@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <script src="/ga4.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Briefing – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0a0e1a;color:#e8e8e8;font-family:'Lato',sans-serif;}
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-track{background:#0a0e1a;}
+    ::-webkit-scrollbar-thumb{background:#2a3a4a;border-radius:3px;}
+    @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes shimmer{0%,100%{opacity:0.6;}50%{opacity:1;}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const MCP_SERVERS = [
+  { type: "url", url: "https://gmailmcp.googleapis.com/mcp/v1", name: "gmail-mcp" },
+  { type: "url", url: "https://calendarmcp.googleapis.com/mcp/v1", name: "calendar-mcp" },
+];
+
+const TODAY = new Date();
+const DATE_STR = TODAY.toLocaleDateString("en-SG", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+const TODAY_ISO = TODAY.toISOString().split("T")[0];
+const WEEK_ISO = new Date(TODAY.getTime() + 7*24*60*60*1000).toISOString().split("T")[0];
+
+async function callClaude(prompt, systemPrompt="") {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model:"claude-sonnet-4-20250514",
+      max_tokens:1000,
+      system: systemPrompt || "You are a personal assistant for Paul, a 70-year-old retired man. Extract and summarise information clearly. Always respond with valid JSON only, no markdown, no explanation.",
+      messages:[{role:"user", content:prompt}],
+      mcp_servers: MCP_SERVERS,
+    }),
+  });
+  const data = await response.json();
+  return data.content?.filter(b=>b.type==="text").map(b=>b.text).join("") || "";
+}
+
+function parseJSON(text) {
+  try { return JSON.parse(text.replace(/```json|```/g,"").trim()); }
+  catch { return null; }
+}
+
+function priorityColor(p) {
+  if(p==="high") return "#ef4444";
+  if(p==="medium") return "#f59e0b";
+  return "#6b7280";
+}
+
+function categoryIcon(cat) {
+  const m={medical:"🏥",meeting:"🤝",travel:"✈️",personal:"👤",finance:"💰",social:"🎉",exercise:"💪",reminder:"🔔",email:"📧",default:"📌"};
+  return m[cat?.toLowerCase()] || m.default;
+}
+
+function Section({title,icon,color,children,count,loading,error}) {
+  return (
+    <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${color}33`,borderRadius:16,overflow:"hidden",marginBottom:20}}>
+      <div style={{padding:"14px 20px",background:`linear-gradient(135deg,${color}18,${color}08)`,borderBottom:`1px solid ${color}22`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:20}}>{icon}</span>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:"1.05rem",color:"#f0f0f0",fontWeight:700}}>{title}</span>
+        </div>
+        {count!==undefined && <span style={{background:color,color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:"0.72rem",fontWeight:700,letterSpacing:"0.05em"}}>{count}</span>}
+      </div>
+      <div style={{padding:"16px 20px"}}>
+        {loading
+          ? <div style={{display:"flex",alignItems:"center",gap:10,color:"#888",fontSize:"0.85rem"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>⟳</span>Loading from {title}…</div>
+          : error
+          ? <div style={{color:"#ef4444",fontSize:"0.82rem",padding:"8px 12px",background:"#ef444411",borderRadius:8}}>⚠️ {error}</div>
+          : children}
+      </div>
+    </div>
+  );
+}
+
+function EventCard({item,accentColor}) {
+  const [hovered,setHovered]=useState(false);
+  return (
+    <div
+      onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
+      style={{display:"flex",alignItems:"flex-start",gap:12,padding:"11px 14px",borderRadius:10,background:hovered?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",marginBottom:8,transition:"background 0.2s"}}
+    >
+      <span style={{fontSize:20,flexShrink:0,marginTop:1}}>{categoryIcon(item.category)}</span>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:600,color:"#f0f0f0",fontSize:"0.9rem",marginBottom:3}}>{item.title}</div>
+        {item.time && <div style={{fontSize:"0.78rem",color:accentColor,fontWeight:500}}>🕐 {item.time}</div>}
+        {item.date && item.date!==TODAY_ISO && item.date!=="Today" && <div style={{fontSize:"0.75rem",color:"#999",marginTop:2}}>📅 {item.date}</div>}
+        {item.description && <div style={{fontSize:"0.78rem",color:"#aaa",marginTop:4,lineHeight:1.5}}>{item.description}</div>}
+        {item.from && <div style={{fontSize:"0.75rem",color:"#888",marginTop:3}}>From: {item.from}</div>}
+      </div>
+      {item.priority && <div style={{width:8,height:8,borderRadius:"50%",flexShrink:0,marginTop:5,background:priorityColor(item.priority),boxShadow:`0 0 6px ${priorityColor(item.priority)}`}} title={item.priority+" priority"}/>}
+    </div>
+  );
+}
+
+function App() {
+  const [calEvents,setCalEvents]=useState([]);
+  const [emails,setEmails]=useState([]);
+  const [reminders,setReminders]=useState([]);
+  const [aiSummary,setAiSummary]=useState("");
+  const [loading,setLoading]=useState({cal:false,email:false,reminder:false,ai:false});
+  const [errors,setErrors]=useState({});
+  const [lastRefresh,setLastRefresh]=useState(null);
+  const [refreshing,setRefreshing]=useState(false);
+
+  const setLoad=(key,val)=>setLoading(p=>({...p,[key]:val}));
+  const setErr=(key,val)=>setErrors(p=>({...p,[key]:val}));
+
+  const fetchCalendar=useCallback(async()=>{
+    setLoad("cal",true); setErr("cal",null);
+    try {
+      const raw=await callClaude(`List all calendar events from today ${TODAY_ISO} to ${WEEK_ISO}. For each event return JSON array with fields: title, date (YYYY-MM-DD), time (HH:MM AM/PM or "All day"), description, category (medical/meeting/travel/personal/finance/social/exercise/reminder), priority (high/medium/low). Return ONLY the JSON array.`);
+      const parsed=parseJSON(raw);
+      setCalEvents(Array.isArray(parsed)?parsed:[]);
+    } catch { setErr("cal","Could not load calendar. Please ensure Google Calendar is connected."); }
+    setLoad("cal",false);
+  },[]);
+
+  const fetchEmails=useCallback(async()=>{
+    setLoad("email",true); setErr("email",null);
+    try {
+      const raw=await callClaude(`Search Gmail for important unread emails received in the last 3 days that need action or are appointments/events/reminders. Return a JSON array with fields: title (subject), from (sender name), time (received time), date, description (1-sentence summary of what action is needed), priority (high/medium/low), category. Limit to 8 most important. Return ONLY the JSON array.`);
+      const parsed=parseJSON(raw);
+      setEmails(Array.isArray(parsed)?parsed:[]);
+    } catch { setErr("email","Could not load Gmail. Please ensure Gmail is connected."); }
+    setLoad("email",false);
+  },[]);
+
+  const fetchReminders=useCallback(async()=>{
+    setLoad("reminder",true); setErr("reminder",null);
+    try {
+      const raw=await callClaude(`List all upcoming reminders and to-do items due today or this week (${TODAY_ISO} to ${WEEK_ISO}). Return a JSON array with fields: title, date (YYYY-MM-DD or "Today"/"Tomorrow"), time, description, priority (high/medium/low), category. Return ONLY the JSON array.`,"You are a personal assistant. Check the user's reminders and calendar for any to-do items or reminders. Return only valid JSON array.");
+      const parsed=parseJSON(raw);
+      setReminders(Array.isArray(parsed)?parsed:[]);
+    } catch { setErr("reminder","Could not load reminders."); }
+    setLoad("reminder",false);
+  },[]);
+
+  const fetchAISummary=useCallback(async(cal,email,rem)=>{
+    setLoad("ai",true);
+    try {
+      const context=`Calendar events: ${JSON.stringify(cal)}. Important emails: ${JSON.stringify(email)}. Reminders: ${JSON.stringify(rem)}.`;
+      const raw=await callClaude(`Based on this data for Paul today (${DATE_STR}): ${context}. Write a friendly 2-3 sentence morning briefing for Paul summarising his day — what to focus on, any urgent items, and a warm encouraging note. Keep it personal and concise. Return plain text only.`,"You are Paul's personal assistant. Write a warm, personal morning briefing. Plain text only, no JSON, no markdown.");
+      setAiSummary(raw.trim());
+    } catch { setAiSummary("Good morning, Paul! Have a wonderful day."); }
+    setLoad("ai",false);
+  },[]);
+
+  const loadAll=useCallback(async()=>{
+    setRefreshing(true);
+    await Promise.all([fetchCalendar(),fetchEmails(),fetchReminders()]);
+    setLastRefresh(new Date());
+    setRefreshing(false);
+  },[fetchCalendar,fetchEmails,fetchReminders]);
+
+  useEffect(()=>{ loadAll(); },[]);
+
+  useEffect(()=>{
+    if(!loading.cal&&!loading.email&&!loading.reminder&&(calEvents.length+emails.length+reminders.length>0)){
+      fetchAISummary(calEvents,emails,reminders);
+    }
+  },[loading.cal,loading.email,loading.reminder]);
+
+  const todayEvents=calEvents.filter(e=>!e.date||e.date===TODAY_ISO||e.date==="Today");
+  const upcomingEvents=calEvents.filter(e=>e.date&&e.date!==TODAY_ISO&&e.date!=="Today");
+  const urgentEmails=emails.filter(e=>e.priority==="high");
+  const otherEmails=emails.filter(e=>e.priority!=="high");
+  const todayReminders=reminders.filter(r=>!r.date||r.date===TODAY_ISO||r.date==="Today");
+  const upcomingReminders=reminders.filter(r=>r.date&&r.date!==TODAY_ISO&&r.date!=="Today");
+  const greeting=TODAY.getHours()<12?"Morning":TODAY.getHours()<17?"Afternoon":"Evening";
+
+  return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0e1a 0%,#0d1520 40%,#0a1015 100%)",fontFamily:"'Lato',sans-serif",color:"#e8e8e8",paddingBottom:40}}>
+
+      {/* HOME BUTTON */}
+      <a href="https://paulsworld.vercel.app/" style={{position:"fixed",top:16,left:16,background:"#3b82f6",color:"#fff",textDecoration:"none",padding:"8px 18px",borderRadius:6,fontSize:"0.8rem",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",zIndex:999,boxShadow:"0 0 16px rgba(59,130,246,0.4)"}}>🏠 Home</a>
+
+      {/* HEADER */}
+      <div style={{background:"linear-gradient(135deg,#0d1a2e,#0a1520)",borderBottom:"1px solid rgba(99,179,237,0.15)",padding:"28px 24px 22px",position:"sticky",top:0,zIndex:10}}>
+        <div style={{maxWidth:680,margin:"0 auto"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+            <div style={{paddingLeft:80}}>
+              <div style={{fontSize:"0.72rem",color:"#63b3ed",fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:4}}>🌅 Good {greeting}, Paul</div>
+              <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(1.4rem,4vw,1.9rem)",margin:0,color:"#fff",lineHeight:1.2}}>Daily Briefing</h1>
+              <div style={{fontSize:"0.8rem",color:"#7a9bb5",marginTop:5}}>{DATE_STR}</div>
+            </div>
+            <button onClick={loadAll} disabled={refreshing} style={{background:refreshing?"rgba(99,179,237,0.1)":"rgba(99,179,237,0.15)",border:"1px solid rgba(99,179,237,0.3)",color:"#63b3ed",borderRadius:10,padding:"8px 16px",fontSize:"0.8rem",fontWeight:700,cursor:refreshing?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6,marginTop:8}}>
+              <span style={{display:"inline-block",animation:refreshing?"spin 1s linear infinite":"none"}}>⟳</span>
+              {refreshing?"Refreshing…":"Refresh"}
+            </button>
+          </div>
+          {(loading.ai||aiSummary)&&(
+            <div style={{marginTop:16,padding:"12px 16px",background:"rgba(99,179,237,0.06)",border:"1px solid rgba(99,179,237,0.18)",borderRadius:10,fontSize:"0.85rem",color:"#c5dff0",lineHeight:1.6,animation:"fadeIn 0.5s ease"}}>
+              {loading.ai
+                ? <span style={{animation:"shimmer 1.5s ease infinite",display:"inline-block"}}>🤖 Preparing your briefing…</span>
+                : <><span style={{color:"#63b3ed",fontWeight:700}}>🤖 AI: </span>{aiSummary}</>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{maxWidth:680,margin:"20px auto 0",padding:"0 16px"}}>
+        {/* STATS */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:24}}>
+          {[
+            {label:"Today's Events",value:todayEvents.length,color:"#63b3ed",icon:"📅"},
+            {label:"Action Emails",value:emails.length,color:"#f6ad55",icon:"📧"},
+            {label:"Reminders",value:reminders.length,color:"#68d391",icon:"🔔"},
+          ].map(s=>(
+            <div key={s.label} style={{background:`${s.color}0e`,border:`1px solid ${s.color}22`,borderRadius:12,padding:"14px 12px",textAlign:"center"}}>
+              <div style={{fontSize:22,marginBottom:4}}>{s.icon}</div>
+              <div style={{fontFamily:"'Playfair Display',serif",fontSize:"1.6rem",color:s.color,lineHeight:1}}>{s.value}</div>
+              <div style={{fontSize:"0.68rem",color:"#888",marginTop:4,textTransform:"uppercase",letterSpacing:"0.06em"}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <Section title="Today's Calendar" icon="📅" color="#63b3ed" count={todayEvents.length} loading={loading.cal} error={errors.cal}>
+          {todayEvents.length===0&&!loading.cal
+            ?<div style={{color:"#666",fontSize:"0.85rem",textAlign:"center",padding:"12px 0"}}>✨ No events today — enjoy your free day!</div>
+            :todayEvents.map((e,i)=><EventCard key={i} item={e} accentColor="#63b3ed"/>)}
+        </Section>
+
+        {upcomingEvents.length>0&&(
+          <Section title="Upcoming This Week" icon="🗓️" color="#7f9cf5" count={upcomingEvents.length} loading={loading.cal} error={null}>
+            {upcomingEvents.map((e,i)=><EventCard key={i} item={e} accentColor="#7f9cf5"/>)}
+          </Section>
+        )}
+
+        <Section title="Emails Needing Attention" icon="📧" color="#f6ad55" count={emails.length} loading={loading.email} error={errors.email}>
+          {urgentEmails.length>0&&(
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:"0.7rem",color:"#ef4444",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>🔴 Urgent</div>
+              {urgentEmails.map((e,i)=><EventCard key={i} item={e} accentColor="#ef4444"/>)}
+            </div>
+          )}
+          {otherEmails.map((e,i)=><EventCard key={i} item={e} accentColor="#f6ad55"/>)}
+          {emails.length===0&&!loading.email&&<div style={{color:"#666",fontSize:"0.85rem",textAlign:"center",padding:"12px 0"}}>✅ Inbox clear — no action needed!</div>}
+        </Section>
+
+        <Section title="Today's Reminders & To-Do" icon="🔔" color="#68d391" count={todayReminders.length} loading={loading.reminder} error={errors.reminder}>
+          {todayReminders.length===0&&!loading.reminder
+            ?<div style={{color:"#666",fontSize:"0.85rem",textAlign:"center",padding:"12px 0"}}>✅ No reminders due today</div>
+            :todayReminders.map((r,i)=><EventCard key={i} item={r} accentColor="#68d391"/>)}
+        </Section>
+
+        {upcomingReminders.length>0&&(
+          <Section title="Upcoming Reminders" icon="📋" color="#b794f4" count={upcomingReminders.length} loading={loading.reminder} error={null}>
+            {upcomingReminders.map((r,i)=><EventCard key={i} item={r} accentColor="#b794f4"/>)}
+          </Section>
+        )}
+
+        <div style={{textAlign:"center",marginTop:20,color:"#444",fontSize:"0.75rem"}}>
+          {lastRefresh&&<>Last refreshed: {lastRefresh.toLocaleTimeString("en-SG")} · </>}
+          Data from Gmail &amp; Google Calendar
+        </div>
+
+        <div style={{textAlign:"center",marginTop:16}}>
+          <script src="/view-counter.js"></script>
+        </div>
+      </div>
+
+      <footer style={{textAlign:"center",padding:"24px 16px",borderTop:"1px solid rgba(255,255,255,0.06)",color:"#444",fontSize:"0.78rem",marginTop:24}}>
+        Paul's World · Daily Briefing · Powered by AI
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
