@@ -493,28 +493,35 @@ function loadReminders(){
   return rems;
 }
 
-// ── AI briefing ───────────────────────────────────────────────────────────
+// ── AI briefing ─────────────────────────────────────────────────────────
 async function fetchBriefing(events, emails, reminders){
   document.getElementById("spinBriefing").style.display = "block";
   if(!IS_CLAUDE){
-    renderBriefing(`**${new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long",year:"numeric"})}** — your personal briefing is ready when you open this in Claude.ai.\n\nYour AI briefing summarises today's **calendar**, **important emails**, and **reminders** in one personalised message written just for you.\n\n- Tap **▼ How to get live data** below for setup steps\n- Takes just 30 seconds to open in Claude.ai\n- Gmail & Google Calendar connect automatically");
+    var todayStr = new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    var staticText = "**" + todayStr + "** — your personal briefing is ready when you open this in Claude.ai.\n\n" +
+      "Your AI briefing summarises today's **calendar**, **important emails**, and **reminders** in one personalised message written just for you.\n\n" +
+      "- Tap **How to get live data** below for setup steps\n" +
+      "- Takes just 30 seconds to open in Claude.ai\n" +
+      "- Gmail & Google Calendar connect automatically";
+    renderBriefing(staticText);
     document.getElementById("spinBriefing").style.display = "none";
     return;
   }
   try{
-    const ctx = `Today: ${new Date().toLocaleDateString([],{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
-Calendar: ${JSON.stringify(events.slice(0,6))}
-Emails: ${JSON.stringify(emails.slice(0,5))}
-Reminders: ${JSON.stringify(reminders.slice(0,5))}`;
+    var todayFull = new Date().toLocaleDateString([],{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+    var ctx = "Today: " + todayFull + "\n" +
+              "Calendar: " + JSON.stringify(events.slice(0,6)) + "\n" +
+              "Emails: "   + JSON.stringify(emails.slice(0,5))  + "\n" +
+              "Reminders: "+ JSON.stringify(reminders.slice(0,5));
     const text = await callClaude({
       system:"You are Paul's personal AI. Paul is 70, retired at 67, loves travel, adventure sports and AI. His wife is Joanne. Write a warm, concise personal morning briefing (150 words). Use **bold** for highlights. Use '- ' bullet points for actions. No greeting — start straight with the day summary.",
-      user:`My morning briefing:\n${ctx}`
+      user:"My morning briefing:\n" + ctx
     });
     renderBriefing(text);
   }catch(e){
     console.error("Briefing:",e);
     setBadge("briefingBadge","badge-offline");
-    empty("briefingBody","⚠️ Unable to generate briefing.");
+    empty("briefingBody","Unable to generate briefing.");
   }
   document.getElementById("spinBriefing").style.display = "none";
 }
