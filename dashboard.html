@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <script src="/ga4.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Paul's World</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #222;
+      min-height: 100vh;
+      font-size: 16px;
+    }
+
+    /* HOME BUTTON */
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: #c0392b;
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff;
+      text-align: center;
+      padding: 80px 24px 40px;
+    }
+    .hero h1 { font-size: 2rem; margin-bottom: 8px; }
+    .hero p  { color: rgba(255,255,255,0.65); font-size: 0.95rem; }
+
+    /* SUMMARY BAR */
+    .summary {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      padding: 24px 16px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .summary-item { text-align: center; }
+    .summary-num {
+      display: block;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #f4813f;
+    }
+    .summary-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #888;
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 16px 60px;
+    }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 32px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 3px solid #f4813f;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    /* CARD */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-decoration: none;
+      color: #222;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-top: 4px solid #f4813f;
+      display: block;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+    .card-cat  { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #f4813f; font-weight: 700; margin-bottom: 4px; }
+    .card-title{ font-size: 0.95rem; font-weight: 700; color: #1a1a2e; margin-bottom: 12px; line-height: 1.3; }
+    .card-views{ font-size: 1.6rem; font-weight: 800; color: #f4813f; }
+    .card-vlabel{ font-size: 0.78rem; color: #888; }
+
+    /* LOADING */
+    .loading { color: #aaa; font-style: italic; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .pulse { animation: pulse 1.2s infinite; }
+
+    /* LAST UPDATED */
+    .last-updated {
+      text-align: center;
+      font-size: 0.82rem;
+      color: #aaa;
+      margin-top: 40px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      background: #1a1a2e;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.82rem;
+      margin-top: 40px;
+    }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+
+    @media(max-width:480px){
+      .grid { grid-template-columns: 1fr 1fr; }
+      .summary { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 HOME</a>
+
+<div class="hero">
+  <h1>📊 Paul's World Dashboard</h1>
+  <p>Live view counts across all pages</p>
+</div>
+
+<div class="summary">
+  <div class="summary-item">
+    <span class="summary-num pulse" id="total-views">…</span>
+    <span class="summary-label">Total Views</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-num" id="total-pages">20</span>
+    <span class="summary-label">Pages Tracked</span>
+  </div>
+  <div class="summary-item">
+    <span class="summary-num pulse" id="top-name">…</span>
+    <span class="summary-label">Most Popular</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-title">📖 Stories</div>
+  <div class="grid" id="grid-stories"></div>
+
+  <div class="section-title">🤖 AI Journey</div>
+  <div class="grid" id="grid-ai"></div>
+
+  <div class="section-title">🏆 Activities</div>
+  <div class="grid" id="grid-ac"></div>
+
+  <div class="section-title">📚 Books</div>
+  <div class="grid" id="grid-books"></div>
+
+  <div class="section-title">🌍 Travel & Special</div>
+  <div class="grid" id="grid-special"></div>
+
+  <div class="section-title">💊 Health</div>
+  <div class="grid" id="grid-health"></div>
+
+  <div class="last-updated" id="last-updated"></div>
+</div>
+
+<footer>
+  © 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a>
+</footer>
+
+<script>
+const NS = 'paulsworld';
+const BASE = 'https://paulsworld.vercel.app/';
+
+const PAGES = [
+  { key:'s1',          label:'Story 1',              cat:'Stories',  grid:'grid-stories' },
+  { key:'s2',          label:'Story 2',              cat:'Stories',  grid:'grid-stories' },
+  { key:'s3',          label:'Story 3',              cat:'Stories',  grid:'grid-stories' },
+  { key:'s4',          label:'Story 4',              cat:'Stories',  grid:'grid-stories' },
+  { key:'s5',          label:'Story 5',              cat:'Stories',  grid:'grid-stories' },
+  { key:'s6',          label:'Story 6',              cat:'Stories',  grid:'grid-stories' },
+  { key:'s7',          label:'Story 7',              cat:'Stories',  grid:'grid-stories' },
+  { key:'ai1',         label:'AI Article 1',         cat:'AI',       grid:'grid-ai' },
+  { key:'ai2',         label:'AI Article 2',         cat:'AI',       grid:'grid-ai' },
+  { key:'ai3',         label:'AI Article 3',         cat:'AI',       grid:'grid-ai' },
+  { key:'ai4',         label:'AI Article 4',         cat:'AI',       grid:'grid-ai' },
+  { key:'ac1',         label:'Activity 1',           cat:'Activity', grid:'grid-ac' },
+  { key:'ac2',         label:'Activity 2',           cat:'Activity', grid:'grid-ac' },
+  { key:'book1',       label:'Book 1',               cat:'Books',    grid:'grid-books' },
+  { key:'book2',       label:'Book 2',               cat:'Books',    grid:'grid-books' },
+  { key:'travel1',     label:'Travel Record',        cat:'Travel',   grid:'grid-special' },
+  { key:'bucket-list', label:'Bucket List',          cat:'Special',  grid:'grid-special' },
+  { key:'adventure',   label:'Adventure List',       cat:'Special',  grid:'grid-special' },
+  { key:'Retire65',    label:'Retire at 65',         cat:'Special',  grid:'grid-special' },
+  { key:'h1',          label:'Colonoscopy Journey',  cat:'Health',   grid:'grid-health' },
+];
+
+// READ-ONLY — uses GET endpoint only, never /up or /down
+async function fetchCount(key) {
+  try {
+    const res = await fetch(`https://api.counterapi.dev/v1/${NS}/${key}/`);
+    const data = await res.json();
+    return data.value ?? data.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+function makeCard(page, count) {
+  const a = document.createElement('a');
+  a.href = `${BASE}${page.key}.html`;
+  a.className = 'card';
+  a.target = '_blank';
+  a.innerHTML = `
+    <div class="card-cat">${page.cat}</div>
+    <div class="card-title">${page.label}</div>
+    <div class="card-views">${count.toLocaleString()}</div>
+    <div class="card-vlabel">👁 views</div>
+  `;
+  return a;
+}
+
+async function init() {
+  // Fetch all counts in parallel
+  const counts = await Promise.all(PAGES.map(p => fetchCount(p.key)));
+  const results = PAGES.map((p, i) => ({ ...p, count: counts[i] }));
+
+  // Populate grids
+  const grids = {};
+  results.forEach(r => {
+    if (!grids[r.grid]) grids[r.grid] = [];
+    grids[r.grid].push(r);
+  });
+  Object.entries(grids).forEach(([id, items]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    items.forEach(item => el.appendChild(makeCard(item, item.count)));
+  });
+
+  // Summary
+  const total = results.reduce((s, r) => s + r.count, 0);
+  const top   = [...results].sort((a,b) => b.count - a.count)[0];
+  document.getElementById('total-views').textContent = total.toLocaleString();
+  document.getElementById('top-name').textContent    = top ? top.label : '—';
+
+  // Remove pulse animation
+  document.getElementById('total-views').classList.remove('pulse');
+  document.getElementById('top-name').classList.remove('pulse');
+
+  // Timestamp
+  const now = new Date();
+  document.getElementById('last-updated').textContent =
+    'Last updated: ' + now.toLocaleDateString('en-SG', { day:'numeric', month:'short', year:'numeric' }) +
+    ' at ' + now.toLocaleTimeString('en-SG', { hour:'2-digit', minute:'2-digit' });
+}
+
+init();
+</script>
+</body>
+</html>

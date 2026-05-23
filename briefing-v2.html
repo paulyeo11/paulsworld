@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Briefing — Paul's World</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #c9a96e;
+      --bg1: #0f0c1a;
+      --bg2: #1a1228;
+      --bg3: #0d1a12;
+      --text: #e8e0d0;
+      --muted: #8a8070;
+      --card: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.08);
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(201,169,110,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(110,181,201,0.05) 0%, transparent 60%);
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 680px;
+    }
+
+    /* HOME BUTTON */
+    .home-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 18px; border-radius: 20px;
+      transition: all 0.3s;
+      margin-bottom: 40px;
+    }
+    .home-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* HEADER */
+    .eyebrow {
+      text-align: center;
+      font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    h1 {
+      text-align: center;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(28px, 6vw, 44px); font-weight: 400;
+      color: #f0ead8; margin-bottom: 10px; letter-spacing: 1px;
+    }
+    .date-line {
+      text-align: center;
+      font-size: 14px; color: var(--muted);
+      letter-spacing: 1px; font-style: italic; margin-bottom: 44px;
+    }
+
+    /* LOADING */
+    #loading {
+      text-align: center; padding: 80px 0;
+    }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 2px solid rgba(201,169,110,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--muted); font-style: italic; font-size: 15px; }
+
+    /* ERROR */
+    #error-box {
+      display: none;
+      background: rgba(224,123,84,0.08);
+      border: 1px solid rgba(224,123,84,0.3);
+      border-radius: 12px; padding: 24px; text-align: center;
+    }
+    .err-msg { color: #e07b54; margin-bottom: 16px; }
+    .retry-btn {
+      background: rgba(224,123,84,0.15); border: 1px solid rgba(224,123,84,0.4);
+      color: #e07b54; padding: 10px 24px; border-radius: 8px;
+      cursor: pointer; font-family: inherit; font-size: 14px;
+    }
+
+    /* CONTENT */
+    #content { display: none; opacity: 0; transform: translateY(16px); transition: opacity 0.8s, transform 0.8s; }
+    #content.visible { opacity: 1; transform: translateY(0); }
+
+    .theme-badge {
+      text-align: center; margin-bottom: 30px;
+    }
+    .theme-badge span {
+      display: inline-block;
+      padding: 6px 22px; border-radius: 20px;
+      border: 1px solid rgba(201,169,110,0.35);
+      background: rgba(201,169,110,0.1);
+      color: var(--accent);
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    }
+
+    /* VERSE */
+    .verse-card {
+      background: var(--card);
+      border: 1px solid rgba(201,169,110,0.25);
+      border-left: 3px solid var(--accent);
+      border-radius: 12px; padding: 32px 36px; margin-bottom: 28px;
+    }
+    .verse-text {
+      font-size: clamp(18px, 3vw, 24px); line-height: 1.75;
+      color: #f0ead8; font-style: italic; margin-bottom: 18px;
+    }
+    .verse-ref {
+      font-size: 12px; color: var(--accent);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    /* DEVOTIONAL */
+    .devot-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 3vw, 24px); font-weight: 400;
+      color: #f0ead8; text-align: center;
+      margin-bottom: 20px; letter-spacing: 0.5px;
+    }
+    .devot-body {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px 32px; margin-bottom: 24px;
+    }
+    .devot-body p {
+      font-size: 17px; line-height: 1.9;
+      color: #ccc4b4; letter-spacing: 0.2px;
+    }
+
+    /* PRAYER */
+    .prayer-card {
+      background: rgba(201,169,110,0.06);
+      border: 1px solid rgba(201,169,110,0.18);
+      border-radius: 12px; padding: 24px 32px;
+      text-align: center; margin-bottom: 40px;
+    }
+    .prayer-label {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+    }
+    .prayer-text {
+      font-size: 15px; line-height: 1.85; color: #b8b0a0; font-style: italic;
+    }
+
+    /* DIVIDER */
+    .divider {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 36px;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider-star { color: var(--accent); font-size: 14px; }
+
+    /* REFRESH BUTTON */
+    .refresh-wrap { text-align: center; }
+    .refresh-btn {
+      background: transparent;
+      border: 1px solid rgba(201,169,110,0.35);
+      color: var(--accent);
+      padding: 12px 36px; border-radius: 30px;
+      cursor: pointer;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+      transition: all 0.3s;
+    }
+    .refresh-btn:hover {
+      background: rgba(201,169,110,0.12);
+      border-color: var(--accent);
+    }
+
+    /* FOOTER */
+    .footer {
+      text-align: center; margin-top: 60px;
+      color: #2a2520; font-size: 11px; letter-spacing: 2px;
+    }
+
+    /* VIEW COUNTER */
+    .view-counter-wrap { text-align: center; margin-top: 40px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Home Button -->
+  <a href="https://paulsworld.vercel.app/" class="home-btn">⌂ Home</a>
+
+  <!-- Header -->
+  <div class="eyebrow">✦ Daily Devotional ✦</div>
+  <h1>Good Morning, Paul</h1>
+  <div class="date-line" id="date-line"></div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Preparing today's Word…</div>
+  </div>
+
+  <!-- Error -->
+  <div id="error-box">
+    <div class="err-msg" id="err-msg">Unable to load today's devotional.</div>
+    <button class="retry-btn" onclick="fetchBriefing()">Try Again</button>
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+    <div class="theme-badge"><span id="theme-badge"></span></div>
+
+    <div class="verse-card">
+      <div class="verse-text" id="verse-text"></div>
+      <div class="verse-ref" id="verse-ref"></div>
+    </div>
+
+    <h2 class="devot-title" id="devot-title"></h2>
+
+    <div class="devot-body">
+      <p id="devot-body"></p>
+    </div>
+
+    <div class="prayer-card">
+      <div class="prayer-label">✦ Prayer ✦</div>
+      <div class="prayer-text" id="prayer-text"></div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-star">✦</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="refresh-wrap">
+      <button class="refresh-btn" onclick="fetchBriefing()">↻ New Reflection</button>
+    </div>
+  </div>
+
+  <!-- View Counter -->
+  <div class="view-counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+
+  <div class="footer">PAUL'S DAILY BRIEFING</div>
+</div>
+
+<script>
+  const BOOKS = [
+    "Genesis","Exodus","Psalms","Proverbs","Isaiah","Matthew","Mark",
+    "Luke","John","Romans","Philippians","Colossians","1 Corinthians",
+    "2 Corinthians","Galatians","Ephesians","James","1 Peter","Revelation"
+  ];
+
+  const THEME_COLORS = {
+    Grace:"#c9a96e", Courage:"#e07b54", Hope:"#6eb5c9", Peace:"#7ec98a",
+    Joy:"#e8c84a", Faith:"#a87ec9", Love:"#e07b9a", Strength:"#e07b54",
+    Wisdom:"#7ec9b8", Gratitude:"#c9a96e"
+  };
+
+  function getDateString() {
+    return new Date().toLocaleDateString("en-US", {
+      weekday:"long", year:"numeric", month:"long", day:"numeric"
+    });
+  }
+
+  function getDaySeed() {
+    const d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+  }
+
+  function setAccent(color) {
+    document.documentElement.style.setProperty('--accent', color);
+  }
+
+  document.getElementById('date-line').textContent = getDateString();
+
+  async function fetchBriefing() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('error-box').style.display = 'none';
+    const content = document.getElementById('content');
+    content.style.display = 'none';
+    content.classList.remove('visible');
+
+    const seed = getDaySeed();
+    const book = BOOKS[seed % BOOKS.length];
+    const today = getDateString();
+
+    try {
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: `You are a warm, wise Christian devotional writer. You write for Paul, a 70-year-old retired man who loves travel, adventure, and learning AI. He was recently baptised on 29 April 2026. Write with warmth, encouragement, and depth. Always respond in pure JSON only — no markdown, no backticks, no preamble.`,
+          messages: [{
+            role: "user",
+            content: `Today is ${today}. Generate a daily devotional for Paul. Use a verse from the book of ${book}.
+
+Respond ONLY with this JSON (no backticks, no markdown):
+{
+  "verse": "The full Bible verse text",
+  "reference": "Book Chapter:Verse",
+  "title": "A short devotional title (5-8 words)",
+  "devotional": "A warm, personal devotional reflection of 3-4 sentences for Paul — touching on faith, adventure, life experience, or gratitude. Make it feel personal and uplifting.",
+  "prayer": "A short 2-sentence closing prayer for Paul.",
+  "theme": "One word theme (e.g. Grace, Courage, Hope, Peace, Joy)"
+}`
+          }]
+        })
+      });
+
+      const data = await res.json();
+      const raw = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+      const clean = raw.replace(/```json|```/g, "").trim();
+      const d = JSON.parse(clean);
+
+      const accent = THEME_COLORS[d.theme] || "#c9a96e";
+      setAccent(accent);
+
+      document.getElementById('theme-badge').textContent = d.theme;
+      document.getElementById('verse-text').textContent = "\u201C" + d.verse + "\u201D";
+      document.getElementById('verse-ref').textContent = "\u2014 " + d.reference;
+      document.getElementById('devot-title').textContent = d.title;
+      document.getElementById('devot-body').textContent = d.devotional;
+      document.getElementById('prayer-text').textContent = d.prayer;
+
+      document.getElementById('loading').style.display = 'none';
+      content.style.display = 'block';
+      setTimeout(() => content.classList.add('visible'), 60);
+
+    } catch(e) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('err-msg').textContent = "Unable to load today's devotional. Please try again.";
+      document.getElementById('error-box').style.display = 'block';
+    }
+  }
+
+  fetchBriefing();
+</script>
+</body>
+</html>
