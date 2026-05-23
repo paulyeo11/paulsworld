@@ -1,93 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <script src="/ga4.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Briefing – Paul's World</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet"/>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:linear-gradient(160deg,#0a0e1a 0%,#0d1520 50%,#0a1015 100%);min-height:100vh;color:#e8e8e8;font-family:'Lato',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Paul's Daily Briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--panel:#161b22;--border:#21262d;
+  --accent:#3b82f6;--accentS:rgba(59,130,246,.15);
+  --gold:#f59e0b;--goldS:rgba(245,158,11,.12);
+  --green:#10b981;--greenS:rgba(16,185,129,.12);
+  --red:#ef4444;--redS:rgba(239,68,68,.12);
+  --purple:#8b5cf6;--purpleS:rgba(139,92,246,.12);
+  --text:#e6edf3;--muted:#7d8590;--sub:#30363d;
+}
+body{background:var(--bg);font-family:'Sora',sans-serif;color:var(--text);min-height:100vh}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
-    .home-btn{position:fixed;top:16px;left:16px;background:#3b82f6;color:#fff;text-decoration:none;padding:8px 18px;border-radius:6px;font-size:0.8rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;z-index:999;box-shadow:0 0 16px rgba(59,130,246,0.4);}
+/* header */
+.header{
+  background:linear-gradient(135deg,#1a274488 0%,#0d1117 100%);
+  border-bottom:1px solid var(--border);
+  padding:18px 18px 14px;
+  position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(10px);
+}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.date-label{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.greeting{font-size:20px;font-weight:700;line-height:1.2}
+.sub-text{font-size:12px;color:var(--muted);margin-top:3px}
+.refresh-btn{
+  background:var(--accentS);border:1px solid rgba(59,130,246,.4);
+  border-radius:10px;padding:8px 14px;color:var(--accent);
+  font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;
+  font-family:'Sora',sans-serif;transition:background .2s;
+}
+.refresh-btn:hover{background:rgba(59,130,246,.25)}
+.refresh-btn:disabled{opacity:.5;cursor:default}
+.home-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:10px;background:var(--goldS);border:1px solid rgba(245,158,11,.4);
+  border-radius:8px;padding:5px 12px;color:var(--gold);
+  font-size:12px;font-weight:700;text-decoration:none;
+}
+.last-refresh{font-size:10px;color:var(--muted);margin-top:5px}
 
-    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(99,179,237,0.2);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 0 60px rgba(99,179,237,0.08);animation:fadeUp 0.6s ease both;}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-    @keyframes ping{0%{transform:scale(1);opacity:1;}100%{transform:scale(1.8);opacity:0;}}
+/* content */
+.content{padding:18px 14px 40px;max-width:680px;margin:0 auto}
 
-    .pulse-ring{position:relative;width:80px;height:80px;margin:0 auto 24px;}
-    .pulse-ring::before,.pulse-ring::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(99,179,237,0.3);animation:ping 2s ease-out infinite;}
-    .pulse-ring::after{animation-delay:1s;}
-    .pulse-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.4rem;}
+/* section */
+.section{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;margin-bottom:16px;
+  animation:fadeUp .4s ease both;
+}
+.section-head{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 16px;border-bottom:1px solid var(--border);
+}
+.section-icon{font-size:18px}
+.section-title{font-weight:700;font-size:14px;letter-spacing:.3px}
+.spinner{
+  margin-left:auto;width:15px;height:15px;
+  border:2px solid var(--border);border-top:2px solid var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+}
+.section-body{padding:10px 14px}
 
-    h1{font-family:'Playfair Display',serif;font-size:1.9rem;color:#fff;margin-bottom:8px;line-height:1.2;}
-    .subtitle{color:#7a9bb5;font-size:0.88rem;margin-bottom:28px;line-height:1.6;}
+/* event card */
+.event-card{display:flex;gap:10px;padding:9px 2px;border-bottom:1px solid var(--border)}
+.event-time{
+  min-width:50px;text-align:center;background:var(--accentS);
+  border-radius:8px;padding:5px 3px;font-size:10px;font-weight:700;
+  color:var(--accent);font-family:monospace;
+  display:flex;flex-direction:column;justify-content:center;line-height:1.4;
+}
+.event-info{flex:1}
+.event-title{font-size:13px;font-weight:600;color:var(--text)}
+.event-loc{font-size:11px;color:var(--muted);margin-top:2px}
+.event-date{font-size:10px;color:var(--muted);margin-top:1px}
 
-    .features{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;text-align:left;}
-    .feat{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;}
-    .feat-icon{font-size:1.2rem;flex-shrink:0;}
-    .feat-text{font-size:0.83rem;color:#c5dff0;}
+/* email card */
+.email-card{padding:9px 2px;border-bottom:1px solid var(--border);display:flex;gap:9px;align-items:flex-start}
+.unread-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.email-from{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.email-date{font-size:10px;color:var(--muted);flex-shrink:0}
+.email-subject{font-size:12px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.email-snippet{font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    .divider{font-size:0.75rem;color:#4a5568;margin:0 0 20px;text-transform:uppercase;letter-spacing:0.08em;}
+/* reminder card */
+.rem-card{display:flex;gap:9px;padding:9px 2px;border-bottom:1px solid var(--border);align-items:flex-start}
+.rem-title{font-size:13px;font-weight:600;color:var(--text)}
+.rem-due{font-size:11px;color:var(--gold);margin-top:2px}
+.rem-note{font-size:11px;color:var(--muted);margin-top:1px}
 
-    .steps{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;text-align:left;}
-    .step{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:rgba(99,179,237,0.05);border:1px solid rgba(99,179,237,0.15);border-radius:10px;}
-    .step-num{background:#1d4ed8;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;margin-top:1px;}
-    .step-text{font-size:0.83rem;color:#c5dff0;line-height:1.5;}
-    .step-text strong{color:#fff;}
+/* briefing */
+.briefing-text{font-size:13px;color:var(--text);line-height:1.8;font-family:'Lora',serif}
+.briefing-bullet{display:flex;gap:8px;margin-bottom:5px}
+.briefing-para{margin-bottom:8px}
 
-    .open-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px 24px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;text-decoration:none;border-radius:12px;font-size:1rem;font-weight:700;letter-spacing:0.03em;box-shadow:0 0 24px rgba(37,99,235,0.4);transition:all 0.2s;margin-bottom:12px;}
-    .open-btn:hover{background:linear-gradient(135deg,#1e40af,#1d4ed8);transform:translateY(-1px);}
+.empty-msg{color:var(--muted);font-size:12px;text-align:center;padding:12px 0}
+.footer{text-align:center;color:var(--muted);font-size:10px;margin-top:20px}
 
-    .note{font-size:0.75rem;color:#4a5568;line-height:1.6;}
-    footer{margin-top:28px;color:#2d3748;font-size:0.75rem;text-align:center;}
-  </style>
+/* loading skeleton */
+.skeleton{background:linear-gradient(90deg,var(--sub) 25%,var(--border) 50%,var(--sub) 75%);
+  background-size:200% 100%;animation:pulse 1.4s ease infinite;
+  border-radius:6px;height:13px;margin-bottom:8px}
+</style>
 </head>
 <body>
 
-<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
-
-<div class="card">
-  <div class="pulse-ring">
-    <div class="pulse-icon">🌅</div>
-  </div>
-
-  <h1>Daily Briefing</h1>
-  <p class="subtitle">Your AI assistant reads your Gmail, Calendar &amp; Reminders — all in one view.</p>
-
-  <div class="features">
-    <div class="feat"><span class="feat-icon">📅</span><span class="feat-text">Today's calendar events &amp; upcoming week</span></div>
-    <div class="feat"><span class="feat-icon">📧</span><span class="feat-text">Important Gmail emails needing attention</span></div>
-    <div class="feat"><span class="feat-icon">🔔</span><span class="feat-text">Reminders &amp; to-do items due today</span></div>
-    <div class="feat"><span class="feat-icon">🤖</span><span class="feat-text">AI-written personal morning briefing</span></div>
-  </div>
-
-  <div class="divider">— How to open —</div>
-
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-text">Tap the button below to open <strong>Claude.ai</strong></div>
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="date-label" id="dateLabel"></div>
+      <div class="greeting" id="greetingText"></div>
+      <div class="sub-text">Your AI assistant has your day covered</div>
     </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-text">Tap the <strong>☰ sidebar</strong> (top left) and find the chat named <strong>"Daily Briefing"</strong></div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-text">Open that chat and tap <strong>"Open my Daily Briefing"</strong> or scroll to the app</div>
-    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">🔄 Refresh</button>
   </div>
-
-  <a href="https://claude.ai" class="open-btn" target="_blank">
-    🤖 Open Claude.ai →
-  </a>
-
-  <p class="note">Runs inside Claude.ai where your Gmail &amp; Calendar are securely connected.</p>
+  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Paul's World</a>
+  <div class="last-refresh" id="lastRefresh"></div>
 </div>
 
-<footer>Paul's World · Daily Briefing · Powered by Claude AI</footer>
-<script src="/view-counter.js"></script>
+<div class="content">
+
+  <!-- AI Briefing -->
+  <div class="section" style="animation-delay:.05s">
+    <div class="section-head" style="background:linear-gradient(90deg,rgba(245,158,11,.12),transparent)">
+      <span class="section-icon">🤖</span>
+      <span class="section-title" style="color:var(--gold)">AI Morning Briefing</span>
+      <div class="spinner" id="spinBriefing" style="display:none;border-top-color:var(--gold)"></div>
+    </div>
+    <div class="section-body" id="briefingBody">
+      <div class="skeleton" style="width:100%"></div>
+      <div class="skeleton" style="width:90%"></div>
+      <div class="skeleton" style="width:80%"></div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="section" style="animation-delay:.1s">
+    <div class="section-head" style="background:linear-gradient(90deg,var(--accentS),transparent)">
+      <span class="section-icon">📅</span>
+      <span class="section-title" style="color:var(--accent)">Calendar — Today & This Week</span>
+      <div class="spinner" id="spinCal" style="display:none"></div>
+    </div>
+    <div class="section-body" id="calBody">
+      <div class="skeleton" style="width:100%"></div>
+      <div class="skeleton" style="width:85%"></div>
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div class="section" style="animation-delay:.15s">
+    <div class="section-head" style="background:linear-gradient(90deg,var(--purpleS),transparent)">
+      <span class="section-icon">✉️</span>
+      <span class="section-title" style="color:var(--purple)">Important Emails</span>
+      <div class="spinner" id="spinEmail" style="display:none;border-top-color:var(--purple)"></div>
+    </div>
+    <div class="section-body" id="emailBody">
+      <div class="skeleton" style="width:100%"></div>
+      <div class="skeleton" style="width:90%"></div>
+    </div>
+  </div>
+
+  <!-- Reminders -->
+  <div class="section" style="animation-delay:.2s">
+    <div class="section-head" style="background:linear-gradient(90deg,var(--greenS),transparent)">
+      <span class="section-icon">🔔</span>
+      <span class="section-title" style="color:var(--green)">Reminders & To-Do</span>
+    </div>
+    <div class="section-body" id="remBody">
+      <div class="skeleton" style="width:80%"></div>
+    </div>
+  </div>
+
+  <div class="footer">Paul's World · Daily Briefing · Powered by Claude AI</div>
+</div>
+
+<script>
+const API = "https://api.anthropic.com/v1/messages";
+const GMAIL_MCP = "https://gmailmcp.googleapis.com/mcp/v1";
+const CAL_MCP   = "https://calendarmcp.googleapis.com/mcp/v1";
+
+// ── init header ──────────────────────────────────────────────────────────
+function initHeader(){
+  const now = new Date();
+  document.getElementById("dateLabel").textContent =
+    now.toLocaleDateString([],{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  const h = now.getHours();
+  const g = h<12?"Good morning":h<17?"Good afternoon":"Good evening";
+  document.getElementById("greetingText").textContent = `${g}, Paul 👋`;
+}
+
+// ── formatting ───────────────────────────────────────────────────────────
+function fmt(iso){if(!iso)return"";try{return new Date(iso).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}catch(e){return iso}}
+function fmtDate(iso){if(!iso)return"";try{return new Date(iso).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})}catch(e){return iso}}
+
+// ── render helpers ───────────────────────────────────────────────────────
+function renderEmpty(id){document.getElementById(id).innerHTML='<p class="empty-msg">Nothing to show ✓</p>'}
+
+function renderCalendar(events){
+  const el = document.getElementById("calBody");
+  if(!events||!events.length){renderEmpty("calBody");return}
+  el.innerHTML = events.map(ev=>{
+    const start = ev.start?.dateTime||ev.start?.date;
+    const end   = ev.end?.dateTime||ev.end?.date;
+    const isAllDay = !ev.start?.dateTime;
+    const timeHtml = isAllDay
+      ? `<span>ALL<br>DAY</span>`
+      : `<span>${fmt(start)}</span><span style="color:var(--muted);font-weight:400">—</span><span>${fmt(end)}</span>`;
+    return `<div class="event-card">
+      <div class="event-time">${timeHtml}</div>
+      <div class="event-info">
+        <div class="event-title">${ev.summary||"Untitled"}</div>
+        ${ev.location?`<div class="event-loc">📍 ${ev.location}</div>`:""}
+        ${!isAllDay?`<div class="event-date">${fmtDate(start)}</div>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderEmails(emails){
+  const el = document.getElementById("emailBody");
+  if(!emails||!emails.length){renderEmpty("emailBody");return}
+  el.innerHTML = emails.map(msg=>{
+    const from = (msg.from||"Unknown").replace(/<.*>/,"").trim();
+    const dotColor = msg.unread?"var(--accent)":"var(--sub)";
+    const dotBorder = msg.unread?"var(--accent)":"var(--sub)";
+    const subjectWeight = msg.unread?"600":"400";
+    return `<div class="email-card">
+      <div class="unread-dot" style="background:${dotColor};border:2px solid ${dotBorder}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:6px">
+          <span class="email-from" style="font-weight:${msg.unread?700:500}">${from}</span>
+          <span class="email-date">${fmtDate(msg.date)}</span>
+        </div>
+        <div class="email-subject" style="color:${msg.unread?"var(--text)":"var(--muted)"};font-weight:${subjectWeight}">${msg.subject||"(No subject)"}</div>
+        ${msg.snippet?`<div class="email-snippet">${msg.snippet}</div>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderReminders(rems){
+  const el = document.getElementById("remBody");
+  if(!rems||!rems.length){renderEmpty("remBody");return}
+  const icon = p => p==="high"?"🔴":p==="medium"?"🟡":"🟢";
+  el.innerHTML = rems.map(r=>`
+    <div class="rem-card">
+      <span style="font-size:15px;margin-top:1px">${icon(r.priority)}</span>
+      <div>
+        <div class="rem-title">${r.title}</div>
+        ${r.dueDate?`<div class="rem-due">Due: ${fmtDate(r.dueDate)}</div>`:""}
+        ${r.notes?`<div class="rem-note">${r.notes}</div>`:""}
+      </div>
+    </div>`).join("") +
+    `<p style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center">* Reminders synced from your device via Claude</p>`;
+}
+
+function renderBriefing(text){
+  const el = document.getElementById("briefingBody");
+  if(!text){el.innerHTML='<p class="empty-msg">Unable to generate briefing.</p>';return}
+  const lines = text.split("\n").filter(Boolean);
+  el.innerHTML = `<div class="briefing-text">`+lines.map(line=>{
+    const isBullet = line.startsWith("- ")||line.startsWith("• ");
+    const clean = isBullet?line.slice(2):line;
+    const formatted = clean.replace(/\*\*(.*?)\*\*/g,`<strong style="color:var(--gold);font-weight:700">$1</strong>`);
+    return isBullet
+      ? `<div class="briefing-bullet"><span style="color:var(--accent)">▸</span><span>${formatted}</span></div>`
+      : `<p class="briefing-para">${formatted}</p>`;
+  }).join("")+`</div>`;
+}
+
+// ── API call helper ──────────────────────────────────────────────────────
+async function callClaude({system,user,mcpServers}){
+  const body = {
+    model:"claude-sonnet-4-20250514",
+    max_tokens:1000,
+    system,
+    messages:[{role:"user",content:user}],
+  };
+  if(mcpServers) body.mcp_servers = mcpServers;
+  const res = await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data = await res.json();
+  return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+
+// ── fetch calendar ───────────────────────────────────────────────────────
+async function fetchCalendar(){
+  document.getElementById("spinCal").style.display="block";
+  let events=[];
+  try{
+    const now=new Date(),wk=new Date(now.getTime()+7*24*60*60*1000);
+    const raw=await callClaude({
+      system:"List upcoming calendar events as JSON array only. Each: {summary,start:{dateTime or date},end:{dateTime or date},location}. No markdown.",
+      user:`List calendar events from ${now.toISOString()} to ${wk.toISOString()}. JSON array only.`,
+      mcpServers:[{type:"url",url:CAL_MCP,name:"gcal"}]
+    });
+    const clean=raw.replace(/```json|```/g,"").trim();
+    events=JSON.parse(clean.match(/\[[\s\S]*\]/)?.[0]||"[]");
+  }catch(e){console.error("Calendar",e)}
+  document.getElementById("spinCal").style.display="none";
+  renderCalendar(events);
+  return events;
+}
+
+// ── fetch email ──────────────────────────────────────────────────────────
+async function fetchEmail(){
+  document.getElementById("spinEmail").style.display="block";
+  let emails=[];
+  try{
+    const raw=await callClaude({
+      system:"List important/unread Gmail emails as JSON array only. Max 8. Each: {from,subject,snippet,date,unread:bool}. No markdown.",
+      user:"List my important and unread emails from the last 3 days. JSON array only.",
+      mcpServers:[{type:"url",url:GMAIL_MCP,name:"gmail"}]
+    });
+    const clean=raw.replace(/```json|```/g,"").trim();
+    emails=JSON.parse(clean.match(/\[[\s\S]*\]/)?.[0]||"[]");
+  }catch(e){console.error("Email",e)}
+  document.getElementById("spinEmail").style.display="none";
+  renderEmails(emails);
+  return emails;
+}
+
+// ── reminders (static for artifact; device-powered in full app) ──────────
+function loadReminders(){
+  const today=new Date().toISOString();
+  const rems=[
+    {title:"Check travel insurance renewal",dueDate:today,priority:"high"},
+    {title:"Review AI article draft",dueDate:today,priority:"medium"},
+    {title:"Book Bali flights — research options",priority:"low"},
+    {title:"Call Joanne — confirm dinner plans",dueDate:today,priority:"medium"},
+  ];
+  renderReminders(rems);
+  return rems;
+}
+
+// ── AI briefing ──────────────────────────────────────────────────────────
+async function fetchBriefing(events,emails,reminders){
+  document.getElementById("spinBriefing").style.display="block";
+  try{
+    const ctx=`Today: ${new Date().toLocaleDateString([],{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
+Calendar: ${JSON.stringify(events.slice(0,6))}
+Emails: ${JSON.stringify(emails.slice(0,5))}
+Reminders: ${JSON.stringify(reminders.slice(0,4))}`;
+    const text=await callClaude({
+      system:"You are Paul's personal AI. Paul is a 70-year-old retired adventurer who loves travel, adventure sports, and AI. Write a warm concise personal morning briefing (150 words). Use **bold** for highlights. Use bullet points (- ) for key actions. Start straight with day summary — no greeting.",
+      user:`Write my morning briefing:\n${ctx}`
+    });
+    renderBriefing(text);
+  }catch(e){
+    console.error("Briefing",e);
+    document.getElementById("briefingBody").innerHTML='<p class="empty-msg">⚠️ Unable to generate briefing. Please refresh.</p>';
+  }
+  document.getElementById("spinBriefing").style.display="none";
+}
+
+// ── load all ─────────────────────────────────────────────────────────────
+async function loadAll(){
+  const btn=document.getElementById("refreshBtn");
+  btn.disabled=true;
+  // reset skeletons
+  ["calBody","emailBody","briefingBody"].forEach(id=>{
+    document.getElementById(id).innerHTML='<div class="skeleton" style="width:100%"></div><div class="skeleton" style="width:80%"></div>';
+  });
+  document.getElementById("remBody").innerHTML='<div class="skeleton" style="width:75%"></div>';
+
+  const [events,emails] = await Promise.all([fetchCalendar(), fetchEmail()]);
+  const reminders = loadReminders();
+  await fetchBriefing(events,emails,reminders);
+
+  document.getElementById("lastRefresh").textContent="Last updated: "+new Date().toLocaleTimeString();
+  btn.disabled=false;
+}
+
+// ── start ────────────────────────────────────────────────────────────────
+initHeader();
+loadAll();
+</script>
 </body>
 </html>
