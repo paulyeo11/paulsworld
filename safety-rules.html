@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safety Rules & Precautions — Paul's World</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #222;
+      min-height: 100vh;
+      font-size: 17px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: white;
+      padding: 50px 20px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 50%, rgba(244,129,63,0.15) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 50%, rgba(74,108,247,0.12) 0%, transparent 60%);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; }
+    .hero-icon { font-size: 3.5em; margin-bottom: 12px; display: block; }
+    .hero h1 { font-size: 2.2em; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.5px; }
+    .hero p { font-size: 1.05em; opacity: 0.85; line-height: 1.7; max-width: 560px; margin: 0 auto 20px; }
+    .home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f4813f;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-size: 0.95em;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 14px rgba(244,129,63,0.4);
+    }
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,129,63,0.5); }
+
+    /* ── ALERT BANNER ── */
+    .alert-banner {
+      max-width: 800px;
+      margin: 24px auto 0;
+      padding: 16px 20px;
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.97em;
+      line-height: 1.6;
+    }
+    .alert-banner .icon { font-size: 1.8em; flex-shrink: 0; }
+    .alert-banner strong { color: #7c4c00; display: block; margin-bottom: 4px; }
+    .alert-banner p { color: #5c3800; }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── RULE CARDS ── */
+    .rule-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .rule-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .rule-header .badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5em;
+      flex-shrink: 0;
+    }
+    .rule-header .title-block h2 { font-size: 1.1em; font-weight: 800; margin-bottom: 2px; }
+    .rule-header .title-block p { font-size: 0.85em; opacity: 0.7; }
+
+    .rule-body {
+      padding: 0 20px 20px;
+    }
+    .rule-body ul { list-style: none; }
+    .rule-body ul li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 0.97em;
+      line-height: 1.6;
+    }
+    .rule-body ul li:last-child { border-bottom: none; }
+    .rule-body ul li .check { font-size: 1.1em; flex-shrink: 0; margin-top: 2px; }
+
+    /* danger = red */
+    .danger .rule-header { background: linear-gradient(135deg, #fdf0f0, #fde0e0); border-left: 6px solid #e53e3e; }
+    .danger .rule-header .badge { background: #fff0f0; }
+    .danger .rule-header h2 { color: #9b2c2c; }
+    .danger .rule-header p { color: #c53030; }
+
+    /* warning = amber */
+    .warning .rule-header { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-left: 6px solid #d97706; }
+    .warning .rule-header .badge { background: #fffbeb; }
+    .warning .rule-header h2 { color: #7c4c00; }
+    .warning .rule-header p { color: #92400e; }
+
+    /* info = blue */
+    .info .rule-header { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-left: 6px solid #3b82f6; }
+    .info .rule-header .badge { background: #eff6ff; }
+    .info .rule-header h2 { color: #1e40af; }
+    .info .rule-header p { color: #1d4ed8; }
+
+    /* success = green */
+    .success .rule-header { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 6px solid #16a34a; }
+    .success .rule-header .badge { background: #f0fdf4; }
+    .success .rule-header h2 { color: #14532d; }
+    .success .rule-header p { color: #15803d; }
+
+    /* purple */
+    .purple .rule-header { background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-left: 6px solid #9333ea; }
+    .purple .rule-header .badge { background: #faf5ff; }
+    .purple .rule-header h2 { color: #581c87; }
+    .purple .rule-header p { color: #7e22ce; }
+
+    /* teal */
+    .teal .rule-header { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); border-left: 6px solid #0d9488; }
+    .teal .rule-header .badge { background: #f0fdfa; }
+    .teal .rule-header h2 { color: #134e4a; }
+    .teal .rule-header p { color: #0f766e; }
+
+    /* ── CHECKLIST BOX ── */
+    .checklist-box {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 24px 24px;
+      border-top: 5px solid #f4813f;
+    }
+    .checklist-box h2 {
+      font-size: 1.2em;
+      font-weight: 800;
+      color: #c0622a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 600px) { .checklist-grid { grid-template-columns: 1fr; } }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.93em;
+      font-weight: 600;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+    .check-item .dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      flex-shrink: 0;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .check-item.done .dot {
+      background: #16a34a;
+      border-color: #16a34a;
+      position: relative;
+    }
+    .check-item.done .dot::after {
+      content: '✓';
+      color: white;
+      font-size: 0.75em;
+      font-weight: 900;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .check-item.done { color: #64748b; text-decoration: line-through; background: #f1fdf4; border-color: #bbf7d0; }
+
+    /* ── EMERGENCY SECTION ── */
+    .emergency-box {
+      background: linear-gradient(135deg, #fff5f5, #ffe4e4);
+      border: 2px solid #fc8181;
+      border-radius: 16px;
+      padding: 22px 24px;
+    }
+    .emergency-box h2 {
+      font-size: 1.15em;
+      font-weight: 800;
+      color: #9b2c2c;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .emergency-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .e-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: white;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.95em;
+      line-height: 1.6;
+      border: 1px solid #fed7d7;
+    }
+    .e-step .num {
+      background: #e53e3e;
+      color: white;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85em;
+      flex-shrink: 0;
+    }
+    .e-step .text strong { display: block; color: #9b2c2c; margin-bottom: 2px; }
+    .e-step .text span { color: #555; }
+
+    /* ── VIEW COUNTER ── */
+    .view-counter-area {
+      text-align: center;
+      padding: 10px 0 6px;
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85em;
+      color: #aaa;
+      padding: 16px 16px 50px;
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.7em; }
+      .hero p { font-size: 0.97em; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="hero-content">
+    <span class="hero-icon">🛡️</span>
+    <h1>Safety Rules & Precautions</h1>
+    <p>Important rules to protect your website, GitHub files, and images.<br>
+    Read this before making ANY changes to your website.</p>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Back to Home</a>
+  </div>
+</header>
+
+<!-- ── ALERT BANNER ── -->
+<div class="alert-banner" style="max-width:800px;margin:20px auto 0;padding:16px 20px;background:#fff3cd;border:2px solid #ffc107;border-radius:12px;display:flex;align-items:flex-start;gap:12px;font-size:0.97em;line-height:1.6;">
+  <span class="icon">⚠️</span>
+  <div>
+    <strong>Why This Page Exists</strong>
+    <p>Files were accidentally deleted from GitHub twice — including entire image folders. Restoring from backup was difficult and all image folders were lost. This page lists every precaution to prevent this from happening again.</p>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── RULE 1: GitHub Danger Zone ── -->
+  <div class="rule-card danger">
+    <div class="rule-header">
+      <div class="badge">🚫</div>
+      <div class="title-block">
+        <h2>NEVER Delete Files on GitHub</h2>
+        <p>The #1 most dangerous action — do NOT do this</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">❌</span><span><strong>NEVER</strong> delete any file or folder directly on GitHub.com using the web interface — not even "old" or "unused" files.</span></li>
+        <li><span class="check">❌</span><span><strong>NEVER</strong> delete an image folder (e.g. <code>img_macritchie/</code>, <code>img_swiss/</code>). Deleting the folder removes ALL photos inside permanently.</span></li>
+        <li><span class="check">❌</span><span><strong>NEVER</strong> use "Delete this file" from the GitHub pencil/edit menu unless you are 100% certain and have a local backup.</span></li>
+        <li><span class="check">✅</span><span>If you want to remove a page, <strong>Archive it instead</strong> — rename it by adding "_old" at the end (e.g. <code>s3_old.html</code>) so it still exists but is no longer linked.</span></li>
+        <li><span class="check">✅</span><span>Before deleting anything, always ask yourself: <em>"Do I have a complete local copy of this?"</em> If not — DO NOT delete.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── RULE 2: Image Folders ── -->
+  <div class="rule-card warning">
+    <div class="rule-header">
+      <div class="badge">🖼️</div>
+      <div class="title-block">
+        <h2>Always Back Up Image Folders</h2>
+        <p>Images are the hardest to recover — protect them first</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">📁</span><span>Every article has its own image folder (e.g. <code>img_macritchie/</code>, <code>img_swiss/</code>, <code>img_portugal/</code>). Keep a copy of ALL these folders on your local computer AND external hard drive.</span></li>
+        <li><span class="check">📸</span><span>After uploading new photos to GitHub, immediately copy them to your local backup folder. Don't wait.</span></li>
+        <li><span class="check">🗂️</span><span>Keep a master list of all image folder names so you know what exists. Current folders: <code>img_macritchie</code>, <code>img_swiss</code>, <code>img_portugal</code> — update this list whenever you add new ones.</span></li>
+        <li><span class="check">☁️</span><span>Consider also backing up image folders to Google Drive or Dropbox as a second cloud backup (separate from GitHub).</span></li>
+        <li><span class="check">⚠️</span><span>Vercel restore (backup) does <strong>NOT</strong> restore image folders — only HTML files. You must restore images manually. This is what caused the problem before.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── RULE 3: Before Making Changes ── -->
+  <div class="rule-card info">
+    <div class="rule-header">
+      <div class="badge">🔍</div>
+      <div class="title-block">
+        <h2>Before Making Any Website Change</h2>
+        <p>Always follow this checklist before editing</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">1️⃣</span><span>Take a <strong>screenshot</strong> of your GitHub repository file list so you know what files exist before you start.</span></li>
+        <li><span class="check">2️⃣</span><span>If editing an HTML file, <strong>copy the current version</strong> to your computer first (right-click → Save As) before making changes.</span></li>
+        <li><span class="check">3️⃣</span><span>When AI pushes a file to GitHub for you, <strong>confirm the push was successful</strong> before closing the chat. Always check the commit SHA that was returned.</span></li>
+        <li><span class="check">4️⃣</span><span>After any AI push, <strong>visit the live page</strong> on paulsworld.vercel.app to confirm it displays correctly.</span></li>
+        <li><span class="check">5️⃣</span><span>Never do two big changes at the same time. <strong>One change at a time</strong>, confirm it works, then do the next one.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── RULE 4: Backup Strategy ── -->
+  <div class="rule-card success">
+    <div class="rule-header">
+      <div class="badge">💾</div>
+      <div class="title-block">
+        <h2>Your Backup Strategy (3 Copies Rule)</h2>
+        <p>Always have 3 copies: GitHub + Local + Cloud</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">🔵</span><span><strong>Copy 1 — GitHub (Live):</strong> Your main website files at github.com/paulyeo11/Dynamic-Index. This is your "production" copy.</span></li>
+        <li><span class="check">🟢</span><span><strong>Copy 2 — Local Computer:</strong> Keep a folder on your desktop called <code>paulsworld_backup</code> with ALL HTML files AND all image folders. Update it weekly.</span></li>
+        <li><span class="check">🟡</span><span><strong>Copy 3 — Google Drive / USB:</strong> Upload your entire <code>paulsworld_backup</code> folder to Google Drive once a month. Also keep a copy on a USB stick.</span></li>
+        <li><span class="check">📅</span><span>Set a monthly reminder (every 1st of the month) to do a full backup — download all files from GitHub and save to local + Google Drive.</span></li>
+        <li><span class="check">🆕</span><span>Every time a NEW article or page is created, immediately add its images to your local backup. Don't wait for the monthly backup.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── RULE 5: AI Usage Rules ── -->
+  <div class="rule-card purple">
+    <div class="rule-header">
+      <div class="badge">🤖</div>
+      <div class="title-block">
+        <h2>Safe Rules When Using AI (Claude)</h2>
+        <p>How to use AI safely to manage your website</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">✅</span><span>When AI pushes a file, always <strong>ask AI to confirm the commit SHA</strong> (the long code like <code>abc123def</code>). This proves the file was saved correctly.</span></li>
+        <li><span class="check">✅</span><span>Tell AI to <strong>NEVER delete files</strong> — only create new or update existing ones. Make this a standing rule in every session.</span></li>
+        <li><span class="check">✅</span><span>After AI updates <code>index.html</code>, always <strong>check the live website</strong> immediately to confirm all sections still appear correctly.</span></li>
+        <li><span class="check">⚠️</span><span>If AI shows you an error or unexpected result, <strong>STOP and ask AI to explain</strong> before continuing. Never keep going blindly when something looks wrong.</span></li>
+        <li><span class="check">⚠️</span><span>Keep your AI conversations focused. <strong>One task per session</strong> if the task involves changing multiple files — rushing leads to mistakes.</span></li>
+        <li><span class="check">🔒</span><span>Your GitHub token (<code>ghp_...</code>) is private and powerful — it can modify ALL your files. <strong>Never share it publicly</strong> or paste it in chat messages to other people.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── RULE 6: File Naming & Organisation ── -->
+  <div class="rule-card teal">
+    <div class="rule-header">
+      <div class="badge">📂</div>
+      <div class="title-block">
+        <h2>File Naming & Organisation Rules</h2>
+        <p>Keep everything neat and easy to find</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">📝</span><span>All HTML files follow a prefix system: <code>s1–s7</code> (Stories), <code>ai1–ai4</code> (AI Journey), <code>ac1–ac2</code> (Activities), <code>book1–book2</code> (Books), <code>h1–h10</code> (Health), <code>travel1</code> (Travel).</span></li>
+        <li><span class="check">🖼️</span><span>Every article's image folder must be named <code>img_[articlename]</code> (e.g. <code>img_macritchie</code>, <code>img_swiss</code>). Never put images loose in the root folder.</span></li>
+        <li><span class="check">🚫</span><span>Never use spaces in file or folder names. Use underscores only (e.g. <code>img_new_zealand</code> not <code>img new zealand</code>).</span></li>
+        <li><span class="check">🔤</span><span>Use lowercase letters only for all file and folder names. GitHub is case-sensitive — <code>Img_Swiss</code> and <code>img_swiss</code> are different folders.</span></li>
+        <li><span class="check">📋</span><span>Keep a simple text file called <code>my-files-list.txt</code> on your desktop listing every file and folder that exists on GitHub. Update it whenever something is added.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── BEFORE YOU START CHECKLIST ── -->
+  <div class="checklist-box">
+    <h2>✅ Quick Before-You-Start Checklist</h2>
+    <p style="font-size:0.9em;color:#666;margin-bottom:14px;">Tap each item to check it off before making website changes:</p>
+    <div class="checklist-grid" id="checkGrid">
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>Local backup folder is up to date</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>I know exactly which file I'm changing</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>I am NOT planning to delete any file</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>Image folders are backed up locally</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>I'll verify the live page after push</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>I'll do ONE change at a time only</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>AI will confirm commit SHA for me</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="dot"></div>
+        <span>Google Drive backup is recent</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EMERGENCY: IF SOMETHING GOES WRONG ── -->
+  <div class="emergency-box">
+    <h2>🆘 If Something Goes Wrong — Recovery Steps</h2>
+    <div class="emergency-steps">
+      <div class="e-step">
+        <div class="num">1</div>
+        <div class="text">
+          <strong>STOP — don't panic, don't make more changes</strong>
+          <span>Stop all editing immediately. Making more changes when something is broken makes recovery harder.</span>
+        </div>
+      </div>
+      <div class="e-step">
+        <div class="num">2</div>
+        <div class="text">
+          <strong>Check GitHub commit history</strong>
+          <span>Go to github.com/paulyeo11/Dynamic-Index → click "Commits" → find the last good version → click the file → click "Raw" to copy the old content.</span>
+        </div>
+      </div>
+      <div class="e-step">
+        <div class="num">3</div>
+        <div class="text">
+          <strong>Restore HTML files first</strong>
+          <span>HTML files can be restored from GitHub history or your local backup. Tell AI: "Please restore this file from my backup" and paste the old content.</span>
+        </div>
+      </div>
+      <div class="e-step">
+        <div class="num">4</div>
+        <div class="text">
+          <strong>Restore image folders from LOCAL backup</strong>
+          <span>⚠️ Vercel/GitHub history does NOT include image folders. You MUST restore images from your local computer or Google Drive backup. Re-upload each image folder to GitHub manually.</span>
+        </div>
+      </div>
+      <div class="e-step">
+        <div class="num">5</div>
+        <div class="text">
+          <strong>Test the live website thoroughly</strong>
+          <span>Visit every page on paulsworld.vercel.app and check all images load correctly. Check the index page links all work.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CURRENT FILE INVENTORY ── -->
+  <div class="rule-card info">
+    <div class="rule-header">
+      <div class="badge">📋</div>
+      <div class="title-block">
+        <h2>Current File Inventory (Keep Updated)</h2>
+        <p>What should exist in your GitHub repository</p>
+      </div>
+    </div>
+    <div class="rule-body">
+      <ul>
+        <li><span class="check">📄</span><span><strong>Core Pages:</strong> index.html, dashboard.html, bucket-list.html, adventure.html, Retire65.html, travel1.html, sales-tracker.html, view-counter.js</span></li>
+        <li><span class="check">📖</span><span><strong>Story Pages:</strong> s1.html to s7.html (Travel Stories)</span></li>
+        <li><span class="check">🤖</span><span><strong>AI Journey:</strong> ai1.html to ai4.html</span></li>
+        <li><span class="check">🏆</span><span><strong>Activities:</strong> ac1.html, ac2.html</span></li>
+        <li><span class="check">📚</span><span><strong>Books:</strong> book1.html, book2.html</span></li>
+        <li><span class="check">💚</span><span><strong>Health:</strong> h1.html, h2.html, h3.html... (up to h10.html)</span></li>
+        <li><span class="check">🖼️</span><span><strong>Image Folders:</strong> Update this list whenever you add a new article with photos — write them here so you never forget what exists.</span></li>
+        <li><span class="check">🖼️</span><span><strong>Profile Image:</strong> 9c69f378baea3446773f2f284d7de6df.jpeg, annapurna-hero.jpg (hero background)</span></li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<!-- View Counter -->
+<div class="view-counter-area">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  &copy; 2025 Paul Yeo &nbsp;|&nbsp; Built with AI 🚀
+  <br><br>
+  <a href="https://paulsworld.vercel.app/" style="color:#f4813f;font-weight:700;text-decoration:none;">🏠 Back to Paul's World</a>
+</footer>
+
+<script>
+  function toggleCheck(el) {
+    el.classList.toggle('done');
+  }
+</script>
+
+</body>
+</html>
