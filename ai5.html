@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Claude Manages My Website — GitHub Access & Auto-Publishing Explained</title>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script src="/ga4.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    #homeBar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+      background: #1a1a2e; padding: 10px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.4);
+      font-family: Arial, sans-serif;
+    }
+    #homeBar .hb-home {
+      background: #f4813f; color: #fff; text-decoration: none;
+      font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px;
+    }
+    #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
+
+    body {
+      padding-top: 52px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8; color: #1a1a2e;
+      font-size: 18px; line-height: 1.75;
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(160deg, #0f1e3d 0%, #1a3a6e 50%, #0f2d5c 100%);
+      color: white; text-align: center; padding: 52px 24px 44px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+      color: #93c5fd; font-size: 13px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(1.7em, 5vw, 2.7em); font-weight: 800;
+      line-height: 1.2; margin-bottom: 14px;
+    }
+    .hero h1 em { color: #93c5fd; font-style: normal; }
+    .hero-sub { font-size: 1.05em; opacity: 0.82; max-width: 620px; margin: 0 auto 10px; }
+    .hero-meta { font-size: 0.85em; opacity: 0.55; margin-top: 8px; }
+
+    .hero-stats {
+      display: flex; justify-content: center; gap: 36px;
+      margin-top: 30px; flex-wrap: wrap;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat .num { font-size: 2em; font-weight: 800; color: #93c5fd; }
+    .hero-stat .lbl { font-size: 0.72em; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ARTICLE */
+    article { max-width: 780px; margin: 0 auto; padding: 36px 20px 70px; }
+
+    .lead {
+      font-size: 1.1em; line-height: 1.85;
+      background: white; border-left: 5px solid #3b82f6;
+      padding: 20px 24px; border-radius: 0 12px 12px 0;
+      margin-bottom: 36px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      color: #1e3a5f;
+    }
+
+    h2 {
+      font-size: 1.35em; color: #0f2d5c; font-weight: 800;
+      margin: 42px 0 16px; padding-bottom: 10px;
+      border-bottom: 3px solid #3b82f6;
+    }
+    p { margin-bottom: 20px; color: #2a2a3a; }
+
+    /* STEP BOXES */
+    .steps { display: flex; flex-direction: column; gap: 14px; margin: 24px 0 32px; }
+    .step {
+      display: flex; gap: 16px; align-items: flex-start;
+      background: white; border-radius: 12px; padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .step .num {
+      background: #3b82f6; color: white;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1em; flex-shrink: 0;
+    }
+    .step .text strong { display: block; color: #0f2d5c; font-size: 1em; margin-bottom: 4px; }
+    .step .text span { font-size: 0.93em; color: #444; line-height: 1.6; }
+
+    /* HIGHLIGHT BOX */
+    .highlight {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border-left: 5px solid #3b82f6; border-radius: 0 12px 12px 0;
+      padding: 20px 24px; margin: 28px 0;
+      font-size: 1.05em; color: #1e3a5f; font-weight: 600; line-height: 1.7;
+    }
+    .highlight .icon { font-size: 1.4em; margin-right: 6px; }
+
+    /* WHAT CLAUDE CAN DO */
+    .can-do {
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      overflow: hidden; margin: 28px 0;
+    }
+    .can-do-header {
+      background: linear-gradient(135deg, #0f2d5c, #1a3a6e);
+      color: white; padding: 16px 22px; font-weight: 800; font-size: 1.1em;
+    }
+    .can-do ul { list-style: none; padding: 10px 0; }
+    .can-do ul li {
+      display: flex; gap: 12px; padding: 12px 22px;
+      border-bottom: 1px solid #f0f4f8; font-size: 0.95em; line-height: 1.6;
+    }
+    .can-do ul li:last-child { border-bottom: none; }
+    .can-do ul li .bullet { font-size: 1.1em; flex-shrink: 0; }
+
+    /* WARNING BOX */
+    .warning {
+      background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px;
+      padding: 18px 22px; margin: 28px 0; font-size: 0.95em; line-height: 1.7;
+    }
+    .warning strong { color: #7c4c00; display: block; margin-bottom: 6px; font-size: 1em; }
+    .warning p { color: #5c3800; margin: 0; }
+
+    /* TOKEN STEPS */
+    .token-steps { margin: 24px 0; }
+    .token-step {
+      display: flex; gap: 14px; margin-bottom: 12px;
+      background: white; border-radius: 10px; padding: 14px 18px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06); align-items: flex-start;
+    }
+    .token-step .badge {
+      background: #0f2d5c; color: white; border-radius: 8px;
+      padding: 4px 10px; font-size: 0.8em; font-weight: 800;
+      white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+    }
+    .token-step .content { font-size: 0.93em; line-height: 1.65; color: #333; }
+    .token-step .content strong { color: #0f2d5c; }
+    code {
+      background: #e8f0fe; color: #1a3a6e; font-family: monospace;
+      padding: 2px 7px; border-radius: 5px; font-size: 0.88em;
+    }
+
+    /* PULLQUOTE */
+    .pullquote {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      border-left: 5px solid #0284c7; border-radius: 0 12px 12px 0;
+      padding: 20px 26px; margin: 32px 0;
+      font-size: 1.15em; font-style: italic;
+      color: #0c3a5e; font-weight: 600; line-height: 1.6;
+    }
+
+    /* LESSON BOX */
+    .lesson {
+      background: linear-gradient(135deg, #0f2d5c, #1e40af);
+      color: white; border-radius: 16px;
+      padding: 28px 26px; margin: 36px 0; text-align: center;
+    }
+    .lesson .icon { font-size: 2.5em; margin-bottom: 12px; display: block; }
+    .lesson h3 { font-size: 1.2em; margin-bottom: 10px; color: #93c5fd; }
+    .lesson p { color: rgba(255,255,255,0.88); margin: 0; font-size: 0.97em; }
+
+    footer { text-align: center; padding: 20px 20px 60px; color: #888; font-size: 0.85em; }
+    footer a { color: #3b82f6; font-weight: 700; text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .hero-stats { gap: 20px; }
+      .hero-stat .num { font-size: 1.6em; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HOME BAR -->
+<nav id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">Paul's World · AI Journey</span>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">🤖 AI Journey · Article 5</div>
+  <h1>How Claude Manages<br><em>My Entire Website</em></h1>
+  <p class="hero-sub">From writing articles to pushing files to GitHub — all done automatically through AI and a simple API token</p>
+  <p class="hero-meta">📅 May 2026 &nbsp;·&nbsp; By Paul Yeo &nbsp;·&nbsp; Singapore 🇸🇬</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">1</div><div class="lbl">Token Needed</div></div>
+    <div class="hero-stat"><div class="num">0</div><div class="lbl">Manual Uploads</div></div>
+    <div class="hero-stat"><div class="num">∞</div><div class="lbl">Time Saved</div></div>
+  </div>
+</header>
+
+<article>
+
+  <p class="lead">
+    Most people think managing a website means logging into GitHub, finding the right file, pasting code, and clicking Save. I used to do that too — until Claude changed everything. Today, I just talk to Claude and my website updates itself. Here is how it works, and how you can set it up too.
+  </p>
+
+  <h2>🌟 What Happened Today — A Real Example</h2>
+
+  <p>
+    This morning I discovered I had accidentally deleted important files from my GitHub repository. I was worried my website was broken and my image folders were gone. I told Claude about the problem — and within minutes, Claude had already:
+  </p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <div class="text">
+        <strong>Checked my entire GitHub repository</strong>
+        <span>Claude scanned all 29 files and folders in my repo and listed exactly what was there — and what was missing.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="text">
+        <strong>Read through all 20 recent commits</strong>
+        <span>Claude looked back through every change made today — with timestamps — to understand what happened and when.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="text">
+        <strong>Diagnosed the problem clearly</strong>
+        <span>Claude confirmed the HTML files were all safe. The image folders were never on GitHub — they needed to be restored from my local computer backup.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="text">
+        <strong>Pushed a new article directly to GitHub</strong>
+        <span>Claude wrote this very article, pushed it to GitHub, updated my index page, and inserted it into the correct category — all automatically.</span>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    All of this happened inside one conversation — no manual file uploads, no copy-pasting, no logging into GitHub. I just described what I wanted, and Claude did it.
+  </p>
+
+  <div class="pullquote">
+    "I just talk to Claude. My website updates itself. I don't need to touch GitHub at all."
+  </div>
+
+  <h2>🤖 What Claude Can Do With Your Website</h2>
+
+  <div class="can-do">
+    <div class="can-do-header">✅ Things Claude Can Do Automatically</div>
+    <ul>
+      <li><span class="bullet">📄</span><span><strong>Write and push new HTML pages</strong> — Claude creates the full article, formats it to match your website style, and pushes it to GitHub in one step.</span></li>
+      <li><span class="bullet">🗂️</span><span><strong>Update the index page automatically</strong> — After creating a new page, Claude adds a link to index.html and places it in the correct category (Stories, AI Journey, Health, etc.).</span></li>
+      <li><span class="bullet">🔍</span><span><strong>Read your existing files</strong> — Claude can fetch any file from your GitHub to check its content, find errors, or use it as a reference for new work.</span></li>
+      <li><span class="bullet">📜</span><span><strong>Check your commit history</strong> — Claude can look back at every change ever made to your repo, with dates and messages.</span></li>
+      <li><span class="bullet">✏️</span><span><strong>Edit and update any existing page</strong> — Fix a typo, change a colour, add a section — Claude edits the file and pushes the update instantly.</span></li>
+      <li><span class="bullet">🛡️</span><span><strong>Never deletes files</strong> — Claude follows a strict rule: only create or update, never delete. Your files are always safe.</span></li>
+    </ul>
+  </div>
+
+  <h2>🔑 The Secret — A GitHub Personal Access Token</h2>
+
+  <p>
+    For Claude to access your GitHub, you need to give it a special password called a <strong>Personal Access Token (PAT)</strong>. This is a long code that gives Claude permission to read and write your files. You create it once on GitHub and share it with Claude — that's all.
+  </p>
+
+  <div class="highlight">
+    <span class="icon">💡</span>
+    Think of the token like a <strong>spare key to your house</strong>. You give it to a trusted helper (Claude) so they can come in and do the work — without you having to be there to open the door every time.
+  </div>
+
+  <h2>📋 How to Create Your GitHub Token — Step by Step</h2>
+
+  <div class="token-steps">
+    <div class="token-step">
+      <div class="badge">Step 1</div>
+      <div class="content">Go to <strong>github.com</strong> and sign in to your account.</div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 2</div>
+      <div class="content">Click your <strong>profile photo</strong> (top-right corner) → then click <strong>Settings</strong>.</div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 3</div>
+      <div class="content">Scroll all the way down the left sidebar and click <strong>Developer settings</strong>.</div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 4</div>
+      <div class="content">Click <strong>Personal access tokens</strong> → then <strong>Tokens (classic)</strong> → then <strong>Generate new token (classic)</strong>.</div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 5</div>
+      <div class="content">
+        Give it a name like <code>claude-website-access</code>. Under <strong>Expiration</strong>, choose <strong>No expiration</strong> so it never expires.
+      </div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 6</div>
+      <div class="content">
+        Under <strong>Scopes</strong>, tick the <strong>repo</strong> checkbox. This gives Claude permission to read and write your files. No other boxes needed.
+      </div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 7</div>
+      <div class="content">Click <strong>Generate token</strong>. GitHub shows you the token — it starts with <code>ghp_</code>. <strong>Copy it immediately</strong> — GitHub will never show it again.</div>
+    </div>
+    <div class="token-step">
+      <div class="badge">Step 8</div>
+      <div class="content">
+        Save the token somewhere safe — in a notes app or password manager. Then paste it into Claude's user preferences so Claude always has access.
+      </div>
+    </div>
+  </div>
+
+  <div class="warning">
+    <strong>⚠️ Important — Keep Your Token Private</strong>
+    <p>Your GitHub token is like your password. Never share it publicly, never post it in a public chat or forum. Only share it with Claude in your private conversation. If you ever think it has been exposed, go back to GitHub Settings and delete it, then create a new one.</p>
+  </div>
+
+  <h2>💬 How to Tell Claude to Push a File</h2>
+
+  <p>
+    Once Claude has your token, you never need to think about the technical details again. You just describe what you want in plain English. Here are real examples of what you can say:
+  </p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">💬</div>
+      <div class="text">
+        <strong>"Write an article about my trip to Japan and add it to My Travel Stories"</strong>
+        <span>Claude writes the full HTML article, pushes it to GitHub as <code>s8.html</code>, and adds it to the Stories section in index.html.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">💬</div>
+      <div class="text">
+        <strong>"Fix the title on my MacRitchie article"</strong>
+        <span>Claude fetches <code>s1.html</code>, makes the change, and pushes the updated file back — all in seconds.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">💬</div>
+      <div class="text">
+        <strong>"Check what files I have on GitHub"</strong>
+        <span>Claude reads your repository and lists every file and folder with their names and types.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">💬</div>
+      <div class="text">
+        <strong>"Create a new health article about my blood pressure"</strong>
+        <span>Claude creates <code>h4.html</code> with the correct health page style, pushes it, and adds it to the Health section in index.html.</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>🔄 How the Auto-Push Works Behind the Scenes</h2>
+
+  <p>
+    You don't need to understand the technical details to use this — but for those who are curious, here is what happens every time Claude pushes a file to your GitHub:
+  </p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <div class="text">
+        <strong>Claude writes the HTML file</strong>
+        <span>The complete file is created with all your standard rules — Home button, view counter, correct colours and fonts.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="text">
+        <strong>Claude calls the GitHub API</strong>
+        <span>Using your token, Claude sends the file directly to GitHub's servers using a secure API call — like a digital courier delivering a package.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="text">
+        <strong>GitHub saves the file with a commit</strong>
+        <span>GitHub creates a permanent record of the change — called a commit — with a unique SHA code like <code>532cf8a3</code>. This is proof the file was saved.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="text">
+        <strong>Vercel detects the change and goes live</strong>
+        <span>Your website hosting (Vercel) automatically detects the new file on GitHub and publishes it to your live website within about 30 seconds.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson">
+    <span class="icon">🚀</span>
+    <h3>The Result</h3>
+    <p>From "I want a new article" to a live page on paulsworld.vercel.app — in under 5 minutes, with zero manual steps. No logging into GitHub. No copy-pasting. No uploading files. Just a conversation with Claude.</p>
+  </div>
+
+  <h2>📌 Key Things to Remember</h2>
+
+  <p>
+    After months of using Claude to manage my website, here are the most important lessons I have learned:
+  </p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">✅</div>
+      <div class="text">
+        <strong>Always confirm the commit SHA</strong>
+        <span>After every push, Claude gives you a SHA code. This confirms the file was saved successfully. If you don't see it, ask Claude to confirm.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">✅</div>
+      <div class="text">
+        <strong>Visit the live page after every push</strong>
+        <span>Go to paulsworld.vercel.app and check the new or updated page looks correct. Take 30 seconds to verify — it saves hours of fixing later.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">✅</div>
+      <div class="text">
+        <strong>Keep your image folders backed up locally</strong>
+        <span>Claude can push HTML files but cannot push image folders automatically. Always keep your photos backed up on your computer and Google Drive.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">✅</div>
+      <div class="text">
+        <strong>Tell Claude your token once — save it in preferences</strong>
+        <span>Put your GitHub token in Claude's User Preferences so every conversation has access without you having to repeat it.</span>
+      </div>
+    </div>
+  </div>
+
+</article>
+
+<div style="text-align:center;padding:8px 0;color:#888;font-size:0.9em;">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  &copy; 2026 Paul Yeo &nbsp;|&nbsp; Built with AI 🚀
+  <br><br>
+  <a href="https://paulsworld.vercel.app/">🏠 Back to Paul's World</a>
+</footer>
+
+</body>
+</html>
