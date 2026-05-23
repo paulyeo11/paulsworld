@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script src="/ga4.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cholesterol Tracker – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #10b981;
+      --green-soft: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-soft: rgba(239,68,68,0.12);
+      --amber: #f59e0b;
+      --amber-soft: rgba(245,158,11,0.12);
+      --teal: #14b8a6;
+      --teal-soft: rgba(20,184,166,0.1);
+      --accent: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* HOME BUTTON */
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--green);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 0 16px rgba(16,185,129,0.35);
+      transition: all 0.2s;
+    }
+    .home-btn:hover {
+      background: #059669;
+      box-shadow: 0 0 24px rgba(16,185,129,0.5);
+    }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0f2027 50%, #0d1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 90px 24px 50px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      display: block;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+    .hero h1 span { color: var(--green); }
+    .hero p {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-block;
+      margin-top: 16px;
+      background: var(--green-soft);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--green);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    /* CONTAINER */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 16px 60px;
+    }
+
+    /* SUMMARY CARDS */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .summary-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--green);
+    }
+    .summary-card .card-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .summary-card .card-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.8rem;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .summary-card .card-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .card-green .card-value { color: var(--green); }
+    .card-red .card-value { color: var(--red); }
+    .card-amber .card-value { color: var(--amber); }
+    .card-teal .card-value { color: var(--teal); }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* CHART */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .chart-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .chart-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .chart-tab.active {
+      background: var(--green-soft);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .chart-tab:hover:not(.active) {
+      border-color: var(--muted);
+      color: var(--text);
+    }
+    .chart-wrapper { position: relative; height: 260px; }
+
+    /* TABLE */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .table-header span {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .table-wrapper { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    thead th {
+      background: var(--surface2);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-top: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td {
+      padding: 13px 16px;
+      white-space: nowrap;
+    }
+    td.date-col {
+      font-weight: 500;
+      color: var(--text);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+    .badge-green { background: var(--green-soft); color: var(--green); }
+    .badge-red { background: var(--red-soft); color: var(--red); }
+    .badge-amber { background: var(--amber-soft); color: var(--amber); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: var(--green); }
+    .dot-red { background: var(--red); }
+    .dot-amber { background: var(--amber); }
+
+    /* ADD ENTRY FORM */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-group input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    }
+    .form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      padding: 10px 22px;
+      border-radius: 7px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(16,185,129,0.3);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      box-shadow: 0 0 20px rgba(16,185,129,0.45);
+    }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+    /* REFERENCE CARD */
+    .ref-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .ref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .ref-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .ref-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .ref-text .ref-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .ref-text .ref-range {
+      font-size: 0.75rem;
+      color: var(--green);
+    }
+
+    /* VIEW COUNTER */
+    .view-counter-section {
+      text-align: center;
+      padding: 16px 0 8px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--green);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.4);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 9999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 600px) {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-icon">🫀</span>
+  <h1>Cholesterol <span>Tracker</span></h1>
+  <p>Monitor your lipid panel over time — stay in range, stay healthy.</p>
+  <div class="hero-badge">Paul's Health Dashboard</div>
+</div>
+
+<div class="container">
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid" id="summaryCards">
+    <!-- Filled by JS -->
+  </div>
+
+  <!-- CHART -->
+  <div class="section-title">📈 Trends Over Time</div>
+  <div class="chart-card">
+    <div class="chart-tabs">
+      <button class="chart-tab active" onclick="switchChart('total')">Total Cholesterol</button>
+      <button class="chart-tab" onclick="switchChart('hdl')">HDL</button>
+      <button class="chart-tab" onclick="switchChart('ldl')">LDL</button>
+      <button class="chart-tab" onclick="switchChart('ratio')">Chol:HDL Ratio</button>
+      <button class="chart-tab" onclick="switchChart('all')">All</button>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="mainChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ADD ENTRY -->
+  <div class="section-title">➕ Add New Entry</div>
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="text" id="inp-date" placeholder="e.g. June 2026" />
+      </div>
+      <div class="form-group">
+        <label>Total Cholesterol</label>
+        <input type="number" id="inp-total" placeholder="e.g. 4.5" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label>HDL</label>
+        <input type="number" id="inp-hdl" placeholder="e.g. 1.6" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label>LDL</label>
+        <input type="number" id="inp-ldl" placeholder="e.g. 2.4" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label>Chol:HDL Ratio</label>
+        <input type="number" id="inp-ratio" placeholder="e.g. 2.8" step="0.01" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="addEntry()">✓ Add Entry</button>
+      <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+    </div>
+  </div>
+
+  <!-- DATA TABLE -->
+  <div class="section-title">📋 All Results</div>
+  <div class="table-card">
+    <div class="table-header">
+      <span id="entryCount">9 entries</span>
+      <span>Sorted by date</span>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Total Chol</th>
+            <th>HDL</th>
+            <th>LDL</th>
+            <th>Ratio</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REFERENCE RANGES -->
+  <div class="section-title">📌 Reference Ranges</div>
+  <div class="ref-card">
+    <p style="font-size:0.85rem; color:var(--muted);">Target values for healthy lipid levels:</p>
+    <div class="ref-grid">
+      <div class="ref-item">
+        <span class="ref-icon">🎯</span>
+        <div class="ref-text">
+          <div class="ref-name">Total Cholesterol</div>
+          <div class="ref-range">Must be &lt; 5.2 mmol/L</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <span class="ref-icon">💚</span>
+        <div class="ref-text">
+          <div class="ref-name">HDL (Good)</div>
+          <div class="ref-range">Higher is better (&gt; 1.0)</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <span class="ref-icon">⚠️</span>
+        <div class="ref-text">
+          <div class="ref-name">LDL (Bad)</div>
+          <div class="ref-range">Lower is better (&lt; 3.0)</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <span class="ref-icon">📊</span>
+        <div class="ref-text">
+          <div class="ref-name">Chol:HDL Ratio</div>
+          <div class="ref-range">Must be &lt; 3.5–5.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW COUNTER -->
+  <div class="view-counter-section">
+    <script src="/view-counter.js"></script>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>Paul's World &nbsp;·&nbsp; Health Tracker &nbsp;·&nbsp; Cholesterol Log</p>
+  <p style="margin-top:6px;">Always consult your doctor for medical advice.</p>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── DATA ──────────────────────────────────────────────
+  let data = [
+    { date: 'Oct 2018', total: 6.33, hdl: 1.60, ldl: 3.81, ratio: 3.81 },
+    { date: 'Jul 2022', total: 7.28, hdl: 1.76, ldl: 4.94, ratio: 4.14 },
+    { date: 'Nov 2022', total: 4.20, hdl: 1.70, ldl: 2.00, ratio: 2.50 },
+    { date: 'Dec 2023', total: 4.10, hdl: 1.70, ldl: 2.00, ratio: 2.40 },
+    { date: 'April 2024', total: 6.50, hdl: 1.80, ldl: 4.30, ratio: 3.60 },
+    { date: 'July 2024', total: 6.50, hdl: 2.07, ldl: 4.20, ratio: 3.20 },
+    { date: 'April 2025', total: 6.40, hdl: 1.80, ldl: 4.30, ratio: 4.30 },
+    { date: 'July 2025', total: 3.80, hdl: 1.50, ldl: 1.60, ratio: 2.50 },
+    { date: 'March 2026', total: 4.50, hdl: 1.60, ldl: 2.40, ratio: 2.80 },
+  ];
+
+  function isGood(row) {
+    return row.total < 5.2 && row.ratio < 3.5;
+  }
+  function isBorderline(row) {
+    return row.total < 5.2 && row.ratio >= 3.5 && row.ratio < 5.0;
+  }
+
+  function statusBadge(row) {
+    if (isGood(row)) return `<span class="badge badge-green"><span class="dot dot-green"></span>Good</span>`;
+    if (isBorderline(row)) return `<span class="badge badge-amber"><span class="dot dot-amber"></span>Borderline</span>`;
+    return `<span class="badge badge-red"><span class="dot dot-red"></span>High</span>`;
+  }
+
+  function colorVal(val, target, lower = true) {
+    const ok = lower ? val < target : val > target;
+    return `<span style="color:${ok ? 'var(--green)' : 'var(--red)'};font-weight:500">${val.toFixed(2)}</span>`;
+  }
+
+  // ── RENDER TABLE ──────────────────────────────────────
+  function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td class="date-col">${r.date}</td>
+        <td>${colorVal(r.total, 5.2)}</td>
+        <td>${colorVal(r.hdl, 1.0, false)}</td>
+        <td>${colorVal(r.ldl, 3.0)}</td>
+        <td>${colorVal(r.ratio, 3.5)}</td>
+        <td>${statusBadge(r)}</td>
+      </tr>
+    `).join('');
+    document.getElementById('entryCount').textContent = `${data.length} entries`;
+  }
+
+  // ── SUMMARY CARDS ─────────────────────────────────────
+  function renderSummary() {
+    const latest = data[data.length - 1];
+    const cards = [
+      { label: 'Latest Total Chol', value: latest.total.toFixed(1), sub: 'Target < 5.2', cls: latest.total < 5.2 ? 'card-green' : 'card-red' },
+      { label: 'Latest HDL', value: latest.hdl.toFixed(2), sub: 'Higher is better', cls: 'card-teal' },
+      { label: 'Latest LDL', value: latest.ldl.toFixed(2), sub: 'Target < 3.0', cls: latest.ldl < 3.0 ? 'card-green' : 'card-red' },
+      { label: 'Chol:HDL Ratio', value: latest.ratio.toFixed(2), sub: 'Target < 3.5', cls: latest.ratio < 3.5 ? 'card-green' : 'card-red' },
+      { label: 'Total Entries', value: data.length, sub: 'Blood tests tracked', cls: 'card-teal' },
+    ];
+    document.getElementById('summaryCards').innerHTML = cards.map(c => `
+      <div class="summary-card ${c.cls}">
+        <div class="card-label">${c.label}</div>
+        <div class="card-value">${c.value}</div>
+        <div class="card-sub">${c.sub}</div>
+      </div>
+    `).join('');
+  }
+
+  // ── CHART ─────────────────────────────────────────────
+  let chart;
+  const labels = data.map(d => d.date);
+
+  const datasets = {
+    total: [{
+      label: 'Total Cholesterol',
+      data: data.map(d => d.total),
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239,68,68,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: data.map(d => d.total < 5.2 ? '#10b981' : '#ef4444'),
+      pointRadius: 5,
+    }],
+    hdl: [{
+      label: 'HDL',
+      data: data.map(d => d.hdl),
+      borderColor: '#14b8a6',
+      backgroundColor: 'rgba(20,184,166,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#14b8a6',
+      pointRadius: 5,
+    }],
+    ldl: [{
+      label: 'LDL',
+      data: data.map(d => d.ldl),
+      borderColor: '#f59e0b',
+      backgroundColor: 'rgba(245,158,11,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: data.map(d => d.ldl < 3.0 ? '#10b981' : '#f59e0b'),
+      pointRadius: 5,
+    }],
+    ratio: [{
+      label: 'Chol:HDL Ratio',
+      data: data.map(d => d.ratio),
+      borderColor: '#a78bfa',
+      backgroundColor: 'rgba(167,139,250,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: data.map(d => d.ratio < 3.5 ? '#10b981' : '#a78bfa'),
+      pointRadius: 5,
+    }],
+    all: [
+      { label: 'Total Cholesterol', data: data.map(d => d.total), borderColor: '#ef4444', backgroundColor: 'transparent', tension: 0.4, pointRadius: 4 },
+      { label: 'HDL', data: data.map(d => d.hdl), borderColor: '#14b8a6', backgroundColor: 'transparent', tension: 0.4, pointRadius: 4 },
+      { label: 'LDL', data: data.map(d => d.ldl), borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.4, pointRadius: 4 },
+      { label: 'Ratio', data: data.map(d => d.ratio), borderColor: '#a78bfa', backgroundColor: 'transparent', tension: 0.4, pointRadius: 4 },
+    ],
+  };
+
+  function buildChart(type = 'total') {
+    if (chart) chart.destroy();
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: datasets[type] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: {
+            labels: { color: '#8b949e', font: { family: 'DM Sans', size: 12 }, boxWidth: 12 }
+          },
+          tooltip: {
+            backgroundColor: '#1c2128',
+            borderColor: '#30363d',
+            borderWidth: 1,
+            titleColor: '#e6edf3',
+            bodyColor: '#8b949e',
+            padding: 12,
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(48,54,61,0.5)' },
+            ticks: { color: '#8b949e', font: { family: 'DM Sans', size: 11 }, maxRotation: 35 }
+          },
+          y: {
+            grid: { color: 'rgba(48,54,61,0.5)' },
+            ticks: { color: '#8b949e', font: { family: 'DM Sans', size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  function switchChart(type) {
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    buildChart(type);
+  }
+
+  // ── FORM ──────────────────────────────────────────────
+  function addEntry() {
+    const date = document.getElementById('inp-date').value.trim();
+    const total = parseFloat(document.getElementById('inp-total').value);
+    const hdl = parseFloat(document.getElementById('inp-hdl').value);
+    const ldl = parseFloat(document.getElementById('inp-ldl').value);
+    const ratio = parseFloat(document.getElementById('inp-ratio').value);
+
+    if (!date || isNaN(total) || isNaN(hdl) || isNaN(ldl) || isNaN(ratio)) {
+      showToast('⚠️ Please fill in all fields', '#f59e0b');
+      return;
+    }
+
+    data.push({ date, total, hdl, ldl, ratio });
+    renderTable();
+    renderSummary();
+    buildChart('total');
+    clearForm();
+    showToast('✓ Entry added!');
+  }
+
+  function clearForm() {
+    ['inp-date','inp-total','inp-hdl','inp-ldl','inp-ratio'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  }
+
+  function showToast(msg, color = '#10b981') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── INIT ──────────────────────────────────────────────
+  renderTable();
+  renderSummary();
+  buildChart('total');
+</script>
+
+</body>
+</html>
