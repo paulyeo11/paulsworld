@@ -1,0 +1,28 @@
+name: Daily Website Backup
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create backup
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          zip -r paulsworld-backup-${DATE}.zip . --exclude ".git/*" --exclude "*.zip"
+          ls -lh *.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paulsworld-backup-${{ github.run_number }}
+          path: paulsworld-backup-*.zip
+          retention-days: 30
+      - name: Summary
+        run: |
+          echo "=============================="
+          echo "Pauls World Backup Complete"
+          echo "Date: $(date)"
+          echo "=============================="
+          echo "HTML files included:"
+          find . -name "*.html" ! -path "./.git/*" | sort
