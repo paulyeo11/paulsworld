@@ -456,8 +456,43 @@
         if (!res.ok) return null;
         const html = await res.text();
         const match = html.match(/<title>(.*?)<\/title>/i);
-        return match ? match[1].trim() : filename;
+        const title = match ? match[1].trim() : filename;
+
+        // Check if article is NEW (published within last 30 days)
+        // We embed publish dates here for accuracy
+        const isNew = isRecentlyPublished(filename);
+        return { title, isNew };
       } catch (e) { return null; }
+    }
+
+    // Returns true if the file was published within the last 30 days
+    // Dates are based on known publish dates; update when adding new articles
+    const PUBLISH_DATES = {
+      's1.html': '2025-06-01',
+      's2.html': '2025-07-01',
+      's3.html': '2025-08-01',
+      's4.html': '2025-09-01',
+      's5.html': '2025-10-01',
+      's6.html': '2025-11-01',
+      's7.html': '2025-12-01',
+      'ai1.html': '2025-06-01',
+      'ai2.html': '2025-07-01',
+      'ai3.html': '2025-08-01',
+      'ai4.html': '2025-09-01',
+      'ac1.html': '2025-06-01',
+      'ac2.html': '2025-07-01',
+      'h1.html':  '2026-05-22',
+      'book1.html': '2025-06-01',
+      'book2.html': '2025-07-01',
+    };
+
+    function isRecentlyPublished(filename) {
+      const dateStr = PUBLISH_DATES[filename];
+      if (!dateStr) return false;
+      const published = new Date(dateStr);
+      const now = new Date();
+      const diffDays = (now - published) / (1000 * 60 * 60 * 24);
+      return diffDays <= 30;
     }
 
     async function loadSection({ prefix, max, listId, statusId }) {
