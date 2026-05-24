@@ -1,28 +1,60 @@
 name: Daily Website Backup
+
 on:
   schedule:
     - cron: "0 20 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:
+
 jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Create backup
         run: |
-          DATE=$(date +%Y-%m-%d)
+          DATE=$(date +%Y-%m-%d-%H%M)
           zip -r paulsworld-backup-${DATE}.zip . --exclude ".git/*" --exclude "*.zip"
+          echo "BACKUP_FILE=paulsworld-backup-${DATE}.zip" >> $GITHUB_ENV
           ls -lh *.zip
+
       - uses: actions/upload-artifact@v4
         with:
           name: paulsworld-backup-${{ github.run_number }}
           path: paulsworld-backup-*.zip
-          retention-days: 30
-      - name: Summary
+          retention-days: 90
+
+      - name: Count files
+        id: count
         run: |
-          echo "=============================="
-          echo "Pauls World Backup Complete"
-          echo "Date: $(date)"
-          echo "=============================="
-          echo "HTML files included:"
-          find . -name "*.html" ! -path "./.git/*" | sort
+          COUNT=$(find . -name "*.html" ! -path "./.git/*" | wc -l)
+          echo "html_count=$COUNT" >> $GITHUB_OUTPUT
+          echo "HTML files backed up: $COUNT"
+
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Pauls World Backup - ${{ job.status == 'success' && 'SUCCESS' || 'FAILED' }} - $(date +%Y-%m-%d)"
+          to: paul11ipad@gmail.com
+          from: Paul World Backup
+          body: |
+            Hi Paul,
+
+            Your daily website backup has completed.
+
+            Status: ${{ job.status }}
+            Date: $(date)
+            HTML Files: ${{ steps.count.outputs.html_count }}
+            Backup stored for: 90 days
+
+            View your backups at:
+            https://github.com/paulyeo11/Dynamic-Index/actions
+
+            God bless,
+            Your Backup Bot
+        if: always()
