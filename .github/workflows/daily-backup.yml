@@ -14,9 +14,11 @@ jobs:
 
       - name: Create backup
         run: |
-          DATE=$(date +%Y-%m-%d-%H%M)
+          DATE=$(date +%Y-%m-%d)
+          TIME=$(date +%H:%M)
           zip -r paulsworld-backup-${DATE}.zip . --exclude ".git/*" --exclude "*.zip"
-          echo "BACKUP_FILE=paulsworld-backup-${DATE}.zip" >> $GITHUB_ENV
+          echo "BACKUP_DATE=$DATE" >> $GITHUB_ENV
+          echo "BACKUP_TIME=$TIME" >> $GITHUB_ENV
           ls -lh *.zip
 
       - uses: actions/upload-artifact@v4
@@ -30,7 +32,6 @@ jobs:
         run: |
           COUNT=$(find . -name "*.html" ! -path "./.git/*" | wc -l)
           echo "html_count=$COUNT" >> $GITHUB_OUTPUT
-          echo "HTML files backed up: $COUNT"
 
       - name: Send email notification
         uses: dawidd6/action-send-mail@v3
@@ -39,7 +40,7 @@ jobs:
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Pauls World Backup - ${{ job.status == 'success' && 'SUCCESS' || 'FAILED' }} - $(date +%Y-%m-%d)"
+          subject: "Pauls World Backup - SUCCESS - ${{ env.BACKUP_DATE }}"
           to: paul11ipad@gmail.com
           from: Paul World Backup
           body: |
@@ -47,8 +48,8 @@ jobs:
 
             Your daily website backup has completed.
 
-            Status: ${{ job.status }}
-            Date: $(date)
+            Status: success
+            Date: ${{ env.BACKUP_DATE }} at ${{ env.BACKUP_TIME }} UTC
             HTML Files: ${{ steps.count.outputs.html_count }}
             Backup stored for: 90 days
 
