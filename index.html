@@ -640,16 +640,22 @@
       let found = 0;
       for (let i = 1; i <= max; i++) {
         const filename = `${prefix}${i}.html`;
-        const title = await getTitle(filename);
-        if (title !== null) {
+        const result = await getTitle(filename);
+        if (result !== null) {
           found++;
+          const titleStr = result.title;
+          const isNew    = result.isNew || false;
           const li = document.createElement('li');
           const a  = document.createElement('a');
           a.href = filename;
-          a.textContent = `${found}. ${title}`;
+          if (isNew) {
+            a.innerHTML = titleStr + ' <span class="new-badge">NEW</span>';
+          } else {
+            a.textContent = titleStr;
+          }
           li.appendChild(a);
           list.appendChild(li);
-          allDiscoveredPages.push({ key: `${prefix}${i}`, title: title, url: filename });
+          allDiscoveredPages.push({ key: `${prefix}${i}`, title: titleStr, url: filename });
         }
       }
       status.textContent = found > 0 ? `${found} found` : 'None yet';
