@@ -291,6 +291,101 @@
     @media (max-width: 600px) {
       .back-to-top { bottom: 90px; right: 18px; width: 44px; height: 44px; font-size: 18px; }
     }
+
+    /* ── SEARCH BAR ── */
+    .search-wrap {
+      max-width: 900px;
+      margin: 16px auto 4px;
+      padding: 0 16px;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 50px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      padding: 12px 20px;
+      gap: 10px;
+      border: 2px solid transparent;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-box:focus-within {
+      border-color: #f4813f;
+      box-shadow: 0 4px 18px rgba(244,129,63,0.2);
+    }
+    .search-box span { font-size: 1.2em; }
+    .search-box input {
+      border: none;
+      outline: none;
+      font-size: 1em;
+      flex: 1;
+      color: #222;
+      background: transparent;
+      font-family: inherit;
+    }
+    .search-box input::placeholder { color: #aaa; }
+    .search-clear {
+      background: none;
+      border: none;
+      font-size: 1.1em;
+      cursor: pointer;
+      color: #aaa;
+      padding: 0 4px;
+      display: none;
+    }
+    .search-clear.visible { display: block; }
+
+    /* Search results overlay */
+    .search-results {
+      max-width: 900px;
+      margin: 8px auto 0;
+      padding: 0 16px;
+      display: none;
+    }
+    .search-results.active { display: block; }
+    .search-results-inner {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+      overflow: hidden;
+    }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      text-decoration: none;
+      color: #222;
+      transition: background 0.15s;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover, .search-result-item:active { background: #fff7ed; }
+    .search-result-cat {
+      font-size: 0.75em;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #f0f4f8;
+      color: #666;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .search-result-title { font-size: 0.97em; font-weight: 600; flex: 1; }
+    .search-no-results {
+      padding: 20px;
+      text-align: center;
+      color: #aaa;
+      font-style: italic;
+    }
+    .search-count {
+      padding: 10px 20px;
+      font-size: 0.82em;
+      color: #888;
+      border-bottom: 1px solid #f0f0f0;
+      background: #fafafa;
+    }
   </style>
 </head>
 <body>
@@ -636,5 +731,106 @@
     }, { passive: true });
   </script>
 
+
+  <script>
+    // ── SEARCH ──
+    // All discovered pages are stored in allDiscoveredPages by loadSection()
+    // We also include fixed pages
+    const fixedSearchPages = [
+      { key: 'Retire65',    title: '🌅 Why Retire at 65 — A Personal Letter',      url: 'Retire65.html',    cat: 'Special' },
+      { key: 'travel1',     title: '🗺️ My Travel Record — View All My Trips',       url: 'travel1.html',     cat: 'Travel' },
+      { key: 'bucket-list', title: '🌍 Dream Destinations — My Bucket List',        url: 'bucket-list.html', cat: 'Travel' },
+      { key: 'adventure',   title: '🪂 Adventure List — Sports & Thrills',          url: 'adventure.html',   cat: 'Activity' },
+      { key: 'daily-briefing', title: '🤖 Daily Briefing — AI-powered summary',     url: 'daily-briefing.html', cat: 'Tools' },
+      { key: 'sales-tracker',  title: '📊 Sales Opportunity Tracker',               url: 'sales-tracker.html',  cat: 'Tools' },
+    ];
+
+    const CAT_MAP = {
+      's':    '📖 Story',
+      'ai':   '🤖 AI',
+      'ac':   '🏆 Activity',
+      'h':    '💚 Health',
+      'book': '📚 Book',
+    };
+
+    function getCat(key) {
+      if (key.startsWith('book')) return CAT_MAP['book'];
+      if (key.startsWith('ai'))   return CAT_MAP['ai'];
+      if (key.startsWith('ac'))   return CAT_MAP['ac'];
+      if (key.startsWith('h') && /^h\d/.test(key)) return CAT_MAP['h'];
+      if (key.startsWith('s'))    return CAT_MAP['s'];
+      return '📌 Page';
+    }
+
+    const searchInput   = document.getElementById('searchInput');
+    const searchClear   = document.getElementById('searchClear');
+    const searchResults = document.getElementById('searchResults');
+    const searchInner   = document.getElementById('searchResultsInner');
+
+    function clearSearch() {
+      searchInput.value = '';
+      searchClear.classList.remove('visible');
+      searchResults.classList.remove('active');
+      searchInner.innerHTML = '';
+      searchInput.focus();
+    }
+
+    function doSearch(query) {
+      const q = query.trim().toLowerCase();
+      searchClear.classList.toggle('visible', q.length > 0);
+
+      if (q.length < 2) {
+        searchResults.classList.remove('active');
+        return;
+      }
+
+      // Build full page list (discovered + fixed)
+      const discovered = allDiscoveredPages.map(p => ({
+        ...p, cat: getCat(p.key)
+      }));
+      const allPages = [...discovered, ...fixedSearchPages];
+
+      // Deduplicate by key
+      const seen = new Set();
+      const unique = allPages.filter(p => {
+        if (seen.has(p.key)) return false;
+        seen.add(p.key); return true;
+      });
+
+      // Filter by query
+      const matches = unique.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        (p.cat || '').toLowerCase().includes(q)
+      );
+
+      searchResults.classList.add('active');
+
+      if (matches.length === 0) {
+        searchInner.innerHTML = '<div class="search-no-results">No articles found for "<strong>' + query.trim() + '</strong>"</div>';
+        return;
+      }
+
+      const countHtml = '<div class="search-count">' + matches.length + ' result' + (matches.length > 1 ? 's' : '') + ' for "<strong>' + query.trim() + '</strong>"</div>';
+      const itemsHtml = matches.map(p => {
+        const badge = isRecentlyPublished(p.url || p.key + '.html') ? ' <span class="new-badge">NEW</span>' : '';
+        return '<a class="search-result-item" href="' + p.url + '">' +
+          '<span class="search-result-cat">' + (p.cat || '📌 Page') + '</span>' +
+          '<span class="search-result-title">' + p.title + badge + '</span>' +
+          '<span>›</span>' +
+        '</a>';
+      }).join('');
+
+      searchInner.innerHTML = countHtml + itemsHtml;
+    }
+
+    searchInput.addEventListener('input', e => doSearch(e.target.value));
+
+    // Close search results when clicking outside
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.search-wrap') && !e.target.closest('.search-results')) {
+        searchResults.classList.remove('active');
+      }
+    });
+  </script>
 </body>
 </html>
