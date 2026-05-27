@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI8: Claude Code on the Web — No Terminal, No Setup, Just Magic</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1a1a2e;
+      --blue: #4a6cf7;
+      --blue-light: #e8eeff;
+      --blue-mid: #c5d3ff;
+      --accent: #f4813f;
+      --soft: #f7f8fc;
+      --line: #e4e8f5;
+      --text: #2d2d44;
+      --muted: #6b7280;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--soft);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.9;
+    }
+
+    /* ── HOME BUTTON ── */
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 999;
+      background: var(--blue);
+      color: white;
+      text-decoration: none;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.82em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 24px;
+      box-shadow: 0 4px 14px rgba(74,108,247,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(74,108,247,0.45); }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(155deg, #1a1a2e 0%, #0f2060 45%, #1a3a8f 100%);
+      color: white;
+      padding: 100px 24px 70px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(74,108,247,0.25) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 30%, rgba(244,129,63,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to   { background-position: 60px 60px; }
+    }
+
+    .hero-tag {
+      position: relative;
+      z-index: 2;
+      display: inline-block;
+      background: rgba(74,108,247,0.35);
+      border: 1px solid rgba(74,108,247,0.6);
+      color: #a5b4fc;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.78em;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      position: relative;
+      z-index: 2;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8em, 5vw, 3em);
+      font-weight: 700;
+      line-height: 1.25;
+      max-width: 820px;
+      margin: 0 auto 20px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: #f4b87a;
+    }
+    .hero-meta {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 0.85em;
+      color: rgba(255,255,255,0.7);
+      margin-top: 10px;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* ── ARTICLE BODY ── */
+    .article-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    .lead {
+      font-size: 1.18em;
+      font-weight: 400;
+      font-style: italic;
+      color: #3d3d5c;
+      border-left: 4px solid var(--blue);
+      padding: 16px 24px;
+      margin: 48px 0 36px;
+      background: var(--blue-light);
+      border-radius: 0 12px 12px 0;
+      line-height: 1.8;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.55em;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 52px 0 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h2::before {
+      content: attr(data-num);
+      display: inline-block;
+      background: var(--blue);
+      color: white;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.52em;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-right: 10px;
+      vertical-align: middle;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    p { margin-bottom: 20px; }
+
+    /* ── PULL QUOTE ── */
+    .pullquote {
+      margin: 44px 0;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, #1a1a2e, #0f2060);
+      color: white;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pullquote::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-family: 'Playfair Display', serif;
+      font-size: 8em;
+      color: rgba(74,108,247,0.25);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .pullquote p {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15em;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0;
+      color: #e2e8ff;
+    }
+
+    /* ── INFO BOXES ── */
+    .info-box {
+      background: white;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--blue);
+      border-radius: 0 12px 12px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+      box-shadow: 0 2px 10px rgba(74,108,247,0.07);
+    }
+    .info-box .box-title {
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.8em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+    .info-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    .info-box ul li {
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f2fa;
+      font-size: 0.96em;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .info-box ul li:last-child { border-bottom: none; }
+    .info-box ul li::before {
+      content: '→';
+      color: var(--blue);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── COMPARISON TABLE ── */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 36px 0;
+      font-size: 0.95em;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(74,108,247,0.1);
+    }
+    .compare-table th {
+      background: var(--blue);
+      color: white;
+      padding: 14px 18px;
+      text-align: left;
+      font-family: 'Source Serif 4', serif;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .compare-table td {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(even) td { background: #f4f6ff; }
+    .compare-table .yes { color: #059669; font-weight: 700; }
+    .compare-table .no  { color: #dc2626; font-weight: 700; }
+
+    /* ── HIGHLIGHT CARD ── */
+    .highlight-card {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      border: 1px solid #fed7aa;
+      border-left: 5px solid var(--accent);
+      border-radius: 0 14px 14px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+    }
+    .highlight-card .card-emoji {
+      font-size: 1.8em;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .highlight-card p { margin-bottom: 0; }
+
+    /* ── STEPS ── */
+    .steps {
+      counter-reset: step;
+      margin: 36px 0;
+    }
+    .step {
+      counter-increment: step;
+      display: flex;
+      gap: 20px;
+      margin-bottom: 28px;
+      align-items: flex-start;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1em;
+      box-shadow: 0 4px 12px rgba(74,108,247,0.3);
+    }
+    .step-num::before { content: counter(step); }
+    .step-body { flex: 1; }
+    .step-body strong {
+      display: block;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05em;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .step-body p { margin-bottom: 0; font-size: 0.97em; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      text-align: center;
+      margin: 48px 0;
+      color: var(--blue);
+      font-size: 1.4em;
+      letter-spacing: 8px;
+      opacity: 0.4;
+    }
+
+    /* ── VIEW COUNTER ── */
+    .view-counter-wrap {
+      text-align: center;
+      margin: 60px 0 20px;
+      padding: 24px;
+      background: var(--blue-light);
+      border-radius: 14px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      font-size: 0.82em;
+      color: var(--muted);
+      padding: 24px 16px 48px;
+      border-top: 1px solid var(--line);
+      margin-top: 16px;
+    }
+    footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 80px 20px 50px; }
+      .home-btn { font-size: 0.78em; padding: 8px 14px; }
+      h2 { font-size: 1.3em; }
+      .pullquote::before { font-size: 5em; }
+      .step-num { width: 36px; height: 36px; font-size: 0.9em; }
+      .compare-table { font-size: 0.85em; }
+      .compare-table th, .compare-table td { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HOME BUTTON -->
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-tag">🤖 AI Journey · Article 8</div>
+    <h1>Claude Code on the Web —<br><em>No Terminal, No Setup, Just Magic</em></h1>
+    <div class="hero-meta">
+      <span>✍️ Paul Yeo</span>
+      <span>📅 May 2026</span>
+      <span>⏱️ 6 min read</span>
+    </div>
+  </header>
+
+  <!-- ARTICLE BODY -->
+  <div class="article-wrap">
+
+    <p class="lead">
+      In my last article, I wrote about finally understanding Claude Code after watching a YouTube video — and how it required installing things in a terminal, a black screen that felt very foreign to me. Then I discovered something incredible: Claude Code now runs entirely in a web browser. No terminal. No installation. No setup at all. This changed everything — again.
+    </p>
+
+    <h2 data-num="01">From Terminal to Browser — A Giant Leap</h2>
+
+    <p>
+      When I first learned about Claude Code, the biggest barrier was the <strong>terminal</strong>. For those who haven't encountered it, the terminal is a black screen where you type commands using a special language. It is powerful, but it feels very intimidating if you have never used one before. I am 70 years old, and I spent my career in business — not programming.
+    </p>
+
+    <p>
+      I followed the YouTube setup guide from my previous article, I got it working, and I was proud of myself. But deep down, I always felt slightly nervous about the terminal. One wrong command and something might break. It required me to remember things, to type carefully, to think like a computer.
+    </p>
+
+    <p>
+      Then I discovered <strong>Claude Code on the Web</strong> — and that nervousness disappeared completely.
+    </p>
+
+    <div class="pullquote">
+      <p>The best technology is the kind that gets out of the way and lets you focus on what you actually want to do. Claude Code on the Web finally gave me that feeling.</p>
+    </div>
+
+    <h2 data-num="02">What Is Claude Code on the Web?</h2>
+
+    <p>
+      Claude Code on the Web is the same powerful AI coding assistant — but it runs entirely in your internet browser. You visit a website, connect your GitHub repository, and Claude gets to work. There is nothing to install on your computer. No terminal. No Node.js. No configuration files to worry about.
+    </p>
+
+    <p>
+      It works like this: Claude Code runs on Anthropic's cloud servers, not on your machine. It can still read all your files, write new pages, edit existing ones, and push changes directly to GitHub — which then automatically updates your live website. The magic still happens. You just don't have to manage any of the plumbing.
+    </p>
+
+    <div class="info-box">
+      <div class="box-title">☁️ What Claude Code on the Web Can Do</div>
+      <ul>
+        <li>Read every file in your GitHub repository — just like the desktop version</li>
+        <li>Write and edit HTML, CSS, JavaScript and any other file type</li>
+        <li>Create brand new pages and add them to your site</li>
+        <li>Commit changes to GitHub — triggering automatic deployment on Vercel</li>
+        <li>Remember your project context across sessions using CLAUDE.md</li>
+        <li>Run entirely in your browser — no installation on your computer needed</li>
+      </ul>
+    </div>
+
+    <h2 data-num="03">Terminal vs Browser — A Side-by-Side Look</h2>
+
+    <p>
+      To appreciate how big this shift is, let me compare the two approaches side by side. I have now used both, so I can speak from real experience:
+    </p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Claude Code (Terminal)</th>
+          <th>Claude Code on the Web</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Installation required?</td>
+          <td class="no">✗ Yes — Node.js + npm</td>
+          <td class="yes">✓ None at all</td>
+        </tr>
+        <tr>
+          <td>Works on any device?</td>
+          <td class="no">✗ Your own computer only</td>
+          <td class="yes">✓ Any browser, anywhere</td>
+        </tr>
+        <tr>
+          <td>Scary for beginners?</td>
+          <td class="no">✗ Terminal can be intimidating</td>
+          <td class="yes">✓ Familiar web interface</td>
+        </tr>
+        <tr>
+          <td>GitHub integration?</td>
+          <td class="yes">✓ Yes</td>
+          <td class="yes">✓ Yes</td>
+        </tr>
+        <tr>
+          <td>Full file access?</td>
+          <td class="yes">✓ Yes</td>
+          <td class="yes">✓ Yes</td>
+        </tr>
+        <tr>
+          <td>Auto-deploys to Vercel?</td>
+          <td class="yes">✓ Yes (via GitHub push)</td>
+          <td class="yes">✓ Yes (via GitHub push)</td>
+        </tr>
+        <tr>
+          <td>Good for non-coders?</td>
+          <td class="no">✗ Steeper learning curve</td>
+          <td class="yes">✓ Much more accessible</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>
+      Looking at that table, you might wonder why anyone would still use the terminal version. The answer is that advanced developers need deeper system access — running scripts, managing servers, and integrating with local tools. But for someone like me, who wants to build and maintain a personal website? The web version is perfect.
+    </p>
+
+    <h2 data-num="04">My First Session — What Actually Happened</h2>
+
+    <p>
+      Let me tell you about my very first session using Claude Code on the Web. I connected my GitHub repository — the one that powers this website you are reading right now — and simply typed what I wanted in plain English.
+    </p>
+
+    <p>
+      I asked Claude to add a new article to my AI Journey series. Within moments, Claude read all my existing files, understood the style and structure of my previous articles, created a brand new HTML page matching that style perfectly, and pushed it to GitHub. Vercel picked up the change automatically and within two minutes, the new page was live on the internet.
+    </p>
+
+    <div class="highlight-card">
+      <span class="card-emoji">⚡</span>
+      <p><strong>The whole process took about 5 minutes</strong> — from typing my request to seeing the live page on the internet. No terminal commands. No file uploads. No worrying about breaking anything. I just described what I wanted in plain English, and it happened.</p>
+    </div>
+
+    <p>
+      I have been building websites the hard way for years — copying and pasting code, worrying about errors, asking friends for help. This felt like discovering a superpower I did not know I had.
+    </p>
+
+    <h2 data-num="05">How to Get Started — It Is Simpler Than You Think</h2>
+
+    <p>
+      If you want to try Claude Code on the Web yourself, here is how straightforward it is:
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Go to code.claude.ai</strong>
+          <p>Open your browser and visit <strong>code.claude.ai</strong>. Sign in with your Anthropic account — the same account you use for Claude chat. No new account needed.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Connect your GitHub repository</strong>
+          <p>Click to connect GitHub and select the repository you want Claude to work on. Claude will be given access to read and write your files. This takes about one minute to set up the first time.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Describe what you want in plain English</strong>
+          <p>Just type what you need — "Add a new article about my trip to Japan" or "Update the colours on my homepage" or "Fix the navigation menu on mobile." Claude will figure out the technical details.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Review and approve the changes</strong>
+          <p>Claude will show you what it plans to do before making changes. You stay in control — approve what looks good, ask it to adjust anything that doesn't. This is your safety net.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong>Watch your site update automatically</strong>
+          <p>Once Claude pushes the changes to GitHub, your hosting service (like Vercel) detects the update and deploys your new site automatically. Usually live within 1–2 minutes — no extra steps from you.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2 data-num="06">What This Means for Ordinary People</h2>
+
+    <p>
+      I keep coming back to this thought: we are living through a genuinely historic moment. For decades, building and maintaining a website required either technical skills or a large budget to hire developers. Most ordinary people were locked out.
+    </p>
+
+    <p>
+      Claude Code on the Web changes that equation completely. I am 70 years old, I retired as a businessman, and I am now editing my own website — adding new articles, fixing layouts, updating content — entirely through natural conversation. No coding. No terminal. No technical knowledge required beyond knowing what I want.
+    </p>
+
+    <div class="pullquote">
+      <p>When the tool becomes invisible and only the result matters, that is when technology has truly succeeded. Claude Code on the Web gave me the website I always wanted — without the technical journey I always dreaded.</p>
+    </div>
+
+    <p>
+      My advice to anyone who has been curious but intimidated: the web version removes almost every barrier. You do not need to understand how it works under the hood. You just need to know what you want to create. Claude handles the rest.
+    </p>
+
+    <h2 data-num="07">My Personal Verdict</h2>
+
+    <p>
+      AI7 was about understanding Claude Code. AI8 is about experiencing what Claude Code can become — effortless, accessible, and genuinely useful for everyday people.
+    </p>
+
+    <p>
+      The terminal version taught me a lot. But the web version set me free. I now update this website regularly, adding new travel stories and AI articles, without ever feeling stuck or frustrated by the technical side. The creative work — the thinking, the writing, the deciding what to share — is all mine. The technical execution belongs to Claude.
+    </p>
+
+    <p>
+      That partnership feels exactly right.
+    </p>
+
+    <div class="info-box">
+      <div class="box-title">✅ Paul's Quick Summary — Claude Code on the Web</div>
+      <ul>
+        <li>Visit <strong>code.claude.ai</strong> — no installation, runs in your browser</li>
+        <li>Connect your GitHub repository in about one minute</li>
+        <li>Give instructions in plain English — no coding knowledge needed</li>
+        <li>Claude reads your files, makes changes, and pushes to GitHub automatically</li>
+        <li>Your website updates live within minutes — no extra steps required</li>
+        <li>Perfect for non-coders, retirees, and anyone who wants results without the technical headache</li>
+      </ul>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <p style="font-style: italic; color: var(--muted); text-align: center;">
+      This article is part of my ongoing AI Journey series — documenting what I learn as a 70-year-old exploring the world of artificial intelligence. Every confused moment, every breakthrough, every "aha!" — I write it all down here.
+    </p>
+
+    <!-- VIEW COUNTER -->
+    <div class="view-counter-wrap">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div><!-- end article-wrap -->
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp; AI Journey Series
+  </footer>
+
+</body>
+</html>
