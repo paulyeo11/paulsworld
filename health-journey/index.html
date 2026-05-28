@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paul's Health Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f7f9;
+    --card: #ffffff;
+    --ink: #1f2d3a;
+    --muted: #64748b;
+    --line: #e3eaf0;
+    --green: #22a06b;
+    --green-soft: #e6f6ee;
+    --blue: #2b6cb0;
+    --blue-soft: #e8f1fb;
+    --amber: #d98314;
+    --amber-soft: #fdf3e2;
+    --red: #d64545;
+    --red-soft: #fbe9e9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 18px 64px; }
+  header.page {
+    background: linear-gradient(135deg, #2b6cb0 0%, #22a06b 100%);
+    color: #fff;
+    border-radius: 18px;
+    padding: 28px 26px;
+    margin-bottom: 26px;
+    box-shadow: 0 8px 24px rgba(43,108,176,0.18);
+  }
+  header.page h1 { margin: 0 0 6px; font-size: 1.85rem; letter-spacing: -0.5px; }
+  header.page .meta { font-size: 0.92rem; opacity: 0.92; }
+  header.page .meta span { margin-right: 16px; display: inline-block; }
+  h2.section {
+    font-size: 1.2rem;
+    margin: 36px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h2.section::before {
+    content: "";
+    width: 5px; height: 22px; border-radius: 3px;
+    background: var(--green);
+  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px,1fr)); gap: 14px; }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 15px 16px;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 6px rgba(31,45,58,0.04);
+    border-left: 5px solid var(--line);
+  }
+  .card.green { border-left-color: var(--green); }
+  .card.amber { border-left-color: var(--amber); }
+  .card.red { border-left-color: var(--red); }
+  .card .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .card .value { font-size: 1.55rem; font-weight: 650; margin-top: 4px; }
+  .card .value small { font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+  .card .sub { font-size: 0.76rem; margin-top: 5px; color: var(--muted); }
+  .badge { display:inline-block; font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:20px; margin-top:6px; }
+  .badge.green { background: var(--green-soft); color: var(--green); }
+  .badge.amber { background: var(--amber-soft); color: var(--amber); }
+  .badge.red { background: var(--red-soft); color: var(--red); }
+  .charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px,1fr)); gap: 18px; }
+  .chart-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px 18px 10px;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 6px rgba(31,45,58,0.04);
+  }
+  .chart-card h3 { margin: 0 0 4px; font-size: 1rem; }
+  .chart-card .unit { font-size: 0.76rem; color: var(--muted); margin-bottom: 8px; }
+  .chart-box { position: relative; height: 230px; }
+  .recs {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 6px 22px 18px;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 6px rgba(31,45,58,0.04);
+  }
+  .disclaimer {
+    background: var(--amber-soft);
+    border: 1px solid #f0dcb6;
+    color: #7a5310;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 0.84rem;
+    margin: 16px 0 14px;
+  }
+  .rec-item { display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-icon { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-size: 0.95rem; }
+  .rec-icon.red { background: var(--red-soft); }
+  .rec-icon.amber { background: var(--amber-soft); }
+  .rec-icon.green { background: var(--green-soft); }
+  .rec-item .body strong { display:block; font-size: 0.95rem; }
+  .rec-item .body span { font-size: 0.85rem; color: var(--muted); }
+  .gaps { background: var(--card); border-radius:14px; padding:16px 20px; border:1px solid var(--line); box-shadow:0 2px 6px rgba(31,45,58,0.04); }
+  .gaps ul { margin: 8px 0 0; padding-left: 20px; }
+  .gaps li { font-size: 0.88rem; margin-bottom: 5px; }
+  .chips { margin-top: 10px; }
+  .chip { display:inline-block; background: var(--blue-soft); color: var(--blue); border-radius:20px; padding:3px 11px; font-size:0.8rem; margin:0 6px 6px 0; }
+  details {
+    background: var(--card); border-radius:14px; border:1px solid var(--line);
+    padding: 4px 18px; box-shadow: 0 2px 6px rgba(31,45,58,0.04);
+  }
+  summary { cursor: pointer; font-weight: 600; padding: 12px 0; font-size: 1rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-bottom: 14px; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); }
+  th { background: #f8fafc; cursor: pointer; user-select: none; position: sticky; top: 0; }
+  th:hover { background: #eef3f7; }
+  td.flag-high { color: var(--red); font-weight: 600; }
+  td.flag-low { color: var(--blue); font-weight: 600; }
+  td.flag-borderline { color: var(--amber); font-weight: 600; }
+  .table-scroll { max-height: 460px; overflow: auto; border-radius: 8px; }
+  footer { margin-top: 40px; text-align:center; font-size:0.78rem; color: var(--muted); }
+  @media (max-width: 640px) {
+    .charts { grid-template-columns: 1fr; }
+    .chart-box { height: 210px; }
+    header.page h1 { font-size: 1.45rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Paul's Health Dashboard</h1>
+  <div class="meta">
+    <span id="lastUpdated"></span>
+    <span id="filesProcessed"></span>
+    <span id="dateRange"></span>
+  </div>
+</header>
+
+<h2 class="section">Latest Snapshot</h2>
+<div class="cards" id="snapshotCards"></div>
+
+<h2 class="section">Trends Over Time</h2>
+<div class="charts" id="chartGrid"></div>
+
+<h2 class="section">Take Care Of</h2>
+<div class="recs">
+  <div class="disclaimer">
+    General lifestyle suggestions based on your data trends. Not medical advice. Discuss with your doctor.
+  </div>
+  <div id="recsList"></div>
+</div>
+
+<h2 class="section">Data Gaps &amp; Manual Entry</h2>
+<div class="gaps">
+  <p style="margin:6px 0;font-size:0.9rem;">Years with <strong>no records</strong> on file (consider locating or adding readings):</p>
+  <div class="chips" id="gapChips"></div>
+  <p style="margin:14px 0 4px;font-size:0.9rem;"><strong>Notes on the source files:</strong></p>
+  <ul id="fileNotes"></ul>
+</div>
+
+<h2 class="section">Raw Data</h2>
+<details>
+  <summary>Show all readings (click column headers to sort)</summary>
+  <div class="table-scroll">
+    <table id="rawTable">
+      <thead>
+        <tr>
+          <th data-key="date">Date</th>
+          <th data-key="metric">Metric</th>
+          <th data-key="value">Value</th>
+          <th data-key="unit">Unit</th>
+          <th data-key="ref_range">Ref Range</th>
+          <th data-key="flag">Flag</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</details>
+
+<footer>
+  Built for Paul Yeo from 21 medical records (2012&ndash;2026). Source data: <code>data/metrics.json</code>.
+</footer>
+
+</div>
+
+<script>
+/* ===== Inlined data (works by double-click, no server needed) ===== */
+const DATA = {
+  "extracted_at": "2026-05-28",
+  "files_processed": 21,
+  "notes": [
+    "Source PDFs were scanned/image-only; all values extracted via vision OCR.",
+    "'2016-10-26_lab_result.pdf' duplicates the 2016 TDS company checkup (Asia HealthPartners, 5 Oct 2016) — counted once under 2016-10-05.",
+    "'2024-06-13_checkup.pdf' is actually the Raffles lipid panel of 17 Apr 2024 (same as 2024-04-19 HEIC) — counted once under 2024-04-17.",
+    "Mi smart-scale screenshots dated 'Jan 31' (folder 2024-02) recorded as 2024-01-31; a separate scale photo (66.45 kg) as 2024-02-01.",
+    "Lipid units vary by lab (mg/dL vs mmol/L) and are shown as printed. ÷ 38.67 converts Total/LDL/HDL mg/dL to mmol/L."
+  ],
+  "metrics": [{"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "Weight kg", "value": 70.6, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "BMI", "value": 24.0, "unit": "kg/m2", "ref_range": "18.5-22.9", "flag": "normal"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "Blood Pressure Systolic", "value": 122, "unit": "mmHg", "ref_range": "<130", "flag": "normal"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "Blood Pressure Diastolic", "value": 82, "unit": "mmHg", "ref_range": "<80", "flag": "borderline"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "Total Cholesterol", "value": 243, "unit": "mg/dL", "ref_range": "<200", "flag": "high"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "HDL", "value": 68, "unit": "mg/dL", "ref_range": ">=60", "flag": "normal"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "LDL", "value": 148, "unit": "mg/dL", "ref_range": "<100", "flag": "borderline"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "Triglycerides", "value": 137, "unit": "mg/dL", "ref_range": "<150", "flag": "normal"}, {"date": "2012-10-09", "source": "01 Annual Checkups/2012-10-18_checkup_p1.pdf", "metric": "Fasting Glucose", "value": 81, "unit": "mg/dL", "ref_range": "60-126", "flag": "normal"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Weight kg", "value": 69.4, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "BMI", "value": 23.46, "unit": "kg/m2", "ref_range": "18.5-22.9", "flag": "borderline"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Blood Pressure Systolic", "value": 132, "unit": "mmHg", "ref_range": "<130", "flag": "borderline"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Blood Pressure Diastolic", "value": 75, "unit": "mmHg", "ref_range": "<80", "flag": "normal"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Heart Rate", "value": 74, "unit": "bpm", "ref_range": "60-100", "flag": "normal"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Total Cholesterol", "value": 6.04, "unit": "mmol/L", "ref_range": "<5.18", "flag": "high"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "HDL", "value": 1.55, "unit": "mmol/L", "ref_range": ">1.03", "flag": "normal"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "LDL", "value": 3.63, "unit": "mmol/L", "ref_range": "<3.37", "flag": "high"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Triglycerides", "value": 1.88, "unit": "mmol/L", "ref_range": "<2.26", "flag": "normal"}, {"date": "2014-10-28", "source": "02 Lab & Test Results/2014-11_lab_result.pdf", "metric": "Fasting Glucose", "value": 5.0, "unit": "mmol/L", "ref_range": "3.9-6.0", "flag": "normal"}, {"date": "2016-07-27", "source": "02 Lab & Test Results/2016_lab_result_photo.JPG", "metric": "Total Cholesterol", "value": 235, "unit": "mg/dL", "ref_range": "<200", "flag": "high"}, {"date": "2016-07-27", "source": "02 Lab & Test Results/2016_lab_result_photo.JPG", "metric": "HDL", "value": 95, "unit": "mg/dL", "ref_range": ">=60", "flag": "normal"}, {"date": "2016-07-27", "source": "02 Lab & Test Results/2016_lab_result_photo.JPG", "metric": "LDL", "value": 123, "unit": "mg/dL", "ref_range": "<100", "flag": "borderline"}, {"date": "2016-07-27", "source": "02 Lab & Test Results/2016_lab_result_photo.JPG", "metric": "Triglycerides", "value": 85, "unit": "mg/dL", "ref_range": "<150", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Weight kg", "value": 66.8, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "BMI", "value": 22.8, "unit": "kg/m2", "ref_range": "18.5-22.9", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Blood Pressure Systolic", "value": 110, "unit": "mmHg", "ref_range": "<130", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Blood Pressure Diastolic", "value": 70, "unit": "mmHg", "ref_range": "<80", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Heart Rate", "value": 72, "unit": "bpm", "ref_range": "60-100", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Body Fat %", "value": 24.5, "unit": "%", "ref_range": "17-23", "flag": "high"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Total Cholesterol", "value": 6.8, "unit": "mmol/L", "ref_range": "<5.2", "flag": "high"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "HDL", "value": 1.5, "unit": "mmol/L", "ref_range": "1.0-1.6", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "LDL", "value": 4.8, "unit": "mmol/L", "ref_range": "<2.6", "flag": "high"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Triglycerides", "value": 1.0, "unit": "mmol/L", "ref_range": "<1.7", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Fasting Glucose", "value": 5.5, "unit": "mmol/L", "ref_range": "<5.6", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Hemoglobin", "value": 15.2, "unit": "g/dL", "ref_range": "13.0-17.0", "flag": "normal"}, {"date": "2016-10-05", "source": "01 Annual Checkups/2016_TDS_company_checkup.pdf", "metric": "Uric Acid", "value": 381, "unit": "umol/L", "ref_range": "300-500", "flag": "normal"}, {"date": "2016-12-22", "source": "03 Specialist Reports/2017-02-17_sleep_study.pdf", "metric": "Weight kg", "value": 67.5, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2016-12-22", "source": "03 Specialist Reports/2017-02-17_sleep_study.pdf", "metric": "BMI", "value": 22.0, "unit": "kg/m2", "ref_range": "18.5-22.9", "flag": "normal"}, {"date": "2016-12-22", "source": "03 Specialist Reports/2017-02-17_sleep_study.pdf", "metric": "AHI", "value": 48.1, "unit": "events/hr", "ref_range": "<5", "flag": "high"}, {"date": "2016-12-22", "source": "03 Specialist Reports/2017-02-17_sleep_study.pdf", "metric": "Min SpO2", "value": 82, "unit": "%", "ref_range": ">90", "flag": "low"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Weight kg", "value": 68.0, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "BMI", "value": 23.53, "unit": "kg/m2", "ref_range": "18.5-22.9", "flag": "borderline"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Blood Pressure Systolic", "value": 122, "unit": "mmHg", "ref_range": "<130", "flag": "normal"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Blood Pressure Diastolic", "value": 84, "unit": "mmHg", "ref_range": "<80", "flag": "borderline"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Heart Rate", "value": 72, "unit": "bpm", "ref_range": "60-100", "flag": "normal"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Total Cholesterol", "value": 6.33, "unit": "mmol/L", "ref_range": "<5.18", "flag": "high"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "HDL", "value": 1.66, "unit": "mmol/L", "ref_range": ">1.03", "flag": "normal"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "LDL", "value": 3.81, "unit": "mmol/L", "ref_range": "<3.37", "flag": "high"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Triglycerides", "value": 1.88, "unit": "mmol/L", "ref_range": "<2.26", "flag": "normal"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "Fasting Glucose", "value": 4.7, "unit": "mmol/L", "ref_range": "3.9-6.0", "flag": "normal"}, {"date": "2018-10-11", "source": "01 Annual Checkups/2018-11-20_checkup.pdf", "metric": "TSH", "value": 2.04, "unit": "mIU/L", "ref_range": "0.40-4.70", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Weight kg", "value": 67.3, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "BMI", "value": 23.0, "unit": "kg/m2", "ref_range": "18.5-22.9", "flag": "borderline"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Blood Pressure Systolic", "value": 114, "unit": "mmHg", "ref_range": "<130", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Blood Pressure Diastolic", "value": 73, "unit": "mmHg", "ref_range": "<80", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Heart Rate", "value": 74, "unit": "bpm", "ref_range": "60-100", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Total Cholesterol", "value": 7.28, "unit": "mmol/L", "ref_range": "<5.20", "flag": "high"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "HDL", "value": 1.76, "unit": "mmol/L", "ref_range": "1.00-1.50", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "LDL", "value": 4.94, "unit": "mmol/L", "ref_range": "2.60-3.30", "flag": "high"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Triglycerides", "value": 1.27, "unit": "mmol/L", "ref_range": "1.70-2.20", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Fasting Glucose", "value": 5.1, "unit": "mmol/L", "ref_range": "3.9-6.0", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "HbA1c", "value": 5.8, "unit": "%", "ref_range": "<=6.0", "flag": "normal"}, {"date": "2022-07-18", "source": "01 Annual Checkups/2022-08-12_checkup.pdf", "metric": "Creatinine", "value": 76, "unit": "umol/L", "ref_range": "50-120", "flag": "normal"}, {"date": "2022-10-31", "source": "02 Lab & Test Results/2022-11_lab_result.heic", "metric": "Total Cholesterol", "value": 4.2, "unit": "mmol/L", "ref_range": "<5.2", "flag": "normal"}, {"date": "2022-10-31", "source": "02 Lab & Test Results/2022-11_lab_result.heic", "metric": "HDL", "value": 1.7, "unit": "mmol/L", "ref_range": "1.0-1.6", "flag": "normal"}, {"date": "2022-10-31", "source": "02 Lab & Test Results/2022-11_lab_result.heic", "metric": "LDL", "value": 2.0, "unit": "mmol/L", "ref_range": "<2.6", "flag": "normal"}, {"date": "2022-10-31", "source": "02 Lab & Test Results/2022-11_lab_result.heic", "metric": "Triglycerides", "value": 1.2, "unit": "mmol/L", "ref_range": "<=4.5", "flag": "normal"}, {"date": "2022-10-31", "source": "02 Lab & Test Results/2022-11_lab_result.heic", "metric": "Fasting Glucose", "value": 5.6, "unit": "mmol/L", "ref_range": "4.0-6.0", "flag": "normal"}, {"date": "2024-01-31", "source": "04 Body Composition/2024-02_Mi_BMI_BodyFat.PNG", "metric": "Weight kg", "value": 65.7, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2024-01-31", "source": "04 Body Composition/2024-02_Mi_BMI_BodyFat.PNG", "metric": "BMI", "value": 22.7, "unit": "kg/m2", "ref_range": "18.5-24.9", "flag": "normal"}, {"date": "2024-01-31", "source": "04 Body Composition/2024-02_Mi_BMI_BodyFat.PNG", "metric": "Body Fat %", "value": 21.4, "unit": "%", "ref_range": "10-20", "flag": "borderline"}, {"date": "2024-01-31", "source": "04 Body Composition/2024-02_Mi_VisceralFat.jpg", "metric": "Visceral Fat", "value": 14, "unit": "level", "ref_range": "<10", "flag": "high"}, {"date": "2024-01-31", "source": "04 Body Composition/2024-02_Mi_Water_Muscle.PNG", "metric": "Muscle Mass", "value": 48.98, "unit": "kg", "ref_range": "49.5-59.4", "flag": "low"}, {"date": "2024-01-31", "source": "04 Body Composition/2024-02_Mi_Water_Muscle.PNG", "metric": "Body Water %", "value": 53.8, "unit": "%", "ref_range": "55.0-65.1", "flag": "low"}, {"date": "2024-02-01", "source": "04 Body Composition/2024-02_Mi_photo_2.HEIC", "metric": "Weight kg", "value": 66.45, "unit": "kg", "ref_range": "", "flag": "normal"}, {"date": "2024-04-17", "source": "02 Lab & Test Results/2024-04-19_lab_result.HEIC", "metric": "Total Cholesterol", "value": 250, "unit": "mg/dL", "ref_range": "<200", "flag": "high"}, {"date": "2024-04-17", "source": "02 Lab & Test Results/2024-04-19_lab_result.HEIC", "metric": "HDL", "value": 70, "unit": "mg/dL", "ref_range": ">=60", "flag": "normal"}, {"date": "2024-04-17", "source": "02 Lab & Test Results/2024-04-19_lab_result.HEIC", "metric": "LDL", "value": 167, "unit": "mg/dL", "ref_range": "<100", "flag": "high"}, {"date": "2024-04-17", "source": "02 Lab & Test Results/2024-04-19_lab_result.HEIC", "metric": "Triglycerides", "value": 64, "unit": "mg/dL", "ref_range": "<150", "flag": "normal"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "Total Cholesterol", "value": 252, "unit": "mg/dL", "ref_range": "<200", "flag": "high"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "HDL", "value": 80, "unit": "mg/dL", "ref_range": ">=60", "flag": "normal"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "LDL", "value": 162, "unit": "mg/dL", "ref_range": "<100", "flag": "high"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "Triglycerides", "value": 49, "unit": "mg/dL", "ref_range": "<150", "flag": "normal"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "Fasting Glucose", "value": 4.0, "unit": "mmol/L", "ref_range": "3.3-7.0", "flag": "normal"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "HbA1c", "value": 5.4, "unit": "%", "ref_range": "4.6-6.4", "flag": "normal"}, {"date": "2024-07-06", "source": "02 Lab & Test Results/2024-07-11_lab_result_p1.HEIC", "metric": "Creatinine", "value": 0.9, "unit": "mg/dL", "ref_range": "0.50-1.60", "flag": "normal"}, {"date": "2025-07-24", "source": "01 Annual Checkups/2025-07-25_checkup.HEIC", "metric": "Total Cholesterol", "value": 3.8, "unit": "mmol/L", "ref_range": "<5.2", "flag": "normal"}, {"date": "2025-07-24", "source": "01 Annual Checkups/2025-07-25_checkup.HEIC", "metric": "HDL", "value": 1.5, "unit": "mmol/L", "ref_range": "1.0-1.6", "flag": "normal"}, {"date": "2025-07-24", "source": "01 Annual Checkups/2025-07-25_checkup.HEIC", "metric": "LDL", "value": 1.6, "unit": "mmol/L", "ref_range": "<2.6", "flag": "normal"}, {"date": "2025-07-24", "source": "01 Annual Checkups/2025-07-25_checkup.HEIC", "metric": "Triglycerides", "value": 1.5, "unit": "mmol/L", "ref_range": "<=4.5", "flag": "normal"}, {"date": "2025-07-24", "source": "01 Annual Checkups/2025-07-25_checkup.HEIC", "metric": "Fasting Glucose", "value": 5.2, "unit": "mmol/L", "ref_range": "4.0-6.0", "flag": "normal"}, {"date": "2026-03-17", "source": "02 Lab & Test Results/2026-03-23_lab_result.jpg", "metric": "Total Cholesterol", "value": 4.5, "unit": "mmol/L", "ref_range": "<5.2", "flag": "normal"}, {"date": "2026-03-17", "source": "02 Lab & Test Results/2026-03-23_lab_result.jpg", "metric": "HDL", "value": 1.6, "unit": "mmol/L", "ref_range": "1.0-1.6", "flag": "normal"}, {"date": "2026-03-17", "source": "02 Lab & Test Results/2026-03-23_lab_result.jpg", "metric": "LDL", "value": 2.4, "unit": "mmol/L", "ref_range": "<2.6", "flag": "normal"}, {"date": "2026-03-17", "source": "02 Lab & Test Results/2026-03-23_lab_result.jpg", "metric": "Triglycerides", "value": 1.2, "unit": "mmol/L", "ref_range": "<=4.5", "flag": "normal"}, {"date": "2026-03-17", "source": "02 Lab & Test Results/2026-03-23_lab_result.jpg", "metric": "Fasting Glucose", "value": 5.5, "unit": "mmol/L", "ref_range": "4.0-6.0", "flag": "normal"}]
+};
+
+/* ===== Reference / display config ===== */
+const TREND_METRICS = [
+  {key:"Weight kg", title:"Weight", unit:"kg"},
+  {key:"BMI", title:"BMI", unit:"kg/m²"},
+  {key:"Body Fat %", title:"Body Fat", unit:"%"},
+  {key:"Total Cholesterol", title:"Total Cholesterol", unit:"(as recorded)"},
+  {key:"LDL", title:"LDL Cholesterol", unit:"(as recorded)"},
+  {key:"HDL", title:"HDL Cholesterol", unit:"(as recorded)"},
+  {key:"Triglycerides", title:"Triglycerides", unit:"(as recorded)"},
+  {key:"Fasting Glucose", title:"Fasting Glucose", unit:"(as recorded)"},
+  {key:"HbA1c", title:"HbA1c", unit:"%"},
+  {key:"Blood Pressure Systolic", title:"Blood Pressure", unit:"mmHg", pairWith:"Blood Pressure Diastolic"}
+];
+
+const FLAG_COLOR = {high:"red", low:"blue", borderline:"amber", normal:"green"};
+const CARD_COLOR = {high:"red", low:"red", borderline:"amber", normal:"green"};
+
+const metrics = DATA.metrics;
+const fmtDate = d => d;
+
+/* ===== Header ===== */
+document.getElementById("lastUpdated").textContent = "Last updated: " + DATA.extracted_at;
+document.getElementById("filesProcessed").textContent = "Files processed: " + DATA.files_processed;
+const allDates = [...new Set(metrics.map(m=>m.date))].sort();
+document.getElementById("dateRange").textContent = "Span: " + allDates[0] + " → " + allDates[allDates.length-1];
+
+/* ===== Latest snapshot cards ===== */
+function latestByMetric() {
+  const map = {};
+  metrics.forEach(m => {
+    if (!map[m.metric] || m.date > map[m.metric].date) map[m.metric] = m;
+  });
+  return map;
+}
+const latest = latestByMetric();
+const SNAPSHOT_ORDER = ["Weight kg","BMI","Body Fat %","Total Cholesterol","LDL","HDL","Triglycerides",
+  "Fasting Glucose","HbA1c","Blood Pressure Systolic","Blood Pressure Diastolic","Visceral Fat",
+  "Muscle Mass","Body Water %","Heart Rate","Hemoglobin","Creatinine","TSH","Uric Acid","AHI","Min SpO2"];
+const snapEl = document.getElementById("snapshotCards");
+SNAPSHOT_ORDER.forEach(name => {
+  const m = latest[name];
+  if (!m) return;
+  const color = CARD_COLOR[m.flag] || "";
+  const cls = (color==="green") ? "green" : (color==="amber") ? "amber" : (color==="red") ? "red" : "";
+  const badgeTxt = m.flag.charAt(0).toUpperCase()+m.flag.slice(1);
+  const div = document.createElement("div");
+  div.className = "card " + cls;
+  div.innerHTML =
+    '<div class="label">'+m.metric.replace(" kg","")+'</div>' +
+    '<div class="value">'+m.value+' <small>'+m.unit+'</small></div>' +
+    '<div class="sub">'+fmtDate(m.date)+(m.ref_range?(' &middot; ref '+m.ref_range):'')+'</div>' +
+    '<span class="badge '+(FLAG_COLOR[m.flag]||"green")+'">'+badgeTxt+'</span>';
+  snapEl.appendChild(div);
+});
+
+/* ===== Charts ===== */
+const grid = document.getElementById("chartGrid");
+function seriesFor(key) {
+  return metrics.filter(m=>m.metric===key).sort((a,b)=>a.date.localeCompare(b.date));
+}
+TREND_METRICS.forEach(cfg => {
+  const s = seriesFor(cfg.key);
+  if (s.length === 0) return;
+  const card = document.createElement("div");
+  card.className = "chart-card";
+  const cid = "c_" + cfg.key.replace(/[^a-z0-9]/gi,"");
+  card.innerHTML = '<h3>'+cfg.title+'</h3><div class="unit">'+cfg.unit+'</div>'+
+                   '<div class="chart-box"><canvas id="'+cid+'"></canvas></div>';
+  grid.appendChild(card);
+
+  const labels = s.map(m=>m.date);
+  const datasets = [{
+    label: cfg.title,
+    data: s.map(m=>m.value),
+    borderColor: "#2b6cb0",
+    backgroundColor: "rgba(43,108,176,0.10)",
+    pointBackgroundColor: s.map(m=> m.flag==="high"||m.flag==="low" ? "#d64545" : m.flag==="borderline" ? "#d98314" : "#22a06b"),
+    pointRadius: 4, pointHoverRadius: 6, tension: 0.25, fill: true, spanGaps: true
+  }];
+
+  if (cfg.pairWith) {
+    const s2map = {}; seriesFor(cfg.pairWith).forEach(m=>s2map[m.date]=m.value);
+    datasets.push({
+      label: "Diastolic",
+      data: labels.map(d=> s2map[d] ?? null),
+      borderColor: "#22a06b",
+      backgroundColor: "rgba(34,160,107,0.08)",
+      pointBackgroundColor: "#22a06b",
+      pointRadius: 4, pointHoverRadius: 6, tension: 0.25, fill: false, spanGaps: true
+    });
+    datasets[0].label = "Systolic";
+  }
+
+  new Chart(document.getElementById(cid), {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: !!cfg.pairWith, labels:{boxWidth:12,font:{size:11}} } },
+      scales: {
+        x: { ticks: { font:{size:10}, maxRotation:45, minRotation:45 }, grid:{display:false} },
+        y: { ticks: { font:{size:11} }, grid:{color:"#eef2f6"} }
+      }
+    }
+  });
+});
+
+/* ===== Recommendations (derived) ===== */
+function val(metricKey, which) {
+  const s = seriesFor(metricKey);
+  if (!s.length) return null;
+  return which==="first" ? s[0] : s[s.length-1];
+}
+const recs = [];
+
+// LDL trend
+(function(){
+  const s = seriesFor("LDL");
+  const last = s[s.length-1];
+  if (last && last.flag === "normal") {
+    recs.push(["green","Cholesterol is well controlled now",
+      "Latest LDL "+last.value+" "+last.unit+" ("+last.date+") is in range — a big improvement from the highs of 2016–2024. Keep up the statin (atorvastatin) and diet that got you here; don't stop without your doctor."]);
+  } else if (last) {
+    recs.push(["red","Keep working on LDL cholesterol",
+      "Latest LDL "+last.value+" "+last.unit+" is above target. Continue lipid-lowering measures and discuss medication with your doctor."]);
+  }
+})();
+
+// Long-standing hyperlipidemia history
+recs.push(["amber","Hyperlipidemia is a long-running theme",
+  "Total cholesterol was flagged high at almost every checkup from 2012 through mid-2024 (peaking ~7.28 mmol/L in 2022). It only normalised after starting atorvastatin. Stay consistent with medication and 6-monthly lipid checks."]);
+
+// Visceral fat / body composition
+(function(){
+  const vf = val("Visceral Fat","last");
+  if (vf && vf.value >= 10) {
+    recs.push(["amber","Trim visceral (belly) fat",
+      "2024 smart-scale visceral fat was "+vf.value+" (target <10). Body fat 21.4% and low muscle mass (49.0 kg) suggest adding resistance training and reducing refined carbs/saturated fat."]);
+  }
+})();
+
+// Sleep apnea
+(function(){
+  const ahi = val("AHI","last");
+  if (ahi && ahi.value >= 30) {
+    recs.push(["red","Stay on top of sleep apnea",
+      "2016 sleep study showed severe obstructive sleep apnea (AHI "+ahi.value+", min SpO2 82%). CPAP at ~15 cmH2O eliminated snoring. Keep using CPAP and review fit/effectiveness periodically — untreated OSA strains the heart."]);
+  }
+})();
+
+// Checkup overdue?
+(function(){
+  const checkupDates = metrics.map(m=>m.date).sort();
+  const lastAny = checkupDates[checkupDates.length-1];
+  const today = new Date(DATA.extracted_at);
+  const last = new Date(lastAny);
+  const months = (today - last) / (1000*60*60*24*30.44);
+  if (months > 14) {
+    recs.push(["amber","Annual checkup may be due",
+      "Most recent reading on file is "+lastAny+" (~"+Math.round(months)+" months ago). A full annual screen every 12 months is reasonable at your age."]);
+  } else {
+    recs.push(["green","Recent monitoring is up to date",
+      "Latest lab on file is "+lastAny+". Bloods are being tracked regularly — keep the roughly twice-yearly lipid/glucose rhythm going."]);
+  }
+})();
+
+// Blood pressure note
+(function(){
+  const d = seriesFor("Blood Pressure Diastolic");
+  if (d.some(x=>x.flag==="borderline")) {
+    recs.push(["amber","Watch blood pressure",
+      "Diastolic touched borderline (82–84 mmHg) in 2012 and 2018, though recent readings are normal. Keep monitoring; limit salt and stay active."]);
+  }
+})();
+
+const recList = document.getElementById("recsList");
+recs.forEach(([color,title,body])=>{
+  const icon = color==="red"?"⚠":color==="amber"?"◉":"✔";
+  const div = document.createElement("div");
+  div.className = "rec-item";
+  div.innerHTML = '<div class="rec-icon '+color+'">'+icon+'</div>'+
+                  '<div class="body"><strong>'+title+'</strong><span>'+body+'</span></div>';
+  recList.appendChild(div);
+});
+
+/* ===== Data gaps ===== */
+const yearsWithData = new Set(metrics.map(m=>+m.date.slice(0,4)));
+const gapChips = document.getElementById("gapChips");
+let firstYr = Math.min(...yearsWithData), lastYr = 2026;
+const missing = [];
+for (let y=firstYr; y<=lastYr; y++) if (!yearsWithData.has(y)) missing.push(y);
+if (missing.length===0) gapChips.innerHTML = "<em style='color:var(--muted);font-size:0.85rem'>No missing years in range.</em>";
+missing.forEach(y=>{ const c=document.createElement("span"); c.className="chip"; c.textContent=y; gapChips.appendChild(c); });
+
+const fileNotes = document.getElementById("fileNotes");
+DATA.notes.forEach(n=>{ const li=document.createElement("li"); li.innerHTML=n; fileNotes.appendChild(li); });
+const extra = [
+  "All readings were OCR-extracted from scanned images — spot-check any value against the original before clinical decisions.",
+  "No records exist for several gap years above; if you have older or interim results, add them to <code>data/metrics.json</code> (see README)."
+];
+extra.forEach(n=>{ const li=document.createElement("li"); li.innerHTML=n; fileNotes.appendChild(li); });
+
+/* ===== Raw table (sortable) ===== */
+const tbody = document.querySelector("#rawTable tbody");
+let sortState = {key:"date", dir:1};
+function renderTable() {
+  const rows = [...metrics].sort((a,b)=>{
+    let av=a[sortState.key], bv=b[sortState.key];
+    if (sortState.key==="value"){ av=+av; bv=+bv; }
+    if (av<bv) return -1*sortState.dir;
+    if (av>bv) return 1*sortState.dir;
+    return 0;
+  });
+  tbody.innerHTML = "";
+  rows.forEach(r=>{
+    const tr = document.createElement("tr");
+    const flagCls = r.flag!=="normal" ? ("flag-"+r.flag) : "";
+    tr.innerHTML = "<td>"+r.date+"</td><td>"+r.metric+"</td>"+
+      "<td class='"+flagCls+"'>"+r.value+"</td><td>"+r.unit+"</td>"+
+      "<td>"+(r.ref_range||"—")+"</td><td class='"+flagCls+"'>"+r.flag+"</td>";
+    tbody.appendChild(tr);
+  });
+}
+document.querySelectorAll("#rawTable th").forEach(th=>{
+  th.addEventListener("click",()=>{
+    const k = th.dataset.key;
+    if (sortState.key===k) sortState.dir*=-1; else { sortState.key=k; sortState.dir=1; }
+    renderTable();
+  });
+});
+renderTable();
+</script>
+</body>
+</html>
