@@ -245,7 +245,7 @@
   <div class="srow">
     <div class="sc"><div class="si">💰</div><div class="sl">Total Premium Income</div><div class="sv" id="sTotal" style="color:#4ade80;">$0.00</div><div class="ss">All 3 positions · 100 shares each</div></div>
     <div class="sc"><div class="si">📈</div><div class="sl">Avg Annualised Return</div><div class="sv" id="sAnn" style="color:#60a5fa;">0.00%</div><div class="ss">If expires worthless</div></div>
-    <div class="sc"><div class="si">🎯</div><div class="sl">Avg Profit Probability</div><div class="sv" id="sProb" style="color:#4ade80;">0.0%</div><div class="ss">Est. chance expires OTM</div></div>
+    <div class="sc"><div class="si">🎯</div><div class="sl">Avg Profit Probability</div><div class="sv" id="sProb" style="color:#4ade80;">0.0%</div><div class="ss">Prob. call expires worthless (you keep premium)</div></div>
     <div class="sc"><div class="si">📊</div><div class="sl">Strike OTM Level</div><div class="sv" id="sOtm" style="color:#eab308;">10%</div><div class="ss" id="sDteSub">14 DTE · Covered Calls</div></div>
   </div>
 
@@ -256,7 +256,7 @@
       <table class="ot">
         <thead><tr>
           <th>Symbol</th><th>Sector</th><th>Stock Price</th><th>Strike Price</th>
-          <th>Premium/Share</th><th>Total Income</th><th>Ann. Return</th><th>Prob. Profit</th><th>Signal</th>
+          <th>Premium/Share</th><th>Total Income</th><th>Ann. Return</th><th>Prob. Expires OTM</th><th>Signal</th>
         </tr></thead>
         <tbody id="mainTbody"></tbody>
       </table>
@@ -401,14 +401,14 @@ let otmPrices=STOCKS.map(s=>FALLBACK[s.symbol].price);
 
 function normCDF(x){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const sign=x<0?-1:1;x=Math.abs(x)/Math.SQRT2;const t=1/(1+p*x);const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return 0.5*(1+sign*y);}
 function bsCall(S,K,T,r,sigma){if(T<=0)return Math.max(0,S-K);const d1=(Math.log(S/K)+(r+0.5*sigma*sigma)*T)/(sigma*Math.sqrt(T));const d2=d1-sigma*Math.sqrt(T);return S*normCDF(d1)-K*Math.exp(-r*T)*normCDF(d2);}
-function calcRow(stock,price,otp,days){const S=price,K=S*(1+otp/100),T=days/365,r=0.053,sig=stock.iv;const prem=bsCall(S,K,T,r,sig);const income=prem*stock.shares;const annRet=((prem/S)*(365/days))*100;const d2=(Math.log(K/S)-(r-0.5*sig*sig)*T)/(sig*Math.sqrt(T));const prob=(1-normCDF(d2))*100;return{strike:K,premium:prem,income,annRet,prob};}
+function calcRow(stock,price,otp,days){const S=price,K=S*(1+otp/100),T=days/365,r=0.053,sig=stock.iv;const prem=bsCall(S,K,T,r,sig);const income=prem*stock.shares;const annRet=((prem/S)*(365/days))*100;const d2=(Math.log(K/S)-(r-0.5*sig*sig)*T)/(sig*Math.sqrt(T));const prob=normCDF(d2)*100;return{strike:K,premium:prem,income,annRet,prob};}
 function fP(v){return v<0.01?'$'+v.toFixed(4):'$'+v.toFixed(2);}
 function fD(v){return '$'+v.toFixed(2);}
 function rCol(p){return p<=5?'#4ade80':p<=15?'#eab308':'#f87171';}
-function probRiskColor(prob){return prob>=80?'#4ade80':prob>=60?'#eab308':'#f87171';}
-function probRiskLabel(prob){return prob>=80?'🟢 Safe':prob>=60?'🟡 Moderate':'🔴 Aggressive';}
+function probRiskColor(prob){return prob>=75?'#4ade80':prob>=55?'#eab308':'#f87171';}
+function probRiskLabel(prob){return prob>=75?'🟢 Safe':prob>=55?'🟡 Moderate':'🔴 Aggressive';}
 function aCol(v){return v>15?'#4ade80':v>5?'#eab308':'#f87171';}
-function pCol(v){return v>70?'#4ade80':v>50?'#eab308':'#f87171';}
+function pCol(v){return v>=75?'#4ade80':v>=55?'#eab308':'#f87171';}
 function bar(pct,c,lbl){return `<div class="bw"><div class="bb"><div class="bf" style="width:${Math.min(pct,100)}%;background:${c};"></div></div><span style="color:${c};font-weight:700;min-width:40px;">${lbl}</span></div>`;}
 
 function renderOTM(){
