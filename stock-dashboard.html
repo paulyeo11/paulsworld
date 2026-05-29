@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Dashboard — Paul's Portfolio</title>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #060b18 0%, #0a1628 40%, #080f1e 100%);
+      font-family: 'Space Mono', monospace;
+      color: #f8fafc;
+      padding: 32px 16px 60px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+    .wrap { max-width: 1100px; margin: 0 auto; animation: fadeUp 0.6s ease; }
+
+    /* Home button */
+    .home-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+      color: #94a3b8; text-decoration: none;
+      font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
+      padding: 8px 18px; border-radius: 20px; letter-spacing: 1px;
+      margin-bottom: 28px; transition: all 0.2s; display: inline-flex;
+    }
+    .home-btn:hover { color: #f4813f; border-color: #f4813f; background: rgba(244,129,63,0.08); }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+    .header-left {}
+    .live-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: #4ade80; box-shadow: 0 0 10px #4ade80; margin-right: 8px;
+      vertical-align: middle;
+    }
+    .live-dot.loading { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; animation: pulse 0.8s ease infinite; }
+    .account-tag { color: #64748b; font-size: 11px; letter-spacing: 3px; margin-bottom: 8px; display: block; }
+    .page-title {
+      font-family: 'Syne', sans-serif; font-size: clamp(24px, 5vw, 40px); font-weight: 800;
+      background: linear-gradient(90deg, #f8fafc 0%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -1px; line-height: 1.1;
+    }
+    .page-sub { color: #475569; font-size: 11px; letter-spacing: 2px; margin-top: 6px; }
+
+    /* Refresh button */
+    .refresh-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      border: 1px solid #3b82f6; border-radius: 12px;
+      color: #fff; font-family: 'Space Mono', monospace;
+      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 0 20px rgba(37,99,235,0.3);
+    }
+    .refresh-btn:hover { box-shadow: 0 0 30px rgba(37,99,235,0.5); transform: translateY(-2px); }
+    .refresh-btn:disabled { background: rgba(100,116,139,0.15); border-color: #334155; color: #64748b; cursor: not-allowed; box-shadow: none; transform: none; }
+    .spin-icon { display: inline-block; }
+    .spin-icon.spinning { animation: spin 0.8s linear infinite; }
+    .last-update { color: #475569; font-size: 10px; letter-spacing: 1px; margin-top: 6px; text-align: right; }
+
+    /* Summary bar */
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 28px; }
+    .sum-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 16px; backdrop-filter: blur(10px); }
+    .sum-label { color: #475569; font-size: 9px; letter-spacing: 2px; margin-bottom: 5px; }
+    .sum-value { font-family: 'Space Mono', monospace; font-size: clamp(14px, 2.5vw, 20px); font-weight: 700; }
+
+    /* Error */
+    .error-bar { background: rgba(127,29,29,0.2); border: 1px solid #f87171; border-radius: 12px; padding: 12px 20px; margin-bottom: 24px; color: #f87171; font-size: 13px; display: none; }
+
+    /* Stock cards grid */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+    /* Individual card */
+    .card {
+      background: linear-gradient(135deg, rgba(15,20,35,0.95) 0%, rgba(20,28,48,0.9) 100%);
+      border-radius: 20px; padding: 26px 22px;
+      display: flex; flex-direction: column; gap: 14px;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card-blob {
+      position: absolute; top: -60px; right: -60px;
+      width: 180px; height: 180px; border-radius: 50%;
+      pointer-events: none; opacity: 0.6;
+    }
+
+    /* Card header */
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-symbol { font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+    .card-name { color: #94a3b8; font-size: 10px; letter-spacing: 1px; margin: 2px 0; }
+    .card-sector {
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+      font-size: 9px; letter-spacing: 1px; margin-top: 5px;
+    }
+    .price-block { text-align: right; }
+    .price-val { font-family: 'Space Mono', monospace; font-size: clamp(20px, 3vw, 26px); font-weight: 700; color: #f8fafc; }
+    .price-change { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 600; margin-top: 2px; }
+
+    /* Loading spinner in card */
+    .card-spinner {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: currentColor;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* Sparkline */
+    .sparkline-wrap { display: flex; justify-content: center; }
+
+    /* Stats grid inside card */
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    .stat-box {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 8px 10px;
+    }
+    .stat-label { color: #64748b; font-size: 9px; letter-spacing: 1px; margin-bottom: 3px; }
+    .stat-val { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; }
+
+    /* 52W range bar */
+    .range-bar-wrap { }
+    .range-labels { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .range-label { color: #64748b; font-size: 9px; letter-spacing: 1px; }
+    .range-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; position: relative; overflow: hidden; }
+    .range-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+    .range-caption { text-align: center; margin-top: 4px; color: #64748b; font-size: 9px; letter-spacing: 1px; }
+
+    /* Glossary */
+    .glossary {
+      margin-top: 28px; padding: 16px 20px;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;
+    }
+    .glossary-title { color: #334155; font-size: 9px; letter-spacing: 2px; }
+    .glossary-item { display: flex; gap: 8px; }
+    .g-term { color: #60a5fa; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .g-def { color: #475569; font-size: 10px; max-width: 260px; line-height: 1.5; }
+
+    .footer-note { text-align: center; margin-top: 24px; color: #1e3a5f; font-size: 10px; letter-spacing: 2px; }
+
+    @media (max-width: 600px) {
+      body { padding: 20px 12px 50px; }
+      .cards { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a href="/" class="home-btn">🏠 HOME</a>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <span class="account-tag">
+        <span class="live-dot" id="liveDot"></span>
+        POHL SAI YEO · INTERACTIVE BROKERS · U***89825
+      </span>
+      <div class="page-title">Portfolio Dashboard</div>
+      <div class="page-sub">SINCE INCEPTION · MAY 2024 — MAY 2026</div>
+    </div>
+    <div>
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
+        <span class="spin-icon" id="spinIcon">⟳</span> REFRESH PRICES
+      </button>
+      <div class="last-update" id="lastUpdate"></div>
+    </div>
+  </div>
+
+  <!-- Summary Bar -->
+  <div class="summary" id="summaryBar">
+    <div class="sum-card"><div class="sum-label">EQUITY VALUE</div><div class="sum-value" id="sumEquity">—</div></div>
+    <div class="sum-card"><div class="sum-label">TOTAL COST</div><div class="sum-value" style="color:#94a3b8" id="sumCost">—</div></div>
+    <div class="sum-card"><div class="sum-label">UNREALIZED P/L</div><div class="sum-value" id="sumPnl">—</div></div>
+    <div class="sum-card"><div class="sum-label">RETURN %</div><div class="sum-value" id="sumRet">—</div></div>
+    <div class="sum-card"><div class="sum-label">CASH</div><div class="sum-value" style="color:#94a3b8">$2,682.64</div></div>
+    <div class="sum-card"><div class="sum-label">TOTAL NAV</div><div class="sum-value" style="color:#60a5fa" id="sumNav">—</div></div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-bar" id="errorBar">⚠ Failed to fetch live data. Please try again.</div>
+
+  <!-- Stock Cards -->
+  <div class="cards" id="cardsContainer"></div>
+
+  <!-- Glossary -->
+  <div class="glossary">
+    <span class="glossary-title">GLOSSARY</span>
+    <div class="glossary-item">
+      <span class="g-term">1-SD:</span>
+      <span class="g-def">One standard deviation of daily closing prices over 30 days — expected price fluctuation ~68% of the time</span>
+    </div>
+    <div class="glossary-item">
+      <span class="g-term">ADR:</span>
+      <span class="g-def">Average Daily Range — mean of absolute day-over-day price moves over 30 days</span>
+    </div>
+    <div class="glossary-item">
+      <span class="g-term">Avg Cost:</span>
+      <span class="g-def">Average cost per share based on IB Portfolio Analyst report (inception to May 2026)</span>
+    </div>
+  </div>
+
+  <div class="footer-note">PAUL'S WORLD · INTERACTIVE BROKERS PORTFOLIO · DATA VIA CLAUDE AI</div>
+
+</div>
+
+<script src="/view-counter.js"></script>
+
+<script>
+const STOCKS = [
+  { symbol:'FDS',  name:'FactSet Research Systems', sector:'Industrial',          shares:54,  avgCost:436.54, color:'#f59e0b', icon:'📊' },
+  { symbol:'POOL', name:'Pool Corporation',          sector:'Consumer Cyclicals',  shares:110, avgCost:167.64, color:'#06b6d4', icon:'🏊' },
+  { symbol:'ZTS',  name:'Zoetis Inc',                sector:'Healthcare',          shares:66,  avgCost:120.42, color:'#10b981', icon:'💊' }
+];
+
+let liveData = {};
+
+function fmt(n) { return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+function calcStats(history) {
+  const n = history.length;
+  if (n < 2) return { stdDev:0, adr:0 };
+  const mean = history.reduce((a,b)=>a+b,0)/n;
+  const variance = history.reduce((s,v)=>s+Math.pow(v-mean,2),0)/(n-1);
+  const stdDev = Math.sqrt(variance);
+  let totalRange=0;
+  for(let i=1;i<n;i++) totalRange += Math.abs(history[i]-history[i-1]);
+  return { stdDev, adr: totalRange/(n-1) };
+}
+
+function sparklineSVG(history, color) {
+  if (!history || history.length === 0) return '';
+  const min = Math.min(...history), max = Math.max(...history), range = max-min||1;
+  const W=120, H=38;
+  const pts = history.map((v,i) => {
+    const x=(i/(history.length-1))*W;
+    const y=H-((v-min)/range)*H;
+    return `${x},${y}`;
+  }).join(' ');
+  const isUp = history[history.length-1] >= history[0];
+  const lc = isUp ? '#4ade80' : '#f87171';
+  const uid = color.replace('#','');
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs>
+      <linearGradient id="g${uid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${lc}" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="${lc}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <polygon points="0,${H} ${pts} ${W},${H}" fill="url(#g${uid})"/>
+    <polyline points="${pts}" fill="none" stroke="${lc}" stroke-width="2" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function renderCard(stock, data, isLoading) {
+  const color = stock.color;
+  const price = data?.price;
+  const change = data?.change || 0;
+  const changePct = data?.changePct || 0;
+  const isUp = change >= 0;
+  const history = data?.history || [];
+  const { stdDev, adr } = calcStats(history);
+  const unrealizedPnL = price ? (price - stock.avgCost) * stock.shares : null;
+  const unrealizedPct = price ? ((price - stock.avgCost) / stock.avgCost) * 100 : null;
+  const marketValue = price ? price * stock.shares : null;
+  const pct52 = data ? Math.min(100,Math.max(0,((price-data.low52w)/(data.high52w-data.low52w))*100)) : 0;
+
+  return `
+  <div class="card" style="border:1px solid ${color}33; box-shadow:0 0 40px ${color}18, 0 8px 32px rgba(0,0,0,0.4);"
+       onmouseenter="this.style.boxShadow='0 0 60px ${color}30, 0 16px 48px rgba(0,0,0,0.5)'"
+       onmouseleave="this.style.boxShadow='0 0 40px ${color}18, 0 8px 32px rgba(0,0,0,0.4)'">
+    <div class="card-blob" style="background:radial-gradient(circle, ${color}22 0%, transparent 70%)"></div>
+
+    <div class="card-head">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+          <span style="font-size:20px">${stock.icon}</span>
+          <span class="card-symbol" style="color:${color}">${stock.symbol}</span>
+        </div>
+        <div class="card-name">${stock.name.toUpperCase()}</div>
+        <span class="card-sector" style="background:${color}22;border:1px solid ${color}44;color:${color}">${stock.sector}</span>
+      </div>
+      ${isLoading ? `<div class="card-spinner" style="color:${color};border-top-color:${color}"></div>` : `
+      <div class="price-block">
+        <div class="price-val">${price ? '$'+price.toFixed(2) : '—'}</div>
+        <div class="price-change" style="color:${isUp?'#4ade80':'#f87171'}">
+          ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)} (${Math.abs(changePct).toFixed(2)}%)
+        </div>
+      </div>`}
+    </div>
+
+    <div class="sparkline-wrap">${sparklineSVG(history, color)}</div>
+
+    <div class="stats">
+      <div class="stat-box"><div class="stat-label">AVG COST</div><div class="stat-val" style="color:#e2e8f0">$${stock.avgCost.toFixed(2)}</div></div>
+      <div class="stat-box"><div class="stat-label">SHARES HELD</div><div class="stat-val" style="color:#e2e8f0">${stock.shares}</div></div>
+      <div class="stat-box"><div class="stat-label">UNREALIZED P/L</div><div class="stat-val" style="color:${unrealizedPnL!=null?(unrealizedPnL>=0?'#4ade80':'#f87171'):'#e2e8f0'}">${unrealizedPnL!=null?(unrealizedPnL>=0?'+':'')+' $'+fmt(Math.abs(unrealizedPnL)):'—'}</div></div>
+      <div class="stat-box"><div class="stat-label">RETURN %</div><div class="stat-val" style="color:${unrealizedPct!=null?(unrealizedPct>=0?'#4ade80':'#f87171'):'#e2e8f0'}">${unrealizedPct!=null?(unrealizedPct>=0?'+':'')+unrealizedPct.toFixed(1)+'%':'—'}</div></div>
+      <div class="stat-box" title="1 Standard Deviation of daily closes (30d)"><div class="stat-label">1-SD (30D)</div><div class="stat-val" style="color:#e2e8f0">${stdDev ? '$'+stdDev.toFixed(2) : '—'}</div></div>
+      <div class="stat-box" title="Average Daily Range — mean abs day-over-day move"><div class="stat-label">ADR</div><div class="stat-val" style="color:#e2e8f0">${adr ? '$'+adr.toFixed(2) : '—'}</div></div>
+      <div class="stat-box"><div class="stat-label">MARKET VALUE</div><div class="stat-val" style="color:#e2e8f0">${marketValue ? '$'+fmt(marketValue) : '—'}</div></div>
+      <div class="stat-box"><div class="stat-label">PORTFOLIO %</div><div class="stat-val" style="color:#e2e8f0">${marketValue ? ((marketValue/49962)*100).toFixed(1)+'%' : '—'}</div></div>
+    </div>
+
+    ${data ? `
+    <div class="range-bar-wrap">
+      <div class="range-labels">
+        <span class="range-label">52W LOW $${data.low52w}</span>
+        <span class="range-label">52W HIGH $${data.high52w}</span>
+      </div>
+      <div class="range-track"><div class="range-fill" style="width:${pct52}%;background:${color}"></div></div>
+      <div class="range-caption">52-WEEK RANGE</div>
+    </div>` : ''}
+  </div>`;
+}
+
+function updateSummary() {
+  const totalValue = STOCKS.reduce((s,st) => {
+    const d = liveData[st.symbol];
+    return s + (d ? d.price * st.shares : 0);
+  }, 0);
+  const totalCost = STOCKS.reduce((s,st) => s + st.avgCost * st.shares, 0);
+  const pnl = totalValue - totalCost;
+  const pnlPct = totalCost ? (pnl/totalCost)*100 : 0;
+  const nav = totalValue + 2682.64;
+
+  if (totalValue) {
+    document.getElementById('sumEquity').textContent = '$'+fmt(totalValue);
+    document.getElementById('sumPnl').textContent = (pnl>=0?'+':'-')+' $'+fmt(Math.abs(pnl));
+    document.getElementById('sumPnl').style.color = pnl>=0?'#4ade80':'#f87171';
+    document.getElementById('sumRet').textContent = (pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%';
+    document.getElementById('sumRet').style.color = pnlPct>=0?'#4ade80':'#f87171';
+    document.getElementById('sumNav').textContent = '$'+fmt(nav);
+  }
+  document.getElementById('sumCost').textContent = '$'+fmt(totalCost);
+}
+
+function renderCards(isLoading) {
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = STOCKS.map(s => renderCard(s, liveData[s.symbol], isLoading)).join('');
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('refreshBtn');
+  const dot = document.getElementById('liveDot');
+  const spin = document.getElementById('spinIcon');
+  const err = document.getElementById('errorBar');
+
+  btn.disabled = true;
+  dot.classList.add('loading');
+  spin.classList.add('spinning');
+  err.style.display = 'none';
+  renderCards(true);
+
+  const symbols = STOCKS.map(s=>s.symbol).join(', ');
+  const prompt = `You are a financial data API. Return ONLY a valid JSON array with NO markdown, no explanation, no backticks for these stocks: ${symbols}.
+Provide current realistic prices as of today May 29 2026 and 30-day historical daily closes.
+Format exactly:
+[{"symbol":"FDS","price":412.50,"change":-3.20,"changePct":-0.77,"high52w":520.00,"low52w":380.00,"volume":245000,"history":[415,418,412,420,416,410,408,422,419,413,417,421,425,418,412,408,410,415,420,418,416,412,408,405,410,415,412,408,405,412]},{"symbol":"POOL","price":167.50,"change":-1.80,"changePct":-1.06,"high52w":220.00,"low52w":150.00,"volume":480000,"history":[170,168,172,169,165,163,168,172,170,166,162,160,164,168,172,170,165,160,162,165,168,170,168,164,160,162,165,168,167,167]},{"symbol":"ZTS","price":120.50,"change":-1.20,"changePct":-0.99,"high52w":165.00,"low52w":110.00,"volume":1800000,"history":[122,121,123,120,118,116,119,122,121,118,115,113,116,119,122,120,117,113,115,118,121,122,120,116,113,115,118,120,120,120]}]
+Return ONLY the JSON array.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const results = JSON.parse(clean);
+    results.forEach(r => { liveData[r.symbol] = r; });
+    renderCards(false);
+    updateSummary();
+    document.getElementById('lastUpdate').textContent = 'UPDATED '+new Date().toLocaleTimeString();
+  } catch(e) {
+    err.style.display = 'block';
+    renderCards(false);
+  } finally {
+    btn.disabled = false;
+    dot.classList.remove('loading');
+    spin.classList.remove('spinning');
+  }
+}
+
+// Auto-load on page open
+refreshAll();
+</script>
+
+</body>
+</html>
