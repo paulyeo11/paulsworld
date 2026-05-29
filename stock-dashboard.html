@@ -328,7 +328,7 @@ async function fetchYahoo(symbol){
 function renderCard(stock, data, isLoading){
   const c=stock.color; const price=data?.price??null; const change=data?.change??0; const changePct=data?.changePct??0;
   const dayUp=change>=0; const history=data?.history??[]; const {stdDev,adr}=calcStats(history);
-  const mktVal=price!==null?price*stock.shares:null; const pnl=mktVal!==null?mktVal-stock.costBasis:null; const pnlPct=pnl!==null?(pnl/stock.costBasis)*100:null; const inProfit=pnl!==null&&pnl>=0;
+  const mktVal=price!==null?price*stock.shares:null; const diffPct=price!==null?((price-stock.avgCost)/stock.avgCost)*100:null; const pnl=mktVal!==null?mktVal-stock.costBasis:null; const pnlPct=pnl!==null?(pnl/stock.costBasis)*100:null; const inProfit=pnl!==null&&pnl>=0;
   const pct52=(data&&data.high52w>data.low52w)?Math.min(100,Math.max(0,((price-data.low52w)/(data.high52w-data.low52w))*100)):0;
   let pnlBox='';
   if(pnl!==null){ if(inProfit){ pnlBox=`<div class="pnl-box gain"><div><div class="pnl-title" style="color:#4ade80">✅ Unrealised Gain</div><div style="font-size:12px;margin-top:4px;color:#86efac">Paper profit — no money until you sell</div></div><div style="text-align:right"><div class="pnl-amount" style="color:#4ade80">+ ${fmtMoney(pnl)}</div><div class="pnl-pct" style="color:#86efac">+ ${pnlPct.toFixed(1)}%</div></div></div>`; } else { pnlBox=`<div class="pnl-box loss"><div><div class="pnl-title" style="color:#f87171">⚠️ Unrealised Loss</div><div style="font-size:12px;margin-top:4px;color:#fca5a5">Paper loss — no money lost until you sell</div></div><div style="text-align:right"><div class="pnl-amount" style="color:#f87171">− ${fmtMoney(pnl)}</div><div class="pnl-pct" style="color:#fca5a5">${pnlPct.toFixed(1)}%</div></div></div>`; } }
@@ -340,6 +340,7 @@ function renderCard(stock, data, isLoading){
     <div class="stats">
       <div class="stat-box"><div class="stat-label">Today's Price</div><div class="stat-val" style="color:#f8fafc">${price!==null?'$'+price.toFixed(2):'Loading...'}</div></div>
       <div class="stat-box"><div class="stat-label">I Paid Per Share</div><div class="stat-val" style="color:#94a3b8">$${stock.avgCost.toFixed(2)}</div></div>
+      <div class="stat-box" style="\${diffPct>=0?'background:rgba(74,222,128,0.07);border-color:rgba(74,222,128,0.3)':'background:rgba(248,113,113,0.07);border-color:rgba(248,113,113,0.3)'}"><div class="stat-label">vs Avg Cost</div><div class="stat-val" style="color:\${diffPct>=0?'#4ade80':'#f87171'}">\${diffPct>=0?'▲':'▼'} \${Math.abs(diffPct).toFixed(1)}%</div><div style="font-size:10px;color:#475569;margin-top:2px">\${price!==null?'$'+Math.abs(price-stock.avgCost).toFixed(2)+' per share':''}</div></div>
       <div class="stat-box"><div class="stat-label">Shares I Hold</div><div class="stat-val" style="color:#e2e8f0">${stock.shares} shares</div></div>
       <div class="stat-box"><div class="stat-label">Total I Paid</div><div class="stat-val" style="color:#94a3b8">${fmtMoney(stock.costBasis)}</div></div>
       <div class="stat-box"><div class="stat-label">Current Value</div><div class="stat-val" style="color:#e2e8f0">${mktVal!==null?fmtMoney(mktVal):'—'}</div></div>
