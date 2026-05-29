@@ -3,181 +3,284 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Dashboard — Paul's Portfolio</title>
+  <title>My Stock Portfolio — Paul Yeo</title>
   <script defer src="/_vercel/insights/script.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       min-height: 100vh;
-      background: linear-gradient(160deg, #060b18 0%, #0a1628 40%, #080f1e 100%);
-      font-family: 'Space Mono', monospace;
-      color: #f8fafc;
-      padding: 32px 16px 60px;
+      background: linear-gradient(160deg, #060b18 0%, #0a1628 45%, #080f1e 100%);
+      font-family: 'Inter', sans-serif;
+      color: #f1f5f9;
+      padding: 28px 18px 80px;
+      font-size: 16px;
     }
-    @keyframes spin    { to { transform: rotate(360deg); } }
-    @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    @keyframes fadeUp  { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
 
-    .wrap { max-width: 1100px; margin: 0 auto; animation: fadeUp 0.6s ease; }
+    @keyframes spin   { to { transform: rotate(360deg); } }
+    @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
+    .wrap { max-width: 1120px; margin: 0 auto; animation: fadeUp 0.5s ease; }
+
+    /* ── Home Button ── */
     .home-btn {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-      color: #94a3b8; text-decoration: none;
-      font-size: 12px; font-weight: 700;
-      padding: 8px 18px; border-radius: 20px; letter-spacing: 1px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+      color: #cbd5e1; text-decoration: none;
+      font-size: 15px; font-weight: 600;
+      padding: 10px 22px; border-radius: 24px;
       margin-bottom: 28px; transition: all 0.2s;
     }
-    .home-btn:hover { color: #f4813f; border-color: #f4813f; }
+    .home-btn:hover { color: #f4813f; border-color: #f4813f; background: rgba(244,129,63,0.1); }
 
-    .header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+    /* ── Page Header ── */
+    .header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 20px; margin-bottom: 28px;
+    }
+    .page-title {
+      font-size: clamp(26px, 5vw, 42px); font-weight: 800;
+      color: #f8fafc; letter-spacing: -0.5px; line-height: 1.15;
+    }
+    .page-sub {
+      font-size: 15px; color: #64748b; margin-top: 6px; font-weight: 500;
+    }
+    .account-tag {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #475569; margin-bottom: 10px; font-weight: 500;
+    }
     .live-dot {
-      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      width: 10px; height: 10px; border-radius: 50%;
       background: #4ade80; box-shadow: 0 0 10px #4ade80;
-      margin-right: 8px; vertical-align: middle; transition: all 0.3s;
+      flex-shrink: 0; transition: all 0.3s;
     }
     .live-dot.loading { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; animation: pulse 0.8s ease infinite; }
-    .account-tag { color: #64748b; font-size: 11px; letter-spacing: 3px; margin-bottom: 8px; display: block; }
-    .page-title {
-      font-family: 'Syne', sans-serif; font-size: clamp(24px,5vw,40px); font-weight: 800;
-      background: linear-gradient(90deg,#f8fafc 0%,#94a3b8 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      letter-spacing: -1px;
-    }
-    .page-sub { color: #475569; font-size: 11px; letter-spacing: 2px; margin-top: 6px; }
 
+    /* ── Refresh Button ── */
     .refresh-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px;
-      background: linear-gradient(135deg,#1d4ed8,#2563eb);
-      border: 1px solid #3b82f6; border-radius: 12px;
-      color: #fff; font-family: 'Space Mono',monospace;
-      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      border: 1px solid #3b82f6; border-radius: 14px;
+      color: #fff; font-size: 16px; font-weight: 700;
       cursor: pointer; transition: all 0.2s;
-      box-shadow: 0 0 20px rgba(37,99,235,0.3);
+      box-shadow: 0 0 24px rgba(37,99,235,0.35);
+      white-space: nowrap;
     }
-    .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(37,99,235,0.5); }
-    .refresh-btn:disabled { background: rgba(100,116,139,0.15); border-color: #334155; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
-    .spin-icon { display: inline-block; font-size: 16px; }
+    .refresh-btn:hover  { transform: translateY(-2px); box-shadow: 0 0 34px rgba(37,99,235,0.55); }
+    .refresh-btn:disabled { background: rgba(100,116,139,0.2); border-color: #334155; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
+    .spin-icon { font-size: 18px; display: inline-block; }
     .spin-icon.spinning { animation: spin 0.8s linear infinite; }
-    .last-update { color: #475569; font-size: 10px; letter-spacing: 1px; margin-top: 6px; text-align: right; }
+    .last-update { font-size: 13px; color: #475569; margin-top: 8px; text-align: right; font-weight: 500; }
 
-    /* Summary bar */
-    .summary { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 10px; margin-bottom: 24px; }
-    .sum-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 16px; }
-    .sum-label { color: #475569; font-size: 9px; letter-spacing: 2px; margin-bottom: 5px; }
-    .sum-value { font-size: clamp(14px,2.5vw,19px); font-weight: 700; }
+    /* ── Portfolio Summary Bar ── */
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .sum-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 16px; padding: 18px 18px 14px;
+    }
+    .sum-label { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sum-value { font-size: clamp(18px, 3vw, 24px); font-weight: 800; }
 
-    /* Error */
-    .error-bar { background: rgba(127,29,29,0.2); border: 1px solid #f87171; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; color: #f87171; font-size: 12px; display: none; }
+    /* ── Error bar ── */
+    .error-bar {
+      background: rgba(127,29,29,0.2); border: 1px solid #f87171;
+      border-radius: 12px; padding: 14px 20px; margin-bottom: 22px;
+      color: #f87171; font-size: 14px; display: none; line-height: 1.5;
+    }
 
-    /* Cards */
-    .cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 20px; }
+    /* ── Stock Cards ── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; }
 
     .card {
-      background: linear-gradient(135deg,rgba(15,20,35,0.95),rgba(20,28,48,0.9));
-      border-radius: 20px; padding: 26px 22px;
-      display: flex; flex-direction: column; gap: 14px;
+      background: linear-gradient(145deg, rgba(15,22,40,0.97), rgba(18,28,52,0.92));
+      border-radius: 22px; padding: 28px 24px;
+      display: flex; flex-direction: column; gap: 18px;
       position: relative; overflow: hidden;
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .card:hover { transform: translateY(-4px); }
-    .card-blob { position: absolute; top: -60px; right: -60px; width: 180px; height: 180px; border-radius: 50%; pointer-events: none; }
+    .card:hover { transform: translateY(-5px); }
+    .card-blob { position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; border-radius: 50%; pointer-events: none; opacity: 0.7; }
 
+    /* Card top row */
     .card-head { display: flex; justify-content: space-between; align-items: flex-start; }
-    .card-symbol { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
-    .card-name { color: #94a3b8; font-size: 10px; letter-spacing: 1px; margin: 2px 0; }
-    .card-sector { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 9px; letter-spacing: 1px; margin-top: 5px; }
+    .card-symbol { font-size: 26px; font-weight: 800; letter-spacing: 1px; }
+    .card-fullname { font-size: 13px; color: #94a3b8; margin: 4px 0 6px; font-weight: 500; }
+    .card-sector {
+      display: inline-block; padding: 3px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
     .price-block { text-align: right; }
-    .price-val { font-size: clamp(20px,3vw,26px); font-weight: 700; color: #f8fafc; }
-    .price-change { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .price-val { font-size: clamp(22px, 3.5vw, 30px); font-weight: 800; color: #f8fafc; }
+    .price-change { font-size: 14px; font-weight: 700; margin-top: 4px; }
+    .card-spinner { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); border-top-color: currentColor; animation: spin 0.8s linear infinite; margin-top: 4px; }
 
-    .card-spinner { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); border-top-color: currentColor; animation: spin 0.8s linear infinite; }
-
+    /* Sparkline */
     .sparkline-wrap { display: flex; justify-content: center; }
 
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
-    .stat-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 8px 10px; }
-    .stat-label { color: #64748b; font-size: 9px; letter-spacing: 1px; margin-bottom: 3px; }
-    .stat-val { font-size: 13px; font-weight: 700; }
+    /* Stats grid — 2 columns */
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+    .stat-box {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 12px 14px;
+    }
+    .stat-label { font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .stat-val { font-size: 16px; font-weight: 700; }
 
-    .range-labels { display: flex; justify-content: space-between; margin-bottom: 4px; }
-    .range-label { color: #64748b; font-size: 9px; }
-    .range-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; position: relative; overflow: hidden; }
-    .range-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; transition: width 1s ease; }
-    .range-caption { text-align: center; margin-top: 4px; color: #64748b; font-size: 9px; letter-spacing: 1px; }
+    /* Unrealised Loss — full width highlight box */
+    .loss-box {
+      background: rgba(248,113,113,0.10); border: 1.5px solid rgba(248,113,113,0.35);
+      border-radius: 14px; padding: 14px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .loss-label { font-size: 14px; color: #fca5a5; font-weight: 600; }
+    .loss-amount { font-size: 22px; font-weight: 800; color: #f87171; }
+    .loss-pct    { font-size: 14px; font-weight: 600; color: #fca5a5; margin-top: 2px; text-align: right; }
 
-    .source-note { text-align: center; color: #334155; font-size: 10px; letter-spacing: 1px; margin-top: 4px; }
+    /* If stock is in profit, show green gain box */
+    .gain-box {
+      background: rgba(74,222,128,0.08); border: 1.5px solid rgba(74,222,128,0.3);
+      border-radius: 14px; padding: 14px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .gain-label  { font-size: 14px; color: #86efac; font-weight: 600; }
+    .gain-amount { font-size: 22px; font-weight: 800; color: #4ade80; }
+    .gain-pct    { font-size: 14px; font-weight: 600; color: #86efac; margin-top: 2px; text-align: right; }
 
-    .glossary { margin-top: 24px; padding: 16px 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 20px; }
-    .glossary-title { color: #334155; font-size: 9px; letter-spacing: 2px; }
-    .g-item { display: flex; gap: 8px; }
-    .g-term { color: #60a5fa; font-size: 10px; font-weight: 700; white-space: nowrap; }
-    .g-def { color: #475569; font-size: 10px; max-width: 260px; line-height: 1.5; }
+    /* 52-week range */
+    .range-labels { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .range-label  { font-size: 12px; color: #64748b; font-weight: 500; }
+    .range-track  { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; position: relative; overflow: hidden; }
+    .range-fill   { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; transition: width 1s ease; }
+    .range-caption { text-align: center; margin-top: 6px; font-size: 12px; color: #475569; font-weight: 500; }
 
-    .footer-note { text-align: center; margin-top: 20px; color: #1e3a5f; font-size: 10px; letter-spacing: 2px; }
+    .source-note { text-align: center; font-size: 13px; font-weight: 500; margin-top: 8px; }
 
-    @media (max-width:600px) {
-      body { padding: 20px 12px 50px; }
+    /* ── What do these mean? section ── */
+    .glossary {
+      margin-top: 28px; padding: 22px 24px;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+    }
+    .glossary h3 { font-size: 14px; color: #475569; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+    .g-item { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start; }
+    .g-term { font-size: 14px; color: #60a5fa; font-weight: 700; min-width: 140px; }
+    .g-def  { font-size: 14px; color: #64748b; line-height: 1.6; }
+
+    .footer-note { text-align: center; margin-top: 24px; font-size: 12px; color: #1e3a5f; }
+
+    @media (max-width: 640px) {
+      body { padding: 18px 14px 60px; }
       .cards { grid-template-columns: 1fr; }
-      .summary { grid-template-columns: repeat(2,1fr); }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .stats { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 <div class="wrap">
 
-  <a href="/" class="home-btn">🏠 HOME</a>
+  <a href="/" class="home-btn">🏠 Back to Home</a>
 
+  <!-- Header -->
   <div class="header">
     <div>
-      <span class="account-tag"><span class="live-dot" id="liveDot"></span>POHL SAI YEO · INTERACTIVE BROKERS · U***89825</span>
-      <div class="page-title">Portfolio Dashboard</div>
-      <div class="page-sub">SINCE INCEPTION · MAY 2024 — MAY 2026</div>
+      <div class="account-tag">
+        <span class="live-dot" id="liveDot"></span>
+        Paul Yeo &nbsp;·&nbsp; Interactive Brokers &nbsp;·&nbsp; Account U***89825
+      </div>
+      <div class="page-title">📈 My Stock Portfolio</div>
+      <div class="page-sub">Started May 2024 &nbsp;·&nbsp; 3 stocks held</div>
     </div>
-    <div>
+    <div style="display:flex; flex-direction:column; align-items:flex-end;">
       <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
-        <span class="spin-icon" id="spinIcon">⟳</span> REFRESH PRICES
+        <span class="spin-icon" id="spinIcon">⟳</span> Get Latest Prices
       </button>
       <div class="last-update" id="lastUpdate"></div>
     </div>
   </div>
 
+  <!-- Portfolio Summary -->
   <div class="summary">
-    <div class="sum-card"><div class="sum-label">EQUITY VALUE</div><div class="sum-value" id="sumEquity">—</div></div>
-    <div class="sum-card"><div class="sum-label">TOTAL COST</div><div class="sum-value" style="color:#94a3b8" id="sumCost">—</div></div>
-    <div class="sum-card"><div class="sum-label">UNREALIZED P/L</div><div class="sum-value" id="sumPnl">—</div></div>
-    <div class="sum-card"><div class="sum-label">RETURN %</div><div class="sum-value" id="sumRet">—</div></div>
-    <div class="sum-card"><div class="sum-label">CASH</div><div class="sum-value" style="color:#94a3b8">$2,682.64</div></div>
-    <div class="sum-card"><div class="sum-label">TOTAL NAV</div><div class="sum-value" style="color:#60a5fa" id="sumNav">—</div></div>
+    <div class="sum-card">
+      <div class="sum-label">Total Stock Value</div>
+      <div class="sum-value" id="sumEquity" style="color:#f8fafc">—</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Total I Paid (Cost)</div>
+      <div class="sum-value" id="sumCost" style="color:#94a3b8">—</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Overall Gain / Loss</div>
+      <div class="sum-value" id="sumPnl">—</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Return %</div>
+      <div class="sum-value" id="sumRet">—</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Cash in Account</div>
+      <div class="sum-value" style="color:#94a3b8">$2,682</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Total Account Value</div>
+      <div class="sum-value" id="sumNav" style="color:#60a5fa">—</div>
+    </div>
   </div>
 
+  <!-- Error -->
   <div class="error-bar" id="errorBar"></div>
+
+  <!-- Cards -->
   <div class="cards" id="cardsContainer"></div>
 
+  <!-- Data source note -->
   <div class="source-note" id="sourceNote"></div>
 
+  <!-- Plain-English Glossary -->
   <div class="glossary">
-    <span class="glossary-title">GLOSSARY</span>
-    <div class="g-item"><span class="g-term">1-SD:</span><span class="g-def">One standard deviation of the last 30 daily closes — expected daily price swing ~68% of the time</span></div>
-    <div class="g-item"><span class="g-term">ADR:</span><span class="g-def">Average Daily Range — mean of absolute day-over-day price moves over 30 days</span></div>
-    <div class="g-item"><span class="g-term">Avg Cost:</span><span class="g-def">Average cost per share derived from IB Portfolio Analyst report (inception to May 2026)</span></div>
+    <h3>📖 What Do These Numbers Mean?</h3>
+    <div class="g-item">
+      <span class="g-term">Today's Price</span>
+      <span class="g-def">The current market price of one share. Updated when you press "Get Latest Prices".</span>
+    </div>
+    <div class="g-item">
+      <span class="g-term">I Paid (Avg Cost)</span>
+      <span class="g-def">The average price you paid per share, based on your Interactive Brokers report.</span>
+    </div>
+    <div class="g-item">
+      <span class="g-term">Unrealised Gain/Loss</span>
+      <span class="g-def">How much profit or loss you have <strong>on paper</strong> right now. No money changes hands until you sell.</span>
+    </div>
+    <div class="g-item">
+      <span class="g-term">Daily Price Swing (1-SD)</span>
+      <span class="g-def">How much this stock's price typically moves up or down each day. A smaller number means a steadier stock.</span>
+    </div>
+    <div class="g-item">
+      <span class="g-term">Avg Daily Move (ADR)</span>
+      <span class="g-def">The average dollar amount the stock price moved from one day to the next, over the past 30 days.</span>
+    </div>
+    <div class="g-item">
+      <span class="g-term">52-Week Range</span>
+      <span class="g-def">The lowest and highest price this stock has been over the past 12 months. The bar shows where today's price sits in that range.</span>
+    </div>
   </div>
-  <div class="footer-note">PAUL'S WORLD · INTERACTIVE BROKERS PORTFOLIO · PRICES VIA YAHOO FINANCE</div>
+
+  <div class="footer-note">Paul's World · Interactive Brokers · Prices from Yahoo Finance</div>
 </div>
 
 <script src="/view-counter.js"></script>
 <script>
-/* ── Stock definitions ── */
+/* ── My 3 stocks ── */
 const STOCKS = [
   { symbol:'FDS',  name:'FactSet Research Systems', sector:'Industrial',         shares:54,  avgCost:436.54, color:'#f59e0b', icon:'📊' },
   { symbol:'POOL', name:'Pool Corporation',          sector:'Consumer Cyclicals', shares:110, avgCost:167.64, color:'#06b6d4', icon:'🏊' },
   { symbol:'ZTS',  name:'Zoetis Inc',                sector:'Healthcare',         shares:66,  avgCost:120.42, color:'#10b981', icon:'💊' }
 ];
 
-/* ── Fallback prices (used when all APIs fail) ── */
+/* ── Reference prices (shown when live data unavailable) ── */
 const FALLBACK = {
   FDS:  { price:412.30, change:-3.20, changePct:-0.77, high52w:518.00, low52w:374.00,
           history:[415,418,412,420,416,410,408,422,419,413,417,421,425,418,412,408,410,415,420,418,416,412,408,405,410,415,412,408,405,412] },
@@ -188,10 +291,9 @@ const FALLBACK = {
 };
 
 let liveData = {};
-let dataSource = '';
 
-/* ── Helpers ── */
-function fmt(n){ return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+/* ── Number helpers ── */
+function fmtMoney(n){ return '$' + Math.abs(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
 
 function calcStats(h){
   const n=h.length; if(n<2) return {stdDev:0,adr:0};
@@ -201,187 +303,258 @@ function calcStats(h){
   return {stdDev, adr:tot/(n-1)};
 }
 
+/* ── Mini chart (sparkline) ── */
 function sparkSVG(history, color){
   if(!history||!history.length) return '';
   const min=Math.min(...history), max=Math.max(...history), rng=max-min||1;
-  const W=120,H=38;
+  const W=130, H=42;
   const pts=history.map((v,i)=>`${(i/(history.length-1))*W},${H-((v-min)/rng)*H}`).join(' ');
   const up=history[history.length-1]>=history[0];
   const lc=up?'#4ade80':'#f87171';
-  const uid=color.replace('#','');
+  const uid='s'+color.replace('#','');
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-    <defs><linearGradient id="g${uid}" x1="0" y1="0" x2="0" y2="1">
+    <defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${lc}" stop-opacity="0.3"/>
       <stop offset="100%" stop-color="${lc}" stop-opacity="0"/>
     </linearGradient></defs>
-    <polygon points="0,${H} ${pts} ${W},${H}" fill="url(#g${uid})"/>
-    <polyline points="${pts}" fill="none" stroke="${lc}" stroke-width="2" stroke-linejoin="round"/>
+    <polygon points="0,${H} ${pts} ${W},${H}" fill="url(#${uid})"/>
+    <polyline points="${pts}" fill="none" stroke="${lc}" stroke-width="2.5" stroke-linejoin="round"/>
   </svg>`;
 }
 
-/* ── Fetch from Yahoo Finance via multiple CORS proxies ── */
+/* ── Fetch live price from Yahoo Finance ── */
 async function fetchYahoo(symbol){
-  const proxies = [
+  const urls = [
     `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=35d`,
     `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=35d`
   ];
-  for(const url of proxies){
+  for(const url of urls){
     try{
-      const r = await fetch(url, {headers:{'Accept':'application/json'}});
+      const r = await fetch(url, {headers:{Accept:'application/json'}});
       if(!r.ok) continue;
       const d = await r.json();
       const result = d?.chart?.result?.[0];
       if(!result) continue;
       const meta = result.meta;
-      const closes = result.indicators?.quote?.[0]?.close || [];
-      const validCloses = closes.filter(v=>v!=null).map(v=>parseFloat(v.toFixed(2)));
-      const price = parseFloat((meta.regularMarketPrice || validCloses[validCloses.length-1]).toFixed(2));
-      const prevClose = parseFloat((meta.previousClose || meta.chartPreviousClose || validCloses[validCloses.length-2] || price).toFixed(2));
-      const change = parseFloat((price - prevClose).toFixed(2));
-      const changePct = parseFloat(((change/prevClose)*100).toFixed(2));
-      const high52w = parseFloat((meta.fiftyTwoWeekHigh || 0).toFixed(2));
-      const low52w = parseFloat((meta.fiftyTwoWeekLow || 0).toFixed(2));
-      const history = validCloses.slice(-30);
-      return {price, change, changePct, high52w, low52w, history};
-    } catch(e){}
+      const closes = (result.indicators?.quote?.[0]?.close||[]).filter(v=>v!=null).map(v=>+v.toFixed(2));
+      const price = +(meta.regularMarketPrice||closes[closes.length-1]||0).toFixed(2);
+      const prev  = +(meta.previousClose||meta.chartPreviousClose||closes[closes.length-2]||price).toFixed(2);
+      const change = +(price-prev).toFixed(2);
+      return {
+        price, change,
+        changePct: +(change/prev*100).toFixed(2),
+        high52w: +(meta.fiftyTwoWeekHigh||0).toFixed(2),
+        low52w:  +(meta.fiftyTwoWeekLow ||0).toFixed(2),
+        history: closes.slice(-30)
+      };
+    }catch(e){}
   }
   return null;
 }
 
-/* ── Render one card ── */
+/* ── Build one stock card ── */
 function renderCard(stock, data, isLoading){
-  const c=stock.color;
-  const price=data?.price, change=data?.change||0, changePct=data?.changePct||0;
-  const isUp=change>=0;
-  const history=data?.history||[];
-  const {stdDev,adr}=calcStats(history);
-  const pnl=price?(price-stock.avgCost)*stock.shares:null;
-  const pnlPct=price?((price-stock.avgCost)/stock.avgCost)*100:null;
-  const mktVal=price?price*stock.shares:null;
-  const pct52=data&&data.high52w>data.low52w?Math.min(100,Math.max(0,((price-data.low52w)/(data.high52w-data.low52w))*100)):50;
+  const c = stock.color;
+  const price    = data?.price ?? null;
+  const change   = data?.change   ?? 0;
+  const changePct= data?.changePct?? 0;
+  const dayUp    = change >= 0;
+  const history  = data?.history ?? [];
+  const {stdDev, adr} = calcStats(history);
 
-  return `<div class="card" style="border:1px solid ${c}33;box-shadow:0 0 40px ${c}18,0 8px 32px rgba(0,0,0,0.4)"
-    onmouseenter="this.style.boxShadow='0 0 60px ${c}30,0 16px 48px rgba(0,0,0,0.5)'"
-    onmouseleave="this.style.boxShadow='0 0 40px ${c}18,0 8px 32px rgba(0,0,0,0.4)'">
-    <div class="card-blob" style="background:radial-gradient(circle,${c}22 0%,transparent 70%)"></div>
+  const totalPaid = stock.avgCost * stock.shares;
+  const mktVal    = price !== null ? price * stock.shares : null;
+  const pnl       = mktVal !== null ? mktVal - totalPaid : null;
+  const pnlPct    = pnl   !== null ? (pnl / totalPaid) * 100 : null;
+  const inProfit  = pnl   !== null && pnl >= 0;
+
+  const pct52 = (data && data.high52w > data.low52w)
+    ? Math.min(100, Math.max(0, ((price - data.low52w) / (data.high52w - data.low52w)) * 100))
+    : 50;
+
+  /* ── Unrealised gain/loss highlight box ── */
+  let pnlBox = '';
+  if(pnl !== null){
+    if(inProfit){
+      pnlBox = `<div class="gain-box">
+        <div>
+          <div class="gain-label">✅ Unrealised Gain</div>
+          <div style="font-size:12px;color:#86efac;margin-top:4px;">Paper profit — not yet sold</div>
+        </div>
+        <div style="text-align:right">
+          <div class="gain-amount">+ ${fmtMoney(pnl)}</div>
+          <div class="gain-pct">+ ${pnlPct.toFixed(1)}%</div>
+        </div>
+      </div>`;
+    } else {
+      pnlBox = `<div class="loss-box">
+        <div>
+          <div class="loss-label">⚠️ Unrealised Loss</div>
+          <div style="font-size:12px;color:#fca5a5;margin-top:4px;">Paper loss — no money lost until sold</div>
+        </div>
+        <div style="text-align:right">
+          <div class="loss-amount">− ${fmtMoney(pnl)}</div>
+          <div class="loss-pct">${pnlPct.toFixed(1)}%</div>
+        </div>
+      </div>`;
+    }
+  }
+
+  return `
+  <div class="card"
+    style="border:1px solid ${c}33; box-shadow:0 0 36px ${c}15, 0 8px 28px rgba(0,0,0,0.45);"
+    onmouseenter="this.style.boxShadow='0 0 56px ${c}28, 0 14px 44px rgba(0,0,0,0.55)'"
+    onmouseleave="this.style.boxShadow='0 0 36px ${c}15, 0 8px 28px rgba(0,0,0,0.45)'">
+
+    <div class="card-blob" style="background:radial-gradient(circle,${c}1e 0%,transparent 70%)"></div>
+
+    <!-- Stock name & live price -->
     <div class="card-head">
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-          <span style="font-size:20px">${stock.icon}</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span style="font-size:24px">${stock.icon}</span>
           <span class="card-symbol" style="color:${c}">${stock.symbol}</span>
         </div>
-        <div class="card-name">${stock.name.toUpperCase()}</div>
-        <span class="card-sector" style="background:${c}22;border:1px solid ${c}44;color:${c}">${stock.sector}</span>
+        <div class="card-fullname">${stock.name}</div>
+        <span class="card-sector" style="background:${c}20;border:1px solid ${c}40;color:${c}">${stock.sector}</span>
       </div>
       ${isLoading
         ? `<div class="card-spinner" style="color:${c};border-top-color:${c}"></div>`
         : `<div class="price-block">
-            <div class="price-val">${price?'$'+price.toFixed(2):'—'}</div>
-            <div class="price-change" style="color:${isUp?'#4ade80':'#f87171'}">
-              ${change>=0?'▲':'▼'} ${Math.abs(change).toFixed(2)} (${Math.abs(changePct).toFixed(2)}%)
+            <div class="price-val">${price !== null ? '$'+price.toFixed(2) : '—'}</div>
+            <div class="price-change" style="color:${dayUp?'#4ade80':'#f87171'}">
+              ${dayUp?'▲':'▼'} $${Math.abs(change).toFixed(2)} (${Math.abs(changePct).toFixed(2)}%) today
             </div>
-           </div>`}
+          </div>`}
     </div>
-    <div class="sparkline-wrap">${sparkSVG(history,c)}</div>
+
+    <!-- 30-day mini chart -->
+    <div class="sparkline-wrap">${sparkSVG(history, c)}</div>
+
+    <!-- Key numbers grid -->
     <div class="stats">
-      <div class="stat-box"><div class="stat-label">AVG COST</div><div class="stat-val" style="color:#e2e8f0">$${stock.avgCost.toFixed(2)}</div></div>
-      <div class="stat-box"><div class="stat-label">SHARES HELD</div><div class="stat-val" style="color:#e2e8f0">${stock.shares}</div></div>
-      <div class="stat-box"><div class="stat-label">UNREALIZED P/L</div><div class="stat-val" style="color:${pnl!=null?(pnl>=0?'#4ade80':'#f87171'):'#e2e8f0'}">${pnl!=null?(pnl>=0?'+':'-')+' $'+fmt(Math.abs(pnl)):'—'}</div></div>
-      <div class="stat-box"><div class="stat-label">RETURN %</div><div class="stat-val" style="color:${pnlPct!=null?(pnlPct>=0?'#4ade80':'#f87171'):'#e2e8f0'}">${pnlPct!=null?(pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%':'—'}</div></div>
-      <div class="stat-box" title="1 Standard Deviation of 30-day daily closes"><div class="stat-label">1-SD (30D)</div><div class="stat-val" style="color:#e2e8f0">${stdDev?'$'+stdDev.toFixed(2):'—'}</div></div>
-      <div class="stat-box" title="Average Daily Range"><div class="stat-label">ADR</div><div class="stat-val" style="color:#e2e8f0">${adr?'$'+adr.toFixed(2):'—'}</div></div>
-      <div class="stat-box"><div class="stat-label">MARKET VALUE</div><div class="stat-val" style="color:#e2e8f0">${mktVal?'$'+fmt(mktVal):'—'}</div></div>
-      <div class="stat-box"><div class="stat-label">PORTFOLIO %</div><div class="stat-val" style="color:#e2e8f0">${mktVal?((mktVal/49962)*100).toFixed(1)+'%':'—'}</div></div>
-    </div>
-    ${data?`<div>
-      <div class="range-labels">
-        <span class="range-label">52W LOW $${data.low52w}</span>
-        <span class="range-label">52W HIGH $${data.high52w}</span>
+      <div class="stat-box">
+        <div class="stat-label">I Paid Per Share</div>
+        <div class="stat-val" style="color:#e2e8f0">$${stock.avgCost.toFixed(2)}</div>
       </div>
-      <div class="range-track"><div class="range-fill" style="width:${pct52}%;background:${c}"></div></div>
-      <div class="range-caption">52-WEEK RANGE</div>
-    </div>`:''}
+      <div class="stat-box">
+        <div class="stat-label">Shares I Hold</div>
+        <div class="stat-val" style="color:#e2e8f0">${stock.shares} shares</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Total I Paid</div>
+        <div class="stat-val" style="color:#94a3b8">${fmtMoney(totalPaid)}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Current Value</div>
+        <div class="stat-val" style="color:#e2e8f0">${mktVal !== null ? fmtMoney(mktVal) : '—'}</div>
+      </div>
+      <div class="stat-box" title="How much the price typically swings each day (1 standard deviation, 30 days)">
+        <div class="stat-label">Daily Price Swing</div>
+        <div class="stat-val" style="color:#e2e8f0">${stdDev ? '$'+stdDev.toFixed(2) : '—'}</div>
+      </div>
+      <div class="stat-box" title="Average dollar move from one day to the next, past 30 days">
+        <div class="stat-label">Avg Daily Move</div>
+        <div class="stat-val" style="color:#e2e8f0">${adr ? '$'+adr.toFixed(2) : '—'}</div>
+      </div>
+    </div>
+
+    <!-- Unrealised Gain / Loss highlighted box -->
+    ${pnlBox}
+
+    <!-- 52-week price range bar -->
+    ${data ? `<div>
+      <div class="range-labels">
+        <span class="range-label">📉 Year Low: $${data.low52w}</span>
+        <span class="range-label">📈 Year High: $${data.high52w}</span>
+      </div>
+      <div class="range-track">
+        <div class="range-fill" style="width:${pct52}%;background:${c}"></div>
+      </div>
+      <div class="range-caption">Where today's price sits in the past 12 months</div>
+    </div>` : ''}
+
   </div>`;
 }
 
 function renderCards(isLoading){
   document.getElementById('cardsContainer').innerHTML =
-    STOCKS.map(s=>renderCard(s,liveData[s.symbol],isLoading)).join('');
+    STOCKS.map(s => renderCard(s, liveData[s.symbol], isLoading)).join('');
 }
 
 function updateSummary(){
-  const tv=STOCKS.reduce((s,st)=>{const d=liveData[st.symbol];return s+(d?d.price*st.shares:0);},0);
-  const tc=STOCKS.reduce((s,st)=>s+st.avgCost*st.shares,0);
-  const pnl=tv-tc, pnlPct=tc?(pnl/tc)*100:0;
-  if(tv){
-    document.getElementById('sumEquity').textContent='$'+fmt(tv);
-    document.getElementById('sumPnl').textContent=(pnl>=0?'+':'-')+' $'+fmt(Math.abs(pnl));
-    document.getElementById('sumPnl').style.color=pnl>=0?'#4ade80':'#f87171';
-    document.getElementById('sumRet').textContent=(pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%';
-    document.getElementById('sumRet').style.color=pnlPct>=0?'#4ade80':'#f87171';
-    document.getElementById('sumNav').textContent='$'+fmt(tv+2682.64);
+  const totalValue = STOCKS.reduce((sum, s) => {
+    const d = liveData[s.symbol];
+    return sum + (d ? d.price * s.shares : 0);
+  }, 0);
+  const totalCost = STOCKS.reduce((sum, s) => sum + s.avgCost * s.shares, 0);
+  const pnl = totalValue - totalCost;
+  const pnlPct = totalCost ? (pnl / totalCost) * 100 : 0;
+
+  document.getElementById('sumCost').textContent = fmtMoney(totalCost);
+  if(totalValue){
+    document.getElementById('sumEquity').textContent = fmtMoney(totalValue);
+    document.getElementById('sumPnl').textContent = (pnl>=0?'+ ':'-') + fmtMoney(pnl).replace('$','$');
+    document.getElementById('sumPnl').style.color = pnl>=0 ? '#4ade80' : '#f87171';
+    document.getElementById('sumRet').textContent = (pnlPct>=0?'+':'') + pnlPct.toFixed(1) + '%';
+    document.getElementById('sumRet').style.color = pnlPct>=0 ? '#4ade80' : '#f87171';
+    document.getElementById('sumNav').textContent = fmtMoney(totalValue + 2682.64);
   }
-  document.getElementById('sumCost').textContent='$'+fmt(tc);
 }
 
 async function refreshAll(){
-  const btn=document.getElementById('refreshBtn');
-  const dot=document.getElementById('liveDot');
-  const spin=document.getElementById('spinIcon');
-  const errBar=document.getElementById('errorBar');
-  const srcNote=document.getElementById('sourceNote');
+  const btn    = document.getElementById('refreshBtn');
+  const dot    = document.getElementById('liveDot');
+  const spin   = document.getElementById('spinIcon');
+  const errBar = document.getElementById('errorBar');
+  const srcNote= document.getElementById('sourceNote');
 
-  btn.disabled=true;
+  btn.disabled = true;
   dot.classList.add('loading');
   spin.classList.add('spinning');
-  errBar.style.display='none';
-  liveData={};
+  errBar.style.display = 'none';
+  liveData = {};
   renderCards(true);
 
-  let liveCount=0;
-  const errors=[];
+  let liveCount = 0;
+  const failed = [];
 
-  await Promise.all(STOCKS.map(async(stock)=>{
-    try{
-      const d=await fetchYahoo(stock.symbol);
-      if(d){
-        liveData[stock.symbol]=d;
-        liveCount++;
-      } else {
-        throw new Error('No data returned');
-      }
-    } catch(e){
-      liveData[stock.symbol]=FALLBACK[stock.symbol];
-      errors.push(stock.symbol);
+  await Promise.all(STOCKS.map(async(stock) => {
+    try {
+      const d = await fetchYahoo(stock.symbol);
+      if(d){ liveData[stock.symbol] = d; liveCount++; }
+      else  { throw new Error(); }
+    } catch(e) {
+      liveData[stock.symbol] = FALLBACK[stock.symbol];
+      failed.push(stock.symbol);
     }
   }));
 
   renderCards(false);
   updateSummary();
 
-  const now=new Date();
-  document.getElementById('lastUpdate').textContent='UPDATED '+now.toLocaleTimeString();
+  document.getElementById('lastUpdate').textContent =
+    'Last updated: ' + new Date().toLocaleTimeString();
 
-  if(liveCount===STOCKS.length){
-    dataSource='✅ Live prices from Yahoo Finance';
-    srcNote.style.color='#4ade80';
-  } else if(liveCount>0){
-    dataSource=`⚡ ${liveCount}/${STOCKS.length} live · ${errors.join(',')} using reference prices`;
-    srcNote.style.color='#f59e0b';
+  if(liveCount === STOCKS.length){
+    srcNote.textContent = '✅ Live prices from Yahoo Finance';
+    srcNote.style.color = '#4ade80';
+  } else if(liveCount > 0){
+    srcNote.textContent = `⚡ ${liveCount} of ${STOCKS.length} live — ${failed.join(', ')} using reference prices`;
+    srcNote.style.color = '#f59e0b';
   } else {
-    dataSource='⚠ Using reference prices (Yahoo Finance unavailable from this browser)';
-    srcNote.style.color='#f87171';
-    errBar.style.display='block';
-    errBar.textContent='Live market data unavailable — showing reference prices from May 27, 2026. Prices update when Yahoo Finance is accessible.';
+    srcNote.textContent = '⚠️ Showing reference prices (May 27, 2026) — press Refresh to retry';
+    srcNote.style.color = '#f87171';
+    errBar.style.display = 'block';
+    errBar.textContent = 'Could not fetch live prices from Yahoo Finance. The numbers shown are reference prices from May 27, 2026. Press "Get Latest Prices" to try again.';
   }
-  srcNote.textContent=dataSource;
 
-  btn.disabled=false;
+  btn.disabled = false;
   dot.classList.remove('loading');
   spin.classList.remove('spinning');
 }
 
-// Auto-load
+// Load prices automatically when page opens
 refreshAll();
 </script>
 </body>
