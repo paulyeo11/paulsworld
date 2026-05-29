@@ -2,461 +2,503 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Journey 4: How Claude Manages My Website</title>
-  <script defer src="/_vercel/insights/script.js"></script>
   <script src="/ga4.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI5: How I Used AI to Build My Options Trading Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --ink: #1a1209;
+      --paper: #faf7f2;
+      --gold: #c8922a;
+      --gold-light: #f5c842;
+      --orange: #e05d20;
+      --deep: #2c1a0e;
+      --muted: #7a6a56;
+      --rule: #ddd0bb;
+      --green: #166534;
+      --green-light: #dcfce7;
+      --blue: #1e40af;
+      --blue-light: #dbeafe;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    #homeBar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
-      background: #1a1a2e; padding: 10px 16px;
-      display: flex; align-items: center; gap: 12px;
-      box-shadow: 0 3px 15px rgba(0,0,0,0.4);
-      font-family: Arial, sans-serif;
-    }
-    #homeBar .hb-home {
-      background: #f4813f; color: #fff; text-decoration: none;
-      font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px;
-    }
-    #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
-
     body {
-      padding-top: 52px;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f0f4f8; color: #1a1a2e;
-      font-size: 18px; line-height: 1.75;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 18px;
+      line-height: 1.8;
     }
+
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px; z-index: 1000;
+      background: var(--gold); color: white;
+      text-decoration: none; font-size: 0.85em; font-weight: 600;
+      padding: 8px 16px; border-radius: 20px;
+      box-shadow: 0 3px 12px rgba(200,146,42,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(200,146,42,0.5); }
 
     /* HERO */
     .hero {
-      background: linear-gradient(160deg, #0f1e3d 0%, #1a3a6e 50%, #0f2d5c 100%);
-      color: white; text-align: center; padding: 52px 24px 44px;
+      background: linear-gradient(135deg, #0a0e1a 0%, #111827 60%, #1a1f2e 100%);
+      color: white;
+      padding: 100px 24px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
-    .hero-badge {
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%);
+    }
+    .hero-tag {
       display: inline-block;
-      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
-      color: #93c5fd; font-size: 13px; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 6px 16px; border-radius: 20px; margin-bottom: 20px;
+      background: rgba(99,102,241,0.2);
+      border: 1px solid rgba(99,102,241,0.4);
+      color: #818cf8;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 20px;
+      margin-bottom: 20px;
     }
     .hero h1 {
-      font-size: clamp(1.7em, 5vw, 2.7em); font-weight: 800;
-      line-height: 1.2; margin-bottom: 14px;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900; line-height: 1.2;
+      margin-bottom: 20px; position: relative;
     }
-    .hero h1 em { color: #93c5fd; font-style: normal; }
-    .hero-sub { font-size: 1.05em; opacity: 0.82; max-width: 620px; margin: 0 auto 10px; }
-    .hero-meta { font-size: 0.85em; opacity: 0.55; margin-top: 8px; }
-
-    .hero-stats {
-      display: flex; justify-content: center; gap: 36px;
-      margin-top: 30px; flex-wrap: wrap;
+    .hero h1 .accent { color: var(--gold-light); }
+    .hero-sub {
+      font-size: 1.1rem; color: rgba(255,255,255,0.6);
+      max-width: 560px; margin: 0 auto 28px;
     }
-    .hero-stat { text-align: center; }
-    .hero-stat .num { font-size: 2em; font-weight: 800; color: #93c5fd; }
-    .hero-stat .lbl { font-size: 0.72em; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+    .hero-meta {
+      display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+      font-size: 0.82rem; color: rgba(255,255,255,0.4);
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
 
     /* ARTICLE */
-    article { max-width: 780px; margin: 0 auto; padding: 36px 20px 70px; }
-
-    .lead {
-      font-size: 1.1em; line-height: 1.85;
-      background: white; border-left: 5px solid #3b82f6;
-      padding: 20px 24px; border-radius: 0 12px 12px 0;
-      margin-bottom: 36px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      color: #1e3a5f;
+    article {
+      max-width: 740px; margin: 0 auto;
+      padding: 60px 24px 40px;
     }
 
     h2 {
-      font-size: 1.35em; color: #0f2d5c; font-weight: 800;
-      margin: 42px 0 16px; padding-bottom: 10px;
-      border-bottom: 3px solid #3b82f6;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; font-weight: 700;
+      color: var(--deep); margin: 48px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--rule);
     }
-    p { margin-bottom: 20px; color: #2a2a3a; }
+    h3 {
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--orange); margin: 28px 0 10px;
+    }
+    p { margin-bottom: 20px; color: #2d2416; }
 
-    /* STEP BOXES */
-    .steps { display: flex; flex-direction: column; gap: 14px; margin: 24px 0 32px; }
+    /* PULL QUOTE */
+    .pullquote {
+      border-left: 4px solid var(--gold);
+      background: linear-gradient(135deg, #fffbf0, #fef9ec);
+      padding: 20px 28px; margin: 32px 0;
+      border-radius: 0 12px 12px 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem; font-style: italic;
+      color: var(--deep); line-height: 1.6;
+    }
+
+    /* INFO BOX */
+    .infobox {
+      border-radius: 12px; padding: 20px 24px;
+      margin: 28px 0; font-size: 0.92rem;
+    }
+    .infobox.green { background: var(--green-light); border: 1px solid #86efac; color: var(--green); }
+    .infobox.blue  { background: var(--blue-light);  border: 1px solid #93c5fd; color: var(--blue); }
+    .infobox.dark  { background: #0f172a; border: 1px solid #1f2937; color: #e2e8f0; }
+    .infobox h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+
+    /* STEP BOX */
+    .steps { margin: 28px 0; }
     .step {
       display: flex; gap: 16px; align-items: flex-start;
-      background: white; border-radius: 12px; padding: 16px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      margin-bottom: 20px; padding: 18px 20px;
+      background: white; border: 1px solid var(--rule);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
-    .step .num {
-      background: #3b82f6; color: white;
+    .step-num {
       width: 36px; height: 36px; border-radius: 50%;
+      background: var(--gold); color: white;
+      font-weight: 800; font-size: 0.9rem;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 1em; flex-shrink: 0;
+      flex-shrink: 0; margin-top: 2px;
     }
-    .step .text strong { display: block; color: #0f2d5c; font-size: 1em; margin-bottom: 4px; }
-    .step .text span { font-size: 0.93em; color: #444; line-height: 1.6; }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; margin-bottom: 4px; color: var(--deep); font-size: 1rem; }
+    .step-body span { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
 
-    /* HIGHLIGHT BOX */
-    .highlight {
-      background: linear-gradient(135deg, #eff6ff, #dbeafe);
-      border-left: 5px solid #3b82f6; border-radius: 0 12px 12px 0;
-      padding: 20px 24px; margin: 28px 0;
-      font-size: 1.05em; color: #1e3a5f; font-weight: 600; line-height: 1.7;
+    /* COMPARISON TABLE */
+    .otm-table {
+      width: 100%; border-collapse: collapse;
+      margin: 24px 0; font-size: 0.88rem;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
-    .highlight .icon { font-size: 1.4em; margin-right: 6px; }
+    .otm-table th {
+      background: #1a1a2e; color: #818cf8;
+      padding: 12px 16px; text-align: left;
+      font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.1em; font-weight: 700;
+    }
+    .otm-table td { padding: 12px 16px; border-top: 1px solid #f0e8dc; }
+    .otm-table tr:nth-child(even) td { background: #fdf8f0; }
+    .otm-table .good { color: #166534; font-weight: 700; }
+    .otm-table .warn { color: #92400e; font-weight: 700; }
+    .otm-table .bad  { color: #991b1b; }
 
-    /* WHAT CLAUDE CAN DO */
-    .can-do {
-      background: white; border-radius: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-      overflow: hidden; margin: 28px 0;
+    /* CHAT BUBBLE */
+    .chat-wrap { margin: 32px 0; }
+    .chat-bubble {
+      padding: 14px 20px; border-radius: 16px;
+      max-width: 90%; margin-bottom: 10px;
+      font-size: 0.92rem; line-height: 1.6;
     }
-    .can-do-header {
-      background: linear-gradient(135deg, #0f2d5c, #1a3a6e);
-      color: white; padding: 16px 22px; font-weight: 800; font-size: 1.1em;
+    .chat-bubble.user {
+      background: #1d4ed8; color: white;
+      border-radius: 16px 16px 4px 16px;
+      margin-left: auto; text-align: right;
     }
-    .can-do ul { list-style: none; padding: 10px 0; }
-    .can-do ul li {
-      display: flex; gap: 12px; padding: 12px 22px;
-      border-bottom: 1px solid #f0f4f8; font-size: 0.95em; line-height: 1.6;
+    .chat-bubble.ai {
+      background: #1f2937; color: #e2e8f0;
+      border-radius: 16px 16px 16px 4px;
     }
-    .can-do ul li:last-child { border-bottom: none; }
-    .can-do ul li .bullet { font-size: 1.1em; flex-shrink: 0; }
+    .chat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; color: var(--muted); }
+    .chat-label.right { text-align: right; }
 
-    /* WARNING BOX */
-    .warning {
-      background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px;
-      padding: 18px 22px; margin: 28px 0; font-size: 0.95em; line-height: 1.7;
+    /* STOCK CARDS */
+    .stock-row {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 14px; margin: 24px 0;
     }
-    .warning strong { color: #7c4c00; display: block; margin-bottom: 6px; font-size: 1em; }
-    .warning p { color: #5c3800; margin: 0; }
+    .stock-card {
+      background: #0f172a; border-radius: 12px;
+      padding: 16px; text-align: center;
+      border-top: 3px solid;
+    }
+    .stock-card .sym { font-weight: 800; font-size: 1.3rem; margin-bottom: 4px; }
+    .stock-card .co  { font-size: 0.7rem; color: #64748b; margin-bottom: 8px; }
+    .stock-card .pr  { font-size: 1rem; font-weight: 700; color: #f1f5f9; }
 
-    /* TOKEN STEPS */
-    .token-steps { margin: 24px 0; }
-    .token-step {
-      display: flex; gap: 14px; margin-bottom: 12px;
-      background: white; border-radius: 10px; padding: 14px 18px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.06); align-items: flex-start;
+    /* TIME SAVED */
+    .time-box {
+      background: linear-gradient(135deg, #0a0e1a, #111827);
+      border: 1px solid #1f2937; border-radius: 16px;
+      padding: 28px; margin: 32px 0;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+      gap: 20px; text-align: center;
     }
-    .token-step .badge {
-      background: #0f2d5c; color: white; border-radius: 8px;
-      padding: 4px 10px; font-size: 0.8em; font-weight: 800;
-      white-space: nowrap; flex-shrink: 0; margin-top: 2px;
-    }
-    .token-step .content { font-size: 0.93em; line-height: 1.65; color: #333; }
-    .token-step .content strong { color: #0f2d5c; }
-    code {
-      background: #e8f0fe; color: #1a3a6e; font-family: monospace;
-      padding: 2px 7px; border-radius: 5px; font-size: 0.88em;
-    }
+    .time-item .num { font-size: 2rem; font-weight: 800; color: #4ade80; }
+    .time-item .lbl { font-size: 0.75rem; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
 
-    /* PULLQUOTE */
-    .pullquote {
-      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-      border-left: 5px solid #0284c7; border-radius: 0 12px 12px 0;
-      padding: 20px 26px; margin: 32px 0;
-      font-size: 1.15em; font-style: italic;
-      color: #0c3a5e; font-weight: 600; line-height: 1.6;
+    /* DIVIDER */
+    .divider {
+      text-align: center; margin: 40px 0;
+      color: var(--rule); font-size: 1.5rem;
+      letter-spacing: 12px;
     }
 
-    /* LESSON BOX */
-    .lesson {
-      background: linear-gradient(135deg, #0f2d5c, #1e40af);
-      color: white; border-radius: 16px;
-      padding: 28px 26px; margin: 36px 0; text-align: center;
+    /* TAGS */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+    .tag { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; background: #f0e8dc; color: var(--gold); border: 1px solid var(--rule); }
+
+    /* VIEW COUNTER */
+    .view-counter-wrap {
+      text-align: center; padding: 32px 24px;
+      border-top: 1px solid var(--rule); margin-top: 48px;
     }
-    .lesson .icon { font-size: 2.5em; margin-bottom: 12px; display: block; }
-    .lesson h3 { font-size: 1.2em; margin-bottom: 10px; color: #93c5fd; }
-    .lesson p { color: rgba(255,255,255,0.88); margin: 0; font-size: 0.97em; }
 
-    footer { text-align: center; padding: 20px 20px 60px; color: #888; font-size: 0.85em; }
-    footer a { color: #3b82f6; font-weight: 700; text-decoration: none; }
+    footer {
+      background: var(--deep); color: rgba(255,255,255,0.4);
+      text-align: center; padding: 24px 16px;
+      font-size: 0.82rem; margin-top: 0;
+    }
+    footer a { color: rgba(255,255,255,0.6); text-decoration: none; }
 
-    @media (max-width: 600px) {
-      .hero-stats { gap: 20px; }
-      .hero-stat .num { font-size: 1.6em; }
+    @media(max-width:600px){
+      .stock-row { grid-template-columns: 1fr; }
+      .time-box  { grid-template-columns: repeat(2,1fr); }
+      article { padding: 40px 18px 30px; }
     }
   </style>
 </head>
 <body>
 
-<!-- HOME BAR -->
-<nav id="homeBar">
-  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
-  <span class="hb-site">Paul's World · AI Journey</span>
-</nav>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 HOME</a>
 
 <!-- HERO -->
-<header class="hero">
-  <div class="hero-badge">🤖 AI Journey · Article 5</div>
-  <h1>AI5: How Claude Manages<br><em>My Entire Website</em></h1>
-  <p class="hero-sub">From writing articles to pushing files to GitHub — all done automatically through AI and a simple API token</p>
-  <p class="hero-meta">📅 May 2026 &nbsp;·&nbsp; By Paul Yeo &nbsp;·&nbsp; Singapore 🇸🇬</p>
-  <div class="hero-stats">
-    <div class="hero-stat"><div class="num">1</div><div class="lbl">Token Needed</div></div>
-    <div class="hero-stat"><div class="num">0</div><div class="lbl">Manual Uploads</div></div>
-    <div class="hero-stat"><div class="num">∞</div><div class="lbl">Time Saved</div></div>
+<div class="hero">
+  <div class="hero-tag">🤖 AI Journey · Article 5</div>
+  <h1>How I Used AI to Build My<br><span class="accent">Options Trading Dashboard</span></h1>
+  <p class="hero-sub">From a simple question to a live Black-Scholes calculator — built entirely through conversation, no coding needed</p>
+  <div class="hero-meta">
+    <span>✍️ Paul Yeo</span>
+    <span>📅 May 2026</span>
+    <span>⏱ 6 min read</span>
+    <span>📊 Options · AI · Finance</span>
   </div>
-</header>
+</div>
 
 <article>
 
-  <p class="lead">
-    Most people think managing a website means logging into GitHub, finding the right file, pasting code, and clicking Save. I used to do that too — until Claude changed everything. Today, I just talk to Claude and my website updates itself. Here is how it works, and how you can set it up too.
-  </p>
+  <p>I am 70 years old, retired since 67, and I own stocks. Not many — just three. But I have been selling covered call options on them to generate extra income every month. The problem? Every time I wanted to figure out the right strike price to sell, I had to manually calculate numbers, look up option chains, and guess whether the premium was worth it.</p>
 
-  <h2>🌟 What Happened Today — A Real Example</h2>
+  <p>That all changed when I started using AI — specifically Claude — to build a live dashboard that does all the maths for me. Let me walk you through exactly what I did, and what I learned.</p>
 
-  <p>
-    This morning I discovered I had accidentally deleted important files from my GitHub repository. I was worried my website was broken and my image folders were gone. I told Claude about the problem — and within minutes, Claude had already:
-  </p>
+  <div class="divider">· · ·</div>
 
-  <div class="steps">
-    <div class="step">
-      <div class="num">1</div>
-      <div class="text">
-        <strong>Checked my entire GitHub repository</strong>
-        <span>Claude scanned all 29 files and folders in my repo and listed exactly what was there — and what was missing.</span>
-      </div>
+  <h2>My 3 Stocks</h2>
+
+  <p>I hold 100 shares each of these three companies, all purchased through Interactive Brokers:</p>
+
+  <div class="stock-row">
+    <div class="stock-card" style="border-color:#f59e0b;">
+      <div class="sym" style="color:#f59e0b;">FDS</div>
+      <div class="co">FactSet Research Systems</div>
+      <div class="pr">~$237</div>
     </div>
-    <div class="step">
-      <div class="num">2</div>
-      <div class="text">
-        <strong>Read through all 20 recent commits</strong>
-        <span>Claude looked back through every change made today — with timestamps — to understand what happened and when.</span>
-      </div>
+    <div class="stock-card" style="border-color:#06b6d4;">
+      <div class="sym" style="color:#06b6d4;">POOL</div>
+      <div class="co">Pool Corporation</div>
+      <div class="pr">~$178</div>
     </div>
-    <div class="step">
-      <div class="num">3</div>
-      <div class="text">
-        <strong>Diagnosed the problem clearly</strong>
-        <span>Claude confirmed the HTML files were all safe. The image folders were never on GitHub — they needed to be restored from my local computer backup.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="num">4</div>
-      <div class="text">
-        <strong>Pushed a new article directly to GitHub</strong>
-        <span>Claude wrote this very article, pushed it to GitHub, updated my index page, and inserted it into the correct category — all automatically.</span>
-      </div>
+    <div class="stock-card" style="border-color:#10b981;">
+      <div class="sym" style="color:#10b981;">ZTS</div>
+      <div class="co">Zoetis Inc</div>
+      <div class="pr">~$79</div>
     </div>
   </div>
 
-  <p>
-    All of this happened inside one conversation — no manual file uploads, no copy-pasting, no logging into GitHub. I just described what I wanted, and Claude did it.
-  </p>
+  <p>All three are down from what I paid. Rather than just sitting and waiting, I decided to sell <strong>covered calls</strong> — a strategy where I sell someone the right to buy my shares at a higher price in exchange for immediate cash (the premium). If the stock doesn't reach that price, I keep the premium as income.</p>
 
   <div class="pullquote">
-    "I just talk to Claude. My website updates itself. I don't need to touch GitHub at all."
+    "I don't need to be a programmer. I just need to know what I want — and AI figures out how to build it."
   </div>
 
-  <h2>🤖 What Claude Can Do With Your Website</h2>
+  <h2>The Problem I Was Trying to Solve</h2>
 
-  <div class="can-do">
-    <div class="can-do-header">✅ Things Claude Can Do Automatically</div>
-    <ul>
-      <li><span class="bullet">📄</span><span><strong>Write and push new HTML pages</strong> — Claude creates the full article, formats it to match your website style, and pushes it to GitHub in one step.</span></li>
-      <li><span class="bullet">🗂️</span><span><strong>Update the index page automatically</strong> — After creating a new page, Claude adds a link to index.html and places it in the correct category (Stories, AI Journey, Health, etc.).</span></li>
-      <li><span class="bullet">🔍</span><span><strong>Read your existing files</strong> — Claude can fetch any file from your GitHub to check its content, find errors, or use it as a reference for new work.</span></li>
-      <li><span class="bullet">📜</span><span><strong>Check your commit history</strong> — Claude can look back at every change ever made to your repo, with dates and messages.</span></li>
-      <li><span class="bullet">✏️</span><span><strong>Edit and update any existing page</strong> — Fix a typo, change a colour, add a section — Claude edits the file and pushes the update instantly.</span></li>
-      <li><span class="bullet">🛡️</span><span><strong>Never deletes files</strong> — Claude follows a strict rule: only create or update, never delete. Your files are always safe.</span></li>
+  <p>Every time I considered selling a covered call, I had the same questions:</p>
+
+  <div class="infobox blue">
+    <h4>❓ My Questions Before Every Trade</h4>
+    <ul style="padding-left:18px;line-height:2;">
+      <li>If I sell a call 10% above today's price, what premium will I earn?</li>
+      <li>What if I go 5% out-of-the-money (OTM) instead? More income but more risk?</li>
+      <li>How does the number of days to expiry (DTE) change the premium?</li>
+      <li>Which combination gives me the best return for the least risk?</li>
     </ul>
   </div>
 
-  <h2>🔑 The Secret — A GitHub Personal Access Token</h2>
+  <p>Before AI, answering these questions meant looking up option chains on my broker's platform, manually comparing rows of numbers, and doing mental arithmetic. It took 20–30 minutes per stock and I was never confident I had the full picture.</p>
 
-  <p>
-    For Claude to access your GitHub, you need to give it a special password called a <strong>Personal Access Token (PAT)</strong>. This is a long code that gives Claude permission to read and write your files. You create it once on GitHub and share it with Claude — that's all.
-  </p>
+  <h2>What I Asked Claude to Build</h2>
 
-  <div class="highlight">
-    <span class="icon">💡</span>
-    Think of the token like a <strong>spare key to your house</strong>. You give it to a trusted helper (Claude) so they can come in and do the work — without you having to be there to open the door every time.
+  <p>I started with a simple message. No technical jargon. Just plain English:</p>
+
+  <div class="chat-wrap">
+    <div class="chat-label right">Me</div>
+    <div class="chat-bubble user">Compute premium amount for DTE 2 weeks and 20% above strike price for my 3 stocks FDS, POOL and ZTS.</div>
+
+    <div style="height:14px"></div>
+
+    <div class="chat-label">Claude (AI)</div>
+    <div class="chat-bubble ai">Here's your 2-Week DTE Options Premium Calculator based on today's stock prices. Using Black-Scholes model with realistic implied volatility for each stock — FDS: 28%, POOL: 35%, ZTS: 30%...<br><br>At 20% OTM with only 14 days, premiums will be very small — essentially lottery tickets. I'd recommend considering 5–10% OTM for meaningful income.</div>
   </div>
 
-  <h2>📋 How to Create Your GitHub Token — Step by Step</h2>
+  <p>That single conversation gave me not just the numbers — it also educated me. Claude explained <em>why</em> 20% OTM was impractical for a 2-week expiry, and suggested better alternatives. I then asked for more:</p>
 
-  <div class="token-steps">
-    <div class="token-step">
-      <div class="badge">Step 1</div>
-      <div class="content">Go to <strong>github.com</strong> and sign in to your account.</div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 2</div>
-      <div class="content">Click your <strong>profile photo</strong> (top-right corner) → then click <strong>Settings</strong>.</div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 3</div>
-      <div class="content">Scroll all the way down the left sidebar and click <strong>Developer settings</strong>.</div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 4</div>
-      <div class="content">Click <strong>Personal access tokens</strong> → then <strong>Tokens (classic)</strong> → then <strong>Generate new token (classic)</strong>.</div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 5</div>
-      <div class="content">
-        Give it a name like <code>claude-website-access</code>. Under <strong>Expiration</strong>, choose <strong>No expiration</strong> so it never expires.
-      </div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 6</div>
-      <div class="content">
-        Under <strong>Scopes</strong>, tick the <strong>repo</strong> checkbox. This gives Claude permission to read and write your files. No other boxes needed.
-      </div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 7</div>
-      <div class="content">Click <strong>Generate token</strong>. GitHub shows you the token — it starts with <code>ghp_</code>. <strong>Copy it immediately</strong> — GitHub will never show it again.</div>
-    </div>
-    <div class="token-step">
-      <div class="badge">Step 8</div>
-      <div class="content">
-        Save the token somewhere safe — in a notes app or password manager. Then paste it into Claude's user preferences so Claude always has access.
-      </div>
-    </div>
+  <div class="chat-wrap">
+    <div class="chat-label right">Me</div>
+    <div class="chat-bubble user">Create a dashboard for me to enter any % OTM and compute the premium dynamically.</div>
+
+    <div style="height:14px"></div>
+
+    <div class="chat-label">Claude (AI)</div>
+    <div class="chat-bubble ai">Here's your Dynamic OTM Premium Dashboard with sliders for OTM % and Days to Expiry, a full position table, and a comparison table showing total income at 5%, 10%, 15%, 20%, 25%, 30% OTM levels...</div>
   </div>
 
-  <div class="warning">
-    <strong>⚠️ Important — Keep Your Token Private</strong>
-    <p>Your GitHub token is like your password. Never share it publicly, never post it in a public chat or forum. Only share it with Claude in your private conversation. If you ever think it has been exposed, go back to GitHub Settings and delete it, then create a new one.</p>
-  </div>
-
-  <h2>💬 How to Tell Claude to Push a File</h2>
-
-  <p>
-    Once Claude has your token, you never need to think about the technical details again. You just describe what you want in plain English. Here are real examples of what you can say:
-  </p>
+  <h2>How the Dashboard Was Built — Step by Step</h2>
 
   <div class="steps">
     <div class="step">
-      <div class="num">💬</div>
-      <div class="text">
-        <strong>"Write an article about my trip to Japan and add it to My Travel Stories"</strong>
-        <span>Claude writes the full HTML article, pushes it to GitHub as <code>s8.html</code>, and adds it to the Stories section in index.html.</span>
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>I described what I wanted in plain English</strong>
+        <span>No coding knowledge required. I told Claude what I needed — a table showing premium income at different OTM percentages for my 3 stocks.</span>
       </div>
     </div>
     <div class="step">
-      <div class="num">💬</div>
-      <div class="text">
-        <strong>"Fix the title on my MacRitchie article"</strong>
-        <span>Claude fetches <code>s1.html</code>, makes the change, and pushes the updated file back — all in seconds.</span>
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Claude built the Black-Scholes calculator</strong>
+        <span>The Black-Scholes model is the standard mathematical formula used by professional options traders worldwide. Claude implemented it in code without me understanding a single line of it.</span>
       </div>
     </div>
     <div class="step">
-      <div class="num">💬</div>
-      <div class="text">
-        <strong>"Check what files I have on GitHub"</strong>
-        <span>Claude reads your repository and lists every file and folder with their names and types.</span>
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>I spotted a mistake and asked for a fix</strong>
+        <span>The risk label was showing "Moderate" even at settings that were clearly aggressive. I questioned it, Claude explained the bug — the probability was inverted — and fixed it immediately.</span>
       </div>
     </div>
     <div class="step">
-      <div class="num">💬</div>
-      <div class="text">
-        <strong>"Create a new health article about my blood pressure"</strong>
-        <span>Claude creates <code>h4.html</code> with the correct health page style, pushes it, and adds it to the Health section in index.html.</span>
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <strong>I asked for it to be added to my live website</strong>
+        <span>Claude pushed the entire dashboard directly to my GitHub repository and it appeared on my live website within minutes. I did not touch a single file.</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <strong>I kept refining through conversation</strong>
+        <span>Tab layout, default tab, colour coding, probability labels — every improvement was just one message. Claude remembered the context and updated the right parts each time.</span>
       </div>
     </div>
   </div>
 
-  <h2>🔄 How the Auto-Push Works Behind the Scenes</h2>
+  <h2>What the Dashboard Shows Me Now</h2>
 
-  <p>
-    You don't need to understand the technical details to use this — but for those who are curious, here is what happens every time Claude pushes a file to your GitHub:
-  </p>
+  <p>The final dashboard has two tabs. The first shows my live stock portfolio. The second — the OTM Calculator — is where I spend most of my time:</p>
 
-  <div class="steps">
-    <div class="step">
-      <div class="num">1</div>
-      <div class="text">
-        <strong>Claude writes the HTML file</strong>
-        <span>The complete file is created with all your standard rules — Home button, view counter, correct colours and fonts.</span>
-      </div>
+  <div class="infobox dark">
+    <h4>🎯 OTM Calculator Features</h4>
+    <ul style="padding-left:18px;line-height:2.2;color:#cbd5e1;">
+      <li><strong style="color:#60a5fa;">OTM % slider</strong> — drag from 1% to 50%, or type any value</li>
+      <li><strong style="color:#60a5fa;">DTE slider</strong> — set days to expiry from 1 to 90 days</li>
+      <li><strong style="color:#60a5fa;">Premium per share</strong> — for each of my 3 stocks, instantly</li>
+      <li><strong style="color:#60a5fa;">Total income</strong> — what I would collect across all 3 positions</li>
+      <li><strong style="color:#60a5fa;">Annualised return %</strong> — so I can compare strategies fairly</li>
+      <li><strong style="color:#60a5fa;">Profit probability</strong> — chance the call expires worthless (I keep premium)</li>
+      <li><strong style="color:#60a5fa;">Risk label</strong> — 🟢 Safe / 🟡 Moderate / 🔴 Aggressive, based on real probability</li>
+      <li><strong style="color:#60a5fa;">Comparison table</strong> — shows all OTM levels side by side at one glance</li>
+    </ul>
+  </div>
+
+  <h2>What I Discovered About My Own Strategy</h2>
+
+  <p>Once I had the dashboard, I learned things I never knew before. Here is what the numbers showed me:</p>
+
+  <table class="otm-table">
+    <thead>
+      <tr>
+        <th>OTM %</th>
+        <th>Total Income (14 DTE)</th>
+        <th>Risk Level</th>
+        <th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>5%</strong></td>
+        <td class="good">$253.76</td>
+        <td class="good">🟢 Safe (76% prob)</td>
+        <td class="good">✅ Best balance</td>
+      </tr>
+      <tr>
+        <td><strong>10%</strong></td>
+        <td class="warn">$38.58</td>
+        <td class="warn">🟡 Moderate</td>
+        <td class="warn">⚠️ Low income</td>
+      </tr>
+      <tr>
+        <td><strong>15%</strong></td>
+        <td class="bad">$4.04</td>
+        <td class="bad">🔴 Aggressive</td>
+        <td class="bad">❌ Not worth it</td>
+      </tr>
+      <tr>
+        <td><strong>20%+</strong></td>
+        <td class="bad">$0.32</td>
+        <td class="bad">🔴 Aggressive</td>
+        <td class="bad">❌ Lottery ticket</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The insight was clear: <strong>5% OTM with 14–21 days to expiry</strong> gives the best income with the highest probability of keeping the premium. Before this dashboard, I might have blindly sold 20% OTM calls thinking I was being "safe" — when in reality I was earning almost nothing.</p>
+
+  <div class="pullquote">
+    "The dashboard did not just save me time. It changed how I think about options trading."
+  </div>
+
+  <h2>How Much Time Did AI Save Me?</h2>
+
+  <div class="time-box">
+    <div class="time-item">
+      <div class="num">0</div>
+      <div class="lbl">Lines of code I wrote</div>
     </div>
-    <div class="step">
-      <div class="num">2</div>
-      <div class="text">
-        <strong>Claude calls the GitHub API</strong>
-        <span>Using your token, Claude sends the file directly to GitHub's servers using a secure API call — like a digital courier delivering a package.</span>
-      </div>
+    <div class="time-item">
+      <div class="num">~3h</div>
+      <div class="lbl">Saved vs manual calculation</div>
     </div>
-    <div class="step">
-      <div class="num">3</div>
-      <div class="text">
-        <strong>GitHub saves the file with a commit</strong>
-        <span>GitHub creates a permanent record of the change — called a commit — with a unique SHA code like <code>532cf8a3</code>. This is proof the file was saved.</span>
-      </div>
+    <div class="time-item">
+      <div class="num">5</div>
+      <div class="lbl">Conversations to build it</div>
     </div>
-    <div class="step">
-      <div class="num">4</div>
-      <div class="text">
-        <strong>Vercel detects the change and goes live</strong>
-        <span>Your website hosting (Vercel) automatically detects the new file on GitHub and publishes it to your live website within about 30 seconds.</span>
-      </div>
+    <div class="time-item">
+      <div class="num">∞</div>
+      <div class="lbl">Times I can reuse it</div>
     </div>
   </div>
 
-  <div class="lesson">
-    <span class="icon">🚀</span>
-    <h3>The Result</h3>
-    <p>From "I want a new article" to a live page on paulsworld.vercel.app — in under 5 minutes, with zero manual steps. No logging into GitHub. No copy-pasting. No uploading files. Just a conversation with Claude.</p>
+  <p>What would have taken a programmer several days to build, and required me to understand the Black-Scholes formula, option Greeks, and web development — was done through simple conversations in an afternoon.</p>
+
+  <h2>What I Learned About Using AI</h2>
+
+  <div class="tag-row">
+    <span class="tag">Be specific</span>
+    <span class="tag">Ask follow-up questions</span>
+    <span class="tag">Challenge wrong answers</span>
+    <span class="tag">Iterate step by step</span>
+    <span class="tag">You are the boss</span>
   </div>
 
-  <h2>📌 Key Things to Remember</h2>
+  <p>The biggest lesson: <strong>AI is not magic, and it does make mistakes.</strong> My risk label was wrong at first — it said "Moderate" when the real probability told a different story. But when I questioned it, Claude admitted the bug, explained the correct logic, and fixed it. That back-and-forth is how good work gets done.</p>
 
-  <p>
-    After months of using Claude to manage my website, here are the most important lessons I have learned:
-  </p>
+  <p>As a 70-year-old retiree with no programming background, I found this empowering. I did not need to learn to code. I needed to learn to <em>think clearly</em> — to describe what I want, recognise when something looks wrong, and ask good questions. That is a skill I already had.</p>
 
-  <div class="steps">
-    <div class="step">
-      <div class="num">✅</div>
-      <div class="text">
-        <strong>Always confirm the commit SHA</strong>
-        <span>After every push, Claude gives you a SHA code. This confirms the file was saved successfully. If you don't see it, ask Claude to confirm.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="num">✅</div>
-      <div class="text">
-        <strong>Visit the live page after every push</strong>
-        <span>Go to paulsworld.vercel.app and check the new or updated page looks correct. Take 30 seconds to verify — it saves hours of fixing later.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="num">✅</div>
-      <div class="text">
-        <strong>Keep your image folders backed up locally</strong>
-        <span>Claude can push HTML files but cannot push image folders automatically. Always keep your photos backed up on your computer and Google Drive.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="num">✅</div>
-      <div class="text">
-        <strong>Tell Claude your token once — save it in preferences</strong>
-        <span>Put your GitHub token in Claude's User Preferences so every conversation has access without you having to repeat it.</span>
-      </div>
-    </div>
-  </div>
+  <h2>Try It Yourself</h2>
 
-</article>
-
-
-  <!-- NEXT ARTICLE -->
-  <div style="text-align:center;margin:40px 16px 16px;">
-    <a href="ai6.html" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1a1a2e,#0f2060);color:white;text-decoration:none;font-family:'Source Serif 4',serif;font-size:1em;font-weight:600;padding:18px 32px;border-radius:14px;box-shadow:0 6px 24px rgba(74,108,247,0.3);">
-      <span style="font-size:1.3em">📈</span>
-      <span>
-        <span style="display:block;font-size:0.72em;color:#a5b4fc;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;">Next Article</span>
-        AI6: Superstore Executive Dashboard →
-      </span>
+  <div class="infobox green">
+    <h4>🚀 Live Dashboard — Free to Use</h4>
+    <p style="margin-bottom:12px;">My OTM Calculator is live on my website. You can see exactly how it works:</p>
+    <a href="https://paulsworld.vercel.app/stock-dashboard.html"
+       style="display:inline-block;background:#166534;color:white;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:700;font-size:0.9rem;">
+      👉 Open My OTM Calculator
     </a>
   </div>
 
-<div style="text-align:center;padding:8px 0;color:#888;font-size:0.9em;">
+  <p>If you own stocks and are interested in generating extra income through covered calls, I hope this article shows you that the barrier to entry is lower than you think. You do not need a finance degree. You do not need to code. You just need to ask the right questions — and AI will help you build the tools you need.</p>
+
+  <p style="color:var(--muted);font-size:0.9rem;font-style:italic;">— Paul Yeo, May 2026 · Retired at 67 · Learning every day</p>
+
+</article>
+
+<div class="view-counter-wrap">
   <script src="/view-counter.js"></script>
 </div>
 
 <footer>
-  &copy; 2026 Paul Yeo &nbsp;|&nbsp; Built with AI 🚀
-  <br><br>
-  <a href="https://paulsworld.vercel.app/">🏠 Back to Paul's World</a>
+  © 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp; AI Journey Series
 </footer>
 
 </body>
