@@ -146,12 +146,12 @@
 
 <!-- TAB NAV -->
 <div class="tab-nav">
-  <button class="tab-btn" onclick="switchTab('portfolio',this)">📈 My Portfolio</button>
-  <button class="tab-btn active" onclick="switchTab('otm',this)">🎯 OTM Calculator</button>
+  <button class="tab-btn active" onclick="switchTab('portfolio',this)">📈 My Portfolio</button>
+  <button class="tab-btn" onclick="switchTab('otm',this)">🎯 OTM Calculator</button>
 </div>
 
 <!-- ══════════════ TAB 1: PORTFOLIO ══════════════ -->
-<div id="tab-portfolio" class="tab-panel">
+<div id="tab-portfolio" class="tab-panel active">
 <div class="wrap">
   <a href="/" class="home-btn">🏠 Back to Home</a>
   <div class="header">
@@ -197,7 +197,7 @@
 </div>
 
 <!-- ══════════════ TAB 2: OTM CALCULATOR ══════════════ -->
-<div id="tab-otm" class="tab-panel active">
+<div id="tab-otm" class="tab-panel">
 <div class="otm-wrap">
   <div class="otm-hdr">
     <div>
@@ -405,6 +405,8 @@ function calcRow(stock,price,otp,days){const S=price,K=S*(1+otp/100),T=days/365,
 function fP(v){return v<0.01?'$'+v.toFixed(4):'$'+v.toFixed(2);}
 function fD(v){return '$'+v.toFixed(2);}
 function rCol(p){return p<=5?'#4ade80':p<=15?'#eab308':'#f87171';}
+function probRiskColor(prob){return prob>=80?'#4ade80':prob>=60?'#eab308':'#f87171';}
+function probRiskLabel(prob){return prob>=80?'🟢 Safe':prob>=60?'🟡 Moderate':'🔴 Aggressive';}
 function aCol(v){return v>15?'#4ade80':v>5?'#eab308':'#f87171';}
 function pCol(v){return v>70?'#4ade80':v>50?'#eab308':'#f87171';}
 function bar(pct,c,lbl){return `<div class="bw"><div class="bb"><div class="bf" style="width:${Math.min(pct,100)}%;background:${c};"></div></div><span style="color:${c};font-weight:700;min-width:40px;">${lbl}</span></div>`;}
@@ -422,8 +424,9 @@ function renderOTM(){
   document.getElementById('sAnn').textContent=avgAnn.toFixed(2)+'%';
   document.getElementById('sProb').textContent=avgProb.toFixed(1)+'%';
   document.getElementById('sProb').style.color=pCol(avgProb);
+  updatePill(avgProb);
   document.getElementById('sOtm').textContent=otmPct+'%';
-  document.getElementById('sOtm').style.color=rCol(otmPct);
+  document.getElementById('sOtm').style.color=probRiskColor(avgProb);
   document.getElementById('sDteSub').textContent=dte+' DTE · Covered Calls';
   document.getElementById('mainTitle').textContent='Position Details — '+otmPct+'% OTM Covered Calls';
 
@@ -471,16 +474,21 @@ function updateExpiry(){
   document.getElementById('expiryDate').textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   document.getElementById('expiryDays').textContent=dte+' calendar days';
 }
-function updatePill(){
-  const pill=document.getElementById('riskPill'),c=rCol(otmPct);
-  pill.textContent=otmPct<=5?'Conservative':otmPct<=15?'Moderate':'Aggressive';
+function updatePill(avgProb){
+  if(avgProb===undefined){
+    // called before renderOTM — compute quickly
+    const rows=STOCKS.map((s,i)=>calcRow(s,otmPrices[i],otmPct,dte));
+    avgProb=rows.reduce((s,r)=>s+r.prob,0)/rows.length;
+  }
+  const pill=document.getElementById('riskPill'),c=probRiskColor(avgProb);
+  pill.textContent=probRiskLabel(avgProb)+' ('+avgProb.toFixed(0)+'% prob)';
   pill.style.background=c+'22';pill.style.color=c;pill.style.border='1px solid '+c+'44';
 }
 function syncOtm(src){
   const v=parseFloat(src==='inp'?document.getElementById('otmInp').value:document.getElementById('otmSlider').value);
   if(isNaN(v)||v<1||v>50)return;otmPct=v;
   if(src==='inp')document.getElementById('otmSlider').value=v; else document.getElementById('otmInp').value=v;
-  updatePill();renderOTM();
+  renderOTM();
 }
 function syncDte(src){
   const v=parseInt(src==='inp'?document.getElementById('dteInp').value:document.getElementById('dteSlider').value);
@@ -491,7 +499,7 @@ function syncDte(src){
 
 /* ── INIT ── */
 document.getElementById('todayBadge').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-updatePill(); updateExpiry();
+updateExpiry();
 refreshAll();
 </script>
 </body>
