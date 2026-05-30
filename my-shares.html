@@ -292,9 +292,9 @@
        - "name" is optional; if left blank the app fetches it from Finnhub.
        ======================================================================= */
     var HOLDINGS = [
-        { symbol: "FDS",  name: "FactSet Research Systems", cost: 343.24 },
-        { symbol: "POOL", name: "Pool Corporation",        cost: 278.40 },
-        { symbol: "ZTS",  name: "Zoetis",                  cost: 135.60 }
+        { symbol: "FDS",  name: "FactSet Research Systems", cost: 343.24, shares: 100 },
+        { symbol: "POOL", name: "Pool Corporation",        cost: 278.40, shares: 100 },
+        { symbol: "ZTS",  name: "Zoetis",                  cost: 135.60, shares: 100 }
     ];
 
     /* ----------------------------------------------------------------------- */
@@ -354,6 +354,15 @@
         var n = (c === 0 || c) ? Number(c) : NaN;
         if (isFinite(n) && n > 0) return n;   // localStorage override wins
         return defaultCost(sym);               // else use hard-coded default
+    }
+    function getShares(sym) {
+        for (var i = 0; i < HOLDINGS.length; i++) {
+            if ((HOLDINGS[i].symbol || "").trim().toUpperCase() === sym) {
+                var n = Number(HOLDINGS[i].shares);
+                return (isFinite(n) && n > 0) ? n : null;
+            }
+        }
+        return null;
     }
 
     /* ---------- messaging (global slot) ---------- */
@@ -551,7 +560,15 @@
         var cls = diff > 0 ? "positive" : diff < 0 ? "negative" : "neutral";
         var sign = diff > 0 ? "+" : diff < 0 ? "" : "";
         refs.pl.className = "pl-pill " + cls;
-        refs.pl.textContent = sign + pct.toFixed(2) + "%  vs avg cost";
+
+        var shares = getShares(sym);
+        if (shares) {
+            var totalPL = diff * shares;            // total $ P&L for this holding
+            refs.pl.textContent = (totalPL >= 0 ? "+$" : "-$") + fmt(Math.abs(totalPL)) +
+                "  P&L  ·  " + sign + pct.toFixed(2) + "%  ·  " + shares + " sh";
+        } else {
+            refs.pl.textContent = sign + pct.toFixed(2) + "%  vs avg cost";
+        }
     }
 
     function renderCardError(sym, text) {
