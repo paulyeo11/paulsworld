@@ -148,6 +148,83 @@
 
     .card-err { font-size: 13px; color: #b91c1c; margin-top: 14px; font-weight: 600; }
 
+    /* cost / P&L block */
+    .costblock {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid #f0f0f3;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .costblock .ci { text-align: center; }
+    .costblock .label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .4px; }
+    .costblock .val { font-size: 14px; font-weight: 700; margin-top: 3px; }
+    .pl-pill {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 6px 10px;
+        border-radius: 8px;
+    }
+    .pl-pill.positive { background: #dcfce7; color: #16a34a; }
+    .pl-pill.negative { background: #fee2e2; color: #dc2626; }
+    .pl-pill.neutral  { background: #f3f4f6; color: #6b7280; }
+
+    .setcost-hint {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed #ececf2;
+        font-size: 11px;
+        color: #b8b8c2;
+        text-align: center;
+    }
+
+    /* "Edit my costs" button on control bar */
+    .cost-btn {
+        background: #eef0ff; border: 0; color: #4f56b5;
+        font-weight: 700; font-size: 12px;
+        padding: 7px 14px; border-radius: 20px; cursor: pointer;
+        margin-left: 6px;
+    }
+    .cost-btn:hover { background: #e2e6ff; }
+
+    /* inline cost editor */
+    .cost-editor {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid #f0f0f3;
+    }
+    .cost-editor h3 { font-size: 13px; color: #444; margin-bottom: 10px; }
+    .cost-rows { display: flex; flex-direction: column; gap: 10px; }
+    .cost-row { display: flex; align-items: center; gap: 10px; }
+    .cost-row label { flex: 0 0 56px; font-weight: 700; font-size: 13px; color: #555; }
+    .cost-row .prefix {
+        flex: 1; display: flex; align-items: center;
+        background: #f7f7fb; border: 1px solid #e6e6ef; border-radius: 10px;
+        padding: 0 10px; overflow: hidden;
+    }
+    .cost-row .prefix span { color: #999; font-size: 14px; }
+    .cost-row input {
+        flex: 1; border: 0; background: transparent; outline: none;
+        font-size: 14px; padding: 9px 4px; color: #333; min-width: 0;
+    }
+    .cost-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .cost-save {
+        background: #667eea; border: 0; color: #fff; font-weight: 700; font-size: 13px;
+        padding: 9px 18px; border-radius: 10px; cursor: pointer;
+    }
+    .cost-save:hover { background: #5563d6; }
+    .cost-cancel, .cost-clear {
+        background: #f3f4f6; border: 0; color: #555; font-weight: 700; font-size: 13px;
+        padding: 9px 18px; border-radius: 10px; cursor: pointer;
+    }
+    .cost-cancel:hover { background: #e5e7eb; }
+    .cost-clear { color: #b91c1c; background: #fee2e2; }
+    .cost-clear:hover { background: #fcd5d5; }
+    .cost-note { font-size: 11px; color: #aaa; margin-top: 10px; line-height: 1.5; }
+
     footer {
         text-align: center;
         color: rgba(255,255,255,0.85);
@@ -178,8 +255,13 @@
     <div class="controlbar">
         <div class="controls-row">
             <span><span class="pulse" id="pulse"></span><span id="liveLabel">Live</span> &middot; <span id="lastUpdated">--</span></span>
-            <button class="toggle-btn" id="pauseBtn">Pause</button>
+            <span>
+                <button class="cost-btn" id="costBtn">&#9999;&#65039; Edit my costs</button>
+                <button class="toggle-btn" id="pauseBtn">Pause</button>
+            </span>
         </div>
+        <!-- inline cost editor renders here -->
+        <div id="costEditor"></div>
         <div class="hint">
             Powered by Finnhub. <span class="keylink" id="changeKey">&#9881; change key</span>
             &middot; Get a free key at <a href="https://finnhub.io" target="_blank" rel="noopener">finnhub.io</a>.
@@ -218,6 +300,7 @@
     /* ----------------------------------------------------------------------- */
 
     var KEY_STORE  = "finnhub_api_key";   // SAME key name as live-price.html (reused)
+    var COST_STORE = "my_shares_costs";   // PRIVATE per-device cost basis map (localStorage only)
     var REFRESH_MS = 10000;               // auto-refresh interval (10s)
     var MAX_POINTS = 40;                  // sparkline rolling buffer length
 
@@ -228,18 +311,40 @@
         lastUpdated: document.getElementById("lastUpdated"),
         pauseBtn:    document.getElementById("pauseBtn"),
         changeKey:   document.getElementById("changeKey"),
-        msgSlot:     document.getElementById("msgSlot")
+        msgSlot:     document.getElementById("msgSlot"),
+        costBtn:     document.getElementById("costBtn"),
+        costEditor:  document.getElementById("costEditor")
     };
 
     var state = {
         paused: false,
         timer: null,
+        editingCosts: false,
+        lastPrice: {}, // symbol -> last live close price (for re-rendering P&L on cost save)
         stocks: {}   // symbol -> { series:[], name:"", refs:{} }
     };
 
-    /* ---------- storage ---------- */
+    /* ---------- storage: API key ---------- */
     function getKey()  { try { return localStorage.getItem(KEY_STORE) || ""; } catch(e){ return ""; } }
     function setKey(k) { try { localStorage.setItem(KEY_STORE, k); } catch(e){} }
+
+    /* ---------- storage: private cost basis (localStorage only, never hardcoded) ---------- */
+    function getCosts() {
+        try {
+            var raw = localStorage.getItem(COST_STORE);
+            if (!raw) return {};
+            var obj = JSON.parse(raw);
+            return (obj && typeof obj === "object") ? obj : {};
+        } catch(e){ return {}; }
+    }
+    function setCosts(map) {
+        try { localStorage.setItem(COST_STORE, JSON.stringify(map || {})); } catch(e){}
+    }
+    function getCost(sym) {
+        var c = getCosts()[sym];
+        var n = (c === 0 || c) ? Number(c) : NaN;
+        return (isFinite(n) && n > 0) ? n : null;
+    }
 
     /* ---------- messaging (global slot) ---------- */
     function showMsg(text, type) {
@@ -303,6 +408,12 @@
                     '<div class="ministat"><div class="label">Low</div><div class="val" data-low>--</div></div>' +
                     '<div class="ministat"><div class="label">Prev</div><div class="val" data-prev>--</div></div>' +
                 '</div>' +
+                '<div class="costblock" data-costblock style="display:none">' +
+                    '<div class="ci"><div class="label">Avg Cost</div><div class="val" data-avgcost>--</div></div>' +
+                    '<div class="ci"><div class="label">Per Share</div><div class="val" data-pershare>--</div></div>' +
+                    '<div class="pl-pill neutral" data-pl>--</div>' +
+                '</div>' +
+                '<div class="setcost-hint" data-setcost style="display:none">No cost set &middot; tap &#9999;&#65039; Edit my costs to add yours</div>' +
                 '<div class="card-err" data-err style="display:none"></div>';
 
             els.grid.appendChild(card);
@@ -317,8 +428,16 @@
                 high:       card.querySelector("[data-high]"),
                 low:        card.querySelector("[data-low]"),
                 prev:       card.querySelector("[data-prev]"),
+                costblock:  card.querySelector("[data-costblock]"),
+                avgcost:    card.querySelector("[data-avgcost]"),
+                pershare:   card.querySelector("[data-pershare]"),
+                pl:         card.querySelector("[data-pl]"),
+                setcost:    card.querySelector("[data-setcost]"),
                 err:        card.querySelector("[data-err]")
             };
+
+            // show cost/hint state immediately (price arrives on first refresh)
+            renderCost(sym);
         });
     }
 
@@ -381,6 +500,48 @@
         st.series.push(q.c);
         if (st.series.length > MAX_POINTS) st.series.shift();
         drawSpark(sym);
+
+        // remember the live price so cost edits can re-render P&L instantly
+        state.lastPrice[sym] = q.c;
+        renderCost(sym);
+    }
+
+    /* ---------- render the cost / P&L block (live price vs avg cost) ---------- */
+    function renderCost(sym) {
+        var st = state.stocks[sym];
+        if (!st || !st.refs) return;
+        var refs = st.refs;
+
+        var cost = getCost(sym);
+        var price = state.lastPrice[sym];
+
+        // no cost recorded on this device -> hide P&L, show subtle hint
+        if (cost === null) {
+            refs.costblock.style.display = "none";
+            refs.setcost.style.display = "block";
+            return;
+        }
+
+        refs.setcost.style.display = "none";
+        refs.costblock.style.display = "grid";
+        refs.avgcost.textContent = "$" + fmt(cost);
+
+        // need a live price to compute the difference
+        if (price === null || price === undefined || isNaN(price)) {
+            refs.pershare.textContent = "--";
+            refs.pl.className = "pl-pill neutral";
+            refs.pl.textContent = "Waiting for price…";
+            return;
+        }
+
+        var diff = price - cost;                 // $ gain/loss per share
+        var pct  = (diff / cost) * 100;          // % difference
+        refs.pershare.textContent = (diff >= 0 ? "+$" : "-$") + fmt(Math.abs(diff));
+
+        var cls = diff > 0 ? "positive" : diff < 0 ? "negative" : "neutral";
+        var sign = diff > 0 ? "+" : diff < 0 ? "" : "";
+        refs.pl.className = "pl-pill " + cls;
+        refs.pl.textContent = sign + pct.toFixed(2) + "%  vs avg cost";
     }
 
     function renderCardError(sym, text) {
@@ -479,8 +640,84 @@
         els.liveLabel.textContent = p ? "Paused" : "Live";
     }
 
+    /* ---------- inline cost editor ---------- */
+    function closeCostEditor() {
+        state.editingCosts = false;
+        els.costEditor.innerHTML = "";
+        els.costBtn.textContent = "✏️ Edit my costs";
+    }
+
+    function openCostEditor() {
+        if (state.editingCosts) { closeCostEditor(); return; }
+        state.editingCosts = true;
+        els.costBtn.textContent = "Close editor";
+
+        var costs = getCosts();
+        var rows = HOLDINGS.map(function (h) {
+            var sym = (h.symbol || "").trim().toUpperCase();
+            var existing = (costs[sym] === 0 || costs[sym]) ? costs[sym] : "";
+            return (
+                '<div class="cost-row">' +
+                    '<label for="cost_' + sym + '">' + sym + '</label>' +
+                    '<div class="prefix"><span>$</span>' +
+                        '<input id="cost_' + sym + '" data-sym="' + sym + '" type="number" step="0.01" min="0" ' +
+                            'inputmode="decimal" placeholder="avg cost / share" value="' + existing + '">' +
+                    '</div>' +
+                '</div>'
+            );
+        }).join("");
+
+        els.costEditor.innerHTML =
+            '<div class="cost-editor">' +
+                '<h3>Your average cost per share</h3>' +
+                '<div class="cost-rows">' + rows + '</div>' +
+                '<div class="cost-actions">' +
+                    '<button class="cost-save" id="costSave">Save</button>' +
+                    '<button class="cost-cancel" id="costCancel">Cancel</button>' +
+                    '<button class="cost-clear" id="costClear">Clear all</button>' +
+                '</div>' +
+                '<div class="cost-note">Stored only in this browser (localStorage) &middot; never uploaded or shared. ' +
+                    'Leave a field blank to remove that holding’s cost.</div>' +
+            '</div>';
+
+        document.getElementById("costSave").onclick = saveCostEditor;
+        document.getElementById("costCancel").onclick = closeCostEditor;
+        document.getElementById("costClear").onclick = function () {
+            if (window.confirm("Remove all saved average costs from this device?")) {
+                setCosts({});
+                HOLDINGS.forEach(function (h) { renderCost((h.symbol || "").trim().toUpperCase()); });
+                closeCostEditor();
+            }
+        };
+        // Enter key inside any field saves
+        var inputs = els.costEditor.querySelectorAll("input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].addEventListener("keydown", function (e) {
+                if (e.key === "Enter") { e.preventDefault(); saveCostEditor(); }
+            });
+        }
+    }
+
+    function saveCostEditor() {
+        var map = {};
+        var inputs = els.costEditor.querySelectorAll("input[data-sym]");
+        for (var i = 0; i < inputs.length; i++) {
+            var sym = inputs[i].getAttribute("data-sym");
+            var raw = (inputs[i].value || "").trim();
+            if (raw === "") continue;            // blank = no cost for this ticker
+            var n = Number(raw);
+            if (isFinite(n) && n > 0) map[sym] = n;
+        }
+        setCosts(map);
+        HOLDINGS.forEach(function (h) { renderCost((h.symbol || "").trim().toUpperCase()); });
+        closeCostEditor();
+        showMsg("Average costs saved on this device.", "info");
+        setTimeout(clearMsg, 2500);
+    }
+
     /* ---------- wire up ---------- */
     els.pauseBtn.onclick = function(){ setPaused(!state.paused); };
+    els.costBtn.onclick  = openCostEditor;
     els.changeKey.onclick = function(){
         if (ensureKey(true)) { showMsg("API key updated.", "info"); refreshAll(); }
     };
