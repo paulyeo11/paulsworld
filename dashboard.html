@@ -386,15 +386,24 @@ function syncDte(src){
   updateExpiryDate();renderMain();
 }
 
-/* ---- FINNHUB LIVE PRICES ---- */
-const FINNHUB_KEY = 'd8d6qhpr01qub2putlogd8d6qhpr01qub2putlp0';
+/* ---- YAHOO FINANCE LIVE PRICES ---- */
 const SYMBOLS = ['FDS','POOL','ZTS'];
 
 async function fetchLivePrice(symbol){
   try{
-    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    const r = await fetch(url, {headers:{'Accept':'application/json'}});
     const d = await r.json();
-    if(d && d.c && d.c > 0) return d.c;
+    const price = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if(price && price > 0) return price;
+  }catch(e){}
+  // fallback: try query2
+  try{
+    const url2 = `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    const r2 = await fetch(url2, {headers:{'Accept':'application/json'}});
+    const d2 = await r2.json();
+    const price2 = d2?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if(price2 && price2 > 0) return price2;
   }catch(e){}
   return null;
 }
@@ -406,7 +415,7 @@ async function loadLivePrices(){
   for(let i=0;i<SYMBOLS.length;i++){
     const live = await fetchLivePrice(SYMBOLS[i]);
     if(live){
-      stockPrices[i] = live;
+      stockPrices[i] = parseFloat(live.toFixed(2));
       anyUpdated = true;
     }
   }
@@ -415,8 +424,8 @@ async function loadLivePrices(){
     const now = new Date();
     const t = now.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     statusEl.textContent = anyUpdated
-      ? `✅ Live prices loaded at ${t}`
-      : `⚠️ Could not fetch live prices — using last known values`;
+      ? `✅ Live prices updated at ${t} (Yahoo Finance)`
+      : `⚠️ Market closed or unavailable — showing last known prices`;
   }
 }
 
