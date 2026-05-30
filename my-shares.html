@@ -292,9 +292,9 @@
        - "name" is optional; if left blank the app fetches it from Finnhub.
        ======================================================================= */
     var HOLDINGS = [
-        { symbol: "FDS",  name: "FactSet Research Systems" },
-        { symbol: "POOL", name: "Pool Corporation" },
-        { symbol: "ZTS",  name: "Zoetis" }
+        { symbol: "FDS",  name: "FactSet Research Systems", cost: 343.24 },
+        { symbol: "POOL", name: "Pool Corporation",        cost: 278.40 },
+        { symbol: "ZTS",  name: "Zoetis",                  cost: 135.60 }
     ];
 
     /* ----------------------------------------------------------------------- */
@@ -340,10 +340,20 @@
     function setCosts(map) {
         try { localStorage.setItem(COST_STORE, JSON.stringify(map || {})); } catch(e){}
     }
+    function defaultCost(sym) {
+        for (var i = 0; i < HOLDINGS.length; i++) {
+            if ((HOLDINGS[i].symbol || "").trim().toUpperCase() === sym) {
+                var n = Number(HOLDINGS[i].cost);
+                return (isFinite(n) && n > 0) ? n : null;
+            }
+        }
+        return null;
+    }
     function getCost(sym) {
         var c = getCosts()[sym];
         var n = (c === 0 || c) ? Number(c) : NaN;
-        return (isFinite(n) && n > 0) ? n : null;
+        if (isFinite(n) && n > 0) return n;   // localStorage override wins
+        return defaultCost(sym);               // else use hard-coded default
     }
 
     /* ---------- messaging (global slot) ---------- */
