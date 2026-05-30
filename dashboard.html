@@ -220,6 +220,10 @@
   </div>
 
   <div class="disclaimer">⚠️ <strong style="color:#4b5563;">Disclaimer:</strong> Premiums estimated using Black-Scholes model with implied volatility approximations (FDS: 28%, POOL: 35%, ZTS: 30%). Actual market premiums may differ. Not financial advice. Click stock prices in the table to edit. Click any row in the comparison table to jump to that OTM level.</div>
+  <div id="price-status" style="text-align:center;margin-top:12px;font-size:0.82rem;color:#6366f1;font-weight:600;">⏳ Connecting to live prices…</div>
+  <div style="text-align:center;margin-top:8px;">
+    <button onclick="loadLivePrices()" style="background:#6366f1;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">🔄 Refresh Live Prices</button>
+  </div>
 </div>
 </div>
 
@@ -382,9 +386,44 @@ function syncDte(src){
   updateExpiryDate();renderMain();
 }
 
+/* ---- FINNHUB LIVE PRICES ---- */
+const FINNHUB_KEY = 'd8d6qhpr01qub2putlogd8d6qhpr01qub2putlp0';
+const SYMBOLS = ['FDS','POOL','ZTS'];
+
+async function fetchLivePrice(symbol){
+  try{
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_KEY}`);
+    const d = await r.json();
+    if(d && d.c && d.c > 0) return d.c;
+  }catch(e){}
+  return null;
+}
+
+async function loadLivePrices(){
+  const statusEl = document.getElementById('price-status');
+  if(statusEl) statusEl.textContent = '🔄 Fetching live prices…';
+  let anyUpdated = false;
+  for(let i=0;i<SYMBOLS.length;i++){
+    const live = await fetchLivePrice(SYMBOLS[i]);
+    if(live){
+      stockPrices[i] = live;
+      anyUpdated = true;
+    }
+  }
+  renderMain();
+  if(statusEl){
+    const now = new Date();
+    const t = now.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    statusEl.textContent = anyUpdated
+      ? `✅ Live prices loaded at ${t}`
+      : `⚠️ Could not fetch live prices — using last known values`;
+  }
+}
+
 /* ---- INIT ---- */
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 updateOtmPill();updateExpiryDate();renderMain();initViews();
+loadLivePrices();
 </script>
 </body>
 </html>
