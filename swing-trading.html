@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swing Trading the Singapore Market — A Strategy I'm Learning</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #1e3a8a;
+      --blue-light: #dbe4ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+      --green: #16a34a;
+      --red: #dc2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    /* HOME BUTTON */
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: var(--blue-dark);
+      color: white;
+      text-decoration: none;
+      font-size: 0.85em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(30,58,138,0.35);
+      transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2746b8 50%, #4a6cf7 100%);
+      min-height: 62vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.30) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%);
+    }
+
+    .hero-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(244,129,63,0.22);
+      border: 1px solid rgba(244,129,63,0.5);
+      color: #fcd9bf;
+      font-size: 0.8em;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2em, 5vw, 3.1em);
+      font-weight: 900;
+      color: white;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span { color: var(--accent); }
+
+    .hero-sub {
+      color: rgba(255,255,255,0.82);
+      font-size: 1.05em;
+      font-style: italic;
+      max-width: 540px;
+      margin: 0 auto 28px;
+    }
+
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .hero-meta span {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85em;
+    }
+
+    /* ARTICLE BODY */
+    .article-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* LEAD */
+    .lead {
+      background: white;
+      border-radius: 16px;
+      padding: 32px 36px;
+      margin: -30px auto 40px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      border-left: 5px solid var(--blue);
+      font-size: 1.1em;
+      font-style: italic;
+      color: var(--blue-dark);
+      line-height: 1.9;
+    }
+
+    /* SECTION */
+    .section { margin-bottom: 44px; }
+
+    .section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6em;
+      color: var(--ink);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--blue-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section p { margin-bottom: 16px; }
+    .section ul { margin: 0 0 16px 22px; }
+    .section ul li { margin-bottom: 8px; }
+
+    /* INDICATOR CARDS */
+    .three-c {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .c-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px 28px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+      border-left: 5px solid var(--blue);
+      position: relative;
+    }
+
+    .c-card .c-number {
+      position: absolute;
+      top: -14px;
+      left: 20px;
+      background: var(--blue);
+      color: white;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 0.85em;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+
+    .c-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25em;
+      color: var(--blue-dark);
+      margin-bottom: 8px;
+      margin-top: 6px;
+    }
+
+    .c-card p { color: var(--text); margin: 0; font-size: 0.97em; }
+
+    /* SET-UP BOXES (buy / sell) */
+    .setup {
+      background: white;
+      border-radius: 16px;
+      padding: 8px 0 24px;
+      margin: 28px 0;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.09);
+      overflow: hidden;
+    }
+    .setup-head {
+      padding: 16px 26px;
+      color: white;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: -8px 0 8px;
+    }
+    .setup.buy .setup-head { background: linear-gradient(135deg, #15803d, #16a34a); }
+    .setup.sell .setup-head { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+
+    .checklist {
+      list-style: none;
+      padding: 0 26px;
+      margin: 14px 0 0;
+      counter-reset: step;
+    }
+    .checklist li {
+      counter-increment: step;
+      padding: 12px 16px 12px 52px;
+      position: relative;
+      margin-bottom: 10px;
+      background: var(--warm);
+      border-radius: 12px;
+      font-size: 0.98em;
+    }
+    .checklist li::before {
+      content: counter(step);
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.82em;
+    }
+    .setup.buy .checklist li::before { background: var(--green); }
+    .setup.sell .checklist li::before { background: var(--red); }
+
+    .trigger-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 14px 26px 0;
+    }
+    .trigger-box {
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 0.92em;
+    }
+    .trigger-box .t-label {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 0.9em;
+      display: block;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+    .t-fire { background: #ecfdf3; border: 1.5px solid #86efac; }
+    .t-fire .t-label { color: #15803d; }
+    .t-stop { background: #fef2f2; border: 1.5px solid #fca5a5; }
+    .t-stop .t-label { color: #b91c1c; }
+
+    /* INSIGHT BOX */
+    .insight {
+      background: linear-gradient(135deg, #eef2ff, #dbe4ff);
+      border: 1.5px solid #a5b4fc;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin: 28px 0;
+    }
+    .insight h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blue-dark);
+      font-size: 1.12em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .insight p { color: #1e3a8a; margin: 0; }
+
+    /* WARNING / CAUTION BOX */
+    .warning {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      border: 1.5px solid var(--accent);
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin: 28px 0;
+    }
+    .warning h3 {
+      font-family: 'Playfair Display', serif;
+      color: #c2410c;
+      font-size: 1.18em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .warning ul { margin: 0 0 0 20px; }
+    .warning li { margin-bottom: 10px; color: #7c2d12; }
+
+    /* PULL QUOTE */
+    .pull-quote {
+      border-left: 4px solid var(--accent);
+      padding: 16px 24px;
+      margin: 32px 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2em;
+      font-style: italic;
+      color: var(--ink);
+      background: #fffbf5;
+      border-radius: 0 10px 10px 0;
+    }
+
+    /* DISCLAIMER */
+    .disclaimer {
+      background: #f3f4f6;
+      border: 1px dashed #9ca3af;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 36px 0;
+      font-size: 0.9em;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .disclaimer strong { color: #4b5563; }
+
+    /* DIVIDER */
+    .divider {
+      text-align: center;
+      margin: 40px 0;
+      color: var(--blue);
+      font-size: 1.4em;
+      letter-spacing: 12px;
+    }
+
+    /* CLOSING */
+    .closing {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2746b8 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 36px;
+      margin-top: 48px;
+      text-align: center;
+    }
+    .closing h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.55em;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+    .closing p { color: rgba(255,255,255,0.85); line-height: 1.8; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.85em;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .c-card { padding: 20px 18px; }
+      .trigger-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">📈 Learning to Trade · Singapore Market</div>
+      <h1>Swing Trading the Singapore Market<br><span>A Strategy I'm Learning</span></h1>
+      <p class="hero-sub">At 70, a good friend is teaching me how to ride the market's short waves — here's what I'm learning, in plain English.</p>
+      <div class="hero-meta">
+        <span>✍️ Paul Yeo</span>
+        <span>📅 May 2026</span>
+        <span>⏱ 7 min read</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="article-wrap">
+
+    <!-- LEAD -->
+    <div class="lead">
+      "I am 70 years old and still learning. My friend Fred Tay sent me two photos on WhatsApp — pages from a swing-trading course — and offered to teach me. I was curious, but also cautious. The stock market has humbled wiser men than me. So I decided to do what I always do: write it all down in plain words, so I truly understand it before I ever risk a single dollar."
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section">
+      <h2>🌊 What Is Swing Trading?</h2>
+      <p>
+        Fred explained it to me simply. <strong>Day trading</strong> means buying and selling within the same day — chasing the market minute by minute. That sounded far too stressful for me. <strong>Swing trading</strong> is gentler: you hold a stock for a <strong>few days</strong> — in this strategy, <strong>up to 5 days</strong> — to catch one short "swing" in price, then you step away.
+      </p>
+      <p>
+        You are not glued to the screen all day. You set up your trade, you know exactly when you'll get in, and you know exactly when you'll get out — whether it goes well or badly. For a retiree like me, that discipline is the appeal. The plan is decided <em>before</em> the emotion arrives.
+      </p>
+      <div class="insight">
+        <h3>💡 The Big Idea</h3>
+        <p>Don't try to predict the market. Wait for the chart to line up into a known pattern, enter at a precise trigger, and always know your exit before you begin.</p>
+      </div>
+    </div>
+
+    <!-- SECTION 2: INDICATORS -->
+    <div class="section">
+      <h2>🧭 The Three Tools on the Chart</h2>
+      <p>This strategy uses just three indicators. Here's how Fred described them to me, in everyday language:</p>
+
+      <div class="three-c">
+        <div class="c-card">
+          <span class="c-number">Tool 1</span>
+          <h3>📏 The 20MA</h3>
+          <p>The <strong>20-period Simple Moving Average</strong> — the average price over the last 20 bars. It's the <em>faster</em>, more sensitive line. Think of it as the stock's recent mood.</p>
+        </div>
+        <div class="c-card">
+          <span class="c-number">Tool 2</span>
+          <h3>📐 The 40MA</h3>
+          <p>The <strong>40-period Simple Moving Average</strong> — the average over 40 bars. It's the <em>slower</em> line, the bigger trend. Think of it as the stock's overall direction.</p>
+        </div>
+        <div class="c-card">
+          <span class="c-number">Tool 3</span>
+          <h3>🌡️ The CCI (±100)</h3>
+          <p>The <strong>Commodity Channel Index</strong> measures how stretched the price is. Below <strong>−100</strong> means it's been pushed down hard (possibly oversold); above <strong>+100</strong> means pushed up hard (possibly overbought). These extremes are our cue to pay attention.</p>
+        </div>
+      </div>
+
+      <p>
+        The clever part: the two moving averages tell us the <em>trend</em>, while the CCI tells us when the price has stretched far enough to <em>snap back</em>. We only act when both agree.
+      </p>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <!-- SECTION 3: BUY SET-UP -->
+    <div class="section">
+      <h2>🟢 The Swing BUY Set-Up (Target Up)</h2>
+      <p>
+        This is the <strong>bullish</strong> pattern — we expect the price to bounce up. Fred says all five conditions should be present, like a checklist, before you even think about buying:
+      </p>
+
+      <div class="setup buy">
+        <div class="setup-head">✅ Buy Checklist — all 5 must line up</div>
+        <ul class="checklist">
+          <li>The moving average is <strong>sloping up</strong> (the trend is rising).</li>
+          <li>The <strong>20MA is above the 40MA</strong> (the fast line is leading higher).</li>
+          <li>The <strong>CCI dips below −100</strong> (price got stretched down — a pullback).</li>
+          <li>The price's <strong>low touches the 20MA</strong>, or dips just slightly below it.</li>
+          <li>The candle <strong>closes above the 40MA</strong> (the bigger trend still holds).</li>
+        </ul>
+        <div class="trigger-row">
+          <div class="trigger-box t-fire">
+            <span class="t-label">🔥 FIRE — Buy Trigger</span>
+            Buy <strong>1 bid above the prior day's high</strong>. You only enter if the price proves itself by pushing past yesterday's top.
+          </div>
+          <div class="trigger-box t-stop">
+            <span class="t-label">🛑 IA — Stop Loss</span>
+            Sell <strong>1 bid below the prior day's low</strong>. If the pattern fails, you exit small and live to trade another day.
+          </div>
+        </div>
+      </div>
+      <p style="font-size:0.92em; color:var(--muted); font-style:italic;">
+        A "bid" is simply one price step on the Singapore Exchange's tick ladder — one tiny notch above or below.
+      </p>
+    </div>
+
+    <!-- SECTION 4: SELL SET-UP -->
+    <div class="section">
+      <h2>🔴 The Swing SELL Set-Up (Target Down)</h2>
+      <p>
+        This is the exact <strong>mirror image</strong> — the <strong>bearish</strong> pattern, where we expect the price to fall. (In Singapore this usually means short-selling, which is more advanced — Fred warned me to learn the buy side properly first.)
+      </p>
+
+      <div class="setup sell">
+        <div class="setup-head">⛔ Sell Checklist — all 5 must line up</div>
+        <ul class="checklist">
+          <li>The moving average is <strong>sloping down</strong> (the trend is falling).</li>
+          <li>The <strong>20MA is below the 40MA</strong> (the fast line is leading lower).</li>
+          <li>The <strong>CCI rises above +100</strong> (price got stretched up — a bounce).</li>
+          <li>The price's <strong>high touches the 20MA</strong>, or pokes just above it.</li>
+          <li>The candle <strong>closes below the 40MA</strong> (the downtrend still holds).</li>
+        </ul>
+        <div class="trigger-row">
+          <div class="trigger-box t-fire">
+            <span class="t-label">🔥 FIRE — Sell Trigger</span>
+            Sell <strong>1 bid below the prior day's low</strong>. You only enter the short if price breaks under yesterday's bottom.
+          </div>
+          <div class="trigger-box t-stop">
+            <span class="t-label">🛑 IA — Stop Loss</span>
+            Buy <strong>1 bid above the prior day's high</strong>. If it turns against you, you cover and accept the small loss.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <!-- SECTION 5: ENTRY & STOP -->
+    <div class="section">
+      <h2>🎯 The Golden Rule: Trigger In, Stop Out</h2>
+      <p>
+        The part Fred kept repeating to me is this: the set-up alone is <em>not</em> a reason to trade. You wait for the <strong>FIRE</strong> trigger — the price must break past the previous day's high (to buy) or low (to sell) before you act. The market has to confirm the move itself.
+      </p>
+      <p>
+        And the very moment you enter, you place your <strong>IA stop loss</strong>. This is non-negotiable. The stop is decided <em>before</em> the trade, when your head is clear — not in the heat of a losing position when fear and hope take over.
+      </p>
+      <div class="pull-quote">
+        "Must remember to put your stop loss." — the first thing Fred told me, and the thing he kept saying.
+      </div>
+    </div>
+
+    <!-- SECTION 6: RISK / CAUTION -->
+    <div class="section">
+      <h2>⚠️ The Part That Matters Most: Risk</h2>
+      <p>
+        Fred was honest with me, and I respect him for it. He didn't sell me a dream of easy money. His warnings were as important as the strategy itself:
+      </p>
+      <div class="warning">
+        <h3>🛑 Fred's Cautions (read these twice)</h3>
+        <ul>
+          <li><strong>Always put your stop loss.</strong> Never enter a trade without knowing exactly where you'll get out if you're wrong.</li>
+          <li><strong>This is very stressful — practise on a paper account first.</strong> Use a demo/paper-trading account and prove the strategy works <em>for you</em>, with no real money on the line, before you ever risk a real dollar.</li>
+          <li><strong>Only risk what you can afford to lose.</strong> Never trade with money you need for living, medical care, or peace of mind.</li>
+          <li><strong>Small losses are part of the plan.</strong> Even a good strategy loses sometimes. The stop loss keeps each loss small so one bad trade can't hurt you.</li>
+        </ul>
+      </div>
+      <p>
+        For me, at 70, that last point is everything. I am not trying to get rich. I am learning a skill, slowly and carefully, the same way I'm learning AI. Capital preservation comes first. The thrill of a winning trade is never worth losing my peace.
+      </p>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> This article is for <strong>educational purposes only</strong> and reflects my personal notes as I learn. It is <strong>not financial advice</strong>, not a recommendation to buy or sell any security, and not a guarantee of any result. I am a 70-year-old retiree learning to trade — a student, not a licensed financial adviser. Trading carries real risk and you can lose money. Always do your own research and consult a qualified, licensed professional before making any investment decision.
+    </div>
+
+    <!-- CREDIT -->
+    <div class="insight">
+      <h3>🙏 With Thanks</h3>
+      <p>This strategy was kindly shared with me by my friend <strong>Fred Tay</strong>, based on the <em>"Systematic Trader"</em> course material by <strong>Collin</strong> — "Using Swing Trading Strategies For The Singapore Market." I'm simply writing down what I'm learning, in my own words, so I never forget the most important lesson of all: protect your capital, and always set your stop.</p>
+    </div>
+
+    <!-- CLOSING -->
+    <div class="closing">
+      <h2>Learning, One Swing at a Time</h2>
+      <p>
+        I don't know yet if I'll become a good trader. But I do know I'll be a careful one. A rising 20MA over a 40MA, a stretched CCI, a clean trigger, and — above all — a stop loss already in place. Slow, patient, disciplined. That sounds like a strategy a 70-year-old can live with.
+      </p>
+      <p style="margin-top:14px; font-style:italic; opacity:0.8;">
+        — Paul Yeo, May 2026 📈
+      </p>
+    </div>
+
+    <!-- VIEW COUNTER -->
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+</body>
+</html>
