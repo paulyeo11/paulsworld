@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Share Price Lookup</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+    }
+
+    .home-btn {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 100;
+        background: rgba(255,255,255,0.95);
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 10px 16px;
+        border-radius: 24px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        transition: transform .2s ease;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    .container { max-width: 760px; margin: 0 auto; }
+
+    header {
+        text-align: center;
+        color: #fff;
+        margin: 60px 0 26px;
+    }
+    header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+    header p { opacity: 0.9; margin-top: 8px; font-size: 14px; }
+
+    .card {
+        background: rgba(255,255,255,0.97);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+        margin-bottom: 20px;
+    }
+
+    /* search */
+    .search-row { display: flex; gap: 10px; }
+    .search-row input {
+        flex: 1;
+        font-size: 18px;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 14px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        outline: none;
+        transition: border-color .2s;
+    }
+    .search-row input:focus { border-color: #667eea; }
+    .search-row button {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        border: 0;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 0 22px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: filter .2s;
+    }
+    .search-row button:hover { filter: brightness(1.07); }
+
+    .recents { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .recents .chip {
+        background: #eef0ff;
+        color: #667eea;
+        border: 0;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+    }
+    .recents .chip:hover { background: #e0e3ff; }
+
+    .controls-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+        font-size: 12px;
+        color: #888;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .pulse {
+        display: inline-block;
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: #4ade80;
+        margin-right: 6px;
+        vertical-align: middle;
+        animation: pulse 2s infinite;
+    }
+    .pulse.paused { background: #f59e0b; animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    .toggle-btn {
+        background: #f3f4f6; border: 0; color: #555;
+        font-weight: 700; font-size: 12px;
+        padding: 7px 14px; border-radius: 20px; cursor: pointer;
+    }
+    .toggle-btn:hover { background: #e5e7eb; }
+
+    /* quote */
+    #quoteCard { display: none; }
+    .quote-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .ticker-block .ticker { font-size: 26px; font-weight: 800; }
+    .ticker-block .name { font-size: 13px; color: #888; margin-top: 2px; }
+    .price { font-size: 54px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; text-align: right; }
+
+    .change-pill {
+        display: inline-block;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 8px;
+        margin-top: 8px;
+    }
+    .change-pill.positive { background: #dcfce7; color: #16a34a; }
+    .change-pill.negative { background: #fee2e2; color: #dc2626; }
+    .change-pill.neutral  { background: #f3f4f6; color: #6b7280; }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 22px;
+    }
+    .stat {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+    }
+    .stat .label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px; }
+    .stat .val { font-size: 18px; font-weight: 700; margin-top: 4px; }
+
+    /* chart */
+    .chart-wrap { margin-top: 22px; }
+    .chart-wrap h3 { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    #chartSvg { width: 100%; height: 160px; display: block; }
+    .chart-empty { font-size: 13px; color: #aaa; padding: 30px 0; text-align: center; }
+
+    /* messages */
+    .msg { padding: 14px 16px; border-radius: 12px; font-size: 14px; margin-top: 4px; }
+    .msg.error { background: #fee2e2; color: #b91c1c; }
+    .msg.info  { background: #eef0ff; color: #4f56b5; }
+
+    .keylink { color: #667eea; cursor: pointer; text-decoration: underline; font-weight: 600; }
+    .hint { font-size: 12px; color: #aaa; margin-top: 10px; line-height: 1.5; }
+    .hint a { color: #667eea; }
+
+    footer {
+        text-align: center;
+        color: rgba(255,255,255,0.85);
+        font-size: 13px;
+        padding: 24px 0 10px;
+    }
+    footer a { color: #fff; font-weight: 600; }
+
+    @media (max-width: 560px) {
+        .price { font-size: 42px; }
+        header h1 { font-size: 24px; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .search-row button { padding: 0 16px; }
+    }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="https://paulsworld.vercel.app/">&#8962; Home</a>
+
+<div class="container">
+
+    <header>
+        <h1>Live Share Price</h1>
+        <p>Real-time stock quotes &middot; auto-refreshing every 10s</p>
+    </header>
+
+    <!-- Search card -->
+    <div class="card">
+        <div class="search-row">
+            <input id="tickerInput" type="text" placeholder="Enter ticker (AAPL, NVDA, TSLA)" autocomplete="off" spellcheck="false">
+            <button id="searchBtn">Look up</button>
+        </div>
+        <div class="recents" id="recents"></div>
+        <div class="controls-row">
+            <span><span class="pulse" id="pulse"></span><span id="liveLabel">Live</span> &middot; <span id="lastUpdated">--</span></span>
+            <button class="toggle-btn" id="pauseBtn">Pause</button>
+        </div>
+        <div class="hint">
+            Powered by Finnhub. <span class="keylink" id="changeKey">&#9881; change key</span>
+            &middot; Get a free key at <a href="https://finnhub.io" target="_blank" rel="noopener">finnhub.io</a>.
+            <br>&#9888; Works best for US tickers; Singapore / other exchanges may be limited on the free tier.
+        </div>
+    </div>
+
+    <!-- Message slot -->
+    <div id="msgSlot"></div>
+
+    <!-- Quote card -->
+    <div class="card" id="quoteCard">
+        <div class="quote-head">
+            <div class="ticker-block">
+                <div class="ticker" id="qTicker">--</div>
+                <div class="name" id="qName">--</div>
+                <div class="change-pill neutral" id="qChange">--</div>
+            </div>
+            <div class="price" id="qPrice">--</div>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><div class="label">Open</div><div class="val" id="qOpen">--</div></div>
+            <div class="stat"><div class="label">Prev Close</div><div class="val" id="qPrev">--</div></div>
+            <div class="stat"><div class="label">Day High</div><div class="val" id="qHigh">--</div></div>
+            <div class="stat"><div class="label">Day Low</div><div class="val" id="qLow">--</div></div>
+        </div>
+
+        <div class="chart-wrap">
+            <h3>Session price (live)</h3>
+            <svg id="chartSvg" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+            <div class="chart-empty" id="chartEmpty">Collecting price points&hellip;</div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 Paul's World &middot; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a>
+    </footer>
+
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var KEY_STORE   = "finnhub_api_key";
+    var RECENT_STORE= "lp_recent_tickers";
+    var REFRESH_MS  = 10000;
+
+    var els = {
+        input:      document.getElementById("tickerInput"),
+        searchBtn:  document.getElementById("searchBtn"),
+        recents:    document.getElementById("recents"),
+        pulse:      document.getElementById("pulse"),
+        liveLabel:  document.getElementById("liveLabel"),
+        lastUpdated:document.getElementById("lastUpdated"),
+        pauseBtn:   document.getElementById("pauseBtn"),
+        changeKey:  document.getElementById("changeKey"),
+        msgSlot:    document.getElementById("msgSlot"),
+        quoteCard:  document.getElementById("quoteCard"),
+        qTicker:    document.getElementById("qTicker"),
+        qName:      document.getElementById("qName"),
+        qChange:    document.getElementById("qChange"),
+        qPrice:     document.getElementById("qPrice"),
+        qOpen:      document.getElementById("qOpen"),
+        qPrev:      document.getElementById("qPrev"),
+        qHigh:      document.getElementById("qHigh"),
+        qLow:       document.getElementById("qLow"),
+        chartSvg:   document.getElementById("chartSvg"),
+        chartEmpty: document.getElementById("chartEmpty")
+    };
+
+    var state = {
+        symbol: "",
+        name: "",
+        paused: false,
+        timer: null,
+        series: [],          // rolling price points for current symbol
+        maxPoints: 60
+    };
+
+    /* ---------- storage helpers ---------- */
+    function getKey()  { try { return localStorage.getItem(KEY_STORE) || ""; } catch(e){ return ""; } }
+    function setKey(k) { try { localStorage.setItem(KEY_STORE, k); } catch(e){} }
+
+    function getRecents() {
+        try { return JSON.parse(localStorage.getItem(RECENT_STORE) || "[]"); } catch(e){ return []; }
+    }
+    function pushRecent(sym) {
+        var list = getRecents().filter(function(s){ return s !== sym; });
+        list.unshift(sym);
+        list = list.slice(0, 6);
+        try { localStorage.setItem(RECENT_STORE, JSON.stringify(list)); } catch(e){}
+        renderRecents();
+    }
+    function renderRecents() {
+        var list = getRecents();
+        els.recents.innerHTML = "";
+        list.forEach(function(sym){
+            var b = document.createElement("button");
+            b.className = "chip";
+            b.textContent = sym;
+            b.onclick = function(){ els.input.value = sym; lookup(sym); };
+            els.recents.appendChild(b);
+        });
+    }
+
+    /* ---------- messaging ---------- */
+    function showMsg(text, type) {
+        els.msgSlot.innerHTML = '<div class="msg ' + (type||"info") + '">' + text + '</div>';
+    }
+    function clearMsg() { els.msgSlot.innerHTML = ""; }
+
+    /* ---------- API key flow ---------- */
+    function ensureKey(force) {
+        var k = getKey();
+        if (k && !force) return k;
+        var entered = window.prompt(
+            "Paste your free Finnhub API key (saved on this device only).\n\nGet one at finnhub.io → Dashboard.",
+            force ? "" : ""
+        );
+        if (entered && entered.trim()) {
+            setKey(entered.trim());
+            clearMsg();
+            return entered.trim();
+        }
+        return "";
+    }
+
+    /* ---------- formatting ---------- */
+    function fmt(n) {
+        if (n === null || n === undefined || isNaN(n)) return "--";
+        return Number(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    function timeStr() {
+        var d = new Date();
+        return d.toLocaleTimeString();
+    }
+
+    /* ---------- chart (hand-rolled SVG) ---------- */
+    function drawChart() {
+        var s = state.series;
+        var svg = els.chartSvg;
+        if (s.length < 2) {
+            svg.innerHTML = "";
+            els.chartEmpty.style.display = "block";
+            return;
+        }
+        els.chartEmpty.style.display = "none";
+
+        var W = 600, H = 160, pad = 8;
+        var min = Math.min.apply(null, s);
+        var max = Math.max.apply(null, s);
+        if (min === max) { min -= 1; max += 1; }
+        var range = max - min;
+
+        function x(i){ return pad + (i / (s.length - 1)) * (W - pad*2); }
+        function y(v){ return pad + (1 - (v - min) / range) * (H - pad*2); }
+
+        var pts = s.map(function(v,i){ return x(i) + "," + y(v); });
+        var up = s[s.length-1] >= s[0];
+        var stroke = up ? "#16a34a" : "#dc2626";
+        var fill   = up ? "rgba(22,163,74,0.12)" : "rgba(220,38,38,0.12)";
+
+        var area = "M" + x(0) + "," + (H - pad) + " L" + pts.join(" L ") + " L" + x(s.length-1) + "," + (H - pad) + " Z";
+        var line = "M" + pts.join(" L ");
+
+        var lastX = x(s.length-1), lastY = y(s[s.length-1]);
+
+        svg.innerHTML =
+            '<path d="' + area + '" fill="' + fill + '" stroke="none"></path>' +
+            '<path d="' + line + '" fill="none" stroke="' + stroke + '" stroke-width="2" vector-effect="non-scaling-stroke"></path>' +
+            '<circle cx="' + lastX + '" cy="' + lastY + '" r="3.5" fill="' + stroke + '"></circle>';
+    }
+
+    /* ---------- render quote ---------- */
+    function renderQuote(sym, q) {
+        els.quoteCard.style.display = "block";
+        els.qTicker.textContent = sym;
+        els.qName.textContent = state.name || "—";
+        els.qPrice.textContent = fmt(q.c);
+
+        var d = q.d, dp = q.dp;
+        var pill = els.qChange;
+        pill.className = "change-pill " + (d > 0 ? "positive" : d < 0 ? "negative" : "neutral");
+        var sign = d > 0 ? "+" : "";
+        pill.textContent = sign + fmt(d) + "  (" + sign + (dp != null ? Number(dp).toFixed(2) : "--") + "%)";
+
+        els.qOpen.textContent = fmt(q.o);
+        els.qPrev.textContent = fmt(q.pc);
+        els.qHigh.textContent = fmt(q.h);
+        els.qLow.textContent  = fmt(q.l);
+
+        state.series.push(q.c);
+        if (state.series.length > state.maxPoints) state.series.shift();
+        drawChart();
+
+        els.lastUpdated.textContent = "updated " + timeStr();
+    }
+
+    /* ---------- fetch ---------- */
+    function fetchQuote(sym) {
+        var key = getKey();
+        if (!key) { showKeyPrompt(); return; }
+
+        var url = "https://finnhub.io/api/v1/quote?symbol=" + encodeURIComponent(sym) + "&token=" + encodeURIComponent(key);
+        fetch(url)
+            .then(function(r){
+                if (r.status === 401 || r.status === 403) throw {type:"auth"};
+                if (r.status === 429) throw {type:"rate"};
+                if (!r.ok) throw {type:"net"};
+                return r.json();
+            })
+            .then(function(q){
+                // Finnhub returns c=0 and all zeros for unknown symbols
+                if (!q || (q.c === 0 && q.h === 0 && q.l === 0 && q.pc === 0)) {
+                    throw {type:"notfound"};
+                }
+                clearMsg();
+                renderQuote(sym, q);
+            })
+            .catch(function(err){
+                handleError(err, sym);
+            });
+    }
+
+    function fetchName(sym) {
+        var key = getKey();
+        if (!key) return;
+        var url = "https://finnhub.io/api/v1/stock/profile2?symbol=" + encodeURIComponent(sym) + "&token=" + encodeURIComponent(key);
+        fetch(url)
+            .then(function(r){ return r.ok ? r.json() : {}; })
+            .then(function(p){
+                state.name = (p && p.name) ? p.name : "";
+                if (state.symbol === sym) els.qName.textContent = state.name || "—";
+            })
+            .catch(function(){ /* name is optional */ });
+    }
+
+    function handleError(err, sym) {
+        var t = err && err.type;
+        if (t === "auth") {
+            showMsg('Invalid API key. <span class="keylink" id="reKey">Enter a new key</span>.', "error");
+            var rk = document.getElementById("reKey");
+            if (rk) rk.onclick = function(){ if (ensureKey(true)) lookup(sym); };
+        } else if (t === "rate") {
+            showMsg("Rate limit reached (free tier ~60 calls/min). Pausing a moment—auto-refresh will retry.", "info");
+        } else if (t === "notfound") {
+            showMsg('Symbol <b>' + sym + '</b> not found. Check the ticker (US symbols work best).', "error");
+            els.quoteCard.style.display = "none";
+        } else {
+            showMsg("Network error reaching Finnhub. Will retry on next refresh.", "info");
+        }
+    }
+
+    function showKeyPrompt() {
+        showMsg('Enter your free Finnhub API key to begin. <span class="keylink" id="setKeyLink">Enter key</span>', "info");
+        var l = document.getElementById("setKeyLink");
+        if (l) l.onclick = function(){ if (ensureKey(true) && state.symbol) lookup(state.symbol); };
+    }
+
+    /* ---------- lookup orchestration ---------- */
+    function lookup(symRaw) {
+        var sym = (symRaw || els.input.value || "").trim().toUpperCase();
+        if (!sym) return;
+
+        var key = getKey();
+        if (!key) { state.symbol = sym; showKeyPrompt(); return; }
+
+        if (sym !== state.symbol) {
+            state.series = [];   // reset chart for a new ticker
+            state.name = "";
+            els.chartSvg.innerHTML = "";
+        }
+        state.symbol = sym;
+        pushRecent(sym);
+        fetchName(sym);
+        fetchQuote(sym);
+        restartTimer();
+    }
+
+    /* ---------- auto-refresh ---------- */
+    function tick() {
+        if (state.paused || !state.symbol) return;
+        if (!getKey()) return;
+        fetchQuote(state.symbol);
+    }
+    function restartTimer() {
+        if (state.timer) clearInterval(state.timer);
+        state.timer = setInterval(tick, REFRESH_MS);
+    }
+    function setPaused(p) {
+        state.paused = p;
+        els.pauseBtn.textContent = p ? "Resume" : "Pause";
+        els.pulse.className = "pulse" + (p ? " paused" : "");
+        els.liveLabel.textContent = p ? "Paused" : "Live";
+    }
+
+    /* ---------- wire up ---------- */
+    els.searchBtn.onclick = function(){ lookup(); };
+    els.input.addEventListener("keydown", function(e){ if (e.key === "Enter") lookup(); });
+    els.pauseBtn.onclick = function(){ setPaused(!state.paused); };
+    els.changeKey.onclick = function(){
+        if (ensureKey(true)) {
+            showMsg("API key updated.", "info");
+            if (state.symbol) lookup(state.symbol);
+        }
+    };
+
+    renderRecents();
+    restartTimer();
+
+    if (!getKey()) {
+        showKeyPrompt();
+    } else {
+        var rec = getRecents();
+        if (rec.length) { els.input.value = rec[0]; }
+    }
+})();
+</script>
+
+<script src="/view-counter.js"></script>
+
+</body>
+</html>
