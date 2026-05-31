@@ -109,7 +109,7 @@ Base: `https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main
 | Investment Tools | **T** | T01.html → T06.html (T03 = `T03/` folder = Tiger) | T01…T06 via CSS counter (leading-zero) |
 | **Health** | **h** | h01.html → h05.html (max 10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
 | Travel | travel | | |
-| Special | — | bucket-list, adventure, Retire65, life-dashboard, dashboard | |
+| Special | **SP** | SP01=Dream Destinations, SP02=Adventure List, SP03=Why Retire at 65, SP04=Dashboard | (hardcoded cards in index.html; custom card titles, no auto-number) |
 
 - **All `loadSection` calls use `pad: 2`** (in index.html `init()`) so discovery looks for 2-digit names (`AI01`…`AI09`, then `AI10`). New page = `<PREFIX><2-digit>.html` (e.g. `S15.html`, `AI11.html`), image folder `img_<PREFIX><2-digit>` (e.g. `img_S15`), and `<title>`/`<h1>` start with the same `<PREFIX><2-digit>:` label.
 - **Investment Tools** links are hardcoded in index.html (T01–T06) and its number label comes from CSS `counter(tool, decimal-leading-zero)` — T pages have NO number in their title. Update both the file and the hardcoded link when adding one.
