@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI11: I Don't Touch the Code Anymore — My AI Does It (and Checks Its Own Work)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --green: #10b981;
+      --green-dark: #065f46;
+      --green-light: #d1fae5;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f59e0b;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    /* HOME BUTTON */
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: var(--green-dark);
+      color: white;
+      text-decoration: none;
+      font-size: 0.85em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(6,95,70,0.35);
+      transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      min-height: 65vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(16,185,129,0.2) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(245,158,11,0.15) 0%, transparent 60%);
+    }
+
+    .hero-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(16,185,129,0.25);
+      border: 1px solid rgba(16,185,129,0.5);
+      color: #6ee7b7;
+      font-size: 0.8em;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2em, 5vw, 3.2em);
+      font-weight: 900;
+      color: white;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span { color: #fcd34d; }
+
+    .hero-sub {
+      color: rgba(255,255,255,0.8);
+      font-size: 1.05em;
+      font-style: italic;
+      max-width: 520px;
+      margin: 0 auto 28px;
+    }
+
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .hero-meta span {
+      color: rgba(255,255,255,0.65);
+      font-size: 0.85em;
+    }
+
+    /* ARTICLE BODY */
+    .article-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* LEAD */
+    .lead {
+      background: white;
+      border-radius: 16px;
+      padding: 32px 36px;
+      margin: -30px auto 40px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      border-left: 5px solid var(--green);
+      font-size: 1.1em;
+      font-style: italic;
+      color: var(--green-dark);
+      line-height: 1.9;
+    }
+
+    /* SECTION */
+    .section {
+      margin-bottom: 44px;
+    }
+
+    .section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.65em;
+      color: var(--ink);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--green-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section p { margin-bottom: 16px; }
+
+    /* CARDS */
+    .three-c {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .c-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px 28px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+      border-left: 5px solid var(--green);
+      position: relative;
+    }
+
+    .c-card .c-number {
+      position: absolute;
+      top: -14px;
+      left: 20px;
+      background: var(--green);
+      color: white;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 0.85em;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+
+    .c-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3em;
+      color: var(--green-dark);
+      margin-bottom: 8px;
+      margin-top: 6px;
+    }
+
+    .c-card p { color: var(--text); margin: 0; font-size: 0.97em; }
+
+    /* INSIGHT BOX */
+    .insight {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      border: 1.5px solid #6ee7b7;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin: 28px 0;
+    }
+    .insight h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--green-dark);
+      font-size: 1.15em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .insight p { color: #064e3b; margin: 0; }
+
+    /* PULL QUOTE */
+    .pull-quote {
+      border-left: 4px solid var(--accent);
+      padding: 16px 24px;
+      margin: 32px 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25em;
+      font-style: italic;
+      color: var(--ink);
+      background: #fffbf0;
+      border-radius: 0 10px 10px 0;
+    }
+
+    /* DIVIDER */
+    .divider {
+      text-align: center;
+      margin: 40px 0;
+      color: var(--green);
+      font-size: 1.4em;
+      letter-spacing: 12px;
+    }
+
+    /* CLOSING */
+    .closing {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 36px;
+      margin-top: 48px;
+      text-align: center;
+    }
+    .closing h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6em;
+      margin-bottom: 12px;
+      color: #fcd34d;
+    }
+    .closing p { color: rgba(255,255,255,0.85); line-height: 1.8; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.85em;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .c-card { padding: 20px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">🤖 My AI Journey · Article 11</div>
+      <h1>I Don't Touch the Code Anymore<br><span>My AI Does It (and Checks Its Own Work)</span></h1>
+      <p class="hero-sub">At 70, I now run my own website and its hosting — without being a programmer. I just talk, and point.</p>
+      <div class="hero-meta">
+        <span>✍️ Paul Yeo</span>
+        <span>📅 31 May 2026</span>
+        <span>⏱ 5 min read</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="article-wrap">
+
+    <!-- LEAD -->
+    <div class="lead">
+      "I am 70 years old, and I am not a programmer. Yet today I rebuilt my whole website and tidied up all my accounts — without typing a single command. I just talked to my AI, and pointed at things on my phone. It did the careful work, and it checked everything before it touched anything."
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section">
+      <h2>🧰 What Is This Thing Called Claude Code?</h2>
+      <p>
+        Let me explain it the way I wish someone had explained it to me. <strong>Claude Code is an AI you talk to that does the computer work for you.</strong> Not the writing kind of work — the real, technical kind. The kind that used to require a young person with a hoodie and three monitors.
+      </p>
+      <p>
+        My website lives on something called GitHub — that is where the actual files sit. And it is published to the world through something called Vercel. For years these two words sounded like a foreign language to me. Folders, branches, deployments, links that break if you so much as breathe on them. Honestly, it frightened me a little.
+      </p>
+      <p>
+        Now I don't go near any of it. I simply tell my AI — I call him David — what I want, in plain everyday English. "Rename this." "Delete that old one." "Tidy up my files." And he goes and does it. No menus to hunt through, no commands to memorise, no chance of me clicking the one button that wipes everything out.
+      </p>
+
+      <div class="insight">
+        <h3>💡 The simple idea</h3>
+        <p>I describe what I want in ordinary words. The AI translates that into the precise technical steps — and carries them out. I am the one who decides; the AI is the one who does. That is the whole magic of it.</p>
+      </div>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section">
+      <h2>🛡️ The Part That Won Me Over: It Checks Before It Acts</h2>
+      <p>
+        Here is what really set my mind at ease. If <em>I</em> had tried to do these things myself, I would have been one nervous misclick away from disaster. Type a command slightly wrong, and a link breaks. Delete the wrong folder, and the whole website goes dark. At my age, with shaky confidence around computers, that fear is very real.
+      </p>
+      <p>
+        But the AI doesn't rush. <strong>Before it changes anything, it looks first.</strong> It checks what is connected to what. It asks itself, "If I rename this, what else might break?" Then it makes the change — and afterwards it goes back and confirms the website is still alive and well before it ever tells me "done."
+      </p>
+
+      <div class="pull-quote">
+        "If I did it myself, I might make a mistake. The AI does it, and it checks before and after. So there are fewer mistakes — and far less work for me."
+      </div>
+
+      <p>
+        That is the heart of it for me. It is not just that the AI is faster. It is that it is <em>careful</em> in a way I cannot reliably be. It does the worrying so I don't have to.
+      </p>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <!-- SECTION 3 -->
+    <div class="section">
+      <h2>📖 A Real Story From Today</h2>
+      <p>
+        This is not a hypothetical. This all happened today, the 31st of May 2026. I spent the morning reorganising my entire website and cleaning out years of clutter — and I never once touched a keyboard command. I talked. And on my phone, I even circled things in screenshots and crossed others out, just pointing at what I meant.
+      </p>
+
+      <div class="three-c">
+        <div class="c-card">
+          <span class="c-number">First</span>
+          <h3>✏️ Renaming the Repositories</h3>
+          <p>I wanted cleaner names. So my website's home — once called <em>Dynamic-Index</em> — became simply <em>paulsworld</em>. A change like that can quietly snap every internal link if you are not careful. The AI updated all of them, then actually tested that the website still published properly before it said a word to me. Imagine that — it did its own homework and marked it.</p>
+        </div>
+
+        <div class="c-card">
+          <span class="c-number">Then</span>
+          <h3>🗑️ Clearing Out the Clutter</h3>
+          <p>Over the years I had collected old, unused repositories and a couple of dead hosting projects just sitting there. I asked the AI to clear them out. But it didn't just delete on command — it checked each one first to make sure nothing was still depending on it. Safe, sensible, exactly what a cautious human would do, but without the fumbling.</p>
+        </div>
+
+        <div class="c-card">
+          <span class="c-number">Finally</span>
+          <h3>🔢 Reorganising the Whole Website</h3>
+          <p>We tidied dozens of pages and image folders into one clean numbering system. After all that moving around, the AI checked every single page to confirm it still loaded properly, and that the old links quietly redirected to the new ones — catching the little broken corners that a person my age would never even think to look for.</p>
+        </div>
+      </div>
+
+      <p>
+        Through the whole thing, the live website never went down for a moment. I watched it happen from my armchair, on my phone, with a cup of tea. That still feels slightly unbelievable when I write it out.
+      </p>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section">
+      <h2>💭 What This Means For Me — and Maybe For You</h2>
+      <p>
+        I keep coming back to one feeling: <strong>relief.</strong> For most of my life, the technical world had a velvet rope across it, and I assumed people like me were simply not allowed in. Too old. Not a programmer. Better leave it to the experts.
+      </p>
+      <p>
+        That rope is gone now. I can manage real developer work — repositories, deployments, the lot — just by asking in the same plain English I use to order lunch. And because the AI checks itself so carefully, I make fewer mistakes doing it this way than I ever would have made on my own.
+      </p>
+      <p>
+        Less work. Less worry. More of my retirement spent on the things I actually love — travel, writing these little stories, and learning. If you are around my age and you have always believed this kind of thing was beyond you, I gently want to tell you: it isn't anymore. The future arrived quietly, and it turns out it works for us too.
+      </p>
+    </div>
+
+    <!-- CLOSING -->
+    <div class="closing">
+      <h2>You Just Have to Ask</h2>
+      <p>
+        I am 70, I am not a programmer, and today I rebuilt my website without breaking a sweat — or a single link. The AI did the careful work and checked itself every step of the way. If a retired old fellow like me can do this, so can you. You don't need to learn the commands. You just have to learn to ask.
+      </p>
+      <p style="margin-top:14px; font-style:italic; opacity:0.8;">
+        — Paul Yeo, 31 May 2026 🌏
+      </p>
+    </div>
+
+    <!-- VIEW COUNTER -->
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#10b981;">Paul's World</a>
+  </footer>
+
+</body>
+</html>
