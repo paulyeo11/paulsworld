@@ -101,7 +101,7 @@ Base: `https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main
 
 | Category | Prefix | Files | Label shown |
 |----------|--------|-------|-------------|
-| Travel Stories | **S** | S1.html → S14.html (S7 missing) | S1, S2, … |
+| Travel Stories | **S** (zero-padded 2-digit) | S01.html → S14.html (S07 missing) | S01, S02, … |
 | AI Journey | **AI** | AI1.html → AI10.html | AI1, AI2, … |
 | AI Tools | **AIT** | AIT1.html → AIT4.html | AIT1, … |
 | Achievements | **AC** | AC1.html → AC3.html | AC1, … |
@@ -112,7 +112,7 @@ Base: `https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main
 | Special | — | bucket-list, adventure, Retire65, life-dashboard, dashboard | |
 
 - **Auto-numbering CSS** lives in index.html (`.stories-card`/`.ai-card`/`.ait-card`/`.achieve-card`/`.books-card`/`.tools-card` `ul li a::before` with `counter`). Numbers re-sequence automatically; never type "1." etc. into the link text.
-- **`loadSection` prefixes** in index.html must match the file prefix exactly (`S`, `AI`, `AIT`, `AC`, `B`, plus `h`).
+- **`loadSection` prefixes** in index.html must match the file prefix exactly (`S`, `AI`, `AIT`, `AC`, `B`, plus `h`). **Stories use `pad: 2`** so files are 2-digit (`S01`…`S09`, then `S10`…). New story = `S<2-digit next#>.html` (e.g. `S15.html`) with image folder `img_S15`, and the `<title>`/`<h1>` must start with the same `S<2-digit>:` label. Other sections are NOT zero-padded (AI1, T1, B1, etc.).
 - Investment Tools links are hardcoded in index.html (T1–T6); update both the file and the link when adding one.
 
 ## Code Style
