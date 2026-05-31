@@ -68,9 +68,11 @@ using exactly: `<script src="/view-counter.js"></script>`
 - Reduce resolution of all shared images before embedding.
 - Preserve correct **orientation** — always fix rotation when resizing.
 - For every article with images:
-  - Create a dedicated folder named after the article (e.g. `img_macritchie`, `img_swiss`).
+  - Create a dedicated folder named **`img_<PAGE-NAME>`** — i.e. `img_` + the page's own
+    filename prefix+number. So a Story S15 uses **`img_S15`**, AI Journey AI11 uses `img_AI11`,
+    Health h4 uses `img_h4`, etc. (Do NOT name folders by topic like `img_patagonia`; match the page.)
   - Place all the article's images inside it.
-  - Update all `<img>` paths to reference that folder (e.g. `img_macritchie/01-photo.jpg`).
+  - Update all `<img>` paths to reference that folder (e.g. `img_S15/01-photo.jpg`).
   - **Tell Paul the exact folder name** he needs to create on GitHub before uploading.
 - **Image Folder Deployment Rule:** once images are added to a new folder, immediately
   push a small update to the linked HTML so Vercel picks up the new folder in the same deploy.
