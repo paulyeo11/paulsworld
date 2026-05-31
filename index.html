@@ -532,7 +532,7 @@
 
   <!-- ABOUT -->
   <div class="about">
-    <img src="https://cdn.jsdelivr.net/gh/paulyeo11/Dynamic-Index@main/img_S1/02-hiking-selfie.jpg" alt="Paul Yeo" onerror="this.style.display='none'">
+    <img src="https://cdn.jsdelivr.net/gh/paulyeo11/Dynamic-Index@main/img_S01/02-hiking-selfie.jpg" alt="Paul Yeo" onerror="this.style.display='none'">
     <div class="about-text">
       <h2>Hi, I'm Paul Yeo 👋</h2>
       <p>Retired at 67. Now 70 — and far from done! Travelled to <strong>38+ countries</strong>. Now building an AI team and exploring the world of artificial intelligence.</p>
@@ -737,12 +737,13 @@
       } catch (e) { return null; }
     }
 
-    async function loadSection({ prefix, max, listId, statusId }) {
+    async function loadSection({ prefix, max, listId, statusId, pad }) {
       const list   = document.getElementById(listId);
       const status = document.getElementById(statusId);
       let found = 0;
       for (let i = 1; i <= max; i++) {
-        const filename = `${prefix}${i}.html`;
+        const num = pad ? String(i).padStart(pad, '0') : `${i}`;
+        const filename = `${prefix}${num}.html`;
         const title = await getTitle(filename);
         if (title !== null) {
           found++;
@@ -754,7 +755,7 @@
           list.appendChild(li);
           // Track for popular ranking
           allDiscoveredPages.push({
-            key: `${prefix}${i}`,
+            key: `${prefix}${num}`,
             title: title,
             url: filename
           });
@@ -768,7 +769,6 @@
       // Add the fixed pages too
       const fixedPages = [
         { key: 'Retire65', title: '🌅 Why Retire at 65', url: 'Retire65.html' },
-        { key: 's11', title: '🌎 S11: Patagonia — The Dream I Chased for 10 Years', url: 's11.html' },
         { key: 'bucket-list', title: '🌍 My Dream Destinations', url: 'bucket-list.html' },
         { key: 'adventure', title: '🪂 My Adventure List', url: 'adventure.html' }
       ];
@@ -807,7 +807,7 @@
     // Load sections first, then ranking
     async function init() {
       await Promise.all([
-        loadSection({ prefix: 'S',    max: 15, listId: 'story-list',   statusId: 'story-status'   }),
+        loadSection({ prefix: 'S',    max: 15, listId: 'story-list',   statusId: 'story-status', pad: 2 }),
         loadSection({ prefix: 'h',    max: 10, listId: 'health-list',  statusId: 'health-status'  }),
         loadSection({ prefix: 'AI',   max: 10, listId: 'ai-list',      statusId: 'ai-status'      }),
         loadSection({ prefix: 'AIT',  max: 10, listId: 'ait-list',     statusId: 'ait-status'     }),
