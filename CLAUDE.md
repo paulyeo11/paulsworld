@@ -97,23 +97,23 @@ it into the right category, then push to GitHub.
 ## Categories / Page Index
 Base: `https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/[filename].html`
 
-**NAMING CONVENTION (updated 2026-05-31): filenames use UPPERCASE prefix + number, and the on-screen number labels match exactly (rendered via CSS `counter` in index.html — do NOT hardcode the number in the link text).** Prefixes are case-sensitive on Vercel — always use the exact case below. To add a page, create `<PREFIX><next-number>.html` and it auto-appears in the right section (index.html auto-discovers each prefix up to its max).
+**NAMING CONVENTION (updated 2026-05-31): UPPERCASE prefix + ZERO-PADDED 2-DIGIT number for EVERY section (S01, AI01, AIT01, AC01, B01, T01, h01 …). Files, image folders, and on-screen labels/titles all use the same 2-digit number.** Prefixes are case-sensitive on Vercel — always use the exact case below. To add a page, create `<PREFIX><2-digit next#>.html` and it auto-appears in the right section (index.html auto-discovers each prefix up to its max).
 
 | Category | Prefix | Files | Label shown |
 |----------|--------|-------|-------------|
-| Travel Stories | **S** (zero-padded 2-digit) | S01.html → S14.html (S07 missing) | S01, S02, … |
-| AI Journey | **AI** | AI1.html → AI10.html | AI1, AI2, … |
-| AI Tools | **AIT** | AIT1.html → AIT4.html | AIT1, … |
-| Achievements | **AC** | AC1.html → AC3.html | AC1, … |
-| Books | **B** | B1.html, B2.html, B11.html (max 10 shown) | B1, B2 |
-| Investment Tools | **T** | T1.html → T6.html (T3 = `T3/` folder = Tiger) | T1 … T6 |
-| **Health** | **h** | max 10 (h1–h10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
+| Travel Stories | **S** | S01.html → S14.html (S07 missing) | from title "S01:" … |
+| AI Journey | **AI** | AI01.html → AI10.html | from title "AI01:" … |
+| AI Tools | **AIT** | AIT01.html → AIT04.html | from title "AIT01:" … |
+| Achievements | **AC** | AC01.html → AC03.html | from title "AC01:" … |
+| Books | **B** | B01.html, B02.html, B11.html (max 10 shown) | from title "B01:" … |
+| Investment Tools | **T** | T01.html → T06.html (T03 = `T03/` folder = Tiger) | T01…T06 via CSS counter (leading-zero) |
+| **Health** | **h** | h01.html → h05.html (max 10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
 | Travel | travel | | |
 | Special | — | bucket-list, adventure, Retire65, life-dashboard, dashboard | |
 
-- **Auto-numbering CSS** lives in index.html (`.stories-card`/`.ai-card`/`.ait-card`/`.achieve-card`/`.books-card`/`.tools-card` `ul li a::before` with `counter`). Numbers re-sequence automatically; never type "1." etc. into the link text.
-- **`loadSection` prefixes** in index.html must match the file prefix exactly (`S`, `AI`, `AIT`, `AC`, `B`, plus `h`). **Stories use `pad: 2`** so files are 2-digit (`S01`…`S09`, then `S10`…). New story = `S<2-digit next#>.html` (e.g. `S15.html`) with image folder `img_S15`, and the `<title>`/`<h1>` must start with the same `S<2-digit>:` label. Other sections are NOT zero-padded (AI1, T1, B1, etc.).
-- Investment Tools links are hardcoded in index.html (T1–T6); update both the file and the link when adding one.
+- **All `loadSection` calls use `pad: 2`** (in index.html `init()`) so discovery looks for 2-digit names (`AI01`…`AI09`, then `AI10`). New page = `<PREFIX><2-digit>.html` (e.g. `S15.html`, `AI11.html`), image folder `img_<PREFIX><2-digit>` (e.g. `img_S15`), and `<title>`/`<h1>` start with the same `<PREFIX><2-digit>:` label.
+- **Investment Tools** links are hardcoded in index.html (T01–T06) and its number label comes from CSS `counter(tool, decimal-leading-zero)` — T pages have NO number in their title. Update both the file and the hardcoded link when adding one.
+- **Stories/AI/AIT/AC/Books** get their number from the page **title** (not a CSS counter) — so the title MUST start with the padded label, and there is NO CSS counter for those cards.
 
 ## Code Style
 - AI articles follow the style of `ai7.html` / `ai8.html`.
