@@ -35,9 +35,9 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
 
 ## Site Info
 - **Live URL:** https://paulsworld.vercel.app
-- **GitHub repo:** paulyeo11/Dynamic-Index · **Branch:** main (Vercel auto-deploys from `main`)
+- **GitHub repo:** paulyeo11/paulsworld · **Branch:** main (Vercel auto-deploys from `main`)
 - **Profile photo:** `IMG_1887.jpeg` (repo root). Always reference via absolute URL:
-  https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/IMG_1887.jpeg
+  https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/IMG_1887.jpeg
 
 ## Authentication (IMPORTANT — no tokens in this file)
 - Push using the **`gh` CLI**, which is already authenticated as `paulyeo11`.
@@ -97,7 +97,7 @@ it into the right category, then push to GitHub.
 - Only `view-counter.js` on article pages may call `/up`.
 
 ## Categories / Page Index
-Base: `https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/[filename].html`
+Base: `https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/[filename].html`
 
 **NAMING CONVENTION (updated 2026-05-31): UPPERCASE prefix + ZERO-PADDED 2-DIGIT number for EVERY section (S01, AI01, AIT01, AC01, B01, T01, h01 …). Files, image folders, and on-screen labels/titles all use the same 2-digit number.** Prefixes are case-sensitive on Vercel — always use the exact case below. To add a page, create `<PREFIX><2-digit next#>.html` and it auto-appears in the right section (index.html auto-discovers each prefix up to its max).
 
