@@ -95,16 +95,23 @@ it into the right category, then push to GitHub.
 ## Categories / Page Index
 Base: `https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/[filename].html`
 
-| Category | Prefix | Notes |
-|----------|--------|-------|
-| Stories | s | s1.html → s12.html |
-| AI Journey | ai | ai1.html → ai10.html (auto-discovered by index.html) |
-| AI Tools | (cards) | |
-| Activities / Achievements | ac | ac1.html → ac3.html |
-| Books | book | book1.html → book11.html |
-| Travel | travel | |
-| **Health** | **h** | max 10 (h1–h10). Card in index.html uses green-teal `#10b981`, placed **between AI Journey and Achievements**. |
-| Special | — | bucket-list, adventure, Retire65, sales-tracker, dashboard, life-dashboard |
+**NAMING CONVENTION (updated 2026-05-31): filenames use UPPERCASE prefix + number, and the on-screen number labels match exactly (rendered via CSS `counter` in index.html — do NOT hardcode the number in the link text).** Prefixes are case-sensitive on Vercel — always use the exact case below. To add a page, create `<PREFIX><next-number>.html` and it auto-appears in the right section (index.html auto-discovers each prefix up to its max).
+
+| Category | Prefix | Files | Label shown |
+|----------|--------|-------|-------------|
+| Travel Stories | **S** | S1.html → S14.html (S7 missing) | S1, S2, … |
+| AI Journey | **AI** | AI1.html → AI10.html | AI1, AI2, … |
+| AI Tools | **AIT** | AIT1.html → AIT4.html | AIT1, … |
+| Achievements | **AC** | AC1.html → AC3.html | AC1, … |
+| Books | **B** | B1.html, B2.html, B11.html (max 10 shown) | B1, B2 |
+| Investment Tools | **T** | T1.html → T6.html (T3 = `T3/` folder = Tiger) | T1 … T6 |
+| **Health** | **h** | max 10 (h1–h10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
+| Travel | travel | | |
+| Special | — | bucket-list, adventure, Retire65, life-dashboard, dashboard | |
+
+- **Auto-numbering CSS** lives in index.html (`.stories-card`/`.ai-card`/`.ait-card`/`.achieve-card`/`.books-card`/`.tools-card` `ul li a::before` with `counter`). Numbers re-sequence automatically; never type "1." etc. into the link text.
+- **`loadSection` prefixes** in index.html must match the file prefix exactly (`S`, `AI`, `AIT`, `AC`, `B`, plus `h`).
+- Investment Tools links are hardcoded in index.html (T1–T6); update both the file and the link when adding one.
 
 ## Code Style
 - AI articles follow the style of `ai7.html` / `ai8.html`.
@@ -119,6 +126,6 @@ Keep each step short, with clear instructions on exactly what to click or type.
 ## Weekly HWMR Rule
 Trigger: **"Process this week's HWMR — start from Book [number]"**.
 When Paul uploads a Morning Revival PDF: extract English only, identify all days,
-create one HTML per day (Mon–Sat) in the Books category with the next book number.
+create one HTML per day (Mon–Sat) in the Books category as `B<next-number>.html`.
 Each file has 3 tabs: Full Reading · 5 Key Points (simple words) · Half Page + prayer.
 Green theme, Home button, view counter. Push to GitHub; confirm filenames and SHAs.
