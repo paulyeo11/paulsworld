@@ -67,6 +67,11 @@
     .summary .daychg.positive { color: var(--green); }
     .summary .daychg.negative { color: var(--red); }
     .summary .daychg.neutral { color: var(--muted); }
+    .summary .totalgl { font-size: 15px; font-weight: 700; margin-top: 6px; }
+    .summary .totalgl .gl-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; display: block; margin-bottom: 2px; }
+    .summary .totalgl.positive { color: var(--green); }
+    .summary .totalgl.negative { color: var(--red); }
+    .summary .totalgl.neutral { color: var(--muted); }
 
     .controls {
         display: flex;
@@ -148,6 +153,13 @@
     .chg.negative { color: var(--red); }
     .chg.neutral { color: var(--muted); }
     .val-usd { font-weight: 700; }
+    .gl { font-weight: 700; }
+    .gl.positive { color: var(--green); }
+    .gl.negative { color: var(--red); }
+    .gl.neutral { color: var(--muted); }
+    .gl .gl-pct { font-size: 11px; font-weight: 600; opacity: .85; }
+    /* mobile gain/loss line shown under holding name; hidden on desktop */
+    .gl-mobile { display: none; }
 
     .fx-line { font-size: 11px; color: var(--muted); text-align: center; margin: 12px 0 4px; }
 
@@ -166,10 +178,16 @@
     @media (max-width: 600px) {
         header h1 { font-size: 22px; }
         .summary .total { font-size: 34px; }
-        /* hide qty + native price columns on small screens to keep it tidy */
+        /* hide qty + native price + day% columns on small screens to keep it tidy */
         th.hide-sm, td.hide-sm { display: none; }
         tbody td { padding: 10px 7px; font-size: 13px; }
         thead th { padding: 10px 7px; }
+        /* on mobile, move gain/loss to its own line under the holding name */
+        th.gl-col, td.gl-col { display: none; }
+        .gl-mobile { display: block; font-size: 12px; font-weight: 700; margin-top: 3px; }
+        .gl-mobile.positive { color: var(--green); }
+        .gl-mobile.negative { color: var(--red); }
+        .gl-mobile.neutral { color: var(--muted); }
     }
 </style>
 </head>
@@ -189,6 +207,7 @@
         <div class="label">Total Portfolio Value (USD)</div>
         <div class="total" id="totalVal">&mdash;</div>
         <div class="daychg neutral" id="dayChg">&mdash;</div>
+        <div class="totalgl neutral" id="totalGL">&mdash;</div>
         <div class="controls">
             <button class="refresh-btn" id="refreshBtn">&#128260; Refresh prices</button>
             <span id="lastUpdated">Not yet updated</span>
@@ -208,7 +227,8 @@
                     <th class="hide-sm">Qty</th>
                     <th class="hide-sm">Price</th>
                     <th>Value (USD)</th>
-                    <th>Day %</th>
+                    <th class="gl-col">Gain/Loss</th>
+                    <th class="hide-sm">Day %</th>
                 </tr>
             </thead>
             <tbody id="rows"></tbody>
@@ -241,24 +261,24 @@
 
     // Holdings. ysym = Yahoo Finance symbol used in the batched request.
     var HOLDINGS = [
-        { sym:"09988",  name:"BABA-W (Alibaba)",        qty:500,      ccy:"HKD", stmt:131.50, ysym:"9988.HK" },
-        { sym:"01211",  name:"BYD Company",             qty:600,      ccy:"HKD", stmt:107.00, ysym:"1211.HK" },
-        { sym:"CFA.SI", name:"Amova/Nikko Asia REIT",   qty:12000,    ccy:"SGD", stmt:0.813,  ysym:"CFA.SI"  },
-        { sym:"00823",  name:"LINK REIT",               qty:1500,     ccy:"HKD", stmt:39.04,  ysym:"0823.HK" },
-        { sym:"02318",  name:"Ping An",                 qty:500,      ccy:"HKD", stmt:61.30,  ysym:"2318.HK" },
-        { sym:"03690",  name:"Meituan-W",               qty:200,      ccy:"HKD", stmt:84.25,  ysym:"3690.HK" },
-        { sym:"GRAB",   name:"Grab Holdings",           qty:500,      ccy:"USD", stmt:4.06,   ysym:"GRAB"    },
-        { sym:"06862",  name:"Haidilao",                qty:1000,     ccy:"HKD", stmt:15.00,  ysym:"6862.HK" },
-        { sym:"02800",  name:"Tracker Fund",            qty:500,      ccy:"HKD", stmt:26.46,  ysym:"2800.HK" },
-        { sym:"09888",  name:"BIDU-SW",                 qty:50,       ccy:"HKD", stmt:121.10, ysym:"9888.HK" },
-        { sym:"09618",  name:"JD-SW",                   qty:50,       ccy:"HKD", stmt:120.20, ysym:"9618.HK" },
-        { sym:"03067",  name:"iShares HS Tech",         qty:400,      ccy:"HKD", stmt:10.45,  ysym:"3067.HK" },
-        { sym:"C38U.SI",name:"CapLand IntCom T",        qty:100,      ccy:"SGD", stmt:2.49,   ysym:"C38U.SI" },
-        { sym:"J69U.SI",name:"Frasers Cpt Tr",          qty:100,      ccy:"SGD", stmt:2.28,   ysym:"J69U.SI" },
-        { sym:"N2IU.SI",name:"Mapletree PanAsia",       qty:100,      ccy:"SGD", stmt:1.41,   ysym:"N2IU.SI" },
-        { sym:"K71U.SI",name:"Keppel Reit",             qty:100,      ccy:"SGD", stmt:0.895,  ysym:"K71U.SI" },
-        { sym:"AAPL",   name:"Apple",                   qty:0.23735,  ccy:"USD", stmt:273.17, ysym:"AAPL"    },
-        { sym:"G13.SI", name:"Genting Sing",            qty:100,      ccy:"SGD", stmt:0.70,   ysym:"G13.SI"  }
+        { sym:"09988",  name:"BABA-W (Alibaba)",        qty:500,      ccy:"HKD", stmt:131.50, ysym:"9988.HK", cost:6102.98 },
+        { sym:"01211",  name:"BYD Company",             qty:600,      ccy:"HKD", stmt:107.00, ysym:"1211.HK", cost:8545.05 },
+        { sym:"CFA.SI", name:"Amova/Nikko Asia REIT",   qty:12000,    ccy:"SGD", stmt:0.813,  ysym:"CFA.SI" , cost:7222.62 },
+        { sym:"00823",  name:"LINK REIT",               qty:1500,     ccy:"HKD", stmt:39.04,  ysym:"0823.HK", cost:6581.44 },
+        { sym:"02318",  name:"Ping An",                 qty:500,      ccy:"HKD", stmt:61.30,  ysym:"2318.HK", cost:2942.02 },
+        { sym:"03690",  name:"Meituan-W",               qty:200,      ccy:"HKD", stmt:84.25,  ysym:"3690.HK", cost:3762.39 },
+        { sym:"GRAB",   name:"Grab Holdings",           qty:500,      ccy:"USD", stmt:4.06,   ysym:"GRAB"   , cost:1636.95 },
+        { sym:"06862",  name:"Haidilao",                qty:1000,     ccy:"HKD", stmt:15.00,  ysym:"6862.HK", cost:1773.65 },
+        { sym:"02800",  name:"Tracker Fund",            qty:500,      ccy:"HKD", stmt:26.46,  ysym:"2800.HK", cost:1385.05 },
+        { sym:"09888",  name:"BIDU-SW",                 qty:50,       ccy:"HKD", stmt:121.10, ysym:"9888.HK", cost:733.87  },
+        { sym:"09618",  name:"JD-SW",                   qty:50,       ccy:"HKD", stmt:120.20, ysym:"9618.HK", cost:736.43  },
+        { sym:"03067",  name:"iShares HS Tech",         qty:400,      ccy:"HKD", stmt:10.45,  ysym:"3067.HK", cost:555.96  },
+        { sym:"C38U.SI",name:"CapLand IntCom T",        qty:100,      ccy:"SGD", stmt:2.49,   ysym:"C38U.SI", cost:157.78  },
+        { sym:"J69U.SI",name:"Frasers Cpt Tr",          qty:100,      ccy:"SGD", stmt:2.28,   ysym:"J69U.SI", cost:164.85  },
+        { sym:"N2IU.SI",name:"Mapletree PanAsia",       qty:100,      ccy:"SGD", stmt:1.41,   ysym:"N2IU.SI", cost:95.03   },
+        { sym:"K71U.SI",name:"Keppel Reit",             qty:100,      ccy:"SGD", stmt:0.895,  ysym:"K71U.SI", cost:65.24   },
+        { sym:"AAPL",   name:"Apple",                   qty:0.23735,  ccy:"USD", stmt:273.17, ysym:"AAPL"   , cost:0.00    },
+        { sym:"G13.SI", name:"Genting Sing",            qty:100,      ccy:"SGD", stmt:0.70,   ysym:"G13.SI" , cost:54.25   }
     ];
 
     // live state per holding: { price, prevClose, pct, live:bool }
@@ -269,6 +289,7 @@
     var els = {
         total:       document.getElementById("totalVal"),
         dayChg:      document.getElementById("dayChg"),
+        totalGL:     document.getElementById("totalGL"),
         refreshBtn:  document.getElementById("refreshBtn"),
         lastUpdated: document.getElementById("lastUpdated"),
         progress:    document.getElementById("progress"),
@@ -285,6 +306,24 @@
     function usd(n) {
         if (n === null || n === undefined || isNaN(n)) return "--";
         return "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    // signed USD value, e.g. +$2,291 / −$349
+    function usdSigned(n) {
+        if (n === null || n === undefined || isNaN(n)) return "--";
+        var sign = n >= 0 ? "+" : "−"; // + / minus sign
+        return sign + "$" + Math.abs(Number(n)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    // build a gain/loss object: { cls, valTxt, pctTxt }
+    function gainLoss(valUsd, cost) {
+        var gl = valUsd - cost;
+        var cls = gl > 0 ? "positive" : (gl < 0 ? "negative" : "neutral");
+        var valTxt = usdSigned(gl);
+        var pctTxt = "&mdash;";
+        if (cost && cost > 0) {
+            var pct = gl / cost * 100;
+            pctTxt = (pct >= 0 ? "+" : "−") + Math.abs(pct).toFixed(1) + "%";
+        }
+        return { cls: cls, valTxt: valTxt, pctTxt: pctTxt };
     }
     function pad2(x){ return x < 10 ? "0" + x : "" + x; }
     function timeStr() {
@@ -349,7 +388,7 @@
             return rowValueUsd(b) - rowValueUsd(a);
         });
 
-        var total = 0, dayChangeUsd = 0, prevTotal = 0;
+        var total = 0, dayChangeUsd = 0, prevTotal = 0, totalCost = 0, totalGL = 0;
         var html = "";
 
         sorted.forEach(function (h) {
@@ -372,6 +411,16 @@
             var pctCls = pct == null ? "neutral" : (pct > 0 ? "positive" : (pct < 0 ? "negative" : "neutral"));
             var pctTxt = pct == null ? "&mdash;" : (pct > 0 ? "+" : "") + pct.toFixed(2) + "%";
 
+            // gain/loss vs cost (off the live OR stmt-based USD value)
+            var cost = (h.cost != null && !isNaN(h.cost)) ? h.cost : 0;
+            var gl = gainLoss(valUsd, cost);
+            totalCost += cost;
+            totalGL   += (valUsd - cost);
+
+            var glCell =
+                '<span class="gl-val">' + gl.valTxt + '</span> ' +
+                '<span class="gl-pct">(' + gl.pctTxt + ')</span>';
+
             var priceDp = (price < 5) ? 3 : 2;
             var priceCls = isLive ? "" : "stmt";
             var stmtBadge = isLive ? "" : '<span class="stmt-badge">stmt</span>';
@@ -381,11 +430,13 @@
                     '<td class="l">' +
                         '<div class="sym">' + h.sym + ' <span class="ccy-tag">' + h.ccy + '</span></div>' +
                         '<div class="nm">' + h.name + '</div>' +
+                        '<div class="gl-mobile ' + gl.cls + '">' + gl.valTxt + ' (' + gl.pctTxt + ')</div>' +
                     '</td>' +
                     '<td class="hide-sm">' + fmt(h.qty, (h.qty % 1 === 0 ? 0 : 5)) + '</td>' +
                     '<td class="hide-sm ' + priceCls + '">' + fmt(price, priceDp) + stmtBadge + '</td>' +
                     '<td class="val-usd">' + usd(valUsd) + '</td>' +
-                    '<td class="chg ' + pctCls + '">' + pctTxt + '</td>' +
+                    '<td class="gl gl-col ' + gl.cls + '">' + glCell + '</td>' +
+                    '<td class="chg hide-sm ' + pctCls + '">' + pctTxt + '</td>' +
                 '</tr>';
         });
 
@@ -402,6 +453,18 @@
         }
         els.dayChg.className = "daychg " + dcCls;
         els.dayChg.innerHTML = dcTxt;
+
+        // total gain/loss vs cost
+        var glCls = totalGL > 0 ? "positive" : (totalGL < 0 ? "negative" : "neutral");
+        var glPctTxt = "";
+        if (totalCost > 0) {
+            var glPct = totalGL / totalCost * 100;
+            glPctTxt = "  (" + (glPct >= 0 ? "+" : "−") + Math.abs(glPct).toFixed(1) + "%)";
+        }
+        els.totalGL.className = "totalgl " + glCls;
+        els.totalGL.innerHTML =
+            '<span class="gl-label">Total Gain/Loss vs cost</span>' +
+            usdSigned(totalGL) + glPctTxt;
 
         // fx line (show USD per native = 1 / nativePerUsd)
         var hkdLive = fxRates.HKD, sgdLive = fxRates.SGD;
