@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiger Portfolio &middot; Live Prices</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --navy: #0e1330;
+        --navy2: #161d44;
+        --card: #1a2250;
+        --indigo: #4a6cf7;
+        --indigo2: #6c8cff;
+        --green: #22c55e;
+        --red: #ef4444;
+        --muted: #8a93c2;
+        --line: rgba(255,255,255,0.08);
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: radial-gradient(1200px 600px at 50% -10%, #1a2358 0%, var(--navy) 60%);
+        min-height: 100vh;
+        padding: 16px;
+        color: #eef1ff;
+    }
+
+    .home-btn {
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        z-index: 100;
+        background: rgba(255,255,255,0.10);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 9px 15px;
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        backdrop-filter: blur(6px);
+        transition: transform .2s ease, background .2s;
+    }
+    .home-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.18); }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    header { text-align: center; margin: 58px 0 18px; }
+    header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.4px; }
+    header .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+    /* Total summary card */
+    .summary {
+        background: linear-gradient(135deg, var(--navy2), var(--card));
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 16px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+        text-align: center;
+    }
+    .summary .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .summary .total { font-size: 44px; font-weight: 800; letter-spacing: -1px; margin-top: 4px; line-height: 1.05; }
+    .summary .daychg { font-size: 16px; font-weight: 700; margin-top: 8px; }
+    .summary .daychg.positive { color: var(--green); }
+    .summary .daychg.negative { color: var(--red); }
+    .summary .daychg.neutral { color: var(--muted); }
+
+    .controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .refresh-btn {
+        background: linear-gradient(135deg, var(--indigo), #7a5cff);
+        color: #fff;
+        border: 0;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 20px;
+        border-radius: 24px;
+        cursor: pointer;
+        transition: filter .2s, transform .2s;
+    }
+    .refresh-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .refresh-btn:disabled { opacity: .55; cursor: default; transform: none; }
+
+    .progress { font-size: 12px; color: var(--muted); min-height: 16px; }
+
+    /* API key card */
+    .keycard {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 16px;
+    }
+    .keycard h3 { font-size: 14px; margin-bottom: 6px; }
+    .keycard p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+    .keycard a { color: var(--indigo2); }
+    .key-row { display: flex; gap: 8px; }
+    .key-row input {
+        flex: 1;
+        font-size: 14px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(0,0,0,0.25);
+        color: #fff;
+        outline: none;
+    }
+    .key-row input:focus { border-color: var(--indigo); }
+    .key-row button {
+        background: var(--indigo);
+        color: #fff;
+        border: 0;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 0 18px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+    .key-status { font-size: 12px; margin-top: 10px; color: var(--muted); }
+    .key-status .ok { color: var(--green); }
+    .link { color: var(--indigo2); cursor: pointer; text-decoration: underline; }
+
+    /* Holdings table */
+    .holdings {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--muted);
+        text-align: right;
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+    }
+    thead th.l { text-align: left; }
+    tbody td {
+        padding: 12px 10px;
+        font-size: 14px;
+        text-align: right;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody td.l { text-align: left; }
+    .sym { font-weight: 700; }
+    .nm { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .ccy-tag { font-size: 10px; color: var(--muted); }
+    .stmt { color: var(--muted); }
+    .stmt-badge {
+        display: inline-block;
+        font-size: 9px;
+        background: rgba(255,255,255,0.10);
+        color: var(--muted);
+        padding: 1px 5px;
+        border-radius: 6px;
+        margin-left: 5px;
+        vertical-align: middle;
+    }
+    .chg.positive { color: var(--green); }
+    .chg.negative { color: var(--red); }
+    .chg.neutral { color: var(--muted); }
+    .val-usd { font-weight: 700; }
+
+    .fx-line { font-size: 11px; color: var(--muted); text-align: center; margin: 12px 0 4px; }
+
+    .note {
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-top: 14px;
+        line-height: 1.6;
+    }
+    .note a { color: var(--indigo2); }
+
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 22px 0 8px; }
+    footer a { color: var(--indigo2); font-weight: 600; }
+
+    @media (max-width: 600px) {
+        header h1 { font-size: 22px; }
+        .summary .total { font-size: 34px; }
+        /* hide qty + native price columns on small screens to keep it tidy */
+        th.hide-sm, td.hide-sm { display: none; }
+        tbody td { padding: 10px 7px; font-size: 13px; }
+        thead th { padding: 10px 7px; }
+    }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="/tools.html">&#8962; Home</a>
+
+<div class="container">
+
+    <header>
+        <h1>&#128057; Tiger Portfolio &mdash; Live</h1>
+        <div class="sub">HK &middot; Singapore &middot; US holdings &middot; valued in USD</div>
+    </header>
+
+    <!-- Summary -->
+    <div class="summary">
+        <div class="label">Total Portfolio Value (USD)</div>
+        <div class="total" id="totalVal">&mdash;</div>
+        <div class="daychg neutral" id="dayChg">&mdash;</div>
+        <div class="controls">
+            <button class="refresh-btn" id="refreshBtn">&#128260; Refresh prices</button>
+            <span id="lastUpdated">Not yet updated</span>
+        </div>
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- API key card -->
+    <div class="keycard" id="keyCard">
+        <h3>Twelve Data API key</h3>
+        <p>
+            Enter your free Twelve Data API key once &mdash; it is stored only in this browser.
+            Get a free key at <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a>
+            (free tier &asymp; 8 calls/min, covers HKEX, SGX &amp; US markets).
+        </p>
+        <div class="key-row">
+            <input id="keyInput" type="text" placeholder="Paste your Twelve Data API key" autocomplete="off" spellcheck="false">
+            <button id="saveKeyBtn">Save key</button>
+        </div>
+        <div class="key-status" id="keyStatus"></div>
+    </div>
+
+    <!-- Holdings -->
+    <div class="holdings">
+        <table>
+            <thead>
+                <tr>
+                    <th class="l">Holding</th>
+                    <th class="hide-sm">Qty</th>
+                    <th class="hide-sm">Price</th>
+                    <th>Value (USD)</th>
+                    <th>Day %</th>
+                </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+
+    <div class="fx-line" id="fxLine"></div>
+
+    <div class="note">
+        Prices may be delayed up to ~15 minutes. Powered by
+        <a href="https://twelvedata.com" target="_blank" rel="noopener">Twelve Data</a>.
+        Falls back to last statement close when a live quote is unavailable.<br>
+        For information only &mdash; not investment advice.
+    </div>
+
+    <footer>
+        &copy; 2026 Paul's World &middot; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a>
+    </footer>
+
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    var KEY_STORE = "twelvedata_api_key";
+
+    // FX fallbacks (native -> USD)
+    var FX_FALLBACK = { HKD: 0.128, SGD: 0.784, USD: 1 };
+
+    // Holdings. tdSymbol = Twelve Data exchange-qualified symbol.
+    var HOLDINGS = [
+        { sym:"09988",  name:"BABA-W (Alibaba)",        qty:500,      ccy:"HKD", stmt:131.50, td:"9988:HKEX" },
+        { sym:"01211",  name:"BYD Company",             qty:600,      ccy:"HKD", stmt:107.00, td:"1211:HKEX" },
+        { sym:"CFA.SI", name:"Amova/Nikko Asia REIT",   qty:12000,    ccy:"SGD", stmt:0.813,  td:"CFA:SGX"   },
+        { sym:"00823",  name:"LINK REIT",               qty:1500,     ccy:"HKD", stmt:39.04,  td:"823:HKEX"  },
+        { sym:"02318",  name:"Ping An",                 qty:500,      ccy:"HKD", stmt:61.30,  td:"2318:HKEX" },
+        { sym:"03690",  name:"Meituan-W",               qty:200,      ccy:"HKD", stmt:84.25,  td:"3690:HKEX" },
+        { sym:"GRAB",   name:"Grab Holdings",           qty:500,      ccy:"USD", stmt:4.06,   td:"GRAB"      },
+        { sym:"06862",  name:"Haidilao",                qty:1000,     ccy:"HKD", stmt:15.00,  td:"6862:HKEX" },
+        { sym:"02800",  name:"Tracker Fund",            qty:500,      ccy:"HKD", stmt:26.46,  td:"2800:HKEX" },
+        { sym:"09888",  name:"BIDU-SW",                 qty:50,       ccy:"HKD", stmt:121.10, td:"9888:HKEX" },
+        { sym:"09618",  name:"JD-SW",                   qty:50,       ccy:"HKD", stmt:120.20, td:"9618:HKEX" },
+        { sym:"03067",  name:"iShares HS Tech",         qty:400,      ccy:"HKD", stmt:10.45,  td:"3067:HKEX" },
+        { sym:"C38U.SI",name:"CapLand IntCom T",        qty:100,      ccy:"SGD", stmt:2.49,   td:"C38U:SGX"  },
+        { sym:"J69U.SI",name:"Frasers Cpt Tr",          qty:100,      ccy:"SGD", stmt:2.28,   td:"J69U:SGX"  },
+        { sym:"N2IU.SI",name:"Mapletree PanAsia",       qty:100,      ccy:"SGD", stmt:1.41,   td:"N2IU:SGX"  },
+        { sym:"K71U.SI",name:"Keppel Reit",             qty:100,      ccy:"SGD", stmt:0.895,  td:"K71U:SGX"  },
+        { sym:"AAPL",   name:"Apple",                   qty:0.23735,  ccy:"USD", stmt:273.17, td:"AAPL"      },
+        { sym:"G13.SI", name:"Genting Sing",            qty:100,      ccy:"SGD", stmt:0.70,   td:"G13:SGX"   }
+    ];
+
+    // live state per holding: { price, prevClose, changePct, live:bool }
+    var live = {};
+    var fxRates = { HKD: null, SGD: null, USD: 1 };
+
+    var els = {
+        total:       document.getElementById("totalVal"),
+        dayChg:      document.getElementById("dayChg"),
+        refreshBtn:  document.getElementById("refreshBtn"),
+        lastUpdated: document.getElementById("lastUpdated"),
+        progress:    document.getElementById("progress"),
+        keyCard:     document.getElementById("keyCard"),
+        keyInput:    document.getElementById("keyInput"),
+        saveKeyBtn:  document.getElementById("saveKeyBtn"),
+        keyStatus:   document.getElementById("keyStatus"),
+        rows:        document.getElementById("rows"),
+        fxLine:      document.getElementById("fxLine")
+    };
+
+    /* ---------- storage ---------- */
+    function getKey()  { try { return localStorage.getItem(KEY_STORE) || ""; } catch(e){ return ""; } }
+    function setKey(k) { try { localStorage.setItem(KEY_STORE, k); } catch(e){} }
+
+    /* ---------- formatting ---------- */
+    function fmt(n, dp) {
+        if (n === null || n === undefined || isNaN(n)) return "--";
+        dp = (dp === undefined) ? 2 : dp;
+        return Number(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
+    }
+    function usd(n) {
+        if (n === null || n === undefined || isNaN(n)) return "--";
+        return "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function pad2(x){ return x < 10 ? "0" + x : "" + x; }
+    function timeStr() {
+        var d = new Date();
+        return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+    }
+
+    /* ---------- FX ---------- */
+    function fxToUsd(ccy) {
+        if (ccy === "USD") return 1;
+        var r = fxRates[ccy];
+        if (r && r > 0) return r;          // r = USD per 1 unit of native
+        return FX_FALLBACK[ccy] || 1;
+    }
+
+    // Twelve Data exchange_rate USD/HKD returns rate = HKD per 1 USD.
+    // We want USD per 1 HKD = 1 / rate.
+    function fetchFx(key) {
+        var jobs = ["HKD", "SGD"].map(function (ccy) {
+            var url = "https://api.twelvedata.com/exchange_rate?symbol=USD/" + ccy + "&apikey=" + encodeURIComponent(key);
+            return fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (j) {
+                    var rate = j && j.rate ? parseFloat(j.rate) : null; // native per USD
+                    if (rate && rate > 0) fxRates[ccy] = 1 / rate;       // store USD per native
+                })
+                .catch(function () { /* keep fallback */ });
+        });
+        return Promise.all(jobs);
+    }
+
+    /* ---------- quotes ---------- */
+    function delay(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+
+    function fetchQuote(key, h) {
+        var url = "https://api.twelvedata.com/quote?symbol=" + encodeURIComponent(h.td) + "&apikey=" + encodeURIComponent(key);
+        return fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (!j || j.status === "error" || j.code === 429) {
+                    return { ok: false, rate: j && j.code === 429 };
+                }
+                var price = parseFloat(j.close);
+                if (isNaN(price)) return { ok: false };
+                var prev  = parseFloat(j.previous_close);
+                var pct   = (j.percent_change !== undefined && j.percent_change !== null)
+                            ? parseFloat(j.percent_change) : null;
+                if (pct === null && !isNaN(prev) && prev > 0) pct = (price - prev) / prev * 100;
+                return { ok: true, price: price, prevClose: isNaN(prev) ? null : prev, pct: pct };
+            })
+            .catch(function () { return { ok: false }; });
+    }
+
+    /* ---------- render ---------- */
+    function rowValueUsd(h) {
+        var d = live[h.sym];
+        var price = (d && d.live) ? d.price : h.stmt;
+        return h.qty * price * fxToUsd(h.ccy);
+    }
+
+    function render() {
+        // sort by USD value descending
+        var sorted = HOLDINGS.slice().sort(function (a, b) {
+            return rowValueUsd(b) - rowValueUsd(a);
+        });
+
+        var total = 0, dayChangeUsd = 0, prevTotal = 0;
+        var html = "";
+
+        sorted.forEach(function (h) {
+            var d = live[h.sym] || {};
+            var isLive = !!d.live;
+            var price = isLive ? d.price : h.stmt;
+            var valUsd = h.qty * price * fxToUsd(h.ccy);
+            total += valUsd;
+
+            // day change in USD: qty * (price - prevClose) * fx
+            if (isLive && d.prevClose != null && !isNaN(d.prevClose)) {
+                dayChangeUsd += h.qty * (price - d.prevClose) * fxToUsd(h.ccy);
+                prevTotal += h.qty * d.prevClose * fxToUsd(h.ccy);
+            } else {
+                prevTotal += valUsd;
+            }
+
+            var pct = (isLive && d.pct != null) ? d.pct : null;
+            var pctCls = pct == null ? "neutral" : (pct > 0 ? "positive" : (pct < 0 ? "negative" : "neutral"));
+            var pctTxt = pct == null ? "&mdash;" : (pct > 0 ? "+" : "") + pct.toFixed(2) + "%";
+
+            var priceDp = (price < 5) ? 3 : 2;
+            var priceCls = isLive ? "" : "stmt";
+            var stmtBadge = isLive ? "" : '<span class="stmt-badge">stmt</span>';
+
+            html +=
+                '<tr>' +
+                    '<td class="l">' +
+                        '<div class="sym">' + h.sym + ' <span class="ccy-tag">' + h.ccy + '</span></div>' +
+                        '<div class="nm">' + h.name + '</div>' +
+                    '</td>' +
+                    '<td class="hide-sm">' + fmt(h.qty, (h.qty % 1 === 0 ? 0 : 5)) + '</td>' +
+                    '<td class="hide-sm ' + priceCls + '">' + fmt(price, priceDp) + stmtBadge + '</td>' +
+                    '<td class="val-usd">' + usd(valUsd) + '</td>' +
+                    '<td class="chg ' + pctCls + '">' + pctTxt + '</td>' +
+                '</tr>';
+        });
+
+        els.rows.innerHTML = html;
+        els.total.textContent = usd(total);
+
+        // day change
+        var dcCls = "neutral", dcTxt = "&mdash;";
+        if (prevTotal > 0 && Math.abs(dayChangeUsd) > 0.0001) {
+            var dcPct = (dayChangeUsd / prevTotal) * 100;
+            dcCls = dayChangeUsd > 0 ? "positive" : (dayChangeUsd < 0 ? "negative" : "neutral");
+            var sign = dayChangeUsd > 0 ? "+" : "";
+            dcTxt = sign + usd(dayChangeUsd) + "  (" + sign + dcPct.toFixed(2) + "% today)";
+        }
+        els.dayChg.className = "daychg " + dcCls;
+        els.dayChg.innerHTML = dcTxt;
+
+        // fx line
+        var hkd = fxRates.HKD, sgd = fxRates.SGD;
+        els.fxLine.textContent =
+            "FX: 1 HKD = $" + (hkd ? hkd.toFixed(4) : FX_FALLBACK.HKD.toFixed(4)) + (hkd ? "" : " (fallback)") +
+            "  ·  1 SGD = $" + (sgd ? sgd.toFixed(4) : FX_FALLBACK.SGD.toFixed(4)) + (sgd ? "" : " (fallback)");
+    }
+
+    /* ---------- refresh orchestration (throttled) ---------- */
+    var refreshing = false;
+    function refresh() {
+        var key = getKey();
+        if (!key) { showKeyCard("Enter your Twelve Data key to load live prices.", false); return; }
+        if (refreshing) return;
+        refreshing = true;
+        els.refreshBtn.disabled = true;
+
+        var n = HOLDINGS.length;
+        els.progress.textContent = "Fetching FX rates…";
+
+        fetchFx(key).then(function () {
+            // sequential, ~8s spacing-friendly: free tier ~8/min. We do small 350ms gap
+            // but more importantly we surface rate-limit messages and keep fallbacks.
+            var i = 0;
+            function next() {
+                if (i >= n) {
+                    finish();
+                    return;
+                }
+                var h = HOLDINGS[i];
+                els.progress.textContent = "Fetching " + (i + 1) + " / " + n + "  (" + h.sym + ")…";
+                fetchQuote(key, h).then(function (res) {
+                    if (res.ok) {
+                        live[h.sym] = { live: true, price: res.price, prevClose: res.prevClose, pct: res.pct };
+                    } else {
+                        // keep any prior live value; otherwise stays on stmt fallback
+                        if (!live[h.sym]) live[h.sym] = { live: false };
+                        if (res.rate) els.progress.textContent = "Rate limit hit — remaining use statement close…";
+                    }
+                    render();
+                    i++;
+                    delay(350).then(next);
+                });
+            }
+            next();
+        });
+
+        function finish() {
+            refreshing = false;
+            els.refreshBtn.disabled = false;
+            els.lastUpdated.textContent = "Updated " + timeStr();
+            var liveCount = HOLDINGS.filter(function (h) { return live[h.sym] && live[h.sym].live; }).length;
+            els.progress.textContent = liveCount + " of " + n + " priced live" +
+                (liveCount < n ? " · rest show last statement close" : "");
+            render();
+        }
+    }
+
+    /* ---------- key card ---------- */
+    function showKeyCard(statusMsg, ok) {
+        els.keyCard.style.display = "block";
+        if (statusMsg) {
+            els.keyStatus.innerHTML = ok ? '<span class="ok">' + statusMsg + '</span>' : statusMsg;
+        }
+    }
+    function hideKeyCardCollapsed() {
+        // keep a slim "change key" affordance
+        els.keyCard.style.display = "block";
+        els.keyStatus.innerHTML = 'Key saved on this device. <span class="link" id="clearKey">Change key</span>';
+        var c = document.getElementById("clearKey");
+        if (c) c.onclick = function () {
+            els.keyInput.value = getKey();
+            els.keyStatus.innerHTML = "Edit the key above and press Save.";
+        };
+    }
+
+    els.saveKeyBtn.onclick = function () {
+        var k = (els.keyInput.value || "").trim();
+        if (!k) { showKeyCard("Please paste a key first.", false); return; }
+        setKey(k);
+        els.keyInput.value = "";
+        hideKeyCardCollapsed();
+        refresh();
+    };
+    els.keyInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") els.saveKeyBtn.click();
+    });
+
+    els.refreshBtn.onclick = refresh;
+
+    /* ---------- init ---------- */
+    render(); // initial view shows all stmt-close fallbacks immediately
+    if (getKey()) {
+        hideKeyCardCollapsed();
+        refresh();
+    } else {
+        showKeyCard("Enter your free Twelve Data key above to load live prices. Until then, last statement closes are shown.", false);
+    }
+})();
+</script>
+
+<script src="/view-counter.js"></script>
+
+<a href="/tools.html" title="Back to Investment Tools" style="position:fixed;left:18px;bottom:18px;z-index:99999;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#0e1330,#1a2a6c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.45);border:2px solid #10b981;">&#128200;</a>
+</body>
+</html>
