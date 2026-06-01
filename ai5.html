@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ai5: IBKR Portfolio Viewer — Python + ib_async Dashboard</title>
+<title>ai5: IBKR Portfolio Viewer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -15,71 +15,67 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; padding-bottom:60px; }
 
-  /* HOME BTN */
   .home-btn {
     position:fixed; top:14px; left:16px; z-index:999;
     background:#f4813f; color:#fff; text-decoration:none;
-    font-size:0.82rem; font-weight:700; padding:7px 16px;
-    border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,0.4);
-    transition:opacity .2s;
+    font-size:.82rem; font-weight:700; padding:7px 16px;
+    border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4);
   }
-  .home-btn:hover { opacity:.85; }
 
-  /* HEADER */
   header {
     background:linear-gradient(135deg,#0a0e17,#0d1f35);
     border-bottom:1px solid var(--border);
-    padding:28px 40px 28px 120px;
+    padding:28px 40px 28px 130px;
     display:flex; align-items:center; justify-content:space-between;
     position:sticky; top:0; z-index:100;
   }
   .logo { display:flex; align-items:center; gap:12px; }
   .logo-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); animation:pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
-  h1 { font-size:1.2rem; font-weight:800; letter-spacing:-.02em; color:#fff; }
+  h1 { font-size:1.2rem; font-weight:800; color:#fff; }
   .subtitle { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
   #fetch-time { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); background:var(--surface); padding:6px 14px; border-radius:20px; border:1px solid var(--border); }
 
-  /* INTRO */
-  .intro {
-    max-width:900px; margin:32px auto; padding:0 24px;
-  }
-  .intro h2 { font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:8px; }
-  .intro p  { color:var(--muted); font-size:.9rem; line-height:1.7; margin-bottom:16px; }
+  main { max-width:960px; margin:0 auto; padding:32px 24px; }
 
-  /* STEPS */
-  .steps { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px 28px; margin-bottom:28px; }
-  .steps h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-family:'DM Mono',monospace; margin-bottom:16px; }
-  .step { display:flex; gap:14px; margin-bottom:14px; align-items:flex-start; }
-  .step-num { width:28px; height:28px; border-radius:50%; background:var(--accent); color:#000; font-weight:800; font-size:.8rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .step-text { font-size:.88rem; line-height:1.6; color:var(--text); }
+  /* LOADING STATE */
+  #loading-state { text-align:center; padding:80px 20px; }
+  .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 20px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loading-state p { color:var(--muted); font-size:.9rem; }
+
+  /* NO DATA STATE */
+  #nodata-state { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; text-align:center; }
+  #nodata-state h3 { color:#fff; margin-bottom:12px; }
+  #nodata-state p { color:var(--muted); font-size:.88rem; line-height:1.7; margin-bottom:16px; }
   code { background:#1f2d45; color:var(--accent); padding:2px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-size:.85em; }
 
+  /* STEPS */
+  .steps { background:rgba(0,212,170,.05); border:1px solid rgba(0,212,170,.2); border-radius:10px; padding:20px 24px; margin:16px 0; text-align:left; }
+  .step { display:flex; gap:12px; margin-bottom:10px; align-items:flex-start; font-size:.85rem; color:var(--text); line-height:1.5; }
+  .step-num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#000; font-weight:800; font-size:.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+
   /* DOWNLOAD BTN */
-  .dl-btn {
-    display:inline-block; background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:#000; font-family:'Syne',sans-serif; font-weight:700; font-size:.88rem;
-    padding:10px 22px; border-radius:8px; text-decoration:none; border:none;
-    cursor:pointer; transition:opacity .2s; margin-right:10px; margin-bottom:10px;
-  }
+  .dl-btn { display:inline-block; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#000; font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem; padding:9px 20px; border-radius:8px; text-decoration:none; border:none; cursor:pointer; transition:opacity .2s; }
   .dl-btn:hover { opacity:.85; }
 
-  /* MAIN */
-  main { max-width:900px; margin:0 auto; padding:0 24px; }
-
-  /* SUMMARY */
+  /* SUMMARY CARDS */
   .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px; position:relative; overflow:hidden; transition:border-color .2s; }
-  .card:hover { border-color:var(--accent); }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px; position:relative; overflow:hidden; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
   .card-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:6px; font-family:'DM Mono',monospace; }
   .card-value { font-size:1.7rem; font-weight:800; color:var(--accent); letter-spacing:-.03em; line-height:1; }
-  .card-sub   { font-size:.72rem; color:var(--muted); margin-top:5px; font-family:'DM Mono',monospace; }
+  .card-sub { font-size:.7rem; color:var(--muted); margin-top:5px; font-family:'DM Mono',monospace; }
+
+  /* REFRESH BTN */
+  .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.75rem; cursor:pointer; font-family:'DM Mono',monospace; transition:all .15s; }
+  .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
 
   /* FILTERS */
-  .filters { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; align-items:center; }
+  .toolbar { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+  .filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .filter-label { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
-  .filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.78rem; font-family:'Syne',sans-serif; cursor:pointer; transition:all .15s; }
+  .filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.78rem; cursor:pointer; transition:all .15s; }
   .filter-btn:hover,.filter-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,212,170,.08); }
 
   /* TABLE */
@@ -88,7 +84,7 @@
   .table-title { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
   #pos-count { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); }
   table { width:100%; border-collapse:collapse; }
-  thead th { padding:10px 18px; text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); background:rgba(255,255,255,.02); cursor:pointer; font-family:'DM Mono',monospace; white-space:nowrap; }
+  thead th { padding:10px 18px; text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); background:rgba(255,255,255,.02); cursor:pointer; font-family:'DM Mono',monospace; white-space:nowrap; user-select:none; }
   thead th:hover { color:var(--accent); }
   tbody tr { border-top:1px solid rgba(255,255,255,.04); transition:background .1s; }
   tbody tr:hover { background:rgba(255,255,255,.03); }
@@ -97,30 +93,21 @@
   .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:.63rem; font-weight:700; font-family:'DM Mono',monospace; }
   .badge-HKD{background:rgba(249,115,22,.15);color:var(--hk)}
   .badge-USD{background:rgba(59,130,246,.15);color:var(--us)}
+  .badge-SGD{background:rgba(16,185,129,.15);color:#10b981}
   .badge-STK{background:rgba(0,212,170,.1);color:var(--accent)}
   .badge-OPT{background:rgba(245,158,11,.1);color:var(--warn)}
   .num{font-family:'DM Mono',monospace}
   .pos-qty{color:var(--accent);font-weight:600}
-  .cost{color:var(--muted)}
+  .muted{color:var(--muted)}
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
 
-  /* LOAD AREA */
-  #load-area { background:var(--surface); border:2px dashed var(--border); border-radius:12px; padding:36px; text-align:center; margin-bottom:28px; transition:border-color .2s; }
-  #load-area:hover { border-color:var(--accent); }
-  #load-area p { color:var(--muted); font-size:.88rem; margin-bottom:16px; line-height:1.6; }
-  #error-msg { color:var(--danger); font-family:'DM Mono',monospace; font-size:.78rem; margin-top:12px; }
-
-  /* VIEW COUNTER */
-  .view-counter { text-align:center; margin:40px auto 0; color:var(--muted); font-family:'DM Mono',monospace; font-size:.75rem; }
-
-  footer { text-align:center; color:var(--muted); font-size:.7rem; font-family:'DM Mono',monospace; margin-top:32px; padding:0 24px; line-height:1.8; }
+  footer { text-align:center; color:var(--muted); font-size:.7rem; font-family:'DM Mono',monospace; margin-top:40px; line-height:1.8; }
   footer a { color:var(--accent); text-decoration:none; }
 
   @media(max-width:600px){
-    header{padding:20px 16px 20px 80px}
-    .intro,.steps{padding:0 16px}
-    main{padding:0 16px}
-    tbody td{padding:10px 12px;font-size:.78rem}
+    header{padding:20px 16px 20px 90px}
+    tbody td{padding:10px 10px;font-size:.78rem}
+    .card-value{font-size:1.4rem}
   }
 </style>
 </head>
@@ -132,59 +119,37 @@
   <div class="logo">
     <div class="logo-dot"></div>
     <div>
-      <h1>IBKR Portfolio Viewer</h1>
-      <div class="subtitle">ai5 · Python + ib_async · Interactive Brokers</div>
+      <h1>IBKR Portfolio</h1>
+      <div class="subtitle">ai5 · Live Positions via ib_async</div>
     </div>
   </div>
-  <div id="fetch-time">No data loaded</div>
+  <div id="fetch-time">Loading…</div>
 </header>
-
-<!-- INTRO -->
-<div class="intro">
-  <h2>📈 View Your IBKR Positions</h2>
-  <p>This tool connects to Interactive Brokers via <strong>ib_async</strong> (the official replacement for ib_insync). Run the Python script on your computer while IB Gateway is open, then load the output file here to see your full portfolio in a live dashboard.</p>
-
-  <div class="steps">
-    <h3>How To Use</h3>
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-text">Install the library: <code>pip install ib_async</code></div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-text">Download the Python script below and place it in any folder</div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-text">Open <strong>IB Gateway</strong> → Configure → Settings → API → Enable Socket Clients. Port: <code>4001</code></div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-text">Run: <code>python ibkr_positions.py</code> — it creates <code>positions.json</code></div>
-    </div>
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-text">Click <strong>Load positions.json</strong> below to see your portfolio</div>
-    </div>
-
-    <div style="margin-top:20px">
-      <button class="dl-btn" onclick="downloadPython()">⬇️ Download ibkr_positions.py</button>
-    </div>
-  </div>
-</div>
 
 <main>
 
-  <!-- LOAD AREA -->
-  <div id="load-area">
-    <p>Run the Python script first, then load the output here:</p>
-    <input type="file" id="file-input" accept=".json" style="display:none">
-    <button class="dl-btn" onclick="document.getElementById('file-input').click()">📂 Load positions.json</button>
-    <div id="error-msg"></div>
+  <!-- LOADING -->
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p>Fetching your portfolio data…</p>
   </div>
 
-  <!-- DASHBOARD (hidden until loaded) -->
+  <!-- NO DATA YET -->
+  <div id="nodata-state">
+    <h3>📭 No position data found</h3>
+    <p>Run the Python script on your computer to upload your positions.<br>Once uploaded, just refresh this page — data loads automatically.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div>Install: <code>pip install ib_async requests</code></div></div>
+      <div class="step"><div class="step-num">2</div><div>Download and run: <code>python ibkr_positions.py</code></div></div>
+      <div class="step"><div class="step-num">3</div><div>Open IB Gateway first — port <code>4001</code></div></div>
+      <div class="step"><div class="step-num">4</div><div>Refresh this page — positions load automatically ✅</div></div>
+    </div>
+    <button class="dl-btn" onclick="downloadPython()">⬇️ Download ibkr_positions.py</button>
+  </div>
+
+  <!-- DASHBOARD -->
   <div id="dashboard" style="display:none">
+
     <div class="summary-grid">
       <div class="card">
         <div class="card-label">Total Positions</div>
@@ -194,7 +159,7 @@
       <div class="card">
         <div class="card-label">Est. Portfolio Value</div>
         <div class="card-value" id="total-val">—</div>
-        <div class="card-sub">cost basis estimate</div>
+        <div class="card-sub">cost basis × qty (USD)</div>
       </div>
       <div class="card">
         <div class="card-label">HK Positions</div>
@@ -208,19 +173,22 @@
       </div>
     </div>
 
-    <div class="filters">
-      <span class="filter-label">FILTER:</span>
-      <button class="filter-btn active" onclick="filterData('ALL',this)">All</button>
-      <button class="filter-btn" onclick="filterData('USD',this)">🇺🇸 USD</button>
-      <button class="filter-btn" onclick="filterData('HKD',this)">🇭🇰 HKD</button>
-      <button class="filter-btn" onclick="filterData('STK',this)">Stocks</button>
-      <button class="filter-btn" onclick="filterData('OPT',this)">Options</button>
+    <div class="toolbar">
+      <div class="filters">
+        <span class="filter-label">FILTER:</span>
+        <button class="filter-btn active" onclick="filterData('ALL',this)">All</button>
+        <button class="filter-btn" onclick="filterData('USD',this)">🇺🇸 USD</button>
+        <button class="filter-btn" onclick="filterData('HKD',this)">🇭🇰 HKD</button>
+        <button class="filter-btn" onclick="filterData('STK',this)">Stocks</button>
+        <button class="filter-btn" onclick="filterData('OPT',this)">Options</button>
+      </div>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
     </div>
 
     <div class="table-wrap">
       <div class="table-header">
         <div class="table-title">Positions</div>
-        <div id="pos-count">0 positions</div>
+        <div id="pos-count">—</div>
       </div>
       <table>
         <thead>
@@ -238,124 +206,52 @@
       </table>
       <div id="empty-state">No positions match this filter.</div>
     </div>
-  </div>
 
+  </div>
 </main>
 
-<!-- VIEW COUNTER -->
-<div class="view-counter">
+<div style="text-align:center;margin-top:40px">
   <script src="/view-counter.js"></script>
 </div>
 
 <footer>
-  <br>
-  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a> · IBKR Portfolio Viewer via ib_async<br>
-  Values shown are estimates (avg cost × qty). Re-run the script for live data.
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Data loaded from GitHub · Run ibkr_positions.py to refresh · Values = avg cost × qty
 </footer>
 
 <script>
-const PYTHON_SCRIPT = `"""
-IBKR Position Fetcher using ib_async
-=====================================
-Requirements:
-  pip install ib_async
-
-Before running:
-  - Open IB Gateway
-  - Enable API: Configure > Settings > API > Enable ActiveX and Socket Clients
-  - Port: 4001 (IB Gateway) | 7496 (TWS Live) | 7497 (TWS Paper)
-  - Tick "Read-Only API" for safety
-
-Run: python ibkr_positions.py
-Output: positions.json  (load into the dashboard)
-"""
-from ib_async import IB, util
-import json
-from datetime import datetime
-
-HOST      = '127.0.0.1'
-PORT      = 4001    # IB Gateway. Change to 7496 for TWS Live
-CLIENT_ID = 1
-
-def fetch_positions():
-    util.startLoop()
-    ib = IB()
-    print(f"Connecting to {HOST}:{PORT} ...")
-    ib.connect(HOST, PORT, clientId=CLIENT_ID)
-    print("Connected!")
-
-    positions     = ib.positions()
-    account_vals  = ib.accountValues()
-
-    pos_list = []
-    for p in positions:
-        pos_list.append({
-            "account"    : p.account,
-            "symbol"     : p.contract.symbol,
-            "secType"    : p.contract.secType,
-            "exchange"   : p.contract.exchange or p.contract.primaryExch or "—",
-            "currency"   : p.contract.currency,
-            "position"   : p.position,
-            "avgCost"    : round(p.avgCost, 4),
-            "marketValue": round(p.position * p.avgCost, 2),
-        })
-
-    net_liq = next((av.value for av in account_vals
-                    if av.tag == 'NetLiquidation' and av.currency == 'USD'), None)
-
-    output = {
-        "fetchedAt"       : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "netLiquidation"  : net_liq,
-        "positions"       : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
-    }
-
-    ib.disconnect()
-    print("Disconnected.")
-
-    with open("positions.json", "w") as f:
-        json.dump(output, f, indent=2)
-
-    print(f"Saved {len(pos_list)} positions to positions.json")
-    print("Load positions.json into the dashboard at paulsworld.vercel.app/ai5.html")
-
-if __name__ == "__main__":
-    fetch_positions()
-`;
-
-function downloadPython() {
-  const blob = new Blob([PYTHON_SCRIPT], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'ibkr_positions.py';
-  a.click();
-}
+// Positions JSON is fetched directly from GitHub raw URL
+const DATA_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/positions.json';
 
 let allData = [], currentFilter = 'ALL', sortKey = 'symbol', sortAsc = true;
 
-document.getElementById('file-input').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      const data = JSON.parse(ev.target.result);
-      loadDashboard(data);
-    } catch(err) {
-      document.getElementById('error-msg').textContent = '❌ Invalid JSON. Run the Python script first.';
-    }
-  };
-  reader.readAsText(file);
-});
+async function loadData() {
+  document.getElementById('fetch-time').textContent = 'Loading…';
+  try {
+    // Cache-bust so we always get fresh data
+    const r = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error('not found');
+    const data = await r.json();
+    showDashboard(data);
+  } catch(e) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('nodata-state').style.display = 'block';
+    document.getElementById('fetch-time').textContent = 'No data yet';
+  }
+}
 
-function loadDashboard(data) {
+function showDashboard(data) {
   allData = data.positions || [];
-  document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || 'Unknown');
+  document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || '—');
   document.getElementById('total-pos').textContent = allData.length;
-  const totalVal = allData.reduce((s,p) => s + (p.marketValue||0), 0);
-  document.getElementById('total-val').textContent = '$' + totalVal.toLocaleString('en-US',{maximumFractionDigits:0});
+
+  const usdVal = allData.filter(p=>p.currency==='USD').reduce((s,p)=>s+(p.marketValue||0),0);
+  document.getElementById('total-val').textContent = '$' + usdVal.toLocaleString('en-US',{maximumFractionDigits:0});
   document.getElementById('hk-count').textContent = allData.filter(p=>p.currency==='HKD').length;
   document.getElementById('us-count').textContent = allData.filter(p=>p.currency==='USD').length;
-  document.getElementById('load-area').style.display = 'none';
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('nodata-state').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   renderTable();
 }
@@ -384,26 +280,113 @@ function renderTable() {
     return sortAsc?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0);
   });
   const tbody=document.getElementById('table-body');
-  const empty=document.getElementById('empty-state');
   document.getElementById('pos-count').textContent = data.length+' position'+(data.length!==1?'s':'');
+  const empty=document.getElementById('empty-state');
   if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=data.map(p=>{
     const val=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const cost=(p.avgCost||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
     const qty=p.position.toLocaleString('en-US');
-    const cur=p.currency==='HKD'?'HK$':'$';
+    const sym = p.currency==='HKD'?'HK$':'$';
     return `<tr>
       <td><span class="symbol">${p.symbol}</span></td>
-      <td><span class="badge badge-${p.secType}">${p.secType}</span></td>
+      <td><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
       <td><span class="badge badge-${p.currency}">${p.currency}</span></td>
-      <td class="num cost">${p.exchange}</td>
+      <td class="num muted">${p.exchange}</td>
       <td class="num pos-qty">${qty}</td>
-      <td class="num cost">${cost}</td>
-      <td class="num" style="font-weight:600">${cur}${val}</td>
+      <td class="num muted">${cost}</td>
+      <td class="num" style="font-weight:600">${sym}${val}</td>
     </tr>`;
   }).join('');
 }
+
+// Embedded Python script for download
+const PYTHON_SCRIPT = `"""
+IBKR Position Fetcher — Auto-uploads to GitHub
+================================================
+pip install ib_async requests
+
+Open IB Gateway first, then run:
+  python ibkr_positions.py
+
+Then visit: https://paulsworld.vercel.app/ai5.html
+"""
+from ib_async import IB, util
+import json, base64, requests
+from datetime import datetime
+
+HOST          = '127.0.0.1'
+PORT          = 4001
+CLIENT_ID     = 1
+GITHUB_TOKEN  = "YOUR_GITHUB_TOKEN_HERE"
+GITHUB_REPO   = "paulyeo21/Dynamic-Index"
+GITHUB_FILE   = "positions.json"
+GITHUB_BRANCH = "main"
+
+def fetch_positions():
+    util.startLoop()
+    ib = IB()
+    print(f"Connecting to {HOST}:{PORT} ...")
+    ib.connect(HOST, PORT, clientId=CLIENT_ID)
+    print("Connected!")
+    positions    = ib.positions()
+    account_vals = ib.accountValues()
+    pos_list = []
+    for p in positions:
+        pos_list.append({
+            "account"    : p.account,
+            "symbol"     : p.contract.symbol,
+            "secType"    : p.contract.secType,
+            "exchange"   : p.contract.exchange or p.contract.primaryExch or "—",
+            "currency"   : p.contract.currency,
+            "position"   : p.position,
+            "avgCost"    : round(p.avgCost, 4),
+            "marketValue": round(p.position * p.avgCost, 2),
+        })
+    net_liq = next((av.value for av in account_vals
+                    if av.tag == 'NetLiquidation' and av.currency == 'USD'), None)
+    output = {
+        "fetchedAt"     : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "netLiquidation": net_liq,
+        "positions"     : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
+    }
+    ib.disconnect()
+    print(f"Done. {len(pos_list)} positions.")
+    with open("positions.json", "w") as f:
+        json.dump(output, f, indent=2)
+    upload_to_github(output)
+
+def upload_to_github(data):
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE}"
+    r = requests.get(f"{url}?ref={GITHUB_BRANCH}", headers=headers)
+    sha = r.json().get("sha") if r.status_code == 200 else None
+    content = base64.b64encode(json.dumps(data, indent=2).encode()).decode()
+    payload = {"message": f"Update positions {data['fetchedAt']}", "content": content, "branch": GITHUB_BRANCH}
+    if sha:
+        payload["sha"] = sha
+    r = requests.put(url, headers=headers, json=payload)
+    if r.status_code in (200, 201):
+        print("Uploaded to GitHub!")
+        print("Visit: https://paulsworld.vercel.app/ai5.html")
+    else:
+        print(f"Upload failed: {r.status_code} {r.json().get('message')}")
+
+if __name__ == "__main__":
+    fetch_positions()
+`;
+
+function downloadPython() {
+  const blob = new Blob([PYTHON_SCRIPT], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ibkr_positions.py';
+  a.click();
+}
+
+// Auto-load on page open
+loadData();
 </script>
 </body>
 </html>
