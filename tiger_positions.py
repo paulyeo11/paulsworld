@@ -15,9 +15,8 @@ ACCOUNT     = "50686489"
 LICENSE     = "TBSG"
 PRIVATE_KEY = "MIICXAIBAAKBgQCXjMARtSd91iMsfebC2fRE2xL9x/rLiTg6CRQ4UTIH1yjj1ctf6i3HUmpnb4MZ6I5ThnoOtsYWRHcaC5taBDbf+OuLTLTaNezKxSjNKCxONDvg8xSBf7hLl3bdUZ11pLq+Ou+9Xx1PNpzxRy7So0iwuyXgQFIQ4pCVksTCtYfvxQIDAQABAoGAJ6074+bvrexQTSexMLZrU1Ofxz2CFaOZSuhxmMT5OkBEflHM6xGeZp7XKLlzM2dFS+zbK9sCRXYrUHBVfd24l8UqqIjTeA1mEG+Ezkrvv5m+HwRAZknTseNycvfYaZLZaqg2/hEvd1HBeBt025Yq1ieBCmDPSY4H+6L5lBM6CUkCQQD1X5UrA0y5iQzH8P2PTXuZ8s1/bx6nN04M+iZRx79OhFdfepX2n30ok6Zf+jlRCeBUvizwA8p9KQWXUKGaOe07AkEAnhz1wFq77y78qPXWOb0noBQgwUT2ymPASqdZttMnl30C5dFESnqmYVazTPJO2rqG9TuZJV7cWpRT7eNUF3vG/wJAWBngqlf99WQS9bs+n3R3m7gFNutD+1AtMxWiKpzowJ1d7cdLDwkG3EnfY/ipGcLNDEBYTDlgO/49pq3pyEFiPwJAap0+fKDx/nshdVCnTjGk6YUI/Slie+A9RlmH3gaNuNFbxdmRAeOoExSiPG1bDJQf8nZoctF/JjjESzExf9A/wwJBAMLPJY8qu/eniSPm3xvjlGZQmuJqJqr2sR5LrK5gGmjI9Q0YgESiuKVZTZ1NY7Co4F/PmAVFG+cs8q7mHCnZM5Y="
 
-# Read GitHub token from config file
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "tiger_config.txt")
-GITHUB_TOKEN = open(CONFIG_FILE).read().strip()
+GITHUB_TOKEN  = open(CONFIG_FILE).read().strip()
 GITHUB_REPO   = "paulyeo11/Dynamic-Index"
 GITHUB_FILE   = "tiger_positions.json"
 GITHUB_BRANCH = "main"
@@ -37,11 +36,12 @@ def fetch_and_upload():
 
     pos_list = []
     for p in positions:
+        c = p.contract
         pos_list.append({
-            "symbol"       : p.contract.symbol,
-            "secType"      : p.contract.security_type,
-            "currency"     : p.contract.currency,
-            "exchange"     : p.contract.exchange or "—",
+            "symbol"       : c.symbol,
+            "secType"      : str(c.sec_type) if hasattr(c, "sec_type") else "STK",
+            "currency"     : c.currency,
+            "exchange"     : c.exchange or "—",
             "quantity"     : p.quantity,
             "avgCost"      : round(float(p.average_cost or 0), 4),
             "marketValue"  : round(float(p.market_value or 0), 2),
@@ -54,7 +54,8 @@ def fetch_and_upload():
         if assets:
             net_value = float(assets[0].summary.net_liquidation or 0)
             cash      = float(assets[0].summary.cash or 0)
-    except: pass
+    except Exception as e:
+        print(f"Note: {e}")
 
     output = {
         "fetchedAt" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
