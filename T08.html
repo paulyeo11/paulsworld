@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T08: Tiger Brokers Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0f1a;--surface:#111c2d;--border:#1e3050;--accent:#f7a800;--accent2:#ff6b00;--green:#00d4aa;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--hk:#f97316;--us:#3b82f6;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;padding-bottom:60px;}
+  .home-btn{position:fixed;top:14px;left:16px;z-index:999;background:#f4813f;color:#fff;text-decoration:none;font-size:.82rem;font-weight:700;padding:7px 16px;border-radius:20px;box-shadow:0 2px 8px rgba(244,129,63,.4);}
+  header{background:linear-gradient(135deg,#0a0f1a,#0d1f35);border-bottom:1px solid var(--border);padding:28px 40px 28px 130px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  h1{font-size:1.2rem;font-weight:800;color:#fff;}
+  .subtitle{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+  #fetch-time{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);background:var(--surface);padding:6px 14px;border-radius:20px;border:1px solid var(--border);}
+  main{max-width:980px;margin:0 auto;padding:32px 24px;}
+  /* LOADING */
+  #loading-state{text-align:center;padding:80px 20px;}
+  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #loading-state p{color:var(--muted);font-size:.9rem;}
+  /* NO DATA */
+  #nodata-state{display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;}
+  #nodata-state h3{color:#fff;margin-bottom:12px;}
+  #nodata-state p{color:var(--muted);font-size:.88rem;line-height:1.7;margin-bottom:16px;}
+  code{background:#1e3050;color:var(--accent);padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:.85em;}
+  .steps{background:rgba(247,168,0,.05);border:1px solid rgba(247,168,0,.2);border-radius:10px;padding:20px 24px;margin:16px 0;text-align:left;}
+  .step{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;font-size:.85rem;line-height:1.5;}
+  .step-num{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#000;font-weight:800;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  /* SUMMARY */
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+  .card-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-family:'DM Mono',monospace;}
+  .card-value{font-size:1.7rem;font-weight:800;color:var(--accent);letter-spacing:-.03em;line-height:1;}
+  .card-sub{font-size:.7rem;color:var(--muted);margin-top:5px;font-family:'DM Mono',monospace;}
+  /* TOOLBAR */
+  .toolbar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .filter-label{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+  .filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:20px;font-size:.78rem;cursor:pointer;transition:all .15s;}
+  .filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(247,168,0,.08);}
+  .refresh-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:20px;font-size:.75rem;cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;}
+  .refresh-btn:hover{border-color:var(--accent);color:var(--accent);}
+  /* TABLE */
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .table-header{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .table-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+  #pos-count{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:10px 18px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);background:rgba(255,255,255,.02);cursor:pointer;font-family:'DM Mono',monospace;white-space:nowrap;user-select:none;}
+  thead th:hover{color:var(--accent);}
+  tbody tr{border-top:1px solid rgba(255,255,255,.04);transition:background .1s;}
+  tbody tr:hover{background:rgba(255,255,255,.03);}
+  tbody td{padding:12px 18px;font-size:.86rem;vertical-align:middle;}
+  .symbol{font-weight:700;font-size:.95rem;color:#fff;font-family:'DM Mono',monospace;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.63rem;font-weight:700;font-family:'DM Mono',monospace;}
+  .badge-HKD{background:rgba(249,115,22,.15);color:var(--hk)}
+  .badge-USD{background:rgba(59,130,246,.15);color:var(--us)}
+  .badge-SGD{background:rgba(16,185,129,.15);color:#10b981}
+  .num{font-family:'DM Mono',monospace;}
+  .green{color:var(--green);font-weight:600;}
+  .red{color:var(--red);font-weight:600;}
+  .muted{color:var(--muted);}
+  #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none;}
+  footer{text-align:center;color:var(--muted);font-size:.7rem;font-family:'DM Mono',monospace;margin-top:40px;line-height:1.8;}
+  footer a{color:var(--accent);text-decoration:none;}
+  @media(max-width:600px){header{padding:20px 16px 20px 90px;}tbody td{padding:10px 10px;font-size:.78rem;}.card-value{font-size:1.4rem;}}
+</style>
+</head>
+<body>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <h1>🐯 Tiger Portfolio</h1>
+      <div class="subtitle">T08 · HK & US Positions · Tiger Brokers Prime</div>
+    </div>
+  </div>
+  <div id="fetch-time">Loading…</div>
+</header>
+
+<main>
+  <!-- LOADING -->
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p>Fetching your Tiger portfolio…</p>
+  </div>
+
+  <!-- NO DATA -->
+  <div id="nodata-state">
+    <h3>📭 No Tiger position data found</h3>
+    <p>Run the Python script on your computer to upload your positions.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div>Install: <code>pip install tigeropen requests</code></div></div>
+      <div class="step"><div class="step-num">2</div><div>Download and run: <code>python tiger_positions.py</code></div></div>
+      <div class="step"><div class="step-num">3</div><div>Refresh this page — positions load automatically ✅</div></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" style="display:none">
+    <div class="summary-grid">
+      <div class="card">
+        <div class="card-label">Total Positions</div>
+        <div class="card-value" id="total-pos">—</div>
+        <div class="card-sub">Tiger Prime Account</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Net Portfolio Value</div>
+        <div class="card-value" id="net-val">—</div>
+        <div class="card-sub">from Tiger API</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Total Mkt Value</div>
+        <div class="card-value" id="mkt-val">—</div>
+        <div class="card-sub">all positions</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Unrealized P&L</div>
+        <div class="card-value" id="total-pnl">—</div>
+        <div class="card-sub">all positions</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <span class="filter-label">FILTER:</span>
+        <button class="filter-btn active" onclick="filterData('ALL',this)">All</button>
+        <button class="filter-btn" onclick="filterData('USD',this)">🇺🇸 USD</button>
+        <button class="filter-btn" onclick="filterData('HKD',this)">🇭🇰 HKD</button>
+        <button class="filter-btn" onclick="filterData('SGD',this)">🇸🇬 SGD</button>
+      </div>
+      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">🐯 Positions</div>
+        <div id="pos-count">—</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('symbol')">Symbol ↕</th>
+            <th onclick="sortTable('currency')">Currency</th>
+            <th onclick="sortTable('quantity')">Qty ↕</th>
+            <th onclick="sortTable('avgCost')">Avg Cost ↕</th>
+            <th onclick="sortTable('marketValue')">Mkt Value ↕</th>
+            <th onclick="sortTable('unrealizedPnl')">Unreal. P&L ↕</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div id="empty-state">No positions match this filter.</div>
+    </div>
+  </div>
+</main>
+
+<div style="text-align:center;margin-top:40px">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Tiger Brokers Prime · Account 50686489 · Run tiger_positions.py to refresh
+</footer>
+
+<script>
+const DATA_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
+let allData=[], currentFilter='ALL', sortKey='symbol', sortAsc=true;
+
+async function loadData() {
+  document.getElementById('fetch-time').textContent = 'Loading…';
+  try {
+    const r = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error('not found');
+    const data = await r.json();
+    showDashboard(data);
+  } catch(e) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('nodata-state').style.display = 'block';
+    document.getElementById('fetch-time').textContent = 'No data yet';
+  }
+}
+
+function fmt(n, prefix='$') {
+  if (n === null || n === undefined) return '—';
+  return prefix + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function showDashboard(data) {
+  allData = data.positions || [];
+  document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || '—');
+  document.getElementById('total-pos').textContent = allData.length;
+  document.getElementById('net-val').textContent = data.netValue ? '$'+parseFloat(data.netValue).toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
+
+  const totalMkt = allData.reduce((s,p)=>s+(p.marketValue||0),0);
+  const totalPnl = allData.reduce((s,p)=>s+(p.unrealizedPnl||0),0);
+  document.getElementById('mkt-val').textContent = '$'+totalMkt.toLocaleString('en-US',{maximumFractionDigits:0});
+
+  const pnlEl = document.getElementById('total-pnl');
+  pnlEl.textContent = (totalPnl>=0?'+':'-') + '$' + Math.abs(totalPnl).toLocaleString('en-US',{maximumFractionDigits:0});
+  pnlEl.style.color = totalPnl>=0 ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('loading-state').style.display='none';
+  document.getElementById('nodata-state').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  renderTable();
+}
+
+function filterData(f,btn) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function sortTable(key) {
+  if(sortKey===key) sortAsc=!sortAsc; else{sortKey=key;sortAsc=true;}
+  renderTable();
+}
+
+function renderTable() {
+  let data=allData.slice();
+  if(currentFilter==='USD') data=data.filter(p=>p.currency==='USD');
+  else if(currentFilter==='HKD') data=data.filter(p=>p.currency==='HKD');
+  else if(currentFilter==='SGD') data=data.filter(p=>p.currency==='SGD');
+  data.sort((a,b)=>{
+    let av=a[sortKey],bv=b[sortKey];
+    if(typeof av==='string'){av=av.toLowerCase();bv=bv.toLowerCase();}
+    return sortAsc?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0);
+  });
+  const tbody=document.getElementById('table-body');
+  document.getElementById('pos-count').textContent=data.length+' position'+(data.length!==1?'s':'');
+  const empty=document.getElementById('empty-state');
+  if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=data.map(p=>{
+    const sym=p.currency==='HKD'?'HK$':'$';
+    const pnl=p.unrealizedPnl||0;
+    const pnlClass=pnl>=0?'green':'red';
+    const pnlStr=(pnl>=0?'+':'')+sym+Math.abs(pnl).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return `<tr>
+      <td><span class="symbol">${p.symbol}</span></td>
+      <td><span class="badge badge-${p.currency}">${p.currency}</span></td>
+      <td class="num" style="color:var(--accent);font-weight:600">${(p.quantity||0).toLocaleString()}</td>
+      <td class="num muted">${(p.avgCost||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4})}</td>
+      <td class="num" style="font-weight:600">${sym}${(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="num ${pnlClass}">${pnlStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+loadData();
+</script>
+</body>
+</html>
