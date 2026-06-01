@@ -102,20 +102,6 @@
         margin-bottom: 16px;
     }
 
-    /* Amber "not configured" notice */
-    .amber-notice {
-        display: none;
-        background: rgba(245, 158, 11, 0.12);
-        border: 1px solid rgba(245, 158, 11, 0.45);
-        color: #fcd34d;
-        border-radius: 12px;
-        padding: 12px 16px;
-        margin-bottom: 16px;
-        font-size: 13px;
-        text-align: center;
-        line-height: 1.5;
-    }
-
     /* Holdings table */
     .holdings {
         background: var(--card);
@@ -210,13 +196,8 @@
         <div class="progress" id="progress"></div>
     </div>
 
-    <!-- Amber "not configured" notice -->
-    <div class="amber-notice" id="amberNotice">
-        &#9881;&#65039; Live prices not set up yet &mdash; showing last statement prices.
-    </div>
-
-    <!-- Secure server line -->
-    <div class="secure-line">&#128274; Live prices via secure server (Twelve Data)</div>
+    <!-- Status line -->
+    <div class="secure-line">&#128994; Live prices via Yahoo Finance &middot; may be ~15 min delayed</div>
 
     <!-- Holdings -->
     <div class="holdings">
@@ -237,8 +218,7 @@
     <div class="fx-line" id="fxLine"></div>
 
     <div class="note">
-        Prices may be delayed up to ~15 minutes. Powered by
-        <a href="https://twelvedata.com" target="_blank" rel="noopener">Twelve Data</a>.
+        Prices may be delayed up to ~15 minutes. Powered by Yahoo Finance.
         Falls back to last statement close when a live quote is unavailable.<br>
         For information only &mdash; not investment advice.
     </div>
@@ -253,37 +233,38 @@
 (function () {
     "use strict";
 
-    // Secure server-side proxy. Key is injected by Vercel; never in the browser.
+    // Free server-side Yahoo Finance proxy. One batched call returns a normalized map.
     var API_BASE = "/api/td";
 
-    // FX fallbacks (native -> USD)
-    var FX_FALLBACK = { HKD: 0.128, SGD: 0.784, USD: 1 };
+    // FX fallbacks: native per 1 USD (HKD=X / SGD=X style)
+    var FX_FALLBACK = { HKD: 7.82, SGD: 1.29 };
 
-    // Holdings. tdSymbol = Twelve Data exchange-qualified symbol.
+    // Holdings. ysym = Yahoo Finance symbol used in the batched request.
     var HOLDINGS = [
-        { sym:"09988",  name:"BABA-W (Alibaba)",        qty:500,      ccy:"HKD", stmt:131.50, td:"9988:HKEX" },
-        { sym:"01211",  name:"BYD Company",             qty:600,      ccy:"HKD", stmt:107.00, td:"1211:HKEX" },
-        { sym:"CFA.SI", name:"Amova/Nikko Asia REIT",   qty:12000,    ccy:"SGD", stmt:0.813,  td:"CFA:SGX"   },
-        { sym:"00823",  name:"LINK REIT",               qty:1500,     ccy:"HKD", stmt:39.04,  td:"823:HKEX"  },
-        { sym:"02318",  name:"Ping An",                 qty:500,      ccy:"HKD", stmt:61.30,  td:"2318:HKEX" },
-        { sym:"03690",  name:"Meituan-W",               qty:200,      ccy:"HKD", stmt:84.25,  td:"3690:HKEX" },
-        { sym:"GRAB",   name:"Grab Holdings",           qty:500,      ccy:"USD", stmt:4.06,   td:"GRAB"      },
-        { sym:"06862",  name:"Haidilao",                qty:1000,     ccy:"HKD", stmt:15.00,  td:"6862:HKEX" },
-        { sym:"02800",  name:"Tracker Fund",            qty:500,      ccy:"HKD", stmt:26.46,  td:"2800:HKEX" },
-        { sym:"09888",  name:"BIDU-SW",                 qty:50,       ccy:"HKD", stmt:121.10, td:"9888:HKEX" },
-        { sym:"09618",  name:"JD-SW",                   qty:50,       ccy:"HKD", stmt:120.20, td:"9618:HKEX" },
-        { sym:"03067",  name:"iShares HS Tech",         qty:400,      ccy:"HKD", stmt:10.45,  td:"3067:HKEX" },
-        { sym:"C38U.SI",name:"CapLand IntCom T",        qty:100,      ccy:"SGD", stmt:2.49,   td:"C38U:SGX"  },
-        { sym:"J69U.SI",name:"Frasers Cpt Tr",          qty:100,      ccy:"SGD", stmt:2.28,   td:"J69U:SGX"  },
-        { sym:"N2IU.SI",name:"Mapletree PanAsia",       qty:100,      ccy:"SGD", stmt:1.41,   td:"N2IU:SGX"  },
-        { sym:"K71U.SI",name:"Keppel Reit",             qty:100,      ccy:"SGD", stmt:0.895,  td:"K71U:SGX"  },
-        { sym:"AAPL",   name:"Apple",                   qty:0.23735,  ccy:"USD", stmt:273.17, td:"AAPL"      },
-        { sym:"G13.SI", name:"Genting Sing",            qty:100,      ccy:"SGD", stmt:0.70,   td:"G13:SGX"   }
+        { sym:"09988",  name:"BABA-W (Alibaba)",        qty:500,      ccy:"HKD", stmt:131.50, ysym:"9988.HK" },
+        { sym:"01211",  name:"BYD Company",             qty:600,      ccy:"HKD", stmt:107.00, ysym:"1211.HK" },
+        { sym:"CFA.SI", name:"Amova/Nikko Asia REIT",   qty:12000,    ccy:"SGD", stmt:0.813,  ysym:"CFA.SI"  },
+        { sym:"00823",  name:"LINK REIT",               qty:1500,     ccy:"HKD", stmt:39.04,  ysym:"0823.HK" },
+        { sym:"02318",  name:"Ping An",                 qty:500,      ccy:"HKD", stmt:61.30,  ysym:"2318.HK" },
+        { sym:"03690",  name:"Meituan-W",               qty:200,      ccy:"HKD", stmt:84.25,  ysym:"3690.HK" },
+        { sym:"GRAB",   name:"Grab Holdings",           qty:500,      ccy:"USD", stmt:4.06,   ysym:"GRAB"    },
+        { sym:"06862",  name:"Haidilao",                qty:1000,     ccy:"HKD", stmt:15.00,  ysym:"6862.HK" },
+        { sym:"02800",  name:"Tracker Fund",            qty:500,      ccy:"HKD", stmt:26.46,  ysym:"2800.HK" },
+        { sym:"09888",  name:"BIDU-SW",                 qty:50,       ccy:"HKD", stmt:121.10, ysym:"9888.HK" },
+        { sym:"09618",  name:"JD-SW",                   qty:50,       ccy:"HKD", stmt:120.20, ysym:"9618.HK" },
+        { sym:"03067",  name:"iShares HS Tech",         qty:400,      ccy:"HKD", stmt:10.45,  ysym:"3067.HK" },
+        { sym:"C38U.SI",name:"CapLand IntCom T",        qty:100,      ccy:"SGD", stmt:2.49,   ysym:"C38U.SI" },
+        { sym:"J69U.SI",name:"Frasers Cpt Tr",          qty:100,      ccy:"SGD", stmt:2.28,   ysym:"J69U.SI" },
+        { sym:"N2IU.SI",name:"Mapletree PanAsia",       qty:100,      ccy:"SGD", stmt:1.41,   ysym:"N2IU.SI" },
+        { sym:"K71U.SI",name:"Keppel Reit",             qty:100,      ccy:"SGD", stmt:0.895,  ysym:"K71U.SI" },
+        { sym:"AAPL",   name:"Apple",                   qty:0.23735,  ccy:"USD", stmt:273.17, ysym:"AAPL"    },
+        { sym:"G13.SI", name:"Genting Sing",            qty:100,      ccy:"SGD", stmt:0.70,   ysym:"G13.SI"  }
     ];
 
-    // live state per holding: { price, prevClose, changePct, live:bool }
+    // live state per holding: { price, prevClose, pct, live:bool }
     var live = {};
-    var fxRates = { HKD: null, SGD: null, USD: 1 };
+    // FX stored as native per 1 USD (e.g. usdToHkd). Convert HKD->USD via price / usdToX.
+    var fxRates = { HKD: null, SGD: null };
 
     var els = {
         total:       document.getElementById("totalVal"),
@@ -291,7 +272,6 @@
         refreshBtn:  document.getElementById("refreshBtn"),
         lastUpdated: document.getElementById("lastUpdated"),
         progress:    document.getElementById("progress"),
-        amberNotice: document.getElementById("amberNotice"),
         rows:        document.getElementById("rows"),
         fxLine:      document.getElementById("fxLine")
     };
@@ -312,74 +292,55 @@
         return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
     }
 
-    /* ---------- FX ---------- */
-    function fxToUsd(ccy) {
+    /* ---------- FX ----------
+       fxRates[ccy] = native units per 1 USD (e.g. HKD per USD).
+       To convert a native price to USD: usdPrice = nativePrice / (native per USD). */
+    function usdPerUnit(ccy) {
         if (ccy === "USD") return 1;
-        var r = fxRates[ccy];
-        if (r && r > 0) return r;          // r = USD per 1 unit of native
-        return FX_FALLBACK[ccy] || 1;
+        var perUsd = fxRates[ccy];
+        if (!perUsd || perUsd <= 0) perUsd = FX_FALLBACK[ccy];
+        return (perUsd && perUsd > 0) ? (1 / perUsd) : 1;
     }
 
-    // flag set when the proxy reports it has no key configured (HTTP 503 not_configured)
-    var notConfigured = false;
+    /* ---------- batched fetch (one call) ---------- */
+    var YAHOO_SYMBOLS = HOLDINGS.map(function (h) { return h.ysym; })
+        .concat(["HKD=X", "SGD=X"]);
 
-    // Twelve Data exchange_rate USD/HKD returns rate = HKD per 1 USD.
-    // We want USD per 1 HKD = 1 / rate.
-    function fetchFx() {
-        var jobs = ["HKD", "SGD"].map(function (ccy) {
-            var url = API_BASE + "?path=exchange_rate&symbol=USD/" + ccy;
-            return fetch(url)
-                .then(function (r) {
-                    if (r.status === 503) { return r.json().then(function (j) {
-                        if (j && j.error === "not_configured") notConfigured = true;
-                        return null;
-                    }); }
-                    return r.json();
-                })
-                .then(function (j) {
-                    if (!j) return;
-                    var rate = j.rate ? parseFloat(j.rate) : null; // native per USD
-                    if (rate && rate > 0) fxRates[ccy] = 1 / rate;       // store USD per native
-                })
-                .catch(function () { /* keep fallback */ });
-        });
-        return Promise.all(jobs);
-    }
-
-    /* ---------- quotes ---------- */
-    function delay(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
-
-    function fetchQuote(h) {
-        var url = API_BASE + "?path=quote&symbol=" + encodeURIComponent(h.td);
+    function fetchAll() {
+        var url = API_BASE + "?symbols=" + encodeURIComponent(YAHOO_SYMBOLS.join(","));
         return fetch(url)
-            .then(function (r) {
-                if (r.status === 503) {
-                    return r.json().then(function (j) {
-                        if (j && j.error === "not_configured") notConfigured = true;
-                        return { ok: false, notConfigured: true };
-                    }).catch(function () { return { ok: false }; });
-                }
-                return r.json().then(function (j) {
-                    if (!j || j.status === "error" || j.code === 429) {
-                        return { ok: false, rate: j && j.code === 429 };
-                    }
-                    var price = parseFloat(j.close);
-                    if (isNaN(price)) return { ok: false };
-                    var prev  = parseFloat(j.previous_close);
-                    var pct   = (j.percent_change !== undefined && j.percent_change !== null)
-                                ? parseFloat(j.percent_change) : null;
-                    if (pct === null && !isNaN(prev) && prev > 0) pct = (price - prev) / prev * 100;
-                    return { ok: true, price: price, prevClose: isNaN(prev) ? null : prev, pct: pct };
-                });
-            })
-            .catch(function () { return { ok: false }; });
+            .then(function (r) { return r.json(); })
+            .then(function (map) { return map || {}; })
+            .catch(function () { return {}; });
+    }
+
+    function applyMap(map) {
+        // FX first
+        var hkd = map["HKD=X"];
+        var sgd = map["SGD=X"];
+        fxRates.HKD = (hkd && !hkd.error && hkd.price > 0) ? hkd.price : null;
+        fxRates.SGD = (sgd && !sgd.error && sgd.price > 0) ? sgd.price : null;
+
+        // Per-holding quotes
+        HOLDINGS.forEach(function (h) {
+            var q = map[h.ysym];
+            if (q && !q.error && q.price != null && !isNaN(q.price)) {
+                var price = parseFloat(q.price);
+                var prev  = (q.prevClose != null && !isNaN(q.prevClose)) ? parseFloat(q.prevClose) : null;
+                var pct   = (prev && prev > 0) ? (price - prev) / prev * 100 : null;
+                live[h.sym] = { live: true, price: price, prevClose: prev, pct: pct };
+            } else {
+                // missing or error -> statement-close fallback
+                live[h.sym] = { live: false };
+            }
+        });
     }
 
     /* ---------- render ---------- */
     function rowValueUsd(h) {
         var d = live[h.sym];
         var price = (d && d.live) ? d.price : h.stmt;
-        return h.qty * price * fxToUsd(h.ccy);
+        return h.qty * price * usdPerUnit(h.ccy);
     }
 
     function render() {
@@ -395,13 +356,14 @@
             var d = live[h.sym] || {};
             var isLive = !!d.live;
             var price = isLive ? d.price : h.stmt;
-            var valUsd = h.qty * price * fxToUsd(h.ccy);
+            var fx = usdPerUnit(h.ccy);
+            var valUsd = h.qty * price * fx;
             total += valUsd;
 
             // day change in USD: qty * (price - prevClose) * fx
             if (isLive && d.prevClose != null && !isNaN(d.prevClose)) {
-                dayChangeUsd += h.qty * (price - d.prevClose) * fxToUsd(h.ccy);
-                prevTotal += h.qty * d.prevClose * fxToUsd(h.ccy);
+                dayChangeUsd += h.qty * (price - d.prevClose) * fx;
+                prevTotal += h.qty * d.prevClose * fx;
             } else {
                 prevTotal += valUsd;
             }
@@ -441,70 +403,36 @@
         els.dayChg.className = "daychg " + dcCls;
         els.dayChg.innerHTML = dcTxt;
 
-        // fx line
-        var hkd = fxRates.HKD, sgd = fxRates.SGD;
+        // fx line (show USD per native = 1 / nativePerUsd)
+        var hkdLive = fxRates.HKD, sgdLive = fxRates.SGD;
+        var hkdUsd = 1 / (hkdLive || FX_FALLBACK.HKD);
+        var sgdUsd = 1 / (sgdLive || FX_FALLBACK.SGD);
         els.fxLine.textContent =
-            "FX: 1 HKD = $" + (hkd ? hkd.toFixed(4) : FX_FALLBACK.HKD.toFixed(4)) + (hkd ? "" : " (fallback)") +
-            "  ·  1 SGD = $" + (sgd ? sgd.toFixed(4) : FX_FALLBACK.SGD.toFixed(4)) + (sgd ? "" : " (fallback)");
+            "FX: 1 HKD = $" + hkdUsd.toFixed(4) + (hkdLive ? "" : " (fallback)") +
+            "  ·  1 SGD = $" + sgdUsd.toFixed(4) + (sgdLive ? "" : " (fallback)");
     }
 
-    /* ---------- refresh orchestration (throttled) ---------- */
+    /* ---------- refresh orchestration (single batched call) ---------- */
     var refreshing = false;
     function refresh() {
         if (refreshing) return;
         refreshing = true;
-        notConfigured = false;
-        els.amberNotice.style.display = "none";
         els.refreshBtn.disabled = true;
 
         var n = HOLDINGS.length;
-        els.progress.textContent = "Fetching FX rates…";
+        els.progress.textContent = "Fetching live prices…";
 
-        fetchFx().then(function () {
-            // If the proxy reports no key configured, show all stmt prices + amber notice.
-            if (notConfigured) { finish(); return; }
-
-            // sequential, ~350ms gap (proxy has a short CDN cache, but be gentle).
-            var i = 0;
-            function next() {
-                if (i >= n || notConfigured) {
-                    finish();
-                    return;
-                }
-                var h = HOLDINGS[i];
-                els.progress.textContent = "Fetching " + (i + 1) + " / " + n + "  (" + h.sym + ")…";
-                fetchQuote(h).then(function (res) {
-                    if (res.ok) {
-                        live[h.sym] = { live: true, price: res.price, prevClose: res.prevClose, pct: res.pct };
-                    } else {
-                        // keep any prior live value; otherwise stays on stmt fallback
-                        if (!live[h.sym]) live[h.sym] = { live: false };
-                        if (res.rate) els.progress.textContent = "Rate limit hit — remaining use statement close…";
-                    }
-                    render();
-                    i++;
-                    delay(350).then(next);
-                });
-            }
-            next();
-        });
-
-        function finish() {
+        fetchAll().then(function (map) {
+            applyMap(map);
             refreshing = false;
             els.refreshBtn.disabled = false;
-            els.lastUpdated.textContent = "Updated " + timeStr();
+            els.lastUpdated.textContent = "Last updated " + timeStr();
             render();
-
-            if (notConfigured) {
-                els.amberNotice.style.display = "block";
-                els.progress.textContent = "Live prices not configured — showing last statement close.";
-                return;
-            }
 
             var liveCount = HOLDINGS.filter(function (h) { return live[h.sym] && live[h.sym].live; }).length;
             els.progress.textContent = liveCount + " of " + n + " priced live" +
                 (liveCount < n ? " · rest show last statement close" : "");
-        }
+        });
     }
 
     els.refreshBtn.onclick = refresh;
