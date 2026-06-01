@@ -3,7 +3,7 @@
 ## Owner / Profile Context
 - Paul Yeo — 70-year-old retired male (retired at **67**).
 - Hobbies: travel, adventure sports, learning AI.
-- Wife: **Joanne** (joanneng16@yahoo.com).
+- Wife: **Joanne** (joanneng16@yahoo.com). Married at age **32**.
 - Baptised **29 April 2026**.
 - **Index Page Rule:** the homepage must always display **"Retired at 67"** — never 70.
 
