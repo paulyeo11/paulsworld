@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paul's World — View Counter Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --border: #1e2230;
+    --accent: #f4813f;
+    --accent2: #10b981;
+    --accent3: #6366f1;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --card: #13161f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+    position: relative;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(244,129,63,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244,129,63,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: linear-gradient(180deg, rgba(244,129,63,0.06) 0%, transparent 100%);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(244,129,63,0.12);
+    border: 1px solid rgba(244,129,63,0.3);
+    color: var(--accent);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .home-btn:hover { background: rgba(244,129,63,0.22); transform: translateY(-1px); }
+
+  .refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { background: rgba(99,102,241,0.22); }
+  .refresh-btn.spinning svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 40px 40px 0;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 32px;
+  }
+
+  /* Summary cards */
+  .summary-row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 0 40px 36px;
+  }
+
+  .summary-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .summary-card:hover { transform: translateY(-2px); }
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .summary-card.total::before { background: linear-gradient(90deg, var(--accent), #f9a97a); }
+  .summary-card.stories::before { background: linear-gradient(90deg, #60a5fa, #93c5fd); }
+  .summary-card.ai::before { background: linear-gradient(90deg, #a78bfa, #c4b5fd); }
+  .summary-card.health::before { background: linear-gradient(90deg, var(--accent2), #6ee7b7); }
+  .summary-card.travel::before { background: linear-gradient(90deg, #fb923c, #fbbf24); }
+  .summary-card.books::before { background: linear-gradient(90deg, #f472b6, #f9a8d4); }
+  .summary-card.activities::before { background: linear-gradient(90deg, #34d399, #6ee7b7); }
+
+  .summary-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .summary-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Main content */
+  .main {
+    position: relative;
+    z-index: 1;
+    padding: 0 40px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .page-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.2s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+  .page-card:hover {
+    border-color: rgba(244,129,63,0.3);
+    background: #161925;
+    transform: translateX(2px);
+  }
+
+  .page-info { flex: 1; min-width: 0; }
+  .page-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .page-name {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+
+  .count-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    min-width: 50px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .count-badge.loading { color: var(--muted); font-size: 13px; }
+  .count-badge.error { color: #ef4444; font-size: 11px; }
+
+  /* Bar indicator */
+  .bar-wrap {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--border);
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 0 2px 2px 0;
+    transition: width 1s ease;
+    width: 0%;
+  }
+
+  /* Category colors */
+  .cat-s .bar-fill { background: #60a5fa; }
+  .cat-s .count-badge { color: #60a5fa; }
+  .cat-ai .bar-fill { background: #a78bfa; }
+  .cat-ai .count-badge { color: #a78bfa; }
+  .cat-h .bar-fill { background: var(--accent2); }
+  .cat-h .count-badge { color: var(--accent2); }
+  .cat-t .bar-fill { background: #fb923c; }
+  .cat-t .count-badge { color: #fb923c; }
+  .cat-b .bar-fill { background: #f472b6; }
+  .cat-b .count-badge { color: #f472b6; }
+  .cat-ac .bar-fill { background: #34d399; }
+  .cat-ac .count-badge { color: #34d399; }
+  .cat-sp .bar-fill { background: #fbbf24; }
+  .cat-sp .count-badge { color: #fbbf24; }
+  .cat-other .bar-fill { background: var(--accent); }
+  .cat-other .count-badge { color: var(--accent); }
+
+  .last-updated {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 40px;
+  }
+
+  @media (max-width: 600px) {
+    header, .hero, .main, .summary-row { padding-left: 20px; padding-right: 20px; }
+    .grid { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Paul's <span>World</span></div>
+  <div class="header-right">
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAllCounts()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">
+      🏠 Home
+    </a>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>View Counter<br><em>Dashboard</em></h1>
+  <p class="subtitle">// live token counts across all pages</p>
+</div>
+
+<!-- Summary Row -->
+<div class="summary-row">
+  <div class="summary-card total">
+    <span class="summary-num" id="sum-total">—</span>
+    <span class="summary-label">Total Views</span>
+  </div>
+  <div class="summary-card stories">
+    <span class="summary-num" id="sum-s">—</span>
+    <span class="summary-label">Stories</span>
+  </div>
+  <div class="summary-card ai">
+    <span class="summary-num" id="sum-ai">—</span>
+    <span class="summary-label">AI Journey</span>
+  </div>
+  <div class="summary-card health">
+    <span class="summary-num" id="sum-h">—</span>
+    <span class="summary-label">Health</span>
+  </div>
+  <div class="summary-card travel">
+    <span class="summary-num" id="sum-t">—</span>
+    <span class="summary-label">Travel</span>
+  </div>
+  <div class="summary-card books">
+    <span class="summary-num" id="sum-b">—</span>
+    <span class="summary-label">Books</span>
+  </div>
+  <div class="summary-card activities">
+    <span class="summary-num" id="sum-ac">—</span>
+    <span class="summary-label">Activities</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Stories -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#60a5fa"></span>
+    Stories
+  </div>
+  <div class="grid" id="grid-s"></div>
+
+  <!-- AI Journey -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#a78bfa"></span>
+    AI Journey
+  </div>
+  <div class="grid" id="grid-ai"></div>
+
+  <!-- Health -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#10b981"></span>
+    Health
+  </div>
+  <div class="grid" id="grid-h"></div>
+
+  <!-- Travel -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#fb923c"></span>
+    Travel
+  </div>
+  <div class="grid" id="grid-t"></div>
+
+  <!-- Books -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#f472b6"></span>
+    Books
+  </div>
+  <div class="grid" id="grid-b"></div>
+
+  <!-- Activities -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#34d399"></span>
+    Activities
+  </div>
+  <div class="grid" id="grid-ac"></div>
+
+  <!-- Special Pages -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#fbbf24"></span>
+    Special Pages
+  </div>
+  <div class="grid" id="grid-sp"></div>
+
+  <!-- Other -->
+  <div class="section-title">
+    <span class="section-dot" style="background:#f4813f"></span>
+    Other
+  </div>
+  <div class="grid" id="grid-other"></div>
+
+  <p class="last-updated" id="lastUpdated">Loading...</p>
+</div>
+
+<script>
+// ── Page registry ──────────────────────────────────────────────
+const PAGES = {
+  s: [
+    { key: 'S01', name: 'Story 01' },
+    { key: 'S02', name: 'Story 02' },
+    { key: 'S03', name: 'Story 03' },
+    { key: 'S04', name: 'Story 04' },
+    { key: 'S05', name: 'Story 05' },
+    { key: 'S06', name: 'Story 06' },
+    { key: 'S08', name: 'Story 08' },
+    { key: 'S09', name: 'Story 09' },
+    { key: 'S10', name: 'Story 10' },
+    { key: 'S11', name: 'Story 11' },
+    { key: 'S12', name: 'Story 12' },
+    { key: 'S13', name: 'Story 13' },
+    { key: 'S14', name: 'Story 14' },
+    { key: 'S15', name: 'Story 15' },
+  ],
+  ai: [
+    { key: 'AI01', name: 'AI Journey 01' },
+    { key: 'AI02', name: 'AI Journey 02' },
+    { key: 'AI03', name: 'AI Journey 03' },
+    { key: 'AI04', name: 'AI Journey 04' },
+    { key: 'AI05', name: 'AI Journey 05' },
+    { key: 'AI06', name: 'AI Journey 06' },
+    { key: 'AI07', name: 'AI Journey 07' },
+    { key: 'AI08', name: 'AI Journey 08' },
+    { key: 'AI09', name: 'AI Journey 09' },
+    { key: 'AI10', name: 'AI Journey 10' },
+    { key: 'AI11', name: 'AI Journey 11' },
+    { key: 'AIT01', name: 'AI Tools 01' },
+    { key: 'AIT02', name: 'AI Tools 02' },
+    { key: 'AIT03', name: 'AI Tools 03' },
+    { key: 'ai5',  name: 'AI Journey (ai5)' },
+  ],
+  h: [
+    { key: 'h01', name: 'Health 01' },
+    { key: 'h02', name: 'Health 02' },
+    { key: 'h03', name: 'Health 03' },
+    { key: 'h04', name: 'Health 04' },
+    { key: 'h05', name: 'Health 05' },
+  ],
+  t: [
+    { key: 'T01', name: 'Travel 01' },
+    { key: 'T02', name: 'Travel 02' },
+    { key: 'T04', name: 'Travel 04' },
+    { key: 'T05', name: 'Travel 05' },
+    { key: 'T06', name: 'Travel 06' },
+    { key: 'T07', name: 'Travel 07' },
+    { key: 'T08', name: 'Travel 08' },
+  ],
+  b: [
+    { key: 'B01',  name: 'Book 01' },
+    { key: 'B02',  name: 'Book 02' },
+    { key: 'B11',  name: 'Book 11' },
+  ],
+  ac: [
+    { key: 'AC01', name: 'Activity 01' },
+    { key: 'AC02', name: 'Activity 02' },
+  ],
+  sp: [
+    { key: 'SP01', name: 'Special 01' },
+    { key: 'SP02', name: 'Special 02' },
+    { key: 'SP03', name: 'Special 03' },
+    { key: 'SP04', name: 'Special 04' },
+  ],
+  other: [
+    { key: 'index',            name: 'Home / Index' },
+    { key: 'daily-briefing',   name: 'Daily Briefing' },
+    { key: 'briefing-v2',      name: 'Briefing v2' },
+    { key: 'fresh',            name: 'Fresh' },
+    { key: 'tools',            name: 'Tools' },
+    { key: 'safety-rules',     name: 'Safety Rules' },
+    { key: 'my-travel-ebook',  name: 'Travel eBook' },
+  ]
+};
+
+const catGrids = {
+  s: 'grid-s', ai: 'grid-ai', h: 'grid-h',
+  t: 'grid-t', b: 'grid-b', ac: 'grid-ac',
+  sp: 'grid-sp', other: 'grid-other'
+};
+const catSums = {
+  s: 'sum-s', ai: 'sum-ai', h: 'sum-h',
+  t: 'sum-t', b: 'sum-b', ac: 'sum-ac'
+};
+
+// ── Build cards ────────────────────────────────────────────────
+let maxCount = 1;
+const allCounts = {};
+
+function buildCards() {
+  for (const [cat, pages] of Object.entries(PAGES)) {
+    const grid = document.getElementById(catGrids[cat]);
+    pages.forEach(p => {
+      const card = document.createElement('div');
+      card.className = `page-card cat-${cat}`;
+      card.id = `card-${p.key}`;
+      card.innerHTML = `
+        <div class="page-info">
+          <div class="page-key">${p.key}</div>
+          <div class="page-name">${p.name}</div>
+        </div>
+        <div class="count-badge loading" id="cnt-${p.key}">...</div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-${p.key}"></div></div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+}
+
+// ── Fetch one counter (GET only) ───────────────────────────────
+async function fetchCount(key) {
+  try {
+    const res = await fetch(`https://api.counterapi.dev/v1/paulsworld/${key}/`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    return data.count ?? data.value ?? 0;
+  } catch {
+    return null;
+  }
+}
+
+// ── Load all & update UI ───────────────────────────────────────
+async function loadAllCounts() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+
+  // Reset
+  Object.keys(PAGES).forEach(cat => {
+    PAGES[cat].forEach(p => {
+      const el = document.getElementById(`cnt-${p.key}`);
+      el.className = 'count-badge loading';
+      el.textContent = '...';
+      document.getElementById(`bar-${p.key}`).style.width = '0%';
+    });
+  });
+  document.getElementById('sum-total').textContent = '—';
+  Object.values(catSums).forEach(id => document.getElementById(id).textContent = '—');
+
+  // Fetch all in parallel
+  const allPages = Object.entries(PAGES).flatMap(([cat, pages]) => pages.map(p => ({ ...p, cat })));
+  const results = await Promise.all(allPages.map(p => fetchCount(p.key)));
+
+  // Store
+  allPages.forEach((p, i) => { allCounts[p.key] = results[i]; });
+
+  // Find max
+  const vals = Object.values(allCounts).filter(v => v !== null);
+  maxCount = Math.max(...vals, 1);
+
+  // Update cards
+  allPages.forEach(p => {
+    const cnt = allCounts[p.key];
+    const el = document.getElementById(`cnt-${p.key}`);
+    const bar = document.getElementById(`bar-${p.key}`);
+    if (cnt === null) {
+      el.className = 'count-badge error';
+      el.textContent = 'err';
+    } else {
+      el.className = `count-badge`;
+      el.textContent = cnt.toLocaleString();
+      setTimeout(() => {
+        bar.style.width = `${Math.max(4, (cnt / maxCount) * 100)}%`;
+      }, 50);
+    }
+  });
+
+  // Summary totals
+  let grandTotal = 0;
+  for (const [cat, pages] of Object.entries(PAGES)) {
+    const sum = pages.reduce((a, p) => a + (allCounts[p.key] ?? 0), 0);
+    grandTotal += sum;
+    if (catSums[cat]) {
+      document.getElementById(catSums[cat]).textContent = sum.toLocaleString();
+    }
+  }
+  document.getElementById('sum-total').textContent = grandTotal.toLocaleString();
+
+  // Timestamp
+  const now = new Date().toLocaleString('en-SG', { timeZone: 'Asia/Singapore', hour12: false });
+  document.getElementById('lastUpdated').textContent = `Last updated: ${now} SGT`;
+
+  btn.classList.remove('spinning');
+}
+
+// ── Init ───────────────────────────────────────────────────────
+buildCards();
+loadAllCounts();
+</script>
+</body>
+</html>
