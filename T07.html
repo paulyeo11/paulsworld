@@ -94,42 +94,27 @@
 
     .progress { font-size: 12px; color: var(--muted); min-height: 16px; }
 
-    /* API key card */
-    .keycard {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 18px;
+    /* Secure server line */
+    .secure-line {
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
         margin-bottom: 16px;
     }
-    .keycard h3 { font-size: 14px; margin-bottom: 6px; }
-    .keycard p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
-    .keycard a { color: var(--indigo2); }
-    .key-row { display: flex; gap: 8px; }
-    .key-row input {
-        flex: 1;
-        font-size: 14px;
-        padding: 12px 14px;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: rgba(0,0,0,0.25);
-        color: #fff;
-        outline: none;
+
+    /* Amber "not configured" notice */
+    .amber-notice {
+        display: none;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.45);
+        color: #fcd34d;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        text-align: center;
+        line-height: 1.5;
     }
-    .key-row input:focus { border-color: var(--indigo); }
-    .key-row button {
-        background: var(--indigo);
-        color: #fff;
-        border: 0;
-        font-weight: 700;
-        font-size: 14px;
-        padding: 0 18px;
-        border-radius: 10px;
-        cursor: pointer;
-    }
-    .key-status { font-size: 12px; margin-top: 10px; color: var(--muted); }
-    .key-status .ok { color: var(--green); }
-    .link { color: var(--indigo2); cursor: pointer; text-decoration: underline; }
 
     /* Holdings table */
     .holdings {
@@ -225,20 +210,13 @@
         <div class="progress" id="progress"></div>
     </div>
 
-    <!-- API key card -->
-    <div class="keycard" id="keyCard">
-        <h3>Twelve Data API key</h3>
-        <p>
-            Enter your free Twelve Data API key once &mdash; it is stored only in this browser.
-            Get a free key at <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a>
-            (free tier &asymp; 8 calls/min, covers HKEX, SGX &amp; US markets).
-        </p>
-        <div class="key-row">
-            <input id="keyInput" type="text" placeholder="Paste your Twelve Data API key" autocomplete="off" spellcheck="false">
-            <button id="saveKeyBtn">Save key</button>
-        </div>
-        <div class="key-status" id="keyStatus"></div>
+    <!-- Amber "not configured" notice -->
+    <div class="amber-notice" id="amberNotice">
+        &#9881;&#65039; Live prices not set up yet &mdash; showing last statement prices.
     </div>
+
+    <!-- Secure server line -->
+    <div class="secure-line">&#128274; Live prices via secure server (Twelve Data)</div>
 
     <!-- Holdings -->
     <div class="holdings">
@@ -275,7 +253,8 @@
 (function () {
     "use strict";
 
-    var KEY_STORE = "twelvedata_api_key";
+    // Secure server-side proxy. Key is injected by Vercel; never in the browser.
+    var API_BASE = "/api/td";
 
     // FX fallbacks (native -> USD)
     var FX_FALLBACK = { HKD: 0.128, SGD: 0.784, USD: 1 };
@@ -312,17 +291,10 @@
         refreshBtn:  document.getElementById("refreshBtn"),
         lastUpdated: document.getElementById("lastUpdated"),
         progress:    document.getElementById("progress"),
-        keyCard:     document.getElementById("keyCard"),
-        keyInput:    document.getElementById("keyInput"),
-        saveKeyBtn:  document.getElementById("saveKeyBtn"),
-        keyStatus:   document.getElementById("keyStatus"),
+        amberNotice: document.getElementById("amberNotice"),
         rows:        document.getElementById("rows"),
         fxLine:      document.getElementById("fxLine")
     };
-
-    /* ---------- storage ---------- */
-    function getKey()  { try { return localStorage.getItem(KEY_STORE) || ""; } catch(e){ return ""; } }
-    function setKey(k) { try { localStorage.setItem(KEY_STORE, k); } catch(e){} }
 
     /* ---------- formatting ---------- */
     function fmt(n, dp) {
@@ -348,15 +320,25 @@
         return FX_FALLBACK[ccy] || 1;
     }
 
+    // flag set when the proxy reports it has no key configured (HTTP 503 not_configured)
+    var notConfigured = false;
+
     // Twelve Data exchange_rate USD/HKD returns rate = HKD per 1 USD.
     // We want USD per 1 HKD = 1 / rate.
-    function fetchFx(key) {
+    function fetchFx() {
         var jobs = ["HKD", "SGD"].map(function (ccy) {
-            var url = "https://api.twelvedata.com/exchange_rate?symbol=USD/" + ccy + "&apikey=" + encodeURIComponent(key);
+            var url = API_BASE + "?path=exchange_rate&symbol=USD/" + ccy;
             return fetch(url)
-                .then(function (r) { return r.json(); })
+                .then(function (r) {
+                    if (r.status === 503) { return r.json().then(function (j) {
+                        if (j && j.error === "not_configured") notConfigured = true;
+                        return null;
+                    }); }
+                    return r.json();
+                })
                 .then(function (j) {
-                    var rate = j && j.rate ? parseFloat(j.rate) : null; // native per USD
+                    if (!j) return;
+                    var rate = j.rate ? parseFloat(j.rate) : null; // native per USD
                     if (rate && rate > 0) fxRates[ccy] = 1 / rate;       // store USD per native
                 })
                 .catch(function () { /* keep fallback */ });
@@ -367,21 +349,28 @@
     /* ---------- quotes ---------- */
     function delay(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
 
-    function fetchQuote(key, h) {
-        var url = "https://api.twelvedata.com/quote?symbol=" + encodeURIComponent(h.td) + "&apikey=" + encodeURIComponent(key);
+    function fetchQuote(h) {
+        var url = API_BASE + "?path=quote&symbol=" + encodeURIComponent(h.td);
         return fetch(url)
-            .then(function (r) { return r.json(); })
-            .then(function (j) {
-                if (!j || j.status === "error" || j.code === 429) {
-                    return { ok: false, rate: j && j.code === 429 };
+            .then(function (r) {
+                if (r.status === 503) {
+                    return r.json().then(function (j) {
+                        if (j && j.error === "not_configured") notConfigured = true;
+                        return { ok: false, notConfigured: true };
+                    }).catch(function () { return { ok: false }; });
                 }
-                var price = parseFloat(j.close);
-                if (isNaN(price)) return { ok: false };
-                var prev  = parseFloat(j.previous_close);
-                var pct   = (j.percent_change !== undefined && j.percent_change !== null)
-                            ? parseFloat(j.percent_change) : null;
-                if (pct === null && !isNaN(prev) && prev > 0) pct = (price - prev) / prev * 100;
-                return { ok: true, price: price, prevClose: isNaN(prev) ? null : prev, pct: pct };
+                return r.json().then(function (j) {
+                    if (!j || j.status === "error" || j.code === 429) {
+                        return { ok: false, rate: j && j.code === 429 };
+                    }
+                    var price = parseFloat(j.close);
+                    if (isNaN(price)) return { ok: false };
+                    var prev  = parseFloat(j.previous_close);
+                    var pct   = (j.percent_change !== undefined && j.percent_change !== null)
+                                ? parseFloat(j.percent_change) : null;
+                    if (pct === null && !isNaN(prev) && prev > 0) pct = (price - prev) / prev * 100;
+                    return { ok: true, price: price, prevClose: isNaN(prev) ? null : prev, pct: pct };
+                });
             })
             .catch(function () { return { ok: false }; });
     }
@@ -462,27 +451,29 @@
     /* ---------- refresh orchestration (throttled) ---------- */
     var refreshing = false;
     function refresh() {
-        var key = getKey();
-        if (!key) { showKeyCard("Enter your Twelve Data key to load live prices.", false); return; }
         if (refreshing) return;
         refreshing = true;
+        notConfigured = false;
+        els.amberNotice.style.display = "none";
         els.refreshBtn.disabled = true;
 
         var n = HOLDINGS.length;
         els.progress.textContent = "Fetching FX rates…";
 
-        fetchFx(key).then(function () {
-            // sequential, ~8s spacing-friendly: free tier ~8/min. We do small 350ms gap
-            // but more importantly we surface rate-limit messages and keep fallbacks.
+        fetchFx().then(function () {
+            // If the proxy reports no key configured, show all stmt prices + amber notice.
+            if (notConfigured) { finish(); return; }
+
+            // sequential, ~350ms gap (proxy has a short CDN cache, but be gentle).
             var i = 0;
             function next() {
-                if (i >= n) {
+                if (i >= n || notConfigured) {
                     finish();
                     return;
                 }
                 var h = HOLDINGS[i];
                 els.progress.textContent = "Fetching " + (i + 1) + " / " + n + "  (" + h.sym + ")…";
-                fetchQuote(key, h).then(function (res) {
+                fetchQuote(h).then(function (res) {
                     if (res.ok) {
                         live[h.sym] = { live: true, price: res.price, prevClose: res.prevClose, pct: res.pct };
                     } else {
@@ -502,53 +493,25 @@
             refreshing = false;
             els.refreshBtn.disabled = false;
             els.lastUpdated.textContent = "Updated " + timeStr();
+            render();
+
+            if (notConfigured) {
+                els.amberNotice.style.display = "block";
+                els.progress.textContent = "Live prices not configured — showing last statement close.";
+                return;
+            }
+
             var liveCount = HOLDINGS.filter(function (h) { return live[h.sym] && live[h.sym].live; }).length;
             els.progress.textContent = liveCount + " of " + n + " priced live" +
                 (liveCount < n ? " · rest show last statement close" : "");
-            render();
         }
     }
-
-    /* ---------- key card ---------- */
-    function showKeyCard(statusMsg, ok) {
-        els.keyCard.style.display = "block";
-        if (statusMsg) {
-            els.keyStatus.innerHTML = ok ? '<span class="ok">' + statusMsg + '</span>' : statusMsg;
-        }
-    }
-    function hideKeyCardCollapsed() {
-        // keep a slim "change key" affordance
-        els.keyCard.style.display = "block";
-        els.keyStatus.innerHTML = 'Key saved on this device. <span class="link" id="clearKey">Change key</span>';
-        var c = document.getElementById("clearKey");
-        if (c) c.onclick = function () {
-            els.keyInput.value = getKey();
-            els.keyStatus.innerHTML = "Edit the key above and press Save.";
-        };
-    }
-
-    els.saveKeyBtn.onclick = function () {
-        var k = (els.keyInput.value || "").trim();
-        if (!k) { showKeyCard("Please paste a key first.", false); return; }
-        setKey(k);
-        els.keyInput.value = "";
-        hideKeyCardCollapsed();
-        refresh();
-    };
-    els.keyInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") els.saveKeyBtn.click();
-    });
 
     els.refreshBtn.onclick = refresh;
 
     /* ---------- init ---------- */
-    render(); // initial view shows all stmt-close fallbacks immediately
-    if (getKey()) {
-        hideKeyCardCollapsed();
-        refresh();
-    } else {
-        showKeyCard("Enter your free Twelve Data key above to load live prices. Until then, last statement closes are shown.", false);
-    }
+    render();   // initial view shows all stmt-close fallbacks immediately
+    refresh();  // auto-fetch on load — no key entry needed
 })();
 </script>
 
