@@ -3,6 +3,7 @@ Tiger Brokers Position Fetcher
 ================================
 pip install tigeropen requests
 python tiger_positions.py
+
 """
 from tigeropen.tiger_open_config import TigerOpenClientConfig
 from tigeropen.common.consts import Language
@@ -17,9 +18,12 @@ PRIVATE_KEY = "MIICXAIBAAKBgQCXjMARtSd91iMsfebC2fRE2xL9x/rLiTg6CRQ4UTIH1yjj1ctf6
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "tiger_config.txt")
 GITHUB_TOKEN  = open(CONFIG_FILE).read().strip()
-GITHUB_REPO   = "paulyeo11/Dynamic-Index"
+GITHUB_REPO   = "paulyeo11/paulsworld"   # FIXED: was Dynamic-Index
 GITHUB_FILE   = "tiger_positions.json"
 GITHUB_BRANCH = "main"
+
+# FX rates to convert all P&L to USD
+FX = {"HKD": 7.8, "SGD": 1.35, "USD": 1.0}
 
 def fetch_and_upload():
     print("Connecting to Tiger Brokers...")
@@ -37,15 +41,25 @@ def fetch_and_upload():
     pos_list = []
     for p in positions:
         c = p.contract
+        currency = c.currency or "USD"
+        raw_pnl  = round(float(p.unrealized_pnl or 0), 2)
+        raw_mkt  = round(float(p.market_value or 0), 2)
+        # Convert P&L and market value to USD for display
+        rate     = FX.get(currency.upper(), 1.0)
+        pnl_usd  = round(raw_pnl / rate, 2)
+        mkt_usd  = round(raw_mkt / rate, 2)
+
         pos_list.append({
-            "symbol"       : c.symbol,
-            "secType"      : str(c.sec_type) if hasattr(c, "sec_type") else "STK",
-            "currency"     : c.currency,
-            "exchange"     : c.exchange or "—",
-            "quantity"     : p.quantity,
-            "avgCost"      : round(float(p.average_cost or 0), 4),
-            "marketValue"  : round(float(p.market_value or 0), 2),
-            "unrealizedPnl": round(float(p.unrealized_pnl or 0), 2),
+            "symbol"        : c.symbol,
+            "secType"       : str(c.sec_type) if hasattr(c, "sec_type") else "STK",
+            "currency"      : currency,
+            "exchange"      : c.exchange or "—",
+            "quantity"      : p.quantity,
+            "avgCost"       : round(float(p.average_cost or 0), 4),
+            "marketValue"   : raw_mkt,      # original currency
+            "marketValueUSD": mkt_usd,      # converted to USD
+            "unrealizedPnl" : raw_pnl,      # original currency
+            "unrealizedPnlUSD": pnl_usd,   # converted to USD
         })
 
     net_value, cash = None, None
