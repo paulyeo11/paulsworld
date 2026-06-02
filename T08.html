@@ -201,8 +201,9 @@ function showDashboard(data) {
   document.getElementById('net-val').textContent = data.netValue ? '$'+parseFloat(data.netValue).toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
 
   const totalMkt = allData.reduce((s,p)=>s+(p.marketValue||0),0);
-  const // Convert all P&L to USD before summing (HKD÷7.8, SGD÷1.35, USD×1)
+  const // Use pre-converted USD P&L if available, else convert on the fly
   totalPnl = allData.reduce((s,p)=>{
+    if(p.unrealizedPnlUSD !== undefined) return s + (p.unrealizedPnlUSD || 0);
     const pnl = p.unrealizedPnl || 0;
     const cur = (p.currency||'USD').toUpperCase();
     if(cur==='HKD') return s + pnl/7.8;
