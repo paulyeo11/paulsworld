@@ -173,7 +173,19 @@
 const DATA_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
 const PRICE_API = '/api/td';
 
-let allData=[], livePrices={}, stockNames={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
+let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
+
+// Fallback name map (Yahoo symbol → display name)
+const NAME_MAP = {
+  '1211.HK':'BYD','1810.HK':'Xiaomi','2318.HK':'PICC P&C','2800.HK':'Tracker Fund',
+  '3067.HK':'CSOP MSCI HK','3690.HK':'Meituan','6862.HK':'Haidilao',
+  '9618.HK':'JD.com','9988.HK':'Alibaba','9999.HK':'NetEase',
+  '1299.HK':'AIA Group','700.HK':'Tencent','2269.HK':'Wuxi Bio',
+  'C38U.SI':'CapLand IntCom T','GRAB':'Grab Holdings','SE':'Sea Ltd',
+  'AAPL':'Apple','MSFT':'Microsoft','NVDA':'NVIDIA','TSLA':'Tesla',
+  'AMZN':'Amazon','GOOGL':'Alphabet','META':'Meta'
+};
+const stockNames = NAME_MAP;
 
 // Convert Tiger symbol to Yahoo Finance format
 function yahooSymbol(p) {
@@ -205,7 +217,7 @@ async function fetchPrices(positions) {
     let loaded = 0;
     stockSyms.forEach(s => {
       const q = map[s];
-      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); if (q.name) stockNames[s] = q.name; loaded++; }
+      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); if (q.name) NAME_MAP[s] = q.name; loaded++; }
     });
     if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
     if (map['HKDSGD=X']?.price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
