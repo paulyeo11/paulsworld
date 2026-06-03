@@ -11,6 +11,7 @@
     --accent:#00d4aa; --accent2:#3b82f6; --warn:#f59e0b;
     --danger:#ef4444; --text:#e2e8f0; --muted:#64748b;
     --hk:#f97316; --us:#3b82f6;
+    --green:#00d4aa; --red:#ef4444;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; padding-bottom:60px; }
@@ -94,6 +95,9 @@
   .price-live{color:var(--accent);font-weight:600;display:block}
   .avg-cost-sub{color:var(--muted);font-size:.7rem;display:block;margin-top:2px}
   .price-loading{color:var(--muted);font-style:italic;font-size:.75rem}
+  .diff-pos{color:var(--green);font-weight:700;font-size:.82rem}
+  .diff-neg{color:var(--red);font-weight:700;font-size:.82rem}
+  .diff-nil{color:var(--muted);font-size:.82rem}
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
   .price-note{font-size:.68rem;color:var(--muted);text-align:center;margin-top:10px;padding:0 22px 14px}
 
@@ -192,14 +196,15 @@
             <th onclick="sortTable('currency')" class="hide-sm">Currency</th>
             <th onclick="sortTable('exchange')" class="hide-sm">Exchange</th>
             <th onclick="sortTable('position')">Qty ↕</th>
-            <th onclick="sortTable('avgCost')">Price / Avg Cost ↕</th>
+            <th onclick="sortTable('avgCost')">Share Price / Avg Cost ↕</th>
+            <th>% Diff</th>
             <th onclick="sortTable('marketValue')">Est. Value ↕</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
       </table>
       <div id="empty-state">No positions match this filter.</div>
-      <div class="price-note">Share prices via Yahoo Finance · may be ~15 min delayed</div>
+      <div class="price-note">Share prices via Yahoo Finance · may be ~15 min delayed · % Diff = (live price − avg cost) ÷ avg cost</div>
     </div>
 
   </div>
@@ -301,13 +306,28 @@ function renderTable() {
   tbody.innerHTML=data.map(p=>{
     const sym = p.currency==='HKD'?'HK$':'$';
     const val=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const cost=(p.avgCost||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const avgCost = p.avgCost || 0;
+    const cost = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const qty=p.position.toLocaleString('en-US');
     const ysym = yahooSymbol(p);
     const livePrice = livePrices[ysym];
-    const priceCell = livePrice != null
-      ? `<span class="price-live">${sym}${livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`
-      : `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`;
+
+    let priceCell, diffCell;
+    if (livePrice != null && avgCost > 0) {
+      const diff = (livePrice - avgCost) / avgCost * 100;
+      const sign = diff >= 0 ? '+' : '';
+      const diffCls = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : 'diff-nil');
+      const arrow = diff > 0 ? '▲' : (diff < 0 ? '▼' : '');
+      priceCell = `<span class="price-live">${sym}${livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`;
+      diffCell = `<span class="${diffCls}">${arrow} ${sign}${diff.toFixed(2)}%</span>`;
+    } else if (livePrice != null) {
+      priceCell = `<span class="price-live">${sym}${livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`;
+      diffCell = '<span class="diff-nil">—</span>';
+    } else {
+      priceCell = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`;
+      diffCell = '<span class="diff-nil">—</span>';
+    }
+
     return `<tr>
       <td><span class="symbol">${p.symbol}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
@@ -315,6 +335,7 @@ function renderTable() {
       <td class="num muted hide-sm">${p.exchange}</td>
       <td class="num pos-qty">${qty}</td>
       <td class="num">${priceCell}</td>
+      <td class="num">${diffCell}</td>
       <td class="num" style="font-weight:600">${sym}${val}</td>
     </tr>`;
   }).join('');
