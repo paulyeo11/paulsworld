@@ -24,9 +24,10 @@ These apply to ANY assistant (notebook Claude Code / phone Claude app) — pleas
 
 ## Verify Before Sharing Links
 Before telling Paul to check any live URL, always verify the result yourself first:
-1. Use WebFetch or Bash curl to confirm the page/feature is working as expected.
-2. Only THEN send Paul the confirmed live link.
-3. If the environment blocks the test (network restricted), say so explicitly — never say "check in X minutes" without first attempting verification.
+1. Attempt WebFetch or Bash curl **immediately after every push** — do not wait for Paul to ask.
+2. Do not lazy-load tools — have WebFetch ready before pushing so the check happens with no delay.
+3. Only THEN tell Paul it's ready with the confirmed live link.
+4. If the environment blocks the test (network restricted), say so explicitly and immediately — never say "check in X minutes" without first attempting verification.
 
 ## Self-Fix Rule (no approval needed)
 If something is not working after a fix attempt, do NOT wait for Paul's approval to try again.
