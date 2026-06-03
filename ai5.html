@@ -99,7 +99,10 @@
   .num{font-family:'DM Mono',monospace}
   .pos-qty{color:var(--accent);font-weight:600}
   .muted{color:var(--muted)}
+  .price-live{color:var(--accent);font-weight:600}
+  .price-loading{color:var(--muted);font-style:italic;font-size:.75rem}
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
+  .price-note{font-size:.68rem;color:var(--muted);text-align:center;margin-top:10px;padding:0 22px 14px}
 
   footer { text-align:center; color:var(--muted); font-size:.7rem; font-family:'DM Mono',monospace; margin-top:40px; line-height:1.8; }
   footer a { color:var(--accent); text-decoration:none; }
@@ -108,6 +111,7 @@
     header{padding:20px 16px 20px 90px}
     tbody td{padding:10px 10px;font-size:.78rem}
     .card-value{font-size:1.4rem}
+    th.hide-sm,td.hide-sm{display:none}
   }
 </style>
 </head>
@@ -182,7 +186,7 @@
         <button class="filter-btn" onclick="filterData('STK',this)">Stocks</button>
         <button class="filter-btn" onclick="filterData('OPT',this)">Options</button>
       </div>
-      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      <button class="refresh-btn" onclick="reloadAll()">↻ Refresh</button>
     </div>
 
     <div class="table-wrap">
@@ -194,17 +198,19 @@
         <thead>
           <tr>
             <th onclick="sortTable('symbol')">Symbol ↕</th>
-            <th onclick="sortTable('secType')">Type</th>
-            <th onclick="sortTable('currency')">Currency</th>
-            <th onclick="sortTable('exchange')">Exchange</th>
+            <th onclick="sortTable('secType')" class="hide-sm">Type</th>
+            <th onclick="sortTable('currency')" class="hide-sm">Currency</th>
+            <th onclick="sortTable('exchange')" class="hide-sm">Exchange</th>
             <th onclick="sortTable('position')">Qty ↕</th>
-            <th onclick="sortTable('avgCost')">Avg Cost ↕</th>
+            <th onclick="sortTable('avgCost')" class="hide-sm">Avg Cost ↕</th>
+            <th>Share Price</th>
             <th onclick="sortTable('marketValue')">Est. Value ↕</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
       </table>
       <div id="empty-state">No positions match this filter.</div>
+      <div class="price-note">Share prices via Yahoo Finance · may be ~15 min delayed · USD shown for USD stocks, HK$ for HKD stocks</div>
     </div>
 
   </div>
@@ -220,18 +226,45 @@
 </footer>
 
 <script>
-// Positions JSON is fetched directly from GitHub raw URL
 const DATA_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/positions.json';
+const PRICE_API = '/api/td';
 
-let allData = [], currentFilter = 'ALL', sortKey = 'symbol', sortAsc = true;
+let allData = [], livePrices = {}, currentFilter = 'ALL', sortKey = 'symbol', sortAsc = true;
+
+function yahooSymbol(p) {
+  if (p.currency === 'HKD') {
+    // IBKR stores HK symbols as numeric strings e.g. "9988"
+    return p.symbol + '.HK';
+  }
+  return p.symbol;
+}
+
+async function fetchPrices(positions) {
+  const syms = [...new Set(positions.map(yahooSymbol))];
+  if (!syms.length) return;
+  try {
+    const url = PRICE_API + '?symbols=' + encodeURIComponent(syms.join(','));
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const map = await r.json();
+    syms.forEach(s => {
+      const q = map[s];
+      if (q && !q.error && q.price != null) {
+        livePrices[s] = parseFloat(q.price);
+      }
+    });
+  } catch(e) { /* silently skip price fetch errors */ }
+}
 
 async function loadData() {
   document.getElementById('fetch-time').textContent = 'Loading…';
   try {
-    // Cache-bust so we always get fresh data
     const r = await fetch(DATA_URL + '?t=' + Date.now());
     if (!r.ok) throw new Error('not found');
     const data = await r.json();
+    allData = data.positions || [];
+    // fetch prices in parallel
+    await fetchPrices(allData);
     showDashboard(data);
   } catch(e) {
     document.getElementById('loading-state').style.display = 'none';
@@ -240,8 +273,12 @@ async function loadData() {
   }
 }
 
+async function reloadAll() {
+  livePrices = {};
+  await loadData();
+}
+
 function showDashboard(data) {
-  allData = data.positions || [];
   document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || '—');
   document.getElementById('total-pos').textContent = allData.length;
 
@@ -285,17 +322,23 @@ function renderTable() {
   if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=data.map(p=>{
+    const sym = p.currency==='HKD'?'HK$':'$';
     const val=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const cost=(p.avgCost||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
     const qty=p.position.toLocaleString('en-US');
-    const sym = p.currency==='HKD'?'HK$':'$';
+    const ysym = yahooSymbol(p);
+    const livePrice = livePrices[ysym];
+    const priceTxt = livePrice != null
+      ? `<span class="price-live">${sym}${livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`
+      : '<span class="price-loading">—</span>';
     return `<tr>
       <td><span class="symbol">${p.symbol}</span></td>
-      <td><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
-      <td><span class="badge badge-${p.currency}">${p.currency}</span></td>
-      <td class="num muted">${p.exchange}</td>
+      <td class="hide-sm"><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
+      <td class="hide-sm"><span class="badge badge-${p.currency}">${p.currency}</span></td>
+      <td class="num muted hide-sm">${p.exchange}</td>
       <td class="num pos-qty">${qty}</td>
-      <td class="num muted">${cost}</td>
+      <td class="num muted hide-sm">${cost}</td>
+      <td class="num">${priceTxt}</td>
       <td class="num" style="font-weight:600">${sym}${val}</td>
     </tr>`;
   }).join('');
