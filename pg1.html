@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PG1: My Photo Gallery — Paul's World</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: #0f0f14;
+      color: #f0f0f0;
+      min-height: 100vh;
+    }
+
+    /* ── Home Button ── */
+    .home-btn {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 999;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 16px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-family: sans-serif;
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: rgba(255,255,255,0.28); }
+
+    /* ── Hero Header ── */
+    .hero {
+      text-align: center;
+      padding: 80px 20px 40px;
+      background: linear-gradient(180deg, #1a1a2e 0%, #0f0f14 100%);
+    }
+    .hero h1 {
+      font-size: 2.4rem;
+      letter-spacing: 2px;
+      color: #ffd580;
+      text-shadow: 0 2px 20px rgba(255,180,0,0.4);
+    }
+    .hero p {
+      margin-top: 10px;
+      font-size: 1.05rem;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    /* ── Filter Bar ── */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px 16px;
+    }
+    .filter-btn {
+      background: #1e1e2e;
+      color: #ccc;
+      border: 1px solid #333;
+      padding: 7px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: sans-serif;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: #ffd580;
+      color: #1a1a2e;
+      border-color: #ffd580;
+      font-weight: bold;
+    }
+
+    /* ── Masonry Grid ── */
+    .gallery-grid {
+      columns: 3;
+      column-gap: 12px;
+      padding: 10px 20px 40px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    @media (max-width: 900px) { .gallery-grid { columns: 2; } }
+    @media (max-width: 550px) { .gallery-grid { columns: 1; } }
+
+    .photo-card {
+      break-inside: avoid;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      background: #1a1a2e;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .photo-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    }
+    .photo-card img {
+      width: 100%;
+      display: block;
+      border-radius: 10px 10px 0 0;
+      transition: filter 0.3s;
+    }
+    .photo-card:hover img { filter: brightness(1.08); }
+
+    .photo-caption {
+      padding: 10px 12px 12px;
+      background: #1a1a2e;
+      border-radius: 0 0 10px 10px;
+    }
+    .photo-caption .title {
+      font-size: 0.95rem;
+      color: #ffd580;
+      font-weight: bold;
+    }
+    .photo-caption .meta {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 3px;
+      font-family: sans-serif;
+    }
+    .photo-caption .tag {
+      display: inline-block;
+      margin-top: 6px;
+      background: rgba(255,213,128,0.12);
+      color: #ffd580;
+      border: 1px solid rgba(255,213,128,0.25);
+      border-radius: 10px;
+      padding: 2px 10px;
+      font-size: 0.72rem;
+      font-family: sans-serif;
+    }
+
+    /* ── Lightbox ── */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 80vh;
+      border-radius: 8px;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.8);
+    }
+    .lightbox-caption {
+      margin-top: 14px;
+      text-align: center;
+      color: #ffd580;
+      font-size: 1rem;
+    }
+    .lightbox-meta {
+      color: #888;
+      font-size: 0.82rem;
+      font-family: sans-serif;
+      margin-top: 4px;
+    }
+    .lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      font-size: 2rem;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.7;
+      background: none;
+      border: none;
+      line-height: 1;
+    }
+    .lightbox-close:hover { opacity: 1; }
+
+    /* ── Upload Prompt Banner ── */
+    .upload-banner {
+      text-align: center;
+      padding: 30px 20px;
+      margin: 0 auto 20px;
+      max-width: 700px;
+      background: #1a1a2e;
+      border: 1px dashed #444;
+      border-radius: 12px;
+      margin-left: 20px;
+      margin-right: 20px;
+    }
+    .upload-banner p {
+      color: #888;
+      font-family: sans-serif;
+      font-size: 0.9rem;
+    }
+    .upload-banner strong { color: #ffd580; }
+
+    /* ── View Counter ── */
+    .counter-wrap {
+      text-align: center;
+      padding: 20px;
+      color: #555;
+      font-family: sans-serif;
+      font-size: 0.85rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #444;
+      font-size: 0.8rem;
+      font-family: sans-serif;
+      border-top: 1px solid #222;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+  <div class="hero">
+    <h1>📸 My Photo Gallery</h1>
+    <p>Moments captured across adventures, sunsets, and places close to my heart</p>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterGallery('all', this)">All</button>
+    <button class="filter-btn" onclick="filterGallery('singapore', this)">🇸🇬 Singapore</button>
+    <button class="filter-btn" onclick="filterGallery('nature', this)">🌿 Nature</button>
+    <button class="filter-btn" onclick="filterGallery('travel', this)">✈️ Travel</button>
+    <button class="filter-btn" onclick="filterGallery('people', this)">👥 People</button>
+  </div>
+
+  <!-- Gallery Grid -->
+  <div class="gallery-grid" id="galleryGrid">
+
+    <!-- Photo 01 -->
+    <div class="photo-card" data-tags="singapore nature" onclick="openLightbox(this)">
+      <img 
+        src="img_gallery/01-sunset-singapore.jpg" 
+        alt="Singapore sunset over landed housing estate"
+        data-title="Singapore Sunset"
+        data-meta="Singapore · 2026"
+      />
+      <div class="photo-caption">
+        <div class="title">Singapore Sunset</div>
+        <div class="meta">Singapore · 2026</div>
+        <span class="tag">Singapore</span>
+        <span class="tag">Nature</span>
+      </div>
+    </div>
+
+    <!-- More photos will be added here -->
+
+  </div>
+
+  <!-- Upload reminder -->
+  <div class="upload-banner" id="uploadBanner">
+    <p>📷 <strong>More photos coming soon!</strong><br/>
+    Send me your photos and I'll add them to this gallery — each one tagged, captioned, and beautifully displayed.</p>
+  </div>
+
+  <!-- View Counter -->
+  <div class="counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="" />
+    <div class="lightbox-caption" id="lightboxTitle"></div>
+    <div class="lightbox-meta" id="lightboxMeta"></div>
+  </div>
+
+  <footer>
+    © 2026 Paul's World · All photos personal &amp; original
+  </footer>
+
+  <script>
+    // ── Filter ──
+    function filterGallery(tag, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.photo-card').forEach(card => {
+        const tags = card.dataset.tags || '';
+        card.style.display = (tag === 'all' || tags.includes(tag)) ? 'block' : 'none';
+      });
+    }
+
+    // ── Lightbox ──
+    function openLightbox(card) {
+      const img = card.querySelector('img');
+      document.getElementById('lightboxImg').src = img.src;
+      document.getElementById('lightboxImg').alt = img.alt;
+      document.getElementById('lightboxTitle').textContent = img.dataset.title || img.alt;
+      document.getElementById('lightboxMeta').textContent = img.dataset.meta || '';
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox(e) {
+      if (!e || e.target !== document.getElementById('lightboxImg')) {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+
+</body>
+</html>
