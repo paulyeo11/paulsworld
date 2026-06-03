@@ -3,511 +3,377 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tiger Portfolio &middot; Live Prices</title>
+<title>T07: IBKR Portfolio Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    :root {
-        --navy: #0e1330;
-        --navy2: #161d44;
-        --card: #1a2250;
-        --indigo: #4a6cf7;
-        --indigo2: #6c8cff;
-        --green: #22c55e;
-        --red: #ef4444;
-        --muted: #8a93c2;
-        --line: rgba(255,255,255,0.08);
-    }
-
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: radial-gradient(1200px 600px at 50% -10%, #1a2358 0%, var(--navy) 60%);
-        min-height: 100vh;
-        padding: 16px;
-        color: #eef1ff;
-    }
-
-    .home-btn {
-        position: fixed;
-        top: 14px;
-        left: 14px;
-        z-index: 100;
-        background: rgba(255,255,255,0.10);
-        color: #fff;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 14px;
-        padding: 9px 15px;
-        border-radius: 24px;
-        border: 1px solid var(--line);
-        backdrop-filter: blur(6px);
-        transition: transform .2s ease, background .2s;
-    }
-    .home-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.18); }
-
-    .container { max-width: 860px; margin: 0 auto; }
-
-    header { text-align: center; margin: 58px 0 18px; }
-    header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.4px; }
-    header .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
-
-    /* Total summary card */
-    .summary {
-        background: linear-gradient(135deg, var(--navy2), var(--card));
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 22px;
-        margin-bottom: 16px;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.35);
-        text-align: center;
-    }
-    .summary .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .summary .total { font-size: 44px; font-weight: 800; letter-spacing: -1px; margin-top: 4px; line-height: 1.05; }
-    .summary .daychg { font-size: 16px; font-weight: 700; margin-top: 8px; }
-    .summary .daychg.positive { color: var(--green); }
-    .summary .daychg.negative { color: var(--red); }
-    .summary .daychg.neutral { color: var(--muted); }
-    .summary .totalgl { font-size: 15px; font-weight: 700; margin-top: 6px; }
-    .summary .totalgl .gl-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; display: block; margin-bottom: 2px; }
-    .summary .totalgl.positive { color: var(--green); }
-    .summary .totalgl.negative { color: var(--red); }
-    .summary .totalgl.neutral { color: var(--muted); }
-
-    .controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
-        margin-top: 16px;
-        font-size: 12px;
-        color: var(--muted);
-    }
-    .refresh-btn {
-        background: linear-gradient(135deg, var(--indigo), #7a5cff);
-        color: #fff;
-        border: 0;
-        font-size: 14px;
-        font-weight: 700;
-        padding: 10px 20px;
-        border-radius: 24px;
-        cursor: pointer;
-        transition: filter .2s, transform .2s;
-    }
-    .refresh-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-    .refresh-btn:disabled { opacity: .55; cursor: default; transform: none; }
-
-    .progress { font-size: 12px; color: var(--muted); min-height: 16px; }
-
-    /* Secure server line */
-    .secure-line {
-        text-align: center;
-        font-size: 12px;
-        color: var(--muted);
-        margin-bottom: 16px;
-    }
-
-    /* Holdings table */
-    .holdings {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    thead th {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        color: var(--muted);
-        text-align: right;
-        padding: 12px 10px;
-        border-bottom: 1px solid var(--line);
-        white-space: nowrap;
-    }
-    thead th.l { text-align: left; }
-    tbody td {
-        padding: 12px 10px;
-        font-size: 14px;
-        text-align: right;
-        border-bottom: 1px solid var(--line);
-        white-space: nowrap;
-    }
-    tbody tr:last-child td { border-bottom: 0; }
-    tbody td.l { text-align: left; }
-    .sym { font-weight: 700; }
-    .nm { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .ccy-tag { font-size: 10px; color: var(--muted); }
-    .stmt { color: var(--muted); }
-    .stmt-badge {
-        display: inline-block;
-        font-size: 9px;
-        background: rgba(255,255,255,0.10);
-        color: var(--muted);
-        padding: 1px 5px;
-        border-radius: 6px;
-        margin-left: 5px;
-        vertical-align: middle;
-    }
-    .chg.positive { color: var(--green); }
-    .chg.negative { color: var(--red); }
-    .chg.neutral { color: var(--muted); }
-    .val-usd { font-weight: 700; }
-    .gl { font-weight: 700; }
-    .gl.positive { color: var(--green); }
-    .gl.negative { color: var(--red); }
-    .gl.neutral { color: var(--muted); }
-    .gl .gl-pct { font-size: 11px; font-weight: 600; opacity: .85; }
-    /* mobile gain/loss line shown under holding name; hidden on desktop */
-    .gl-mobile { display: none; }
-
-    .fx-line { font-size: 11px; color: var(--muted); text-align: center; margin: 12px 0 4px; }
-
-    .note {
-        font-size: 11px;
-        color: var(--muted);
-        text-align: center;
-        margin-top: 14px;
-        line-height: 1.6;
-    }
-    .note a { color: var(--indigo2); }
-
-    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 22px 0 8px; }
-    footer a { color: var(--indigo2); font-weight: 600; }
-
-    @media (max-width: 600px) {
-        header h1 { font-size: 22px; }
-        .summary .total { font-size: 34px; }
-        /* hide qty + native price + day% columns on small screens to keep it tidy */
-        th.hide-sm, td.hide-sm { display: none; }
-        tbody td { padding: 10px 7px; font-size: 13px; }
-        thead th { padding: 10px 7px; }
-        /* on mobile, move gain/loss to its own line under the holding name */
-        th.gl-col, td.gl-col { display: none; }
-        .gl-mobile { display: block; font-size: 12px; font-weight: 700; margin-top: 3px; }
-        .gl-mobile.positive { color: var(--green); }
-        .gl-mobile.negative { color: var(--red); }
-        .gl-mobile.neutral { color: var(--muted); }
-    }
+  :root {
+    --bg:#0a0e17; --surface:#111827; --border:#1f2d45;
+    --accent:#00d4aa; --accent2:#3b82f6; --warn:#f59e0b;
+    --danger:#ef4444; --text:#e2e8f0; --muted:#64748b;
+    --hk:#f97316; --us:#3b82f6;
+    --green:#00d4aa; --red:#ef4444;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; padding-bottom:60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  header { background:linear-gradient(135deg,#0a0e17,#0d1f35); border-bottom:1px solid var(--border); padding:28px 40px 28px 130px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  h1 { font-size:1.2rem; font-weight:800; color:#fff; }
+  .subtitle { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
+  #fetch-time { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); background:var(--surface); padding:6px 14px; border-radius:20px; border:1px solid var(--border); }
+  main { max-width:960px; margin:0 auto; padding:32px 24px; }
+  #loading-state { text-align:center; padding:80px 20px; }
+  .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 20px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loading-state p { color:var(--muted); font-size:.9rem; }
+  #nodata-state { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; text-align:center; }
+  #nodata-state h3 { color:#fff; margin-bottom:12px; }
+  #nodata-state p { color:var(--muted); font-size:.88rem; line-height:1.7; margin-bottom:16px; }
+  code { background:#1f2d45; color:var(--accent); padding:2px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-size:.85em; }
+  .steps { background:rgba(0,212,170,.05); border:1px solid rgba(0,212,170,.2); border-radius:10px; padding:20px 24px; margin:16px 0; text-align:left; }
+  .step { display:flex; gap:12px; margin-bottom:10px; align-items:flex-start; font-size:.85rem; color:var(--text); line-height:1.5; }
+  .step-num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#000; font-weight:800; font-size:.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .dl-btn { display:inline-block; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#000; font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem; padding:9px 20px; border-radius:8px; text-decoration:none; border:none; cursor:pointer; transition:opacity .2s; }
+  .dl-btn:hover { opacity:.85; }
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  .card-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:6px; font-family:'DM Mono',monospace; }
+  .card-value { font-size:1.5rem; font-weight:800; color:var(--accent); letter-spacing:-.03em; line-height:1; }
+  .card-sub { font-size:.68rem; color:var(--muted); margin-top:5px; font-family:'DM Mono',monospace; }
+  .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.75rem; cursor:pointer; font-family:'DM Mono',monospace; transition:all .15s; }
+  .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .toolbar { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .filter-label { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
+  .filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:4px 12px; border-radius:20px; font-size:.75rem; cursor:pointer; transition:all .15s; }
+  .filter-btn:hover,.filter-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,212,170,.08); }
+  #price-status { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); padding:4px 10px; border-radius:12px; border:1px solid var(--border); background:var(--surface); white-space:nowrap; }
+  #price-status.ok { color:var(--green); border-color:rgba(0,212,170,.3); }
+  #price-status.fail { color:var(--warn); border-color:rgba(245,158,11,.3); }
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .table-header { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .table-title { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  #pos-count { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; }
+  thead th { padding:10px 16px; text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); background:rgba(255,255,255,.02); cursor:pointer; font-family:'DM Mono',monospace; white-space:nowrap; user-select:none; }
+  thead th:hover { color:var(--accent); }
+  tbody tr { border-top:1px solid rgba(255,255,255,.04); transition:background .1s; }
+  tbody tr:hover { background:rgba(255,255,255,.03); }
+  tbody td { padding:12px 16px; font-size:.86rem; vertical-align:middle; }
+  .symbol { font-weight:700; font-size:.95rem; color:#fff; font-family:'DM Mono',monospace; }
+  .badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:.63rem; font-weight:700; font-family:'DM Mono',monospace; }
+  .badge-HKD{background:rgba(249,115,22,.15);color:var(--hk)}
+  .badge-USD{background:rgba(59,130,246,.15);color:var(--us)}
+  .badge-SGD{background:rgba(16,185,129,.15);color:#10b981}
+  .badge-STK{background:rgba(0,212,170,.1);color:var(--accent)}
+  .badge-OPT{background:rgba(245,158,11,.1);color:var(--warn)}
+  .num{font-family:'DM Mono',monospace}
+  .pos-qty{color:var(--accent);font-weight:600}
+  .muted{color:var(--muted)}
+  /* Price cell: 3 lines stacked */
+  .price-live { color:var(--accent); font-weight:700; display:block; font-size:.9rem; }
+  .avg-cost-sub { color:var(--muted); font-size:.68rem; display:block; margin-top:2px; }
+  .diff-line { font-size:.75rem; font-weight:700; display:block; margin-top:3px; }
+  .diff-line.pos { color:var(--green); }
+  .diff-line.neg { color:var(--red); }
+  .diff-line.nil { color:var(--muted); }
+  .price-loading { color:var(--muted); font-style:italic; font-size:.78rem; }
+  #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
+  .price-note{font-size:.65rem;color:var(--muted);text-align:center;padding:10px 16px 14px;line-height:1.5}
+  footer { text-align:center; color:var(--muted); font-size:.7rem; font-family:'DM Mono',monospace; margin-top:40px; line-height:1.8; }
+  footer a { color:var(--accent); text-decoration:none; }
+  @media(max-width:600px){
+    header{padding:20px 16px 20px 90px}
+    tbody td{padding:10px 10px;font-size:.82rem}
+    .card-value{font-size:1.3rem}
+    th.hide-sm,td.hide-sm{display:none}
+    main{padding:20px 12px}
+  }
 </style>
 </head>
 <body>
 
-<a class="home-btn" href="/tools.html">&#8962; Home</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
 
-<div class="container">
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <h1>IBKR Portfolio</h1>
+      <div class="subtitle">T07 · Live Positions via ib_async</div>
+    </div>
+  </div>
+  <div id="fetch-time">Loading…</div>
+</header>
 
-    <header>
-        <h1>&#128057; Tiger Portfolio &mdash; Live</h1>
-        <div class="sub">HK &middot; Singapore &middot; US holdings &middot; valued in USD</div>
-    </header>
+<main>
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p>Fetching your portfolio data…</p>
+  </div>
 
-    <!-- Summary -->
-    <div class="summary">
-        <div class="label">Total Portfolio Value (USD)</div>
-        <div class="total" id="totalVal">&mdash;</div>
-        <div class="daychg neutral" id="dayChg">&mdash;</div>
-        <div class="totalgl neutral" id="totalGL">&mdash;</div>
-        <div class="controls">
-            <button class="refresh-btn" id="refreshBtn">&#128260; Refresh prices</button>
-            <span id="lastUpdated">Not yet updated</span>
-        </div>
-        <div class="progress" id="progress"></div>
+  <div id="nodata-state">
+    <h3>📭 No position data found</h3>
+    <p>Run the Python script on your computer to upload your positions.<br>Once uploaded, just refresh this page — data loads automatically.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div>Install: <code>pip install ib_async requests</code></div></div>
+      <div class="step"><div class="step-num">2</div><div>Download and run: <code>python ibkr_positions.py</code></div></div>
+      <div class="step"><div class="step-num">3</div><div>Open IB Gateway first — port <code>4001</code></div></div>
+      <div class="step"><div class="step-num">4</div><div>Refresh this page — positions load automatically ✅</div></div>
+    </div>
+    <button class="dl-btn" onclick="downloadPython()">⬇️ Download ibkr_positions.py</button>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="summary-grid">
+      <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">across all accounts</div></div>
+      <div class="card"><div class="card-label">Est. Value (USD)</div><div class="card-value" id="total-val">—</div><div class="card-sub">cost basis × qty</div></div>
+      <div class="card"><div class="card-label">HK Positions</div><div class="card-value" id="hk-count" style="color:var(--hk)">—</div><div class="card-sub">HKD denominated</div></div>
+      <div class="card"><div class="card-label">US Positions</div><div class="card-value" id="us-count" style="color:var(--us)">—</div><div class="card-sub">USD denominated</div></div>
     </div>
 
-    <!-- Status line -->
-    <div class="secure-line">&#128994; Live prices via Yahoo Finance &middot; may be ~15 min delayed</div>
-
-    <!-- Holdings -->
-    <div class="holdings">
-        <table>
-            <thead>
-                <tr>
-                    <th class="l">Holding</th>
-                    <th class="hide-sm">Qty</th>
-                    <th class="hide-sm">Price</th>
-                    <th>Value (USD)</th>
-                    <th class="gl-col">Gain/Loss</th>
-                    <th class="hide-sm">Day %</th>
-                </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-        </table>
+    <div class="toolbar">
+      <div class="filters">
+        <span class="filter-label">FILTER:</span>
+        <button class="filter-btn active" onclick="filterData('ALL',this)">All</button>
+        <button class="filter-btn" onclick="filterData('USD',this)">🇺🇸 USD</button>
+        <button class="filter-btn" onclick="filterData('HKD',this)">🇭🇰 HKD</button>
+        <button class="filter-btn" onclick="filterData('STK',this)">Stocks</button>
+        <button class="filter-btn" onclick="filterData('OPT',this)">Options</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <span id="price-status">🔄 Loading…</span>
+        <button class="refresh-btn" onclick="reloadAll()">↻ Refresh</button>
+      </div>
     </div>
 
-    <div class="fx-line" id="fxLine"></div>
-
-    <div class="note">
-        Prices may be delayed up to ~15 minutes. Powered by Yahoo Finance.
-        Falls back to last statement close when a live quote is unavailable.<br>
-        For information only &mdash; not investment advice.
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">Positions</div>
+        <div id="pos-count">—</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('symbol')">Symbol ↕</th>
+            <th onclick="sortTable('secType')" class="hide-sm">Type</th>
+            <th onclick="sortTable('currency')" class="hide-sm">Ccy</th>
+            <th onclick="sortTable('position')">Qty ↕</th>
+            <th onclick="sortTable('avgCost')">Price / Avg / % Diff ↕</th>
+            <th onclick="sortTable('marketValue')">Est. Value ↕</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div id="empty-state">No positions match this filter.</div>
+      <div class="price-note">% Diff = (live price − avg cost) ÷ avg cost · Yahoo Finance (~15 min delay)</div>
     </div>
+  </div>
+</main>
 
-    <footer>
-        &copy; 2026 Paul's World &middot; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a>
-    </footer>
-
+<div style="text-align:center;margin-top:40px">
+  <script src="/view-counter.js"></script>
 </div>
 
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Data from GitHub · Run ibkr_positions.py to refresh
+</footer>
+
 <script>
-(function () {
-    "use strict";
+const DATA_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/positions.json';
+const PRICE_API = '/api/td';
 
-    // Free server-side Yahoo Finance proxy. One batched call returns a normalized map.
-    var API_BASE = "/api/td";
+let allData = [], livePrices = {};
+let currentFilter = 'ALL', sortKey = 'symbol', sortAsc = true;
 
-    // FX fallbacks: native per 1 USD (HKD=X / SGD=X style)
-    var FX_FALLBACK = { HKD: 7.82, SGD: 1.29 };
+function yahooSymbol(p) {
+  return p.currency === 'HKD' ? p.symbol + '.HK' : p.symbol;
+}
 
-    // Holdings. ysym = Yahoo Finance symbol used in the batched request.
-    var HOLDINGS = [
-        { sym:"09988",  name:"BABA-W (Alibaba)",        qty:500,      ccy:"HKD", stmt:131.50, ysym:"9988.HK", cost:6102.98 },
-        { sym:"01211",  name:"BYD Company",             qty:600,      ccy:"HKD", stmt:107.00, ysym:"1211.HK", cost:8545.05 },
-        { sym:"CFA.SI", name:"Amova/Nikko Asia REIT",   qty:12000,    ccy:"SGD", stmt:0.813,  ysym:"CFA.SI" , cost:7222.62 },
-        { sym:"00823",  name:"LINK REIT",               qty:1500,     ccy:"HKD", stmt:39.04,  ysym:"0823.HK", cost:6581.44 },
-        { sym:"02318",  name:"Ping An",                 qty:500,      ccy:"HKD", stmt:61.30,  ysym:"2318.HK", cost:2942.02 },
-        { sym:"03690",  name:"Meituan-W",               qty:200,      ccy:"HKD", stmt:84.25,  ysym:"3690.HK", cost:3762.39 },
-        { sym:"GRAB",   name:"Grab Holdings",           qty:500,      ccy:"USD", stmt:4.06,   ysym:"GRAB"   , cost:1636.95 },
-        { sym:"06862",  name:"Haidilao",                qty:1000,     ccy:"HKD", stmt:15.00,  ysym:"6862.HK", cost:1773.65 },
-        { sym:"02800",  name:"Tracker Fund",            qty:500,      ccy:"HKD", stmt:26.46,  ysym:"2800.HK", cost:1385.05 },
-        { sym:"09888",  name:"BIDU-SW",                 qty:50,       ccy:"HKD", stmt:121.10, ysym:"9888.HK", cost:733.87  },
-        { sym:"09618",  name:"JD-SW",                   qty:50,       ccy:"HKD", stmt:120.20, ysym:"9618.HK", cost:736.43  },
-        { sym:"03067",  name:"iShares HS Tech",         qty:400,      ccy:"HKD", stmt:10.45,  ysym:"3067.HK", cost:555.96  },
-        { sym:"C38U.SI",name:"CapLand IntCom T",        qty:100,      ccy:"SGD", stmt:2.49,   ysym:"C38U.SI", cost:157.78  },
-        { sym:"J69U.SI",name:"Frasers Cpt Tr",          qty:100,      ccy:"SGD", stmt:2.28,   ysym:"J69U.SI", cost:164.85  },
-        { sym:"N2IU.SI",name:"Mapletree PanAsia",       qty:100,      ccy:"SGD", stmt:1.41,   ysym:"N2IU.SI", cost:95.03   },
-        { sym:"K71U.SI",name:"Keppel Reit",             qty:100,      ccy:"SGD", stmt:0.895,  ysym:"K71U.SI", cost:65.24   },
-        { sym:"AAPL",   name:"Apple",                   qty:0.23735,  ccy:"USD", stmt:273.17, ysym:"AAPL"   , cost:0.00    },
-        { sym:"G13.SI", name:"Genting Sing",            qty:100,      ccy:"SGD", stmt:0.70,   ysym:"G13.SI" , cost:54.25   }
-    ];
+function setPriceStatus(cls, text) {
+  const el = document.getElementById('price-status');
+  if (el) { el.textContent = text; el.className = cls; }
+}
 
-    // live state per holding: { price, prevClose, pct, live:bool }
-    var live = {};
-    // FX stored as native per 1 USD (e.g. usdToHkd). Convert HKD->USD via price / usdToX.
-    var fxRates = { HKD: null, SGD: null };
+async function fetchPrices(positions) {
+  const syms = [...new Set(positions.map(yahooSymbol))];
+  if (!syms.length) return;
+  setPriceStatus('', '🔄 Loading…');
+  try {
+    const r = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(syms.join(',')));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const map = await r.json();
+    let loaded = 0;
+    syms.forEach(s => {
+      const q = map[s];
+      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); loaded++; }
+    });
+    setPriceStatus(loaded > 0 ? 'ok' : 'fail',
+      loaded > 0 ? '✅ ' + loaded + '/' + syms.length + ' prices loaded' : '⚠️ Prices unavailable');
+  } catch(e) {
+    setPriceStatus('fail', '⚠️ ' + e.message);
+  }
+}
 
-    var els = {
-        total:       document.getElementById("totalVal"),
-        dayChg:      document.getElementById("dayChg"),
-        totalGL:     document.getElementById("totalGL"),
-        refreshBtn:  document.getElementById("refreshBtn"),
-        lastUpdated: document.getElementById("lastUpdated"),
-        progress:    document.getElementById("progress"),
-        rows:        document.getElementById("rows"),
-        fxLine:      document.getElementById("fxLine")
-    };
+async function loadData() {
+  document.getElementById('fetch-time').textContent = 'Loading…';
+  try {
+    const r = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    allData = data.positions || [];
+    await fetchPrices(allData);
+    showDashboard(data);
+  } catch(e) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('nodata-state').style.display = 'block';
+    document.getElementById('fetch-time').textContent = 'No data';
+  }
+}
 
-    /* ---------- formatting ---------- */
-    function fmt(n, dp) {
-        if (n === null || n === undefined || isNaN(n)) return "--";
-        dp = (dp === undefined) ? 2 : dp;
-        return Number(n).toLocaleString(undefined, { minimumFractionDigits: dp, maximumFractionDigits: dp });
-    }
-    function usd(n) {
-        if (n === null || n === undefined || isNaN(n)) return "--";
-        return "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    }
-    // signed USD value, e.g. +$2,291 / −$349
-    function usdSigned(n) {
-        if (n === null || n === undefined || isNaN(n)) return "--";
-        var sign = n >= 0 ? "+" : "−"; // + / minus sign
-        return sign + "$" + Math.abs(Number(n)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    }
-    // build a gain/loss object: { cls, valTxt, pctTxt }
-    function gainLoss(valUsd, cost) {
-        var gl = valUsd - cost;
-        var cls = gl > 0 ? "positive" : (gl < 0 ? "negative" : "neutral");
-        var valTxt = usdSigned(gl);
-        var pctTxt = "&mdash;";
-        if (cost && cost > 0) {
-            var pct = gl / cost * 100;
-            pctTxt = (pct >= 0 ? "+" : "−") + Math.abs(pct).toFixed(1) + "%";
-        }
-        return { cls: cls, valTxt: valTxt, pctTxt: pctTxt };
-    }
-    function pad2(x){ return x < 10 ? "0" + x : "" + x; }
-    function timeStr() {
-        var d = new Date();
-        return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
-    }
+async function reloadAll() { livePrices = {}; await loadData(); }
 
-    /* ---------- FX ----------
-       fxRates[ccy] = native units per 1 USD (e.g. HKD per USD).
-       To convert a native price to USD: usdPrice = nativePrice / (native per USD). */
-    function usdPerUnit(ccy) {
-        if (ccy === "USD") return 1;
-        var perUsd = fxRates[ccy];
-        if (!perUsd || perUsd <= 0) perUsd = FX_FALLBACK[ccy];
-        return (perUsd && perUsd > 0) ? (1 / perUsd) : 1;
-    }
+function showDashboard(data) {
+  document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || '—');
+  document.getElementById('total-pos').textContent = allData.length;
+  const usdVal = allData.filter(p=>p.currency==='USD').reduce((s,p)=>s+(p.marketValue||0),0);
+  document.getElementById('total-val').textContent = '$' + usdVal.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('hk-count').textContent = allData.filter(p=>p.currency==='HKD').length;
+  document.getElementById('us-count').textContent = allData.filter(p=>p.currency==='USD').length;
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('nodata-state').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderTable();
+}
 
-    /* ---------- batched fetch (one call) ---------- */
-    var YAHOO_SYMBOLS = HOLDINGS.map(function (h) { return h.ysym; })
-        .concat(["HKD=X", "SGD=X"]);
+function filterData(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
 
-    function fetchAll() {
-        var url = API_BASE + "?symbols=" + encodeURIComponent(YAHOO_SYMBOLS.join(","));
-        return fetch(url)
-            .then(function (r) { return r.json(); })
-            .then(function (map) { return map || {}; })
-            .catch(function () { return {}; });
-    }
+function sortTable(key) {
+  if (sortKey===key) sortAsc=!sortAsc; else { sortKey=key; sortAsc=true; }
+  renderTable();
+}
 
-    function applyMap(map) {
-        // FX first
-        var hkd = map["HKD=X"];
-        var sgd = map["SGD=X"];
-        fxRates.HKD = (hkd && !hkd.error && hkd.price > 0) ? hkd.price : null;
-        fxRates.SGD = (sgd && !sgd.error && sgd.price > 0) ? sgd.price : null;
+function renderTable() {
+  let data = allData.slice();
+  if (currentFilter==='USD') data=data.filter(p=>p.currency==='USD');
+  else if (currentFilter==='HKD') data=data.filter(p=>p.currency==='HKD');
+  else if (currentFilter==='STK') data=data.filter(p=>p.secType==='STK');
+  else if (currentFilter==='OPT') data=data.filter(p=>p.secType==='OPT');
+  data.sort((a,b)=>{
+    let av=a[sortKey],bv=b[sortKey];
+    if(typeof av==='string'){av=av.toLowerCase();bv=bv.toLowerCase();}
+    return sortAsc?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0);
+  });
+  const tbody=document.getElementById('table-body');
+  document.getElementById('pos-count').textContent=data.length+' position'+(data.length!==1?'s':'');
+  const empty=document.getElementById('empty-state');
+  if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=data.map(p=>{
+    const s = p.currency==='HKD'?'HK$':'$';
+    const val=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const avgCost = p.avgCost||0;
+    const costFmt = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const qty = p.position.toLocaleString('en-US');
+    const ysym = yahooSymbol(p);
+    const lp = livePrices[ysym];
 
-        // Per-holding quotes
-        HOLDINGS.forEach(function (h) {
-            var q = map[h.ysym];
-            if (q && !q.error && q.price != null && !isNaN(q.price)) {
-                var price = parseFloat(q.price);
-                var prev  = (q.prevClose != null && !isNaN(q.prevClose)) ? parseFloat(q.prevClose) : null;
-                var pct   = (prev && prev > 0) ? (price - prev) / prev * 100 : null;
-                live[h.sym] = { live: true, price: price, prevClose: prev, pct: pct };
-            } else {
-                // missing or error -> statement-close fallback
-                live[h.sym] = { live: false };
-            }
-        });
+    let priceBlock;
+    if (lp != null) {
+      const lpFmt = lp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      let diffLine = '';
+      if (avgCost > 0) {
+        const diff = (lp - avgCost) / avgCost * 100;
+        const sign = diff >= 0 ? '+' : '';
+        const arrow = diff > 0.005 ? '▲ ' : (diff < -0.005 ? '▼ ' : '');
+        const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
+        diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
+      }
+      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}`;
+    } else {
+      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>`;
     }
 
-    /* ---------- render ---------- */
-    function rowValueUsd(h) {
-        var d = live[h.sym];
-        var price = (d && d.live) ? d.price : h.stmt;
-        return h.qty * price * usdPerUnit(h.ccy);
-    }
+    return `<tr>
+      <td><span class="symbol">${p.symbol}</span></td>
+      <td class="hide-sm"><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
+      <td class="hide-sm"><span class="badge badge-${p.currency}">${p.currency}</span></td>
+      <td class="num pos-qty">${qty}</td>
+      <td class="num">${priceBlock}</td>
+      <td class="num" style="font-weight:600">${s}${val}</td>
+    </tr>`;
+  }).join('');
+}
 
-    function render() {
-        // sort by USD value descending
-        var sorted = HOLDINGS.slice().sort(function (a, b) {
-            return rowValueUsd(b) - rowValueUsd(a);
-        });
+const PYTHON_SCRIPT = `"""
+IBKR Position Fetcher — Auto-uploads to GitHub
+================================================
+pip install ib_async requests
 
-        var total = 0, dayChangeUsd = 0, prevTotal = 0, totalCost = 0, totalGL = 0;
-        var html = "";
+Open IB Gateway first, then run:
+  python ibkr_positions.py
 
-        sorted.forEach(function (h) {
-            var d = live[h.sym] || {};
-            var isLive = !!d.live;
-            var price = isLive ? d.price : h.stmt;
-            var fx = usdPerUnit(h.ccy);
-            var valUsd = h.qty * price * fx;
-            total += valUsd;
+Then visit: https://paulsworld.vercel.app/T07.html
+"""
+from ib_async import IB, util
+import json, base64, requests
+from datetime import datetime
 
-            // day change in USD: qty * (price - prevClose) * fx
-            if (isLive && d.prevClose != null && !isNaN(d.prevClose)) {
-                dayChangeUsd += h.qty * (price - d.prevClose) * fx;
-                prevTotal += h.qty * d.prevClose * fx;
-            } else {
-                prevTotal += valUsd;
-            }
+HOST='127.0.0.1'; PORT=4001; CLIENT_ID=1
+GITHUB_TOKEN="YOUR_GITHUB_TOKEN_HERE"
+GITHUB_REPO="paulyeo21/Dynamic-Index"
+GITHUB_FILE="positions.json"; GITHUB_BRANCH="main"
 
-            var pct = (isLive && d.pct != null) ? d.pct : null;
-            var pctCls = pct == null ? "neutral" : (pct > 0 ? "positive" : (pct < 0 ? "negative" : "neutral"));
-            var pctTxt = pct == null ? "&mdash;" : (pct > 0 ? "+" : "") + pct.toFixed(2) + "%";
+def fetch_positions():
+    util.startLoop()
+    ib=IB()
+    ib.connect(HOST,PORT,clientId=CLIENT_ID)
+    positions=ib.positions(); account_vals=ib.accountValues()
+    pos_list=[]
+    for p in positions:
+        pos_list.append({"account":p.account,"symbol":p.contract.symbol,
+            "secType":p.contract.secType,
+            "exchange":p.contract.exchange or p.contract.primaryExch or "—",
+            "currency":p.contract.currency,"position":p.position,
+            "avgCost":round(p.avgCost,4),"marketValue":round(p.position*p.avgCost,2)})
+    net_liq=next((av.value for av in account_vals if av.tag=='NetLiquidation' and av.currency=='USD'),None)
+    output={"fetchedAt":datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "netLiquidation":net_liq,
+            "positions":sorted(pos_list,key=lambda x:x["currency"]+x["symbol"])}
+    ib.disconnect()
+    with open("positions.json","w") as f: json.dump(output,f,indent=2)
+    upload_to_github(output)
 
-            // gain/loss vs cost (off the live OR stmt-based USD value)
-            var cost = (h.cost != null && !isNaN(h.cost)) ? h.cost : 0;
-            var gl = gainLoss(valUsd, cost);
-            totalCost += cost;
-            totalGL   += (valUsd - cost);
+def upload_to_github(data):
+    headers={"Authorization":f"token {GITHUB_TOKEN}","Accept":"application/vnd.github.v3+json"}
+    url=f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE}"
+    r=requests.get(f"{url}?ref={GITHUB_BRANCH}",headers=headers)
+    sha=r.json().get("sha") if r.status_code==200 else None
+    content=base64.b64encode(json.dumps(data,indent=2).encode()).decode()
+    payload={"message":f"Update positions {data['fetchedAt']}","content":content,"branch":GITHUB_BRANCH}
+    if sha: payload["sha"]=sha
+    r=requests.put(url,headers=headers,json=payload)
+    print("Uploaded!" if r.status_code in(200,201) else f"Failed: {r.status_code}")
 
-            var glCell =
-                '<span class="gl-val">' + gl.valTxt + '</span> ' +
-                '<span class="gl-pct">(' + gl.pctTxt + ')</span>';
+if __name__=="__main__": fetch_positions()
+`;
 
-            var priceDp = (price < 5) ? 3 : 2;
-            var priceCls = isLive ? "" : "stmt";
-            var stmtBadge = isLive ? "" : '<span class="stmt-badge">stmt</span>';
+function downloadPython(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([PYTHON_SCRIPT],{type:'text/plain'}));
+  a.download='ibkr_positions.py'; a.click();
+}
 
-            html +=
-                '<tr>' +
-                    '<td class="l">' +
-                        '<div class="sym">' + h.sym + ' <span class="ccy-tag">' + h.ccy + '</span></div>' +
-                        '<div class="nm">' + h.name + '</div>' +
-                        '<div class="gl-mobile ' + gl.cls + '">' + gl.valTxt + ' (' + gl.pctTxt + ')</div>' +
-                    '</td>' +
-                    '<td class="hide-sm">' + fmt(h.qty, (h.qty % 1 === 0 ? 0 : 5)) + '</td>' +
-                    '<td class="hide-sm ' + priceCls + '">' + fmt(price, priceDp) + stmtBadge + '</td>' +
-                    '<td class="val-usd">' + usd(valUsd) + '</td>' +
-                    '<td class="gl gl-col ' + gl.cls + '">' + glCell + '</td>' +
-                    '<td class="chg hide-sm ' + pctCls + '">' + pctTxt + '</td>' +
-                '</tr>';
-        });
-
-        els.rows.innerHTML = html;
-        els.total.textContent = usd(total);
-
-        // day change
-        var dcCls = "neutral", dcTxt = "&mdash;";
-        if (prevTotal > 0 && Math.abs(dayChangeUsd) > 0.0001) {
-            var dcPct = (dayChangeUsd / prevTotal) * 100;
-            dcCls = dayChangeUsd > 0 ? "positive" : (dayChangeUsd < 0 ? "negative" : "neutral");
-            var sign = dayChangeUsd > 0 ? "+" : "";
-            dcTxt = sign + usd(dayChangeUsd) + "  (" + sign + dcPct.toFixed(2) + "% today)";
-        }
-        els.dayChg.className = "daychg " + dcCls;
-        els.dayChg.innerHTML = dcTxt;
-
-        // total gain/loss vs cost
-        var glCls = totalGL > 0 ? "positive" : (totalGL < 0 ? "negative" : "neutral");
-        var glPctTxt = "";
-        if (totalCost > 0) {
-            var glPct = totalGL / totalCost * 100;
-            glPctTxt = "  (" + (glPct >= 0 ? "+" : "−") + Math.abs(glPct).toFixed(1) + "%)";
-        }
-        els.totalGL.className = "totalgl " + glCls;
-        els.totalGL.innerHTML =
-            '<span class="gl-label">Total Gain/Loss vs cost</span>' +
-            usdSigned(totalGL) + glPctTxt;
-
-        // fx line (show USD per native = 1 / nativePerUsd)
-        var hkdLive = fxRates.HKD, sgdLive = fxRates.SGD;
-        var hkdUsd = 1 / (hkdLive || FX_FALLBACK.HKD);
-        var sgdUsd = 1 / (sgdLive || FX_FALLBACK.SGD);
-        els.fxLine.textContent =
-            "FX: 1 HKD = $" + hkdUsd.toFixed(4) + (hkdLive ? "" : " (fallback)") +
-            "  ·  1 SGD = $" + sgdUsd.toFixed(4) + (sgdLive ? "" : " (fallback)");
-    }
-
-    /* ---------- refresh orchestration (single batched call) ---------- */
-    var refreshing = false;
-    function refresh() {
-        if (refreshing) return;
-        refreshing = true;
-        els.refreshBtn.disabled = true;
-
-        var n = HOLDINGS.length;
-        els.progress.textContent = "Fetching live prices…";
-
-        fetchAll().then(function (map) {
-            applyMap(map);
-            refreshing = false;
-            els.refreshBtn.disabled = false;
-            els.lastUpdated.textContent = "Last updated " + timeStr();
-            render();
-
-            var liveCount = HOLDINGS.filter(function (h) { return live[h.sym] && live[h.sym].live; }).length;
-            els.progress.textContent = liveCount + " of " + n + " priced live" +
-                (liveCount < n ? " · rest show last statement close" : "");
-        });
-    }
-
-    els.refreshBtn.onclick = refresh;
-
-    /* ---------- init ---------- */
-    render();   // initial view shows all stmt-close fallbacks immediately
-    refresh();  // auto-fetch on load — no key entry needed
-})();
+loadData();
 </script>
-
-<script src="/view-counter.js"></script>
-
-<a href="/tools.html" title="Back to Investment Tools" style="position:fixed;left:18px;bottom:18px;z-index:99999;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#0e1330,#1a2a6c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.45);border:2px solid #10b981;">&#128200;</a>
 </body>
 </html>
