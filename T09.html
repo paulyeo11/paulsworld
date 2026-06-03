@@ -320,6 +320,17 @@ function renderTable() {
   const overallSign = overallDiff >= 0 ? '+' : '';
   const overallArrow = overallDiff > 0.005 ? '▲ ' : (overallDiff < -0.005 ? '▼ ' : '');
   const overallCls = overallDiff > 0.005 ? 'pos' : (overallDiff < -0.005 ? 'neg' : 'nil');
+
+  // Per-currency invested breakdown
+  const byUSD = data.filter(p=>p.avgCost&&(p.currency||'USD').toUpperCase()==='USD').reduce((s,p)=>s+getQty(p)*p.avgCost,0);
+  const byHKD = data.filter(p=>p.avgCost&&(p.currency||'').toUpperCase()==='HKD').reduce((s,p)=>s+getQty(p)*p.avgCost,0);
+  const bySGD = data.filter(p=>p.avgCost&&(p.currency||'').toUpperCase()==='SGD').reduce((s,p)=>s+getQty(p)*p.avgCost,0);
+  const ccyLine = [
+    byUSD>0?`US$${byUSD.toLocaleString('en-US',{maximumFractionDigits:0})}`:'',
+    byHKD>0?`HK$${byHKD.toLocaleString('en-US',{maximumFractionDigits:0})}`:'',
+    bySGD>0?`S$${bySGD.toLocaleString('en-US',{maximumFractionDigits:0})}`:'',
+  ].filter(Boolean).join(' · ');
+
   const overallRow = `<tr style="background:rgba(247,168,0,.06);border-bottom:2px solid rgba(247,168,0,.3);">
     <td><span class="symbol" style="color:var(--accent);">OVERALL</span><span class="stock-name">${data.length} positions</span></td>
     <td class="hide-sm"></td>
@@ -328,6 +339,7 @@ function renderTable() {
       <span class="price-live" style="color:var(--accent);">S$${totalLiveSGD.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
       <span class="avg-cost-sub">invested S$${totalInvestedSGD.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
       <span class="diff-line ${overallCls}">${overallArrow}${overallSign}${overallDiff.toFixed(2)}% overall</span>
+      <span class="total-val-sub" style="color:#68d391;margin-top:6px;">${ccyLine}</span>
     </td>
   </tr>`;
 
