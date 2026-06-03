@@ -131,7 +131,7 @@
   <div id="dashboard" style="display:none">
     <div class="summary-grid">
       <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">across all accounts</div></div>
-      <div class="card"><div class="card-label">Total Value (Qty × Avg Cost)</div><div class="card-value" id="total-val">—</div><div class="card-sub">shares × avg cost price</div></div>
+      <div class="card"><div class="card-label">Total Value (SGD)</div><div class="card-value" id="total-val">—</div><div class="card-sub">qty × avg cost × FX rate</div></div>
       <div class="card"><div class="card-label">HK Positions</div><div class="card-value" id="hk-count" style="color:var(--hk)">—</div><div class="card-sub">HKD denominated</div></div>
       <div class="card"><div class="card-label">US Positions</div><div class="card-value" id="us-count" style="color:var(--us)">—</div><div class="card-sub">USD denominated</div></div>
     </div>
@@ -162,8 +162,7 @@
             <th onclick="sortTable('symbol')">Symbol ↕</th>
             <th onclick="sortTable('secType')" class="hide-sm">Type</th>
             <th onclick="sortTable('currency')" class="hide-sm">Ccy</th>
-            <th onclick="sortTable('position')">Qty ↕</th>
-            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total ↕</th>
+            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total / S$ ↕</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -187,7 +186,7 @@
 const DATA_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/positions.json';
 const PRICE_API = '/api/td';
 
-let allData = [], livePrices = {};
+let allData = [], livePrices = {}, fxRates = { USD: 1.35, HKD: 0.172 };
 let currentFilter = 'ALL', sortKey = 'marketValue', sortAsc = false;
 
 function yahooSymbol(p) {
@@ -200,20 +199,24 @@ function setPriceStatus(cls, text) {
 }
 
 async function fetchPrices(positions) {
-  const syms = [...new Set(positions.map(yahooSymbol))];
-  if (!syms.length) return;
+  const stockSyms = [...new Set(positions.map(yahooSymbol))];
+  const fxSyms = ['USDSGD=X', 'HKDSGD=X'];
+  const syms = [...stockSyms, ...fxSyms];
+  if (!stockSyms.length) return;
   setPriceStatus('', '🔄 Loading…');
   try {
     const r = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(syms.join(',')));
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const map = await r.json();
     let loaded = 0;
-    syms.forEach(s => {
+    stockSyms.forEach(s => {
       const q = map[s];
       if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); loaded++; }
     });
+    if (map['USDSGD=X'] && map['USDSGD=X'].price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
+    if (map['HKDSGD=X'] && map['HKDSGD=X'].price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
     setPriceStatus(loaded > 0 ? 'ok' : 'fail',
-      loaded > 0 ? '✅ ' + loaded + '/' + syms.length + ' prices loaded' : '⚠️ Prices unavailable');
+      loaded > 0 ? '✅ ' + loaded + '/' + stockSyms.length + ' prices loaded' : '⚠️ Prices unavailable');
   } catch(e) {
     setPriceStatus('fail', '⚠️ ' + e.message);
   }
@@ -240,8 +243,8 @@ async function reloadAll() { livePrices = {}; await loadData(); }
 function showDashboard(data) {
   document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || '—');
   document.getElementById('total-pos').textContent = allData.length;
-  const usdVal = allData.filter(p=>p.currency==='USD').reduce((s,p)=>s+(p.marketValue||0),0);
-  document.getElementById('total-val').textContent = '$' + usdVal.toLocaleString('en-US',{maximumFractionDigits:0});
+  const totalSGD = allData.reduce((s,p)=>s+((p.position||0)*(p.avgCost||0)*(fxRates[p.currency]||1)),0);
+  document.getElementById('total-val').textContent = 'S$' + totalSGD.toLocaleString('en-US',{maximumFractionDigits:0});
   document.getElementById('hk-count').textContent = allData.filter(p=>p.currency==='HKD').length;
   document.getElementById('us-count').textContent = allData.filter(p=>p.currency==='USD').length;
   document.getElementById('loading-state').style.display = 'none';
@@ -279,11 +282,13 @@ function renderTable() {
   if(!data.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=data.map(p=>{
+    const fx = fxRates[p.currency] || 1;
     const s = p.currency==='HKD'?'HK$':'$';
     const avgCost = p.avgCost||0;
     const costFmt = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const qty = p.position.toLocaleString('en-US');
-    const totalCost = ((p.position||0)*avgCost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const totalLocal = ((p.position||0)*avgCost);
+    const totalLocalFmt = totalLocal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const amtSGD = (totalLocal * fx).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const ysym = yahooSymbol(p);
     const lp = livePrices[ysym];
 
@@ -298,16 +303,15 @@ function renderTable() {
         const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
         diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalCost}</span>`;
+      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
     } else {
-      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalCost}</span>`;
+      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
     }
 
     return `<tr>
       <td><span class="symbol">${p.symbol}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.currency}">${p.currency}</span></td>
-      <td class="num pos-qty">${qty}</td>
       <td class="num">${priceBlock}</td>
     </tr>`;
   }).join('');

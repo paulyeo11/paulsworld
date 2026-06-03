@@ -147,8 +147,7 @@
           <tr>
             <th onclick="sortTable('symbol')">Symbol ↕</th>
             <th onclick="sortTable('currency')" class="hide-sm">Ccy</th>
-            <th onclick="sortTable('quantity')">Qty ↕</th>
-            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total ↕</th>
+            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total / S$ ↕</th>
             <th onclick="sortTable('unrealizedPnl')" class="hide-sm">P&L ↕</th>
           </tr>
         </thead>
@@ -173,7 +172,7 @@
 const DATA_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
 const PRICE_API = '/api/td';
 
-let allData=[], livePrices={}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
+let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
 
 // Convert Tiger symbol to Yahoo Finance format
 function yahooSymbol(p) {
@@ -193,20 +192,24 @@ function setPriceStatus(cls, text) {
 }
 
 async function fetchPrices(positions) {
-  const syms = [...new Set(positions.map(yahooSymbol))];
-  if (!syms.length) return;
+  const stockSyms = [...new Set(positions.map(yahooSymbol))];
+  const fxSyms = ['USDSGD=X','HKDSGD=X'];
+  const syms = [...stockSyms, ...fxSyms];
+  if (!stockSyms.length) return;
   setPriceStatus('', '🔄 Loading…');
   try {
     const r = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(syms.join(',')));
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const map = await r.json();
     let loaded = 0;
-    syms.forEach(s => {
+    stockSyms.forEach(s => {
       const q = map[s];
       if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); loaded++; }
     });
+    if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
+    if (map['HKDSGD=X']?.price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
     setPriceStatus(loaded > 0 ? 'ok' : 'fail',
-      loaded > 0 ? '✅ ' + loaded + '/' + syms.length + ' prices loaded' : '⚠️ Prices unavailable');
+      loaded > 0 ? '✅ ' + loaded + '/' + stockSyms.length + ' prices loaded' : '⚠️ Prices unavailable');
   } catch(e) {
     setPriceStatus('fail', '⚠️ ' + e.message);
   }
@@ -282,11 +285,12 @@ function renderTable(){
   tbody.innerHTML=data.map(p=>{
     const cur=(p.currency||'USD').toUpperCase();
     const s=cur==='HKD'?'HK$':(cur==='SGD'?'S$':'$');
+    const fx=fxRates[cur]||1;
     const avgCost=p.avgCost||0;
     const costFmt=avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const qty=(p.quantity||0).toLocaleString();
-    const mktVal=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const totalCost=((p.quantity||0)*avgCost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const totalLocal=(p.quantity||0)*avgCost;
+    const totalLocalFmt=totalLocal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const amtSGD=(totalLocal*fx).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const pnl=p.unrealizedPnl||0;
     const pnlCls=pnl>=0?'pnl-pos':'pnl-neg';
     const pnlStr=(pnl>=0?'+':'')+s+Math.abs(pnl).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -304,15 +308,14 @@ function renderTable(){
         const cls=diff>0.005?'pos':(diff<-0.005?'neg':'nil');
         diffLine=`<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      priceBlock=`<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalCost}</span>`;
+      priceBlock=`<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
     } else {
-      priceBlock=`<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalCost}</span>`;
+      priceBlock=`<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
     }
 
     return `<tr>
       <td><span class="symbol">${p.symbol}</span></td>
       <td class="hide-sm"><span class="badge badge-${cur}">${cur}</span></td>
-      <td class="num qty-val">${qty}</td>
       <td class="num">${priceBlock}</td>
       <td class="num ${pnlCls} hide-sm">${pnlStr}</td>
     </tr>`;
