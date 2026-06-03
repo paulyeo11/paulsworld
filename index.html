@@ -627,12 +627,17 @@
       } catch (e) { return null; }
     }
 
-    async function loadSection({ prefix, max, listId, statusId }) {
+    function pad2(n) {
+      return n < 10 ? '0' + n : '' + n;
+    }
+
+    async function loadSection({ prefix, max, listId, statusId, padded }) {
       const list   = document.getElementById(listId);
       const status = document.getElementById(statusId);
       let found = 0;
       for (let i = 1; i <= max; i++) {
-        const filename = prefix + i + '.html';
+        const num = padded ? pad2(i) : i;
+        const filename = prefix + num + '.html';
         const title = await getTitle(filename);
         if (title !== null) {
           found++;
@@ -642,7 +647,7 @@
           a.textContent = title;
           li.appendChild(a);
           list.appendChild(li);
-          allDiscoveredPages.push({ key: prefix + i, title: title, url: filename });
+          allDiscoveredPages.push({ key: prefix + num, title: title, url: filename });
         }
       }
       status.textContent = found > 0 ? found + ' found' : 'None yet';
@@ -685,11 +690,11 @@
 
     async function init() {
       await Promise.all([
-        loadSection({ prefix: 's',    max: 10, listId: 'story-list',   statusId: 'story-status'   }),
-        loadSection({ prefix: 'ai',   max: 10, listId: 'ai-list',      statusId: 'ai-status'      }),
-        loadSection({ prefix: 'h',    max: 10, listId: 'health-list',  statusId: 'health-status'  }),
-        loadSection({ prefix: 'ac',   max: 10, listId: 'achieve-list', statusId: 'achieve-status' }),
-        loadSection({ prefix: 'book', max: 10, listId: 'book-list',    statusId: 'book-status'    })
+        loadSection({ prefix: 'S',  max: 20, padded: true,  listId: 'story-list',   statusId: 'story-status'   }),
+        loadSection({ prefix: 'AI', max: 20, padded: true,  listId: 'ai-list',      statusId: 'ai-status'      }),
+        loadSection({ prefix: 'h',  max: 10, padded: true,  listId: 'health-list',  statusId: 'health-status'  }),
+        loadSection({ prefix: 'AC', max: 10, padded: true,  listId: 'achieve-list', statusId: 'achieve-status' }),
+        loadSection({ prefix: 'B',  max: 15, padded: true,  listId: 'book-list',    statusId: 'book-status'    })
       ]);
       loadPopularStories();
     }
