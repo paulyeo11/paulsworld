@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T09: Combined Portfolio — IBKR + Tiger</title>
+<title>T20: Combined Portfolio — IBKR + Tiger + CPF/SGX</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0a0f1a;--surface:#111c2d;--border:#1e3050;--accent:#f7a800;--accent2:#ff6b00;--green:#00d4aa;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--hk:#f97316;--us:#3b82f6;}
@@ -85,8 +85,8 @@
   <div class="logo">
     <div class="logo-dot"></div>
     <div>
-      <h1>📊 T09: Combined Portfolio</h1>
-      <div class="subtitle">T09 · IBKR + Tiger Brokers · All Positions in SGD</div>
+      <h1>📊 T20: Combined Portfolio</h1>
+      <div class="subtitle">T20 · IBKR + Tiger + CPF/SGX · All Positions in SGD</div>
     </div>
   </div>
   <div id="fetch-time">Loading…</div>
@@ -215,6 +215,7 @@ function yahooSymbol(p) {
   const cur = (p.currency||'').toUpperCase();
   const sym = p.symbol||'';
   if (cur === 'HKD') return parseInt(sym, 10) + '.HK';
+  if (cur === 'SGD' && !sym.includes('.')) return sym + '.SI';
   return sym;
 }
 
@@ -274,7 +275,20 @@ async function loadData() {
       });
     }
 
-    allData = [...ibkrPositions, ...tigerPositions];
+    // Hardcoded: Singtel CPF Discounted Shares (T10)
+    const singtelPos = [{
+      symbol: 'Z74',
+      conid: 'Z74',
+      description: 'Singtel — CPF Discounted Shares',
+      currency: 'SGD',
+      quantity: 1360,
+      position: 1360,
+      avgCost: 3.08,
+      marketValue: 1360 * 3.08,
+      broker: 'CPF/SGX',
+      sector: 'Telecom'
+    }];
+    allData = [...ibkrPositions, ...tigerPositions, ...singtelPos];
     await fetchPrices(allData);
     allData = addSGD(allData); // recompute with live FX rates
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
@@ -323,6 +337,7 @@ function renderTable() {
   else if (currentFilter === 'USD')   data = data.filter(p => p.currency === 'USD');
   else if (currentFilter === 'HKD')   data = data.filter(p => p.currency === 'HKD');
   else if (currentFilter === 'SGD')   data = data.filter(p => p.currency === 'SGD');
+  else if (currentFilter === 'CPF')   data = data.filter(p => p.broker === 'CPF/SGX');
 
   data.sort((a,b) => {
     let av = a[sortKey], bv = b[sortKey];
