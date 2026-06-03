@@ -108,7 +108,7 @@
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
       <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">📊 Portfolio by Stock — Invested S$</div>
-      <div style="position:relative;height:420px;"><canvas id="stockChart"></canvas></div>
+      <div style="position:relative;height:560px;"><canvas id="stockChart"></canvas></div>
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
@@ -566,40 +566,76 @@ let stockChartInstance = null;
 function renderChart() {
   const data = allData.filter(p => p.avgCost > 0).slice().sort((a,b) => b.sgdValue - a.sgdValue);
   const labels = data.map(p => p.symbol);
-  const values = data.map(p => parseFloat((p.sgdValue||0).toFixed(0)));
-  const colors = data.map(p => {
+  const invVals = data.map(p => parseFloat((p.sgdValue||0).toFixed(0)));
+  const liveVals = data.map(p => {
     const cur = (p.currency||'USD').toUpperCase();
-    if (cur === 'HKD') return 'rgba(249,115,22,0.8)';
-    if (cur === 'SGD') return 'rgba(16,185,129,0.8)';
-    return 'rgba(59,130,246,0.8)';
+    const fx = fxRates[cur] || 1;
+    const qty = getQty(p);
+    const ysym = yahooSymbol(p);
+    const lp = livePrices[ysym];
+    if (lp != null) {
+      const liveSGD = qty * lp * fx;
+      const inv = p.sgdValue || 0;
+      return parseFloat((inv > 0 && liveSGD > inv * 5 ? inv : liveSGD).toFixed(0));
+    }
+    return parseFloat((p.sgdValue||0).toFixed(0));
   });
+  const diffs = data.map((p,i) => invVals[i] > 0 ? ((liveVals[i]-invVals[i])/invVals[i]*100) : 0);
+
+  const liveColors = data.map(p => {
+    const cur = (p.currency||'USD').toUpperCase();
+    if (cur === 'HKD') return 'rgba(249,115,22,0.85)';
+    if (cur === 'SGD') return 'rgba(16,185,129,0.85)';
+    return 'rgba(59,130,246,0.85)';
+  });
+
+  const stockDiffPlugin = {
+    id: 'stockDiffLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const meta0 = chart.getDatasetMeta(0);
+      const meta1 = chart.getDatasetMeta(1);
+      ctx.save();
+      data.forEach((p, i) => {
+        const bar0 = meta0.data[i];
+        const bar1 = meta1.data[i];
+        const maxX = Math.max(bar0.x, bar1.x);
+        const cy = (bar0.y + bar1.y) / 2;
+        const diff = diffs[i];
+        if (Math.abs(diff) < 0.01) return;
+        const sign = diff >= 0 ? '+' : '';
+        ctx.fillStyle = diff >= 0 ? '#00d4aa' : '#ef4444';
+        ctx.font = 'bold 10px DM Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${sign}${diff.toFixed(1)}%`, maxX + 4, cy + 4);
+      });
+      ctx.restore();
+    }
+  };
+
   const ctx = document.getElementById('stockChart').getContext('2d');
   if (stockChartInstance) stockChartInstance.destroy();
   stockChartInstance = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
+    plugins: [stockDiffPlugin],
+    data: {
+      labels,
+      datasets: [
+        { label: 'Live Value', data: liveVals, backgroundColor: liveColors, borderRadius: 3, borderSkipped: false },
+        { label: 'Avg Cost', data: invVals, backgroundColor: 'rgba(100,116,139,0.45)', borderRadius: 3, borderSkipped: false }
+      ]
+    },
     options: {
       indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 55 } },
       plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const p = data[ctx.dataIndex];
-              const cur = (p.currency||'USD').toUpperCase();
-              const flag = cur==='HKD'?'🇭🇰':cur==='SGD'?'🇸🇬':'🇺🇸';
-              return `${flag} S$${ctx.parsed.x.toLocaleString()}`;
-            }
-          }
-        }
+        legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: S$${ctx.parsed.x.toLocaleString()}` } }
       },
       scales: {
         y: { ticks: { color: '#e2e8f0', font: { size: 11, weight:'600' } }, grid: { color: 'rgba(255,255,255,.04)' } },
-        x: {
-          ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => 'S$'+v.toLocaleString() },
-          grid: { color: 'rgba(255,255,255,.06)' }
-        }
+        x: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => 'S$'+v.toLocaleString() }, grid: { color: 'rgba(255,255,255,.06)' } }
       }
     }
   });
