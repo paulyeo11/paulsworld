@@ -290,7 +290,34 @@ function renderTable() {
   if (!data.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
 
-  tbody.innerHTML = data.map(p => {
+  // Overall summary row
+  const totalInvestedSGD = data.reduce((s,p) => {
+    const cur = (p.currency||'USD').toUpperCase();
+    return s + getQty(p) * (p.avgCost||0) * (fxRates[cur]||1);
+  }, 0);
+  const totalLiveSGD = data.reduce((s,p) => {
+    const cur = (p.currency||'USD').toUpperCase();
+    const ysym = yahooSymbol(p);
+    const lp = livePrices[ysym];
+    if (lp != null) return s + getQty(p) * lp * (fxRates[cur]||1);
+    return s + getQty(p) * (p.avgCost||0) * (fxRates[cur]||1);
+  }, 0);
+  const overallDiff = totalInvestedSGD > 0 ? (totalLiveSGD - totalInvestedSGD) / totalInvestedSGD * 100 : 0;
+  const overallSign = overallDiff >= 0 ? '+' : '';
+  const overallArrow = overallDiff > 0.005 ? '▲ ' : (overallDiff < -0.005 ? '▼ ' : '');
+  const overallCls = overallDiff > 0.005 ? 'pos' : (overallDiff < -0.005 ? 'neg' : 'nil');
+  const overallRow = `<tr style="background:rgba(247,168,0,.06);border-bottom:2px solid rgba(247,168,0,.3);">
+    <td><span class="symbol" style="color:var(--accent);">OVERALL</span><span class="stock-name">${data.length} positions</span></td>
+    <td class="hide-sm"></td>
+    <td class="hide-sm"></td>
+    <td class="num">
+      <span class="price-live" style="color:var(--accent);">S$${totalLiveSGD.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
+      <span class="avg-cost-sub">invested S$${totalInvestedSGD.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
+      <span class="diff-line ${overallCls}">${overallArrow}${overallSign}${overallDiff.toFixed(2)}% overall</span>
+    </td>
+  </tr>`;
+
+  tbody.innerHTML = overallRow + data.map(p => {
     const cur = (p.currency||'USD').toUpperCase();
     const s = cur==='HKD'?'HK$':(cur==='SGD'?'S$':'$');
     const fx = fxRates[cur] || 1;
