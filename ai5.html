@@ -38,28 +38,23 @@
 
   main { max-width:960px; margin:0 auto; padding:32px 24px; }
 
-  /* LOADING STATE */
   #loading-state { text-align:center; padding:80px 20px; }
   .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 20px; }
   @keyframes spin { to { transform:rotate(360deg); } }
   #loading-state p { color:var(--muted); font-size:.9rem; }
 
-  /* NO DATA STATE */
   #nodata-state { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; text-align:center; }
   #nodata-state h3 { color:#fff; margin-bottom:12px; }
   #nodata-state p { color:var(--muted); font-size:.88rem; line-height:1.7; margin-bottom:16px; }
   code { background:#1f2d45; color:var(--accent); padding:2px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-size:.85em; }
 
-  /* STEPS */
   .steps { background:rgba(0,212,170,.05); border:1px solid rgba(0,212,170,.2); border-radius:10px; padding:20px 24px; margin:16px 0; text-align:left; }
   .step { display:flex; gap:12px; margin-bottom:10px; align-items:flex-start; font-size:.85rem; color:var(--text); line-height:1.5; }
   .step-num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#000; font-weight:800; font-size:.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
 
-  /* DOWNLOAD BTN */
   .dl-btn { display:inline-block; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#000; font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem; padding:9px 20px; border-radius:8px; text-decoration:none; border:none; cursor:pointer; transition:opacity .2s; }
   .dl-btn:hover { opacity:.85; }
 
-  /* SUMMARY CARDS */
   .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px; position:relative; overflow:hidden; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
@@ -67,18 +62,15 @@
   .card-value { font-size:1.7rem; font-weight:800; color:var(--accent); letter-spacing:-.03em; line-height:1; }
   .card-sub { font-size:.7rem; color:var(--muted); margin-top:5px; font-family:'DM Mono',monospace; }
 
-  /* REFRESH BTN */
   .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.75rem; cursor:pointer; font-family:'DM Mono',monospace; transition:all .15s; }
   .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
 
-  /* FILTERS */
   .toolbar { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
   .filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .filter-label { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
   .filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.78rem; cursor:pointer; transition:all .15s; }
   .filter-btn:hover,.filter-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(0,212,170,.08); }
 
-  /* TABLE */
   .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
   .table-header { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
   .table-title { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
@@ -99,7 +91,8 @@
   .num{font-family:'DM Mono',monospace}
   .pos-qty{color:var(--accent);font-weight:600}
   .muted{color:var(--muted)}
-  .price-live{color:var(--accent);font-weight:600}
+  .price-live{color:var(--accent);font-weight:600;display:block}
+  .avg-cost-sub{color:var(--muted);font-size:.7rem;display:block;margin-top:2px}
   .price-loading{color:var(--muted);font-style:italic;font-size:.75rem}
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
   .price-note{font-size:.68rem;color:var(--muted);text-align:center;margin-top:10px;padding:0 22px 14px}
@@ -132,13 +125,11 @@
 
 <main>
 
-  <!-- LOADING -->
   <div id="loading-state">
     <div class="spinner"></div>
     <p>Fetching your portfolio data…</p>
   </div>
 
-  <!-- NO DATA YET -->
   <div id="nodata-state">
     <h3>📭 No position data found</h3>
     <p>Run the Python script on your computer to upload your positions.<br>Once uploaded, just refresh this page — data loads automatically.</p>
@@ -151,7 +142,6 @@
     <button class="dl-btn" onclick="downloadPython()">⬇️ Download ibkr_positions.py</button>
   </div>
 
-  <!-- DASHBOARD -->
   <div id="dashboard" style="display:none">
 
     <div class="summary-grid">
@@ -202,15 +192,14 @@
             <th onclick="sortTable('currency')" class="hide-sm">Currency</th>
             <th onclick="sortTable('exchange')" class="hide-sm">Exchange</th>
             <th onclick="sortTable('position')">Qty ↕</th>
-            <th onclick="sortTable('avgCost')" class="hide-sm">Avg Cost ↕</th>
-            <th>Share Price</th>
+            <th onclick="sortTable('avgCost')">Price / Avg Cost ↕</th>
             <th onclick="sortTable('marketValue')">Est. Value ↕</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
       </table>
       <div id="empty-state">No positions match this filter.</div>
-      <div class="price-note">Share prices via Yahoo Finance · may be ~15 min delayed · USD shown for USD stocks, HK$ for HKD stocks</div>
+      <div class="price-note">Share prices via Yahoo Finance · may be ~15 min delayed</div>
     </div>
 
   </div>
@@ -222,7 +211,7 @@
 
 <footer>
   Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
-  Data loaded from GitHub · Run ibkr_positions.py to refresh · Values = avg cost × qty
+  Data loaded from GitHub · Run ibkr_positions.py to refresh
 </footer>
 
 <script>
@@ -232,10 +221,7 @@ const PRICE_API = '/api/td';
 let allData = [], livePrices = {}, currentFilter = 'ALL', sortKey = 'symbol', sortAsc = true;
 
 function yahooSymbol(p) {
-  if (p.currency === 'HKD') {
-    // IBKR stores HK symbols as numeric strings e.g. "9988"
-    return p.symbol + '.HK';
-  }
+  if (p.currency === 'HKD') return p.symbol + '.HK';
   return p.symbol;
 }
 
@@ -243,27 +229,23 @@ async function fetchPrices(positions) {
   const syms = [...new Set(positions.map(yahooSymbol))];
   if (!syms.length) return;
   try {
-    const url = PRICE_API + '?symbols=' + encodeURIComponent(syms.join(','));
-    const r = await fetch(url);
+    const r = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(syms.join(',')));
     if (!r.ok) return;
     const map = await r.json();
     syms.forEach(s => {
       const q = map[s];
-      if (q && !q.error && q.price != null) {
-        livePrices[s] = parseFloat(q.price);
-      }
+      if (q && !q.error && q.price != null) livePrices[s] = parseFloat(q.price);
     });
-  } catch(e) { /* silently skip price fetch errors */ }
+  } catch(e) {}
 }
 
 async function loadData() {
   document.getElementById('fetch-time').textContent = 'Loading…';
   try {
     const r = await fetch(DATA_URL + '?t=' + Date.now());
-    if (!r.ok) throw new Error('not found');
+    if (!r.ok) throw new Error();
     const data = await r.json();
     allData = data.positions || [];
-    // fetch prices in parallel
     await fetchPrices(allData);
     showDashboard(data);
   } catch(e) {
@@ -273,20 +255,15 @@ async function loadData() {
   }
 }
 
-async function reloadAll() {
-  livePrices = {};
-  await loadData();
-}
+async function reloadAll() { livePrices = {}; await loadData(); }
 
 function showDashboard(data) {
   document.getElementById('fetch-time').textContent = '🕐 ' + (data.fetchedAt || '—');
   document.getElementById('total-pos').textContent = allData.length;
-
   const usdVal = allData.filter(p=>p.currency==='USD').reduce((s,p)=>s+(p.marketValue||0),0);
   document.getElementById('total-val').textContent = '$' + usdVal.toLocaleString('en-US',{maximumFractionDigits:0});
   document.getElementById('hk-count').textContent = allData.filter(p=>p.currency==='HKD').length;
   document.getElementById('us-count').textContent = allData.filter(p=>p.currency==='USD').length;
-
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('nodata-state').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
@@ -324,27 +301,25 @@ function renderTable() {
   tbody.innerHTML=data.map(p=>{
     const sym = p.currency==='HKD'?'HK$':'$';
     const val=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const cost=(p.avgCost||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:4});
+    const cost=(p.avgCost||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const qty=p.position.toLocaleString('en-US');
     const ysym = yahooSymbol(p);
     const livePrice = livePrices[ysym];
-    const priceTxt = livePrice != null
-      ? `<span class="price-live">${sym}${livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`
-      : '<span class="price-loading">—</span>';
+    const priceCell = livePrice != null
+      ? `<span class="price-live">${sym}${livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`
+      : `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${sym}${cost}</span>`;
     return `<tr>
       <td><span class="symbol">${p.symbol}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.currency}">${p.currency}</span></td>
       <td class="num muted hide-sm">${p.exchange}</td>
       <td class="num pos-qty">${qty}</td>
-      <td class="num muted hide-sm">${cost}</td>
-      <td class="num">${priceTxt}</td>
+      <td class="num">${priceCell}</td>
       <td class="num" style="font-weight:600">${sym}${val}</td>
     </tr>`;
   }).join('');
 }
 
-// Embedded Python script for download
 const PYTHON_SCRIPT = `"""
 IBKR Position Fetcher — Auto-uploads to GitHub
 ================================================
@@ -428,7 +403,6 @@ function downloadPython() {
   a.click();
 }
 
-// Auto-load on page open
 loadData();
 </script>
 </body>
