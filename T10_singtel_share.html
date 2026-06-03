@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Singtel Shares Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 20px;
+    }
+    .home-btn {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      color: #e2e8f0;
+      padding: 8px 16px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.85em;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 1.5em;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 0.85em;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 0.75em;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .big-num {
+      font-size: 2.2em;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .big-num span {
+      font-size: 0.5em;
+      color: #94a3b8;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .small-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .small-card .label {
+      font-size: 0.72em;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .small-card .value {
+      font-size: 1.3em;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .profit { color: #34d399 !important; }
+    .loss { color: #f87171 !important; }
+
+    /* Edit section */
+    .edit-card {
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .edit-card h3 {
+      font-size: 0.9em;
+      color: #93c5fd;
+      margin-bottom: 14px;
+    }
+    .input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .input-group label {
+      font-size: 0.75em;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .input-group input {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #f1f5f9;
+      font-size: 1em;
+      outline: none;
+    }
+    .input-group input:focus { border-color: #3b82f6; }
+    .update-btn {
+      width: 100%;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .update-btn:active { background: #2563eb; }
+
+    /* History */
+    .history-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .history-card h3 {
+      font-size: 0.85em;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.85em;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-date { color: #64748b; }
+    .history-price { color: #38bdf8; }
+    .history-val { color: #a3e635; }
+
+    .info-box {
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.8em;
+      color: #6ee7b7;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .view-counter { text-align: center; margin-top: 30px; }
+    footer {
+      text-align: center;
+      color: #334155;
+      font-size: 0.75em;
+      margin-top: 20px;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+  <h1>📱 Singtel Shares</h1>
+  <p class="subtitle" id="lastUpdated">Last updated: 03 Jun 2026</p>
+
+  <!-- Total Value -->
+  <div class="card">
+    <div class="card-title">Total Portfolio Value</div>
+    <div class="big-num" id="totalValue"><span>SGD </span>5,916.00</div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid">
+    <div class="small-card">
+      <div class="label">Shares Held</div>
+      <div class="value" id="sharesHeld">1,360</div>
+    </div>
+    <div class="small-card">
+      <div class="label">Current Price</div>
+      <div class="value" id="currentPrice">S$4.35</div>
+    </div>
+    <div class="small-card">
+      <div class="label">Source</div>
+      <div class="value" style="font-size:1em;">CPF Discounted</div>
+    </div>
+    <div class="small-card">
+      <div class="label">As At</div>
+      <div class="value" style="font-size:1em;" id="asAt">03 Jun 2026</div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="info-box">
+    ✅ You are eligible to withdraw your discounted Singtel shares (CPF confirmed). Withdrawal application is available via cpf.gov.sg.
+  </div>
+
+  <!-- Update Price -->
+  <div class="edit-card">
+    <h3>✏️ Update Share Price</h3>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Current Price (SGD)</label>
+        <input type="number" id="priceInput" placeholder="e.g. 4.35" step="0.01" value="4.35">
+      </div>
+      <div class="input-group">
+        <label>Shares Held</label>
+        <input type="number" id="sharesInput" placeholder="e.g. 1360" value="1360">
+      </div>
+    </div>
+    <button class="update-btn" onclick="updateValues()">📊 Update</button>
+  </div>
+
+  <!-- Price History -->
+  <div class="history-card">
+    <h3>📅 Price History</h3>
+    <div id="historyList">
+      <div class="history-item">
+        <span class="history-date">03 Jun 2026</span>
+        <span class="history-price">S$4.35</span>
+        <span class="history-val">S$5,916</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="view-counter">
+    <script src="/view-counter.js"></script>
+  </div>
+
+  <footer>© 2025 Paul Yeo | Built with AI 🚀</footer>
+
+  <script>
+    // Load from localStorage
+    let shares = parseFloat(localStorage.getItem('singtel_shares') || '1360');
+    let price  = parseFloat(localStorage.getItem('singtel_price')  || '4.35');
+    let history = JSON.parse(localStorage.getItem('singtel_history') || '[]');
+
+    if (history.length === 0) {
+      history.push({ date: '03 Jun 2026', price: 4.35, value: (1360 * 4.35).toFixed(2) });
+      localStorage.setItem('singtel_history', JSON.stringify(history));
+    }
+
+    function fmt(n) { return parseFloat(n).toLocaleString('en-SG', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+    function render() {
+      const total = shares * price;
+      document.getElementById('totalValue').innerHTML = '<span>SGD </span>' + fmt(total);
+      document.getElementById('sharesHeld').textContent = shares.toLocaleString();
+      document.getElementById('currentPrice').textContent = 'S$' + fmt(price);
+      document.getElementById('priceInput').value = price;
+      document.getElementById('sharesInput').value = shares;
+
+      // History
+      const list = document.getElementById('historyList');
+      list.innerHTML = history.slice().reverse().map(h =>
+        `<div class="history-item">
+          <span class="history-date">${h.date}</span>
+          <span class="history-price">S$${parseFloat(h.price).toFixed(2)}</span>
+          <span class="history-val">S$${fmt(h.value)}</span>
+        </div>`
+      ).join('');
+    }
+
+    function updateValues() {
+      const newPrice  = parseFloat(document.getElementById('priceInput').value);
+      const newShares = parseFloat(document.getElementById('sharesInput').value);
+      if (isNaN(newPrice) || isNaN(newShares)) return;
+
+      price  = newPrice;
+      shares = newShares;
+
+      const today = new Date().toLocaleDateString('en-SG', {day:'2-digit', month:'short', year:'numeric'});
+      const total = (shares * price).toFixed(2);
+
+      // Add to history if price changed
+      if (!history.length || history[history.length-1].price != price) {
+        history.push({ date: today, price: price, value: total });
+        if (history.length > 20) history.shift();
+      }
+
+      localStorage.setItem('singtel_shares', shares);
+      localStorage.setItem('singtel_price', price);
+      localStorage.setItem('singtel_history', JSON.stringify(history));
+
+      document.getElementById('lastUpdated').textContent = 'Last updated: ' + today;
+      document.getElementById('asAt').textContent = today;
+      render();
+    }
+
+    render();
+  </script>
+
+</body>
+</html>
