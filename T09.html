@@ -330,7 +330,7 @@ function renderTable() {
 
   tbody.innerHTML = overallRow + data.map(p => {
     const cur = (p.currency||'USD').toUpperCase();
-    const s = cur==='HKD'?'HK$':(cur==='SGD'?'S$':'$');
+    const s = cur==='HKD'?'HK$':(cur==='SGD'?'S$':(cur==='USD'?'US$':'$'));
     const fx = fxRates[cur] || 1;
     const avgCost = p.avgCost || 0;
     const costFmt = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -357,7 +357,8 @@ function renderTable() {
         const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
         diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      priceBlock = `<span class="price-live">S$${lpSGDFmt}</span><span class="avg-cost-sub">avg S$${avgSGDFmt}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span>`;
+      const lpLocalFmt = lp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      priceBlock = `<span class="price-live">S$${lpSGDFmt} <span style="font-size:.75em;opacity:.6;">(${s}${lpLocalFmt})</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span>`;
     } else {
       const avgSGD = avgCost * fx;
       const avgSGDFmt = avgSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
