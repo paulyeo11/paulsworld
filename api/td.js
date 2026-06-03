@@ -52,7 +52,7 @@ export default async function handler(req, res) {
         const seen = new Set();
         for (const q of quotes) {
           if (q.regularMarketPrice != null) {
-            out[q.symbol] = { price: q.regularMarketPrice, prevClose: q.regularMarketPreviousClose ?? null, currency: q.currency ?? null };
+            out[q.symbol] = { price: q.regularMarketPrice, prevClose: q.regularMarketPreviousClose ?? null, currency: q.currency ?? null, name: q.shortName ?? q.longName ?? null };
             seen.add(q.symbol);
           }
         }
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
         const j = await r.json();
         const m = j?.chart?.result?.[0]?.meta;
         if (m?.regularMarketPrice != null) {
-          out[sym] = { price: m.regularMarketPrice, prevClose: m.chartPreviousClose ?? m.previousClose ?? null, currency: m.currency ?? null };
+          out[sym] = { price: m.regularMarketPrice, prevClose: m.chartPreviousClose ?? m.previousClose ?? null, currency: m.currency ?? null, name: m.shortName ?? m.instrumentType ?? null };
           return;
         }
       } catch (_) {}

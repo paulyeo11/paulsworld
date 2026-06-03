@@ -70,6 +70,7 @@
   .diff-line.neg{color:var(--red);}
   .diff-line.nil{color:var(--muted);}
   .total-val-sub{color:#a0aec0;font-size:.68rem;display:block;margin-top:3px;font-family:'DM Mono',monospace;}
+  .stock-name{color:#a0aec0;font-size:.62rem;display:block;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
   .price-loading{color:var(--muted);font-style:italic;font-size:.78rem;}
   .pnl-pos{color:var(--green);font-weight:600;}
   .pnl-neg{color:var(--red);font-weight:600;}
@@ -172,7 +173,7 @@
 const DATA_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
 const PRICE_API = '/api/td';
 
-let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
+let allData=[], livePrices={}, stockNames={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
 
 // Convert Tiger symbol to Yahoo Finance format
 function yahooSymbol(p) {
@@ -204,7 +205,7 @@ async function fetchPrices(positions) {
     let loaded = 0;
     stockSyms.forEach(s => {
       const q = map[s];
-      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); loaded++; }
+      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); if (q.name) stockNames[s] = q.name; loaded++; }
     });
     if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
     if (map['HKDSGD=X']?.price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
@@ -314,7 +315,7 @@ function renderTable(){
     }
 
     return `<tr>
-      <td><span class="symbol">${p.symbol}</span></td>
+      <td><span class="symbol">${p.symbol}</span>${stockNames[ysym]?`<span class="stock-name">${stockNames[ysym]}</span>`:''}</td>
       <td class="hide-sm"><span class="badge badge-${cur}">${cur}</span></td>
       <td class="num">${priceBlock}</td>
       <td class="num ${pnlCls} hide-sm">${pnlStr}</td>

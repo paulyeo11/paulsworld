@@ -80,6 +80,7 @@
   .diff-line.pos { color:var(--green); }
   .diff-line.neg { color:var(--red); }
   .total-val-sub { color:#a0aec0; font-size:.68rem; display:block; margin-top:3px; font-family:'DM Mono',monospace; }
+  .stock-name { color:#a0aec0; font-size:.62rem; display:block; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px; }
   .diff-line.nil { color:var(--muted); }
   .price-loading { color:var(--muted); font-style:italic; font-size:.78rem; }
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
@@ -186,7 +187,7 @@
 const DATA_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/positions.json';
 const PRICE_API = '/api/td';
 
-let allData = [], livePrices = {}, fxRates = { USD: 1.35, HKD: 0.172 };
+let allData = [], livePrices = {}, stockNames = {}, fxRates = { USD: 1.35, HKD: 0.172 };
 let currentFilter = 'ALL', sortKey = 'marketValue', sortAsc = false;
 
 function yahooSymbol(p) {
@@ -211,7 +212,7 @@ async function fetchPrices(positions) {
     let loaded = 0;
     stockSyms.forEach(s => {
       const q = map[s];
-      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); loaded++; }
+      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); if (q.name) stockNames[s] = q.name; loaded++; }
     });
     if (map['USDSGD=X'] && map['USDSGD=X'].price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
     if (map['HKDSGD=X'] && map['HKDSGD=X'].price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
@@ -309,7 +310,7 @@ function renderTable() {
     }
 
     return `<tr>
-      <td><span class="symbol">${p.symbol}</span></td>
+      <td><span class="symbol">${p.symbol}</span>${stockNames[ysym]?`<span class="stock-name">${stockNames[ysym]}</span>`:''}</td>
       <td class="hide-sm"><span class="badge badge-${p.secType||'STK'}">${p.secType||'STK'}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.currency}">${p.currency}</span></td>
       <td class="num">${priceBlock}</td>
