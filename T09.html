@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T09: Combined Portfolio — IBKR + Tiger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0f1a;--surface:#111c2d;--border:#1e3050;--accent:#f7a800;--accent2:#ff6b00;--green:#00d4aa;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--hk:#f97316;--us:#3b82f6;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;padding-bottom:60px;}
+  .home-btn{position:fixed;top:14px;left:16px;z-index:999;background:#f4813f;color:#fff;text-decoration:none;font-size:.82rem;font-weight:700;padding:7px 16px;border-radius:20px;box-shadow:0 2px 8px rgba(244,129,63,.4);}
+  header{background:linear-gradient(135deg,#0a0f1a,#0d1f35);border-bottom:1px solid var(--border);padding:28px 40px 28px 130px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  h1{font-size:1.2rem;font-weight:800;color:#fff;}
+  .subtitle{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+  #fetch-time{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);background:var(--surface);padding:6px 14px;border-radius:20px;border:1px solid var(--border);}
+  main{max-width:980px;margin:0 auto;padding:32px 24px;}
+  #loading-state{text-align:center;padding:80px 20px;}
+  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #loading-state p{color:var(--muted);font-size:.9rem;}
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+  .card-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-family:'DM Mono',monospace;}
+  .card-value{font-size:1.4rem;font-weight:800;color:var(--accent);letter-spacing:-.03em;line-height:1;}
+  .card-sub{font-size:.68rem;color:var(--muted);margin-top:5px;font-family:'DM Mono',monospace;}
+  .toolbar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .filter-label{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+  .filter-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:20px;font-size:.75rem;cursor:pointer;transition:all .15s;}
+  .filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(247,168,0,.08);}
+  .refresh-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:20px;font-size:.75rem;cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;}
+  .refresh-btn:hover{border-color:var(--accent);color:var(--accent);}
+  #price-status{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);white-space:nowrap;}
+  #price-status.ok{color:var(--green);border-color:rgba(0,212,170,.3);}
+  #price-status.fail{color:#f59e0b;border-color:rgba(245,158,11,.3);}
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+  .table-header{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .table-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+  #pos-count{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);}
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:10px 16px;text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);background:rgba(255,255,255,.02);cursor:pointer;font-family:'DM Mono',monospace;white-space:nowrap;user-select:none;}
+  thead th:hover{color:var(--accent);}
+  tbody tr{border-top:1px solid rgba(255,255,255,.04);transition:background .1s;}
+  tbody tr:hover{background:rgba(255,255,255,.03);}
+  tbody td{padding:12px 16px;font-size:.86rem;vertical-align:middle;}
+  .symbol{font-weight:700;font-size:.95rem;color:#fff;font-family:'DM Mono',monospace;}
+  .stock-name{color:#a0aec0;font-size:.62rem;display:block;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.63rem;font-weight:700;font-family:'DM Mono',monospace;}
+  .badge-HKD{background:rgba(249,115,22,.15);color:var(--hk)}
+  .badge-USD{background:rgba(59,130,246,.15);color:var(--us)}
+  .badge-SGD{background:rgba(16,185,129,.15);color:#10b981}
+  .badge-IBKR{background:rgba(100,116,139,.2);color:#94a3b8;}
+  .badge-Tiger{background:rgba(247,168,0,.15);color:var(--accent);}
+  .num{font-family:'DM Mono',monospace;}
+  .price-live{color:var(--accent);font-weight:700;display:block;font-size:.9rem;}
+  .avg-cost-sub{color:var(--muted);font-size:.68rem;display:block;margin-top:2px;}
+  .diff-line{font-size:.75rem;font-weight:700;display:block;margin-top:3px;}
+  .diff-line.pos{color:var(--green);}
+  .diff-line.neg{color:var(--red);}
+  .diff-line.nil{color:var(--muted);}
+  .total-val-sub{color:#a0aec0;font-size:.68rem;display:block;margin-top:3px;font-family:'DM Mono',monospace;}
+  .price-loading{color:var(--muted);font-style:italic;font-size:.78rem;}
+  #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none;}
+  .price-note{font-size:.65rem;color:var(--muted);text-align:center;padding:10px 16px 14px;line-height:1.5;}
+  footer{text-align:center;color:var(--muted);font-size:.7rem;font-family:'DM Mono',monospace;margin-top:40px;line-height:1.8;}
+  footer a{color:var(--accent);text-decoration:none;}
+  @media(max-width:600px){
+    header{padding:20px 16px 20px 90px;}
+    tbody td{padding:10px 10px;font-size:.8rem;}
+    .card-value{font-size:1.2rem;}
+    th.hide-sm,td.hide-sm{display:none;}
+    main{padding:20px 12px;}
+  }
+</style>
+</head>
+<body>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <h1>📊 T09: Combined Portfolio</h1>
+      <div class="subtitle">T09 · IBKR + Tiger Brokers · All Positions in SGD</div>
+    </div>
+  </div>
+  <div id="fetch-time">Loading…</div>
+</header>
+
+<main>
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p>Fetching portfolios…</p>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="summary-grid">
+      <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">IBKR + Tiger</div></div>
+      <div class="card"><div class="card-label">IBKR Positions</div><div class="card-value" id="ibkr-pos">—</div><div class="card-sub">Interactive Brokers</div></div>
+      <div class="card"><div class="card-label">Tiger Positions</div><div class="card-value" id="tiger-pos">—</div><div class="card-sub">Tiger Brokers Prime</div></div>
+      <div class="card"><div class="card-label">Total Value (SGD)</div><div class="card-value" id="total-val">—</div><div class="card-sub">all positions × FX</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <span class="filter-label">FILTER:</span>
+        <button class="filter-btn active" onclick="filterData('ALL',this)">All</button>
+        <button class="filter-btn" onclick="filterData('IBKR',this)">🏦 IBKR</button>
+        <button class="filter-btn" onclick="filterData('Tiger',this)">🐯 Tiger</button>
+        <button class="filter-btn" onclick="filterData('USD',this)">🇺🇸 USD</button>
+        <button class="filter-btn" onclick="filterData('HKD',this)">🇭🇰 HKD</button>
+        <button class="filter-btn" onclick="filterData('SGD',this)">🇸🇬 SGD</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <span id="price-status">🔄 Loading…</span>
+        <button class="refresh-btn" onclick="reloadAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">📊 All Positions</div>
+        <div id="pos-count">—</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('symbol')">Symbol ↕</th>
+            <th onclick="sortTable('broker')" class="hide-sm">Broker</th>
+            <th onclick="sortTable('currency')" class="hide-sm">Ccy</th>
+            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total / S$ ↕</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+      <div id="empty-state">No positions match this filter.</div>
+      <div class="price-note">% Diff = (live price − avg cost) ÷ avg cost · Yahoo Finance (~15 min delay)</div>
+    </div>
+  </div>
+</main>
+
+<div style="text-align:center;margin-top:40px">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  IBKR: run ibkr_positions.py · Tiger: run tiger_positions.py
+</footer>
+
+<script>
+const IBKR_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/positions.json';
+const TIGER_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
+const PRICE_API = '/api/td';
+
+let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
+
+const NAME_MAP = {
+  '1211.HK':'BYD','1810.HK':'Xiaomi','2318.HK':'PICC P&C','2800.HK':'Tracker Fund',
+  '3067.HK':'CSOP MSCI HK','3690.HK':'Meituan','6862.HK':'Haidilao',
+  '9618.HK':'JD.com','9988.HK':'Alibaba','9999.HK':'NetEase',
+  '1299.HK':'AIA Group','700.HK':'Tencent','2269.HK':'Wuxi Bio',
+  'C38U.SI':'CapLand IntCom T','GRAB':'Grab Holdings','SE':'Sea Ltd',
+  'FDS':'FactSet Research','POOL':'Pool Corp','ZTS':'Zoetis',
+  'AAPL':'Apple','MSFT':'Microsoft','NVDA':'NVIDIA','TSLA':'Tesla',
+  'AMZN':'Amazon','GOOGL':'Alphabet','META':'Meta'
+};
+
+function yahooSymbol(p) {
+  const cur = (p.currency||'').toUpperCase();
+  const sym = p.symbol||'';
+  if (cur === 'HKD') return parseInt(sym, 10) + '.HK';
+  return sym;
+}
+
+// Normalise field names: IBKR uses 'position', Tiger uses 'quantity'
+function getQty(p) { return p.position || p.quantity || 0; }
+
+function setPriceStatus(cls, text) {
+  const el = document.getElementById('price-status');
+  if (el) { el.textContent = text; el.className = cls; }
+}
+
+async function fetchPrices(positions) {
+  const stockSyms = [...new Set(positions.map(yahooSymbol))];
+  const fxSyms = ['USDSGD=X','HKDSGD=X'];
+  const syms = [...stockSyms, ...fxSyms];
+  if (!stockSyms.length) return;
+  setPriceStatus('', '🔄 Loading…');
+  try {
+    const r = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(syms.join(',')));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const map = await r.json();
+    let loaded = 0;
+    stockSyms.forEach(s => {
+      const q = map[s];
+      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); if (q.name) NAME_MAP[s] = q.name; loaded++; }
+    });
+    if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
+    if (map['HKDSGD=X']?.price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
+    setPriceStatus(loaded > 0 ? 'ok' : 'fail',
+      loaded > 0 ? '✅ ' + loaded + '/' + stockSyms.length + ' prices loaded' : '⚠️ Prices unavailable');
+  } catch(e) {
+    setPriceStatus('fail', '⚠️ ' + e.message);
+  }
+}
+
+async function loadData() {
+  document.getElementById('fetch-time').textContent = 'Loading…';
+  try {
+    const [ibkrRes, tigerRes] = await Promise.all([
+      fetch(IBKR_URL + '?t=' + Date.now()),
+      fetch(TIGER_URL + '?t=' + Date.now())
+    ]);
+    const ibkrData  = ibkrRes.ok  ? await ibkrRes.json()  : { positions: [] };
+    const tigerData = tigerRes.ok ? await tigerRes.json() : { positions: [] };
+
+    const ibkrPositions  = (ibkrData.positions  || []).map(p => ({ ...p, broker: 'IBKR',  marketValue: p.marketValue || (p.position||0)*(p.avgCost||0) }));
+    const tigerPositions = (tigerData.positions || []).map(p => ({ ...p, broker: 'Tiger', marketValue: p.marketValue || (p.quantity||0)*(p.avgCost||0) }));
+
+    allData = [...ibkrPositions, ...tigerPositions];
+    await fetchPrices(allData);
+    showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
+  } catch(e) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('fetch-time').textContent = 'Error loading';
+  }
+}
+
+async function reloadAll() { livePrices = {}; await loadData(); }
+
+function showDashboard(ibkrCount, tigerCount, fetchedAt) {
+  document.getElementById('fetch-time').textContent = '🕐 ' + (fetchedAt || '—');
+  document.getElementById('total-pos').textContent = allData.length;
+  document.getElementById('ibkr-pos').textContent = ibkrCount;
+  document.getElementById('tiger-pos').textContent = tigerCount;
+  const totalSGD = allData.reduce((s,p) => {
+    const cur = (p.currency||'USD').toUpperCase();
+    return s + (p.marketValue||0) * (fxRates[cur]||1);
+  }, 0);
+  document.getElementById('total-val').textContent = 'S$' + totalSGD.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderTable();
+}
+
+function filterData(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = true; }
+  renderTable();
+}
+
+function renderTable() {
+  let data = allData.slice();
+  if (currentFilter === 'IBKR')  data = data.filter(p => p.broker === 'IBKR');
+  else if (currentFilter === 'Tiger') data = data.filter(p => p.broker === 'Tiger');
+  else if (currentFilter === 'USD')   data = data.filter(p => p.currency === 'USD');
+  else if (currentFilter === 'HKD')   data = data.filter(p => p.currency === 'HKD');
+  else if (currentFilter === 'SGD')   data = data.filter(p => p.currency === 'SGD');
+
+  data.sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    return sortAsc ? (av<bv?-1:av>bv?1:0) : (av>bv?-1:av<bv?1:0);
+  });
+
+  const tbody = document.getElementById('table-body');
+  document.getElementById('pos-count').textContent = data.length + ' position' + (data.length !== 1 ? 's' : '');
+  const empty = document.getElementById('empty-state');
+  if (!data.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = data.map(p => {
+    const cur = (p.currency||'USD').toUpperCase();
+    const s = cur==='HKD'?'HK$':(cur==='SGD'?'S$':'$');
+    const fx = fxRates[cur] || 1;
+    const avgCost = p.avgCost || 0;
+    const costFmt = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const qty = getQty(p);
+    const totalLocal = qty * avgCost;
+    const totalLocalFmt = totalLocal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const amtSGD = (totalLocal * fx).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const ysym = yahooSymbol(p);
+    const lp = livePrices[ysym];
+
+    let priceBlock;
+    if (lp != null) {
+      const lpFmt = lp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      let diffLine = '';
+      if (avgCost > 0) {
+        const diff = (lp - avgCost) / avgCost * 100;
+        const sign = diff >= 0 ? '+' : '';
+        const arrow = diff > 0.005 ? '▲ ' : (diff < -0.005 ? '▼ ' : '');
+        const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
+        diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
+      }
+      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
+    } else {
+      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
+    }
+
+    return `<tr>
+      <td><span class="symbol">${p.symbol}</span>${NAME_MAP[ysym]?`<span class="stock-name">${NAME_MAP[ysym]}</span>`:''}</td>
+      <td class="hide-sm"><span class="badge badge-${p.broker}">${p.broker}</span></td>
+      <td class="hide-sm"><span class="badge badge-${cur}">${cur}</span></td>
+      <td class="num">${priceBlock}</td>
+    </tr>`;
+  }).join('');
+}
+
+loadData();
+</script>
+</body>
+</html>
