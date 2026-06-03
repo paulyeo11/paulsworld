@@ -28,6 +28,12 @@ Before telling Paul to check any live URL, always verify the result yourself fir
 2. Only THEN send Paul the confirmed live link.
 3. If the environment blocks the test (network restricted), say so explicitly — never say "check in X minutes" without first attempting verification.
 
+## Self-Fix Rule (no approval needed)
+If something is not working after a fix attempt, do NOT wait for Paul's approval to try again.
+- Immediately find a workaround and apply it.
+- Keep Paul updated with a short status: what failed, what you tried next.
+- Only stop and ask Paul if you are completely stuck with no remaining options.
+
 ## David's AI Team (roster)
 David (the orchestrator) delegates work to these specialists. NOTE: the real specialist agents only run on Paul's notebook (Claude Code). On phone/remote you cannot dispatch them — but you can write *in their style* if Paul asks.
 - **Dash** — Financial dashboard developer. Interactive portfolio/brokerage dashboards (esp. IBKR), charts, responsive web UI.
@@ -114,7 +120,7 @@ Base: `https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/[f
 | AI Tools | **AIT** | AIT01.html → AIT04.html | from title "AIT01:" … |
 | Achievements | **AC** | AC01.html → AC03.html | from title "AC01:" … |
 | Books | **B** | B01.html, B02.html, B11.html (max 10 shown) | from title "B01:" … |
-| Investment Tools | **T** | T01.html → T06.html (T03 = `T03/` folder = Tiger) | T01…T06 via CSS counter (leading-zero) |
+| Investment Tools | **T** | T01.html → T06.html (T03 = `T03/` folder = Tiger) | T01–T06 via CSS counter (leading-zero) |
 | **Health** | **h** | h01.html → h05.html (max 10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
 | Travel | travel | | |
 | Special | **SP** | SP01=Dream Destinations, SP02=Adventure List, SP03=Why Retire at 65, SP04=Dashboard | (hardcoded cards in index.html; custom card titles, no auto-number) |
