@@ -297,10 +297,18 @@ function renderTable() {
   }, 0);
   const totalLiveSGD = data.reduce((s,p) => {
     const cur = (p.currency||'USD').toUpperCase();
+    const fx = fxRates[cur] || 1;
     const ysym = yahooSymbol(p);
     const lp = livePrices[ysym];
-    if (lp != null) return s + getQty(p) * lp * (fxRates[cur]||1);
-    return s + getQty(p) * (p.avgCost||0) * (fxRates[cur]||1);
+    const qty = getQty(p);
+    if (lp != null) {
+      const liveSGD = qty * lp * fx;
+      const investedSGD = p.sgdValue || qty * (p.avgCost||0) * fx;
+      // sanity: if live value is >5x invested, likely a bad price — fall back to invested
+      if (investedSGD > 0 && liveSGD > investedSGD * 5) return s + investedSGD;
+      return s + liveSGD;
+    }
+    return s + (p.sgdValue || qty * (p.avgCost||0) * fx);
   }, 0);
   const overallDiff = totalInvestedSGD > 0 ? (totalLiveSGD - totalInvestedSGD) / totalInvestedSGD * 100 : 0;
   const overallSign = overallDiff >= 0 ? '+' : '';
@@ -332,7 +340,12 @@ function renderTable() {
 
     let priceBlock;
     if (lp != null) {
-      const lpFmt = lp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const lpSGD = lp * fx;
+      const lpSGDFmt = lpSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const avgSGD = avgCost * fx;
+      const avgSGDFmt = avgSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const liveTotalSGD = qty * lpSGD;
+      const liveTotalFmt = liveTotalSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       let diffLine = '';
       if (avgCost > 0) {
         const diff = (lp - avgCost) / avgCost * 100;
@@ -341,9 +354,11 @@ function renderTable() {
         const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
         diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
+      priceBlock = `<span class="price-live">S$${lpSGDFmt}</span><span class="avg-cost-sub">avg S$${avgSGDFmt}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span>`;
     } else {
-      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalLocalFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
+      const avgSGD = avgCost * fx;
+      const avgSGDFmt = avgSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg S$${avgSGDFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
     }
 
     return `<tr>
