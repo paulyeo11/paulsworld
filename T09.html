@@ -115,8 +115,9 @@
         <button class="filter-btn" onclick="filterData('HKD',this)">🇭🇰 HKD</button>
         <button class="filter-btn" onclick="filterData('SGD',this)">🇸🇬 SGD</button>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
         <span id="price-status">🔄 Loading…</span>
+        <span id="fx-display" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);">🇺🇸→🇸🇬 — &nbsp;|&nbsp; 🇭🇰→🇸🇬 —</span>
         <button class="refresh-btn" onclick="reloadAll()">↻ Refresh</button>
       </div>
     </div>
@@ -202,6 +203,8 @@ async function fetchPrices(positions) {
     });
     if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
     if (map['HKDSGD=X']?.price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
+    const fxEl = document.getElementById('fx-display');
+    if (fxEl) fxEl.textContent = `🇺🇸→🇸🇬 ${fxRates.USD.toFixed(4)}  |  🇭🇰→🇸🇬 ${fxRates.HKD.toFixed(4)}`;
     setPriceStatus(loaded > 0 ? 'ok' : 'fail',
       loaded > 0 ? '✅ ' + loaded + '/' + stockSyms.length + ' prices loaded' : '⚠️ Prices unavailable');
   } catch(e) {
