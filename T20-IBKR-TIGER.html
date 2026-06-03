@@ -174,7 +174,7 @@ const IBKR_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/ref
 const TIGER_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
 const PRICE_API = '/api/td';
 
-let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='sgdValue', sortAsc=false;
+let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='liveValueSGD', sortAsc=false;
 
 const NAME_MAP = {
   '1211.HK':'BYD','1810.HK':'Xiaomi','2318.HK':'PICC P&C','2800.HK':'Tracker Fund',
@@ -271,7 +271,11 @@ async function loadData() {
         const cur = (p.currency||'USD').toUpperCase();
         const qty = p.position || p.quantity || 0;
         const sgdValue = qty * (p.avgCost||0) * (fxRates[cur]||1);
-        return { ...p, sgdValue };
+        const ysym = yahooSymbol(p);
+        const lp = livePrices[ysym];
+        const fx = fxRates[cur] || 1;
+        const liveValueSGD = lp != null ? qty * lp * fx : sgdValue;
+        return { ...p, sgdValue, liveValueSGD };
       });
     }
 
