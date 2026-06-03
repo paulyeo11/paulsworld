@@ -111,6 +111,11 @@
       <div style="position:relative;height:420px;"><canvas id="stockChart"></canvas></div>
     </div>
 
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">🏭 Portfolio by Sector — Invested S$</div>
+      <div style="position:relative;height:260px;"><canvas id="sectorChart"></canvas></div>
+    </div>
+
     <div class="toolbar">
       <div class="filters">
         <span class="filter-label">FILTER:</span>
@@ -175,6 +180,30 @@ const NAME_MAP = {
   'FDS':'FactSet Research','POOL':'Pool Corp','ZTS':'Zoetis',
   'AAPL':'Apple','MSFT':'Microsoft','NVDA':'NVIDIA','TSLA':'Tesla',
   'AMZN':'Amazon','GOOGL':'Alphabet','META':'Meta'
+};
+
+const SECTOR_MAP = {
+  'FDS':'Financial Data','POOL':'Leisure / Home','ZTS':'Healthcare',
+  '1211.HK':'EV','01211':'EV',
+  '1810.HK':'Consumer Tech','01810':'Consumer Tech',
+  '2318.HK':'Insurance','02318':'Insurance',
+  '2800.HK':'ETF / Index','02800':'ETF / Index',
+  '3067.HK':'ETF / Index','03067':'ETF / Index',
+  '3690.HK':'E-commerce','03690':'E-commerce',
+  '6862.HK':'Food & Beverage','06862':'Food & Beverage',
+  '9618.HK':'E-commerce','09618':'E-commerce',
+  '9888.HK':'Tech / AI','09888':'Tech / AI',
+  '9988.HK':'E-commerce','09988':'E-commerce',
+  'C38U.SI':'REIT','CFA.SI':'REIT','J69U.SI':'REIT','K71U.SI':'REIT','N2IU.SI':'REIT',
+  'G13.SI':'Gaming','GRAB':'E-commerce',
+};
+const SECTOR_COLORS = {
+  'E-commerce':'rgba(99,102,241,0.8)','EV':'rgba(16,185,129,0.8)',
+  'Healthcare':'rgba(236,72,153,0.8)','REIT':'rgba(245,158,11,0.8)',
+  'Consumer Tech':'rgba(59,130,246,0.8)','Tech / AI':'rgba(139,92,246,0.8)',
+  'ETF / Index':'rgba(100,116,139,0.8)','Insurance':'rgba(249,115,22,0.8)',
+  'Food & Beverage':'rgba(34,197,94,0.8)','Financial Data':'rgba(14,165,233,0.8)',
+  'Leisure / Home':'rgba(217,70,239,0.8)','Gaming':'rgba(251,191,36,0.8)',
 };
 
 function yahooSymbol(p) {
@@ -264,6 +293,7 @@ function showDashboard(ibkrCount, tigerCount, fetchedAt) {
   document.getElementById('total-val').textContent = 'S$' + totalSGD.toLocaleString('en-US',{maximumFractionDigits:0});
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
+  renderSectorChart();
   renderChart();
   renderTable();
 }
@@ -413,6 +443,38 @@ function renderTable() {
       <td class="num">${priceBlock}</td>
     </tr>`;
   }).join('');
+}
+
+let sectorChartInstance = null;
+function renderSectorChart() {
+  const totals = {};
+  allData.filter(p => p.avgCost > 0).forEach(p => {
+    const ysym = yahooSymbol(p);
+    const rawSym = p.symbol || '';
+    const sector = SECTOR_MAP[ysym] || SECTOR_MAP[rawSym] || 'Other';
+    totals[sector] = (totals[sector]||0) + (p.sgdValue||0);
+  });
+  const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const labels = sorted.map(e=>e[0]);
+  const values = sorted.map(e=>parseFloat(e[1].toFixed(0)));
+  const colors = labels.map(l => SECTOR_COLORS[l]||'rgba(148,163,184,0.7)');
+  const ctx = document.getElementById('sectorChart').getContext('2d');
+  if (sectorChartInstance) sectorChartInstance.destroy();
+  sectorChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `S$${ctx.parsed.x.toLocaleString()}` } }
+      },
+      scales: {
+        y: { ticks: { color: '#e2e8f0', font: { size: 11, weight:'600' } }, grid: { color: 'rgba(255,255,255,.04)' } },
+        x: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => 'S$'+v.toLocaleString() }, grid: { color: 'rgba(255,255,255,.06)' } }
+      }
+    }
+  });
 }
 
 let stockChartInstance = null;
