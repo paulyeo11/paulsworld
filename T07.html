@@ -79,6 +79,7 @@
   .diff-line { font-size:.75rem; font-weight:700; display:block; margin-top:3px; }
   .diff-line.pos { color:var(--green); }
   .diff-line.neg { color:var(--red); }
+  .total-val-sub { color:#a0aec0; font-size:.68rem; display:block; margin-top:3px; font-family:'DM Mono',monospace; }
   .diff-line.nil { color:var(--muted); }
   .price-loading { color:var(--muted); font-style:italic; font-size:.78rem; }
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none}
@@ -162,8 +163,7 @@
             <th onclick="sortTable('secType')" class="hide-sm">Type</th>
             <th onclick="sortTable('currency')" class="hide-sm">Ccy</th>
             <th onclick="sortTable('position')">Qty ↕</th>
-            <th onclick="sortTable('avgCost')">Price / Avg / % Diff ↕</th>
-            <th onclick="sortTable('marketValue')">Total Value ↕</th>
+            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total ↕</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -298,9 +298,9 @@ function renderTable() {
         const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
         diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}`;
+      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${val}</span>`;
     } else {
-      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>`;
+      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${val}</span>`;
     }
 
     return `<tr>
@@ -309,7 +309,6 @@ function renderTable() {
       <td class="hide-sm"><span class="badge badge-${p.currency}">${p.currency}</span></td>
       <td class="num pos-qty">${qty}</td>
       <td class="num">${priceBlock}</td>
-      <td class="num" style="font-weight:600">${s}${val}</td>
     </tr>`;
   }).join('');
 }
