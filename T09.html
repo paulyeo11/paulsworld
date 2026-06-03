@@ -116,6 +116,11 @@
       <div style="position:relative;height:260px;"><canvas id="sectorChart"></canvas></div>
     </div>
 
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">📈 Sector: Live Value vs Avg Cost (S$) · % diff on top</div>
+      <div style="position:relative;height:320px;"><canvas id="sectorCompareChart"></canvas></div>
+    </div>
+
     <div class="toolbar">
       <div class="filters">
         <span class="filter-label">FILTER:</span>
@@ -294,6 +299,7 @@ function showDashboard(ibkrCount, tigerCount, fetchedAt) {
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   renderSectorChart();
+  renderSectorCompareChart();
   renderChart();
   renderTable();
 }
@@ -468,6 +474,85 @@ function renderSectorChart() {
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => `S$${ctx.parsed.x.toLocaleString()}` } }
+      },
+      scales: {
+        y: { ticks: { color: '#e2e8f0', font: { size: 11, weight:'600' } }, grid: { color: 'rgba(255,255,255,.04)' } },
+        x: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => 'S$'+v.toLocaleString() }, grid: { color: 'rgba(255,255,255,.06)' } }
+      }
+    }
+  });
+}
+
+let sectorCompareChartInstance = null;
+function renderSectorCompareChart() {
+  // Build per-sector: invested SGD and live SGD
+  const invested = {}, live = {};
+  allData.filter(p => p.avgCost > 0).forEach(p => {
+    const ysym = yahooSymbol(p);
+    const rawSym = p.symbol || '';
+    const sector = SECTOR_MAP[ysym] || SECTOR_MAP[rawSym] || 'Other';
+    const cur = (p.currency||'USD').toUpperCase();
+    const fx = fxRates[cur] || 1;
+    const qty = getQty(p);
+    invested[sector] = (invested[sector]||0) + (p.sgdValue||qty*p.avgCost*fx);
+    const lp = livePrices[ysym];
+    if (lp != null) {
+      const liveSGD = qty * lp * fx;
+      const inv = p.sgdValue || qty * p.avgCost * fx;
+      live[sector] = (live[sector]||0) + (inv > 0 && liveSGD > inv * 5 ? inv : liveSGD);
+    } else {
+      live[sector] = (live[sector]||0) + (p.sgdValue||qty*p.avgCost*fx);
+    }
+  });
+
+  const sectors = Object.keys(invested).sort((a,b) => invested[b] - invested[a]);
+  const invVals = sectors.map(s => parseFloat((invested[s]||0).toFixed(0)));
+  const liveVals = sectors.map(s => parseFloat((live[s]||0).toFixed(0)));
+  const diffs = sectors.map((s,i) => invVals[i] > 0 ? ((liveVals[i]-invVals[i])/invVals[i]*100) : 0);
+
+  // Custom plugin: draw % diff above each group
+  const diffPlugin = {
+    id: 'diffLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx, data, scales: { x, y } } = chart;
+      const meta0 = chart.getDatasetMeta(0);
+      const meta1 = chart.getDatasetMeta(1);
+      ctx.save();
+      sectors.forEach((s, i) => {
+        const bar0 = meta0.data[i];
+        const bar1 = meta1.data[i];
+        const maxX = Math.max(bar0.x, bar1.x);
+        const cy = (bar0.y + bar1.y) / 2;
+        const diff = diffs[i];
+        if (Math.abs(diff) < 0.01) return;
+        const sign = diff >= 0 ? '+' : '';
+        ctx.fillStyle = diff >= 0 ? '#00d4aa' : '#ef4444';
+        ctx.font = 'bold 10px DM Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${sign}${diff.toFixed(1)}%`, maxX + 6, cy + 4);
+      });
+      ctx.restore();
+    }
+  };
+
+  const ctx = document.getElementById('sectorCompareChart').getContext('2d');
+  if (sectorCompareChartInstance) sectorCompareChartInstance.destroy();
+  sectorCompareChartInstance = new Chart(ctx, {
+    type: 'bar',
+    plugins: [diffPlugin],
+    data: {
+      labels: sectors,
+      datasets: [
+        { label: 'Live Value', data: liveVals, backgroundColor: 'rgba(99,102,241,0.75)', borderRadius: 3, borderSkipped: false },
+        { label: 'Avg Cost', data: invVals, backgroundColor: 'rgba(100,116,139,0.5)', borderRadius: 3, borderSkipped: false }
+      ]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 60 } },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: S$${ctx.parsed.x.toLocaleString()}` } }
       },
       scales: {
         y: { ticks: { color: '#e2e8f0', font: { size: 11, weight:'600' } }, grid: { color: 'rgba(255,255,255,.04)' } },
