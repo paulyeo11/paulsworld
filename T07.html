@@ -280,10 +280,10 @@ function renderTable() {
   empty.style.display='none';
   tbody.innerHTML=data.map(p=>{
     const s = p.currency==='HKD'?'HK$':'$';
-    const val=(p.marketValue||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const avgCost = p.avgCost||0;
     const costFmt = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const qty = p.position.toLocaleString('en-US');
+    const totalCost = ((p.position||0)*avgCost).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const ysym = yahooSymbol(p);
     const lp = livePrices[ysym];
 
@@ -298,9 +298,9 @@ function renderTable() {
         const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
         diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${val}</span>`;
+      priceBlock = `<span class="price-live">${s}${lpFmt}</span><span class="avg-cost-sub">avg ${s}${costFmt}</span>${diffLine}<span class="total-val-sub">total ${s}${totalCost}</span>`;
     } else {
-      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${val}</span>`;
+      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg ${s}${costFmt}</span><span class="total-val-sub">total ${s}${totalCost}</span>`;
     }
 
     return `<tr>
