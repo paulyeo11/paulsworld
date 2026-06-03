@@ -292,8 +292,9 @@ function renderTable() {
 
   // Overall summary row
   const totalInvestedSGD = data.reduce((s,p) => {
+    if (!p.avgCost) return s;
     const cur = (p.currency||'USD').toUpperCase();
-    return s + getQty(p) * (p.avgCost||0) * (fxRates[cur]||1);
+    return s + getQty(p) * p.avgCost * (fxRates[cur]||1);
   }, 0);
   const totalLiveSGD = data.reduce((s,p) => {
     const cur = (p.currency||'USD').toUpperCase();
@@ -301,14 +302,16 @@ function renderTable() {
     const ysym = yahooSymbol(p);
     const lp = livePrices[ysym];
     const qty = getQty(p);
+    const avgCost = p.avgCost || 0;
+    if (avgCost === 0) return s; // no cost basis — skip from total
     if (lp != null) {
       const liveSGD = qty * lp * fx;
-      const investedSGD = p.sgdValue || qty * (p.avgCost||0) * fx;
+      const investedSGD = p.sgdValue || qty * avgCost * fx;
       // sanity: if live value is >5x invested, likely a bad price — fall back to invested
       if (investedSGD > 0 && liveSGD > investedSGD * 5) return s + investedSGD;
       return s + liveSGD;
     }
-    return s + (p.sgdValue || qty * (p.avgCost||0) * fx);
+    return s + (p.sgdValue || qty * avgCost * fx);
   }, 0);
   const overallDiff = totalInvestedSGD > 0 ? (totalLiveSGD - totalInvestedSGD) / totalInvestedSGD * 100 : 0;
   const overallSign = overallDiff >= 0 ? '+' : '';
