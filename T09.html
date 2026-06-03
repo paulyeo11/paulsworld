@@ -132,7 +132,7 @@
             <th onclick="sortTable('symbol')">Symbol ↕</th>
             <th onclick="sortTable('broker')" class="hide-sm">Broker</th>
             <th onclick="sortTable('currency')" class="hide-sm">Ccy</th>
-            <th onclick="sortTable('avgCost')">Price / Avg / % Diff / Total / S$ ↕</th>
+            <th onclick="sortTable('sgdValue')">Price / Avg / % Diff / Total / S$ ↕</th>
           </tr>
         </thead>
         <tbody id="table-body"></tbody>
@@ -157,7 +157,7 @@ const IBKR_URL  = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/ref
 const TIGER_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
 const PRICE_API = '/api/td';
 
-let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='marketValue', sortAsc=false;
+let allData=[], livePrices={}, fxRates={USD:1.35,HKD:0.172,SGD:1}, currentFilter='ALL', sortKey='sgdValue', sortAsc=false;
 
 const NAME_MAP = {
   '1211.HK':'BYD','1810.HK':'Xiaomi','2318.HK':'PICC P&C','2800.HK':'Tracker Fund',
@@ -222,8 +222,18 @@ async function loadData() {
     const ibkrPositions  = (ibkrData.positions  || []).map(p => ({ ...p, broker: 'IBKR',  marketValue: p.marketValue || (p.position||0)*(p.avgCost||0) }));
     const tigerPositions = (tigerData.positions || []).map(p => ({ ...p, broker: 'Tiger', marketValue: p.marketValue || (p.quantity||0)*(p.avgCost||0) }));
 
+    function addSGD(arr) {
+      return arr.map(p => {
+        const cur = (p.currency||'USD').toUpperCase();
+        const qty = p.position || p.quantity || 0;
+        const sgdValue = qty * (p.avgCost||0) * (fxRates[cur]||1);
+        return { ...p, sgdValue };
+      });
+    }
+
     allData = [...ibkrPositions, ...tigerPositions];
     await fetchPrices(allData);
+    allData = addSGD(allData); // recompute with live FX rates
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
     document.getElementById('loading-state').style.display = 'none';
