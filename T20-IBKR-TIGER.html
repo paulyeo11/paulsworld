@@ -355,6 +355,13 @@ async function loadData() {
     allData = [...ibkrPositions, ...tigerPositions, ...singtelPos];
     await fetchPrices(allData);
     allData = addSGD(allData); // recompute with live FX rates
+    // Populate balance cards
+    const fmtBal = n => n.toLocaleString('en-SG', {maximumFractionDigits:0});
+    const ibkrNetLiq = parseFloat(ibkrData.netLiquidation || 0);
+    const el1 = document.getElementById('bal-ibkr-usd'); if(el1) el1.textContent = 'US$' + fmtBal(ibkrNetLiq);
+    const el2 = document.getElementById('bal-ibkr-sgd'); if(el2) el2.textContent = 'S$' + fmtBal(ibkrNetLiq * (fxRates.USD || 1.285));
+    const el3 = document.getElementById('bal-tiger-net'); if(el3) el3.textContent = 'S$' + fmtBal(parseFloat(tigerData.netValue || 0));
+    const el4 = document.getElementById('bal-tiger-cash'); if(el4) el4.textContent = 'S$' + fmtBal(parseFloat(tigerData.cash || 0));
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt, ibkrData, tigerData);
   } catch(e) {
     document.getElementById('loading-state').style.display = 'none';
