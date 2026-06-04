@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T20: Combined Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --border: #1e2230;
+    --accent: #f4813f;
+    --accent2: #10b981;
+    --accent3: #6366f1;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --card: #13161f;
+    --red: #ef4444;
+    --green: #10b981;
+    --gold: #f4813f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 80px;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(244,129,63,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(244,129,63,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(244,129,63,0.06) 0%, transparent 100%);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .title-block { display: flex; align-items: center; gap: 12px; }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(244,129,63,0.12);
+    border: 1px solid rgba(244,129,63,0.3);
+    color: var(--accent);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .home-btn:hover { background: rgba(244,129,63,0.22); }
+
+  .clock-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  /* Summary cards */
+  .summary-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 20px 24px;
+  }
+
+  .sum-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .sum-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .sum-value {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+  }
+  .sum-value.green { color: var(--green); }
+  .sum-value.red { color: var(--red); }
+  .sum-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Sort bar */
+  .sort-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 24px 16px;
+    flex-wrap: wrap;
+  }
+  .sort-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-right: 4px;
+  }
+  .sort-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sort-btn:hover, .sort-btn.active {
+    background: rgba(244,129,63,0.15);
+    border-color: rgba(244,129,63,0.4);
+    color: var(--accent);
+  }
+  .add-btn {
+    margin-left: auto;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(99,102,241,0.4);
+    background: rgba(99,102,241,0.12);
+    color: #a5b4fc;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .add-btn:hover { background: rgba(99,102,241,0.25); }
+
+  /* Position list */
+  .positions {
+    position: relative;
+    z-index: 1;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pos-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+  .pos-card:hover { border-color: rgba(244,129,63,0.3); }
+  .pos-card.winner { border-left: 3px solid var(--green); }
+  .pos-card.loser { border-left: 3px solid var(--red); }
+
+  .pos-left { display: flex; flex-direction: column; gap: 4px; }
+  .pos-ticker {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .pos-name {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .pos-qty {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .pos-right { text-align: right; }
+  .pos-price {
+    font-family: 'DM Mono', monospace;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--gold);
+  }
+  .pos-price-usd {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  .pos-pnl {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .pos-pnl.up { color: var(--green); }
+  .pos-pnl.down { color: var(--red); }
+  .pos-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 2px;
+  }
+  .pos-invested {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1a1d27;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .modal h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .form-group input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: rgba(244,129,63,0.5);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+  .btn-save {
+    flex: 1;
+    padding: 10px;
+    background: rgba(244,129,63,0.2);
+    border: 1px solid rgba(244,129,63,0.4);
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-save:hover { background: rgba(244,129,63,0.35); }
+  .btn-cancel {
+    flex: 1;
+    padding: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-cancel:hover { color: var(--text); }
+
+  .timestamp {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 20px 24px 0;
+  }
+
+  .no-pos {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 40px 20px;
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="title-block">
+      <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+      <div>
+        <div class="logo">📊 T20: <span>Combined Portfolio</span></div>
+        <div class="subtitle">T20 · IBKR + Tiger + CPF/SGX · All Positions in SGD</div>
+      </div>
+    </div>
+    <div class="clock-badge" id="clockBadge">⏱ —</div>
+  </div>
+</header>
+
+<!-- Summary cards -->
+<div class="summary-grid" id="summaryGrid">
+  <div class="sum-card">
+    <div class="sum-label">Total Value</div>
+    <div class="sum-value" id="sumValue">—</div>
+    <div class="sum-sub" id="sumValueSub">SGD</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Total Invested</div>
+    <div class="sum-value" id="sumInvested">—</div>
+    <div class="sum-sub">SGD</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Total P&amp;L</div>
+    <div class="sum-value" id="sumPnl">—</div>
+    <div class="sum-sub" id="sumPnlPct">—</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Positions</div>
+    <div class="sum-value" id="sumCount">—</div>
+    <div class="sum-sub" id="sumWinLoss">— winners</div>
+  </div>
+</div>
+
+<!-- Sort bar -->
+<div class="sort-bar">
+  <span class="sort-label">Sort by:</span>
+  <button class="sort-btn active" onclick="sortPositions('ticker')">Ticker</button>
+  <button class="sort-btn" onclick="sortPositions('pnlPct')">P&amp;L %</button>
+  <button class="sort-btn" onclick="sortPositions('value')">Value</button>
+  <button class="sort-btn" onclick="sortPositions('invested')">Invested</button>
+  <button class="add-btn" onclick="openModal()">＋ Add Position</button>
+</div>
+
+<!-- Positions -->
+<div class="positions" id="positionList"></div>
+<div class="timestamp" id="timestamp"></div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Add Position</h3>
+    <div class="form-group">
+      <label>Ticker Symbol</label>
+      <input type="text" id="fTicker" placeholder="e.g. AAPL">
+    </div>
+    <div class="form-group">
+      <label>Company Name</label>
+      <input type="text" id="fName" placeholder="e.g. Apple">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="fQty" placeholder="100" step="any">
+      </div>
+      <div class="form-group">
+        <label>Current Price (SGD)</label>
+        <input type="number" id="fPrice" placeholder="398.26" step="any">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Avg Cost (SGD)</label>
+        <input type="number" id="fAvg" placeholder="440.59" step="any">
+      </div>
+      <div class="form-group">
+        <label>Price (Foreign)</label>
+        <input type="text" id="fForeign" placeholder="US$310.26">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="savePosition()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Default positions from screenshot ──────────────────────────────────────
+const DEFAULT_POSITIONS = [
+  { ticker:'AAPL', name:'Apple',            qty:0.237, price:398.26, avg:0,      foreign:'US$310.26' },
+  { ticker:'FDS',  name:'FactSet Research', qty:100,   price:325.32, avg:440.59, foreign:'US$253.44' },
+  { ticker:'POOL', name:'Pool Corp',        qty:100,   price:231.94, avg:357.36, foreign:'US$180.69' },
+  { ticker:'01211',name:'BYD',              qty:900,   price:15.04,  avg:17.12,  foreign:'HK$91.80'  },
+  { ticker:'09988',name:'Alibaba',          qty:500,   price:20.23,  avg:15.66,  foreign:'HK$123.50' },
+];
+
+let positions = JSON.parse(localStorage.getItem('t20_positions') || 'null');
+if (!positions) {
+  positions = DEFAULT_POSITIONS;
+  save();
+}
+
+let editIndex = -1;
+let currentSort = 'ticker';
+
+function save() {
+  localStorage.setItem('t20_positions', JSON.stringify(positions));
+}
+
+function fmt(n) {
+  return 'S$' + n.toLocaleString('en-SG', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+function calcValue(p)    { return p.qty * p.price; }
+function calcInvested(p) { return p.avg > 0 ? p.qty * p.avg : 0; }
+function calcPnlAmt(p)   { return p.avg > 0 ? (p.price - p.avg) * p.qty : 0; }
+function calcPnlPct(p)   { return p.avg > 0 ? ((p.price - p.avg) / p.avg) * 100 : null; }
+
+function sortPositions(by) {
+  currentSort = by;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function render() {
+  const sorted = [...positions];
+  if (currentSort === 'pnlPct')    sorted.sort((a,b) => (calcPnlPct(b)||0) - (calcPnlPct(a)||0));
+  else if (currentSort === 'value') sorted.sort((a,b) => calcValue(b) - calcValue(a));
+  else if (currentSort === 'invested') sorted.sort((a,b) => calcInvested(b) - calcInvested(a));
+  else sorted.sort((a,b) => a.ticker.localeCompare(b.ticker));
+
+  const list = document.getElementById('positionList');
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="no-pos">No positions yet — click ＋ Add Position</div>';
+    updateSummary();
+    return;
+  }
+
+  list.innerHTML = sorted.map((p, si) => {
+    const realIdx = positions.indexOf(p);
+    const val = calcValue(p);
+    const inv = calcInvested(p);
+    const pnlAmt = calcPnlAmt(p);
+    const pnlPct = calcPnlPct(p);
+    const hasPnl = pnlPct !== null;
+    const cls = hasPnl ? (pnlPct >= 0 ? 'winner' : 'loser') : '';
+    const pnlSign = pnlPct >= 0 ? '▲' : '▼';
+    const pnlClass = pnlPct >= 0 ? 'up' : 'down';
+
+    return `
+    <div class="pos-card ${cls}" onclick="openEdit(${realIdx})" style="cursor:pointer">
+      <div class="pos-left">
+        <div class="pos-ticker">${p.ticker}</div>
+        <div class="pos-name">${p.name}</div>
+        <div class="pos-qty">qty: ${p.qty.toLocaleString()}</div>
+      </div>
+      <div class="pos-right">
+        <div class="pos-price">${fmt(p.price)}</div>
+        ${p.foreign ? `<div class="pos-price-usd">(${p.foreign})</div>` : ''}
+        ${hasPnl
+          ? `<div class="pos-pnl ${pnlClass}">${pnlSign} ${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</div>`
+          : ''}
+        <div class="pos-value">${fmt(val)}</div>
+        ${inv > 0 ? `<div class="pos-invested">invested ${fmt(inv)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const totalVal = positions.reduce((s,p) => s + calcValue(p), 0);
+  const totalInv = positions.reduce((s,p) => s + calcInvested(p), 0);
+  const totalPnl = totalInv > 0 ? totalVal - totalInv : null;
+  const pnlPct   = totalInv > 0 ? ((totalVal - totalInv) / totalInv) * 100 : null;
+  const winners  = positions.filter(p => (calcPnlPct(p)||0) > 0).length;
+  const losers   = positions.filter(p => (calcPnlPct(p)||0) < 0).length;
+
+  document.getElementById('sumValue').textContent    = fmt(totalVal);
+  document.getElementById('sumInvested').textContent = totalInv > 0 ? fmt(totalInv) : '—';
+  
+  const pnlEl = document.getElementById('sumPnl');
+  if (totalPnl !== null) {
+    pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + fmt(totalPnl);
+    pnlEl.className = 'sum-value ' + (totalPnl >= 0 ? 'green' : 'red');
+    document.getElementById('sumPnlPct').textContent =
+      (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%';
+  } else {
+    pnlEl.textContent = '—';
+    document.getElementById('sumPnlPct').textContent = '';
+  }
+
+  document.getElementById('sumCount').textContent = positions.length;
+  document.getElementById('sumWinLoss').textContent =
+    `${winners} up · ${losers} down`;
+
+  const now = new Date();
+  document.getElementById('timestamp').textContent =
+    'Last updated: ' + now.toLocaleDateString('en-SG', {day:'2-digit',month:'short',year:'numeric'}) +
+    ' ' + now.toLocaleTimeString('en-SG', {hour:'2-digit',minute:'2-digit'});
+}
+
+// Clock
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clockBadge').textContent =
+    '⏱ ' + d.toISOString().replace('T',' ').slice(0,19);
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Modal
+function openModal() {
+  editIndex = -1;
+  document.getElementById('modalTitle').textContent = 'Add Position';
+  document.getElementById('fTicker').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fQty').value = '';
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fAvg').value = '';
+  document.getElementById('fForeign').value = '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEdit(idx) {
+  editIndex = idx;
+  const p = positions[idx];
+  document.getElementById('modalTitle').textContent = 'Edit · ' + p.ticker;
+  document.getElementById('fTicker').value = p.ticker;
+  document.getElementById('fName').value = p.name;
+  document.getElementById('fQty').value = p.qty;
+  document.getElementById('fPrice').value = p.price;
+  document.getElementById('fAvg').value = p.avg || '';
+  document.getElementById('fForeign').value = p.foreign || '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function savePosition() {
+  const ticker  = document.getElementById('fTicker').value.trim().toUpperCase();
+  const name    = document.getElementById('fName').value.trim();
+  const qty     = parseFloat(document.getElementById('fQty').value) || 0;
+  const price   = parseFloat(document.getElementById('fPrice').value) || 0;
+  const avg     = parseFloat(document.getElementById('fAvg').value) || 0;
+  const foreign = document.getElementById('fForeign').value.trim();
+
+  if (!ticker || qty === 0 || price === 0) {
+    alert('Ticker, qty and current price are required.');
+    return;
+  }
+
+  const pos = { ticker, name, qty, price, avg, foreign };
+
+  if (editIndex >= 0) {
+    positions[editIndex] = pos;
+  } else {
+    positions.push(pos);
+  }
+
+  save();
+  closeModal();
+  render();
+}
+
+// Click outside modal to close
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+render();
+</script>
+</body>
+</html>
