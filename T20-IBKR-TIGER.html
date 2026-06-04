@@ -107,6 +107,33 @@
       <div class="card"><div class="card-label">Total Value (SGD)</div><div class="card-value" id="total-val">—</div><div class="card-sub">all positions × FX</div></div>
     </div>
 
+    <!-- Balance Section -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">💰 Account Balances</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px;">IBKR Net Liq</div>
+          <div style="font-size:18px;font-weight:700;color:#f4813f;font-family:'Syne',sans-serif;" id="ibkr-netliq">—</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px;">IBKR Net Liq (SGD)</div>
+          <div style="font-size:18px;font-weight:700;color:#f4813f;font-family:'Syne',sans-serif;" id="ibkr-netliq-sgd">—</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px;">Tiger Net Value</div>
+          <div style="font-size:18px;font-weight:700;color:#10b981;font-family:'Syne',sans-serif;" id="tiger-netval">—</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px;">Tiger Cash</div>
+          <div style="font-size:18px;font-weight:700;color:#10b981;font-family:'Syne',sans-serif;" id="tiger-cash">—</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD</div>
+        </div>
+      </div>
+    </div>
+
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
       <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">📊 Portfolio by Stock — Invested S$</div>
       <div style="position:relative;height:560px;"><canvas id="stockChart"></canvas></div>
@@ -326,6 +353,19 @@ function showDashboard(ibkrCount, tigerCount, fetchedAt) {
   document.getElementById('total-val').textContent = 'S$' + totalSGD.toLocaleString('en-US',{maximumFractionDigits:0});
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
+
+  // Populate balance cards from broker data
+  try {
+    const ibkrNetLiq = parseFloat(ibkrData.netLiquidation || 0);
+    const ibkrNetLiqSGD = ibkrNetLiq * (fxRates.USD || 1.285);
+    const tigerNetVal = parseFloat(tigerData.netValue || 0);
+    const tigerCash = parseFloat(tigerData.cash || 0);
+    const fmt = n => n.toLocaleString('en-SG', {maximumFractionDigits:0});
+    document.getElementById('ibkr-netliq').textContent = 'US$' + fmt(ibkrNetLiq);
+    document.getElementById('ibkr-netliq-sgd').textContent = 'S$' + fmt(ibkrNetLiqSGD);
+    document.getElementById('tiger-netval').textContent = 'S$' + fmt(tigerNetVal);
+    document.getElementById('tiger-cash').textContent = 'S$' + fmt(tigerCash);
+  } catch(e) {}
   renderSectorChart();
   renderSectorCompareChart();
   renderChart();
