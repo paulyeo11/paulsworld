@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T12: Net Profit — 5 Year History</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c10;--surface:#111318;--border:#1e2230;--accent:#f4813f;
+    --text:#e8eaf0;--muted:#6b7280;--card:#13161f;
+    --c1:#f4813f;--c2:#10b981;--c3:#6366f1;--c4:#f59e0b;
+    --c5:#ec4899;--c6:#14b8a6;--c7:#8b5cf6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:0 0 80px;}
+  body::before{content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(244,129,63,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(244,129,63,0.03) 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none;z-index:0;}
+
+  header{position:relative;z-index:1;padding:28px 24px 20px;border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(244,129,63,0.06) 0%,transparent 100%);}
+  .header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .title-block{display:flex;align-items:center;gap:12px;}
+  .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+  .logo span{color:var(--accent);}
+  .subtitle{font-size:12px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;}
+  .home-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(244,129,63,0.12);
+    border:1px solid rgba(244,129,63,0.3);color:var(--accent);text-decoration:none;
+    padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;}
+
+  /* Tab bar */
+  .tabs{position:relative;z-index:1;display:flex;gap:0;padding:20px 24px 0;border-bottom:1px solid var(--border);}
+  .tab{padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;
+    color:var(--muted);border-bottom:2px solid transparent;transition:all 0.2s;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* Section */
+  .section{position:relative;z-index:1;padding:24px;}
+  .section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:20px;
+    color:var(--text);display:flex;align-items:center;gap:8px;}
+
+  /* Chart container per stock */
+  .stock-block{background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:20px;margin-bottom:16px;}
+  .stock-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+  .stock-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;}
+  .stock-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .stock-currency{font-size:11px;padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;}
+
+  /* Bar chart */
+  .bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px;margin-bottom:12px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .bar-wrap{width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:100px;}
+  .bar{width:100%;border-radius:4px 4px 0 0;transition:all 0.3s;position:relative;min-height:4px;}
+  .bar:hover::after{content:attr(data-val);position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+    background:#1e2230;color:var(--text);font-size:10px;padding:2px 6px;border-radius:4px;
+    white-space:nowrap;font-family:'DM Mono',monospace;z-index:10;}
+  .bar.neg{border-radius:0 0 4px 4px;transform-origin:top;}
+  .bar-year{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .bar-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);}
+
+  /* Table view */
+  .profit-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'DM Mono',monospace;}
+  .profit-table th{padding:10px 12px;text-align:left;color:var(--muted);font-size:11px;
+    text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--border);}
+  .profit-table td{padding:10px 12px;border-bottom:1px solid rgba(30,34,48,0.5);}
+  .profit-table tr:last-child td{border-bottom:none;}
+  .profit-table .ticker-col{font-weight:700;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;}
+  .profit-table .name-col{color:var(--muted);font-size:11px;}
+  .val-cell{text-align:right;}
+  .val-cell.pos{color:var(--c2);}
+  .val-cell.neg{color:#ef4444;}
+  .val-cell.neutral{color:var(--text);}
+
+  /* Legend */
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);}
+  .legend-dot{width:10px;height:10px;border-radius:2px;}
+
+  /* Overview chart (all stocks on one chart) */
+  .overview-chart{overflow-x:auto;padding-bottom:8px;}
+  .overview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;min-width:500px;}
+  .ov-col{display:flex;flex-direction:column;gap:4px;}
+  .ov-year-header{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;
+    text-align:center;padding:4px 0;border-bottom:1px solid var(--border);}
+
+  .note{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;
+    padding:12px 0 0;line-height:1.6;}
+
+  /* Hide/show tabs */
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="title-block">
+      <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+      <div>
+        <div class="logo">📈 T12: <span>Net Profit — 5 Year</span></div>
+        <div class="subtitle">Top 7 Holdings · Annual Net Profit 2020–2024</div>
+      </div>
+    </div>
+    <a href="T12-Top7-Portfolio.html" style="text-decoration:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);border:1px solid rgba(244,129,63,0.3);padding:6px 12px;border-radius:8px;">← Portfolio</a>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('charts')">📊 Charts</div>
+  <div class="tab" onclick="showTab('table')">📋 Table</div>
+  <div class="tab" onclick="showTab('notes')">ℹ️ Notes</div>
+</div>
+
+<!-- CHARTS TAB -->
+<div class="tab-content active" id="tab-charts">
+<div class="section">
+  <div class="legend" id="legend"></div>
+  <div id="chartBlocks"></div>
+</div>
+</div>
+
+<!-- TABLE TAB -->
+<div class="tab-content" id="tab-table">
+<div class="section">
+  <div class="section-title">📋 Net Profit Summary Table</div>
+  <div style="overflow-x:auto;">
+  <table class="profit-table">
+    <thead>
+      <tr>
+        <th>Stock</th>
+        <th class="val-cell">2020</th>
+        <th class="val-cell">2021</th>
+        <th class="val-cell">2022</th>
+        <th class="val-cell">2023</th>
+        <th class="val-cell">2024</th>
+        <th class="val-cell">Trend</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  </div>
+  <p class="note">* USD figures in millions. CNY figures in billions. FDS fiscal year ends Aug 31; Alibaba fiscal year ends Mar 31 (shown as closest calendar year).</p>
+</div>
+</div>
+
+<!-- NOTES TAB -->
+<div class="tab-content" id="tab-notes">
+<div class="section">
+  <div class="section-title">ℹ️ Data Notes</div>
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:8px;">Data Sources</div>
+      <p class="note">All figures from company annual reports, SEC filings (10-K / 20-F / 6-K), and HKEX announcements. US stocks in USD millions. Chinese/HK stocks in CNY billions (BYD, Alibaba, Ping An, Meituan).</p>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:8px;">Fiscal Year Notes</div>
+      <p class="note">
+        • <b>FDS</b> — Fiscal year ends August 31. "2024" = FY ending Aug 2024.<br>
+        • <b>Alibaba</b> — Fiscal year ends March 31. "2024" = FY ending Mar 2024.<br>
+        • <b>BYD, Ping An, Meituan</b> — Calendar year (Jan–Dec).<br>
+        • <b>POOL, ZTS</b> — Calendar year (Jan–Dec).<br>
+        • Net profit = Net income attributable to shareholders (GAAP).
+      </p>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;margin-bottom:8px;">Meituan Note</div>
+      <p class="note">Meituan had net losses in 2020, 2021, and 2022 due to heavy investment phase. Turned profitable in 2023. 2024 net profit CNY 35.8B (+158% YoY).</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+// Net profit: US stocks in USD millions, CN/HK in CNY billions
+const STOCKS = [
+  {
+    ticker: 'FDS', name: 'FactSet Research', currency: 'USD M', color: 'var(--c1)',
+    data: { 2020: 373, 2021: 400, 2022: 493, 2023: 519, 2024: 574 },
+    note: 'Fiscal year ends Aug 31. Steady growth driven by data subscriptions.'
+  },
+  {
+    ticker: 'POOL', name: 'Pool Corp', currency: 'USD M', color: 'var(--c2)',
+    data: { 2020: 367, 2021: 651, 2022: 749, 2023: 523, 2024: 461 },
+    note: 'Peak profit in 2022 post-pandemic pool boom. Normalising since.'
+  },
+  {
+    ticker: 'ZTS', name: 'Zoetis', currency: 'USD M', color: 'var(--c3)',
+    data: { 2020: 1638, 2021: 1996, 2022: 2094, 2023: 2206, 2024: 2490 },
+    note: 'Consistent growth in animal health medicines & vaccines.'
+  },
+  {
+    ticker: '01211', name: 'BYD', currency: 'CNY B', color: 'var(--c4)',
+    data: { 2020: 4.2, 2021: 3.0, 2022: 16.6, 2023: 30.0, 2024: 40.3 },
+    note: 'Explosive growth from EV transition. 2021 dip due to chip shortage.'
+  },
+  {
+    ticker: '09988', name: 'Alibaba', currency: 'CNY B', color: 'var(--c5)',
+    data: { 2020: 140, 2021: 150, 2022: -0.8, 2023: 72, 2024: 129 },
+    note: 'FY ends Mar 31. 2022 net loss due to investment write-downs & regulatory fines.'
+  },
+  {
+    ticker: '02318', name: 'Ping An', currency: 'CNY B', color: 'var(--c6)',
+    data: { 2020: 143, 2021: 101, 2022: 84, 2023: 86, 2024: 127 },
+    note: 'Insurance giant. Profit declined 2021–2022 from property sector exposure.'
+  },
+  {
+    ticker: '03690', name: 'Meituan', currency: 'CNY B', color: 'var(--c7)',
+    data: { 2020: -47.4, 2021: -23.5, 2022: -66.9, 2023: 13.9, 2024: 35.8 },
+    note: 'Loss years during investment phase. Strong turnaround from 2023.'
+  }
+];
+
+const YEARS = [2020, 2021, 2022, 2023, 2024];
+
+// ── LEGEND ───────────────────────────────────────────────────────────────────
+const legend = document.getElementById('legend');
+STOCKS.forEach(s => {
+  legend.innerHTML += `<div class="legend-item">
+    <div class="legend-dot" style="background:${s.color}"></div>
+    <span>${s.ticker} ${s.name}</span>
+  </div>`;
+});
+
+// ── CHARTS ───────────────────────────────────────────────────────────────────
+const chartBlocks = document.getElementById('chartBlocks');
+
+STOCKS.forEach(s => {
+  const vals = YEARS.map(y => s.data[y]);
+  const maxAbs = Math.max(...vals.map(v => Math.abs(v)));
+  const hasNeg = vals.some(v => v < 0);
+  const chartH = 90; // px for positive zone
+  const negH = hasNeg ? 40 : 0; // px for negative zone
+
+  let bars = '';
+  YEARS.forEach((y, i) => {
+    const v = vals[i];
+    const isNeg = v < 0;
+    const pct = Math.abs(v) / maxAbs;
+    const h = isNeg ? Math.round(pct * negH) : Math.round(pct * chartH);
+    const label = Math.abs(v) >= 1 && s.currency.includes('B')
+      ? (v >= 0 ? '+' : '') + v.toFixed(1) + 'B'
+      : (v >= 0 ? '+' : '') + Math.round(v) + (s.currency.includes('M') ? 'M' : 'B');
+
+    if (hasNeg) {
+      const posH = !isNeg ? h : 0;
+      const nH   =  isNeg ? h : 0;
+      bars += `<div class="bar-col">
+        <div style="height:${chartH}px;display:flex;align-items:flex-end;">
+          <div class="bar" style="height:${posH}px;background:${s.color};opacity:0.85;width:100%"
+            data-val="${label}"></div>
+        </div>
+        <div style="height:${negH}px;display:flex;align-items:flex-start;">
+          <div class="bar neg" style="height:${nH}px;background:#ef4444;opacity:0.8;width:100%"
+            data-val="${label}"></div>
+        </div>
+        <div class="bar-year">${y}</div>
+        <div class="bar-val" style="color:${isNeg?'#ef4444':s.color}">${label}</div>
+      </div>`;
+    } else {
+      bars += `<div class="bar-col">
+        <div class="bar-wrap">
+          <div class="bar" style="height:${h}px;background:${s.color};opacity:0.85"
+            data-val="${label}"></div>
+        </div>
+        <div class="bar-year">${y}</div>
+        <div class="bar-val" style="color:${s.color}">${label}</div>
+      </div>`;
+    }
+  });
+
+  // Trend arrow
+  const first = vals[0], last = vals[vals.length-1];
+  const trendUp = last > first;
+  const trendPct = first !== 0 ? ((last - first) / Math.abs(first) * 100).toFixed(0) : '—';
+  const trendColor = trendUp ? 'var(--c2)' : '#ef4444';
+
+  chartBlocks.innerHTML += `
+  <div class="stock-block">
+    <div class="stock-header">
+      <div>
+        <div class="stock-name" style="color:${s.color}">${s.ticker} <span style="color:var(--text);font-size:13px;font-weight:400">${s.name}</span></div>
+        <div class="stock-meta">${s.currency} · Net Profit Attributable to Shareholders</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:${trendColor}">
+          ${trendUp ? '▲' : '▼'} ${trendPct}% <span style="color:var(--muted);font-size:10px">2020→2024</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${s.note.slice(0,50)}…</div>
+      </div>
+    </div>
+    <div class="bar-chart">${bars}</div>
+    ${hasNeg ? '<div style="font-size:10px;color:#ef4444;font-family:DM Mono,monospace;">Red bars = net loss</div>' : ''}
+  </div>`;
+});
+
+// ── TABLE ─────────────────────────────────────────────────────────────────────
+const tbody = document.getElementById('tableBody');
+STOCKS.forEach((s, si) => {
+  const colors = ['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)','var(--c7)'];
+  const vals = YEARS.map(y => s.data[y]);
+  const first = vals[0], last = vals[vals.length-1];
+  const trendUp = last > first;
+  const trendPct = first !== 0 ? Math.abs(((last-first)/Math.abs(first)*100)).toFixed(0) : '—';
+
+  const cells = YEARS.map(y => {
+    const v = s.data[y];
+    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : 'neutral';
+    const fmt = s.currency.includes('B')
+      ? (v >= 0 ? '' : '') + v.toFixed(1) + 'B'
+      : (v >= 0 ? '' : '') + Math.round(v) + 'M';
+    return `<td class="val-cell ${cls}">${fmt}</td>`;
+  }).join('');
+
+  tbody.innerHTML += `<tr>
+    <td>
+      <div class="ticker-col" style="color:${colors[si]}">${s.ticker}</div>
+      <div class="name-col">${s.name} · ${s.currency}</div>
+    </td>
+    ${cells}
+    <td class="val-cell" style="color:${trendUp?'var(--c2)':'#ef4444'}">${trendUp?'▲':'▼'}${trendPct}%</td>
+  </tr>`;
+});
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+<script src="/view-counter.js"></script>
+</body>
+</html>
