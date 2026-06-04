@@ -52,15 +52,24 @@ def fetch_positions():
             "marketValue": round(p.position * p.avgCost, 2),
         })
 
-    net_liq = next(
-        (av.value for av in account_vals
-         if av.tag == 'NetLiquidation' and av.currency == 'USD'), None
-    )
+    def get_val(tag, currency='USD'):
+        return next((av.value for av in account_vals
+                     if av.tag == tag and av.currency == currency), None)
+
+    net_liq        = get_val('NetLiquidation')
+    unrealized_pnl = get_val('UnrealizedPnL')
+    realized_pnl   = get_val('RealizedPnL')
+    gross_pos_val  = get_val('GrossPositionValue')
+    cash           = get_val('TotalCashValue')
 
     output = {
-        "fetchedAt"     : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "netLiquidation": net_liq,
-        "positions"     : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
+        "fetchedAt"       : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "netLiquidation"  : net_liq,
+        "unrealizedPnL"   : unrealized_pnl,
+        "realizedPnL"     : realized_pnl,
+        "grossPositionVal": gross_pos_val,
+        "cashBalance"     : cash,
+        "positions"       : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
     }
 
     ib.disconnect()
