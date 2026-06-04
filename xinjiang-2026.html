@@ -1009,6 +1009,49 @@
   notesEl.addEventListener('input', () => localStorage.setItem(NOTES_KEY, notesEl.value));
 
   loadChecklist();
+
+  // Task tracker
+  const TASK_KEY = 'xinjiang2026_tasks';
+  function loadTasks() {
+    const saved = JSON.parse(localStorage.getItem(TASK_KEY) || '{}');
+    Object.keys(saved).forEach(id => {
+      const el = document.querySelector(`[onclick*="${id}"]`);
+      if (el && saved[id]) {
+        el.classList.add('done');
+        el.classList.remove('urgent','waiting');
+      }
+    });
+    updateTaskOwnerStatus();
+  }
+  function toggleTask(el, id) {
+    el.classList.toggle('done');
+    if (el.classList.contains('done')) {
+      el.classList.remove('urgent','waiting');
+    }
+    const saved = JSON.parse(localStorage.getItem(TASK_KEY) || '{}');
+    saved[id] = el.classList.contains('done');
+    localStorage.setItem(TASK_KEY, JSON.stringify(saved));
+    updateTaskOwnerStatus();
+  }
+  function updateTaskOwnerStatus() {
+    const poTasks = document.querySelectorAll('#po-tasks .task-item');
+    const paulTasks = document.querySelectorAll('#paul-tasks .task-item');
+    const poDone = [...poTasks].filter(t => t.classList.contains('done')).length;
+    const paulDone = [...paulTasks].filter(t => t.classList.contains('done')).length;
+    // Unlock Paul tasks when all PO tasks done
+    if (poDone === poTasks.length) {
+      paulTasks.forEach(t => {
+        if (!t.classList.contains('done')) {
+          t.classList.remove('waiting');
+          t.classList.add('urgent');
+        }
+      });
+      document.querySelector('.task-arrow').innerHTML = '✅ PO tickets confirmed — Paul, book the car now!';
+      document.querySelector('.task-arrow').style.color = '#2ecc71';
+    }
+  }
+  loadTasks();
+
 </script>
 </body>
 </html>
