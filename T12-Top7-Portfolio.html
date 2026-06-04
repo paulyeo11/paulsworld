@@ -17,8 +17,12 @@
   .logo span{color:var(--accent);}
   .subtitle{font-size:12px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;}
   .home-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(244,129,63,0.12);border:1px solid rgba(244,129,63,0.3);color:var(--accent);text-decoration:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;}
+  .refresh-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+  .refresh-btn:hover{background:rgba(99,102,241,0.25);}
+  .refresh-btn.spinning{animation:spin 1s linear infinite;}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   .badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;}
-  .badge{font-family:'DM Mono',monospace;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);}
+  .badge{font-family:'DM Mono',monospace;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);}
   .badge.ok{color:var(--green);border-color:rgba(16,185,129,0.3);}
   .badge.loading{color:#f59e0b;border-color:rgba(245,158,11,0.3);}
   .badge.err{color:var(--red);border-color:rgba(239,68,68,0.3);}
@@ -48,9 +52,10 @@
   .pos-pnl.up{color:var(--green);}.pos-pnl.down{color:var(--red);}
   .pos-value{font-family:'DM Mono',monospace;font-size:12px;margin-top:2px;}
   .pos-invested{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+  .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
   .timestamp{position:relative;z-index:1;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);padding:20px 24px 0;}
   .loading{text-align:center;color:var(--muted);font-size:14px;padding:40px;font-family:'DM Mono',monospace;}
-  .t20-note{position:relative;z-index:1;text-align:center;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;padding:8px 24px 0;}
 </style>
 </head>
 <body>
@@ -61,19 +66,21 @@
       <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
       <div>
         <div class="logo">📊 T12: <span>Top 7 Portfolio</span></div>
-        <div class="subtitle">T12 · Live from T20 · IBKR + Tiger · SGD</div>
+        <div class="subtitle">T12 · Live prices · IBKR + Tiger · SGD</div>
       </div>
     </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">🔄 Refresh</button>
   </div>
   <div class="badges">
-    <span class="badge loading" id="syncStatus">⟳ Loading T20 data…</span>
-    <span class="badge" id="fetchTime">—</span>
+    <span class="badge loading" id="posStatus">⟳ Loading positions…</span>
+    <span class="badge loading" id="priceStatus">⟳ Loading prices…</span>
     <span class="badge" id="fxBadge">USD/SGD: — · HKD/SGD: —</span>
+    <span class="badge" id="fetchTime">—</span>
   </div>
 </header>
 
 <div class="summary-grid">
-  <div class="sum-card"><div class="sum-label">Total Value</div><div class="sum-value" id="sumValue">—</div><div class="sum-sub">SGD</div></div>
+  <div class="sum-card"><div class="sum-label">Total Value</div><div class="sum-value" id="sumValue">—</div><div class="sum-sub">SGD · live prices</div></div>
   <div class="sum-card"><div class="sum-label">Total Invested</div><div class="sum-value" id="sumInvested">—</div><div class="sum-sub">SGD</div></div>
   <div class="sum-card"><div class="sum-label">Total P&amp;L</div><div class="sum-value" id="sumPnl">—</div><div class="sum-sub" id="sumPnlPct"></div></div>
   <div class="sum-card"><div class="sum-label">Positions</div><div class="sum-value" id="sumCount">—</div><div class="sum-sub" id="sumWinLoss"></div></div>
@@ -87,8 +94,7 @@
   <button class="sort-btn" onclick="sortBy('invested',this)">Invested</button>
 </div>
 
-<div class="positions" id="positionList"><div class="loading">⟳ Fetching live T20 data…</div></div>
-<div class="t20-note" id="t20note">Data source: T20 · positions.json + tiger_positions.json</div>
+<div class="positions" id="positionList"><div class="loading">⟳ Fetching live data…</div></div>
 <div class="timestamp" id="timestamp"></div>
 
 <script>
@@ -97,7 +103,7 @@ const TIGER_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/ref
 const PRICE_API = '/api/td';
 
 const NAME_MAP = {
-  'FDS':'FactSet Research','POOL':'Pool Corp','ZTS':'Zoetis','AAPL':'Apple',
+  'FDS':'FactSet Research','POOL':'Pool Corp','ZTS':'Zoetis','AAPL':'Apple','NVDA':'Nvidia',
   '1211.HK':'BYD','1810.HK':'Xiaomi','2318.HK':'Ping An','2800.HK':'Tracker Fund',
   '3067.HK':'CSOP MSCI HK','3690.HK':'Meituan','6862.HK':'Haidilao',
   '9618.HK':'JD.com','9988.HK':'Alibaba','9999.HK':'NetEase','9888.HK':'Baidu',
@@ -105,107 +111,140 @@ const NAME_MAP = {
 };
 
 let fxRates = { USD: 1.285, HKD: 0.172, SGD: 1 };
-let allPositions = [];
+let livePrices = {};
+let rawPositions = [];   // all merged positions with qty/avgCost
+let allPositions = [];   // top 7 after price computation
 let currentSort = 'value';
 
+// Convert broker symbol → Yahoo Finance symbol
+function yahooSymbol(p) {
+  const cur = (p.currency || '').toUpperCase();
+  const sym = p.symbol || '';
+  if (cur === 'HKD') return parseInt(sym, 10) + '.HK';
+  if (cur === 'SGD' && !sym.includes('.')) return sym + '.SI';
+  return sym;
+}
+
+function getQty(p)     { return p.position || p.quantity || 0; }
+function getAvg(p)     { return p.avgCost || 0; }
+function getBroker(p)  { return p.position != null ? 'IBKR' : 'TIGER'; }
+
+function setBadge(id, cls, txt) {
+  const el = document.getElementById(id);
+  el.className = 'badge ' + cls; el.textContent = txt;
+}
+
 async function loadAll() {
-  setStatus('loading', '⟳ Loading T20 data…');
+  // Spin refresh button
+  const btn = document.getElementById('refreshBtn');
+  btn.querySelector ? null : null;
+  btn.style.pointerEvents = 'none';
+  btn.textContent = '⟳ Loading…';
+
+  setBadge('posStatus',   'loading', '⟳ Loading positions…');
+  setBadge('priceStatus', 'loading', '⟳ Loading prices…');
+
   try {
+    // Step 1: Load broker positions
     const [ibkrRes, tigerRes] = await Promise.all([
-      fetch(IBKR_URL + '?t=' + Date.now()),
+      fetch(IBKR_URL  + '?t=' + Date.now()),
       fetch(TIGER_URL + '?t=' + Date.now())
     ]);
     const ibkr  = ibkrRes.ok  ? await ibkrRes.json()  : { positions: [] };
     const tiger = tigerRes.ok ? await tigerRes.json() : { positions: [] };
 
-    // Show fetch times
-    const ft = ibkr.fetchedAt || tiger.fetchedAt || '—';
-    document.getElementById('fetchTime').textContent = '🕐 ' + ft;
+    const fetchedAt = ibkr.fetchedAt || tiger.fetchedAt || '—';
+    document.getElementById('fetchTime').textContent = '📂 ' + fetchedAt;
 
-    // Try live FX from price API
+    // Merge all positions
+    rawPositions = [
+      ...(ibkr.positions  || []).map(p => ({ ...p, broker: 'IBKR'  })),
+      ...(tiger.positions || []).map(p => ({ ...p, broker: 'TIGER' }))
+    ];
+    setBadge('posStatus', 'ok', '✓ ' + rawPositions.length + ' positions loaded');
+
+    // Step 2: Fetch live prices + FX from Yahoo via /api/td
+    const yahooSyms = [...new Set(rawPositions.map(yahooSymbol))];
+    const allSyms   = [...yahooSyms, 'USDSGD=X', 'HKDSGD=X'];
+
     try {
-      const fxRes = await fetch(PRICE_API + '?symbols=USDSGD%3DX%2CHKDSGD%3DX');
-      if (fxRes.ok) {
-        const fxMap = await fxRes.json();
-        if (fxMap['USDSGD=X']?.price) fxRates.USD = parseFloat(fxMap['USDSGD=X'].price);
-        if (fxMap['HKDSGD=X']?.price) fxRates.HKD = parseFloat(fxMap['HKDSGD=X'].price);
+      const priceRes = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(allSyms.join(',')));
+      if (!priceRes.ok) throw new Error('HTTP ' + priceRes.status);
+      const priceMap = await priceRes.json();
+
+      // Update FX rates
+      if (priceMap['USDSGD=X']?.price) fxRates.USD = parseFloat(priceMap['USDSGD=X'].price);
+      if (priceMap['HKDSGD=X']?.price) fxRates.HKD = parseFloat(priceMap['HKDSGD=X'].price);
+
+      // Store live prices
+      let loaded = 0;
+      yahooSyms.forEach(s => {
+        const q = priceMap[s];
+        if (q && !q.error && q.price != null) {
+          livePrices[s] = parseFloat(q.price);
+          if (q.name) NAME_MAP[s] = q.name;
+          loaded++;
+        }
+      });
+
+      document.getElementById('fxBadge').textContent =
+        'USD/SGD: ' + fxRates.USD.toFixed(4) + ' · HKD/SGD: ' + fxRates.HKD.toFixed(4);
+      setBadge('priceStatus', loaded > 0 ? 'ok' : 'err',
+        loaded > 0 ? '<span class="live-dot"></span> ' + loaded + '/' + yahooSyms.length + ' live prices' : '⚠ Prices unavailable');
+
+    } catch(e) {
+      setBadge('priceStatus', 'err', '⚠ Price API: ' + e.message + ' (using broker values)');
+    }
+
+    // Step 3: Compute positions with live prices
+    const computed = rawPositions.map(p => {
+      const ySym    = yahooSymbol(p);
+      const cur     = (p.currency || 'USD').toUpperCase();
+      const fx      = fxRates[cur] || 1;
+      const qty     = getQty(p);
+      const avgLocal= getAvg(p);
+      const broker  = getBroker(p);
+      const hkKey   = parseInt(p.symbol, 10) + '.HK';
+      const name    = NAME_MAP[ySym] || NAME_MAP[hkKey] || NAME_MAP[p.symbol] || p.symbol;
+
+      // Use live price if available, else fall back to broker marketValue
+      let priceLocal, valueSGD;
+      if (livePrices[ySym] != null) {
+        priceLocal = livePrices[ySym];
+        valueSGD   = priceLocal * qty * fx;
+      } else {
+        const mktVal = p.marketValue || 0;
+        valueSGD     = mktVal * fx;
+        priceLocal   = qty > 0 ? mktVal / qty : 0;
       }
-    } catch(e) {}
-    document.getElementById('fxBadge').textContent =
-      'USD/SGD: ' + fxRates.USD.toFixed(4) + ' · HKD/SGD: ' + fxRates.HKD.toFixed(4);
 
-    // Merge IBKR positions
-    const merged = [];
-    (ibkr.positions || []).forEach(p => {
-      const fx = fxRates[p.currency] || 1;
-      const qty = p.position || 0;
-      const avgCostLocal = p.avgCost || 0;
-      const mktValLocal  = p.marketValue || 0;
-      merged.push({
-        ticker:   p.symbol,
-        name:     NAME_MAP[p.symbol] || p.symbol,
-        qty:      qty,
-        currency: p.currency,
-        broker:   'IBKR',
-        priceSGD: qty > 0 ? (mktValLocal * fx) / qty : 0,
-        valueSGD: mktValLocal * fx,
-        investedSGD: avgCostLocal * qty * fx,
-        avgCostLocal: avgCostLocal,
-        mktValLocal:  mktValLocal
-      });
+      const investedSGD = avgLocal * qty * fx;
+      const priceSGD    = priceLocal * fx;
+
+      return { ticker: p.symbol, name, qty, currency: cur, broker, ySym,
+               priceLocal, priceSGD, valueSGD, investedSGD, avgLocal };
     });
 
-    // Merge Tiger positions
-    (tiger.positions || []).forEach(p => {
-      const fx = fxRates[p.currency] || 1;
-      const qty = p.quantity || 0;
-      const avgCostLocal = p.avgCost || 0;
-      const mktValLocal  = p.marketValue || 0;
-      // Map HK ticker e.g. 01211 → 1211.HK
-      const hkKey = parseInt(p.symbol) + '.HK';
-      const name  = NAME_MAP[hkKey] || NAME_MAP[p.symbol] || p.symbol;
-      merged.push({
-        ticker:   p.symbol,
-        name:     name,
-        qty:      qty,
-        currency: p.currency,
-        broker:   'TIGER',
-        priceSGD: qty > 0 ? (mktValLocal * fx) / qty : 0,
-        valueSGD: mktValLocal * fx,
-        investedSGD: avgCostLocal * qty * fx,
-        avgCostLocal: avgCostLocal,
-        mktValLocal:  mktValLocal
-      });
-    });
+    // Top 7 by value
+    computed.sort((a, b) => b.valueSGD - a.valueSGD);
+    allPositions = computed.slice(0, 7);
 
-    // Sort by value desc, take top 7
-    merged.sort((a,b) => b.valueSGD - a.valueSGD);
-    allPositions = merged.slice(0, 7);
-
-    setStatus('ok', '☁ Live from T20 ✓');
     render();
 
   } catch(e) {
-    setStatus('err', '⚠ Load failed: ' + e.message);
+    setBadge('posStatus', 'err', '⚠ ' + e.message);
     document.getElementById('positionList').innerHTML =
-      '<div class="loading">⚠ Could not load T20 data</div>';
+      '<div class="loading">⚠ Could not load data: ' + e.message + '</div>';
   }
+
+  btn.style.pointerEvents = '';
+  btn.textContent = '🔄 Refresh';
 }
 
-function setStatus(cls, txt) {
-  const el = document.getElementById('syncStatus');
-  el.className = 'badge ' + cls; el.textContent = txt;
-}
-
-const fmt = n => 'S$' + n.toLocaleString('en-SG', {minimumFractionDigits:2, maximumFractionDigits:2});
-const fmtLocal = (n, cur) => {
-  const sym = cur === 'USD' ? 'US$' : cur === 'HKD' ? 'HK$' : 'S$';
-  return sym + Math.abs(n).toLocaleString('en-SG', {minimumFractionDigits:2, maximumFractionDigits:2});
-};
-
-function calcPnlPct(p) {
-  return p.investedSGD > 0 ? ((p.valueSGD - p.investedSGD) / p.investedSGD) * 100 : null;
-}
+const fmt     = n => 'S$' + n.toLocaleString('en-SG', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtFx   = (n, cur) => (cur==='USD'?'US$':cur==='HKD'?'HK$':'S$') +
+                              Math.abs(n).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
+const calcPct = p => p.investedSGD > 0 ? ((p.valueSGD - p.investedSGD) / p.investedSGD) * 100 : null;
 
 function sortBy(by, btn) {
   currentSort = by;
@@ -216,20 +255,21 @@ function sortBy(by, btn) {
 
 function render() {
   const sorted = [...allPositions];
-  const pct = p => calcPnlPct(p) || 0;
-  if (currentSort === 'pnlPct')    sorted.sort((a,b) => pct(b) - pct(a));
-  else if (currentSort === 'value') sorted.sort((a,b) => b.valueSGD - a.valueSGD);
+  if      (currentSort === 'pnlPct')   sorted.sort((a,b) => (calcPct(b)||0) - (calcPct(a)||0));
+  else if (currentSort === 'value')    sorted.sort((a,b) => b.valueSGD - a.valueSGD);
   else if (currentSort === 'invested') sorted.sort((a,b) => b.investedSGD - a.investedSGD);
-  else sorted.sort((a,b) => a.ticker.localeCompare(b.ticker));
+  else                                  sorted.sort((a,b) => a.ticker.localeCompare(b.ticker));
 
   const list = document.getElementById('positionList');
   if (!sorted.length) { list.innerHTML = '<div class="loading">No data</div>'; updateSummary(); return; }
 
+  const isLive = s => livePrices[s] != null;
+
   list.innerHTML = sorted.map(p => {
-    const pp = calcPnlPct(p);
+    const pp = calcPct(p);
     const hasPnl = pp !== null && p.investedSGD > 0;
     const cls = hasPnl ? (pp >= 0 ? 'winner' : 'loser') : '';
-    const priceLocal = p.qty > 0 ? p.mktValLocal / p.qty : 0;
+    const liveIndicator = isLive(p.ySym) ? '<span class="live-dot"></span>' : '';
     return `<div class="pos-card ${cls}">
       <div>
         <div class="pos-ticker">${p.ticker}</div>
@@ -238,8 +278,8 @@ function render() {
         <span class="pos-broker ${p.broker}">${p.broker}</span>
       </div>
       <div class="pos-right">
-        <div class="pos-price">${fmt(p.priceSGD)}</div>
-        <div class="pos-price-fx">(${fmtLocal(priceLocal, p.currency)})</div>
+        <div class="pos-price">${liveIndicator}${fmt(p.priceSGD)}</div>
+        <div class="pos-price-fx">(${fmtFx(p.priceLocal, p.currency)})</div>
         ${hasPnl ? `<div class="pos-pnl ${pp>=0?'up':'down'}">${pp>=0?'▲':'▼'} ${pp>=0?'+':''}${pp.toFixed(2)}%</div>` : ''}
         <div class="pos-value">${fmt(p.valueSGD)}</div>
         ${p.investedSGD > 0 ? `<div class="pos-invested">invested ${fmt(p.investedSGD)}</div>` : ''}
@@ -250,26 +290,26 @@ function render() {
 }
 
 function updateSummary() {
-  const tv = allPositions.reduce((s,p) => s + p.valueSGD, 0);
-  const ti = allPositions.reduce((s,p) => s + p.investedSGD, 0);
+  const tv  = allPositions.reduce((s,p) => s + p.valueSGD, 0);
+  const ti  = allPositions.reduce((s,p) => s + p.investedSGD, 0);
   const pnl = ti > 0 ? tv - ti : null;
   const pct = ti > 0 ? ((tv - ti) / ti) * 100 : null;
-  const w = allPositions.filter(p => (calcPnlPct(p)||0) > 0).length;
-  const l = allPositions.filter(p => (calcPnlPct(p)||0) < 0).length;
-  document.getElementById('sumValue').textContent = fmt(tv);
+  const w   = allPositions.filter(p => (calcPct(p)||0) > 0).length;
+  const l   = allPositions.filter(p => (calcPct(p)||0) < 0).length;
+  document.getElementById('sumValue').textContent    = fmt(tv);
   document.getElementById('sumInvested').textContent = ti > 0 ? fmt(ti) : '—';
   const pe = document.getElementById('sumPnl');
   if (pnl !== null) {
-    pe.textContent = (pnl>=0?'+':'') + fmt(pnl);
-    pe.className = 'sum-value ' + (pnl>=0?'green':'red');
+    pe.textContent  = (pnl>=0?'+':'') + fmt(pnl);
+    pe.className    = 'sum-value ' + (pnl>=0?'green':'red');
     document.getElementById('sumPnlPct').textContent = (pct>=0?'+':'') + pct.toFixed(2) + '%';
-  } else { pe.textContent = '—'; }
-  document.getElementById('sumCount').textContent = allPositions.length;
-  document.getElementById('sumWinLoss').textContent = `${w} up · ${l} down`;
+  } else { pe.textContent = '—'; pe.className = 'sum-value'; }
+  document.getElementById('sumCount').textContent    = allPositions.length;
+  document.getElementById('sumWinLoss').textContent  = `${w} up · ${l} down`;
   const now = new Date();
-  document.getElementById('timestamp').textContent = 'Loaded: ' +
-    now.toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
-    now.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('timestamp').textContent   =
+    'Updated: ' + now.toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'}) +
+    ' ' + now.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
 }
 
 loadAll();
