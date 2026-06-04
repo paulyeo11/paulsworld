@@ -220,7 +220,12 @@ function yahooSymbol(p) {
 }
 
 // Normalise field names: IBKR uses 'position', Tiger uses 'quantity'
-function getQty(p) { return p.position || p.quantity || 0; }
+function getQty(p) {
+  const raw = p.position || p.quantity || 0;
+  // Tiger fractional shares: avgCost=0, large qty integer, tiny market value
+  if (p.avgCost === 0 && raw > 100 && (p.marketValue || 0) < 500) return raw / 100000;
+  return raw;
+}
 
 function setPriceStatus(cls, text) {
   const el = document.getElementById('price-status');
@@ -462,7 +467,7 @@ function renderTable() {
     }
 
     return `<tr>
-      <td><span class="symbol">${p.symbol}</span>${NAME_MAP[ysym]?`<span class="stock-name">${NAME_MAP[ysym]}</span>`:''}<span style="color:#94a3b8;font-size:.78rem;font-family:'DM Mono',monospace;display:block;margin-top:3px;">${(()=>{const dispQty=(avgCost===0&&qty>100&&(p.marketValue||0)<500)?(qty/100000).toFixed(5):qty.toLocaleString();return 'qty: '+dispQty;})()}</span></td>
+      <td><span class="symbol">${p.symbol}</span>${NAME_MAP[ysym]?`<span class="stock-name">${NAME_MAP[ysym]}</span>`:''}<span style="color:#94a3b8;font-size:.78rem;font-family:'DM Mono',monospace;display:block;margin-top:3px;">qty: ${qty.toLocaleString()}</span></td>
       <td class="hide-sm"><span class="badge badge-${p.broker}">${p.broker}</span></td>
       <td class="hide-sm"><span class="badge badge-${cur}">${cur}</span></td>
       <td class="num">${priceBlock}</td>
