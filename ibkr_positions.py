@@ -15,7 +15,7 @@ Then visit: https://paulsworld.vercel.app/ai5.html
 """
 
 from ib_async import IB, util
-import json, base64, requests, sys
+import json, sys, os, subprocess
 from datetime import datetime
 
 # Make stdout/stderr UTF-8 so emoji (✅) don't crash the Windows cp1252 console
@@ -30,9 +30,10 @@ HOST      = '127.0.0.1'
 PORT      = 4001        # 4001=IB Gateway, 7496=TWS Live, 7497=TWS Paper
 CLIENT_ID = 1
 # ── GITHUB CONFIG ───────────────────────────────────────────
-GITHUB_TOKEN = "YOUR_GITHUB_TOKEN_HERE"  # paste your token here
-GITHUB_REPO  = "paulyeo11/Dynamic-Index"
-GITHUB_FILE  = "positions.json"
+# Upload now goes through the LOCAL git clone (this directory is a working
+# clone of paulyeo11/paulsworld, remote 'origin', branch 'main') using the
+# already-configured git credential helper. No token is stored or used here.
+GITHUB_FILE   = "positions.json"
 GITHUB_BRANCH = "main"
 # ────────────────────────────────────────────────────────────
 
@@ -194,35 +195,91 @@ def fetch_positions():
         json.dump(output, f, indent=2)
     print("✅ Saved positions.json locally.")
 
-    # Upload to GitHub
-    upload_to_github(output)
+    # Upload to GitHub (via local git clone + credential helper — no token)
+    upload_to_github()
 
-def upload_to_github(data):
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE}"
+def upload_to_github():
+    """Push positions.json to GitHub using the LOCAL git clone and its already
+    configured credential helper — NO embedded token, no GitHub REST API.
 
-    # Get existing SHA (needed for update)
-    r = requests.get(f"{url}?ref={GITHUB_BRANCH}", headers=headers)
-    sha = r.json().get("sha") if r.status_code == 200 else None
+    This directory is a working clone of paulyeo11/paulsworld (origin/main).
+    The working tree may contain unrelated edits (.gitignore, HTML, etc.), so
+    we stage ONLY positions.json and never `git add .`.
 
-    content = base64.b64encode(json.dumps(data, indent=2).encode()).decode()
-    payload = {
-        "message": f"Update positions {data['fetchedAt']}",
-        "content": content,
-        "branch" : GITHUB_BRANCH
-    }
-    if sha:
-        payload["sha"] = sha
+    Divergence handling: commit positions.json first so the index is clean,
+    then push. If the remote has advanced (push rejected), stash any unrelated
+    *unstaged* changes, `git pull --rebase`, push again, then restore the
+    stash. Stashing keeps the rebase from failing on dirty working-tree files.
 
-    r = requests.put(url, headers=headers, json=payload)
-    if r.status_code in (200, 201):
-        print("✅ Uploaded to GitHub successfully!")
-        print("🌐 Visit: https://paulsworld.vercel.app/ai5.html")
-    else:
-        print(f"❌ GitHub upload failed: {r.status_code} — {r.json().get('message')}")
+    Any failure prints a ❌ but never crashes the script — the data is already
+    saved locally regardless.
+    """
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+
+    def git(*args, check=True):
+        """Run a git command in the repo dir; return CompletedProcess.
+        Captures stdout/stderr as text. raise on non-zero only if check=True."""
+        return subprocess.run(
+            ["git", *args],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            check=check,
+        )
+
+    try:
+        # a. Stage ONLY positions.json (never other working-tree edits).
+        git("add", GITHUB_FILE)
+
+        # b. Anything actually staged? `git diff --cached --quiet` exits 0 when
+        #    there are NO staged changes, non-zero (1) when there are.
+        staged = git("diff", "--cached", "--quiet", "--", GITHUB_FILE, check=False)
+        if staged.returncode == 0:
+            print("ℹ️  positions.json unchanged, nothing to push.")
+            return
+
+        # c. Commit just this file.
+        commit = git("commit", "-m",
+                     "Auto-refresh IBKR positions data [skip ci]", check=False)
+        print((commit.stdout or commit.stderr).strip())
+
+        # d. Try to push; on rejection, rebase onto the advanced remote.
+        push = git("push", "origin", f"HEAD:{GITHUB_BRANCH}", check=False)
+        if push.returncode != 0:
+            print("⚠️  Push rejected (remote advanced) — rebasing...")
+            print((push.stderr or push.stdout).strip())
+
+            # Stash unrelated UNSTAGED changes so the rebase can't fail on a
+            # dirty tree. `git diff --quiet` exits non-zero if unstaged edits
+            # exist. (Our commit already captured positions.json.)
+            dirty = git("diff", "--quiet", check=False)
+            stashed = False
+            if dirty.returncode != 0:
+                git("stash", "push", "-m", "auto-refresh-stash", check=False)
+                stashed = True
+
+            try:
+                pull = git("pull", "--rebase", "origin", GITHUB_BRANCH, check=False)
+                print((pull.stdout or pull.stderr).strip())
+                push = git("push", "origin", f"HEAD:{GITHUB_BRANCH}", check=False)
+            finally:
+                # Always restore the stashed unrelated changes.
+                if stashed:
+                    pop = git("stash", "pop", check=False)
+                    if pop.returncode != 0:
+                        print("⚠️  Could not auto-restore stashed changes:")
+                        print((pop.stderr or pop.stdout).strip())
+
+        # e. Report final push result (commit SHA / "main -> main" line).
+        if push.returncode == 0:
+            print((push.stderr or push.stdout).strip())
+            print("✅ Uploaded to GitHub successfully!")
+            print("🌐 Visit: https://paulsworld.vercel.app/ai5.html")
+        else:
+            print(f"❌ GitHub push failed:\n{(push.stderr or push.stdout).strip()}")
+
+    except Exception as e:
+        print(f"❌ GitHub push failed (data is saved locally): {e}")
 
 if __name__ == "__main__":
     fetch_positions()
