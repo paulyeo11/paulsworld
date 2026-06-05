@@ -65,6 +65,21 @@
   .diff-line.nil{color:var(--muted);}
   .total-val-sub{color:#a0aec0;font-size:.85rem;display:block;margin-top:3px;font-family:'DM Mono',monospace;}
   .price-loading{color:var(--muted);font-style:italic;font-size:.9rem;}
+  /* ── IBKR Options cards (scoped: .opt-*) ───────────────────────── */
+  .opt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:16px;}
+  .opt-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+  .opt-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+  .opt-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+  .opt-ticker{font-weight:700;font-size:1.35rem;color:#fff;font-family:'DM Mono',monospace;letter-spacing:-.02em;}
+  .opt-contract{font-size:.8rem;color:#a0aec0;font-family:'DM Mono',monospace;margin-bottom:14px;}
+  .opt-qty{font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;}
+  .opt-kv{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 14px;}
+  .opt-kv-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:3px;}
+  .opt-kv-val{font-size:1rem;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;line-height:1.1;}
+  .opt-kv-val.pos{color:var(--green);}
+  .opt-kv-val.neg{color:var(--red);}
+  .opt-kv-val.nil{color:var(--muted);}
+  .opt-kv-val.dte{color:var(--accent);}
   #empty-state{text-align:center;padding:50px;color:var(--muted);font-size:.88rem;display:none;}
   .price-note{font-size:.65rem;color:var(--muted);text-align:center;padding:10px 16px 14px;line-height:1.5;}
   footer{text-align:center;color:var(--muted);font-size:.7rem;font-family:'DM Mono',monospace;margin-top:40px;line-height:1.8;}
@@ -225,25 +240,7 @@
         <div class="table-title">📑 IBKR Options</div>
         <div id="opt-count">—</div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Underlying</th>
-            <th>Strike</th>
-            <th class="hide-sm">Exp</th>
-            <th>DTE</th>
-            <th>C/P</th>
-            <th>Qty</th>
-            <th>Delta</th>
-            <th class="hide-sm">Avg Cost</th>
-            <th class="hide-sm">Mkt Value</th>
-            <th class="hide-sm">Unreal P&L</th>
-            <th class="hide-sm">IV</th>
-            <th class="hide-sm">Mark</th>
-          </tr>
-        </thead>
-        <tbody id="options-body"></tbody>
-      </table>
+      <div class="opt-cards" id="options-body"></div>
       <div id="options-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem;">No option positions.</div>
       <div class="price-note">Greeks via IBKR (live entitlement) — blank values mean no options market-data subscription; delayed/none shown.</div>
     </div>
@@ -880,28 +877,51 @@ function renderOptions(options) {
     return Math.round((e - t) / 86400000);
   };
 
+  // Compact "Jul 17 '26" style expiry label (falls back to raw / —).
+  const expLabel = exp => {
+    if (!exp) return '—';
+    const m = String(exp).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return exp;
+    const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1];
+    return `${mon} ${+m[3]} '${m[1].slice(2)}`;
+  };
+  // One key/value block. Add `cls` to colour the value (pos/neg/nil/dte).
+  const kv = (label, value, cls = '') =>
+    `<div><div class="opt-kv-label">${label}</div><div class="opt-kv-val${cls ? ' ' + cls : ''}">${value}</div></div>`;
+
   body.innerHTML = list.map(o => {
     const right = (o.right || '').toUpperCase();
+    const rightWord = right === 'C' ? 'Call' : (right === 'P' ? 'Put' : '');
     const rightBadge = right === 'C'
       ? `<span class="badge" style="background:rgba(0,212,170,.15);color:var(--green);">CALL</span>`
       : (right === 'P' ? `<span class="badge" style="background:rgba(239,68,68,.15);color:var(--red);">PUT</span>` : (right || '—'));
     const upnl = o.unrealizedPnL;
     const upnlCls = upnl == null || isNaN(upnl) ? 'nil' : (upnl > 0 ? 'pos' : (upnl < 0 ? 'neg' : 'nil'));
     const ivPct = (o.iv == null || isNaN(o.iv)) ? '—' : (Number(o.iv) * 100).toFixed(1) + '%';
-    return `<tr>
-      <td><span class="symbol">${o.underlying || '—'}</span></td>
-      <td class="num">${num(o.strike)}</td>
-      <td class="num hide-sm">${o.expiry || '—'}</td>
-      <td class="num">${dte(o.expiry)}</td>
-      <td>${rightBadge}</td>
-      <td class="num">${o.qty == null ? '—' : Number(o.qty).toLocaleString()}</td>
-      <td class="num">${num(o.delta, 3)}</td>
-      <td class="num hide-sm">${num(o.avgCost)}</td>
-      <td class="num hide-sm">${money(o.marketValue)}</td>
-      <td class="num hide-sm"><span class="diff-line ${upnlCls}">${money(upnl)}</span></td>
-      <td class="num hide-sm">${ivPct}</td>
-      <td class="num hide-sm">${num(o.mark)}</td>
-    </tr>`;
+    // Qty hint: -1 → "Sold 1", positive → "Bought N".
+    const qtyHint = o.qty == null ? ''
+      : (o.qty < 0 ? `Sold ${Math.abs(o.qty)}` : `Bought ${o.qty}`);
+    // Compact contract line, e.g. "320 Call · Jul 17 '26".
+    const contract = `${num(o.strike)}${rightWord ? ' ' + rightWord : ''} · ${expLabel(o.expiry)}`;
+
+    return `<div class="opt-card">
+      <div class="opt-head">
+        <span class="opt-ticker">${o.underlying || '—'}</span>
+        ${rightBadge}
+        ${qtyHint ? `<span class="opt-qty">${qtyHint}</span>` : ''}
+      </div>
+      <div class="opt-contract">${contract}</div>
+      <div class="opt-kv">
+        ${kv('DTE', dte(o.expiry), 'dte')}
+        ${kv('Delta', num(o.delta, 3))}
+        ${kv('IV', ivPct)}
+        ${kv('Avg Cost', num(o.avgCost))}
+        ${kv('Mkt Value', money(o.marketValue))}
+        ${kv('Unreal P&L', money(upnl), upnlCls)}
+        ${kv('Mark', num(o.mark))}
+        <!-- To add a field: copy one kv() line above, e.g. ${'$'}{kv('Theta', num(o.theta,3))} -->
+      </div>
+    </div>`;
   }).join('');
 }
 
