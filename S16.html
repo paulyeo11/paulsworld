@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S16: Arctic on Alaska — 30 Days on America's Most Feared Road</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
   :root {
     --blue: #4a6cf7;
@@ -530,6 +531,22 @@
 
 <div class="divider">✦ ✦ ✦</div>
 
+<!-- MAP SECTION -->
+<div class="container">
+  <div class="chapter">
+    <div class="chapter-label">The Route</div>
+    <h2>All 30 Days <em>on the Map</em></h2>
+    <div class="dates">Every stop, plotted in order — from Anchorage to the Arctic Ocean and back</div>
+    <p>Here is the full journey laid out on Alaska's map. Tap any numbered marker to see what happens that day. The coloured lines trace the driving route; the dashed white lines are the three flights (Deadhorse back to Fairbanks, Fairbanks to Juneau, and Glacier Bay back to Anchorage).</p>
+  </div>
+</div>
+<div style="max-width:1000px;margin:10px auto 0;padding:0 20px;">
+  <div id="alaska-map" style="width:100%;height:540px;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(2,11,26,0.25);"></div>
+  <p style="text-align:center;font-size:0.78rem;color:var(--caption);font-style:italic;padding:10px 0 0;">Tap any marker for details &nbsp;·&nbsp; Solid line = drive &nbsp;·&nbsp; Dashed = flight &nbsp;·&nbsp; Map © OpenStreetMap contributors</p>
+</div>
+
+<div class="divider">✦ ✦ ✦</div>
+
 <!-- CHAPTER 1: THE SOUTH -->
 <div class="container">
   <div class="chapter">
@@ -814,6 +831,139 @@
   <p>S16: Arctic on Alaska — 30 Days on America's Most Feared Road &nbsp;·&nbsp; A Proposed Journey</p>
   <p style="margin-top:8px;">Written by Paul &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></p>
 </footer>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/sp38=" crossorigin=""></script>
+<script>
+(function () {
+  var stops = [
+    { num:1,  day:"Days 1–3",   name:"Anchorage",                 lat:61.2181, lng:-149.9003, phase:"south",     desc:"Arrival &amp; orientation · Chugach Mountains · Tony Knowles Coastal Trail · Alaska Native Heritage Center" },
+    { num:2,  day:"Days 4–5",   name:"Seward / Kenai Fjords",     lat:60.1042, lng:-149.4437, phase:"south",     desc:"Kenai Fjords National Park glacier cruise · Orcas &amp; puffins · Tidewater glaciers calving into the sea" },
+    { num:3,  day:"Days 6–7",   name:"Homer &amp; the Spit",      lat:59.6425, lng:-151.5483, phase:"south",     desc:"Homer Spit · Kachemak Bay · Halibut fishing · &ldquo;The end of the road&rdquo;" },
+    { num:4,  day:"Days 8–9",   name:"Valdez",                    lat:61.1302, lng:-146.3483, phase:"south",     desc:"Columbia Glacier cruise · Prince William Sound · Trans-Alaska Pipeline southern terminus" },
+    { num:5,  day:"Days 10–13", name:"Denali National Park",      lat:63.7304, lng:-148.9156, phase:"interior",  desc:"Wildlife bus tour · Savage River hike · Wonder Lake · Grizzlies, caribou &amp; Dall sheep" },
+    { num:6,  day:"Days 14–15", name:"Fairbanks",                 lat:64.8378, lng:-147.7164, phase:"interior",  desc:"Gold Dredge 8 &amp; gold panning · Trans-Alaska Pipeline viewpoint · Midnight sun · Chena Hot Springs day trip" },
+    { num:7,  day:"Day 16",     name:"Yukon River Camp (Mi 56)",  lat:66.055,  lng:-150.690,  phase:"dalton",    desc:"Dalton Highway · Mile 56 · Crossing the Yukon River on the single-lane bridge · Hot food &amp; fuel" },
+    { num:8,  day:"Day 17",     name:"Arctic Circle (Mi 115)",    lat:66.5622, lng:-150.7878, phase:"dalton",    desc:"Mile 115 · 66&deg;33&prime;N · The Arctic Circle sign · Certificate photo moment · Midnight sun never sets north of here" },
+    { num:9,  day:"Days 18–19", name:"Coldfoot Camp (Mi 175)",    lat:67.2533, lng:-150.6783, phase:"dalton",    desc:"Mile 175 · Wiseman historic mining village (Mi 188) · Gates of the Arctic day hikes · Midnight sun base camp" },
+    { num:10, day:"Day 20",     name:"Atigun Pass (Mi 244)",      lat:68.1333, lng:-149.5444, phase:"dalton",    desc:"Mile 244 · 4,800 ft · Highest highway mountain pass in Alaska · Crossing the Brooks Range spine" },
+    { num:11, day:"Day 21",     name:"Deadhorse / Prudhoe Bay",   lat:70.2002, lng:-148.4598, phase:"dalton",    desc:"Mile 414 · End of the Dalton Highway · Trans-Alaska Pipeline northern terminus · Oil fields &amp; tundra" },
+    { num:12, day:"Day 22",     name:"Arctic Ocean ★",            lat:70.3744, lng:-148.5539, phase:"arctic",    desc:"The prize ★ · Guided security tour to the actual Arctic Ocean beach · Then fly Deadhorse &rarr; Fairbanks" },
+    { num:13, day:"Days 23–24", name:"Chena Hot Springs",         lat:65.0511, lng:-146.0455, phase:"return",    desc:"Geothermal pools in the Alaska wilderness · Recovery soak after the Dalton Highway" },
+    { num:14, day:"Days 25–27", name:"Juneau",                    lat:58.3005, lng:-134.4197, phase:"southeast", desc:"Mendenhall Glacier walk · Whale watching in the Gastineau Channel · Seaplane over the icefields" },
+    { num:15, day:"Days 28–29", name:"Glacier Bay National Park", lat:58.6658, lng:-136.9006, phase:"southeast", desc:"Full-day cruise past 16 tidewater glaciers · Humpback whales · Sea otters · Brown bears on the shore" },
+    { num:16, day:"Day 30",     name:"Anchorage — Depart",        lat:61.2181, lng:-149.9003, phase:"depart",    desc:"Final morning in the Last Frontier · Fly home with Alaska in the bones" }
+  ];
+
+  var phaseColor = {
+    south:     '#f4813f',
+    interior:  '#4a6cf7',
+    dalton:    '#e0a64b',
+    arctic:    '#00b4d8',
+    return:    '#06d6a0',
+    southeast: '#9333ea',
+    depart:    '#888888'
+  };
+
+  var map = L.map('alaska-map', { scrollWheelZoom: false }).setView([64.0, -150.5], 5);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 13
+  }).addTo(map);
+
+  stops.forEach(function (s) {
+    var c = phaseColor[s.phase] || '#888';
+    var icon = L.divIcon({
+      className: '',
+      html: '<div style="width:26px;height:26px;background:' + c + ';border:2.5px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.45);font-family:sans-serif;">' + s.num + '</div>',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -16]
+    });
+    L.marker([s.lat, s.lng], { icon: icon })
+      .addTo(map)
+      .bindPopup(
+        '<div style="font-family:Georgia,serif;min-width:180px;">' +
+        '<strong style="font-size:0.95rem;color:#1c1c1e;">' + s.name + '</strong><br>' +
+        '<span style="color:#f4813f;font-size:0.78rem;font-weight:700;">' + s.day + '</span><br>' +
+        '<span style="font-size:0.82rem;color:#2d2d2d;line-height:1.55;">' + s.desc + '</span>' +
+        '</div>',
+        { maxWidth: 260 }
+      );
+  });
+
+  /* Driving polylines */
+  /* South loop: Anchorage → Seward → Homer → Valdez */
+  L.polyline([
+    [61.2181, -149.9003],
+    [60.1042, -149.4437],
+    [59.6425, -151.5483],
+    [61.1302, -146.3483]
+  ], { color: '#f4813f', weight: 2.5, opacity: 0.85 }).addTo(map);
+
+  /* Interior: Valdez → Denali → Fairbanks */
+  L.polyline([
+    [61.1302, -146.3483],
+    [63.7304, -148.9156],
+    [64.8378, -147.7164]
+  ], { color: '#4a6cf7', weight: 2.5, opacity: 0.85 }).addTo(map);
+
+  /* Dalton Highway: Fairbanks → Arctic Ocean */
+  L.polyline([
+    [64.8378, -147.7164],
+    [66.055,  -150.690],
+    [66.5622, -150.7878],
+    [67.2533, -150.6783],
+    [68.1333, -149.5444],
+    [70.2002, -148.4598],
+    [70.3744, -148.5539]
+  ], { color: '#e0a64b', weight: 3, opacity: 0.9 }).addTo(map);
+
+  /* Flight: Deadhorse → Fairbanks */
+  L.polyline([[70.2002, -148.4598], [64.8378, -147.7164]], {
+    color: '#fff', weight: 2, opacity: 0.65, dashArray: '8 7'
+  }).addTo(map);
+
+  /* Drive: Fairbanks → Chena Hot Springs */
+  L.polyline([[64.8378, -147.7164], [65.0511, -146.0455]], {
+    color: '#06d6a0', weight: 2.5, opacity: 0.85
+  }).addTo(map);
+
+  /* Flight: Fairbanks area → Juneau */
+  L.polyline([[65.0511, -146.0455], [58.3005, -134.4197]], {
+    color: '#fff', weight: 2, opacity: 0.65, dashArray: '8 7'
+  }).addTo(map);
+
+  /* Cruise/drive: Juneau → Glacier Bay */
+  L.polyline([[58.3005, -134.4197], [58.6658, -136.9006]], {
+    color: '#9333ea', weight: 2.5, opacity: 0.85
+  }).addTo(map);
+
+  /* Flight: Glacier Bay → Anchorage */
+  L.polyline([[58.6658, -136.9006], [61.2181, -149.9003]], {
+    color: '#fff', weight: 2, opacity: 0.65, dashArray: '8 7'
+  }).addTo(map);
+
+  /* Legend */
+  var legend = L.control({ position: 'bottomright' });
+  legend.onAdd = function () {
+    var div = L.DomUtil.create('div');
+    div.style.cssText = 'background:rgba(14,19,48,0.92);padding:10px 14px;border-radius:8px;font-size:0.72rem;color:#fff;line-height:1.95;font-family:sans-serif;';
+    div.innerHTML =
+      '<span style="color:#f4813f;">&#9679;</span> South Alaska<br>' +
+      '<span style="color:#4a6cf7;">&#9679;</span> Interior / Denali<br>' +
+      '<span style="color:#e0a64b;">&#9679;</span> Dalton Highway<br>' +
+      '<span style="color:#00b4d8;">&#9679;</span> Arctic Ocean<br>' +
+      '<span style="color:#06d6a0;">&#9679;</span> Hot Springs<br>' +
+      '<span style="color:#9333ea;">&#9679;</span> Southeast Alaska<br>' +
+      '<span style="color:#e0a64b;">&#8212;</span> Drive &nbsp;&nbsp;' +
+      '<span style="color:#fff;letter-spacing:2px;">&#183;&#183;&#183;</span> Flight';
+    return div;
+  };
+  legend.addTo(map);
+}());
+</script>
 
 </body>
 </html>
