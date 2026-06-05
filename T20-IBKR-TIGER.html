@@ -231,6 +231,7 @@
             <th>Underlying</th>
             <th>Strike</th>
             <th class="hide-sm">Exp</th>
+            <th>DTE</th>
             <th>C/P</th>
             <th>Qty</th>
             <th class="hide-sm">Avg Cost</th>
@@ -869,6 +870,15 @@ function renderOptions(options) {
 
   const num = (v, d = 2) => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
   const money = v => (v == null || isNaN(v)) ? '—' : (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
+  const dte = exp => {
+    if (!exp) return '—';
+    const m = String(exp).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '—';
+    const today = new Date();
+    const t = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    const e = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    return Math.round((e - t) / 86400000);
+  };
 
   body.innerHTML = list.map(o => {
     const right = (o.right || '').toUpperCase();
@@ -882,6 +892,7 @@ function renderOptions(options) {
       <td><span class="symbol">${o.underlying || '—'}</span></td>
       <td class="num">${num(o.strike)}</td>
       <td class="num hide-sm">${o.expiry || '—'}</td>
+      <td class="num">${dte(o.expiry)}</td>
       <td>${rightBadge}</td>
       <td class="num">${o.qty == null ? '—' : Number(o.qty).toLocaleString()}</td>
       <td class="num hide-sm">${num(o.avgCost)}</td>
