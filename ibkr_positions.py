@@ -15,8 +15,15 @@ Then visit: https://paulsworld.vercel.app/ai5.html
 """
 
 from ib_async import IB, util
-import json, base64, requests
+import json, base64, requests, sys
 from datetime import datetime
+
+# Make stdout/stderr UTF-8 so emoji (✅) don't crash the Windows cp1252 console
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 # ── IBKR CONFIG ─────────────────────────────────────────────
 HOST      = '127.0.0.1'
@@ -46,7 +53,7 @@ def fetch_positions():
             "account"    : p.account,
             "symbol"     : p.contract.symbol,
             "secType"    : p.contract.secType,
-            "exchange"   : p.contract.exchange or p.contract.primaryExch or "—",
+            "exchange"   : p.contract.exchange or p.contract.primaryExchange or "—",
             "currency"   : p.contract.currency,
             "position"   : p.position,
             "avgCost"    : round(p.avgCost, 4),
