@@ -57,7 +57,8 @@ def fetch_positions():
         print(f"⚠️  Could not set delayed market data type: {e}")
 
     def fetch_option_greeks(contract):
-        """Return (delta, iv) model Greeks for an option contract, or (None, None).
+        """Return (delta, iv, theta, undPrice) model Greeks for an option
+        contract, or None for any value that's missing.
         Never raises — missing entitlement / errors gracefully yield None so the
         dashboard keeps showing its '—' fallback."""
         try:
@@ -68,28 +69,34 @@ def fetch_positions():
             ticker = ib.reqMktData(contract, genericTickList="106",
                                    snapshot=False, regulatorySnapshot=False)
             # Greeks arrive asynchronously — poll up to ~4s for modelGreeks.
-            delta = iv = None
+            delta = iv = theta = und_price = None
             for _ in range(8):
                 ib.sleep(0.5)
                 mg = ticker.modelGreeks
                 if mg is not None:
                     d = mg.delta
                     v = mg.impliedVol
+                    th = mg.theta
+                    up = mg.undPrice
                     if d is not None and d == d:        # not None / not NaN
                         delta = round(float(d), 3)
                     if v is not None and v == v:        # not None / not NaN
                         iv = round(float(v), 4)
+                    if th is not None and th == th:     # not None / not NaN
+                        theta = round(float(th), 4)
+                    if up is not None and up == up:     # not None / not NaN
+                        und_price = round(float(up), 2)
                     if delta is not None:
                         break
             ib.cancelMktData(contract)
-            return delta, iv
+            return delta, iv, theta, und_price
         except Exception as e:
             print(f"⚠️  Greeks unavailable for {getattr(contract, 'localSymbol', contract)}: {e}")
             try:
                 ib.cancelMktData(contract)
             except Exception:
                 pass
-            return None, None
+            return None, None, None, None
 
     pos_list = []
     opt_list = []
@@ -120,9 +127,10 @@ def fetch_positions():
             raw_exp = p.contract.lastTradeDateOrContractMonth or ""
             expiry  = f"{raw_exp[0:4]}-{raw_exp[4:6]}-{raw_exp[6:8]}" if len(raw_exp) >= 8 else raw_exp
 
-            # Fetch model Greeks (delta) + implied vol via market data.
-            # Safe None fallback if no entitlement / Greeks unavailable.
-            delta, iv = fetch_option_greeks(p.contract)
+            # Fetch model Greeks (delta, theta) + implied vol + underlying
+            # price via market data. Safe None fallback if no entitlement /
+            # Greeks unavailable.
+            delta, iv, theta, und_price = fetch_option_greeks(p.contract)
 
             opt_list.append({
                 "underlying": p.contract.symbol,
@@ -133,6 +141,8 @@ def fetch_positions():
                 "avgCost"   : round(p.avgCost / mult, 2),
                 "delta"     : delta,   # model greek, 3dp, or None -> dashboard shows "—"
                 "iv"        : iv,      # implied vol decimal (0.25), 4dp, or None
+                "theta"     : theta,   # per-share daily decay, 4dp, or None (×100 = per-contract)
+                "undPrice"  : und_price,  # underlying price, 2dp, or None (for % OTM)
             })
 
     def get_val(tag, currency='USD'):

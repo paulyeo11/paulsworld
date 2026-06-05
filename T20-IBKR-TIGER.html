@@ -898,6 +898,42 @@ function renderOptions(options) {
     const upnl = o.unrealizedPnL;
     const upnlCls = upnl == null || isNaN(upnl) ? 'nil' : (upnl > 0 ? 'pos' : (upnl < 0 ? 'neg' : 'nil'));
     const ivPct = (o.iv == null || isNaN(o.iv)) ? '—' : (Number(o.iv) * 100).toFixed(1) + '%';
+
+    // ── Covered-call seller's decision metrics (computed inline) ──────────
+    // 1) % of Max Profit captured (SHORT call only): (avgCost - mark)/avgCost.
+    //    avgCost = premium sold, mark = current option price. Real number incl.
+    //    negative (call moved against him). null inputs / qty>=0 → "—".
+    let maxProfitStr = '—', maxProfitCls = '';
+    if (o.qty != null && o.qty < 0 &&
+        o.avgCost != null && !isNaN(o.avgCost) && Number(o.avgCost) !== 0 &&
+        o.mark != null && !isNaN(o.mark)) {
+      const mp = (Number(o.avgCost) - Number(o.mark)) / Number(o.avgCost) * 100;
+      maxProfitStr = mp.toFixed(0) + '%';
+      maxProfitCls = mp >= 0 ? 'pos' : 'neg';
+    }
+    // 2) % Out-of-the-Money (CALL): (strike - undPrice)/undPrice. Positive =
+    //    OTM cushion (green), negative = ITM (red). Needs undPrice.
+    let otmStr = '—', otmCls = 'nil';
+    if (right === 'C' &&
+        o.strike != null && !isNaN(o.strike) &&
+        o.undPrice != null && !isNaN(o.undPrice) && Number(o.undPrice) !== 0) {
+      const otm = (Number(o.strike) - Number(o.undPrice)) / Number(o.undPrice) * 100;
+      otmStr = Math.abs(otm).toFixed(1) + '% ' + (otm >= 0 ? 'OTM' : 'ITM');
+      otmCls = otm >= 0 ? 'pos' : 'neg';
+    }
+    // 3) Assignment % ≈ |delta| × 100 (prob. call finishes ITM / assigned).
+    const assignStr = (o.delta == null || isNaN(o.delta))
+      ? '—' : (Math.abs(Number(o.delta)) * 100).toFixed(0) + '%';
+    // 4) Theta — per-share modelGreeks × 100 = per-contract daily $ decay.
+    //    For a short call, decay favours the seller → present as a gain (+).
+    let thetaStr = '—', thetaCls = '';
+    if (o.theta != null && !isNaN(o.theta)) {
+      const perContract = Math.abs(Number(o.theta)) * 100;
+      const sellerGain = o.qty != null && o.qty < 0;   // short → decay helps him
+      const sign = sellerGain ? '+' : '-';
+      thetaStr = sign + '$' + perContract.toFixed(2) + '/day';
+      thetaCls = sellerGain ? 'pos' : 'neg';
+    }
     // Qty hint: -1 → "Sold 1", positive → "Bought N".
     const qtyHint = o.qty == null ? ''
       : (o.qty < 0 ? `Sold ${Math.abs(o.qty)}` : `Bought ${o.qty}`);
@@ -914,12 +950,18 @@ function renderOptions(options) {
       <div class="opt-kv">
         ${kv('DTE', dte(o.expiry), 'dte')}
         ${kv('Delta', num(o.delta, 3))}
+        ${kv('% Max Profit', maxProfitStr, maxProfitCls)}
+        ${kv('% OTM', otmStr, otmCls)}
+        ${kv('Assignment %', assignStr)}
+        ${kv('Theta', thetaStr, thetaCls)}
         ${kv('IV', ivPct)}
         ${kv('Avg Cost', num(o.avgCost))}
         ${kv('Mkt Value', money(o.marketValue))}
         ${kv('Unreal P&L', money(upnl), upnlCls)}
         ${kv('Mark', num(o.mark))}
-        <!-- To add a field: copy one kv() line above, e.g. ${'$'}{kv('Theta', num(o.theta,3))} -->
+        <!-- To add a field: compute a string above (graceful "—" fallback) then
+             copy one kv() line here, e.g. ${'$'}{kv('Gamma', num(o.gamma,3))}.
+             Pass a 3rd arg (pos/neg/nil/dte) to colour the value. -->
       </div>
     </div>`;
   }).join('');
