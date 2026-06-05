@@ -49,13 +49,28 @@ def fetch_and_upload():
         pnl_usd  = round(raw_pnl / rate, 2)
         mkt_usd  = round(raw_mkt / rate, 2)
 
+        # Cost basis. Tiger returns avgCost = 0.0 for fractional-share lots
+        # (e.g. AAPL qty 0.23735), which made the dashboard render S$0.00 and
+        # drop the position. Back-fill a derived cost (≈ market price) and flag it.
+        try:
+            avg_cost = float(p.average_cost or 0)
+        except (TypeError, ValueError):
+            avg_cost = 0.0
+        cost_unknown = False
+        qty = p.quantity or 0
+        if (avg_cost <= 0 or avg_cost != avg_cost) and raw_mkt and qty:
+            avg_cost = raw_mkt / qty   # original currency, matches marketValue
+            cost_unknown = True
+        avg_cost = round(avg_cost, 4)
+
         pos_list.append({
             "symbol"        : c.symbol,
             "secType"       : str(c.sec_type) if hasattr(c, "sec_type") else "STK",
             "currency"      : currency,
             "exchange"      : c.exchange or "—",
             "quantity"      : p.quantity,
-            "avgCost"       : round(float(p.average_cost or 0), 4),
+            "avgCost"       : avg_cost,
+            "costUnknown"   : cost_unknown,  # True = avgCost derived from market, not reported
             "marketValue"   : raw_mkt,      # original currency
             "marketValueUSD": mkt_usd,      # converted to USD
             "unrealizedPnl" : raw_pnl,      # original currency
