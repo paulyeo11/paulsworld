@@ -313,6 +313,29 @@ function getQty(p) {
   return raw;
 }
 
+// --- GUARDRAILS against misleading 0.0 readings ---------------------------
+// A number is "usable" only if it's finite and strictly positive. Anything
+// that is 0, negative, NaN, null or undefined is treated as MISSING so we
+// never render a real-looking "0.00" for a stock that isn't worth zero.
+function isUsable(n) { return typeof n === 'number' && isFinite(n) && n > 0; }
+
+// Effective cost basis per share. Tiger sometimes reports avgCost = 0 for
+// tiny fractional lots (e.g. AAPL 0.23735 sh, avgCost 0, marketValue 73.9).
+// In that case derive cost from marketValue / qty so charts and totals work.
+// Returns null when cost truly cannot be determined (so callers show "—").
+function effAvgCost(p) {
+  if (isUsable(p.avgCost)) return p.avgCost;
+  const qty = getQty(p);
+  if (isUsable(p.marketValue) && isUsable(qty)) return p.marketValue / qty;
+  return null;
+}
+
+// Live price guard: reject 0 / negative / NaN / null. Returns null if missing.
+function liveOf(p) {
+  const lp = livePrices[yahooSymbol(p)];
+  return isUsable(lp) ? lp : null;
+}
+
 function setPriceStatus(cls, text) {
   const el = document.getElementById('price-status');
   if (el) { el.textContent = text; el.className = cls; }
@@ -331,7 +354,11 @@ async function fetchPrices(positions) {
     let loaded = 0;
     stockSyms.forEach(s => {
       const q = map[s];
-      if (q && !q.error && q.price != null) { livePrices[s] = parseFloat(q.price); if (q.name) NAME_MAP[s] = q.name; loaded++; }
+      const px = q && !q.error ? parseFloat(q.price) : NaN;
+      // Sanity guard: only accept a finite, strictly-positive price. A 0,
+      // negative or NaN quote is a failed/garbage fetch — leave it missing
+      // so the row falls back to cost/market value and shows a stale marker.
+      if (isFinite(px) && px > 0) { livePrices[s] = px; if (q.name) NAME_MAP[s] = q.name; loaded++; }
     });
     if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
     if (map['HKDSGD=X']?.price) fxRates.HKD = parseFloat(map['HKDSGD=X'].price);
@@ -360,11 +387,13 @@ async function loadData() {
     function addSGD(arr) {
       return arr.map(p => {
         const cur = (p.currency||'USD').toUpperCase();
-        const qty = p.position || p.quantity || 0;
-        const sgdValue = qty * (p.avgCost||0) * (fxRates[cur]||1);
-        const ysym = yahooSymbol(p);
-        const lp = livePrices[ysym];
+        const qty = getQty(p);
         const fx = fxRates[cur] || 1;
+        // Invested value: prefer real cost; if cost is 0/unknown fall back to
+        // reported marketValue so the position isn't valued at 0.
+        const cost = effAvgCost(p);
+        const sgdValue = (cost != null ? qty * cost : (isUsable(p.marketValue) ? p.marketValue : 0)) * fx;
+        const lp = liveOf(p);
         const liveValueSGD = lp != null ? qty * lp * fx : sgdValue;
         return { ...p, sgdValue, liveValueSGD };
       });
@@ -465,28 +494,24 @@ function renderTable() {
   if (!data.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
 
-  // Overall summary row
-  const totalInvestedSGD = data.reduce((s,p) => {
-    if (!p.avgCost) return s;
-    const cur = (p.currency||'USD').toUpperCase();
-    return s + getQty(p) * p.avgCost * (fxRates[cur]||1);
-  }, 0);
+  // Overall summary row. Use guarded sgdValue (cost basis, or market-value
+  // fallback when cost is 0/unknown) so positions like fractional AAPL with
+  // avgCost=0 still contribute their real value instead of vanishing.
+  const totalInvestedSGD = data.reduce((s,p) => s + (p.sgdValue||0), 0);
   const totalLiveSGD = data.reduce((s,p) => {
     const cur = (p.currency||'USD').toUpperCase();
     const fx = fxRates[cur] || 1;
-    const ysym = yahooSymbol(p);
-    const lp = livePrices[ysym];
+    const lp = liveOf(p);
     const qty = getQty(p);
-    const avgCost = p.avgCost || 0;
-    if (avgCost === 0) return s; // no cost basis — skip from total
+    const investedSGD = p.sgdValue || 0;
+    if (investedSGD <= 0) return s; // nothing usable to count
     if (lp != null) {
       const liveSGD = qty * lp * fx;
-      const investedSGD = p.sgdValue || qty * avgCost * fx;
       // sanity: if live value is >5x invested, likely a bad price — fall back to invested
       if (investedSGD > 0 && liveSGD > investedSGD * 5) return s + investedSGD;
       return s + liveSGD;
     }
-    return s + (p.sgdValue || qty * avgCost * fx);
+    return s + investedSGD;
   }, 0);
   const overallDiff = totalInvestedSGD > 0 ? (totalLiveSGD - totalInvestedSGD) / totalInvestedSGD * 100 : 0;
   const overallSign = overallDiff >= 0 ? '+' : '';
@@ -538,37 +563,45 @@ function renderTable() {
     const cur = (p.currency||'USD').toUpperCase();
     const s = cur==='HKD'?'HK$':(cur==='SGD'?'S$':(cur==='USD'?'US$':'$'));
     const fx = fxRates[cur] || 1;
-    const avgCost = p.avgCost || 0;
-    const costFmt = avgCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     const qty = getQty(p);
-    const totalLocal = qty * avgCost;
-    const totalLocalFmt = totalLocal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const amtSGD = (totalLocal * fx).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const ysym = yahooSymbol(p);
-    const lp = livePrices[ysym];
+    const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    // Cost basis: real avgCost, else derived from market value, else unknown.
+    const avgCost = effAvgCost(p);              // null when truly unknown
+    const costKnown = avgCost != null;
+    const costDerived = costKnown && !isUsable(p.avgCost); // came from mktVal/qty
+    const avgSGDFmt = costKnown ? fmt(avgCost * fx) : '—';
+    // Invested = qty × cost; if cost unknown fall back to reported marketValue.
+    const investedLocal = costKnown ? qty * avgCost : (isUsable(p.marketValue) ? p.marketValue : 0);
+    const amtSGD = fmt(investedLocal * fx);
+
+    const lp = liveOf(p);                       // null when missing/0/NaN
 
     let priceBlock;
     if (lp != null) {
-      const lpSGD = lp * fx;
-      const lpSGDFmt = lpSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      const avgSGD = avgCost * fx;
-      const avgSGDFmt = avgSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      const liveTotalSGD = qty * lpSGD;
-      const liveTotalFmt = liveTotalSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      const lpSGDFmt = fmt(lp * fx);
+      const lpLocalFmt = fmt(lp);
+      const liveTotalFmt = fmt(qty * lp * fx);
       let diffLine = '';
-      if (avgCost > 0) {
+      if (costKnown && !costDerived) {
+        // Only show % gain/loss against a REAL cost basis (not a derived one,
+        // which would always read ~0%). Avoids a misleading 0.00%.
         const diff = (lp - avgCost) / avgCost * 100;
         const sign = diff >= 0 ? '+' : '';
         const arrow = diff > 0.005 ? '▲ ' : (diff < -0.005 ? '▼ ' : '');
         const cls = diff > 0.005 ? 'pos' : (diff < -0.005 ? 'neg' : 'nil');
         diffLine = `<span class="diff-line ${cls}">${arrow}${sign}${diff.toFixed(2)}%</span>`;
       }
-      const lpLocalFmt = lp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      priceBlock = `<span class="price-live">S$${lpSGDFmt} <span style="font-size:.75em;opacity:.6;">(${s}${lpLocalFmt})</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span><span class="total-val-sub" style="color:#a0aec0;">invested S$${amtSGD}</span>`;
+      const avgTag = costDerived ? ' <span style="font-size:.75em;opacity:.55;">(est)</span>' : '';
+      const investedLine = costKnown && !costDerived
+        ? `<span class="total-val-sub" style="color:#a0aec0;">invested S$${amtSGD}</span>` : '';
+      priceBlock = `<span class="price-live">S$${lpSGDFmt} <span style="font-size:.75em;opacity:.6;">(${s}${lpLocalFmt})</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}${avgTag}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span>${investedLine}`;
     } else {
-      const avgSGD = avgCost * fx;
-      const avgSGDFmt = avgSGD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-      priceBlock = `<span class="price-loading">—</span><span class="avg-cost-sub">avg S$${avgSGDFmt}</span><span class="total-val-sub" style="color:#68d391;">S$${amtSGD}</span>`;
+      // No usable live price — show "—" (never 0.00) plus a stale marker, and
+      // fall back to market value / cost so the value column isn't blank.
+      const avgTag = costDerived ? ' <span style="font-size:.75em;opacity:.55;">(est)</span>' : '';
+      const fallbackVal = isUsable(p.marketValue) ? fmt(p.marketValue * fx) : amtSGD;
+      priceBlock = `<span class="price-loading">— <span style="opacity:.7;">price n/a</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}${avgTag}</span><span class="total-val-sub" style="color:#68d391;">S$${fallbackVal}</span>`;
     }
 
     return `<tr>
@@ -583,7 +616,7 @@ function renderTable() {
 let sectorChartInstance = null;
 function renderSectorChart() {
   const totals = {};
-  allData.filter(p => p.avgCost > 0).forEach(p => {
+  allData.filter(p => (p.sgdValue||0) > 0).forEach(p => {
     const ysym = yahooSymbol(p);
     const rawSym = p.symbol || '';
     const sector = SECTOR_MAP[ysym] || SECTOR_MAP[rawSym] || 'Other';
@@ -638,21 +671,21 @@ let sectorCompareChartInstance = null;
 function renderSectorCompareChart() {
   // Build per-sector: invested SGD and live SGD
   const invested = {}, live = {};
-  allData.filter(p => p.avgCost > 0).forEach(p => {
+  allData.filter(p => (p.sgdValue||0) > 0).forEach(p => {
     const ysym = yahooSymbol(p);
     const rawSym = p.symbol || '';
     const sector = SECTOR_MAP[ysym] || SECTOR_MAP[rawSym] || 'Other';
     const cur = (p.currency||'USD').toUpperCase();
     const fx = fxRates[cur] || 1;
     const qty = getQty(p);
-    invested[sector] = (invested[sector]||0) + (p.sgdValue||qty*p.avgCost*fx);
-    const lp = livePrices[ysym];
+    invested[sector] = (invested[sector]||0) + (p.sgdValue||0);
+    const lp = liveOf(p);
     if (lp != null) {
       const liveSGD = qty * lp * fx;
-      const inv = p.sgdValue || qty * p.avgCost * fx;
+      const inv = p.sgdValue || 0;
       live[sector] = (live[sector]||0) + (inv > 0 && liveSGD > inv * 5 ? inv : liveSGD);
     } else {
-      live[sector] = (live[sector]||0) + (p.sgdValue||qty*p.avgCost*fx);
+      live[sector] = (live[sector]||0) + (p.sgdValue||0);
     }
   });
 
@@ -715,15 +748,14 @@ function renderSectorCompareChart() {
 
 let stockChartInstance = null;
 function renderChart() {
-  const data = allData.filter(p => p.avgCost > 0).slice().sort((a,b) => b.sgdValue - a.sgdValue);
+  const data = allData.filter(p => (p.sgdValue||0) > 0).slice().sort((a,b) => b.sgdValue - a.sgdValue);
   const labels = data.map(p => p.symbol);
   const invVals = data.map(p => parseFloat((p.sgdValue||0).toFixed(0)));
   const liveVals = data.map(p => {
     const cur = (p.currency||'USD').toUpperCase();
     const fx = fxRates[cur] || 1;
     const qty = getQty(p);
-    const ysym = yahooSymbol(p);
-    const lp = livePrices[ysym];
+    const lp = liveOf(p);
     if (lp != null) {
       const liveSGD = qty * lp * fx;
       const inv = p.sgdValue || 0;
