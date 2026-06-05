@@ -146,6 +146,11 @@
           <div style="font-size:17px;font-weight:700;color:#10b981;font-family:'Syne',sans-serif;" id="bal-tiger-cash">—</div>
           <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD</div>
         </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;" id="bal-tiger-upnl-card">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Tiger Prime Open P&L</div>
+          <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;" id="bal-tiger-upnl">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;" id="bal-tiger-upnl-sub">USD</div>
+        </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
           <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">IBKR Unrealized P&L</div>
           <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;" id="bal-ibkr-upnl">—</div>
@@ -422,6 +427,30 @@ async function loadData() {
     const el2 = document.getElementById('bal-ibkr-sgd'); if(el2) el2.textContent = 'S$' + fmtBal(ibkrNetLiq * (fxRates.USD || 1.285));
     const el3 = document.getElementById('bal-tiger-net'); if(el3) el3.textContent = 'S$' + fmtBal(parseFloat(tigerData.netValue || 0));
     const el4 = document.getElementById('bal-tiger-cash'); if(el4) el4.textContent = 'S$' + fmtBal(parseFloat(tigerData.cash || 0));
+    // ---- Tiger Prime Open P&L (USD) ----
+    // PREFER Tiger's OWN account-level figure (tigerData.accountOpenPnlUSD) —
+    // the exact number the Tiger app shows (e.g. 533.78), already in account
+    // USD so used verbatim. Fall back to summing per-position unrealizedPnlUSD
+    // only if that field is absent.
+    const tAcct = (tigerData.accountOpenPnlUSD != null) ? parseFloat(tigerData.accountOpenPnlUSD) : null;
+    const tUsingAccount = tAcct != null && isFinite(tAcct);
+    const tComputed = (tigerData.positions || []).reduce((s,p) => {
+      if (p.unrealizedPnlUSD != null) return s + parseFloat(p.unrealizedPnlUSD);
+      const cur = (p.currency||'USD').toUpperCase();
+      const pnl = p.unrealizedPnl || 0;
+      const usdSgd = fxRates.USD || 1.35;
+      return s + (pnl * (fxRates[cur]||1)) / usdSgd;
+    }, 0);
+    const tigerOpenPnl = tUsingAccount ? tAcct : tComputed;
+    const el4b = document.getElementById('bal-tiger-upnl');
+    if (el4b) {
+      el4b.textContent = (tigerOpenPnl>=0?'+':'-') + 'US$' + Math.abs(tigerOpenPnl).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      el4b.style.color = tigerOpenPnl>=0 ? '#10b981' : '#ef4444';
+    }
+    const el4c = document.getElementById('bal-tiger-upnl-sub');
+    if (el4c) el4c.textContent = (tUsingAccount ? 'USD · app figure' : 'USD · computed') + (tigerData.fetchedAt ? ' · ' + tigerData.fetchedAt : '');
+    const el4card = document.getElementById('bal-tiger-upnl-card');
+    if (el4card) el4card.style.borderColor = tigerOpenPnl>=0 ? 'rgba(16,185,129,.45)' : 'rgba(239,68,68,.45)';
     const upnl = parseFloat(ibkrData.unrealizedPnL || 0);
     const rpnl = parseFloat(ibkrData.realizedPnL || 0);
     const el5 = document.getElementById('bal-ibkr-upnl');

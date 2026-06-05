@@ -102,18 +102,54 @@ def fetch_positions():
         })
 
     net_value, cash = None, None
+    account_open_pnl_usd, realized_pnl_usd = None, None
+
+    def _f(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
     try:
         assets = trade_client.get_assets(account=ACCOUNT)
         if assets:
-            net_value = float(assets[0].summary.net_liquidation or 0)
-            cash      = float(assets[0].summary.cash or 0)
+            summary = assets[0].summary
+            net_value = float(summary.net_liquidation or 0)
+            cash      = float(summary.cash or 0)
+            # Average-cost basis Open P&L (Tiger's get_assets summary). Kept as a
+            # fallback only — the Tiger APP shows the COST-OF-CARRY basis instead.
+            account_open_pnl_usd = _f(getattr(summary, "unrealized_pnl", None))
+            realized_pnl_usd     = _f(getattr(summary, "realized_pnl", None))
     except Exception as e:
         print(f"Note: {e}")
+
+    # ---- App-matching Open P&L: COST OF CARRY basis ----
+    # Tiger's APP shows the cost-of-carry unrealized P&L, NOT the average-cost
+    # figure from get_assets. Pull it from get_prime_assets():
+    #   segments["S"] (S = securities) .unrealized_plby_cost_of_carry
+    # (note the spelling: "plby", no underscore before "by"). This is already in
+    # USD (base_currency). Robust: any failure falls back to the avg-cost value.
+    try:
+        prime = trade_client.get_prime_assets(account=ACCOUNT, base_currency="USD")
+        segments = getattr(prime, "segments", None) or {}
+        sec_seg = segments.get("S") if hasattr(segments, "get") else None
+        coc = _f(getattr(sec_seg, "unrealized_plby_cost_of_carry", None)) if sec_seg else None
+        if coc is not None:
+            account_open_pnl_usd = coc
+    except Exception as e:
+        print(f"Note (cost-of-carry): {e}")
 
     output = {
         "fetchedAt" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "netValue"  : net_value,
         "cash"      : cash,
+        # Account-level summary fields straight from Tiger's get_assets().
+        # accountOpenPnlUSD is Tiger's OWN reported unrealized P&L for the
+        # account (the app figure). Falls back to None if the SDK didn't
+        # return it, in which case the dashboards re-sum per position.
+        "accountOpenPnlUSD" : account_open_pnl_usd,
+        "realizedPnlUSD"    : realized_pnl_usd,
+        "netLiquidationUSD" : net_value,
         "positions" : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
     }
 
