@@ -40,6 +40,7 @@ def fetch_positions():
     account_vals = ib.accountValues()
 
     pos_list = []
+    opt_list = []
     for p in positions:
         pos_list.append({
             "account"    : p.account,
@@ -51,6 +52,30 @@ def fetch_positions():
             "avgCost"    : round(p.avgCost, 4),
             "marketValue": round(p.position * p.avgCost, 2),
         })
+
+        # Collect option positions for the T20 dashboard Options tab
+        if p.contract.secType == "OPT":
+            # IBKR reports option avgCost as total premium × the contract
+            # multiplier (usually 100). The dashboard wants the per-share quote.
+            try:
+                mult = float(p.contract.multiplier) if p.contract.multiplier else 100.0
+            except (ValueError, TypeError):
+                mult = 100.0
+            if mult == 0:
+                mult = 100.0
+
+            # Reformat IBKR expiry "YYYYMMDD" -> "YYYY-MM-DD"
+            raw_exp = p.contract.lastTradeDateOrContractMonth or ""
+            expiry  = f"{raw_exp[0:4]}-{raw_exp[4:6]}-{raw_exp[6:8]}" if len(raw_exp) >= 8 else raw_exp
+
+            opt_list.append({
+                "underlying": p.contract.symbol,
+                "strike"    : round(p.contract.strike, 2),
+                "expiry"    : expiry,
+                "right"     : p.contract.right,
+                "qty"       : p.position,
+                "avgCost"   : round(p.avgCost / mult, 2),
+            })
 
     def get_val(tag, currency='USD'):
         return next((av.value for av in account_vals
@@ -69,7 +94,8 @@ def fetch_positions():
         "realizedPnL"     : realized_pnl,
         "grossPositionVal": gross_pos_val,
         "cashBalance"     : cash,
-        "positions"       : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
+        "positions"       : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"]),
+        "options"         : sorted(opt_list, key=lambda x: (x["underlying"], x["expiry"], x["strike"]))
     }
 
     ib.disconnect()
