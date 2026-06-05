@@ -1,36 +1,60 @@
 """
 Tiger Brokers Position Fetcher
 ================================
-pip install tigeropen requests
+pip install tigeropen
 python tiger_positions.py
 
+Job: call the Tiger API -> write tiger_positions.json into this folder.
+Deploy/push is handled separately by a normal `git` commit+push (e.g. via gh CLI),
+NOT by this script. No GitHub token is read or stored here.
+
+The Tiger RSA private key is a SECRET and is NOT stored in this file. It is read
+at runtime from either:
+  1. the TIGER_PRIVATE_KEY environment variable, or
+  2. a gitignored file `tiger_private_key.pem` in this same folder.
 """
 from tigeropen.tiger_open_config import TigerOpenClientConfig
 from tigeropen.common.consts import Language
 from tigeropen.trade.trade_client import TradeClient
-import json, base64, requests, os
+import json, os, sys
 from datetime import datetime
 
-TIGER_ID    = "20159583"
-ACCOUNT     = "50686489"
-LICENSE     = "TBSG"
-PRIVATE_KEY = "MIICXAIBAAKBgQCXjMARtSd91iMsfebC2fRE2xL9x/rLiTg6CRQ4UTIH1yjj1ctf6i3HUmpnb4MZ6I5ThnoOtsYWRHcaC5taBDbf+OuLTLTaNezKxSjNKCxONDvg8xSBf7hLl3bdUZ11pLq+Ou+9Xx1PNpzxRy7So0iwuyXgQFIQ4pCVksTCtYfvxQIDAQABAoGAJ6074+bvrexQTSexMLZrU1Ofxz2CFaOZSuhxmMT5OkBEflHM6xGeZp7XKLlzM2dFS+zbK9sCRXYrUHBVfd24l8UqqIjTeA1mEG+Ezkrvv5m+HwRAZknTseNycvfYaZLZaqg2/hEvd1HBeBt025Yq1ieBCmDPSY4H+6L5lBM6CUkCQQD1X5UrA0y5iQzH8P2PTXuZ8s1/bx6nN04M+iZRx79OhFdfepX2n30ok6Zf+jlRCeBUvizwA8p9KQWXUKGaOe07AkEAnhz1wFq77y78qPXWOb0noBQgwUT2ymPASqdZttMnl30C5dFESnqmYVazTPJO2rqG9TuZJV7cWpRT7eNUF3vG/wJAWBngqlf99WQS9bs+n3R3m7gFNutD+1AtMxWiKpzowJ1d7cdLDwkG3EnfY/ipGcLNDEBYTDlgO/49pq3pyEFiPwJAap0+fKDx/nshdVCnTjGk6YUI/Slie+A9RlmH3gaNuNFbxdmRAeOoExSiPG1bDJQf8nZoctF/JjjESzExf9A/wwJBAMLPJY8qu/eniSPm3xvjlGZQmuJqJqr2sR5LrK5gGmjI9Q0YgESiuKVZTZ1NY7Co4F/PmAVFG+cs8q7mHCnZM5Y="
+TIGER_ID = "20159583"
+ACCOUNT  = "50686489"
+LICENSE  = "TBSG"
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "tiger_config.txt")
-GITHUB_TOKEN  = open(CONFIG_FILE).read().strip()
-GITHUB_REPO   = "paulyeo11/paulsworld"   # FIXED: was Dynamic-Index
-GITHUB_FILE   = "tiger_positions.json"
-GITHUB_BRANCH = "main"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+KEY_FILE   = os.path.join(SCRIPT_DIR, "tiger_private_key.pem")
+OUT_FILE   = os.path.join(SCRIPT_DIR, "tiger_positions.json")
 
 # FX rates to convert all P&L to USD
 FX = {"HKD": 7.8, "SGD": 1.35, "USD": 1.0}
 
-def fetch_and_upload():
+
+def load_private_key():
+    """Load the Tiger RSA private key from env var or gitignored .pem file."""
+    key = os.environ.get("TIGER_PRIVATE_KEY")
+    if key and key.strip():
+        return key.strip()
+    if os.path.exists(KEY_FILE):
+        with open(KEY_FILE) as f:
+            key = f.read().strip()
+        if key:
+            return key
+    sys.exit(
+        "ERROR: Tiger private key not found.\n"
+        "Set the TIGER_PRIVATE_KEY environment variable, or place the key in:\n"
+        f"  {KEY_FILE}\n"
+        "(this file is gitignored and must never be committed)."
+    )
+
+
+def fetch_positions():
     print("Connecting to Tiger Brokers...")
     client_config = TigerOpenClientConfig(sandbox_debug=False)
     client_config.tiger_id    = TIGER_ID
     client_config.account     = ACCOUNT
-    client_config.private_key = PRIVATE_KEY
+    client_config.private_key  = load_private_key()
     client_config.license     = LICENSE
     client_config.language    = Language.en_US
 
@@ -93,25 +117,11 @@ def fetch_and_upload():
         "positions" : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
     }
 
-    with open("tiger_positions.json", "w") as f:
+    with open(OUT_FILE, "w") as f:
         json.dump(output, f, indent=2)
-    print("Saved tiger_positions.json")
-    upload_to_github(output)
+    print(f"Saved {OUT_FILE}")
+    print("Now commit + push tiger_positions.json with git/gh to deploy.")
 
-def upload_to_github(data):
-    gh_headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_FILE}"
-    r = requests.get(f"{url}?ref={GITHUB_BRANCH}", headers=gh_headers)
-    sha = r.json().get("sha") if r.status_code == 200 else None
-    content = base64.b64encode(json.dumps(data, indent=2).encode()).decode()
-    payload = {"message": f"Update Tiger positions {data['fetchedAt']}", "content": content, "branch": GITHUB_BRANCH}
-    if sha: payload["sha"] = sha
-    r2 = requests.put(url, headers=gh_headers, json=payload)
-    if r2.status_code in (200, 201):
-        print("Uploaded to GitHub!")
-        print("Visit: https://paulsworld.vercel.app/T08.html")
-    else:
-        print(f"Upload failed: {r2.status_code} {r2.json().get('message')}")
 
 if __name__ == "__main__":
-    fetch_and_upload()
+    fetch_positions()
