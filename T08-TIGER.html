@@ -130,7 +130,7 @@
       <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">Tiger Prime Account</div></div>
       <div class="card"><div class="card-label">Net Value (SGD)</div><div class="card-value" id="net-val">—</div><div class="card-sub">from Tiger API × FX</div></div>
       <div class="card"><div class="card-label">Total Mkt Value (SGD)</div><div class="card-value" id="mkt-val">—</div><div class="card-sub">all positions × FX</div></div>
-      <div class="card"><div class="card-label">Unrealized P&L (SGD)</div><div class="card-value" id="total-pnl">—</div><div class="card-sub">all positions × FX</div></div>
+      <div class="card" id="open-pnl-sgd-card"><div class="card-label">Open P&L (SGD)</div><div class="card-value" id="total-pnl">—</div><div class="card-sub" id="open-pnl-sgd-sub">Tiger Prime · USD figure × FX</div></div>
     </div>
 
     <div class="toolbar">
@@ -264,15 +264,7 @@ function showDashboard(data) {
     const cur=(p.currency||'USD').toUpperCase();
     return s+(p.marketValue||0)*(fxRates[cur]||1);
   },0);
-  const totalPnlSGD = allData.reduce((s,p)=>{
-    const cur=(p.currency||'USD').toUpperCase();
-    const pnl=p.unrealizedPnl||0;
-    return s+pnl*(fxRates[cur]||1);
-  },0);
   document.getElementById('mkt-val').textContent='S$'+totalMktSGD.toLocaleString('en-US',{maximumFractionDigits:0});
-  const pnlEl=document.getElementById('total-pnl');
-  pnlEl.textContent=(totalPnlSGD>=0?'+':'-')+'S$'+Math.abs(totalPnlSGD).toLocaleString('en-US',{maximumFractionDigits:0});
-  pnlEl.style.color=totalPnlSGD>=0?'var(--green)':'var(--red)';
 
   // ---- Open (Unrealized) P&L in USD ----
   // PREFER Tiger's OWN account-level figure (data.accountOpenPnlUSD) — this is
@@ -299,6 +291,19 @@ function showDashboard(data) {
   if (openCard) openCard.style.borderColor = gain ? 'rgba(0,212,170,.35)' : 'rgba(239,68,68,.35)';
   const openSub = document.getElementById('open-pnl-sub');
   if (openSub) openSub.textContent = (usingAccount ? 'Tiger Prime · app figure' : 'Tiger Prime · computed') + (data.fetchedAt ? ' · ' + data.fetchedAt : '');
+
+  // ---- Open (Unrealized) P&L in SGD ----
+  // Same cost-of-carry Open P&L as the USD card (openPnlUSD), converted to SGD
+  // via the live USD→SGD FX rate. Keeps both cards consistent in sign & size.
+  const openPnlSGD = openPnlUSD * usdSgd;
+  const pnlEl = document.getElementById('total-pnl');
+  const sgdGain = openPnlSGD >= 0;
+  pnlEl.textContent = (sgdGain?'+':'-') + 'S$' + Math.abs(openPnlSGD).toLocaleString('en-US',{maximumFractionDigits:0});
+  pnlEl.style.color = sgdGain ? 'var(--green)' : 'var(--red)';
+  const sgdCard = document.getElementById('open-pnl-sgd-card');
+  if (sgdCard) sgdCard.style.borderColor = sgdGain ? 'rgba(0,212,170,.35)' : 'rgba(239,68,68,.35)';
+  const sgdSub = document.getElementById('open-pnl-sgd-sub');
+  if (sgdSub) sgdSub.textContent = 'Tiger Prime · USD figure × FX' + (data.fetchedAt ? ' · ' + data.fetchedAt : '');
 
   document.getElementById('loading-state').style.display='none';
   document.getElementById('nodata-state').style.display='none';
