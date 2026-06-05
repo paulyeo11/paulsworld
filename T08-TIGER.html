@@ -118,13 +118,14 @@
 
   <div id="dashboard" style="display:none">
     <div class="summary-grid">
-      <!-- ===== STATIC OPEN P&L SNAPSHOT (Tiger Prime 50686489) =====
-           Manual snapshot value. To update later, change OPEN-PNL-VALUE and OPEN-PNL-DATE below.
-           As of 2026-06-05: +709.29 USD (positive / gain → green). -->
-      <div class="card" style="border-color:rgba(0,212,170,.35);">
+      <!-- ===== LIVE OPEN (UNREALIZED) P&L — Tiger Prime =====
+           Computed client-side in showDashboard() from the positions array:
+           sum of each position's unrealized P&L converted to USD via the same live
+           FX rates the dashboard already fetches. Colour is set dynamically. -->
+      <div class="card" id="open-pnl-card">
         <div class="card-label">Open P&L (USD)</div>
-        <div class="card-value" id="open-pnl-static" style="color:var(--green);">+709.29</div>
-        <div class="card-sub">Tiger Prime · snapshot 2026-06-05</div>
+        <div class="card-value" id="open-pnl">—</div>
+        <div class="card-sub" id="open-pnl-sub">Tiger Prime · live</div>
       </div>
       <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">Tiger Prime Account</div></div>
       <div class="card"><div class="card-label">Net Value (SGD)</div><div class="card-value" id="net-val">—</div><div class="card-sub">from Tiger API × FX</div></div>
@@ -272,6 +273,27 @@ function showDashboard(data) {
   const pnlEl=document.getElementById('total-pnl');
   pnlEl.textContent=(totalPnlSGD>=0?'+':'-')+'S$'+Math.abs(totalPnlSGD).toLocaleString('en-US',{maximumFractionDigits:0});
   pnlEl.style.color=totalPnlSGD>=0?'var(--green)':'var(--red)';
+
+  // ---- Live Open (Unrealized) P&L in USD ----
+  // Prefer per-position unrealizedPnlUSD if the JSON provides it; otherwise convert
+  // each position's native-currency unrealizedPnl to USD via live FX:
+  // pnl(USD) = pnl(local) * fx[local→SGD] / fx[USD→SGD].
+  const usdSgd = fxRates.USD || 1.35;
+  const openPnlUSD = allData.reduce((s,p)=>{
+    if (p.unrealizedPnlUSD != null) return s + parseFloat(p.unrealizedPnlUSD);
+    const cur = (p.currency||'USD').toUpperCase();
+    const pnl = p.unrealizedPnl || 0;
+    return s + (pnl * (fxRates[cur]||1)) / usdSgd;
+  }, 0);
+  const openEl = document.getElementById('open-pnl');
+  const openCard = document.getElementById('open-pnl-card');
+  const gain = openPnlUSD >= 0;
+  openEl.textContent = (gain?'+':'-') + '$' + Math.abs(openPnlUSD).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  openEl.style.color = gain ? 'var(--green)' : 'var(--red)';
+  if (openCard) openCard.style.borderColor = gain ? 'rgba(0,212,170,.35)' : 'rgba(239,68,68,.35)';
+  const openSub = document.getElementById('open-pnl-sub');
+  if (openSub) openSub.textContent = 'Tiger Prime · live' + (data.fetchedAt ? ' · ' + data.fetchedAt : '');
+
   document.getElementById('loading-state').style.display='none';
   document.getElementById('nodata-state').style.display='none';
   document.getElementById('dashboard').style.display='block';
