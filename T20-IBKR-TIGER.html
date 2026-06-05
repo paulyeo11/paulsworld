@@ -934,6 +934,20 @@ function renderOptions(options) {
       thetaStr = sign + '$' + perContract.toFixed(2) + '/day';
       thetaCls = sellerGain ? 'pos' : 'neg';
     }
+    // ── Fill price + premium collected ──────────────────────────────────
+    // Fill Price = real premium/share Paul sold at (o.fillPrice from the
+    // script's FILL_PRICES record). Falls back to o.avgCost (IBKR cost basis,
+    // a cent off) when no fill is recorded. "—" if both null.
+    const fillBase = (o.fillPrice != null && !isNaN(o.fillPrice)) ? Number(o.fillPrice)
+                   : ((o.avgCost != null && !isNaN(o.avgCost)) ? Number(o.avgCost) : null);
+    const fillStr  = fillBase == null ? '—' : num(fillBase);
+    // Premium $ = fillBase × multiplier(100) × |qty| — total dollars collected.
+    // "—" if no price or qty null.
+    const optMult  = (o.multiplier != null && !isNaN(o.multiplier) && Number(o.multiplier) > 0)
+                   ? Number(o.multiplier) : 100;
+    const premiumStr = (fillBase == null || o.qty == null || isNaN(o.qty))
+                   ? '—' : money(fillBase * optMult * Math.abs(Number(o.qty)));
+
     // Qty hint: -1 → "Sold 1", positive → "Bought N".
     const qtyHint = o.qty == null ? ''
       : (o.qty < 0 ? `Sold ${Math.abs(o.qty)}` : `Bought ${o.qty}`);
@@ -956,6 +970,8 @@ function renderOptions(options) {
         ${kv('Theta', thetaStr, thetaCls)}
         ${kv('IV', ivPct)}
         ${kv('Avg Cost', num(o.avgCost))}
+        ${kv('Fill Price', fillStr)}
+        ${kv('Premium $', premiumStr)}
         ${kv('Mkt Value', money(o.marketValue))}
         ${kv('Unreal P&L', money(upnl), upnlCls)}
         ${kv('Mark', num(o.mark))}

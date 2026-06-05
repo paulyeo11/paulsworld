@@ -36,6 +36,15 @@ GITHUB_FILE  = "positions.json"
 GITHUB_BRANCH = "main"
 # ────────────────────────────────────────────────────────────
 
+# Manual fill-price record (premium per share actually sold/bought).
+# IBKR avgCost is net of commission, so it differs by a cent — these are the
+# real fills. ADD A LINE HERE whenever Paul opens a new option position.
+# Key: "UNDERLYING|YYYY-MM-DD|STRIKE|RIGHT"
+FILL_PRICES = {
+    "FDS|2026-07-17|320.0|C": 2.56,
+    "POOL|2026-07-17|260.0|C": 0.50,
+}
+
 def fetch_positions():
     util.startLoop()
     ib = IB()
@@ -132,13 +141,24 @@ def fetch_positions():
             # Greeks unavailable.
             delta, iv, theta, und_price = fetch_option_greeks(p.contract)
 
+            # Look up Paul's real fill price (premium per share). Build the key
+            # from the SAME strike/expiry/right variables the dict uses so the
+            # FILL_PRICES lookup always matches. None if not in the record →
+            # the card falls back to avgCost.
+            strike = round(p.contract.strike, 2)
+            right  = p.contract.right
+            symbol = p.contract.symbol
+            key    = f"{symbol}|{expiry}|{strike}|{right}"
+            fill   = FILL_PRICES.get(key)
+
             opt_list.append({
-                "underlying": p.contract.symbol,
-                "strike"    : round(p.contract.strike, 2),
+                "underlying": symbol,
+                "strike"    : strike,
                 "expiry"    : expiry,
-                "right"     : p.contract.right,
+                "right"     : right,
                 "qty"       : p.position,
                 "avgCost"   : round(p.avgCost / mult, 2),
+                "fillPrice" : fill,   # real premium/share from FILL_PRICES, or None
                 "delta"     : delta,   # model greek, 3dp, or None -> dashboard shows "—"
                 "iv"        : iv,      # implied vol decimal (0.25), 4dp, or None
                 "theta"     : theta,   # per-share daily decay, 4dp, or None (×100 = per-contract)
