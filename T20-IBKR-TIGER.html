@@ -195,6 +195,33 @@
       <div id="empty-state">No positions match this filter.</div>
       <div class="price-note">% Diff = (live price − avg cost) ÷ avg cost · Yahoo Finance (~15 min delay)</div>
     </div>
+
+    <div class="table-wrap" id="options-wrap">
+      <div class="table-header">
+        <div class="table-title">📑 IBKR Options</div>
+        <div id="opt-count">—</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Underlying</th>
+            <th>Strike</th>
+            <th class="hide-sm">Exp</th>
+            <th>C/P</th>
+            <th>Qty</th>
+            <th class="hide-sm">Avg Cost</th>
+            <th class="hide-sm">Mkt Value</th>
+            <th>Unreal P&L</th>
+            <th>Delta</th>
+            <th class="hide-sm">IV</th>
+            <th class="hide-sm">Mark</th>
+          </tr>
+        </thead>
+        <tbody id="options-body"></tbody>
+      </table>
+      <div id="options-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem;">No option positions.</div>
+      <div class="price-note">Greeks via IBKR (live entitlement) — blank values mean no options market-data subscription; delayed/none shown.</div>
+    </div>
   </div>
 </main>
 
@@ -352,6 +379,7 @@ async function loadData() {
     if(el5) { el5.textContent = (upnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(upnl)); el5.style.color = upnl>=0?'#10b981':'#ef4444'; }
     const el6 = document.getElementById('bal-ibkr-rpnl');
     if(el6) { el6.textContent = (rpnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(rpnl)); el6.style.color = rpnl>=0?'#10b981':'#ef4444'; }
+    renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
     document.getElementById('loading-state').style.display = 'none';
@@ -741,6 +769,43 @@ function renderChart() {
       }
     }
   });
+}
+
+function renderOptions(options) {
+  const body  = document.getElementById('options-body');
+  const empty = document.getElementById('options-empty');
+  const count = document.getElementById('opt-count');
+  if (!body) return;
+  const list = Array.isArray(options) ? options : [];
+  count.textContent = list.length + ' option' + (list.length !== 1 ? 's' : '');
+  if (!list.length) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const num = (v, d = 2) => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+  const money = v => (v == null || isNaN(v)) ? '—' : (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
+
+  body.innerHTML = list.map(o => {
+    const right = (o.right || '').toUpperCase();
+    const rightBadge = right === 'C'
+      ? `<span class="badge" style="background:rgba(0,212,170,.15);color:var(--green);">CALL</span>`
+      : (right === 'P' ? `<span class="badge" style="background:rgba(239,68,68,.15);color:var(--red);">PUT</span>` : (right || '—'));
+    const upnl = o.unrealizedPnL;
+    const upnlCls = upnl == null || isNaN(upnl) ? 'nil' : (upnl > 0 ? 'pos' : (upnl < 0 ? 'neg' : 'nil'));
+    const ivPct = (o.iv == null || isNaN(o.iv)) ? '—' : (Number(o.iv) * 100).toFixed(1) + '%';
+    return `<tr>
+      <td><span class="symbol">${o.underlying || '—'}</span></td>
+      <td class="num">${num(o.strike)}</td>
+      <td class="num hide-sm">${o.expiry || '—'}</td>
+      <td>${rightBadge}</td>
+      <td class="num">${o.qty == null ? '—' : Number(o.qty).toLocaleString()}</td>
+      <td class="num hide-sm">${num(o.avgCost)}</td>
+      <td class="num hide-sm">${money(o.marketValue)}</td>
+      <td class="num"><span class="diff-line ${upnlCls}">${money(upnl)}</span></td>
+      <td class="num">${num(o.delta, 3)}</td>
+      <td class="num hide-sm">${ivPct}</td>
+      <td class="num hide-sm">${num(o.mark)}</td>
+    </tr>`;
+  }).join('');
 }
 
 loadData();
