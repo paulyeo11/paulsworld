@@ -601,6 +601,9 @@ function renderTable() {
     const costKnown = avgCost != null;
     const costDerived = costKnown && (p.costUnknown === true || !isUsable(p.avgCost)); // came from mktVal/qty, or flagged cost-unknown
     const avgSGDFmt = costKnown ? fmt(avgCost * fx) : '—';
+    // Secondary-currency avg cost, mirroring the price line's "(US$.../HK$...)".
+    // avgCost is in the listing's native currency, same basis as the live price.
+    const avgLocalTag = (costKnown && cur !== 'SGD') ? ` <span style="font-size:.75em;opacity:.6;">(${s}${fmt(avgCost)})</span>` : '';
     // Invested = qty × cost; if cost unknown fall back to reported marketValue.
     const investedLocal = costKnown ? qty * avgCost : (isUsable(p.marketValue) ? p.marketValue : 0);
     const amtSGD = fmt(investedLocal * fx);
@@ -625,13 +628,13 @@ function renderTable() {
       const avgTag = costDerived ? ' <span style="font-size:.75em;opacity:.55;">(est)</span>' : '';
       const investedLine = costKnown && !costDerived
         ? `<span class="total-val-sub" style="color:#a0aec0;">invested S$${amtSGD}</span>` : '';
-      priceBlock = `<span class="price-live">S$${lpSGDFmt} <span style="font-size:.75em;opacity:.6;">(${s}${lpLocalFmt})</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}${avgTag}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span>${investedLine}`;
+      priceBlock = `<span class="price-live">S$${lpSGDFmt} <span style="font-size:.75em;opacity:.6;">(${s}${lpLocalFmt})</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}${avgLocalTag}${avgTag}</span>${diffLine}<span class="total-val-sub" style="color:#68d391;">S$${liveTotalFmt}</span>${investedLine}`;
     } else {
       // No usable live price — show "—" (never 0.00) plus a stale marker, and
       // fall back to market value / cost so the value column isn't blank.
       const avgTag = costDerived ? ' <span style="font-size:.75em;opacity:.55;">(est)</span>' : '';
       const fallbackVal = isUsable(p.marketValue) ? fmt(p.marketValue * fx) : amtSGD;
-      priceBlock = `<span class="price-loading">— <span style="opacity:.7;">price n/a</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}${avgTag}</span><span class="total-val-sub" style="color:#68d391;">S$${fallbackVal}</span>`;
+      priceBlock = `<span class="price-loading">— <span style="opacity:.7;">price n/a</span></span><span class="avg-cost-sub">avg S$${avgSGDFmt}${avgLocalTag}${avgTag}</span><span class="total-val-sub" style="color:#68d391;">S$${fallbackVal}</span>`;
     }
 
     return `<tr>
