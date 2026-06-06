@@ -46,6 +46,14 @@ FILL_PRICES = {
     "POOL|2026-07-17|260.0|C": 0.50,
 }
 
+# Underlying stock price at the time each option was filled (manual, static).
+# ADD A LINE whenever Paul opens a new option position.
+# Key: "UNDERLYING|YYYY-MM-DD|STRIKE|RIGHT"  (same key format as FILL_PRICES)
+FILL_UNDERLYING = {
+    "FDS|2026-07-17|320.0|C": 255.0,
+    "POOL|2026-07-17|260.0|C": 185.0,
+}
+
 def fetch_positions():
     util.startLoop()
     ib = IB()
@@ -151,6 +159,7 @@ def fetch_positions():
             symbol = p.contract.symbol
             key    = f"{symbol}|{expiry}|{strike}|{right}"
             fill   = FILL_PRICES.get(key)
+            fill_und = FILL_UNDERLYING.get(key)
 
             opt_list.append({
                 "underlying": symbol,
@@ -160,6 +169,7 @@ def fetch_positions():
                 "qty"       : p.position,
                 "avgCost"   : round(p.avgCost / mult, 2),
                 "fillPrice" : fill,   # real premium/share from FILL_PRICES, or None
+                "fillUnderlying": fill_und,  # stock price at fill from FILL_UNDERLYING, or None
                 "delta"     : delta,   # model greek, 3dp, or None -> dashboard shows "—"
                 "iv"        : iv,      # implied vol decimal (0.25), 4dp, or None
                 "theta"     : theta,   # per-share daily decay, 4dp, or None (×100 = per-contract)
