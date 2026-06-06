@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S18: D2701 Silk Road Train Guide — Xi'an to Urumqi</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:    #c0392b;
+    --gold:   #d4a017;
+    --ink:    #0d1421;
+    --paper:  #f0e6d3;
+    --muted:  #7a6e5f;
+    --card:   rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.09);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--paper);
+    min-height: 100vh;
+  }
+
+  /* ── Home button ── */
+  .home-btn {
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
+    color:var(--paper); text-decoration:none; padding:10px 18px;
+    border-radius:10px; font-size:0.85rem; margin-bottom:16px;
+  }
+  .back-link {
+    display:inline-flex; align-items:center; gap:8px;
+    color:var(--muted); text-decoration:none; font-size:0.85rem;
+    margin-bottom:28px;
+  }
+  .back-link:hover { color:var(--gold); }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, #12122a 0%, #1a0d2e 50%, #0d1421 100%);
+    border-bottom: 1px solid rgba(212,160,23,0.2);
+    padding: 40px 20px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '新疆';
+    position: absolute; right: -10px; top: -20px;
+    font-size: 200px; opacity: 0.035; font-weight: 900; line-height: 1;
+    color: var(--gold);
+  }
+  .train-label {
+    display: inline-block;
+    background: rgba(212,160,23,0.15);
+    border: 1px solid rgba(212,160,23,0.4);
+    color: var(--gold);
+    font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem,5vw,3rem);
+    font-weight: 900; line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero-sub {
+    font-size: 0.9rem; color: var(--muted);
+    letter-spacing: 1px; margin-bottom: 24px;
+  }
+  .hero-stats {
+    display: flex; justify-content: center; gap: 32px; flex-wrap: wrap;
+  }
+  .hero-stat { text-align: center; }
+  .hero-stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; font-weight: 700; color: var(--gold); line-height: 1;
+  }
+  .hero-stat-lbl {
+    font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--muted); margin-top: 4px;
+  }
+
+  /* ── Route strip ── */
+  .route-strip {
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .route-stop {
+    display: inline-flex; flex-direction: column; align-items: center;
+    gap: 3px; margin: 0 2px; vertical-align: middle;
+  }
+  .route-stop-num {
+    font-size: 0.65rem; color: var(--gold); font-weight: 700;
+  }
+  .route-stop-cn {
+    font-size: 0.72rem; color: var(--paper); white-space: nowrap;
+  }
+  .route-stop-en {
+    font-size: 0.6rem; color: var(--muted); white-space: nowrap;
+  }
+  .route-arrow {
+    display: inline-block; vertical-align: middle;
+    color: rgba(212,160,23,0.5); font-size: 0.9rem; margin: 0 4px;
+  }
+
+  /* ── Container ── */
+  .container { max-width: 920px; margin: 0 auto; padding: 32px 16px 80px; }
+
+  /* ── Section title ── */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; color: var(--gold);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: rgba(212,160,23,0.25);
+  }
+
+  /* ── Stop cards grid ── */
+  .stops-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .stop-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .stop-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(212,160,23,0.4);
+  }
+  .stop-card.highlight {
+    border-left: 3px solid var(--gold);
+  }
+
+  /* Photo wrapper */
+  .stop-photo {
+    position: relative;
+    width: 100%; height: 190px;
+    overflow: hidden;
+    background: #1a1a2e;
+  }
+  .stop-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .stop-card:hover .stop-photo img { transform: scale(1.05); }
+  .stop-photo .fallback {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px; display: none;
+  }
+  .stop-photo .fallback-emoji { font-size: 3rem; }
+  .stop-photo .fallback-text {
+    font-size: 0.8rem; color: rgba(255,255,255,0.5);
+    letter-spacing: 1px;
+  }
+
+  /* Number badge */
+  .stop-num-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(212,160,23,0.5);
+    color: var(--gold);
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .stop-time-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.72rem; padding: 3px 9px; border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .wiki-credit {
+    position: absolute; bottom: 6px; right: 8px;
+    font-size: 0.58rem; color: rgba(255,255,255,0.35);
+    letter-spacing: 0.5px;
+  }
+
+  /* Card body */
+  .stop-body { padding: 14px 16px 16px; }
+  .stop-names { margin-bottom: 10px; }
+  .stop-cn {
+    font-size: 1.05rem; font-weight: 600; color: var(--paper);
+    margin-bottom: 3px;
+  }
+  .stop-en {
+    font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--gold);
+  }
+  .stop-province {
+    font-size: 0.7rem; color: var(--muted); margin-top: 2px;
+  }
+
+  .sight-row {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .sight-item {
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .sight-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+  .sight-text {}
+  .sight-cn { font-size: 0.78rem; color: rgba(255,255,255,0.7); }
+  .sight-en { font-size: 0.73rem; color: var(--muted); margin-top: 1px; }
+  .sight-desc { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 2px; line-height: 1.5; }
+
+  .tag-pill {
+    display: inline-block;
+    font-size: 0.62rem; padding: 2px 8px; border-radius: 12px;
+    margin-top: 8px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pill-star { background: rgba(212,160,23,0.2); color: var(--gold); border: 1px solid rgba(212,160,23,0.4); }
+  .pill-train { background: rgba(52,152,219,0.2); color: #74b9ff; border: 1px solid rgba(52,152,219,0.4); }
+  .pill-great { background: rgba(192,57,43,0.2); color: #ff7675; border: 1px solid rgba(192,57,43,0.4); }
+
+  /* ── Tips box ── */
+  .tips-box {
+    background: rgba(212,160,23,0.07);
+    border: 1px solid rgba(212,160,23,0.2);
+    border-radius: 14px; padding: 18px 20px;
+    margin-bottom: 32px; font-size: 0.85rem; line-height: 1.9;
+  }
+  .tips-box strong { color: var(--gold); }
+
+  /* ── Timeline strip (compact) ── */
+  .timeline-row {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 32px;
+  }
+  .tl-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+  }
+  .tl-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 700; color: var(--gold);
+    min-width: 22px;
+  }
+  .tl-cn { font-size: 0.88rem; font-weight: 500; }
+  .tl-en { font-size: 0.72rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; }
+  .tl-sight { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+  .tl-time { margin-left: auto; font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; font-size: 0.75rem; color: var(--muted);
+    margin-top: 32px; padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── Responsive ── */
+  @media(max-width: 600px) {
+    .stops-grid { grid-template-columns: 1fr; }
+    .stop-photo { height: 200px; }
+    .hero-stats { gap: 20px; }
+    .hero-stat-val { font-size: 1.4rem; }
+  }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .stops-grid { animation: fadeUp 0.7s ease both; }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div style="max-width:880px;margin:0 auto;position:relative;z-index:1;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+    </div>
+    <a href="xinjiang-2026.html" class="back-link">← Back to Xinjiang Trip</a>
+    <div class="train-label">S18 · 🚂 D2701 · Silk Road Express</div>
+    <h1>S18: Xi'an → <span>Urumqi</span></h1>
+    <p class="hero-sub">西安北 → 乌鲁木齐 · 31 August 2026 · 08:00 – 21:15 · 13 hrs 15 min</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val">10</div><div class="hero-stat-lbl">Stations</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">13h</div><div class="hero-stat-lbl">Journey</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">3,000+</div><div class="hero-stat-lbl">km Rail</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">卧铺</div><div class="hero-stat-lbl">Sleeper Berth</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scrollable route strip -->
+<div class="route-strip">
+  <span class="route-stop">
+    <span class="route-stop-num">①</span>
+    <span class="route-stop-cn">西安北</span>
+    <span class="route-stop-en">Xi'an North</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num">②</span>
+    <span class="route-stop-cn">宝鸡南</span>
+    <span class="route-stop-en">Baoji South</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num">③</span>
+    <span class="route-stop-cn">天水南</span>
+    <span class="route-stop-en">Tianshui South</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num">④</span>
+    <span class="route-stop-cn">兰州西</span>
+    <span class="route-stop-en">Lanzhou West</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num">⑤</span>
+    <span class="route-stop-cn">西宁站</span>
+    <span class="route-stop-en">Xining</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num" style="color:#ff7675">⑥</span>
+    <span class="route-stop-cn" style="color:#ff9a97">张掖西</span>
+    <span class="route-stop-en" style="color:#ff9a97">Zhangye West ⭐</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num" style="color:#ff7675">⑦</span>
+    <span class="route-stop-cn" style="color:#ff9a97">嘉峪关</span>
+    <span class="route-stop-en" style="color:#ff9a97">Jiayuguan ⭐</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num">⑧</span>
+    <span class="route-stop-cn">哈密站</span>
+    <span class="route-stop-en">Hami</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num">⑨</span>
+    <span class="route-stop-cn">吐鲁番北</span>
+    <span class="route-stop-en">Turpan North</span>
+  </span>
+  <span class="route-arrow">→</span>
+  <span class="route-stop">
+    <span class="route-stop-num" style="color:#74b9ff">⑩</span>
+    <span class="route-stop-cn" style="color:#74b9ff">乌鲁木齐</span>
+    <span class="route-stop-en" style="color:#74b9ff">Urumqi 🏁</span>
+  </span>
+</div>
+
+<div class="container">
+
+  <!-- Quick reference table -->
+  <div class="section-title">📋 All Stops at a Glance</div>
+  <div class="timeline-row" style="margin-bottom:40px;">
+
+    <div class="tl-item" style="border-left:3px solid #e74c3c;">
+      <div class="tl-num">①</div>
+      <div style="flex:1;">
+        <div class="tl-cn">西安北 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Shaanxi Province</span></div>
+        <div class="tl-en">Xi'an North Station</div>
+        <div class="tl-sight">兵马俑 Terracotta Warriors · 回民街 Muslim Street · 古城墙 Ancient City Wall</div>
+      </div>
+      <div class="tl-time">08:00 🚂 DEPART</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-num">②</div>
+      <div style="flex:1;">
+        <div class="tl-cn">宝鸡南 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Shaanxi Province</span></div>
+        <div class="tl-en">Baoji South Station</div>
+        <div class="tl-sight">法门寺 Famen Temple (Buddha's Finger Relic) · Bronze Age Capital</div>
+      </div>
+      <div class="tl-time">~09:15</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-num">③</div>
+      <div style="flex:1;">
+        <div class="tl-cn">天水南 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Gansu Province</span></div>
+        <div class="tl-en">Tianshui South Station</div>
+        <div class="tl-sight">麦积山石窟 Maijishan Grottoes · One of China's 4 great cliff-face cave temples</div>
+      </div>
+      <div class="tl-time">~10:30</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-num">④</div>
+      <div style="flex:1;">
+        <div class="tl-cn">兰州西 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Gansu Province</span></div>
+        <div class="tl-en">Lanzhou West Station</div>
+        <div class="tl-sight">黄河 Yellow River · 中山桥 Zhongshan Bridge · 牛肉面 Famous Lanzhou Beef Noodles</div>
+      </div>
+      <div class="tl-time">~12:00</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-num">⑤</div>
+      <div style="flex:1;">
+        <div class="tl-cn">西宁站 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Qinghai Province</span></div>
+        <div class="tl-en">Xining Station</div>
+        <div class="tl-sight">塔尔寺 Ta'er Monastery (Kumbum) · Tibetan Buddhist Gateway · Altitude begins 🏔️</div>
+      </div>
+      <div class="tl-time">~13:00</div>
+    </div>
+
+    <div class="tl-item" style="border-left:3px solid #ff7675;">
+      <div class="tl-num" style="color:#ff7675;">⑥</div>
+      <div style="flex:1;">
+        <div class="tl-cn" style="color:#ff9a97;">张掖西 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Gansu Province</span></div>
+        <div class="tl-en" style="color:#ff7675;">Zhangye West Station ⭐ Must See</div>
+        <div class="tl-sight">七彩丹霞 Danxia Rainbow Mountains · Earth's most colourful geological formation 🌈</div>
+      </div>
+      <div class="tl-time">~15:00</div>
+    </div>
+
+    <div class="tl-item" style="border-left:3px solid #ff7675;">
+      <div class="tl-num" style="color:#ff7675;">⑦</div>
+      <div style="flex:1;">
+        <div class="tl-cn" style="color:#ff9a97;">嘉峪关 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Gansu Province</span></div>
+        <div class="tl-en" style="color:#ff7675;">Jiayuguan Station ⭐ Must See</div>
+        <div class="tl-sight">"天下第一雄关" The Greatest Pass Under Heaven · Western End of the Great Wall 🏯</div>
+      </div>
+      <div class="tl-time">~16:00</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-num">⑧</div>
+      <div style="flex:1;">
+        <div class="tl-cn">哈密站 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Xinjiang</span></div>
+        <div class="tl-en">Hami Station — Enter Xinjiang!</div>
+        <div class="tl-sight">哈密瓜 World-Famous Hami Melon 🍈 · 魔鬼城 Ghost City Yardang Landform</div>
+      </div>
+      <div class="tl-time">~18:30</div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-num">⑨</div>
+      <div style="flex:1;">
+        <div class="tl-cn">吐鲁番北 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Xinjiang</span></div>
+        <div class="tl-en">Turpan North Station</div>
+        <div class="tl-sight">火焰山 Flaming Mountains · 葡萄沟 Grape Valley · China's Lowest &amp; Hottest Point 🌡️</div>
+      </div>
+      <div class="tl-time">~20:00</div>
+    </div>
+
+    <div class="tl-item" style="border-left:3px solid #3498db;">
+      <div class="tl-num" style="color:#74b9ff;">⑩</div>
+      <div style="flex:1;">
+        <div class="tl-cn" style="color:#74b9ff;">乌鲁木齐 &nbsp;<span style="font-size:0.72rem;color:var(--muted);">Xinjiang Capital</span></div>
+        <div class="tl-en" style="color:#74b9ff;">Urumqi — Journey's End 🏁</div>
+        <div class="tl-sight">大巴扎 International Grand Bazaar · World's Most Inland City · Still bright at 9pm! 🌅</div>
+      </div>
+      <div class="tl-time">21:15 🏁 ARRIVE</div>
+    </div>
+
+  </div>
+
+  <!-- Photo cards section -->
+  <div class="section-title">📸 Places of Interest — Photo Guide</div>
+  <div class="stops-grid">
+
+    <!-- ① Xi'an -->
+    <div class="stop-card highlight">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Terracotta_Army%2C_View_of_Pit_1.jpg/800px-Terracotta_Army%2C_View_of_Pit_1.jpg"
+          alt="Terracotta Army Xi'an"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#4a0000,#8B0000,#c0392b);">
+          <div class="fallback-emoji">🏺</div>
+          <div class="fallback-text">XI'AN</div>
+        </div>
+        <div class="stop-num-badge">① DEPART 08:00</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">西安北 · Xi'an North</div>
+          <div class="stop-en">Shaanxi Province — Silk Road Starting Point</div>
+          <div class="stop-province">古都 Ancient Capital · Former Tang Dynasty Imperial City</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🏺</div>
+            <div class="sight-text">
+              <div class="sight-cn">兵马俑 Bīngmǎ Yǒng</div>
+              <div class="sight-en">Terracotta Army</div>
+              <div class="sight-desc">8,000 life-size clay warriors buried with Emperor Qin Shi Huang · UNESCO World Heritage Site</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🕌</div>
+            <div class="sight-text">
+              <div class="sight-cn">回民街 Huímín Jiē</div>
+              <div class="sight-en">Muslim Quarter Street</div>
+              <div class="sight-desc">700-year-old Islamic trading quarter · Lamb skewers, rou jiamo, pomegranate juice</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🧱</div>
+            <div class="sight-text">
+              <div class="sight-cn">古城墙 Gǔ Chéng Qiáng</div>
+              <div class="sight-en">Ancient City Wall</div>
+              <div class="sight-desc">Best-preserved city wall in China · 14km circumference · Ride a bicycle on top</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train">🚂 Depart 08:00 Sharp</span>
+      </div>
+    </div>
+
+    <!-- ② Baoji / Famen Temple -->
+    <div class="stop-card">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Famen_Temple_in_Baoji%2C_Shaanxi%2C_China_%28DSCF3557%29.jpg/800px-Famen_Temple_in_Baoji%2C_Shaanxi%2C_China_%28DSCF3557%29.jpg"
+          alt="Famen Temple Baoji"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#1a3d1a,#2e7d32,#388e3c);">
+          <div class="fallback-emoji">🛕</div>
+          <div class="fallback-text">FAMEN TEMPLE</div>
+        </div>
+        <div class="stop-num-badge">②</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">宝鸡南 · Baoji South</div>
+          <div class="stop-en">Shaanxi Province — Bronze Age Capital</div>
+          <div class="stop-province">青铜器之乡 Hometown of Bronze Artifacts</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🛕</div>
+            <div class="sight-text">
+              <div class="sight-cn">法门寺 Fǎmén Sì</div>
+              <div class="sight-en">Famen Temple</div>
+              <div class="sight-desc">Houses a finger bone relic of Buddha · Tang Dynasty underground palace · Sacred Buddhist pilgrimage site</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">⚗️</div>
+            <div class="sight-text">
+              <div class="sight-cn">周原遗址 Zhōuyuán</div>
+              <div class="sight-en">Zhou Dynasty Ruins</div>
+              <div class="sight-desc">3,000-year-old cradle of Zhou civilization · Important archaeological excavation site</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train">🚂 Pass Through ~09:15</span>
+      </div>
+    </div>
+
+    <!-- ③ Tianshui / Maijishan -->
+    <div class="stop-card">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Maijishan_grottoes_2009.jpg/800px-Maijishan_grottoes_2009.jpg"
+          alt="Maijishan Grottoes Tianshui"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#5d4037,#8d6e63,#4e342e);">
+          <div class="fallback-emoji">🪨</div>
+          <div class="fallback-text">MAIJISHAN</div>
+        </div>
+        <div class="stop-num-badge">③</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">天水南 · Tianshui South</div>
+          <div class="stop-en">Gansu Province — Enter Gansu Corridor</div>
+          <div class="stop-province">羲皇故里 Birthplace of mythical Emperor Fu Xi</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🪨</div>
+            <div class="sight-text">
+              <div class="sight-cn">麦积山石窟 Màijī Shān Shíkū</div>
+              <div class="sight-en">Maijishan Cliff Grottoes</div>
+              <div class="sight-desc">194 caves carved into a 142m haystack-shaped cliff · 7,200 Buddhist sculptures · Walkways along sheer rock face · One of China's 4 great grottoes</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train">🚂 Pass Through ~10:30</span>
+      </div>
+    </div>
+
+    <!-- ④ Lanzhou / Yellow River -->
+    <div class="stop-card">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Lanzhou_Yellow_River.jpg/800px-Lanzhou_Yellow_River.jpg"
+          alt="Yellow River Lanzhou"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#e65100,#f57c00,#bf360c);">
+          <div class="fallback-emoji">🌊</div>
+          <div class="fallback-text">YELLOW RIVER</div>
+        </div>
+        <div class="stop-num-badge">④</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">兰州西 · Lanzhou West</div>
+          <div class="stop-en">Gansu Province — Only City Straddling Yellow River</div>
+          <div class="stop-province">黄河之都 Yellow River Capital</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🌊</div>
+            <div class="sight-text">
+              <div class="sight-cn">黄河 Huáng Hé</div>
+              <div class="sight-en">The Yellow River</div>
+              <div class="sight-desc">China's "Mother River" · 5,464km long · 中山桥 Zhongshan Bridge (1907) is the oldest iron bridge on the Yellow River</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🍜</div>
+            <div class="sight-text">
+              <div class="sight-cn">兰州牛肉面 Lánzhōu Niúròu Miàn</div>
+              <div class="sight-en">Lanzhou Beef Noodles</div>
+              <div class="sight-desc">China's most eaten noodle · Hand-pulled to your desired thickness · Clear broth, white radish, red chilli oil</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train">🚂 Pass Through ~12:00</span>
+      </div>
+    </div>
+
+    <!-- ⑤ Xining / Ta'er Monastery -->
+    <div class="stop-card">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Kumbum_Monastery_%28Ta%27er_Si%29_Xining_Qinghai_China_August_2010.jpg/800px-Kumbum_Monastery_%28Ta%27er_Si%29_Xining_Qinghai_China_August_2010.jpg"
+          alt="Kumbum Ta'er Monastery Xining"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#4a148c,#880e4f,#6a1b9a);">
+          <div class="fallback-emoji">🙏</div>
+          <div class="fallback-text">TA'ER MONASTERY</div>
+        </div>
+        <div class="stop-num-badge">⑤</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">西宁站 · Xining</div>
+          <div class="stop-en">Qinghai Province — Gateway to Tibet</div>
+          <div class="stop-province">高原门户 Tibetan Plateau Gateway · Altitude 2,275m</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🙏</div>
+            <div class="sight-text">
+              <div class="sight-cn">塔尔寺 Tǎ'ěr Sì</div>
+              <div class="sight-en">Ta'er Monastery (Kumbum Monastery)</div>
+              <div class="sight-desc">One of 6 great Tibetan Buddhist monasteries · Birthplace of Tsongkhapa (founder of Yellow Hat sect) · Famous for its yak butter sculptures</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">⚠️</div>
+            <div class="sight-text">
+              <div class="sight-cn">信号消失！Xìnhào Xiāoshī</div>
+              <div class="sight-en">Signal Drops After Xining!</div>
+              <div class="sight-desc">Download offline maps, movies &amp; music before this stop — no mobile signal ahead until Hami</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-great" style="background:rgba(231,76,60,0.2);color:#ff7675;border-color:rgba(231,76,60,0.4);">⚠️ Download offline maps here!</span>
+      </div>
+    </div>
+
+    <!-- ⑥ Zhangye / Rainbow Mountains -->
+    <div class="stop-card highlight">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Zhangye_Danxia.JPG"
+          alt="Zhangye Danxia Rainbow Mountains"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#e64a19,#f57c00,#388e3c,#1565c0);">
+          <div class="fallback-emoji">🌈</div>
+          <div class="fallback-text">RAINBOW MOUNTAINS</div>
+        </div>
+        <div class="stop-num-badge" style="background:rgba(192,57,43,0.8);color:#fff;">⑥ ⭐ MUST SEE</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn" style="color:#ff9a97;">张掖西 · Zhangye West</div>
+          <div class="stop-en" style="color:#ff7675;">Gansu Province — ⭐ Star Stop!</div>
+          <div class="stop-province">七彩 Gateway to the Rainbow Mountains</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🌈</div>
+            <div class="sight-text">
+              <div class="sight-cn">七彩丹霞 Qīcǎi Dānxiá</div>
+              <div class="sight-en">Danxia Rainbow Mountains (National Geopark)</div>
+              <div class="sight-desc">Multi-coloured sedimentary rock layers formed over 24 million years · Reds, oranges, yellows, greens, blues visible from train window! Best light: sunrise &amp; sunset</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🪟</div>
+            <div class="sight-text">
+              <div class="sight-cn">左窗口 Zuǒ Chuāngkǒu</div>
+              <div class="sight-en">Sit on the LEFT side (A seat)</div>
+              <div class="sight-desc">The Qilian Mountains &amp; Rainbow Mountains are visible from the LEFT window of the train</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-star">⭐ Most Photogenic Stop</span>
+      </div>
+    </div>
+
+    <!-- ⑦ Jiayuguan / Great Wall -->
+    <div class="stop-card highlight">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Jiayuguan_Pass.jpg/800px-Jiayuguan_Pass.jpg"
+          alt="Jiayuguan Fort Great Wall"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#263238,#37474f,#546e7a);">
+          <div class="fallback-emoji">🏯</div>
+          <div class="fallback-text">JIAYUGUAN FORT</div>
+        </div>
+        <div class="stop-num-badge" style="background:rgba(192,57,43,0.8);color:#fff;">⑦ ⭐ MUST SEE</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn" style="color:#ff9a97;">嘉峪关 · Jiayuguan</div>
+          <div class="stop-en" style="color:#ff7675;">Gansu Province — ⭐ Western End of Great Wall</div>
+          <div class="stop-province">天下第一雄关 "The Greatest Pass Under Heaven"</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🏯</div>
+            <div class="sight-text">
+              <div class="sight-cn">嘉峪关城楼 Jiāyùguān Chénglóu</div>
+              <div class="sight-en">Jiayuguan Fortress Tower</div>
+              <div class="sight-desc">Western-most point of the Ming Dynasty Great Wall · Built in 1372 AD · Point where the Wall meets the Gobi Desert · "The Last Beacon Under Heaven" — visible from the train!</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🏜️</div>
+            <div class="sight-text">
+              <div class="sight-cn">祁连山 Qīlián Shān</div>
+              <div class="sight-en">Qilian Mountain Range</div>
+              <div class="sight-desc">Snow-capped peaks visible alongside the train · Glaciers feeding the Hexi Corridor oases along the ancient Silk Road</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-great">🏯 Western End of the Great Wall</span>
+      </div>
+    </div>
+
+    <!-- ⑧ Hami / Ghost City -->
+    <div class="stop-card">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Wuerhe_Ghost_City_%28Xinjiang%2C_China%29.jpg/800px-Wuerhe_Ghost_City_%28Xinjiang%2C_China%29.jpg"
+          alt="Ghost City Yardang Hami Xinjiang"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#795548,#a1887f,#4e342e);">
+          <div class="fallback-emoji">👻</div>
+          <div class="fallback-text">GHOST CITY</div>
+        </div>
+        <div class="stop-num-badge">⑧ Enter Xinjiang!</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">哈密站 · Hami</div>
+          <div class="stop-en">Xinjiang — Eastern Gateway to Xinjiang</div>
+          <div class="stop-province">丝路东门 Eastern Gate of the Silk Road</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🍈</div>
+            <div class="sight-text">
+              <div class="sight-cn">哈密瓜 Hāmì Guā</div>
+              <div class="sight-en">Hami Melon (Honeydew Melon)</div>
+              <div class="sight-desc">World-famous sweet melon · Grown in Hami's extreme heat &amp; arid conditions · 2,000-year history · Buy from platform vendors!</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">👻</div>
+            <div class="sight-text">
+              <div class="sight-cn">魔鬼城 Mógui Chéng</div>
+              <div class="sight-en">Ghost City Yardang Landform</div>
+              <div class="sight-desc">Wind-eroded sandstone formations resembling a ruined city · Eerie whistling sounds in wind · Resembles a ghost town at dusk</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train">🚂 Pass Through ~18:30</span>
+      </div>
+    </div>
+
+    <!-- ⑨ Turpan / Flaming Mountains -->
+    <div class="stop-card">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Flaming_Mountains_%284%29.jpg/800px-Flaming_Mountains_%284%29.jpg"
+          alt="Flaming Mountains Turpan"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#b71c1c,#d32f2f,#e64a19);">
+          <div class="fallback-emoji">🔥</div>
+          <div class="fallback-text">FLAMING MOUNTAINS</div>
+        </div>
+        <div class="stop-num-badge">⑨</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn">吐鲁番北 · Turpan North</div>
+          <div class="stop-en">Xinjiang — China's Hottest &amp; Lowest Point</div>
+          <div class="stop-province">中国最热 Hottest place in China · −154m below sea level</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🔥</div>
+            <div class="sight-text">
+              <div class="sight-cn">火焰山 Huǒyàn Shān</div>
+              <div class="sight-en">Flaming Mountains</div>
+              <div class="sight-desc">Red sandstone ridges reaching 50°C surface temperature in summer · Famous setting in Journey to the West novel · Glow like fire at sunset</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🍇</div>
+            <div class="sight-text">
+              <div class="sight-cn">葡萄沟 Pútáo Gōu</div>
+              <div class="sight-en">Grape Valley</div>
+              <div class="sight-desc">Lush oasis of grape vines amid desert · 11km vine-covered valley · Turpan raisins are China's finest · Ancient karez underground water system</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train">🚂 Pass Through ~20:00</span>
+      </div>
+    </div>
+
+    <!-- ⑩ Urumqi -->
+    <div class="stop-card" style="border-color:rgba(52,152,219,0.3);">
+      <div class="stop-photo">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/4/4d/Impression_inside_the_Grand_Bazaar.JPG"
+          alt="Urumqi International Grand Bazaar"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          loading="lazy">
+        <div class="fallback" style="background:linear-gradient(135deg,#0d47a1,#1565c0,#1976d2);">
+          <div class="fallback-emoji">🏙️</div>
+          <div class="fallback-text">URUMQI</div>
+        </div>
+        <div class="stop-num-badge" style="background:rgba(52,152,219,0.8);color:#fff;">⑩ ARRIVE 21:15 🏁</div>
+        <div class="wiki-credit">📷 Wikimedia Commons</div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-names">
+          <div class="stop-cn" style="color:#74b9ff;">乌鲁木齐 · Urumqi</div>
+          <div class="stop-en" style="color:#74b9ff;">Xinjiang Capital — Journey's End</div>
+          <div class="stop-province">全球最内陆城市 World's Most Inland City · 2,500km from nearest coastline</div>
+        </div>
+        <div class="sight-row">
+          <div class="sight-item">
+            <div class="sight-icon">🏪</div>
+            <div class="sight-text">
+              <div class="sight-cn">国际大巴扎 Guójì Dà Bāzhā</div>
+              <div class="sight-en">International Grand Bazaar</div>
+              <div class="sight-desc">Largest bazaar in Central Asia · Uyghur food, spices, carpets, dried fruits · Minaret-styled architecture · Vibrant at night</div>
+            </div>
+          </div>
+          <div class="sight-item">
+            <div class="sight-icon">🌅</div>
+            <div class="sight-text">
+              <div class="sight-cn">新疆时间 Xīnjiāng Shíjiān</div>
+              <div class="sight-en">Xinjiang Time Tip</div>
+              <div class="sight-desc">Officially UTC+8 (Beijing time) but locals use unofficial UTC+6 · Sun still bright at 9pm Beijing time · Daily life runs ~2 hours "later" than Beijing</div>
+            </div>
+          </div>
+        </div>
+        <span class="tag-pill pill-train" style="background:rgba(52,152,219,0.2);color:#74b9ff;border-color:rgba(52,152,219,0.4);">🚗 Road Trip Starts Here!</span>
+      </div>
+    </div>
+
+  </div><!-- /stops-grid -->
+
+  <!-- Tips -->
+  <div class="section-title">💡 Paul's Train Tips</div>
+  <div class="tips-box">
+    🪟 <strong>Best seat:</strong> Left side A-seat — Qilian Mountains &amp; Rainbow Mountains are on the LEFT<br>
+    📱 <strong>Signal drops</strong> after Xining (Stop ⑤) — download offline maps, Netflix, music BEFORE boarding<br>
+    🕐 <strong>Xinjiang time:</strong> Clocks show Beijing time but sun is 2 hrs behind — still daylight at 9pm!<br>
+    🍈 <strong>Buy Hami melon</strong> from platform vendors at Hami Station — sweetest you'll ever taste<br>
+    🛏️ <strong>Book 卧铺 sleeper berth</strong> for this 13-hour journey — much more comfortable than seats<br>
+    🎫 <strong>Tickets on sale:</strong> <strong style="color:#ff7675;">17 Aug 2026 · 10:30am sharp</strong> · Book via 12306 app · Use 候补 waitlist function<br>
+    🪟 <strong>Rainbow Mountains</strong> at Zhangye visible from train — have camera ready around 3pm
+  </div>
+
+  <!-- Photo attribution -->
+  <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px 16px;font-size:0.72rem;color:var(--muted);margin-bottom:32px;">
+    📸 <strong style="color:rgba(255,255,255,0.4);">Photo credits:</strong> All photographs sourced from Wikimedia Commons under Creative Commons licences. Images belong to their respective photographers.
+  </div>
+
+  <script src="/view-counter.js"></script>
+
+  <div class="footer">
+    Paul's World · D2701 Silk Road Train Guide · Xi'an → Urumqi · Sep 2026
+  </div>
+
+</div><!-- /container -->
+</body>
+</html>
