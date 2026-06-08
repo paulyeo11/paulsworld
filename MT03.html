@@ -344,7 +344,7 @@
 
 <!-- Sticky tab bar — always visible at top -->
 <div id="sticky-tabs">
-  <button id="stab-pack" class="active" onclick="switchTab('pack')">🎒 Packing List</button>
+  <button id="stab-pack" onclick="switchTab('pack')">🎒 Packing List</button>
   <button id="stab-wx" onclick="switchTab('wx')">🌤️ Weather</button>
 </div>
 
@@ -1283,11 +1283,11 @@
 
 
   <!-- Packing / Weather Tabs -->
-  <div style="margin-bottom:32px;">
+  <div id="pack-weather-tabs" style="margin-bottom:32px;">
 
     <div style="display:flex;gap:0;margin-bottom:20px;border-radius:12px;overflow:hidden;border:1px solid rgba(212,160,23,0.3);">
       <button id="tab-pack-btn" onclick="switchTab('pack')"
-        style="flex:1;padding:13px 16px;background:rgba(212,160,23,0.2);border:none;color:#d4a017;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
+        style="flex:1;padding:13px 16px;background:rgba(255,255,255,0.04);border:none;color:#7a6e5f;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s;">
         🎒 Packing List
       </button>
       <button id="tab-wx-btn" onclick="switchTab('wx')"
@@ -1297,7 +1297,7 @@
     </div>
 
     <!-- Packing List Tab -->
-    <div id="tab-pack">
+    <div id="tab-pack" style="display:none">
   <!-- Packing List -->
   <div style="margin-bottom:32px;">
     <div class="section-title">🎒 Packing List</div>
@@ -1599,18 +1599,36 @@
   </div><!-- /pack-weather-tabs -->
 
   <script>
+  var activeTab = null;
   function switchTab(t) {
+    var packEl = document.getElementById('tab-pack');
+    var wxEl   = document.getElementById('tab-wx');
+    var packBtn = document.getElementById('tab-pack-btn');
+    var wxBtn   = document.getElementById('tab-wx-btn');
+
+    if (activeTab === t) {
+      // Same button tapped — collapse/hide
+      packEl.style.display = 'none';
+      wxEl.style.display   = 'none';
+      packBtn.style.background = 'rgba(255,255,255,0.04)'; packBtn.style.color = '#7a6e5f';
+      wxBtn.style.background   = 'rgba(255,255,255,0.04)'; wxBtn.style.color   = '#7a6e5f';
+      document.getElementById('stab-pack').className = '';
+      document.getElementById('stab-wx').className   = '';
+      activeTab = null;
+      return;
+    }
+
+    // Show selected tab, hide other
     var p = (t === 'pack');
-    document.getElementById('tab-pack').style.display = p ? 'block' : 'none';
-    document.getElementById('tab-wx').style.display   = p ? 'none'  : 'block';
-    document.getElementById('tab-pack-btn').style.background = p ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.04)';
-    document.getElementById('tab-pack-btn').style.color = p ? '#d4a017' : '#7a6e5f';
-    document.getElementById('tab-wx-btn').style.background  = p ? 'rgba(255,255,255,0.04)' : 'rgba(212,160,23,0.2)';
-    document.getElementById('tab-wx-btn').style.color  = p ? '#7a6e5f' : '#d4a017';
-    // Sync sticky bar
+    packEl.style.display = p ? 'block' : 'none';
+    wxEl.style.display   = p ? 'none'  : 'block';
+    packBtn.style.background = p ? 'rgba(212,160,23,0.2)' : 'rgba(255,255,255,0.04)';
+    packBtn.style.color      = p ? '#d4a017' : '#7a6e5f';
+    wxBtn.style.background   = p ? 'rgba(255,255,255,0.04)' : 'rgba(212,160,23,0.2)';
+    wxBtn.style.color        = p ? '#7a6e5f' : '#d4a017';
     document.getElementById('stab-pack').className = p ? 'active' : '';
     document.getElementById('stab-wx').className   = p ? '' : 'active';
-    // Scroll to tab content
+    activeTab = t;
     document.getElementById('pack-weather-tabs').scrollIntoView({behavior:'smooth', block:'start'});
   }
   </script>
