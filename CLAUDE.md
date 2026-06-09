@@ -64,6 +64,19 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
   (via gh/git) — no need to ask Paul, never ask him to copy/paste or upload manually.
 - After every successful push, confirm with the **file name and commit SHA**.
 
+## Map Links Rule
+Whenever Paul asks to "add map link", "add google location", or similar — always add **all three** map buttons together:
+1. **Google Maps** — `https://maps.google.com/?q=LAT,LNG&label=Name`
+2. **百度地图** — `https://map.baidu.com/search/URL_ENCODED_CHINESE_NAME`
+3. **Amap (高德地图)** — `https://uri.amap.com/marker?position=LNG,LAT&name=URL_ENCODED_NAME`
+
+Button style pattern:
+```html
+<a href="GOOGLE_URL" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+<a href="BAIDU_URL" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+<a href="AMAP_URL" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+```
+
 ## After Every Deployment — MANDATORY
 1. Wait ~2 minutes for Vercel to deploy.
 2. Use **WebFetch** to check the live URL and confirm the change is visible yourself.
