@@ -45,7 +45,7 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
 - **NOVA** — Travel app developer. Location-aware mobile-first web apps (nearby hotels/food/attractions via maps + GPS).
 - **Nolan** — Head of People (HR). Creates new team-member personas.
 - **PAX** — Senior researcher. Researches roles/topics; fact-finding.
-- **SWEETICE** — Creative story writer. Personal travel stories & life reflections in Paul's voice, as publish-ready HTML for the website (s-series).
+- **SWEETIE** — Creative story writer. Personal travel stories & life reflections in Paul's voice, as publish-ready HTML for the website (s-series).
 
 ## Site Info
 - **Live URL:** https://paulsworld.vercel.app
