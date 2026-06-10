@@ -119,6 +119,12 @@
   .t-canyon { background: rgba(245,158,11,0.2);  color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
   .t-grass  { background: rgba(132,204,22,0.2);  color: #bef264; border: 1px solid rgba(132,204,22,0.3); }
   .t-offroad{ background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .t-transit{ background: rgba(168,85,247,0.2);  color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+
+  .connector-row {
+    background: rgba(168,85,247,0.05);
+    border-left: 3px solid rgba(168,85,247,0.5);
+  }
 
   /* Leaflet */
   .leaflet-popup-content-wrapper {
@@ -148,7 +154,7 @@
   <div class="header-top">
     <div>
       <h1>🏔️ MT06: Xinjiang <span class="gold">North Loop</span> + <span class="teal">Duku Highway</span></h1>
-      <div class="header-sub">新疆自驾全图 · Sep 2026 · Combined Route Map · ~3,375 km total</div>
+      <div class="header-sub">新疆自驾全图 · Sep 2026 · Anti-Clockwise Route · ~2,165 km total</div>
     </div>
     <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
   </div>
@@ -162,7 +168,7 @@
   </button>
   <button class="tab" onclick="switchTab(1)">
     <div class="tab-title">🔵 North Loop</div>
-    <div class="tab-sub">~1,815 km</div>
+    <div class="tab-sub">anti-clockwise ~985 km</div>
   </button>
   <button class="tab" onclick="switchTab(2)">
     <div class="tab-title">🟡 Duku Hwy</div>
@@ -177,8 +183,9 @@
   <div class="legend-item"><div class="ldot" style="background:#10b981;"></div> Village</div>
   <div class="legend-item"><div class="ldot" style="background:#f0a500;"></div> City</div>
   <div class="legend-item"><div class="lline" style="background:#3b82f6; opacity:0.8;"></div> North Loop</div>
+  <div class="legend-item"><div class="lline" style="background:#a855f7; opacity:0.8;"></div> Transit</div>
   <div class="legend-item"><div class="lline" style="background:#f0a500; opacity:0.8;"></div> Duku Hwy</div>
-  <div class="legend-right">~3,375 km total</div>
+  <div class="legend-right">~2,165 km total</div>
 </div>
 
 <!-- MAP -->
@@ -187,12 +194,12 @@
 <!-- STOPS PANEL -->
 <div class="stops-panel">
 
-  <!-- ALL -->
+  <!-- ALL ROUTES -->
   <div class="route-section active" id="sec-0">
     <div class="section-head">
       <span class="sec-badge" style="background:#f0a500;color:#000;">全程 ALL</span>
-      <span class="sec-title">19 stops · North Loop + Duku Highway</span>
-      <span class="sec-km">~3,375 km</span>
+      <span class="sec-title">16 stops · Anti-Clockwise Loop + Duku Highway</span>
+      <span class="sec-km">~2,165 km</span>
     </div>
     <div id="all-list"></div>
   </div>
@@ -200,217 +207,98 @@
   <!-- NORTH LOOP -->
   <div class="route-section" id="sec-1">
     <div class="section-head">
-      <span class="sec-badge" style="background:#3b82f6;color:#fff;">NORTH LOOP</span>
-      <span class="sec-title">Urumqi → Kanas → Hemu → Altay → Wulungu → Urumqi</span>
-      <span class="sec-km">~1,815 km</span>
+      <span class="sec-badge" style="background:#3b82f6;color:#fff;">🔵 NORTH</span>
+      <span class="sec-title">6 stops · Urumqi → Wulungu → Burqin → Altay → Hemu → Kanas</span>
+      <span class="sec-km">~985 km</span>
     </div>
     <div id="north-list"></div>
   </div>
 
-  <!-- DUKU -->
+  <!-- DUKU HWY -->
   <div class="route-section" id="sec-2">
     <div class="section-head">
-      <span class="sec-badge" style="background:#f0a500;color:#000;">独库公路</span>
-      <span class="sec-title">独山子 → 哈希勒根 → 那拉提 → 巴音布鲁克 → 库车</span>
-      <span class="sec-km">~560 km · 3 Days</span>
+      <span class="sec-badge" style="background:#f0a500;color:#000;">🟡 DUKU</span>
+      <span class="sec-title">10 stops · Dushanzi → Kuqa · G217 独库公路</span>
+      <span class="sec-km">~560 km</span>
     </div>
     <div id="duku-list"></div>
   </div>
 
 </div>
 
-<!-- NORTH LOOP: STOP-BY-STOP DISTANCE TABLE -->
-<div id="north-table-section" style="background:#0d1117; padding:14px 14px 18px; border-top:1px solid rgba(255,255,255,0.07);">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-    <span style="background:#3b82f6;color:#fff;font-size:0.68em;font-weight:800;padding:3px 10px;border-radius:12px;">NORTH LOOP</span>
-    <span style="font-size:0.85em;font-weight:700;color:#e6edf3;">North Loop · Stop-by-Stop Distances</span>
-    <span style="margin-left:auto;font-size:0.72em;color:#f0a500;font-weight:700;">Total ~1,815 km</span>
-  </div>
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-  <table style="width:100%;border-collapse:collapse;font-size:0.75em;min-width:320px;">
-    <thead>
-      <tr style="background:#161b22;color:#8b949e;text-align:left;">
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);white-space:nowrap;">Leg</th>
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);">From</th>
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);">To</th>
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);text-align:right;white-space:nowrap;">Dist (km)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#ef4444;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">①</span>→<span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">②</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Urumqi 乌鲁木齐 ✈️</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Shihezi 石河子</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~150 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">②</span>→<span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">③</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Shihezi 石河子</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Kanas Lake 喀纳斯湖 ⭐</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~680 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">③</span>→<span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">④</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Kanas Lake 喀纳斯湖</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Hemu Village 禾木村 ⭐</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~35 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">④</span>→<span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">⑤</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Hemu Village 禾木村</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Altay 阿勒泰</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~180 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">⑤</span>→<span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">⑥</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Altay 阿勒泰</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Burqin 布尔津 🌅</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~110 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">⑥</span>→<span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">⑦</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Burqin 布尔津</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Wulungu Lake 乌伦古湖 🎣</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~180 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">⑦</span>→<span style="background:#ef4444;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;">①</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Wulungu Lake 乌伦古湖</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Urumqi 乌鲁木齐 ✈️ <span style="font-size:0.8em;color:#8b949e;">(return)</span></td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~480 km</td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr style="background:#161b22;border-top:2px solid rgba(59,130,246,0.4);">
-        <td colspan="3" style="padding:8px 10px;color:#3b82f6;font-weight:800;font-size:0.9em;">🔵 Full Loop ① → ⑦ → ① (Urumqi round trip)</td>
-        <td style="padding:8px 10px;color:#3b82f6;font-weight:800;font-size:0.9em;text-align:right;">~1,815 km</td>
-      </tr>
-    </tfoot>
-  </table>
-  </div>
-  <div style="margin-top:9px;font-size:0.68em;color:#8b949e;line-height:1.6;">
-    📌 Distances are approximate road distances · North Loop is a full circuit back to Urumqi.<br>
-    ⭐ Kanas Lake &amp; Hemu Village are the highlight stops of the North Loop.
-  </div>
-</div>
-
-<!-- DUKU HIGHWAY: STOP-BY-STOP DISTANCE TABLE -->
-<div id="duku-table-section" style="background:#0d1117; padding:14px 14px 18px; border-top:1px solid rgba(255,255,255,0.07);">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-    <span style="background:#f0a500;color:#000;font-size:0.68em;font-weight:800;padding:3px 10px;border-radius:12px;">独库公路</span>
-    <span style="font-size:0.85em;font-weight:700;color:#e6edf3;">Duku Highway · Stop-by-Stop Distances</span>
-    <span style="margin-left:auto;font-size:0.72em;color:#f0a500;font-weight:700;">Total ~560 km</span>
-  </div>
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-  <table style="width:100%;border-collapse:collapse;font-size:0.75em;min-width:320px;">
-    <thead>
-      <tr style="background:#161b22;color:#8b949e;text-align:left;">
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);white-space:nowrap;">Leg</th>
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);">From</th>
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);">To</th>
-        <th style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.1);text-align:right;white-space:nowrap;">Dist (km)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">A</span>→<span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">B</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Dushanzi 独山子</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Dushanzi Grand Canyon 独山子大峡谷</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~200 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">B</span>→<span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">C</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Dushanzi Grand Canyon</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Hashilagen Pass 哈希勒根达坂</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~65 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">C</span>→<span style="background:#8b5cf6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">D</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Hashilagen Pass ⛰️</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Qiaerma 乔尔玛</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~40 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#8b5cf6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">D</span>→<span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">E</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Qiaerma 乔尔玛</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Nalati Grasslands 那拉提 ⭐</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~55 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">E</span>→<span style="background:#8b5cf6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">F</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Nalati Grasslands 那拉提</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Bayanbulak 巴音布鲁克 ⭐</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~65 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#8b5cf6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">F</span>→<span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">H</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Bayanbulak 巴音布鲁克</td>
-        <td style="padding:7px 10px;color:#e6edf3;">S. Tianshan Straight Road 南天山直道</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~65 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);">
-        <td style="padding:7px 10px;"><span style="background:#f0a500;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">H</span>→<span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">I</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">S. Tianshan Straight Road</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Daxiao Longchi 大小龙池</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~40 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">I</span>→<span style="background:#f59e0b;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">K</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Daxiao Longchi 大小龙池</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Red Rock Forest 红山石林</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~35 km</td>
-      </tr>
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-        <td style="padding:7px 10px;"><span style="background:#f59e0b;color:#000;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">K</span>→<span style="background:#ef4444;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;">L</span></td>
-        <td style="padding:7px 10px;color:#e6edf3;">Red Rock Forest</td>
-        <td style="padding:7px 10px;color:#e6edf3;">Kuqa 库车 🏛️</td>
-        <td style="padding:7px 10px;color:#f0a500;font-weight:700;text-align:right;">~45 km</td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr style="background:#161b22;border-top:2px solid rgba(240,165,0,0.4);">
-        <td colspan="3" style="padding:8px 10px;color:#f0a500;font-weight:800;font-size:0.9em;">🏁 Total A → L (Dushanzi → Kuqa)</td>
-        <td style="padding:8px 10px;color:#f0a500;font-weight:800;font-size:0.9em;text-align:right;">~615 km</td>
-      </tr>
-    </tfoot>
-  </table>
-  </div>
-  <div style="margin-top:9px;font-size:0.68em;color:#8b949e;line-height:1.6;">
-    📌 Distances are approximate road distances. The Duku Highway (G217) is officially ~561 km.<br>
-    📌 Distances are approximate road distances. The Duku Highway (G217) is officially ~561 km.
-  </div>
-</div>
-
-<script src="/view-counter.js"></script>
-
 <script>
 // ── DATA ──
 
+// ANTI-CLOCKWISE North Loop (Shihezi removed)
+// Direction: ① Urumqi → ② Wulungu Lake → ③ Burqin → ④ Altay → ⑤ Hemu → ⑥ Kanas
 const northStops = [
-  { id:'n0', num:'①', lat:43.82, lng:87.62, name:'Urumqi', cn:'乌鲁木齐', desc:'Start & End · Airport · Capital of Xinjiang', km:'Start / End', color:'#ef4444', type:'start', icon:'✈️' },
-  { id:'n1', num:'②', lat:44.30, lng:86.03, name:'Shihezi', cn:'石河子', desc:'En-route stopover · ~150 km from Urumqi', km:'~150 km', color:'#f0a500', type:'city', icon:'🏙️' },
-  { id:'n2', num:'③', lat:48.68, lng:87.00, name:'Kanas Lake', cn:'喀纳斯湖 ⭐', desc:'Alpine lake 1,340m · Deep-blue water · Tuvan cabins · Autumn birch forests', km:'~680 km from Shihezi', color:'#3b82f6', type:'lake', icon:'🏞️' },
-  { id:'n3', num:'④', lat:48.54, lng:86.90, name:'Hemu Village', cn:'禾木村 ⭐', desc:'Most beautiful village in Xinjiang · Morning mist · Tuvan minority · Horses', km:'~35 km from Kanas', color:'#10b981', type:'village', icon:'🛖' },
-  { id:'n4', num:'⑤', lat:47.85, lng:88.13, name:'Altay', cn:'阿勒泰', desc:'City base · Gateway to north Xinjiang', km:'~180 km from Hemu', color:'#f0a500', type:'city', icon:'🏙️' },
-  { id:'n5', num:'⑥', lat:47.71, lng:86.87, name:'Burqin', cn:'布尔津', desc:'Night market · Five-Coloured Beach (五彩滩) nearby', km:'~110 km from Altay', color:'#f0a500', type:'city', icon:'🌅' },
-  { id:'n6', num:'⑦', lat:47.20, lng:87.48, name:'Wulungu Lake', cn:'乌伦古湖', desc:'Large freshwater lake · Fishing culture', km:'~180 km from Burqin', color:'#3b82f6', type:'lake', icon:'🎣' },
+  { id:'n0', num:'①', lat:43.82, lng:87.62, name:'Urumqi', cn:'乌鲁木齐',
+    desc:'Start · Airport · Capital of Xinjiang',
+    km:'Day 1 Start', color:'#ef4444', type:'start', icon:'✈️' },
+  { id:'n1', num:'②', lat:47.20, lng:87.48, name:'Wulungu Lake', cn:'乌伦古湖',
+    desc:'Large freshwater lake · Fishing culture · Gateway to North Loop',
+    km:'~480 km from Urumqi', color:'#3b82f6', type:'lake', icon:'🎣' },
+  { id:'n2', num:'③', lat:47.71, lng:86.87, name:'Burqin', cn:'布尔津',
+    desc:'Night market · Five-Coloured Beach (五彩滩) nearby',
+    km:'~180 km from Wulungu Lake', color:'#f0a500', type:'city', icon:'🌅' },
+  { id:'n3', num:'④', lat:47.85, lng:88.13, name:'Altay', cn:'阿勒泰',
+    desc:'City base · Gateway to north Xinjiang · Resupply stop',
+    km:'~110 km from Burqin', color:'#f0a500', type:'city', icon:'🏙️' },
+  { id:'n4', num:'⑤', lat:48.54, lng:86.90, name:'Hemu Village', cn:'禾木村 ⭐',
+    desc:'Most beautiful village · Morning mist · Tuvan minority · Horses',
+    km:'~180 km from Altay', color:'#10b981', type:'village', icon:'🛖' },
+  { id:'n5', num:'⑥', lat:48.68, lng:87.00, name:'Kanas Lake', cn:'喀纳斯湖 ⭐',
+    desc:'Alpine lake 1,340m · Deep-blue water · Tuvan cabins · Autumn birch forests',
+    km:'~35 km from Hemu', color:'#3b82f6', type:'lake', icon:'🏞️' },
 ];
 
+// TRANSIT CONNECTOR: ⑥ Kanas → A Dushanzi (bypasses ② Shihezi)
+// Route: Kanas → Haba River area → Jeminay → south to Karamay → Dushanzi
+const connectorCoords = [
+  [48.68, 87.00],  // ⑥ Kanas Lake
+  [48.05, 86.40],  // via Haba River valley (哈巴河)
+  [47.45, 85.89],  // Jeminay 吉木乃
+  [46.50, 85.40],  // south toward Karamay corridor
+  [45.62, 84.96],  // Karamay approach (克拉玛依)
+  [45.60, 84.87],  // A Dushanzi
+];
+
+// DUKU HIGHWAY: A Dushanzi → L Kuqa
 const dukuStops = [
-  { id:'d0', num:'A', lat:45.60, lng:84.87, name:'Dushanzi', cn:'独山子', desc:'North entry of G217 Duku Highway · Fuel up here', km:'Start of Duku', color:'#f0a500', type:'city', icon:'🚗' },
-  { id:'d1', num:'B', lat:43.89, lng:84.11, name:'Dushanzi Grand Canyon', cn:'独山子大峡谷', desc:'Red rock gorge · First dramatic stop', km:'~30 km south', color:'#f0a500', type:'canyon', icon:'🏜️' },
-  { id:'d2', num:'C', lat:43.38, lng:83.72, name:'Hashilagen Pass', cn:'哈希勒根达坂', desc:'~3,600m · Snow mountain pass · Highest point Day 1', km:'~80 km south', color:'#3b82f6', type:'pass', icon:'⛰️' },
-  { id:'d3', num:'D', lat:43.11, lng:83.41, name:'Qiaerma', cn:'乔尔玛', desc:'Overnight stop · Heroes Memorial for Duku soldiers', km:'~70 km south', color:'#8b5cf6', type:'city', icon:'🏕️' },
-  { id:'d4', num:'E', lat:43.05, lng:84.10, name:'Nalati Grasslands', cn:'那拉提草原 ⭐', desc:'Sky grassland · Kazakh nomads · Yurts · Panoramic views', km:'~80 km southeast', color:'#10b981', type:'grass', icon:'🌿' },
-  { id:'d5', num:'F', lat:42.72, lng:83.42, name:'Bayanbulak', cn:'巴音布鲁克 ⭐', desc:'UNESCO wetland · Nine-Bend River sunset · Swan Lake', km:'~80 km west', color:'#8b5cf6', type:'grass', icon:'🦢' },
-  { id:'d7', num:'H', lat:42.20, lng:83.05, name:'S. Tianshan Straight Road', cn:'南天山直道', desc:'Iconic poplar-lined avenue through mountain valley', km:'~50 km south', color:'#f0a500', type:'city', icon:'🛣️' },
-  { id:'d8', num:'I', lat:42.08, lng:83.52, name:'Daxiao Longchi', cn:'大小龙池', desc:'Twin alpine dragon lakes · Turquoise mountain water', km:'~40 km east', color:'#3b82f6', type:'lake', icon:'💧' },
-  { id:'d10', num:'K', lat:41.78, lng:83.50, name:'Red Rock Forest', cn:'红山石林', desc:'Red sandstone pillars · Near Kuqa city', km:'~15 km south', color:'#f59e0b', type:'canyon', icon:'🔴' },
-  { id:'d11', num:'L', lat:41.72, lng:82.96, name:'Kuqa', cn:'库车', desc:'🎉 Journey end · Ancient Silk Road city · Kizil Caves nearby', km:'End of Duku', color:'#ef4444', type:'start', icon:'🏛️' },
+  { id:'d0', num:'A', lat:45.60, lng:84.87, name:'Dushanzi', cn:'独山子',
+    desc:'North entry of G217 Duku Hwy · Fuel up · Start of mountain road',
+    km:'~620 km from Kanas (via 吉木乃 — bypasses Shihezi)', color:'#f0a500', type:'city', icon:'🚗' },
+  { id:'d1', num:'B', lat:43.89, lng:84.11, name:'Dushanzi Grand Canyon', cn:'独山子大峡谷',
+    desc:'Red rock gorge · First dramatic stop on Duku',
+    km:'~30 km south', color:'#f0a500', type:'canyon', icon:'🏜️' },
+  { id:'d2', num:'C', lat:43.38, lng:83.72, name:'Hashilagen Pass', cn:'哈希勒根达坂',
+    desc:'~3,600m · Snow mountain pass · Highest point of Day 1',
+    km:'~80 km south', color:'#3b82f6', type:'pass', icon:'⛰️' },
+  { id:'d3', num:'D', lat:43.11, lng:83.41, name:'Qiaerma', cn:'乔尔玛',
+    desc:'Overnight stop · Heroes Memorial for Duku road soldiers',
+    km:'~70 km south', color:'#8b5cf6', type:'city', icon:'🏕️' },
+  { id:'d4', num:'E', lat:43.05, lng:84.10, name:'Nalati Grasslands', cn:'那拉提草原 ⭐',
+    desc:'Sky grassland · Kazakh nomads · Yurts · Panoramic views',
+    km:'~80 km southeast', color:'#10b981', type:'grass', icon:'🌿' },
+  { id:'d5', num:'F', lat:42.72, lng:83.42, name:'Bayanbulak', cn:'巴音布鲁克 ⭐',
+    desc:'UNESCO wetland · Nine-Bend River sunset · Swan Lake',
+    km:'~80 km west', color:'#8b5cf6', type:'grass', icon:'🦢' },
+  { id:'d7', num:'H', lat:42.20, lng:83.05, name:'S. Tianshan Straight Road', cn:'南天山直道',
+    desc:'Iconic poplar-lined avenue through mountain valley',
+    km:'~50 km south', color:'#f0a500', type:'city', icon:'🛣️' },
+  { id:'d8', num:'I', lat:42.08, lng:83.52, name:'Daxiao Longchi', cn:'大小龙池',
+    desc:'Twin alpine dragon lakes · Turquoise mountain water',
+    km:'~40 km east', color:'#3b82f6', type:'lake', icon:'💧' },
+  { id:'d10', num:'K', lat:41.78, lng:83.50, name:'Red Rock Forest', cn:'红山石林',
+    desc:'Red sandstone pillars · Near Kuqa city',
+    km:'~15 km south', color:'#f59e0b', type:'canyon', icon:'🔴' },
+  { id:'d11', num:'L', lat:41.72, lng:82.96, name:'Kuqa', cn:'库车',
+    desc:'🎉 Journey End · Ancient Silk Road city · Kizil Caves nearby',
+    km:'End of Duku Hwy', color:'#ef4444', type:'start', icon:'🏛️' },
 ];
 
-const typeTag   = { start:'t-start', lake:'t-lake', village:'t-village', city:'t-city', pass:'t-pass', canyon:'t-canyon', grass:'t-grass', offroad:'t-offroad' };
-const typeLabel = { start:'Start/End', lake:'Lake', village:'Village', city:'City', pass:'Pass', canyon:'Canyon', grass:'Grassland', offroad:'Off-road ⚠️' };
+const typeTag   = { start:'t-start', lake:'t-lake', village:'t-village', city:'t-city', pass:'t-pass', canyon:'t-canyon', grass:'t-grass', offroad:'t-offroad', transit:'t-transit' };
+const typeLabel = { start:'Start/End', lake:'Lake', village:'Village', city:'City', pass:'Pass', canyon:'Canyon', grass:'Grassland', offroad:'Off-road ⚠️', transit:'Transit' };
 
 // ── MAP ──
 const map = L.map('map', { center: [45.5, 85.5], zoom: 6 });
@@ -423,19 +311,25 @@ const layerAll   = L.layerGroup();
 const layerNorth = L.layerGroup();
 const layerDuku  = L.layerGroup();
 
-// North Loop route + close loop
-const northCoords = northStops.map(s => [s.lat, s.lng]);
-northCoords.push([northStops[0].lat, northStops[0].lng]);
-const northLine = L.polyline(northCoords, { color:'#3b82f6', weight:3.2, opacity:0.8, dashArray:'8,5' });
+// Route coordinate arrays
+const northCoords = northStops.map(s => [s.lat, s.lng]);  // no loop close — exits to Duku
+const dukuCoords  = dukuStops.map(s => [s.lat, s.lng]);
 
-// Duku Highway route
-const dukuCoords = dukuStops.map(s => [s.lat, s.lng]);
-const dukuLine = L.polyline(dukuCoords, { color:'#f0a500', weight:3.2, opacity:0.8, dashArray:'6,4' });
+// Polylines
+const northLine     = L.polyline(northCoords, { color:'#3b82f6', weight:3.2, opacity:0.85, dashArray:'8,5' });
+const connectorLine = L.polyline(connectorCoords, { color:'#a855f7', weight:2.8, opacity:0.75, dashArray:'5,4' });
+const dukuLine      = L.polyline(dukuCoords, { color:'#f0a500', weight:3.2, opacity:0.85, dashArray:'6,4' });
 
-// All layers
-layerAll.addLayer(L.polyline(northCoords, { color:'#3b82f6', weight:3, opacity:0.7, dashArray:'8,5' }));
-layerAll.addLayer(L.polyline(dukuCoords,  { color:'#f0a500', weight:3, opacity:0.7, dashArray:'6,4' }));
+// ALL layer
+layerAll.addLayer(L.polyline(northCoords,     { color:'#3b82f6', weight:3,   opacity:0.75, dashArray:'8,5' }));
+layerAll.addLayer(L.polyline(connectorCoords, { color:'#a855f7', weight:2.5, opacity:0.65, dashArray:'5,4' }));
+layerAll.addLayer(L.polyline(dukuCoords,      { color:'#f0a500', weight:3,   opacity:0.75, dashArray:'6,4' }));
+
+// NORTH layer (includes connector so user sees where loop leads)
 layerNorth.addLayer(northLine);
+layerNorth.addLayer(L.polyline(connectorCoords, { color:'#a855f7', weight:2.5, opacity:0.65, dashArray:'5,4' }));
+
+// DUKU layer
 layerDuku.addLayer(dukuLine);
 
 // ── MARKERS ──
@@ -460,26 +354,29 @@ function makeMarker(s, layer) {
   return m;
 }
 
-// North markers → all + north layers
+// North markers → north + all layers
 northStops.forEach(s => {
   makeMarker(s, layerNorth);
   makeMarker({...s, id: s.id+'_all'}, layerAll);
 });
-// Duku markers → all + duku layers
+// Duku markers → duku + all layers
 dukuStops.forEach(s => {
   makeMarker(s, layerDuku);
   makeMarker({...s, id: s.id+'_all'}, layerAll);
 });
 
-// Distance labels for North Loop
+// Distance labels — North Loop (anti-clockwise)
 const northDist = [
-  { km:'150 km', pos:[44.06, 86.83] },
-  { km:'680 km', pos:[46.30, 86.52] },
-  { km:'35 km',  pos:[48.61, 86.95] },
-  { km:'180 km', pos:[48.20, 87.52] },
-  { km:'110 km', pos:[47.78, 87.48] },
-  { km:'180 km', pos:[47.46, 87.18] },
-  { km:'480 km', pos:[45.50, 87.55] },
+  { km:'480 km', pos:[45.51, 87.55] },  // ① Urumqi → ② Wulungu
+  { km:'180 km', pos:[47.46, 87.18] },  // ② Wulungu → ③ Burqin
+  { km:'110 km', pos:[47.78, 87.53] },  // ③ Burqin → ④ Altay
+  { km:'180 km', pos:[48.20, 87.52] },  // ④ Altay → ⑤ Hemu
+  { km:'35 km',  pos:[48.61, 86.95] },  // ⑤ Hemu → ⑥ Kanas
+];
+
+// Distance label — connector
+const connDist = [
+  { km:'~620 km', pos:[47.10, 85.75] },  // ⑥ Kanas → A Dushanzi
 ];
 
 function distLabel(km, pos, layer, color) {
@@ -487,14 +384,18 @@ function distLabel(km, pos, layer, color) {
     icon: L.divIcon({
       className: '',
       html: `<div style="background:rgba(13,17,23,0.82);border:1px solid ${color}55;color:${color};font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:7px;font-family:'Segoe UI',Arial,sans-serif;white-space:nowrap;">${km}</div>`,
-      iconSize: [58, 18], iconAnchor: [29, 9]
+      iconSize: [60, 18], iconAnchor: [30, 9]
     })
   }));
 }
 
 northDist.forEach(d => {
   distLabel(d.km, d.pos, layerNorth, '#3b82f6');
-  distLabel(d.km, d.pos, layerAll, '#3b82f6');
+  distLabel(d.km, d.pos, layerAll,   '#3b82f6');
+});
+connDist.forEach(d => {
+  distLabel(d.km, d.pos, layerNorth, '#a855f7');
+  distLabel(d.km, d.pos, layerAll,   '#a855f7');
 });
 
 // Add all layer to map by default
@@ -502,11 +403,11 @@ layerAll.addTo(map);
 let currentLayer = layerAll;
 
 // Fit all stops
-const allCoords = [...northCoords, ...dukuCoords];
+const allCoords = [...northCoords, ...connectorCoords, ...dukuCoords];
 map.fitBounds(allCoords, { padding: [25, 25] });
 
 // ── BUILD STOP LISTS ──
-function buildList(stops, containerId, layerRef) {
+function buildList(stops, containerId) {
   const el = document.getElementById(containerId);
   stops.forEach(s => {
     const div = document.createElement('div');
@@ -526,9 +427,28 @@ function buildList(stops, containerId, layerRef) {
   });
 }
 
-buildList(northStops, 'north-list', layerNorth);
-buildList(dukuStops,  'duku-list',  layerDuku);
-buildList([...northStops, ...dukuStops], 'all-list', layerAll);
+function addConnectorRow(containerId) {
+  const el = document.getElementById(containerId);
+  const div = document.createElement('div');
+  div.className = 'stop-item connector-row';
+  div.innerHTML = `
+    <div class="snum" style="background:#a855f7;color:#fff;font-size:8px;letter-spacing:-1px;">→A</div>
+    <div class="sinfo">
+      <div class="sname">🛣️ Transit: Kanas ⑥ → Dushanzi A <span class="stag t-transit">Transit</span></div>
+      <div class="sdesc">Drive south via Jeminay (吉木乃) corridor · Bypasses ② Shihezi · Connects North Loop to Duku Highway start</div>
+      <div class="skm">📍 ~620 km · 吉木乃 → 克拉玛依 → 独山子</div>
+    </div>`;
+  el.appendChild(div);
+}
+
+buildList(northStops, 'north-list');
+addConnectorRow('north-list');
+
+buildList(dukuStops,  'duku-list');
+
+buildList(northStops, 'all-list');
+addConnectorRow('all-list');
+buildList(dukuStops,  'all-list');
 
 // ── SWITCH TAB ──
 function switchTab(idx) {
@@ -536,9 +456,10 @@ function switchTab(idx) {
   document.querySelectorAll('.route-section').forEach((s,i) => s.classList.toggle('active', i===idx));
 
   map.removeLayer(currentLayer);
-  if      (idx===0) { currentLayer = layerAll;   map.fitBounds(allCoords,   {padding:[25,25]}); }
-  else if (idx===1) { currentLayer = layerNorth; map.fitBounds(northCoords, {padding:[30,30]}); }
-  else              { currentLayer = layerDuku;  map.fitBounds(dukuCoords,  {padding:[30,30]}); }
+  const northBounds = [...northCoords, ...connectorCoords];
+  if      (idx===0) { currentLayer = layerAll;   map.fitBounds(allCoords,    {padding:[25,25]}); }
+  else if (idx===1) { currentLayer = layerNorth; map.fitBounds(northBounds,  {padding:[30,30]}); }
+  else              { currentLayer = layerDuku;  map.fitBounds(dukuCoords,   {padding:[30,30]}); }
   currentLayer.addTo(map);
 }
 </script>
