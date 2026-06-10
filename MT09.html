@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT09: Xinjiang 2026 — Full 16-Day Self-Drive Route Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 12px 16px 10px;
+    background: linear-gradient(135deg, #0d1117, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .header-top {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  }
+  .header h1 { font-size: 1.1em; font-weight: 800; color: #fff; }
+  .header h1 span.gold { color: #f0a500; }
+  .header h1 span.teal { color: #1abc9c; }
+  .header-sub { font-size: 0.73em; color: #8b949e; margin-top: 3px; }
+  .home-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+    color: #f0a500; text-decoration: none; font-size: 0.78em; font-weight: 700;
+    padding: 6px 14px; border-radius: 16px; white-space: nowrap;
+  }
+
+  /* TAB BAR */
+  .tab-bar {
+    display: flex; background: #161b22;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; padding: 10px 18px;
+    background: transparent; border: none; cursor: pointer;
+    font-size: 0.78em; font-weight: 700; color: #8b949e;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .tab-btn.active { color: #f0a500; border-bottom-color: #f0a500; }
+
+  /* LEGEND BAR */
+  .legend-bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 7px 16px; background: #0d1117;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-wrap: wrap; font-size: 0.7em; color: #8b949e;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;
+  }
+  .legend-total { margin-left: auto; color: #f0a500; font-weight: 700; }
+
+  /* MAP */
+  #map { width: 100%; flex: 1; min-height: 54vh; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: flex; flex-direction: column; }
+
+  /* STOPS PANEL */
+  .stops-panel {
+    background: #0d1117; overflow-y: auto; max-height: 34vh;
+  }
+  .panel-header {
+    padding: 9px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title { font-size: 0.82em; font-weight: 700; color: #e6edf3; }
+  .panel-km { margin-left: auto; font-size: 0.75em; color: #f0a500; font-weight: 700; }
+  .stop-list { padding: 4px 0; }
+  .stop-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 9px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .stop-item:hover { background: rgba(255,255,255,0.04); }
+  .stop-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.68em; font-weight: 800; flex-shrink: 0; margin-top: 1px;
+    border: 2px solid rgba(255,255,255,0.45);
+  }
+  .stop-info { flex: 1; min-width: 0; }
+  .stop-name {
+    font-size: 0.86em; font-weight: 700; color: #e6edf3;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .stop-desc { font-size: 0.73em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+  .stop-km { font-size: 0.69em; color: #f0a500; font-weight: 700; margin-top: 3px; }
+  .stop-tag {
+    display: inline-block; font-size: 0.63em;
+    padding: 2px 7px; border-radius: 8px; font-weight: 700;
+  }
+  .tag-start   { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+  .tag-city    { background:rgba(240,165,0,0.2);   color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
+  .tag-lake    { background:rgba(59,130,246,0.2);  color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+  .tag-village { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+  .tag-highway { background:rgba(139,92,246,0.2);  color:#c4b5fd; border:1px solid rgba(139,92,246,0.3); }
+  .tag-end     { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+
+  /* ITINERARY PANEL */
+  .itin-panel {
+    background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
+  }
+  .day-card {
+    border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 16px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .day-card:hover { background: rgba(255,255,255,0.03); }
+  .day-header { display: flex; align-items: flex-start; gap: 10px; }
+  .day-badge {
+    background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.35);
+    color: #f0a500; font-size: 0.68em; font-weight: 800; padding: 3px 9px;
+    border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+  }
+  .day-title { font-size: 0.88em; font-weight: 700; color: #e6edf3; line-height: 1.35; }
+  .day-meta { font-size: 0.72em; color: #8b949e; margin-top: 4px; }
+  .day-body { font-size: 0.76em; color: #8b949e; margin-top: 8px; line-height: 1.6; display: none; }
+  .day-body.open { display: block; }
+  .day-body .section { margin-top: 7px; }
+  .day-body .section-label {
+    font-size: 0.75em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: #f0a500; margin-bottom: 3px;
+  }
+  .day-body .section-text { color: #c9d1d9; }
+  .day-chevron { margin-left: auto; color: #f0a500; font-size: 0.8em; flex-shrink: 0; transition: transform 0.2s; }
+  .day-card.open .day-chevron { transform: rotate(180deg); }
+
+  /* TIPS PANEL */
+  .tips-panel {
+    background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
+  }
+  .tip-section { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 13px 16px; }
+  .tip-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .tip-icon { font-size: 1.1em; }
+  .tip-title { font-size: 0.85em; font-weight: 700; color: #e6edf3; }
+  .tip-chevron { margin-left: auto; color: #f0a500; font-size: 0.8em; transition: transform 0.2s; }
+  .tip-section.open .tip-chevron { transform: rotate(180deg); }
+  .tip-body { font-size: 0.76em; color: #8b949e; margin-top: 9px; line-height: 1.65; display: none; }
+  .tip-section.open .tip-body { display: block; }
+  .tip-body ul { padding-left: 16px; }
+  .tip-body li { margin-bottom: 5px; }
+  .tip-body strong { color: #e6edf3; }
+
+  /* Leaflet */
+  .leaflet-popup-content-wrapper {
+    background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    color: #e6edf3 !important;
+  }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; line-height: 1.5; }
+  .popup-day  { font-size: 0.68em; font-weight: 700; color: #f0a500; margin-bottom: 2px; }
+  .popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+  .popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.82em; }
+  .popup-food { margin-top: 5px; color: #6ee7b7; font-size: 0.78em; }
+  .popup-stay { margin-top: 3px; color: #93c5fd; font-size: 0.78em; }
+  .leaflet-control-zoom a {
+    background: #161b22 !important; color: #e6edf3 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .leaflet-control-attribution {
+    background: rgba(13,17,23,0.8) !important; color: #484f58 !important;
+  }
+
+  /* view counter */
+  .vc-wrap { text-align: center; padding: 14px 16px; background: #0d1117; border-top: 1px solid rgba(255,255,255,0.06); }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 0.95em; }
+    #map { min-height: 48vh; }
+    .stops-panel, .itin-panel, .tips-panel { max-height: 40vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🏔️ MT09: Xinjiang 2026 — <span class="gold">16-Day</span> <span class="teal">Full Route Map</span></h1>
+      <div class="header-sub">Urumqi · Wulungu · Kanas · Hemu · Altay · Burqin · Urerhe · Sayram · Duku Highway · Kuqa · Korla · Return · ~4,800 km</div>
+    </div>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
+  <button class="tab-btn" onclick="switchTab('itin')">📅 Itinerary</button>
+  <button class="tab-btn" onclick="switchTab('tips')">💡 Travel Tips</button>
+</div>
+
+<!-- LEGEND (map tab only) -->
+<div class="legend-bar" id="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Start/End</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> City</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Lake</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Village</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a855f7;"></div> Highway</div>
+  <div class="legend-total">~4,800 km · 16 Days</div>
+</div>
+
+<!-- MAP PANEL -->
+<div id="panel-map" class="panel active">
+  <div id="map"></div>
+  <div class="stops-panel">
+    <div class="panel-header">
+      <span class="panel-title">📍 Route Stops — Tap to zoom</span>
+      <span class="panel-km">16 stops · Sep 2026</span>
+    </div>
+    <div class="stop-list" id="stop-list"></div>
+  </div>
+</div>
+
+<!-- ITINERARY PANEL -->
+<div id="panel-itin" class="panel">
+  <div class="itin-panel" id="itin-list"></div>
+</div>
+
+<!-- TIPS PANEL -->
+<div id="panel-tips" class="panel">
+  <div class="tips-panel" id="tips-list"></div>
+</div>
+
+<div class="vc-wrap"><script src="/view-counter.js"></script></div>
+
+<script>
+// ── STOPS DATA ──────────────────────────────────────────────────
+const stops = [
+  {
+    day:'Day 1', num:'①', lat:43.8200, lng:87.6200,
+    name:'Urumqi', emoji:'✈️', type:'start',
+    color:'#ef4444',
+    desc:'Assembly day · Car rental · Museum of Xinjiang · International Grand Bazaar',
+    food:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan with kebabs',
+    stay:'Atour Hotel (Grand Bazaar) · Flora Secret Garden Hotel'
+  },
+  {
+    day:'Day 2', num:'②', lat:47.1100, lng:87.4800,
+    name:'Wulungu Lake', emoji:'🎣', type:'lake',
+    color:'#3b82f6',
+    desc:'S21 Desert Highway through Gurbantunggut Desert · "Gobi Sea" golden coast sunset · ~400 km from Urumqi',
+    food:'Fuhai County lakeside restaurants: spicy whole lake fish, deep-fried five-spot black',
+    stay:'Fuhai County Yingbin Hotel · Haiyue Hotel · Yilong Hotel'
+  },
+  {
+    day:'Day 3', num:'③', lat:47.8500, lng:88.1300,
+    name:'Altay City', emoji:'🏙️', type:'city',
+    color:'#f0a500',
+    desc:'Morning mist on Wulungu Lake · G216 road · Kazakh pastures · Huahua Park · General Mountain cable car sunset · ~200 km from Wulungu',
+    food:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market',
+    stay:'Atour Hotel (Wubai Li) · Madier Garden Hotel'
+  },
+  {
+    day:'Day 4', num:'④', lat:48.3500, lng:86.5500,
+    name:'Hemu Village', emoji:'🛖', type:'village',
+    color:'#10b981',
+    desc:'A-He Highway: Tolelhaite Grassland · Tongba Forest · River valley scenery · Rafting & forest hiking · ~210 km from Altay',
+    food:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, handmade yogurt, kvass',
+    stay:'Hemu Village Qinghuan Guesthouse (old village)'
+  },
+  {
+    day:'Day 5', num:'⑤', lat:48.6800, lng:87.0000,
+    name:'Kanas Lake', emoji:'🏞️', type:'lake',
+    color:'#3b82f6',
+    desc:'Dawn viewpoint: mist and smoke over fairy-tale village · Kanas Lake scenic area · Old Village free roam · ~70 km from Hemu',
+    food:'Hotel dining recommended (limited options in park)',
+    stay:'Kanas Old Village log cabin (standard room)'
+  },
+  {
+    day:'Day 6', num:'⑥', lat:47.7100, lng:86.8700,
+    name:'Burqin', emoji:'🌅', type:'city',
+    color:'#f0a500',
+    desc:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street',
+    food:'Irtysh Night Market: grilled pike, cold-water fish feast',
+    stay:'Night Light City Hotel · County Tourism Hotel · Sutong Holiday Hotel'
+  },
+  {
+    day:'Day 7', num:'⑦', lat:46.0800, lng:84.6800,
+    name:'Kuytun City', emoji:'🏙️', type:'city',
+    color:'#f0a500',
+    desc:'Five-Coloured Beach (Burqin) → Ueerhe World Devil City (afternoon golden light) → Kuytun · ~450 km from Burqin',
+    food:'Kuytun: Cambodia Little Rooster, Wang Fei Big Plate Chicken, Yigan Qi pilaf, Wusu beer',
+    stay:'Atour Hotel Kuytun · Wanda Meihua Hotel · Vienna Hotel'
+  },
+  {
+    day:'Day 8', num:'⑧', lat:44.6100, lng:81.1700,
+    name:'Sayram Lake', emoji:'💎', type:'lake',
+    color:'#3b82f6',
+    desc:'Lianhuo Expressway · Self-drive around the lake · Sunset over Sayram · Highest lake in Tianshan · ~420 km from Kuytun',
+    food:'Local cold-water fish: Coregonus peled (white salmon)',
+    stay:'Sayram Lake Orange Hotel · Sayram Lake Shuiyunshan Platinum Hotel'
+  },
+  {
+    day:'Day 9', num:'⑨', lat:44.3200, lng:84.8800,
+    name:'Dushanzi District', emoji:'⛽', type:'highway',
+    color:'#a855f7',
+    desc:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Gateway to Duku Highway · ~350 km',
+    food:'Yulan Bridge Big Plate Chicken (local favourite)',
+    stay:'Dushanzi Tianshu International Hotel · Delaide Hotel · Tianyuan International Hotel'
+  },
+  {
+    day:'Day 10', num:'⑩', lat:43.3500, lng:83.7000,
+    name:'Nalati Town', emoji:'🌿', type:'village',
+    color:'#10b981',
+    desc:'Duku Highway North Section: Sentry Stone · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Valley · ~full day drive · pre-book permit required',
+    food:'Road-side simple lunch · Nalati: Daidai Pilaf King (local lamb leg rice)',
+    stay:'Wusun Shale Art Lodge (Kazakh-style) · Nalati Sky Grassland Resort · Xinlv Nalati Resort'
+  },
+  {
+    day:'Day 11', num:'⑪', lat:43.3500, lng:83.7000,
+    name:'Nalati Grassland', emoji:'🐴', type:'village',
+    color:'#10b981',
+    desc:'Full day: Sky Grassland · River Valley Grassland · Horse riding through forest · Sunset on the steppe · Evening bonfire at guesthouse',
+    food:'Local restaurant clear-simmered lamb with green onions · Grassland flavours',
+    stay:'Wusun Shale Art Lodge (continued stay)'
+  },
+  {
+    day:'Day 12', num:'⑫', lat:41.7200, lng:82.9600,
+    name:'Kuqa City', emoji:'🕌', type:'city',
+    color:'#f0a500',
+    desc:'Duku Highway South Section: Bayanbulak Grassland · Dragon & Small Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa evening · ~350 km',
+    food:'Kuqa Giant Naan from the Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs',
+    stay:'Kuqa Tianyuan Hotel (convenient, good breakfast)'
+  },
+  {
+    day:'Day 13', num:'⑬', lat:41.7200, lng:82.9600,
+    name:'Kuqa Old City', emoji:'🏺', type:'village',
+    color:'#10b981',
+    desc:'Full day: Kuqa Old City · Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road · Afternoon: Kezierqiaha Beacon Tower · Old city sunset',
+    food:'Kuqa Old City: jar-braised mutton, rice sausage with lung noodles, baked buns',
+    stay:'Kuqa Tianyuan Hotel (continued)'
+  },
+  {
+    day:'Day 14', num:'⑭', lat:41.7600, lng:86.1400,
+    name:'Korla City', emoji:'🍐', type:'city',
+    color:'#f0a500',
+    desc:'G217 → G3012 · Tiemen Pass en route · Bosten Lake afternoon · Peacock River night walk · Korla fragrant pears · ~300 km from Kuqa',
+    food:'Xiangli Restaurant: big plate chicken, roast whole lamb · Korla No.1 Naan (roast lamb ribs, yogurt rice dumpling)',
+    stay:'Korla Licheng Baihe Hotel · Kangcheng Jianguo International Hotel'
+  },
+  {
+    day:'Day 15', num:'⑮', lat:43.8200, lng:87.6200,
+    name:'Urumqi (Return)', emoji:'🏙️', type:'end',
+    color:'#ef4444',
+    desc:'G0712 Victory Tunnel Highway · Baluntai: Yellow Temple (Tibetan Buddhist) · World\'s longest road tunnel: Tianshan Victory Tunnel · Return car · ~480 km',
+    food:'Free choice in Urumqi for last night dinner',
+    stay:'Hotel of your choice · Return rental car'
+  },
+  {
+    day:'Day 16', num:'⑯', lat:43.9071, lng:87.4742,
+    name:'Urumqi Airport', emoji:'✈️', type:'end',
+    color:'#ef4444',
+    desc:'Depart from Urumqi Tianshan International Airport (IATA: URC) · End of 16-day Xinjiang self-drive adventure',
+    food:'Airport dining',
+    stay:'Fly home — trip complete!'
+  }
+];
+
+// ── MAP SETUP ────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true }).setView([44.5, 85.5], 6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO', maxZoom: 19
+}).addTo(map);
+
+// Draw route polyline
+const latLngs = stops.map(s => [s.lat, s.lng]);
+L.polyline(latLngs, { color: '#f0a500', weight: 2.5, opacity: 0.7, dashArray: '6,4' }).addTo(map);
+
+// Return line (D15→D16 same spot, skip; draw D14→D15)
+// Already in latLngs array
+
+const markers = [];
+stops.forEach((s, i) => {
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:28px;height:28px;border-radius:50%;background:${s.color};border:2.5px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${i+1}</div>`,
+    iconSize: [28,28], iconAnchor: [14,14]
+  });
+  const m = L.marker([s.lat, s.lng], { icon })
+    .addTo(map)
+    .bindPopup(`
+      <div class="popup-day">${s.day}</div>
+      <div class="popup-name">${s.emoji} ${s.name}</div>
+      <div class="popup-desc">${s.desc}</div>
+      <div class="popup-food">🍜 ${s.food}</div>
+      <div class="popup-stay">🏨 ${s.stay}</div>
+    `);
+  markers.push(m);
+});
+
+// Build stop list
+const listEl = document.getElementById('stop-list');
+stops.forEach((s, i) => {
+  const tagMap = { start:'tag-start', city:'tag-city', lake:'tag-lake', village:'tag-village', highway:'tag-highway', end:'tag-end' };
+  const tagLabel = { start:'Start', city:'City', lake:'Lake', village:'Village/Grassland', highway:'Highway Gate', end:'End' };
+  const div = document.createElement('div');
+  div.className = 'stop-item';
+  div.innerHTML = `
+    <div class="stop-num" style="background:${s.color};color:#fff">${i+1}</div>
+    <div class="stop-info">
+      <div class="stop-name">
+        ${s.emoji} ${s.name}
+        <span class="stop-tag ${tagMap[s.type]}">${tagLabel[s.type]}</span>
+      </div>
+      <div class="stop-desc">${s.desc.split('·')[0].trim()}</div>
+      <div class="stop-km">${s.day}</div>
+    </div>`;
+  div.addEventListener('click', () => {
+    map.flyTo([s.lat, s.lng], 9, { duration: 1 });
+    markers[i].openPopup();
+  });
+  listEl.appendChild(div);
+});
+
+// ── ITINERARY DATA ───────────────────────────────────────────────
+const itinDays = [
+  {
+    day:'Day 1', date:'1 Sep', title:'Urumqi — Assembly Day',
+    route:'Arrive Urumqi (URC)',
+    activity:'Collect rental car · Stock up on snacks, water, sunscreen · Xinjiang Uyghur Autonomous Region Museum (mummies & painted pottery) · Evening at Consulate Lane / International Grand Bazaar',
+    food:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan + kebabs · Hetian 2nd Street snacks',
+    stay:'Atour Hotel (Grand Bazaar) · Flora Secret Garden Hotel · Liujin Art Hotel'
+  },
+  {
+    day:'Day 2', date:'2 Sep', title:'Urumqi → Wulungu Lake',
+    route:'~400 km / ~5h via S21 Desert Highway',
+    activity:'Drive S21 Awu Expressway through Gurbantunggut Desert (famous road) · Afternoon: Wulungu Lake Golden Coast · "Gobi Sea" sunset',
+    food:'Fuhai County: lakeside restaurant whole lake fish, deep-fried five-spot black',
+    stay:'Fuhai Yingbin Hotel · Haiyue Hotel · Yilong Hotel'
+  },
+  {
+    day:'Day 3', date:'3 Sep', title:'Wulungu Lake → Altay City',
+    route:'~200 km / ~3h via G216',
+    activity:'Early morning lake mist photos · G216 road with Kazakh pastures · Altay Huahua Park · General Mountain cable car for sunset party (if clear)',
+    food:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market',
+    stay:'Atour Hotel (Wubai Li St) · Madier Garden Hotel'
+  },
+  {
+    day:'Day 4', date:'4 Sep', title:'Altay → A-He Highway → Hemu Village',
+    route:'~210 km / ~5h via A-He Highway',
+    activity:'Tolelhaite Great Grassland · Tongba Forest · River valley scenery all the way · Arrive Hemu village by dusk · Evening riverside walk · Rafting & forest hike · White birch forest sunset · Stargazing at night',
+    food:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, yogurt, kvass',
+    stay:'Qinghuan Guesthouse, Hemu Old Village'
+  },
+  {
+    day:'Day 5', date:'5 Sep', title:'Hemu Village → Kanas Lake',
+    route:'~70 km / ~2h',
+    activity:'Dawn viewpoint: mist, smoke, fairy-tale village · Kanas Lake scenic area · Old Village free exploration',
+    food:'Hotel dining recommended (limited park options)',
+    stay:'Kanas Old Village log cabin standard room'
+  },
+  {
+    day:'Day 6', date:'6 Sep', title:'Kanas → Burqin',
+    route:'Drive from Jiadengyu to Burqin',
+    activity:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street',
+    food:'Irtysh Night Market: grilled pike, cold-water fish feast',
+    stay:'Night Light City Hotel · County Tourism Hotel · Sutong Holiday Hotel'
+  },
+  {
+    day:'Day 7', date:'7 Sep', title:'Burqin → Ueerhe → Kuytun',
+    route:'~450 km / ~6h',
+    activity:'Five-Coloured Beach (morning) · Ueerhe World Devil City (after 17:00 for golden light & sunset) · Night arrival Kuytun',
+    food:'Ueerhe: Auwudan lamb-joint pilaf · Kuytun: Cambodia Rooster, Wang Fei Chicken, Wusu beer',
+    stay:'Atour Hotel Kuytun · Wanda Meihua · Vienna Hotel'
+  },
+  {
+    day:'Day 8', date:'8 Sep', title:'Kuytun → Sayram Lake Circuit',
+    route:'~420 km via Lianhuo Expressway + lakeside loop road',
+    activity:'Full lake circuit drive · Sunset over Sayram Lake · Tianshan\'s highest lake at 2,073 m',
+    food:'Local cold-water fish: Coregonus peled (white salmon)',
+    stay:'Sayram Lake Orange Hotel · Shuiyunshan Platinum Hotel'
+  },
+  {
+    day:'Day 9', date:'9 Sep', title:'Sayram Lake → Dushanzi District',
+    route:'~350 km via G30 + Kuytun Expressway',
+    activity:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Fill full tank — Duku prep',
+    food:'Yulan Bridge Big Plate Chicken + belt noodles (local favourite)',
+    stay:'Dushanzi Tianshu International · Delaide Hotel · Tianyuan International'
+  },
+  {
+    day:'Day 10', date:'10 Sep', title:'Dushanzi → Duku Highway North → Nalati',
+    route:'~full day / ~350 km · PRE-BOOK PERMIT REQUIRED',
+    activity:'Full tank before departure · Sentry Tianshan Stele · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Hundred-Mile Gallery · Arrive Nalati town at dusk',
+    food:'Simple road-side lunch · Nalati: Daidai Pilaf King — lamb leg rice',
+    stay:'Wusun Shale Art Lodge (Kazakh-style B&B) · Nalati Sky Grassland Resort · Xinlv Nalati Resort'
+  },
+  {
+    day:'Day 11', date:'11 Sep', title:'Nalati Grassland — Full Day',
+    route:'Stay in Nalati area',
+    activity:'Sky Grassland · River Valley Grassland · Horseback ride through forests · Steppe sunset · Evening bonfire at lodge',
+    food:'Local restaurant: clear-simmered lamb with green onions, grassland flavours',
+    stay:'Wusun Shale Art Lodge (continued)'
+  },
+  {
+    day:'Day 12', date:'12 Sep', title:'Nalati → Duku Highway South → Kuqa',
+    route:'~350 km / ~6h',
+    activity:'Bayanbulak Grassland · Large & Small Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa City by evening',
+    food:'Kuqa Giant Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs — great value',
+    stay:'Kuqa Tianyuan Hotel (convenient location, rich breakfast)'
+  },
+  {
+    day:'Day 13', date:'13 Sep', title:'Kuqa Old City — Deep Dive',
+    route:'Stay in Kuqa',
+    activity:'Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road bazaar · Afternoon: Kezierqiaha Beacon Tower · Old city golden hour sunset',
+    food:'Jar-braised mutton · Rice sausage with lung noodles · Baked lamb buns — authentic Silk Road street food',
+    stay:'Kuqa Tianyuan Hotel (continued)'
+  },
+  {
+    day:'Day 14', date:'14 Sep', title:'Kuqa → Korla City',
+    route:'~300 km / ~4h via G217 → G3012',
+    activity:'Tiemen Pass (Iron Gate Pass) en route · Bosten Lake afternoon · Peacock River night stroll · Try Korla fragrant pears',
+    food:'Xiangli Restaurant: big plate chicken, roast whole lamb · No.1 Naan: roast lamb ribs, yogurt rice dumpling, Uighur cola (Gawas)',
+    stay:'Korla Licheng Baihe Hotel · Kangcheng Jianguo International Hotel'
+  },
+  {
+    day:'Day 15', date:'15 Sep', title:'Korla → Victory Tunnel → Urumqi',
+    route:'~480 km / ~5h via G0712 Wuwei Expressway',
+    activity:'Baluntai: Yellow Temple (Tibetan Buddhist holy site) · Tianshan Victory Tunnel — Asia\'s longest road tunnel · Return to Urumqi · Return rental car',
+    food:'Last night dinner — free choice in Urumqi',
+    stay:'Hotel of your choice in Urumqi'
+  },
+  {
+    day:'Day 16', date:'16 Sep', title:'Fly Home — Trip Complete',
+    route:'Urumqi Tianshan International Airport (URC)',
+    activity:'Transfer to airport per flight time · Check-in · End of 16-day Xinjiang self-drive adventure — perfect full stop!',
+    food:'Airport dining',
+    stay:'Fly home'
+  }
+];
+
+const itinEl = document.getElementById('itin-list');
+itinDays.forEach((d, i) => {
+  const card = document.createElement('div');
+  card.className = 'day-card';
+  card.innerHTML = `
+    <div class="day-header">
+      <span class="day-badge">${d.day} · ${d.date}</span>
+      <div>
+        <div class="day-title">${d.title}</div>
+        <div class="day-meta">📍 ${d.route}</div>
+      </div>
+      <span class="day-chevron">▼</span>
+    </div>
+    <div class="day-body">
+      <div class="section"><div class="section-label">🗺️ Activities</div><div class="section-text">${d.activity}</div></div>
+      <div class="section"><div class="section-label">🍜 Food</div><div class="section-text">${d.food}</div></div>
+      <div class="section"><div class="section-label">🏨 Stay</div><div class="section-text">${d.stay}</div></div>
+    </div>`;
+  card.addEventListener('click', () => {
+    const body = card.querySelector('.day-body');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    card.classList.toggle('open', !isOpen);
+    if (!isOpen && stops[i]) {
+      switchTab('map');
+      map.flyTo([stops[i].lat, stops[i].lng], 8, { duration: 1 });
+      markers[i].openPopup();
+    }
+  });
+  itinEl.appendChild(card);
+});
+
+// ── TIPS DATA ────────────────────────────────────────────────────
+const tips = [
+  {
+    icon:'🌡️', title:'Weather & Clothing (September: 15–25°C daily swing)',
+    body:`<ul>
+      <li><strong>North Xinjiang (Kanas/Hemu/Duku):</strong> Daytime ~15°C, dawn/dusk 0–5°C, possible snow at altitude. Layer up: quick-dry base + fleece + windproof jacket + warm trousers. Hat, scarf, thin gloves essential.</li>
+      <li><strong>South Xinjiang (Kuqa):</strong> Daytime ~25°C, evenings 10–18°C, dry. Light shirt + sun-protection jacket by day; thin outer layer at night.</li>
+      <li><strong>Universal:</strong> Lip balm + heavy-duty moisturiser (humidity below 20%). SPF50+ sunscreen, wide-brim hat, UV-blocking glasses.</li>
+    </ul>`
+  },
+  {
+    icon:'🚗', title:'Driving & Road Conditions',
+    body:`<ul>
+      <li><strong>Car choice:</strong> Prefer SUV / petrol (EV charging points almost non-existent in South Xinjiang).</li>
+      <li><strong>Pre-trip check:</strong> Tyres, brakes, coolant, washer fluid. Carry spare tyre, jack, tow rope, jump cables, pressure gauge.</li>
+      <li><strong>Fuel rule:</strong> Fill up when half-tank — North Xinjiang stations 200–300 km apart; South Xinjiang even further.</li>
+      <li><strong>Duku Highway:</strong> September usually open. Night ban 20:00–08:00. Speed limit 40–60 km/h. No random roadside stops. Watch for black ice at Hashilagen Pass.</li>
+      <li><strong>Speed cameras:</strong> Entire Xinjiang has average-speed + mobile cameras. Highways 80 km/h, mountain/scenic zones 40–60 km/h.</li>
+      <li><strong>Daily cap:</strong> Max 400 km per day. No night driving on mountain or steppe roads.</li>
+      <li><strong>Offline maps:</strong> Download Gaode (AutoNavi) / Baidu offline maps — mountain areas have zero signal.</li>
+    </ul>`
+  },
+  {
+    icon:'🪪', title:'Documents & Permits',
+    body:`<ul>
+      <li><strong>ID card or passport:</strong> Carry at all times — required at petrol stations, checkpoints, hotels, and scenic gates.</li>
+      <li><strong>Duku Highway permit:</strong> Must be pre-booked through official channel before Day 10. Check 新疆交通 (Xinjiang Transport) WeChat public account for status updates.</li>
+      <li><strong>Checkpoints:</strong> Multiple police checkpoints throughout; cooperation required. Non-Chinese passport holders should carry a printed copy of hotel bookings.</li>
+    </ul>`
+  },
+  {
+    icon:'📅', title:'Best Timing — September Window',
+    body:`<ul>
+      <li><strong>North Xinjiang (1–15 Sep):</strong> Green-gold mix at Kanas/Hemu; fewer crowds; lower prices. After 20 Sep: peak autumn gold but prices double and crowds surge.</li>
+      <li><strong>Duku Highway:</strong> Early September = least snow, most stable road. October may close due to snowfall.</li>
+      <li><strong>South Xinjiang (after 10 Sep):</strong> Avoid North Xinjiang peak crowds. Desert and cultural sights best in Sep.</li>
+    </ul>`
+  },
+  {
+    icon:'🏨', title:'Accommodation Tips',
+    body:`<ul>
+      <li><strong>Kanas / Hemu:</strong> Book log cabins inside the park at least 1 month in advance (sold out mid-September). Staying inside avoids buying another entry ticket for sunrise/stars.</li>
+      <li><strong>Nalati / Duku area:</strong> Book Kazakh-style B&Bs early for authentic experience.</li>
+      <li><strong>South Xinjiang county towns:</strong> Plenty of hotels; no need to book far ahead.</li>
+    </ul>`
+  },
+  {
+    icon:'🧴', title:'Health & Sun Protection',
+    body:`<ul>
+      <li>SPF50+ PA++++ sunscreen — reapply every 2 hours. UV is intense at altitude.</li>
+      <li>Drink 3–4 litres of water daily — extremely dry air causes rapid dehydration.</li>
+      <li><strong>Altitude:</strong> Kanas/Hemu at 1,300–1,800 m — generally fine; drink water, avoid overeating.</li>
+      <li><strong>Medicine kit:</strong> Cold & flu tablets, stomach medicine, anti-nausea, fever reducer, pain relief.</li>
+    </ul>`
+  },
+  {
+    icon:'🕌', title:'Cultural Respect & Safety',
+    body:`<ul>
+      <li>Remove shoes before entering mosques. Cover shoulders and knees.</li>
+      <li>Ask permission before photographing locals, especially women and elderly.</li>
+      <li>At halal restaurants: do not mention or order pork; do not bring alcohol.</li>
+      <li>Carry CNY 500 in cash — remote villages may have no mobile payment signal.</li>
+      <li>Fire safety: September grasslands and forests are dry. No smoking or open fires outside. Follow all scenic area fire rules.</li>
+      <li>Avoid buying jade/herbs from scenic area vendors — mostly fakes. Use official markets only.</li>
+    </ul>`
+  }
+];
+
+const tipsEl = document.getElementById('tips-list');
+tips.forEach(t => {
+  const sec = document.createElement('div');
+  sec.className = 'tip-section';
+  sec.innerHTML = `
+    <div class="tip-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="tip-icon">${t.icon}</span>
+      <span class="tip-title">${t.title}</span>
+      <span class="tip-chevron">▼</span>
+    </div>
+    <div class="tip-body">${t.body}</div>`;
+  tipsEl.appendChild(sec);
+});
+
+// ── TAB SWITCH ───────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    const tabs = ['map','itin','tips'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.getElementById('legend-bar').style.display = tab === 'map' ? 'flex' : 'none';
+  if (tab === 'map') setTimeout(() => map.invalidateSize(), 50);
+}
+</script>
+</body>
+</html>
