@@ -8,109 +8,42 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #0d1117;
-    color: #e6edf3;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    padding: 13px 16px 10px;
-    background: linear-gradient(135deg, #0d1117, #161b22);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; display: flex; flex-direction: column; }
+  .header { padding: 13px 16px 10px; background: linear-gradient(135deg, #0d1117, #161b22); border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .header h1 { font-size: 1.1em; font-weight: 800; color: #fff; line-height: 1.3; }
   .header h1 .gold { color: #f0a500; }
   .header h1 .teal { color: #2ecc71; }
   .header-sub { font-size: 0.73em; color: #8b949e; margin-top: 3px; }
-  .home-btn {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
-    color: #f0a500; text-decoration: none; font-size: 0.76em; font-weight: 700;
-    padding: 6px 13px; border-radius: 16px; white-space: nowrap; flex-shrink: 0;
-  }
-
-  /* ── TABS ── */
-  .tabs {
-    display: flex;
-    background: #161b22;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-  }
-  .tab {
-    flex: 1; padding: 10px 6px; border: none; background: transparent;
-    color: #8b949e; font-size: 0.76em; font-weight: 700; cursor: pointer;
-    border-bottom: 3px solid transparent; transition: all 0.2s; text-align: center;
-    font-family: 'Segoe UI', Arial, sans-serif;
-  }
+  .home-btn { display: inline-flex; align-items: center; gap: 5px; background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35); color: #f0a500; text-decoration: none; font-size: 0.76em; font-weight: 700; padding: 6px 13px; border-radius: 16px; white-space: nowrap; flex-shrink: 0; }
+  .tabs { display: flex; background: #161b22; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .tab { flex: 1; padding: 10px 6px; border: none; background: transparent; color: #8b949e; font-size: 0.76em; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; text-align: center; font-family: 'Segoe UI', Arial, sans-serif; }
   .tab.active { color: #f0a500; border-bottom-color: #f0a500; background: rgba(240,165,0,0.06); }
   .tab:hover:not(.active) { color: #c9d1d9; background: rgba(255,255,255,0.03); }
   .tab .tab-title { font-size: 1em; }
   .tab .tab-sub { font-size: 0.85em; opacity: 0.75; margin-top: 1px; }
-
-  /* ── LEGEND ── */
-  .legend-bar {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    padding: 7px 14px; background: #0d1117;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 0.7em; color: #8b949e;
-  }
+  .legend-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 7px 14px; background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.7em; color: #8b949e; }
   .legend-item { display: flex; align-items: center; gap: 5px; }
   .ldot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
   .lline { width: 22px; height: 3px; border-radius: 2px; flex-shrink: 0; }
   .legend-right { margin-left: auto; color: #f0a500; font-weight: 700; }
-
-  /* ── MAP ── */
   #map { width: 100%; flex: 1; min-height: 54vh; }
-
-  /* ── STOPS PANEL ── */
   .stops-panel { background: #0d1117; overflow-y: auto; max-height: 34vh; }
-
   .route-section { display: none; }
   .route-section.active { display: block; }
-
-  .section-head {
-    padding: 9px 14px 7px; border-bottom: 1px solid rgba(255,255,255,0.06);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .sec-badge {
-    font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 12px; white-space: nowrap;
-  }
+  .section-head { padding: 9px 14px 7px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+  .sec-badge { font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
   .sec-title { font-size: 0.82em; font-weight: 700; color: #e6edf3; }
   .sec-km { margin-left: auto; font-size: 0.72em; color: #f0a500; font-weight: 700; white-space: nowrap; }
-
-  .stop-item {
-    display: flex; align-items: flex-start; gap: 11px;
-    padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.04);
-    cursor: pointer; transition: background 0.15s;
-  }
+  .stop-item { display: flex; align-items: flex-start; gap: 11px; padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
   .stop-item:hover { background: rgba(255,255,255,0.04); }
   .stop-item:last-child { border-bottom: none; }
-
-  .snum {
-    width: 25px; height: 25px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.7em; font-weight: 800; flex-shrink: 0; margin-top: 1px;
-    border: 2px solid rgba(255,255,255,0.5);
-  }
+  .snum { width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7em; font-weight: 800; flex-shrink: 0; margin-top: 1px; border: 2px solid rgba(255,255,255,0.5); }
   .sinfo { flex: 1; min-width: 0; }
   .sname { font-size: 0.85em; font-weight: 700; color: #e6edf3; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .sdesc { font-size: 0.72em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
   .skm   { font-size: 0.68em; color: #f0a500; font-weight: 700; margin-top: 3px; }
-  .stag {
-    display: inline-block; font-size: 0.62em; padding: 2px 6px;
-    border-radius: 7px; font-weight: 700;
-  }
+  .stag  { display: inline-block; font-size: 0.62em; padding: 2px 6px; border-radius: 7px; font-weight: 700; }
   .t-start  { background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
   .t-lake   { background: rgba(59,130,246,0.2);  color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
   .t-village{ background: rgba(16,185,129,0.2);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
@@ -118,19 +51,9 @@
   .t-pass   { background: rgba(59,130,246,0.2);  color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
   .t-canyon { background: rgba(245,158,11,0.2);  color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
   .t-grass  { background: rgba(132,204,22,0.2);  color: #bef264; border: 1px solid rgba(132,204,22,0.3); }
-  .t-offroad{ background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
   .t-transit{ background: rgba(168,85,247,0.2);  color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
-
-  .connector-row {
-    background: rgba(168,85,247,0.05);
-    border-left: 3px solid rgba(168,85,247,0.5);
-  }
-
-  /* Leaflet */
-  .leaflet-popup-content-wrapper {
-    background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important;
-    border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; color: #e6edf3 !important;
-  }
+  .connector-row { background: rgba(168,85,247,0.05); border-left: 3px solid rgba(168,85,247,0.5); }
+  .leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; color: #e6edf3 !important; }
   .leaflet-popup-tip { background: #161b22 !important; }
   .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; line-height: 1.5; }
   .pname { font-weight: 800; font-size: 1.05em; color: #fff; }
@@ -139,32 +62,25 @@
   .pkm   { margin-top: 5px; color: #f0a500; font-size: 0.78em; font-weight: 700; }
   .leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
   .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
-
-  @media (max-width: 500px) {
-    .header h1 { font-size: 0.95em; }
-    #map { min-height: 50vh; }
-    .stops-panel { max-height: 36vh; }
-  }
+  @media (max-width: 500px) { .header h1 { font-size: 0.95em; } #map { min-height: 50vh; } .stops-panel { max-height: 36vh; } }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div class="header-top">
     <div>
       <h1>🏔️ MT06: Xinjiang <span class="gold">North Loop</span> + <span class="teal">Duku Highway</span></h1>
-      <div class="header-sub">新疆自驾全图 · Sep 2026 · Anti-Clockwise Route · ~2,165 km total</div>
+      <div class="header-sub">新疆自驾全图 · Sep 2026 · Anti-Clockwise Full Circuit · ~2,840 km total</div>
     </div>
     <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
   </div>
 </div>
 
-<!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab(0)">
     <div class="tab-title">🗺️ All Routes</div>
-    <div class="tab-sub">Combined view</div>
+    <div class="tab-sub">Full circuit</div>
   </button>
   <button class="tab" onclick="switchTab(1)">
     <div class="tab-title">🔵 North Loop</div>
@@ -172,39 +88,33 @@
   </button>
   <button class="tab" onclick="switchTab(2)">
     <div class="tab-title">🟡 Duku Hwy</div>
-    <div class="tab-sub">独库公路 ~560 km</div>
+    <div class="tab-sub">独库→乌市 ~1,235 km</div>
   </button>
 </div>
 
-<!-- LEGEND -->
 <div class="legend-bar">
   <div class="legend-item"><div class="ldot" style="background:#ef4444;"></div> Start/End</div>
   <div class="legend-item"><div class="ldot" style="background:#3b82f6;"></div> Lake</div>
   <div class="legend-item"><div class="ldot" style="background:#10b981;"></div> Village</div>
   <div class="legend-item"><div class="ldot" style="background:#f0a500;"></div> City</div>
-  <div class="legend-item"><div class="lline" style="background:#3b82f6; opacity:0.8;"></div> North Loop</div>
-  <div class="legend-item"><div class="lline" style="background:#a855f7; opacity:0.8;"></div> Transit</div>
-  <div class="legend-item"><div class="lline" style="background:#f0a500; opacity:0.8;"></div> Duku Hwy</div>
-  <div class="legend-right">~2,165 km total</div>
+  <div class="legend-item"><div class="lline" style="background:#3b82f6;opacity:0.8;"></div> North Loop</div>
+  <div class="legend-item"><div class="lline" style="background:#a855f7;opacity:0.8;"></div> Transit</div>
+  <div class="legend-item"><div class="lline" style="background:#f0a500;opacity:0.8;"></div> Duku/Return</div>
+  <div class="legend-right">~2,840 km total</div>
 </div>
 
-<!-- MAP -->
 <div id="map"></div>
 
-<!-- STOPS PANEL -->
 <div class="stops-panel">
-
-  <!-- ALL ROUTES -->
   <div class="route-section active" id="sec-0">
     <div class="section-head">
       <span class="sec-badge" style="background:#f0a500;color:#000;">全程 ALL</span>
-      <span class="sec-title">16 stops · Anti-Clockwise Loop + Duku Highway</span>
-      <span class="sec-km">~2,165 km</span>
+      <span class="sec-title">17 stops · Full Circuit: North Loop + Duku Hwy + Return</span>
+      <span class="sec-km">~2,840 km</span>
     </div>
     <div id="all-list"></div>
   </div>
 
-  <!-- NORTH LOOP -->
   <div class="route-section" id="sec-1">
     <div class="section-head">
       <span class="sec-badge" style="background:#3b82f6;color:#fff;">🔵 NORTH</span>
@@ -214,27 +124,24 @@
     <div id="north-list"></div>
   </div>
 
-  <!-- DUKU HWY -->
   <div class="route-section" id="sec-2">
     <div class="section-head">
       <span class="sec-badge" style="background:#f0a500;color:#000;">🟡 DUKU</span>
-      <span class="sec-title">10 stops · Dushanzi → Kuqa · G217 独库公路</span>
-      <span class="sec-km">~560 km</span>
+      <span class="sec-title">11 stops · Dushanzi → Kuqa → Korla → Urumqi ①</span>
+      <span class="sec-km">~1,235 km</span>
     </div>
     <div id="duku-list"></div>
   </div>
-
 </div>
 
 <script>
 // ── DATA ──
 
-// ANTI-CLOCKWISE North Loop (Shihezi removed)
-// Direction: ① Urumqi → ② Wulungu Lake → ③ Burqin → ④ Altay → ⑤ Hemu → ⑥ Kanas
+// ANTI-CLOCKWISE NORTH LOOP (no Shihezi)
 const northStops = [
   { id:'n0', num:'①', lat:43.82, lng:87.62, name:'Urumqi', cn:'乌鲁木齐',
-    desc:'Start · Airport · Capital of Xinjiang',
-    km:'Day 1 Start', color:'#ef4444', type:'start', icon:'✈️' },
+    desc:'Start & Return · Airport · Capital of Xinjiang',
+    km:'Day 1 Start / Final Return', color:'#ef4444', type:'start', icon:'✈️' },
   { id:'n1', num:'②', lat:47.20, lng:87.48, name:'Wulungu Lake', cn:'乌伦古湖',
     desc:'Large freshwater lake · Fishing culture · Gateway to North Loop',
     km:'~480 km from Urumqi', color:'#3b82f6', type:'lake', icon:'🎣' },
@@ -252,27 +159,27 @@ const northStops = [
     km:'~35 km from Hemu', color:'#3b82f6', type:'lake', icon:'🏞️' },
 ];
 
-// TRANSIT CONNECTOR: ⑥ Kanas → A Dushanzi (bypasses ② Shihezi)
-// Route: Kanas → Haba River area → Jeminay → south to Karamay → Dushanzi
+// TRANSIT CONNECTOR: ⑥ Kanas → A Dushanzi (bypasses Shihezi)
 const connectorCoords = [
-  [48.68, 87.00],  // ⑥ Kanas Lake
-  [48.05, 86.40],  // via Haba River valley (哈巴河)
-  [47.45, 85.89],  // Jeminay 吉木乃
-  [46.50, 85.40],  // south toward Karamay corridor
-  [45.62, 84.96],  // Karamay approach (克拉玛依)
-  [45.60, 84.87],  // A Dushanzi
+  [48.68, 87.00],
+  [48.05, 86.40],
+  [47.45, 85.89],
+  [46.50, 85.40],
+  [45.62, 84.96],
+  [45.60, 84.87],
 ];
 
-// DUKU HIGHWAY: A Dushanzi → L Kuqa
+// DUKU HIGHWAY + RETURN TO URUMQI
+// Stop I (Daxiao Longchi) REMOVED per update
 const dukuStops = [
   { id:'d0', num:'A', lat:45.60, lng:84.87, name:'Dushanzi', cn:'独山子',
-    desc:'North entry of G217 Duku Hwy · Fuel up · Start of mountain road',
-    km:'~620 km from Kanas (via 吉木乃 — bypasses Shihezi)', color:'#f0a500', type:'city', icon:'🚗' },
+    desc:'North entry of G217 Duku Highway · Fuel up · Start of mountain road',
+    km:'~620 km from Kanas via 吉木乃 (bypasses Shihezi)', color:'#f0a500', type:'city', icon:'🚗' },
   { id:'d1', num:'B', lat:43.89, lng:84.11, name:'Dushanzi Grand Canyon', cn:'独山子大峡谷',
-    desc:'Red rock gorge · First dramatic stop on Duku',
-    km:'~30 km south', color:'#f0a500', type:'canyon', icon:'🏜️' },
+    desc:'Red rock gorge · First dramatic scenery on Duku',
+    km:'~30 km south of Dushanzi', color:'#f0a500', type:'canyon', icon:'🏜️' },
   { id:'d2', num:'C', lat:43.38, lng:83.72, name:'Hashilagen Pass', cn:'哈希勒根达坂',
-    desc:'~3,600m · Snow mountain pass · Highest point of Day 1',
+    desc:'~3,600m · Snow mountain pass · Highest point Day 1 on Duku',
     km:'~80 km south', color:'#3b82f6', type:'pass', icon:'⛰️' },
   { id:'d3', num:'D', lat:43.11, lng:83.41, name:'Qiaerma', cn:'乔尔玛',
     desc:'Overnight stop · Heroes Memorial for Duku road soldiers',
@@ -286,22 +193,31 @@ const dukuStops = [
   { id:'d7', num:'H', lat:42.20, lng:83.05, name:'S. Tianshan Straight Road', cn:'南天山直道',
     desc:'Iconic poplar-lined avenue through mountain valley',
     km:'~50 km south', color:'#f0a500', type:'city', icon:'🛣️' },
-  { id:'d8', num:'I', lat:42.08, lng:83.52, name:'Daxiao Longchi', cn:'大小龙池',
-    desc:'Twin alpine dragon lakes · Turquoise mountain water',
-    km:'~40 km east', color:'#3b82f6', type:'lake', icon:'💧' },
   { id:'d10', num:'K', lat:41.78, lng:83.50, name:'Red Rock Forest', cn:'红山石林',
-    desc:'Red sandstone pillars · Near Kuqa city',
-    km:'~15 km south', color:'#f59e0b', type:'canyon', icon:'🔴' },
+    desc:'Red sandstone pillars · Dramatic canyon landscape near Kuqa',
+    km:'~50 km from S. Tianshan Road', color:'#f59e0b', type:'canyon', icon:'🔴' },
   { id:'d11', num:'L', lat:41.72, lng:82.96, name:'Kuqa', cn:'库车',
-    desc:'🎉 Journey End · Ancient Silk Road city · Kizil Caves nearby',
-    km:'End of Duku Hwy', color:'#ef4444', type:'start', icon:'🏛️' },
+    desc:'Ancient Silk Road city · Kizil Caves nearby · Continue east to Korla',
+    km:'~15 km from Red Rock Forest', color:'#f0a500', type:'city', icon:'🏛️' },
+  { id:'d12', num:'M', lat:41.77, lng:86.07, name:'Korla', cn:'库尔勒市',
+    desc:'City of Pears (库尔勒香梨) · Tarim River · Kaidu River delta · Drive north to Urumqi',
+    km:'~300 km from Kuqa via G314', color:'#f0a500', type:'city', icon:'🍐' },
 ];
 
-const typeTag   = { start:'t-start', lake:'t-lake', village:'t-village', city:'t-city', pass:'t-pass', canyon:'t-canyon', grass:'t-grass', offroad:'t-offroad', transit:'t-transit' };
-const typeLabel = { start:'Start/End', lake:'Lake', village:'Village', city:'City', pass:'Pass', canyon:'Canyon', grass:'Grassland', offroad:'Off-road ⚠️', transit:'Transit' };
+// RETURN LEG: Korla M → Urumqi ① (closing the full circuit)
+const returnCoords = [
+  [41.77, 86.07],
+  [42.08, 86.35],
+  [42.55, 86.78],
+  [43.20, 87.18],
+  [43.82, 87.62],
+];
+
+const typeTag   = { start:'t-start', lake:'t-lake', village:'t-village', city:'t-city', pass:'t-pass', canyon:'t-canyon', grass:'t-grass', transit:'t-transit' };
+const typeLabel = { start:'Start/End', lake:'Lake', village:'Village', city:'City', pass:'Pass', canyon:'Canyon', grass:'Grassland', transit:'Transit' };
 
 // ── MAP ──
-const map = L.map('map', { center: [45.5, 85.5], zoom: 6 });
+const map = L.map('map', { center: [44.0, 85.0], zoom: 6 });
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors', maxZoom: 18
 }).addTo(map);
@@ -311,26 +227,20 @@ const layerAll   = L.layerGroup();
 const layerNorth = L.layerGroup();
 const layerDuku  = L.layerGroup();
 
-// Route coordinate arrays
-const northCoords = northStops.map(s => [s.lat, s.lng]);  // no loop close — exits to Duku
+const northCoords = northStops.map(s => [s.lat, s.lng]);
 const dukuCoords  = dukuStops.map(s => [s.lat, s.lng]);
 
 // Polylines
-const northLine     = L.polyline(northCoords, { color:'#3b82f6', weight:3.2, opacity:0.85, dashArray:'8,5' });
-const connectorLine = L.polyline(connectorCoords, { color:'#a855f7', weight:2.8, opacity:0.75, dashArray:'5,4' });
-const dukuLine      = L.polyline(dukuCoords, { color:'#f0a500', weight:3.2, opacity:0.85, dashArray:'6,4' });
+layerAll.addLayer(L.polyline(northCoords,      { color:'#3b82f6', weight:3,   opacity:0.8, dashArray:'8,5' }));
+layerAll.addLayer(L.polyline(connectorCoords,  { color:'#a855f7', weight:2.5, opacity:0.7, dashArray:'5,4' }));
+layerAll.addLayer(L.polyline(dukuCoords,       { color:'#f0a500', weight:3,   opacity:0.8, dashArray:'6,4' }));
+layerAll.addLayer(L.polyline(returnCoords,     { color:'#f0a500', weight:3,   opacity:0.75, dashArray:'6,4' }));
 
-// ALL layer
-layerAll.addLayer(L.polyline(northCoords,     { color:'#3b82f6', weight:3,   opacity:0.75, dashArray:'8,5' }));
-layerAll.addLayer(L.polyline(connectorCoords, { color:'#a855f7', weight:2.5, opacity:0.65, dashArray:'5,4' }));
-layerAll.addLayer(L.polyline(dukuCoords,      { color:'#f0a500', weight:3,   opacity:0.75, dashArray:'6,4' }));
+layerNorth.addLayer(L.polyline(northCoords,     { color:'#3b82f6', weight:3.2, opacity:0.85, dashArray:'8,5' }));
+layerNorth.addLayer(L.polyline(connectorCoords, { color:'#a855f7', weight:2.5, opacity:0.7,  dashArray:'5,4' }));
 
-// NORTH layer (includes connector so user sees where loop leads)
-layerNorth.addLayer(northLine);
-layerNorth.addLayer(L.polyline(connectorCoords, { color:'#a855f7', weight:2.5, opacity:0.65, dashArray:'5,4' }));
-
-// DUKU layer
-layerDuku.addLayer(dukuLine);
+layerDuku.addLayer(L.polyline(dukuCoords,   { color:'#f0a500', weight:3.2, opacity:0.85, dashArray:'6,4' }));
+layerDuku.addLayer(L.polyline(returnCoords, { color:'#f0a500', weight:3.2, opacity:0.8,  dashArray:'6,4' }));
 
 // ── MARKERS ──
 const allMarkers = {};
@@ -354,56 +264,55 @@ function makeMarker(s, layer) {
   return m;
 }
 
-// North markers → north + all layers
-northStops.forEach(s => {
-  makeMarker(s, layerNorth);
-  makeMarker({...s, id: s.id+'_all'}, layerAll);
-});
-// Duku markers → duku + all layers
-dukuStops.forEach(s => {
-  makeMarker(s, layerDuku);
-  makeMarker({...s, id: s.id+'_all'}, layerAll);
-});
+northStops.forEach(s => { makeMarker(s, layerNorth); makeMarker({...s, id: s.id+'_all'}, layerAll); });
+dukuStops.forEach(s  => { makeMarker(s, layerDuku);  makeMarker({...s, id: s.id+'_all'}, layerAll); });
 
-// Distance labels — North Loop (anti-clockwise)
-const northDist = [
-  { km:'480 km', pos:[45.51, 87.55] },  // ① Urumqi → ② Wulungu
-  { km:'180 km', pos:[47.46, 87.18] },  // ② Wulungu → ③ Burqin
-  { km:'110 km', pos:[47.78, 87.53] },  // ③ Burqin → ④ Altay
-  { km:'180 km', pos:[48.20, 87.52] },  // ④ Altay → ⑤ Hemu
-  { km:'35 km',  pos:[48.61, 86.95] },  // ⑤ Hemu → ⑥ Kanas
-];
-
-// Distance label — connector
-const connDist = [
-  { km:'~620 km', pos:[47.10, 85.75] },  // ⑥ Kanas → A Dushanzi
-];
-
+// ── DISTANCE LABELS ──
 function distLabel(km, pos, layer, color) {
   layer.addLayer(L.marker(pos, {
     icon: L.divIcon({
       className: '',
-      html: `<div style="background:rgba(13,17,23,0.82);border:1px solid ${color}55;color:${color};font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:7px;font-family:'Segoe UI',Arial,sans-serif;white-space:nowrap;">${km}</div>`,
+      html: `<div style="background:rgba(13,17,23,0.85);border:1px solid ${color}55;color:${color};font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:7px;font-family:'Segoe UI',Arial,sans-serif;white-space:nowrap;">${km}</div>`,
       iconSize: [60, 18], iconAnchor: [30, 9]
     })
   }));
 }
 
-northDist.forEach(d => {
-  distLabel(d.km, d.pos, layerNorth, '#3b82f6');
-  distLabel(d.km, d.pos, layerAll,   '#3b82f6');
-});
-connDist.forEach(d => {
-  distLabel(d.km, d.pos, layerNorth, '#a855f7');
-  distLabel(d.km, d.pos, layerAll,   '#a855f7');
-});
+// North Loop distance labels (① to ⑥)
+const northDist = [
+  { km:'480 km', pos:[45.51, 87.55] },
+  { km:'180 km', pos:[47.46, 87.18] },
+  { km:'110 km', pos:[47.78, 87.53] },
+  { km:'180 km', pos:[48.20, 87.52] },
+  { km:'35 km',  pos:[48.61, 86.95] },
+];
+const connDist = [{ km:'~620 km', pos:[47.10, 85.75] }];
 
-// Add all layer to map by default
+northDist.forEach(d => { distLabel(d.km, d.pos, layerNorth, '#3b82f6'); distLabel(d.km, d.pos, layerAll, '#3b82f6'); });
+connDist.forEach(d  => { distLabel(d.km, d.pos, layerNorth, '#a855f7'); distLabel(d.km, d.pos, layerAll, '#a855f7'); });
+
+// Duku Highway distance labels (A to M, then M→①)
+const dukuDist = [
+  { km:'~30 km',  pos:[44.85, 84.50] },  // A→B
+  { km:'~80 km',  pos:[43.64, 83.92] },  // B→C
+  { km:'~70 km',  pos:[43.25, 83.57] },  // C→D
+  { km:'~80 km',  pos:[43.08, 83.76] },  // D→E
+  { km:'~80 km',  pos:[42.88, 83.76] },  // E→F
+  { km:'~50 km',  pos:[42.46, 83.24] },  // F→H
+  { km:'~50 km',  pos:[41.99, 83.32] },  // H→K (stop I removed)
+  { km:'~15 km',  pos:[41.74, 83.20] },  // K→L
+  { km:'~300 km', pos:[41.75, 84.50] },  // L→M (Kuqa→Korla)
+  { km:'~480 km', pos:[42.80, 86.88] },  // M→① (Korla→Urumqi)
+];
+
+dukuDist.forEach(d => { distLabel(d.km, d.pos, layerDuku, '#f0a500'); distLabel(d.km, d.pos, layerAll, '#f0a500'); });
+
+// Add all layer by default
 layerAll.addTo(map);
 let currentLayer = layerAll;
 
 // Fit all stops
-const allCoords = [...northCoords, ...connectorCoords, ...dukuCoords];
+const allCoords = [...northCoords, ...connectorCoords, ...dukuCoords, ...returnCoords];
 map.fitBounds(allCoords, { padding: [25, 25] });
 
 // ── BUILD STOP LISTS ──
@@ -435,8 +344,24 @@ function addConnectorRow(containerId) {
     <div class="snum" style="background:#a855f7;color:#fff;font-size:8px;letter-spacing:-1px;">→A</div>
     <div class="sinfo">
       <div class="sname">🛣️ Transit: Kanas ⑥ → Dushanzi A <span class="stag t-transit">Transit</span></div>
-      <div class="sdesc">Drive south via Jeminay (吉木乃) corridor · Bypasses ② Shihezi · Connects North Loop to Duku Highway start</div>
+      <div class="sdesc">Drive south via Jeminay (吉木乃) corridor · Bypasses Shihezi · Connects North Loop to Duku Highway</div>
       <div class="skm">📍 ~620 km · 吉木乃 → 克拉玛依 → 独山子</div>
+    </div>`;
+  el.appendChild(div);
+}
+
+function addReturnRow(containerId) {
+  const el = document.getElementById(containerId);
+  const div = document.createElement('div');
+  div.className = 'stop-item connector-row';
+  div.style.borderLeft = '3px solid rgba(240,165,0,0.5)';
+  div.style.background = 'rgba(240,165,0,0.05)';
+  div.innerHTML = `
+    <div class="snum" style="background:#f0a500;color:#000;font-size:8px;letter-spacing:-1px;">→①</div>
+    <div class="sinfo">
+      <div class="sname">🔄 Return: Korla M → Urumqi ① <span class="stag t-city">Return</span></div>
+      <div class="sdesc">Drive north via G218 · Yanqi Basin → Tianshan corridor → Urumqi · Full circuit complete!</div>
+      <div class="skm">📍 ~480 km · Circuit closes at ① Urumqi</div>
     </div>`;
   el.appendChild(div);
 }
@@ -444,22 +369,24 @@ function addConnectorRow(containerId) {
 buildList(northStops, 'north-list');
 addConnectorRow('north-list');
 
-buildList(dukuStops,  'duku-list');
+buildList(dukuStops, 'duku-list');
+addReturnRow('duku-list');
 
 buildList(northStops, 'all-list');
 addConnectorRow('all-list');
-buildList(dukuStops,  'all-list');
+buildList(dukuStops, 'all-list');
+addReturnRow('all-list');
 
 // ── SWITCH TAB ──
 function switchTab(idx) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
   document.querySelectorAll('.route-section').forEach((s,i) => s.classList.toggle('active', i===idx));
-
   map.removeLayer(currentLayer);
   const northBounds = [...northCoords, ...connectorCoords];
+  const dukuBounds  = [...dukuCoords, ...returnCoords];
   if      (idx===0) { currentLayer = layerAll;   map.fitBounds(allCoords,    {padding:[25,25]}); }
   else if (idx===1) { currentLayer = layerNorth; map.fitBounds(northBounds,  {padding:[30,30]}); }
-  else              { currentLayer = layerDuku;  map.fitBounds(dukuCoords,   {padding:[30,30]}); }
+  else              { currentLayer = layerDuku;  map.fitBounds(dukuBounds,   {padding:[30,30]}); }
   currentLayer.addTo(map);
 }
 </script>
