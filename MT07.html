@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT07: Xinjiang Express Route 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; display: flex; flex-direction: column; }
+  .header { padding: 13px 16px 10px; background: linear-gradient(135deg, #0d1117, #161b22); border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .header h1 { font-size: 1.1em; font-weight: 800; color: #fff; line-height: 1.3; }
+  .header h1 .gold { color: #f0a500; }
+  .header h1 .teal { color: #2ecc71; }
+  .header-sub { font-size: 0.73em; color: #8b949e; margin-top: 3px; }
+  .route-line { font-size: 0.68em; color: #c9d1d9; margin-top: 4px; letter-spacing: 0.3px; }
+  .route-line .dot { color: #f0a500; }
+  .home-btn { display: inline-flex; align-items: center; gap: 5px; background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35); color: #f0a500; text-decoration: none; font-size: 0.76em; font-weight: 700; padding: 6px 13px; border-radius: 16px; white-space: nowrap; flex-shrink: 0; }
+  .legend-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 7px 14px; background: #0d1117; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.7em; color: #8b949e; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .ldot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
+  .lline { width: 22px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+  .legend-right { margin-left: auto; color: #f0a500; font-weight: 700; }
+  #map { width: 100%; flex: 1; min-height: 56vh; }
+  .stops-panel { background: #0d1117; overflow-y: auto; max-height: 32vh; }
+  .section-head { padding: 9px 14px 7px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+  .sec-badge { font-size: 0.68em; font-weight: 800; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+  .sec-title { font-size: 0.82em; font-weight: 700; color: #e6edf3; }
+  .sec-km { margin-left: auto; font-size: 0.72em; color: #f0a500; font-weight: 700; white-space: nowrap; }
+  .stop-item { display: flex; align-items: flex-start; gap: 11px; padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
+  .stop-item:hover { background: rgba(255,255,255,0.04); }
+  .stop-item:last-child { border-bottom: none; }
+  .snum { width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7em; font-weight: 800; flex-shrink: 0; margin-top: 1px; border: 2px solid rgba(255,255,255,0.5); }
+  .sinfo { flex: 1; min-width: 0; }
+  .sname { font-size: 0.85em; font-weight: 700; color: #e6edf3; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .sdesc { font-size: 0.72em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+  .skm   { font-size: 0.68em; color: #f0a500; font-weight: 700; margin-top: 3px; }
+  .stag  { display: inline-block; font-size: 0.62em; padding: 2px 6px; border-radius: 7px; font-weight: 700; }
+  .t-start  { background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .t-lake   { background: rgba(59,130,246,0.2);  color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+  .t-village{ background: rgba(16,185,129,0.2);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .t-city   { background: rgba(240,165,0,0.2);   color: #fcd34d; border: 1px solid rgba(240,165,0,0.3); }
+  .t-canyon { background: rgba(245,158,11,0.2);  color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+  .t-grass  { background: rgba(132,204,22,0.2);  color: #bef264; border: 1px solid rgba(132,204,22,0.3); }
+  .t-transit{ background: rgba(168,85,247,0.2);  color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+  .connector-row { background: rgba(168,85,247,0.05); border-left: 3px solid rgba(168,85,247,0.5); }
+  .return-row    { background: rgba(240,165,0,0.05);   border-left: 3px solid rgba(240,165,0,0.4); }
+  .leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; color: #e6edf3 !important; }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; line-height: 1.5; }
+  .pname { font-weight: 800; font-size: 1.05em; color: #fff; }
+  .pcn   { color: #8b949e; font-size: 0.82em; }
+  .pdesc { margin-top: 4px; color: #c9d1d9; font-size: 0.84em; }
+  .pkm   { margin-top: 5px; color: #f0a500; font-size: 0.78em; font-weight: 700; }
+  .leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+  .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+  @media (max-width: 500px) { .header h1 { font-size: 0.95em; } #map { min-height: 50vh; } .stops-panel { max-height: 36vh; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🏔️ MT07: Xinjiang <span class="gold">Express Route</span> <span class="teal">2026</span></h1>
+      <div class="header-sub">新疆精简自驾 · Sep 2026 · 10 Stops · Full Circuit · ~2,585 km</div>
+      <div class="route-line">
+        <span class="dot">①</span> Urumqi →
+        <span class="dot">②</span> Wulungu →
+        <span class="dot">④</span> Altay →
+        <span class="dot">⑤</span> Hemu →
+        <span class="dot">A</span> Dushanzi →
+        <span class="dot">B</span> Canyon →
+        <span class="dot">D</span> Qiaerma →
+        <span class="dot">E</span> Nalati →
+        <span class="dot">L</span> Kuqa →
+        <span class="dot">M</span> Korla →
+        <span class="dot">①</span>
+      </div>
+    </div>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+  </div>
+</div>
+
+<div class="legend-bar">
+  <div class="legend-item"><div class="ldot" style="background:#ef4444;"></div> Start/End</div>
+  <div class="legend-item"><div class="ldot" style="background:#3b82f6;"></div> Lake</div>
+  <div class="legend-item"><div class="ldot" style="background:#10b981;"></div> Village</div>
+  <div class="legend-item"><div class="ldot" style="background:#f0a500;"></div> City</div>
+  <div class="legend-item"><div class="lline" style="background:#3b82f6;opacity:0.8;"></div> North</div>
+  <div class="legend-item"><div class="lline" style="background:#a855f7;opacity:0.8;"></div> Transit</div>
+  <div class="legend-item"><div class="lline" style="background:#f0a500;opacity:0.8;"></div> Duku/Return</div>
+  <div class="legend-right">~2,585 km total</div>
+</div>
+
+<div id="map"></div>
+
+<div class="stops-panel">
+  <div class="section-head">
+    <span class="sec-badge" style="background:#f0a500;color:#000;">全程 ROUTE</span>
+    <span class="sec-title">① → ② → ④ → ⑤ → A → B → D → E → L → M → ①</span>
+    <span class="sec-km">~2,585 km</span>
+  </div>
+  <div id="stop-list"></div>
+</div>
+
+<script>
+// ── STOPS ──
+// Only: ① ② ④ ⑤  A B D E L M
+
+const stops = [
+  { id:'n0', num:'①', lat:43.82, lng:87.62, name:'Urumqi',            cn:'乌鲁木齐',      desc:'Start & Return · Airport · Capital of Xinjiang',                              km:'Day 1 Start / Final Return',               color:'#ef4444', type:'start',   icon:'✈️' },
+  { id:'n1', num:'②', lat:47.20, lng:87.48, name:'Wulungu Lake',      cn:'乌伦古湖',      desc:'Large freshwater lake · Fishing culture · Gateway to North Loop',             km:'~480 km from Urumqi',                      color:'#3b82f6', type:'lake',    icon:'🎣' },
+  { id:'n3', num:'④', lat:47.85, lng:88.13, name:'Altay',             cn:'阿勒泰',        desc:'City base · Resupply stop · Direct from Wulungu (skips Burqin)',              km:'~120 km from Wulungu Lake',                color:'#f0a500', type:'city',    icon:'🏙️' },
+  { id:'n4', num:'⑤', lat:48.54, lng:86.90, name:'Hemu Village',      cn:'禾木村 ⭐',     desc:'Most beautiful village · Morning mist · Tuvan minority · Horses',             km:'~180 km from Altay',                       color:'#10b981', type:'village', icon:'🛖' },
+  { id:'d0', num:'A', lat:45.60, lng:84.87, name:'Dushanzi',          cn:'独山子',        desc:'North entry of G217 Duku Highway · Fuel up · Start of mountain road',         km:'~600 km from Hemu via 吉木乃 transit',     color:'#f0a500', type:'city',    icon:'🚗' },
+  { id:'d1', num:'B', lat:43.89, lng:84.11, name:'Dushanzi Canyon',   cn:'独山子大峡谷',  desc:'Red rock gorge · First dramatic scenery on Duku Highway',                     km:'~30 km south of Dushanzi',                 color:'#f0a500', type:'canyon',  icon:'🏜️' },
+  { id:'d3', num:'D', lat:43.11, lng:83.41, name:'Qiaerma',           cn:'乔尔玛',        desc:'Overnight stop · Heroes Memorial for Duku road soldiers · Via Hashilagen Pass',km:'~130 km from Canyon (via Hashilagen Pass)', color:'#8b5cf6', type:'city',    icon:'🏕️' },
+  { id:'d4', num:'E', lat:43.05, lng:84.10, name:'Nalati Grasslands', cn:'那拉提草原 ⭐', desc:'Sky grassland · Kazakh nomads · Yurts · Panoramic mountain views',            km:'~80 km from Qiaerma',                      color:'#10b981', type:'grass',   icon:'🌿' },
+  { id:'d11', num:'L', lat:41.72, lng:82.96, name:'Kuqa',             cn:'库车',          desc:'Ancient Silk Road city · Kizil Caves · Via Bayanbulak & Kuqa corridor',       km:'~185 km from Nalati (via Bayanbulak)',      color:'#f0a500', type:'city',    icon:'🏛️' },
+  { id:'d12', num:'M', lat:41.77, lng:86.07, name:'Korla',            cn:'库尔勒市',      desc:'City of Pears (库尔勒香梨) · Tarim River · Drive north to complete circuit',   km:'~300 km from Kuqa via G314',               color:'#f0a500', type:'city',    icon:'🍐' },
+];
+
+const typeTag   = { start:'t-start', lake:'t-lake', village:'t-village', city:'t-city', canyon:'t-canyon', grass:'t-grass' };
+const typeLabel = { start:'Start/End', lake:'Lake', village:'Village', city:'City', canyon:'Canyon', grass:'Grassland' };
+
+// ── MAP ──
+const map = L.map('map', { center: [44.5, 85.5], zoom: 6 });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 18
+}).addTo(map);
+
+// ── POLYLINES ──
+
+// 1. North segment: ① → ② → ④ → ⑤ (blue)
+const northCoords = [
+  [43.82, 87.62],  // ① Urumqi
+  [47.20, 87.48],  // ② Wulungu Lake
+  [47.85, 88.13],  // ④ Altay
+  [48.54, 86.90],  // ⑤ Hemu Village
+];
+
+// 2. Transit connector: ⑤ Hemu → A Dushanzi (purple, via Jeminay, bypasses Kanas & Shihezi)
+const connectorCoords = [
+  [48.54, 86.90],  // ⑤ Hemu
+  [48.05, 86.40],  // via Haba River valley
+  [47.45, 85.89],  // Jeminay 吉木乃
+  [46.50, 85.40],  // south corridor
+  [45.62, 84.96],  // Karamay approach
+  [45.60, 84.87],  // A Dushanzi
+];
+
+// 3. Duku segment: A → B → [via C] → D → E → [via F,H,K] → L → M (gold)
+// Intermediate waypoints kept for road accuracy (not stop markers)
+const dukuCoords = [
+  [45.60, 84.87],  // A Dushanzi
+  [43.89, 84.11],  // B Canyon
+  [43.38, 83.72],  // via C Hashilagen Pass (waypoint only)
+  [43.11, 83.41],  // D Qiaerma
+  [43.05, 84.10],  // E Nalati
+  [42.72, 83.42],  // via F Bayanbulak (waypoint only)
+  [42.20, 83.05],  // via H Tianshan Road (waypoint only)
+  [41.78, 83.50],  // via K Red Rock (waypoint only)
+  [41.72, 82.96],  // L Kuqa
+  [41.77, 86.07],  // M Korla
+];
+
+// 4. Return: M Korla → ① Urumqi (gold, via G218)
+const returnCoords = [
+  [41.77, 86.07],  // M Korla
+  [42.08, 86.35],  // via Yanqi 焉耆
+  [42.55, 86.78],  // north
+  [43.20, 87.18],  // approaching Urumqi
+  [43.82, 87.62],  // ① Urumqi
+];
+
+// Draw lines
+L.polyline(northCoords,     { color:'#3b82f6', weight:3.2, opacity:0.85, dashArray:'8,5' }).addTo(map);
+L.polyline(connectorCoords, { color:'#a855f7', weight:2.8, opacity:0.75, dashArray:'5,4' }).addTo(map);
+L.polyline(dukuCoords,      { color:'#f0a500', weight:3.2, opacity:0.85, dashArray:'6,4' }).addTo(map);
+L.polyline(returnCoords,    { color:'#f0a500', weight:3.2, opacity:0.8,  dashArray:'6,4' }).addTo(map);
+
+// ── MARKERS ──
+const allMarkers = {};
+
+function makeMarker(s) {
+  const size = (s.type === 'start') ? 33 : 27;
+  const textColor = (s.color === '#f0a500' || s.color === '#f59e0b' || s.color === '#8b5cf6') ? '#fff' : '#fff';
+  const tc = (s.color === '#f0a500') ? '#000' : '#fff';
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${s.color};border:2.5px solid rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;color:${tc};font-size:10px;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,0.6);font-family:'Segoe UI',Arial,sans-serif;">${s.num}</div>`,
+    iconSize: [size, size], iconAnchor: [size/2, size/2]
+  });
+  const m = L.marker([s.lat, s.lng], { icon }).bindPopup(`
+    <div class="pname">${s.icon} ${s.name}</div>
+    <div class="pcn">${s.cn}</div>
+    <div class="pdesc">${s.desc}</div>
+    <div class="pkm">📍 ${s.km}</div>
+  `).addTo(map);
+  allMarkers[s.id] = m;
+}
+
+stops.forEach(makeMarker);
+
+// ── DISTANCE LABELS ──
+function distLabel(km, pos, color) {
+  L.marker(pos, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="background:rgba(13,17,23,0.85);border:1px solid ${color}55;color:${color};font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:7px;font-family:'Segoe UI',Arial,sans-serif;white-space:nowrap;">${km}</div>`,
+      iconSize: [62, 18], iconAnchor: [31, 9]
+    })
+  }).addTo(map);
+}
+
+// North segment labels
+distLabel('480 km',  [45.51, 87.55], '#3b82f6');   // ①→②
+distLabel('~120 km', [47.53, 87.81], '#3b82f6');   // ②→④
+distLabel('180 km',  [48.20, 87.32], '#3b82f6');   // ④→⑤
+
+// Transit connector label
+distLabel('~600 km', [47.10, 85.75], '#a855f7');   // ⑤→A
+
+// Duku Highway labels
+distLabel('~30 km',  [44.85, 84.50], '#f0a500');   // A→B
+distLabel('~130 km', [43.50, 83.76], '#f0a500');   // B→D (via Hashilagen)
+distLabel('~80 km',  [43.08, 83.76], '#f0a500');   // D→E
+distLabel('~185 km', [42.38, 83.50], '#f0a500');   // E→L (via Bayanbulak)
+distLabel('~300 km', [41.75, 84.50], '#f0a500');   // L→M
+distLabel('~480 km', [42.80, 86.88], '#f0a500');   // M→①
+
+// Fit map to all coords
+const allCoords = [...northCoords, ...connectorCoords, ...dukuCoords, ...returnCoords];
+map.fitBounds(allCoords, { padding: [25, 25] });
+
+// ── BUILD STOP LIST ──
+function buildList() {
+  const el = document.getElementById('stop-list');
+
+  stops.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'stop-item';
+    div.onclick = () => { map.flyTo([s.lat, s.lng], 11, {duration:0.9}); setTimeout(()=>allMarkers[s.id].openPopup(),950); };
+    div.innerHTML = `
+      <div class="snum" style="background:${s.color};color:${s.color==='#f0a500'?'#000':'#fff'};">${s.num}</div>
+      <div class="sinfo">
+        <div class="sname">${s.icon} ${s.name} <span style="color:#8b949e;font-weight:400;font-size:0.88em;">${s.cn}</span> <span class="stag ${typeTag[s.type]}">${typeLabel[s.type]}</span></div>
+        <div class="sdesc">${s.desc}</div>
+        <div class="skm">📍 ${s.km}</div>
+      </div>`;
+    el.appendChild(div);
+  });
+
+  // Transit row: ⑤ → A
+  const tr = document.createElement('div');
+  tr.className = 'stop-item connector-row';
+  tr.style.order = '4';
+  tr.innerHTML = `
+    <div class="snum" style="background:#a855f7;color:#fff;font-size:8px;">→A</div>
+    <div class="sinfo">
+      <div class="sname">🛣️ Transit: ⑤ Hemu → A Dushanzi <span class="stag t-transit">Transit</span></div>
+      <div class="sdesc">Drive south via Jeminay (吉木乃) · Bypasses Kanas & Shihezi · Joins Duku Highway</div>
+      <div class="skm">📍 ~600 km · 吉木乃 → 克拉玛依 → 独山子</div>
+    </div>`;
+  // Insert after ⑤ (index 3 = 4th stop)
+  const items = el.querySelectorAll('.stop-item');
+  el.insertBefore(tr, items[4]); // after ⑤, before A
+
+  // Return row: M → ①
+  const ret = document.createElement('div');
+  ret.className = 'stop-item return-row';
+  ret.innerHTML = `
+    <div class="snum" style="background:#f0a500;color:#000;font-size:8px;">→①</div>
+    <div class="sinfo">
+      <div class="sname">🔄 Return: M Korla → ① Urumqi <span class="stag t-city">Return</span></div>
+      <div class="sdesc">Drive north via G218 · Yanqi Basin → Urumqi · Full circuit complete! 🎉</div>
+      <div class="skm">📍 ~480 km · Circuit closes at ① Urumqi</div>
+    </div>`;
+  el.appendChild(ret);
+}
+
+buildList();
+</script>
+</body>
+</html>
