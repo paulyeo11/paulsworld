@@ -16,8 +16,6 @@
     display: flex;
     flex-direction: column;
   }
-
-  /* HEADER */
   .header {
     padding: 12px 16px 10px;
     background: linear-gradient(135deg, #0d1117, #161b22);
@@ -37,8 +35,6 @@
     color: #f0a500; text-decoration: none; font-size: 0.78em; font-weight: 700;
     padding: 6px 14px; border-radius: 16px; white-space: nowrap;
   }
-
-  /* TAB BAR */
   .tab-bar {
     display: flex; background: #161b22;
     border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -53,8 +49,6 @@
     transition: all 0.2s; white-space: nowrap;
   }
   .tab-btn.active { color: #f0a500; border-bottom-color: #f0a500; }
-
-  /* LEGEND BAR */
   .legend-bar {
     display: flex; align-items: center; gap: 14px;
     padding: 7px 16px; background: #0d1117;
@@ -67,15 +61,9 @@
     border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;
   }
   .legend-total { margin-left: auto; color: #f0a500; font-weight: 700; }
-
-  /* MAP */
   #map { width: 100%; flex: 1; min-height: 54vh; }
-
-  /* PANELS */
   .panel { display: none; }
   .panel.active { display: flex; flex-direction: column; }
-
-  /* STOPS PANEL */
   .stops-panel {
     background: #0d1117; overflow-y: auto; max-height: 34vh;
   }
@@ -116,8 +104,6 @@
   .tag-village { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
   .tag-highway { background:rgba(139,92,246,0.2);  color:#c4b5fd; border:1px solid rgba(139,92,246,0.3); }
   .tag-end     { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
-
-  /* ITINERARY PANEL */
   .itin-panel {
     background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
   }
@@ -144,8 +130,6 @@
   .day-body .section-text { color: #c9d1d9; }
   .day-chevron { margin-left: auto; color: #f0a500; font-size: 0.8em; flex-shrink: 0; transition: transform 0.2s; }
   .day-card.open .day-chevron { transform: rotate(180deg); }
-
-  /* TIPS PANEL */
   .tips-panel {
     background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
   }
@@ -160,8 +144,6 @@
   .tip-body ul { padding-left: 16px; }
   .tip-body li { margin-bottom: 5px; }
   .tip-body strong { color: #e6edf3; }
-
-  /* Leaflet */
   .leaflet-popup-content-wrapper {
     background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important;
     border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
@@ -181,10 +163,13 @@
   .leaflet-control-attribution {
     background: rgba(13,17,23,0.8) !important; color: #484f58 !important;
   }
-
-  /* view counter */
+  .route-status {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(13,17,23,0.85); border: 1px solid rgba(240,165,0,0.3);
+    color: #f0a500; font-size: 0.7em; padding: 4px 12px; border-radius: 12px;
+    z-index: 1000; pointer-events: none; display: none;
+  }
   .vc-wrap { text-align: center; padding: 14px 16px; background: #0d1117; border-top: 1px solid rgba(255,255,255,0.06); }
-
   @media (max-width: 500px) {
     .header h1 { font-size: 0.95em; }
     #map { min-height: 48vh; }
@@ -194,7 +179,6 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div class="header-top">
     <div>
@@ -205,14 +189,12 @@
   </div>
 </div>
 
-<!-- TAB BAR -->
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
   <button class="tab-btn" onclick="switchTab('itin')">📅 Itinerary</button>
   <button class="tab-btn" onclick="switchTab('tips')">💡 Travel Tips</button>
 </div>
 
-<!-- LEGEND (map tab only) -->
 <div class="legend-bar" id="legend-bar">
   <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Start/End</div>
   <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> City</div>
@@ -222,9 +204,11 @@
   <div class="legend-total">~4,800 km · 16 Days</div>
 </div>
 
-<!-- MAP PANEL -->
 <div id="panel-map" class="panel active">
-  <div id="map"></div>
+  <div style="position:relative;">
+    <div id="map"></div>
+    <div class="route-status" id="route-status">Loading road routes…</div>
+  </div>
   <div class="stops-panel">
     <div class="panel-header">
       <span class="panel-title">📍 Route Stops — Tap to zoom</span>
@@ -234,12 +218,10 @@
   </div>
 </div>
 
-<!-- ITINERARY PANEL -->
 <div id="panel-itin" class="panel">
   <div class="itin-panel" id="itin-list"></div>
 </div>
 
-<!-- TIPS PANEL -->
 <div id="panel-tips" class="panel">
   <div class="tips-panel" id="tips-list"></div>
 </div>
@@ -249,134 +231,22 @@
 <script>
 // ── STOPS DATA ──────────────────────────────────────────────────
 const stops = [
-  {
-    day:'Day 1', num:'①', lat:43.8200, lng:87.6200,
-    name:'Urumqi', emoji:'✈️', type:'start',
-    color:'#ef4444',
-    desc:'Assembly day · Car rental · Museum of Xinjiang · International Grand Bazaar',
-    food:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan with kebabs',
-    stay:'Atour Hotel (Grand Bazaar) · Flora Secret Garden Hotel'
-  },
-  {
-    day:'Day 2', num:'②', lat:47.1100, lng:87.4800,
-    name:'Wulungu Lake', emoji:'🎣', type:'lake',
-    color:'#3b82f6',
-    desc:'S21 Desert Highway through Gurbantunggut Desert · "Gobi Sea" golden coast sunset · ~400 km from Urumqi',
-    food:'Fuhai County lakeside restaurants: spicy whole lake fish, deep-fried five-spot black',
-    stay:'Fuhai County Yingbin Hotel · Haiyue Hotel · Yilong Hotel'
-  },
-  {
-    day:'Day 3', num:'③', lat:47.8500, lng:88.1300,
-    name:'Altay City', emoji:'🏙️', type:'city',
-    color:'#f0a500',
-    desc:'Morning mist on Wulungu Lake · G216 road · Kazakh pastures · Huahua Park · General Mountain cable car sunset · ~200 km from Wulungu',
-    food:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market',
-    stay:'Atour Hotel (Wubai Li) · Madier Garden Hotel'
-  },
-  {
-    day:'Day 4', num:'④', lat:48.3500, lng:86.5500,
-    name:'Hemu Village', emoji:'🛖', type:'village',
-    color:'#10b981',
-    desc:'A-He Highway: Tolelhaite Grassland · Tongba Forest · River valley scenery · Rafting & forest hiking · ~210 km from Altay',
-    food:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, handmade yogurt, kvass',
-    stay:'Hemu Village Qinghuan Guesthouse (old village)'
-  },
-  {
-    day:'Day 5', num:'⑤', lat:48.6800, lng:87.0000,
-    name:'Kanas Lake', emoji:'🏞️', type:'lake',
-    color:'#3b82f6',
-    desc:'Dawn viewpoint: mist and smoke over fairy-tale village · Kanas Lake scenic area · Old Village free roam · ~70 km from Hemu',
-    food:'Hotel dining recommended (limited options in park)',
-    stay:'Kanas Old Village log cabin (standard room)'
-  },
-  {
-    day:'Day 6', num:'⑥', lat:47.7100, lng:86.8700,
-    name:'Burqin', emoji:'🌅', type:'city',
-    color:'#f0a500',
-    desc:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street',
-    food:'Irtysh Night Market: grilled pike, cold-water fish feast',
-    stay:'Night Light City Hotel · County Tourism Hotel · Sutong Holiday Hotel'
-  },
-  {
-    day:'Day 7', num:'⑦', lat:46.0800, lng:84.6800,
-    name:'Kuytun City', emoji:'🏙️', type:'city',
-    color:'#f0a500',
-    desc:'Five-Coloured Beach (Burqin) → Ueerhe World Devil City (afternoon golden light) → Kuytun · ~450 km from Burqin',
-    food:'Kuytun: Cambodia Little Rooster, Wang Fei Big Plate Chicken, Yigan Qi pilaf, Wusu beer',
-    stay:'Atour Hotel Kuytun · Wanda Meihua Hotel · Vienna Hotel'
-  },
-  {
-    day:'Day 8', num:'⑧', lat:44.6100, lng:81.1700,
-    name:'Sayram Lake', emoji:'💎', type:'lake',
-    color:'#3b82f6',
-    desc:'Lianhuo Expressway · Self-drive around the lake · Sunset over Sayram · Highest lake in Tianshan · ~420 km from Kuytun',
-    food:'Local cold-water fish: Coregonus peled (white salmon)',
-    stay:'Sayram Lake Orange Hotel · Sayram Lake Shuiyunshan Platinum Hotel'
-  },
-  {
-    day:'Day 9', num:'⑨', lat:44.3200, lng:84.8800,
-    name:'Dushanzi District', emoji:'⛽', type:'highway',
-    color:'#a855f7',
-    desc:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Gateway to Duku Highway · ~350 km',
-    food:'Yulan Bridge Big Plate Chicken (local favourite)',
-    stay:'Dushanzi Tianshu International Hotel · Delaide Hotel · Tianyuan International Hotel'
-  },
-  {
-    day:'Day 10', num:'⑩', lat:43.3500, lng:83.7000,
-    name:'Nalati Town', emoji:'🌿', type:'village',
-    color:'#10b981',
-    desc:'Duku Highway North Section: Sentry Stone · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Valley · ~full day drive · pre-book permit required',
-    food:'Road-side simple lunch · Nalati: Daidai Pilaf King (local lamb leg rice)',
-    stay:'Wusun Shale Art Lodge (Kazakh-style) · Nalati Sky Grassland Resort · Xinlv Nalati Resort'
-  },
-  {
-    day:'Day 11', num:'⑪', lat:43.3900, lng:83.7500,
-    name:'Nalati Grassland', emoji:'🐴', type:'village',
-    color:'#10b981',
-    desc:'Full day: Sky Grassland · River Valley Grassland · Horse riding through forest · Sunset on the steppe · Evening bonfire at guesthouse',
-    food:'Local restaurant clear-simmered lamb with green onions · Grassland flavours',
-    stay:'Wusun Shale Art Lodge (continued stay)'
-  },
-  {
-    day:'Day 12', num:'⑫', lat:41.7200, lng:82.9600,
-    name:'Kuqa City', emoji:'🕌', type:'city',
-    color:'#f0a500',
-    desc:'Duku Highway South Section: Bayanbulak Grassland · Dragon & Small Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa evening · ~350 km',
-    food:'Kuqa Giant Naan from the Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs',
-    stay:'Kuqa Tianyuan Hotel (convenient, good breakfast)'
-  },
-  {
-    day:'Day 13', num:'⑬', lat:41.7600, lng:83.0200,
-    name:'Kuqa Old City', emoji:'🏺', type:'village',
-    color:'#10b981',
-    desc:'Full day: Kuqa Old City · Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road · Afternoon: Kezierqiaha Beacon Tower · Old city sunset',
-    food:'Kuqa Old City: jar-braised mutton, rice sausage with lung noodles, baked buns',
-    stay:'Kuqa Tianyuan Hotel (continued)'
-  },
-  {
-    day:'Day 14', num:'⑭', lat:41.7600, lng:86.1400,
-    name:'Korla City', emoji:'🍐', type:'city',
-    color:'#f0a500',
-    desc:'G217 → G3012 · Tiemen Pass en route · Bosten Lake afternoon · Peacock River night walk · Korla fragrant pears · ~300 km from Kuqa',
-    food:'Xiangli Restaurant: big plate chicken, roast whole lamb · Korla No.1 Naan (roast lamb ribs, yogurt rice dumpling)',
-    stay:'Korla Licheng Baihe Hotel · Kangcheng Jianguo International Hotel'
-  },
-  {
-    day:'Day 15', num:'⑮', lat:43.8200, lng:87.6200,
-    name:'Urumqi (Return)', emoji:'🏙️', type:'end',
-    color:'#ef4444',
-    desc:'G0712 Victory Tunnel Highway · Baluntai: Yellow Temple (Tibetan Buddhist) · World\'s longest road tunnel: Tianshan Victory Tunnel · Return car · ~480 km',
-    food:'Free choice in Urumqi for last night dinner',
-    stay:'Hotel of your choice · Return rental car'
-  },
-  {
-    day:'Day 16', num:'⑯', lat:43.9600, lng:87.5500,
-    name:'Urumqi Airport', emoji:'✈️', type:'end',
-    color:'#ef4444',
-    desc:'Depart from Urumqi Tianshan International Airport (IATA: URC) · End of 16-day Xinjiang self-drive adventure',
-    food:'Airport dining',
-    stay:'Fly home — trip complete!'
-  }
+  { day:'Day 1',  num:'①',  lat:43.8200, lng:87.6200, name:'Urumqi',           emoji:'✈️',  type:'start',   color:'#ef4444', desc:'Assembly day · Car rental · Museum of Xinjiang · International Grand Bazaar', food:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan with kebabs', stay:'Atour Hotel (Grand Bazaar) · Flora Secret Garden Hotel' },
+  { day:'Day 2',  num:'②',  lat:47.1100, lng:87.4800, name:'Wulungu Lake',     emoji:'🎣',  type:'lake',    color:'#3b82f6', desc:'S21 Desert Highway through Gurbantunggut Desert · "Gobi Sea" golden coast sunset · ~400 km from Urumqi', food:'Fuhai County lakeside restaurants: spicy whole lake fish, deep-fried five-spot black', stay:'Fuhai County Yingbin Hotel · Haiyue Hotel · Yilong Hotel' },
+  { day:'Day 3',  num:'③',  lat:47.8500, lng:88.1300, name:'Altay City',       emoji:'🏙️', type:'city',    color:'#f0a500', desc:'Morning mist on Wulungu Lake · G216 road · Kazakh pastures · Huahua Park · General Mountain cable car sunset · ~200 km from Wulungu', food:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market', stay:'Atour Hotel (Wubai Li) · Madier Garden Hotel' },
+  { day:'Day 4',  num:'④',  lat:48.3500, lng:86.5500, name:'Hemu Village',     emoji:'🛖',  type:'village', color:'#10b981', desc:'A-He Highway: Tolelhaite Grassland · Tongba Forest · River valley scenery · Rafting & forest hiking · ~210 km from Altay', food:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, handmade yogurt, kvass', stay:'Hemu Village Qinghuan Guesthouse (old village)' },
+  { day:'Day 5',  num:'⑤',  lat:48.6800, lng:87.0000, name:'Kanas Lake',       emoji:'🏞️', type:'lake',    color:'#3b82f6', desc:'Dawn viewpoint: mist and smoke over fairy-tale village · Kanas Lake scenic area · Old Village free roam · ~70 km from Hemu', food:'Hotel dining recommended (limited options in park)', stay:'Kanas Old Village log cabin (standard room)' },
+  { day:'Day 6',  num:'⑥',  lat:47.7100, lng:86.8700, name:'Burqin',           emoji:'🌅',  type:'city',    color:'#f0a500', desc:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street', food:'Irtysh Night Market: grilled pike, cold-water fish feast', stay:'Night Light City Hotel · County Tourism Hotel · Sutong Holiday Hotel' },
+  { day:'Day 7',  num:'⑦',  lat:46.0800, lng:84.6800, name:'Kuytun City',      emoji:'🏙️', type:'city',    color:'#f0a500', desc:'Five-Coloured Beach (Burqin) → Ueerhe World Devil City (afternoon golden light) → Kuytun · ~450 km from Burqin', food:'Kuytun: Cambodia Little Rooster, Wang Fei Big Plate Chicken, Yigan Qi pilaf, Wusu beer', stay:'Atour Hotel Kuytun · Wanda Meihua Hotel · Vienna Hotel' },
+  { day:'Day 8',  num:'⑧',  lat:44.6100, lng:81.1700, name:'Sayram Lake',      emoji:'💎',  type:'lake',    color:'#3b82f6', desc:'Lianhuo Expressway · Self-drive around the lake · Sunset over Sayram · Highest lake in Tianshan · ~420 km from Kuytun', food:'Local cold-water fish: Coregonus peled (white salmon)', stay:'Sayram Lake Orange Hotel · Sayram Lake Shuiyunshan Platinum Hotel' },
+  { day:'Day 9',  num:'⑨',  lat:44.3200, lng:84.8800, name:'Dushanzi District',emoji:'⛽',  type:'highway', color:'#a855f7', desc:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Gateway to Duku Highway · ~350 km', food:'Yulan Bridge Big Plate Chicken (local favourite)', stay:'Dushanzi Tianshu International Hotel · Delaide Hotel · Tianyuan International Hotel' },
+  { day:'Day 10', num:'⑩',  lat:43.3500, lng:83.7000, name:'Nalati Town',      emoji:'🌿',  type:'village', color:'#10b981', desc:'Duku Highway North Section: Sentry Stone · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Valley · ~full day drive · pre-book permit required', food:'Road-side simple lunch · Nalati: Daidai Pilaf King (local lamb leg rice)', stay:'Wusun Shale Art Lodge (Kazakh-style B&B) · Nalati Sky Grassland Resort' },
+  { day:'Day 11', num:'⑪',  lat:43.3500, lng:83.7000, name:'Nalati Grassland', emoji:'🐎',  type:'village', color:'#10b981', desc:'Sky Grassland · River Valley Grassland · Horseback ride through forests · Steppe sunset · Evening bonfire at lodge', food:'Local restaurant: clear-simmered lamb with green onions, grassland flavours', stay:'Wusun Shale Art Lodge (continued)' },
+  { day:'Day 12', num:'⑫',  lat:41.7100, lng:82.9600, name:'Kuqa City',        emoji:'🕌',  type:'city',    color:'#f0a500', desc:'Nalati → Duku Highway South → Bayanbulak Grassland · Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa · ~350 km', food:'Kuqa Giant Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs', stay:'Kuqa Tianyuan Hotel (convenient location, rich breakfast)' },
+  { day:'Day 13', num:'⑬',  lat:41.7200, lng:82.9700, name:'Kuqa Old City',    emoji:'🏛️', type:'city',    color:'#f0a500', desc:'Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road bazaar · Kezierqiaha Beacon Tower · Old city golden hour sunset', food:'Jar-braised mutton · Rice sausage with lung noodles · Baked lamb buns — authentic Silk Road street food', stay:'Kuqa Tianyuan Hotel (continued)' },
+  { day:'Day 14', num:'⑭',  lat:41.7600, lng:86.1400, name:'Korla City',       emoji:'🍐',  type:'city',    color:'#f0a500', desc:'G217 → G3012 · Tiemen Pass en route · Bosten Lake afternoon · Peacock River night walk · Korla fragrant pears · ~300 km from Kuqa', food:'Xiangli Restaurant: big plate chicken, roast whole lamb · Korla No.1 Naan (roast lamb ribs, yogurt rice dumpling)', stay:'Korla Licheng Baihe Hotel · Kangcheng Jianguo International Hotel' },
+  { day:'Day 15', num:'⑮',  lat:43.8200, lng:87.6200, name:'Urumqi (Return)',  emoji:'🏙️', type:'end',     color:'#ef4444', desc:'G0712 Victory Tunnel Highway · Baluntai: Yellow Temple (Tibetan Buddhist) · World\'s longest road tunnel: Tianshan Victory Tunnel · Return car · ~480 km', food:'Free choice in Urumqi for last night dinner', stay:'Hotel of your choice · Return rental car' },
+  { day:'Day 16', num:'⑯',  lat:43.9600, lng:87.5500, name:'Urumqi Airport',   emoji:'✈️',  type:'end',     color:'#ef4444', desc:'Depart from Urumqi Tianshan International Airport (IATA: URC) · End of 16-day Xinjiang self-drive adventure', food:'Airport dining', stay:'Fly home — trip complete!' }
 ];
 
 // ── MAP SETUP ────────────────────────────────────────────────────
@@ -385,13 +255,44 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '© OpenStreetMap © CARTO', maxZoom: 19
 }).addTo(map);
 
-// Draw route polyline
-const latLngs = stops.map(s => [s.lat, s.lng]);
-L.polyline(latLngs, { color: '#f0a500', weight: 2.5, opacity: 0.7, dashArray: '6,4' }).addTo(map);
+// ── ROAD ROUTING via OSRM (client-side fetch) ─────────────────────
+// Each segment fetched from OSRM public API; falls back to straight line if unavailable
+const routeStyle = { color: '#f0a500', weight: 2.8, opacity: 0.82, dashArray: '8,4' };
+const routeLayers = [];
+let completedSegs = 0;
 
-// Return line (D15→D16 same spot, skip; draw D14→D15)
-// Already in latLngs array
+async function fetchSegment(fromStop, toStop, idx) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${fromStop.lng},${fromStop.lat};${toStop.lng},${toStop.lat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok') {
+      const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+      return coords;
+    }
+  } catch(e) {}
+  // fallback: straight line
+  return [[fromStop.lat, fromStop.lng], [toStop.lat, toStop.lng]];
+}
 
+async function buildRoads() {
+  const statusEl = document.getElementById('route-status');
+  statusEl.style.display = 'block';
+  const total = stops.length - 1;
+
+  for (let i = 0; i < total; i++) {
+    statusEl.textContent = `Loading road route ${i+1}/${total}…`;
+    const coords = await fetchSegment(stops[i], stops[i+1], i);
+    const layer = L.polyline(coords, routeStyle).addTo(map);
+    routeLayers.push(layer);
+    completedSegs++;
+  }
+  statusEl.style.display = 'none';
+}
+
+buildRoads();
+
+// ── MARKERS ─────────────────────────────────────────────────────
 const markers = [];
 stops.forEach((s, i) => {
   const icon = L.divIcon({
@@ -411,7 +312,7 @@ stops.forEach((s, i) => {
   markers.push(m);
 });
 
-// Build stop list
+// ── STOP LIST ────────────────────────────────────────────────────
 const listEl = document.getElementById('stop-list');
 stops.forEach((s, i) => {
   const tagMap = { start:'tag-start', city:'tag-city', lake:'tag-lake', village:'tag-village', highway:'tag-highway', end:'tag-end' };
@@ -437,118 +338,22 @@ stops.forEach((s, i) => {
 
 // ── ITINERARY DATA ───────────────────────────────────────────────
 const itinDays = [
-  {
-    day:'Day 1', date:'1 Sep', title:'Urumqi — Assembly Day',
-    route:'Arrive Urumqi (URC)',
-    activity:'Collect rental car · Stock up on snacks, water, sunscreen · Xinjiang Uyghur Autonomous Region Museum (mummies & painted pottery) · Evening at Consulate Lane / International Grand Bazaar',
-    food:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan + kebabs · Hetian 2nd Street snacks',
-    stay:'Atour Hotel (Grand Bazaar) · Flora Secret Garden Hotel · Liujin Art Hotel'
-  },
-  {
-    day:'Day 2', date:'2 Sep', title:'Urumqi → Wulungu Lake',
-    route:'~400 km / ~5h via S21 Desert Highway',
-    activity:'Drive S21 Awu Expressway through Gurbantunggut Desert (famous road) · Afternoon: Wulungu Lake Golden Coast · "Gobi Sea" sunset',
-    food:'Fuhai County: lakeside restaurant whole lake fish, deep-fried five-spot black',
-    stay:'Fuhai Yingbin Hotel · Haiyue Hotel · Yilong Hotel'
-  },
-  {
-    day:'Day 3', date:'3 Sep', title:'Wulungu Lake → Altay City',
-    route:'~200 km / ~3h via G216',
-    activity:'Early morning lake mist photos · G216 road with Kazakh pastures · Altay Huahua Park · General Mountain cable car for sunset party (if clear)',
-    food:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market',
-    stay:'Atour Hotel (Wubai Li St) · Madier Garden Hotel'
-  },
-  {
-    day:'Day 4', date:'4 Sep', title:'Altay → A-He Highway → Hemu Village',
-    route:'~210 km / ~5h via A-He Highway',
-    activity:'Tolelhaite Great Grassland · Tongba Forest · River valley scenery all the way · Arrive Hemu village by dusk · Evening riverside walk · Rafting & forest hike · White birch forest sunset · Stargazing at night',
-    food:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, yogurt, kvass',
-    stay:'Qinghuan Guesthouse, Hemu Old Village'
-  },
-  {
-    day:'Day 5', date:'5 Sep', title:'Hemu Village → Kanas Lake',
-    route:'~70 km / ~2h',
-    activity:'Dawn viewpoint: mist, smoke, fairy-tale village · Kanas Lake scenic area · Old Village free exploration',
-    food:'Hotel dining recommended (limited park options)',
-    stay:'Kanas Old Village log cabin standard room'
-  },
-  {
-    day:'Day 6', date:'6 Sep', title:'Kanas → Burqin',
-    route:'Drive from Jiadengyu to Burqin',
-    activity:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street',
-    food:'Irtysh Night Market: grilled pike, cold-water fish feast',
-    stay:'Night Light City Hotel · County Tourism Hotel · Sutong Holiday Hotel'
-  },
-  {
-    day:'Day 7', date:'7 Sep', title:'Burqin → Ueerhe → Kuytun',
-    route:'~450 km / ~6h',
-    activity:'Five-Coloured Beach (morning) · Ueerhe World Devil City (after 17:00 for golden light & sunset) · Night arrival Kuytun',
-    food:'Ueerhe: Auwudan lamb-joint pilaf · Kuytun: Cambodia Rooster, Wang Fei Chicken, Wusu beer',
-    stay:'Atour Hotel Kuytun · Wanda Meihua · Vienna Hotel'
-  },
-  {
-    day:'Day 8', date:'8 Sep', title:'Kuytun → Sayram Lake Circuit',
-    route:'~420 km via Lianhuo Expressway + lakeside loop road',
-    activity:'Full lake circuit drive · Sunset over Sayram Lake · Tianshan\'s highest lake at 2,073 m',
-    food:'Local cold-water fish: Coregonus peled (white salmon)',
-    stay:'Sayram Lake Orange Hotel · Shuiyunshan Platinum Hotel'
-  },
-  {
-    day:'Day 9', date:'9 Sep', title:'Sayram Lake → Dushanzi District',
-    route:'~350 km via G30 + Kuytun Expressway',
-    activity:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Fill full tank — Duku prep',
-    food:'Yulan Bridge Big Plate Chicken + belt noodles (local favourite)',
-    stay:'Dushanzi Tianshu International · Delaide Hotel · Tianyuan International'
-  },
-  {
-    day:'Day 10', date:'10 Sep', title:'Dushanzi → Duku Highway North → Nalati',
-    route:'~full day / ~350 km · PRE-BOOK PERMIT REQUIRED',
-    activity:'Full tank before departure · Sentry Tianshan Stele · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Hundred-Mile Gallery · Arrive Nalati town at dusk',
-    food:'Simple road-side lunch · Nalati: Daidai Pilaf King — lamb leg rice',
-    stay:'Wusun Shale Art Lodge (Kazakh-style B&B) · Nalati Sky Grassland Resort · Xinlv Nalati Resort'
-  },
-  {
-    day:'Day 11', date:'11 Sep', title:'Nalati Grassland — Full Day',
-    route:'Stay in Nalati area',
-    activity:'Sky Grassland · River Valley Grassland · Horseback ride through forests · Steppe sunset · Evening bonfire at lodge',
-    food:'Local restaurant: clear-simmered lamb with green onions, grassland flavours',
-    stay:'Wusun Shale Art Lodge (continued)'
-  },
-  {
-    day:'Day 12', date:'12 Sep', title:'Nalati → Duku Highway South → Kuqa',
-    route:'~350 km / ~6h',
-    activity:'Bayanbulak Grassland · Large & Small Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa City by evening',
-    food:'Kuqa Giant Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs — great value',
-    stay:'Kuqa Tianyuan Hotel (convenient location, rich breakfast)'
-  },
-  {
-    day:'Day 13', date:'13 Sep', title:'Kuqa Old City — Deep Dive',
-    route:'Stay in Kuqa',
-    activity:'Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road bazaar · Afternoon: Kezierqiaha Beacon Tower · Old city golden hour sunset',
-    food:'Jar-braised mutton · Rice sausage with lung noodles · Baked lamb buns — authentic Silk Road street food',
-    stay:'Kuqa Tianyuan Hotel (continued)'
-  },
-  {
-    day:'Day 14', date:'14 Sep', title:'Kuqa → Korla City',
-    route:'~300 km / ~4h via G217 → G3012',
-    activity:'Tiemen Pass (Iron Gate Pass) en route · Bosten Lake afternoon · Peacock River night stroll · Try Korla fragrant pears',
-    food:'Xiangli Restaurant: big plate chicken, roast whole lamb · No.1 Naan: roast lamb ribs, yogurt rice dumpling, Uighur cola (Gawas)',
-    stay:'Korla Licheng Baihe Hotel · Kangcheng Jianguo International Hotel'
-  },
-  {
-    day:'Day 15', date:'15 Sep', title:'Korla → Victory Tunnel → Urumqi',
-    route:'~480 km / ~5h via G0712 Wuwei Expressway',
-    activity:'Baluntai: Yellow Temple (Tibetan Buddhist holy site) · Tianshan Victory Tunnel — Asia\'s longest road tunnel · Return to Urumqi · Return rental car',
-    food:'Last night dinner — free choice in Urumqi',
-    stay:'Hotel of your choice in Urumqi'
-  },
-  {
-    day:'Day 16', date:'16 Sep', title:'Fly Home — Trip Complete',
-    route:'Urumqi Tianshan International Airport (URC)',
-    activity:'Transfer to airport per flight time · Check-in · End of 16-day Xinjiang self-drive adventure — perfect full stop!',
-    food:'Airport dining',
-    stay:'Fly home'
-  }
+  { day:'Day 1',  date:'1 Sep',  title:'Urumqi — Assembly Day', route:'Arrive Urumqi (URC)', activity:'Collect rental car · Stock up on snacks, water, sunscreen · Xinjiang Uyghur Autonomous Region Museum (mummies & painted pottery) · Evening at Consulate Lane / International Grand Bazaar', food:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan + kebabs · Hetian 2nd Street snacks', stay:'Atour Hotel (Grand Bazaar) · Flora Secret Garden Hotel · Liujin Art Hotel' },
+  { day:'Day 2',  date:'2 Sep',  title:'Urumqi → Wulungu Lake', route:'~400 km / ~5h via S21 Desert Highway', activity:'Drive S21 Awu Expressway through Gurbantunggut Desert (famous road) · Afternoon: Wulungu Lake Golden Coast · "Gobi Sea" sunset', food:'Fuhai County: lakeside restaurant whole lake fish, deep-fried five-spot black', stay:'Fuhai Yingbin Hotel · Haiyue Hotel · Yilong Hotel' },
+  { day:'Day 3',  date:'3 Sep',  title:'Wulungu Lake → Altay City', route:'~200 km / ~3h via G216', activity:'Early morning lake mist photos · G216 road with Kazakh pastures · Altay Huahua Park · General Mountain cable car for sunset party (if clear)', food:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market', stay:'Atour Hotel (Wubai Li St) · Madier Garden Hotel' },
+  { day:'Day 4',  date:'4 Sep',  title:'Altay → A-He Highway → Hemu Village', route:'~210 km / ~5h via A-He Highway', activity:'Tolelhaite Great Grassland · Tongba Forest · River valley scenery all the way · Arrive Hemu village by dusk · Evening riverside walk · Rafting & forest hike · White birch forest sunset · Stargazing at night', food:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, yogurt, kvass', stay:'Qinghuan Guesthouse, Hemu Old Village' },
+  { day:'Day 5',  date:'5 Sep',  title:'Hemu Village → Kanas Lake', route:'~70 km / ~2h', activity:'Dawn viewpoint: mist, smoke, fairy-tale village · Kanas Lake scenic area · Old Village free exploration', food:'Hotel dining recommended (limited park options)', stay:'Kanas Old Village log cabin standard room' },
+  { day:'Day 6',  date:'6 Sep',  title:'Kanas → Burqin', route:'Drive from Jiadengyu to Burqin', activity:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street', food:'Irtysh Night Market: grilled pike, cold-water fish feast', stay:'Night Light City Hotel · County Tourism Hotel · Sutong Holiday Hotel' },
+  { day:'Day 7',  date:'7 Sep',  title:'Burqin → Ueerhe → Kuytun', route:'~450 km / ~6h', activity:'Five-Coloured Beach (morning) · Ueerhe World Devil City (after 17:00 for golden light & sunset) · Night arrival Kuytun', food:'Ueerhe: Auwudan lamb-joint pilaf · Kuytun: Cambodia Rooster, Wang Fei Chicken, Wusu beer', stay:'Atour Hotel Kuytun · Wanda Meihua · Vienna Hotel' },
+  { day:'Day 8',  date:'8 Sep',  title:'Kuytun → Sayram Lake Circuit', route:'~420 km via Lianhuo Expressway + lakeside loop road', activity:'Full lake circuit drive · Sunset over Sayram Lake · Tianshan\'s highest lake at 2,073 m', food:'Local cold-water fish: Coregonus peled (white salmon)', stay:'Sayram Lake Orange Hotel · Shuiyunshan Platinum Hotel' },
+  { day:'Day 9',  date:'9 Sep',  title:'Sayram Lake → Dushanzi District', route:'~350 km via G30 + Kuytun Expressway', activity:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Fill full tank — Duku prep', food:'Yulan Bridge Big Plate Chicken + belt noodles (local favourite)', stay:'Dushanzi Tianshu International · Delaide Hotel · Tianyuan International' },
+  { day:'Day 10', date:'10 Sep', title:'Dushanzi → Duku Highway North → Nalati', route:'~full day / ~350 km · PRE-BOOK PERMIT REQUIRED', activity:'Full tank before departure · Sentry Tianshan Stele · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Hundred-Mile Gallery · Arrive Nalati town at dusk', food:'Simple road-side lunch · Nalati: Daidai Pilaf King — lamb leg rice', stay:'Wusun Shale Art Lodge (Kazakh-style B&B) · Nalati Sky Grassland Resort · Xinlv Nalati Resort' },
+  { day:'Day 11', date:'11 Sep', title:'Nalati Grassland — Full Day', route:'Stay in Nalati area', activity:'Sky Grassland · River Valley Grassland · Horseback ride through forests · Steppe sunset · Evening bonfire at lodge', food:'Local restaurant: clear-simmered lamb with green onions, grassland flavours', stay:'Wusun Shale Art Lodge (continued)' },
+  { day:'Day 12', date:'12 Sep', title:'Nalati → Duku Highway South → Kuqa', route:'~350 km / ~6h', activity:'Bayanbulak Grassland · Large & Small Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa City by evening', food:'Kuqa Giant Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs — great value', stay:'Kuqa Tianyuan Hotel (convenient location, rich breakfast)' },
+  { day:'Day 13', date:'13 Sep', title:'Kuqa Old City — Deep Dive', route:'Stay in Kuqa', activity:'Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road bazaar · Afternoon: Kezierqiaha Beacon Tower · Old city golden hour sunset', food:'Jar-braised mutton · Rice sausage with lung noodles · Baked lamb buns — authentic Silk Road street food', stay:'Kuqa Tianyuan Hotel (continued)' },
+  { day:'Day 14', date:'14 Sep', title:'Kuqa → Korla City', route:'~300 km / ~4h via G217 → G3012', activity:'Tiemen Pass (Iron Gate Pass) en route · Bosten Lake afternoon · Peacock River night stroll · Try Korla fragrant pears', food:'Xiangli Restaurant: big plate chicken, roast whole lamb · No.1 Naan: roast lamb ribs, yogurt rice dumpling, Uighur cola (Gawas)', stay:'Korla Licheng Baihe Hotel · Kangcheng Jianguo International Hotel' },
+  { day:'Day 15', date:'15 Sep', title:'Korla → Victory Tunnel → Urumqi', route:'~480 km / ~5h via G0712 Wuwei Expressway', activity:'Baluntai: Yellow Temple (Tibetan Buddhist holy site) · Tianshan Victory Tunnel — Asia\'s longest road tunnel · Return to Urumqi · Return rental car', food:'Last night dinner — free choice in Urumqi', stay:'Hotel of your choice in Urumqi' },
+  { day:'Day 16', date:'16 Sep', title:'Fly Home — Trip Complete', route:'Urumqi Tianshan International Airport (URC)', activity:'Transfer to airport per flight time · Check-in · End of 16-day Xinjiang self-drive adventure — perfect full stop!', food:'Airport dining', stay:'Fly home' }
 ];
 
 const itinEl = document.getElementById('itin-list');
@@ -585,70 +390,13 @@ itinDays.forEach((d, i) => {
 
 // ── TIPS DATA ────────────────────────────────────────────────────
 const tips = [
-  {
-    icon:'🌡️', title:'Weather & Clothing (September: 15–25°C daily swing)',
-    body:`<ul>
-      <li><strong>North Xinjiang (Kanas/Hemu/Duku):</strong> Daytime ~15°C, dawn/dusk 0–5°C, possible snow at altitude. Layer up: quick-dry base + fleece + windproof jacket + warm trousers. Hat, scarf, thin gloves essential.</li>
-      <li><strong>South Xinjiang (Kuqa):</strong> Daytime ~25°C, evenings 10–18°C, dry. Light shirt + sun-protection jacket by day; thin outer layer at night.</li>
-      <li><strong>Universal:</strong> Lip balm + heavy-duty moisturiser (humidity below 20%). SPF50+ sunscreen, wide-brim hat, UV-blocking glasses.</li>
-    </ul>`
-  },
-  {
-    icon:'🚗', title:'Driving & Road Conditions',
-    body:`<ul>
-      <li><strong>Car choice:</strong> Prefer SUV / petrol (EV charging points almost non-existent in South Xinjiang).</li>
-      <li><strong>Pre-trip check:</strong> Tyres, brakes, coolant, washer fluid. Carry spare tyre, jack, tow rope, jump cables, pressure gauge.</li>
-      <li><strong>Fuel rule:</strong> Fill up when half-tank — North Xinjiang stations 200–300 km apart; South Xinjiang even further.</li>
-      <li><strong>Duku Highway:</strong> September usually open. Night ban 20:00–08:00. Speed limit 40–60 km/h. No random roadside stops. Watch for black ice at Hashilagen Pass.</li>
-      <li><strong>Speed cameras:</strong> Entire Xinjiang has average-speed + mobile cameras. Highways 80 km/h, mountain/scenic zones 40–60 km/h.</li>
-      <li><strong>Daily cap:</strong> Max 400 km per day. No night driving on mountain or steppe roads.</li>
-      <li><strong>Offline maps:</strong> Download Gaode (AutoNavi) / Baidu offline maps — mountain areas have zero signal.</li>
-    </ul>`
-  },
-  {
-    icon:'🪪', title:'Documents & Permits',
-    body:`<ul>
-      <li><strong>ID card or passport:</strong> Carry at all times — required at petrol stations, checkpoints, hotels, and scenic gates.</li>
-      <li><strong>Duku Highway permit:</strong> Must be pre-booked through official channel before Day 10. Check 新疆交通 (Xinjiang Transport) WeChat public account for status updates.</li>
-      <li><strong>Checkpoints:</strong> Multiple police checkpoints throughout; cooperation required. Non-Chinese passport holders should carry a printed copy of hotel bookings.</li>
-    </ul>`
-  },
-  {
-    icon:'📅', title:'Best Timing — September Window',
-    body:`<ul>
-      <li><strong>North Xinjiang (1–15 Sep):</strong> Green-gold mix at Kanas/Hemu; fewer crowds; lower prices. After 20 Sep: peak autumn gold but prices double and crowds surge.</li>
-      <li><strong>Duku Highway:</strong> Early September = least snow, most stable road. October may close due to snowfall.</li>
-      <li><strong>South Xinjiang (after 10 Sep):</strong> Avoid North Xinjiang peak crowds. Desert and cultural sights best in Sep.</li>
-    </ul>`
-  },
-  {
-    icon:'🏨', title:'Accommodation Tips',
-    body:`<ul>
-      <li><strong>Kanas / Hemu:</strong> Book log cabins inside the park at least 1 month in advance (sold out mid-September). Staying inside avoids buying another entry ticket for sunrise/stars.</li>
-      <li><strong>Nalati / Duku area:</strong> Book Kazakh-style B&Bs early for authentic experience.</li>
-      <li><strong>South Xinjiang county towns:</strong> Plenty of hotels; no need to book far ahead.</li>
-    </ul>`
-  },
-  {
-    icon:'🧴', title:'Health & Sun Protection',
-    body:`<ul>
-      <li>SPF50+ PA++++ sunscreen — reapply every 2 hours. UV is intense at altitude.</li>
-      <li>Drink 3–4 litres of water daily — extremely dry air causes rapid dehydration.</li>
-      <li><strong>Altitude:</strong> Kanas/Hemu at 1,300–1,800 m — generally fine; drink water, avoid overeating.</li>
-      <li><strong>Medicine kit:</strong> Cold & flu tablets, stomach medicine, anti-nausea, fever reducer, pain relief.</li>
-    </ul>`
-  },
-  {
-    icon:'🕌', title:'Cultural Respect & Safety',
-    body:`<ul>
-      <li>Remove shoes before entering mosques. Cover shoulders and knees.</li>
-      <li>Ask permission before photographing locals, especially women and elderly.</li>
-      <li>At halal restaurants: do not mention or order pork; do not bring alcohol.</li>
-      <li>Carry CNY 500 in cash — remote villages may have no mobile payment signal.</li>
-      <li>Fire safety: September grasslands and forests are dry. No smoking or open fires outside. Follow all scenic area fire rules.</li>
-      <li>Avoid buying jade/herbs from scenic area vendors — mostly fakes. Use official markets only.</li>
-    </ul>`
-  }
+  { icon:'🌡️', title:'Weather & Clothing (September: 15–25°C daily swing)', body:`<ul><li><strong>North Xinjiang (Kanas/Hemu/Duku):</strong> Daytime ~15°C, dawn/dusk 0–5°C, possible snow at altitude. Layer up: quick-dry base + fleece + windproof jacket + warm trousers. Hat, scarf, thin gloves essential.</li><li><strong>South Xinjiang (Kuqa):</strong> Daytime ~25°C, evenings 10–18°C, dry. Light shirt + sun-protection jacket by day; thin outer layer at night.</li><li><strong>Universal:</strong> Lip balm + heavy-duty moisturiser (humidity below 20%). SPF50+ sunscreen, wide-brim hat, UV-blocking glasses.</li></ul>` },
+  { icon:'🚗', title:'Driving & Road Conditions', body:`<ul><li><strong>Car choice:</strong> Prefer SUV / petrol (EV charging points almost non-existent in South Xinjiang).</li><li><strong>Pre-trip check:</strong> Tyres, brakes, coolant, washer fluid. Carry spare tyre, jack, tow rope, jump cables, pressure gauge.</li><li><strong>Fuel rule:</strong> Fill up when half-tank — North Xinjiang stations 200–300 km apart; South Xinjiang even further.</li><li><strong>Duku Highway:</strong> September usually open. Night ban 20:00–08:00. Speed limit 40–60 km/h. No random roadside stops. Watch for black ice at Hashilagen Pass.</li><li><strong>Speed cameras:</strong> Entire Xinjiang has average-speed + mobile cameras. Highways 80 km/h, mountain/scenic zones 40–60 km/h.</li><li><strong>Daily cap:</strong> Max 400 km per day. No night driving on mountain or steppe roads.</li><li><strong>Offline maps:</strong> Download Gaode (AutoNavi) / Baidu offline maps — mountain areas have zero signal.</li></ul>` },
+  { icon:'🪪', title:'Documents & Permits', body:`<ul><li><strong>ID card or passport:</strong> Carry at all times — required at petrol stations, checkpoints, hotels, and scenic gates.</li><li><strong>Duku Highway permit:</strong> Must be pre-booked through official channel before Day 10. Check 新疆交通 (Xinjiang Transport) WeChat public account for status updates.</li><li><strong>Checkpoints:</strong> Multiple police checkpoints throughout; cooperation required. Non-Chinese passport holders should carry a printed copy of hotel bookings.</li></ul>` },
+  { icon:'📅', title:'Best Timing — September Window', body:`<ul><li><strong>North Xinjiang (1–15 Sep):</strong> Green-gold mix at Kanas/Hemu; fewer crowds; lower prices. After 20 Sep: peak autumn gold but prices double and crowds surge.</li><li><strong>Duku Highway:</strong> Early September = least snow, most stable road. October may close due to snowfall.</li><li><strong>South Xinjiang (after 10 Sep):</strong> Avoid North Xinjiang peak crowds. Desert and cultural sights best in Sep.</li></ul>` },
+  { icon:'🏨', title:'Accommodation Tips', body:`<ul><li><strong>Kanas / Hemu:</strong> Book log cabins inside the park at least 1 month in advance (sold out mid-September). Staying inside avoids buying another entry ticket for sunrise/stars.</li><li><strong>Nalati / Duku area:</strong> Book Kazakh-style B&Bs early for authentic experience.</li><li><strong>South Xinjiang county towns:</strong> Plenty of hotels; no need to book far ahead.</li></ul>` },
+  { icon:'🧴', title:'Health & Sun Protection', body:`<ul><li>SPF50+ PA++++ sunscreen — reapply every 2 hours. UV is intense at altitude.</li><li>Drink 3–4 litres of water daily — extremely dry air causes rapid dehydration.</li><li><strong>Altitude:</strong> Kanas/Hemu at 1,300–1,800 m — generally fine; drink water, avoid overeating.</li><li><strong>Medicine kit:</strong> Cold & flu tablets, stomach medicine, anti-nausea, fever reducer, pain relief.</li></ul>` },
+  { icon:'🕌', title:'Cultural Respect & Safety', body:`<ul><li>Remove shoes before entering mosques. Cover shoulders and knees.</li><li>Ask permission before photographing locals, especially women and elderly.</li><li>At halal restaurants: do not mention or order pork; do not bring alcohol.</li><li>Carry CNY 500 in cash — remote villages may have no mobile payment signal.</li><li>Fire safety: September grasslands and forests are dry. No smoking or open fires outside. Follow all scenic area fire rules.</li><li>Avoid buying jade/herbs from scenic area vendors — mostly fakes. Use official markets only.</li></ul>` }
 ];
 
 const tipsEl = document.getElementById('tips-list');
