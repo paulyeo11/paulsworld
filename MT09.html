@@ -470,17 +470,42 @@ async function fetchSegment(fromStop, toStop, idx) {
 
 async function buildRoads() {
   const statusEl = document.getElementById('route-status');
+
+  // Safety guard — catch variable name bugs early
+  if (!stopsData || stopsData.length === 0) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(239,68,68,0.85)';
+    statusEl.style.borderColor = '#ef4444';
+    statusEl.style.color = '#fff';
+    statusEl.textContent = '❌ Route error: stopsData missing!';
+    return;
+  }
+
   statusEl.style.display = 'block';
   const total = stopsData.length - 1;
+  let loaded = 0, failed = 0;
 
   for (let i = 0; i < total; i++) {
-    statusEl.textContent = `Loading road route ${i+1}/${total}…`;
+    statusEl.textContent = `Loading routes… ${i+1}/${total}`;
     const coords = await fetchSegment(stopsData[i], stopsData[i+1], i);
+    // Detect if it fell back to straight line (only 2 points)
+    if (coords.length === 2) failed++;
+    else loaded++;
     const layer = L.polyline(coords, routeStyle).addTo(map);
     routeLayers.push(layer);
     completedSegs++;
   }
-  statusEl.style.display = 'none';
+
+  // Show persistent route count
+  const allOk = failed === 0;
+  statusEl.style.background = allOk ? 'rgba(16,185,129,0.15)' : 'rgba(240,165,0,0.15)';
+  statusEl.style.borderColor = allOk ? 'rgba(16,185,129,0.5)' : 'rgba(240,165,0,0.5)';
+  statusEl.style.color = allOk ? '#10b981' : '#f0a500';
+  statusEl.textContent = allOk
+    ? `✅ ${total}/${total} routes loaded`
+    : `⚠️ ${loaded}/${total} routes loaded (${failed} straight-line)`;
+  // Auto-hide after 6 seconds
+  setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
 }
 
 buildRoads();
