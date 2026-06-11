@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>北疆公路 North Xinjiang Road Trip — Days 1–3</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 16px 20px 12px;
+    background: linear-gradient(135deg, #0d1117, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(240,165,0,0.12);
+    border: 1px solid rgba(240,165,0,0.3);
+    color: #f0a500;
+    text-decoration: none;
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .header h1 {
+    font-size: 1.2em;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .header h1 span { color: #f0a500; }
+  .header p {
+    font-size: 0.78em;
+    color: #8b949e;
+    margin-top: 3px;
+  }
+
+  /* ── ROUTE SERIES BADGE ── */
+  .series-badge {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .series-pill {
+    font-size: 0.68em;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #8b949e;
+    text-decoration: none;
+  }
+  .series-pill.current {
+    background: rgba(240,165,0,0.15);
+    border-color: rgba(240,165,0,0.4);
+    color: #f0a500;
+  }
+
+  /* ── DAY TABS ── */
+  .day-tabs {
+    display: flex;
+    gap: 0;
+    background: #161b22;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .day-tab {
+    flex: 1;
+    min-width: 90px;
+    padding: 11px 8px;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    font-size: 0.78em;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .day-tab.active { color: #f0a500; border-bottom-color: #f0a500; background: rgba(240,165,0,0.06); }
+  .day-tab:hover:not(.active) { color: #c9d1d9; background: rgba(255,255,255,0.04); }
+  .day-tab .tab-day { font-size: 0.95em; }
+  .day-tab .tab-route { font-size: 0.72em; color: inherit; opacity: 0.8; margin-top: 1px; }
+
+  /* ── MAP ── */
+  #map {
+    width: 100%;
+    height: 52vh;
+    min-height: 260px;
+  }
+
+  /* ── STOPS PANEL ── */
+  .stops-panel {
+    background: #0d1117;
+    overflow-y: auto;
+    max-height: calc(100vh - 52vh - 130px);
+  }
+
+  .day-section { display: none; }
+  .day-section.active { display: block; }
+
+  .day-header {
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .day-badge {
+    background: #f0a500;
+    color: #000;
+    font-size: 0.7em;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .day-title {
+    font-size: 0.88em;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .day-meta {
+    font-size: 0.72em;
+    color: #8b949e;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .stop-list { padding: 6px 0; }
+
+  .stop-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .stop-item:hover { background: rgba(255,255,255,0.04); }
+  .stop-item:last-child { border-bottom: none; }
+
+  .stop-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72em;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #fff;
+  }
+  .day1 .stop-num { background: #3b82f6; }
+  .day2 .stop-num { background: #f97316; }
+  .day3 .stop-num { background: #a855f7; }
+
+  .stop-info { flex: 1; min-width: 0; }
+  .stop-name { font-size: 0.88em; font-weight: 700; color: #e6edf3; }
+  .stop-name .cn { color: #8b949e; font-weight: 400; margin-left: 5px; font-size: 0.9em; }
+  .stop-desc { font-size: 0.75em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+  .stop-tag {
+    display: inline-block;
+    font-size: 0.65em;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+  .tag-city    { background: rgba(59,130,246,0.2);   color: #93c5fd;  border: 1px solid rgba(59,130,246,0.3); }
+  .tag-drive   { background: rgba(249,115,22,0.2);   color: #fdba74;  border: 1px solid rgba(249,115,22,0.3); }
+  .tag-lake    { background: rgba(6,182,212,0.2);    color: #67e8f9;  border: 1px solid rgba(6,182,212,0.3); }
+  .tag-forest  { background: rgba(132,204,22,0.2);   color: #bef264;  border: 1px solid rgba(132,204,22,0.3); }
+  .tag-village { background: rgba(168,85,247,0.2);   color: #d8b4fe;  border: 1px solid rgba(168,85,247,0.3); }
+  .tag-stay    { background: rgba(168,85,247,0.2);   color: #d8b4fe;  border: 1px solid rgba(168,85,247,0.3); }
+  .tag-market  { background: rgba(245,158,11,0.2);   color: #fcd34d;  border: 1px solid rgba(245,158,11,0.3); }
+  .tag-scenic  { background: rgba(16,185,129,0.2);   color: #6ee7b7;  border: 1px solid rgba(16,185,129,0.3); }
+  .tag-pass    { background: rgba(239,68,68,0.2);    color: #fca5a5;  border: 1px solid rgba(239,68,68,0.3); }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 4px 40px;
+    font-size: 0.7em;
+    color: #484f58;
+  }
+  .connector::before { content: '↓'; font-size: 0.9em; }
+
+  /* Leaflet popup override */
+  .leaflet-popup-content-wrapper {
+    background: #161b22 !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    color: #e6edf3 !important;
+  }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; }
+  .popup-name { font-weight: 700; font-size: 1em; color: #fff; margin-bottom: 2px; }
+  .popup-cn { color: #8b949e; font-size: 0.85em; }
+  .popup-desc { margin-top: 5px; color: #c9d1d9; font-size: 0.85em; line-height: 1.4; }
+  .leaflet-control-zoom a {
+    background: #161b22 !important;
+    color: #e6edf3 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🏔️ 北疆公路 <span>North Xinjiang</span> Road Trip</h1>
+      <p>乌鲁木齐 → 石河子 → 阿勒泰 → 喀纳斯湖 · Days 1–3 · Sep 2026</p>
+    </div>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+  </div>
+  <div class="series-badge">
+    <a href="https://paulsworld.vercel.app/MT03.html" class="series-pill">📋 Full Itinerary</a>
+    <span class="series-pill current">📍 MT04.1 · North XJ Days 1–3</span>
+    <a href="https://paulsworld.vercel.app/MT04.html" class="series-pill">🏔️ MT04 · Duku Highway</a>
+  </div>
+</div>
+
+<!-- DAY TABS -->
+<div class="day-tabs">
+  <button class="day-tab active" onclick="switchDay(1)">
+    <div class="tab-day">Day 01 · 2 Sep</div>
+    <div class="tab-route">乌鲁木齐 → 石河子</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(2)">
+    <div class="tab-day">Day 02 · 3 Sep</div>
+    <div class="tab-route">石河子 → 阿勒泰</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(3)">
+    <div class="tab-day">Day 03 · 4 Sep</div>
+    <div class="tab-route">阿勒泰 → 喀纳斯</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(0)">
+    <div class="tab-day">🗺️ All</div>
+    <div class="tab-route">Full Route</div>
+  </button>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- STOPS PANEL -->
+<div class="stops-panel">
+
+  <!-- ALL DAYS overview -->
+  <div class="day-section active" id="section-0">
+    <div class="day-header">
+      <span class="day-badge">全程 FULL ROUTE</span>
+      <span class="day-title">乌鲁木齐 → 喀纳斯湖 · ~910 km · 3 Days</span>
+      <span class="day-meta">北疆 North Xinjiang</span>
+    </div>
+    <div class="stop-list">
+      <div class="stop-item day1" onclick="flyTo(43.83, 87.62, 12)">
+        <div class="stop-num" style="background:#3b82f6;">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Urumqi <span class="cn">乌鲁木齐</span></div>
+          <div class="stop-desc">Day 1 Start · Arrive by night train Z41 at 08:43 · Pick up rental car · Grand Bazaar 大巴扎</div>
+          <span class="stop-tag tag-city">Start</span>
+        </div>
+      </div>
+      <div class="stop-item day1" onclick="flyTo(44.30, 86.03, 12)">
+        <div class="stop-num" style="background:#3b82f6;">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Shihezi <span class="cn">石河子</span></div>
+          <div class="stop-desc">Day 1 overnight · Military-founded city · Gardens · Easy 150 km drive</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(45.09, 85.13, 12)">
+        <div class="stop-num" style="background:#f97316;">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Kuitun / G217 Entry <span class="cn">奎屯</span></div>
+          <div class="stop-desc">Junction town · Join G217 heading north · fuel up</div>
+          <span class="stop-tag tag-drive">Waypoint</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(46.50, 85.93, 12)">
+        <div class="stop-num" style="background:#f97316;">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Sayram Lake <span class="cn">赛里木湖</span></div>
+          <div class="stop-desc">⭐ Vivid cobalt-blue lake at 2,073m · snow peaks reflected · Walk lakeside · Picnic lunch 🧺</div>
+          <span class="stop-tag tag-lake">Alpine Lake ⭐</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(47.85, 88.13, 12)">
+        <div class="stop-num" style="background:#f97316;">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Altay City <span class="cn">阿勒泰市</span></div>
+          <div class="stop-desc">Day 2 overnight · ~530 km · 6.5 hrs · Rest and refuel for north</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(48.40, 87.10, 12)">
+        <div class="stop-num" style="background:#a855f7;">5</div>
+        <div class="stop-info">
+          <div class="stop-name">Burqin <span class="cn">布尔津</span></div>
+          <div class="stop-desc">Scenic river town · Irtysh River 额尔齐斯河 · Gateway to Kanas</div>
+          <span class="stop-tag tag-drive">Waypoint</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(48.68, 87.03, 12)">
+        <div class="stop-num" style="background:#a855f7;">6</div>
+        <div class="stop-info">
+          <div class="stop-name">Hemu Village Viewpoint <span class="cn">禾木村</span></div>
+          <div class="stop-desc">Tuvan log cabin village · birch forest · morning mist overlook · optional</div>
+          <span class="stop-tag tag-village">Village</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(48.99, 87.08, 12)">
+        <div class="stop-num" style="background:#a855f7;">E</div>
+        <div class="stop-info">
+          <div class="stop-name">Kanas Lake <span class="cn">喀纳斯湖</span></div>
+          <div class="stop-desc">Day 3 End · Fairytale lake · Autumn colours · Tuvan Kazakhs · Mystery of lake monster 🐉</div>
+          <span class="stop-tag tag-stay">Overnight ⭐</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 1 -->
+  <div class="day-section" id="section-1">
+    <div class="day-header">
+      <span class="day-badge" style="background:#3b82f6;">DAY 01 · 2 SEP</span>
+      <span class="day-title">乌鲁木齐 → 大巴扎 → 石河子</span>
+      <span class="day-meta">~150 km · ~2 hrs</span>
+    </div>
+    <div class="stop-list day1">
+      <div class="stop-item" onclick="flyTo(43.83, 87.62, 12)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Urumqi Train Station <span class="cn">乌鲁木齐火车站</span></div>
+          <div class="stop-desc">Z41 arrives 08:43 · Collect luggage · Walk or taxi to car rental office</div>
+          <span class="stop-tag tag-city">Arrive 08:43</span>
+        </div>
+      </div>
+      <div class="connector">~15 min taxi to car rental</div>
+      <div class="stop-item" onclick="flyTo(43.82, 87.60, 13)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Rental Car Pick-Up <span class="cn">取车</span></div>
+          <div class="stop-desc">Collect large SUV · Paul + Eddy + Mr Po · Check car condition · Load luggage · Fuel up 🚗</div>
+          <span class="stop-tag tag-city">Pick-Up 🚗</span>
+        </div>
+      </div>
+      <div class="connector">~5 km drive to bazaar</div>
+      <div class="stop-item" onclick="flyTo(43.80, 87.58, 14)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Grand Bazaar <span class="cn">大巴扎 · 国际大巴扎</span></div>
+          <div class="stop-desc">Xinjiang's most famous market · Uyghur crafts · dried fruits · spices · naan bread 🫓 · Spend 1–2 hrs</div>
+          <span class="stop-tag tag-market">Market ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~150 km west on G312</div>
+      <div class="stop-item" onclick="flyTo(44.30, 86.03, 12)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Shihezi <span class="cn">石河子市</span></div>
+          <div class="stop-desc">Reclamation Corps city · clean wide boulevards · Shihezi Museum · relaxed evening dinner 🍜 · Overnight stay</div>
+          <span class="stop-tag tag-stay">Overnight 🛏️</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 2 -->
+  <div class="day-section" id="section-2">
+    <div class="day-header">
+      <span class="day-badge" style="background:#f97316;">DAY 02 · 3 SEP</span>
+      <span class="day-title">石河子 → 奎屯 → 阿勒泰</span>
+      <span class="day-meta">~530 km · ~6.5 hrs</span>
+    </div>
+    <div class="stop-list day2">
+      <div class="stop-item" onclick="flyTo(44.30, 86.03, 12)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Shihezi <span class="cn">石河子</span></div>
+          <div class="stop-desc">Early start 7–8 AM · Long drive day · Fuel up before leaving</div>
+          <span class="stop-tag tag-drive">Depart Early</span>
+        </div>
+      </div>
+      <div class="connector">~80 km northwest · ~50 min</div>
+      <div class="stop-item" onclick="flyTo(44.43, 85.66, 12)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Kuitun <span class="cn">奎屯市</span></div>
+          <div class="stop-desc">Fuel + breakfast stop · Junction city · North on G217 from here · Last big town for food/supplies</div>
+          <span class="stop-tag tag-drive">Fuel + Food</span>
+        </div>
+      </div>
+      <div class="connector">~100 km north on G217</div>
+      <div class="stop-item" onclick="flyTo(45.09, 85.13, 12)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Wusu / Jinghe Pass <span class="cn">乌苏 · 精河</span></div>
+          <div class="stop-desc">G217 corridor through Junggar Basin · vast open steppe · dramatic skies · road trip vibes 🛣️</div>
+          <span class="stop-tag tag-scenic">Steppe Drive</span>
+        </div>
+      </div>
+      <div class="connector">~120 km northeast · via Sayram Lake</div>
+      <div class="stop-item" onclick="flyTo(44.60, 81.21, 12)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Sayram Lake <span class="cn">赛里木湖</span></div>
+          <div class="stop-desc">⭐ One of Xinjiang's most stunning alpine lakes · vivid cobalt-blue water · 2,073m elevation · 453 km² · snow-capped peaks reflected on still water · Walk lakeside 30–60 min · Picnic lunch here recommended 🧺</div>
+          <span class="stop-tag tag-lake">Alpine Lake ⭐ Must-See</span>
+        </div>
+      </div>
+      <div class="connector">~230 km north on G217 → G216</div>
+      <div class="stop-item" onclick="flyTo(47.85, 88.13, 12)">
+        <div class="stop-num">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Altay City <span class="cn">阿勒泰市</span></div>
+          <div class="stop-desc">Arrive evening · City of gold panning · Irtysh River valley · Hot dinner · Good hotels · Overnight stay 🛏️</div>
+          <span class="stop-tag tag-stay">Overnight 🛏️</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 3 -->
+  <div class="day-section" id="section-3">
+    <div class="day-header">
+      <span class="day-badge" style="background:#a855f7;">DAY 03 · 4 SEP</span>
+      <span class="day-title">阿勒泰 → 布尔津 → 禾木 → 喀纳斯</span>
+      <span class="day-meta">~230 km · ~3.5 hrs + stops</span>
+    </div>
+    <div class="stop-list day3">
+      <div class="stop-item" onclick="flyTo(47.85, 88.13, 12)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Altay City <span class="cn">阿勒泰市</span></div>
+          <div class="stop-desc">Morning departure · Shorter drive · Enjoy the journey north through poplar-lined roads 🌿</div>
+          <span class="stop-tag tag-drive">Depart</span>
+        </div>
+      </div>
+      <div class="connector">~75 km west on G217</div>
+      <div class="stop-item" onclick="flyTo(47.71, 86.87, 13)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Burqin Town <span class="cn">布尔津县</span></div>
+          <div class="stop-desc">Lunch stop · Pretty river town on Irtysh 额尔齐斯河 · Colourful buildings · Night market famous for freshwater fish 🐟 · Stock up on water and snacks</div>
+          <span class="stop-tag tag-market">Lunch + Supplies</span>
+        </div>
+      </div>
+      <div class="connector">~80 km northeast into mountains</div>
+      <div class="stop-item" onclick="flyTo(48.37, 87.53, 13)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Kanas Scenic Area Gate <span class="cn">喀纳斯景区入口</span></div>
+          <div class="stop-desc">Buy tickets here · National Park entry · Shuttle buses available inside · Allow 1 hr for gate process</div>
+          <span class="stop-tag tag-scenic">Ticket Gate</span>
+        </div>
+      </div>
+      <div class="connector">~30 km inside scenic area</div>
+      <div class="stop-item" onclick="flyTo(48.68, 87.03, 13)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Hemu Village <span class="cn">禾木村</span></div>
+          <div class="stop-desc">⭐ Most photogenic village in Xinjiang · Tuvan wooden log houses · golden birch forest in autumn · morning fog overlook point · Horses and yaks roam free 🐴</div>
+          <span class="stop-tag tag-village">Village ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~30 km north through Kanas valley</div>
+      <div class="stop-item" onclick="flyTo(48.75, 87.00, 13)">
+        <div class="stop-num">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Kanas Lake Viewpoint <span class="cn">喀纳斯湖观鱼台</span></div>
+          <div class="stop-desc">Fish-watching platform · panoramic lake view · Deep blue-green glacial lake · Legendary lake monster 龙 · Best light late afternoon 🌅</div>
+          <span class="stop-tag tag-lake">Viewpoint ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~3 km</div>
+      <div class="stop-item" onclick="flyTo(48.99, 87.08, 13)">
+        <div class="stop-num">E</div>
+        <div class="stop-info">
+          <div class="stop-name">Kanas Lake Village <span class="cn">喀纳斯村</span></div>
+          <div class="stop-desc">🎉 Arrive! · Overnight stay in Tuvan homestay or lodge · Cool mountain air · Stars overhead · Autumn foliage begins 🍂 · Stay 2 nights (Days 5–6)</div>
+          <span class="stop-tag tag-stay">Overnight ⭐🎉</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /stops-panel -->
+
+<script>
+// ── ALL STOPS DATA ──
+const stops = [
+  // Day 1
+  { lat: 43.83, lng: 87.62, day: 1, num: 'S', name: 'Urumqi Train Station 乌鲁木齐火车站', desc: 'Z41 arrives 08:43 · Car pickup point', color: '#3b82f6' },
+  { lat: 43.80, lng: 87.58, day: 1, num: '2', name: 'Grand Bazaar 大巴扎', desc: '⭐ Uyghur market · crafts · food', color: '#3b82f6' },
+  { lat: 44.30, lng: 86.03, day: 1, num: '3', name: 'Shihezi 石河子', desc: 'Day 1 Overnight', color: '#8b5cf6' },
+  // Day 2
+  { lat: 44.43, lng: 85.66, day: 2, num: '1', name: 'Kuitun 奎屯', desc: 'Fuel + breakfast stop', color: '#f97316' },
+  { lat: 44.60, lng: 81.21, day: 2, num: '3', name: 'Sayram Lake 赛里木湖', desc: '⭐ Cobalt-blue alpine lake · 2,073m · snow peaks', color: '#f97316' },
+  { lat: 47.85, lng: 88.13, day: 2, num: '4', name: 'Altay City 阿勒泰市', desc: 'Day 2 Overnight', color: '#8b5cf6' },
+  // Day 3
+  { lat: 47.71, lng: 86.87, day: 3, num: '1', name: 'Burqin 布尔津', desc: 'Lunch · Irtysh river town', color: '#a855f7' },
+  { lat: 48.37, lng: 87.53, day: 3, num: '2', name: 'Kanas Gate 喀纳斯入口', desc: 'Park ticket gate', color: '#a855f7' },
+  { lat: 48.68, lng: 87.03, day: 3, num: '3', name: 'Hemu Village 禾木村', desc: '⭐ Tuvan village · birch forest', color: '#a855f7' },
+  { lat: 48.75, lng: 87.00, day: 3, num: '4', name: 'Kanas Viewpoint 观鱼台', desc: '⭐ Panoramic lake view', color: '#a855f7' },
+  { lat: 48.99, lng: 87.08, day: 3, num: 'E', name: 'Kanas Lake Village 喀纳斯村', desc: 'Day 3 Overnight · Tuvan homestay', color: '#ef4444' },
+];
+
+const dayColors = { 1: '#3b82f6', 2: '#f97316', 3: '#a855f7' };
+
+// ── INIT MAP ──
+const map = L.map('map', {
+  center: [46.5, 87.0],
+  zoom: 6,
+  zoomControl: true
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(map);
+
+// ── MARKERS ──
+const markers = [];
+const layerGroups = { 0: L.layerGroup(), 1: L.layerGroup(), 2: L.layerGroup(), 3: L.layerGroup() };
+
+stops.forEach((stop, i) => {
+  const size = (stop.num === 'S' || stop.num === 'E') ? 32 : 28;
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${stop.color};
+      border: 2.5px solid rgba(255,255,255,0.9);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;
+      font-size:${size===32?'11':'10'}px;font-weight:800;
+      box-shadow:0 2px 8px rgba(0,0,0,0.5);
+      font-family:'Segoe UI',Arial,sans-serif;
+    ">${stop.num}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+
+  const marker = L.marker([stop.lat, stop.lng], { icon })
+    .bindPopup(`
+      <div class="popup-name">${stop.name}</div>
+      <div class="popup-cn">Day ${stop.day}</div>
+      <div class="popup-desc">${stop.desc}</div>
+    `);
+
+  markers.push(marker);
+  layerGroups[0].addLayer(marker);
+  layerGroups[stop.day].addLayer(marker);
+});
+
+// ── ROUTE LINES ──
+const day1Stops = stops.filter(s => s.day === 1);
+const day2Stops = [stops[2], ...stops.filter(s => s.day === 2)]; // start from Shihezi
+const day3Stops = [stops[5], ...stops.filter(s => s.day === 3)]; // start from Altay
+
+const lineOpts = (color, dash='') => ({
+  color, weight: 3.5, opacity: 0.85,
+  dashArray: dash || null
+});
+
+// Full route line
+const allCoords = stops.map(s => [s.lat, s.lng]);
+const fullLine = L.polyline(allCoords, { color: '#f0a500', weight: 3, opacity: 0.5, dashArray: '6,4' });
+layerGroups[0].addLayer(fullLine);
+
+// Day lines
+const d1line = L.polyline(day1Stops.map(s => [s.lat, s.lng]), lineOpts('#3b82f6'));
+const d2line = L.polyline(day2Stops.map(s => [s.lat, s.lng]), lineOpts('#f97316'));
+const d3line = L.polyline(day3Stops.map(s => [s.lat, s.lng]), lineOpts('#a855f7'));
+layerGroups[1].addLayer(d1line);
+layerGroups[2].addLayer(d2line);
+layerGroups[3].addLayer(d3line);
+
+// Start with day 1
+layerGroups[0].addTo(map);
+let currentDay = 0;
+
+// ── SWITCH DAY ──
+function switchDay(day) {
+  document.querySelectorAll('.day-tab').forEach((t, i) => {
+    const tabDays = [1, 2, 3, 0];
+    t.classList.toggle('active', tabDays[i] === day);
+  });
+
+  document.querySelectorAll('.day-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + day).classList.add('active');
+
+  map.removeLayer(layerGroups[currentDay]);
+  currentDay = day;
+  layerGroups[day].addTo(map);
+
+  const dayStops = day === 0 ? stops : stops.filter(s => s.day === day);
+  if (day === 2) {
+    const d2all = [stops[2], ...stops.filter(s => s.day === 2)];
+    map.fitBounds(d2all.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  } else if (day === 3) {
+    const d3all = [stops[5], ...stops.filter(s => s.day === 3)];
+    map.fitBounds(d3all.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  } else {
+    map.fitBounds(dayStops.map(s => [s.lat, s.lng]), { padding: [40, 40] });
+  }
+}
+
+function flyTo(lat, lng, zoom) {
+  map.flyTo([lat, lng], zoom, { duration: 0.8 });
+  const match = stops.findIndex(s => Math.abs(s.lat - lat) < 0.02 && Math.abs(s.lng - lng) < 0.02);
+  if (match >= 0) {
+    setTimeout(() => markers[match].openPopup(), 900);
+  }
+}
+
+// Initial fit — Day 1 view
+switchDay(1);
+</script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT05: Xinjiang North Self-Drive · Sep 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 14px 16px 10px;
+    background: linear-gradient(135deg, #0d1117, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .header h1 {
+    font-size: 1.15em;
+    font-weight: 800;
+    color: #fff;
+  }
+  .header h1 span { color: #f0a500; }
+  .header-sub {
+    font-size: 0.75em;
+    color: #8b949e;
+    margin-top: 3px;
+  }
+  .home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(240,165,0,0.12);
+    border: 1px solid rgba(240,165,0,0.35);
+    color: #f0a500;
+    text-decoration: none;
+    font-size: 0.78em;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 16px;
+    white-space: nowrap;
+  }
+
+  /* ── LEGEND BAR ── */
+  .legend-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: #161b22;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-wrap: wrap;
+    font-size: 0.72em;
+    color: #8b949e;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.6);
+    flex-shrink: 0;
+  }
+  .legend-total {
+    margin-left: auto;
+    color: #f0a500;
+    font-weight: 700;
+  }
+
+  /* ── MAP ── */
+  #map {
+    width: 100%;
+    flex: 1;
+    min-height: 58vh;
+  }
+
+  /* ── STOPS PANEL ── */
+  .stops-panel {
+    background: #0d1117;
+    overflow-y: auto;
+    max-height: 36vh;
+  }
+
+  .panel-header {
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-title {
+    font-size: 0.82em;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .panel-km {
+    margin-left: auto;
+    font-size: 0.75em;
+    color: #f0a500;
+    font-weight: 700;
+  }
+
+  .stop-list { padding: 4px 0; }
+
+  .stop-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .stop-item:hover { background: rgba(255,255,255,0.04); }
+  .stop-item:last-child { border-bottom: none; }
+
+  .stop-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72em;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+    border: 2px solid rgba(255,255,255,0.5);
+  }
+
+  .stop-info { flex: 1; min-width: 0; }
+  .stop-name {
+    font-size: 0.88em;
+    font-weight: 700;
+    color: #e6edf3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stop-desc { font-size: 0.74em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+  .stop-km {
+    font-size: 0.7em;
+    color: #f0a500;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-top: 3px;
+    padding-top: 3px;
+  }
+
+  .stop-tag {
+    display: inline-block;
+    font-size: 0.65em;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+  .tag-start  { background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .tag-lake   { background: rgba(59,130,246,0.2);  color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+  .tag-village{ background: rgba(16,185,129,0.2);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .tag-city   { background: rgba(240,165,0,0.2);   color: #fcd34d; border: 1px solid rgba(240,165,0,0.3); }
+  .tag-end    { background: rgba(239,68,68,0.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* Leaflet overrides */
+  .leaflet-popup-content-wrapper {
+    background: #161b22 !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    color: #e6edf3 !important;
+  }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; line-height: 1.5; }
+  .popup-num  { font-size: 0.72em; font-weight: 700; opacity: 0.7; margin-bottom: 2px; }
+  .popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+  .popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.85em; }
+  .popup-km   { margin-top: 5px; color: #f0a500; font-size: 0.8em; font-weight: 700; }
+  .leaflet-control-zoom a {
+    background: #161b22 !important;
+    color: #e6edf3 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .leaflet-control-attribution {
+    background: rgba(13,17,23,0.8) !important;
+    color: #484f58 !important;
+  }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 1em; }
+    #map { min-height: 52vh; }
+    .stops-panel { max-height: 38vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🏔️ MT05: <span>Xinjiang North</span> Self-Drive</h1>
+      <div class="header-sub">新疆北部自驾 · Sep 2026 · Urumqi Loop · ~1,815 km</div>
+    </div>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Start / End</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Lakes</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Village</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> Cities</div>
+  <div class="legend-total">Total: ~1,815 km</div>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- STOPS PANEL -->
+<div class="stops-panel">
+  <div class="panel-header">
+    <span class="panel-title">🗺️ Route Stops — Tap to zoom</span>
+    <span class="panel-km">7 stops · Loop route</span>
+  </div>
+  <div class="stop-list" id="stop-list"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<script>
+const stops = [
+  {
+    num: '①', lat: 43.82, lng: 87.62,
+    name: 'Urumqi', cn: '乌鲁木齐',
+    desc: 'Start & End · Airport pickup · Capital of Xinjiang',
+    km: 'Start / End',
+    color: '#ef4444', type: 'start', icon: '✈️'
+  },
+  {
+    num: '②', lat: 44.30, lng: 86.03,
+    name: 'Shihezi', cn: '石河子',
+    desc: 'En route stopover · ~150 km from Urumqi',
+    km: '~150 km from Urumqi',
+    color: '#f0a500', type: 'city', icon: '🏙️'
+  },
+  {
+    num: '③', lat: 48.68, lng: 87.00,
+    name: 'Kanas Lake', cn: '喀纳斯湖 ⭐',
+    desc: 'Alpine lake at 1,340m · Mysterious deep-blue water · Tuvan log cabins · Autumn gold birch forests',
+    km: '~680 km from Hemu Village',
+    color: '#3b82f6', type: 'lake', icon: '🏞️'
+  },
+  {
+    num: '④', lat: 48.54, lng: 86.90,
+    name: 'Hemu Village', cn: '禾木村 ⭐',
+    desc: 'Most beautiful village in Xinjiang · Morning mist over log cabins · Tuvan minority · Horses · ~35 km from Kanas',
+    km: '~35 km from Kanas Lake',
+    color: '#10b981', type: 'village', icon: '🛖'
+  },
+  {
+    num: '⑤', lat: 47.85, lng: 88.13,
+    name: 'Altay', cn: '阿勒泰',
+    desc: 'City base · ~180 km from Hemu Village · Gateway to north Xinjiang',
+    km: '~180 km from Hemu',
+    color: '#f0a500', type: 'city', icon: '🏙️'
+  },
+  {
+    num: '⑥', lat: 47.71, lng: 86.87,
+    name: 'Burqin', cn: '布尔津',
+    desc: 'Night market · Five-Coloured Beach (五彩滩) nearby · ~110 km from Altay',
+    km: '~110 km from Altay',
+    color: '#f0a500', type: 'city', icon: '🌅'
+  },
+  {
+    num: '⑦', lat: 47.20, lng: 87.48,
+    name: 'Wulungu Lake', cn: '乌伦古湖',
+    desc: 'Large freshwater lake · Fishing culture · ~180 km from Burqin',
+    km: '~180 km from Burqin',
+    color: '#3b82f6', type: 'lake', icon: '🎣'
+  },
+];
+
+const typeTag = { start: 'tag-start', lake: 'tag-lake', village: 'tag-village', city: 'tag-city', end: 'tag-end' };
+const typeLabel = { start: 'Start/End', lake: 'Lake', village: 'Village', city: 'City' };
+
+// ── BUILD STOP LIST ──
+const listEl = document.getElementById('stop-list');
+stops.forEach((s, i) => {
+  const div = document.createElement('div');
+  div.className = 'stop-item';
+  div.onclick = () => flyTo(s.lat, s.lng, 11, i);
+  div.innerHTML = `
+    <div class="stop-num" style="background:${s.color};color:${s.type==='city'?'#000':'#fff'};">${s.num}</div>
+    <div class="stop-info">
+      <div class="stop-name">
+        ${s.icon} ${s.name} <span style="color:#8b949e;font-weight:400;font-size:0.88em;">${s.cn}</span>
+        <span class="stop-tag ${typeTag[s.type]}">${typeLabel[s.type]}</span>
+      </div>
+      <div class="stop-desc">${s.desc}</div>
+      <div class="stop-km">📍 ${s.km}</div>
+    </div>`;
+  listEl.appendChild(div);
+});
+
+// ── INIT MAP ──
+const map = L.map('map', { center: [46.5, 87.5], zoom: 6 });
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 18
+}).addTo(map);
+
+// ── ROUTE LINE (dashed gold) ──
+const routeCoords = stops.map(s => [s.lat, s.lng]);
+// Close the loop back to Urumqi
+routeCoords.push([stops[0].lat, stops[0].lng]);
+
+L.polyline(routeCoords, {
+  color: '#f0a500',
+  weight: 3,
+  opacity: 0.75,
+  dashArray: '8, 5'
+}).addTo(map);
+
+// ── MARKERS ──
+const markers = [];
+stops.forEach((s, i) => {
+  const isLarge = s.type === 'start';
+  const size = isLarge ? 34 : 28;
+  const textColor = (s.type === 'city') ? '#000' : '#fff';
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${s.color};
+      border:2.5px solid rgba(255,255,255,0.85);
+      display:flex;align-items:center;justify-content:center;
+      color:${textColor};
+      font-size:11px;font-weight:800;
+      box-shadow:0 3px 10px rgba(0,0,0,0.55);
+      font-family:'Segoe UI',Arial,sans-serif;
+    ">${s.num}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+
+  // Distance label on line midpoint
+  const marker = L.marker([s.lat, s.lng], { icon })
+    .bindPopup(`
+      <div class="popup-num">Stop ${s.num}</div>
+      <div class="popup-name">${s.icon} ${s.name}</div>
+      <div style="color:#8b949e;font-size:0.82em;">${s.cn}</div>
+      <div class="popup-desc">${s.desc}</div>
+      <div class="popup-km">📍 ${s.km}</div>
+    `)
+    .addTo(map);
+
+  markers.push(marker);
+});
+
+// ── DISTANCE LABELS on route ──
+const distLabels = [
+  { from: 0, to: 1, km: '150 km', pos: [44.06, 86.83] },
+  { from: 1, to: 2, km: '680 km', pos: [46.30, 86.52] },
+  { from: 2, to: 3, km: '35 km',  pos: [48.61, 86.95] },
+  { from: 3, to: 4, km: '180 km', pos: [48.20, 87.52] },
+  { from: 4, to: 5, km: '110 km', pos: [47.78, 87.50] },
+  { from: 5, to: 6, km: '180 km', pos: [47.46, 87.18] },
+  { from: 6, to: 0, km: '480 km', pos: [45.50, 87.55] },
+];
+
+distLabels.forEach(dl => {
+  L.marker([dl.pos[0], dl.pos[1]], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="
+        background:rgba(13,17,23,0.82);
+        border:1px solid rgba(240,165,0,0.45);
+        color:#f0a500;
+        font-size:10px;font-weight:700;
+        padding:2px 7px;border-radius:8px;
+        font-family:'Segoe UI',Arial,sans-serif;
+        white-space:nowrap;
+      ">${dl.km}</div>`,
+      iconSize: [60, 20],
+      iconAnchor: [30, 10]
+    })
+  }).addTo(map);
+});
+
+// ── FIT BOUNDS ──
+map.fitBounds(stops.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+
+// ── FLY TO ──
+function flyTo(lat, lng, zoom, idx) {
+  map.flyTo([lat, lng], zoom, { duration: 0.9 });
+  setTimeout(() => markers[idx].openPopup(), 950);
+}
+</script>
+</body>
+</html>

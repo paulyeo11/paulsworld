@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>独库公路 Duku Highway — 3-Day Self-Drive Route</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 16px 20px 12px;
+    background: linear-gradient(135deg, #0d1117, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .header h1 {
+    font-size: 1.25em;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .header h1 span { color: #f0a500; }
+  .header p {
+    font-size: 0.8em;
+    color: #8b949e;
+    margin-top: 3px;
+  }
+
+  /* ── DAY TABS ── */
+  .day-tabs {
+    display: flex;
+    gap: 0;
+    background: #161b22;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .day-tab {
+    flex: 1;
+    min-width: 90px;
+    padding: 11px 8px;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    font-size: 0.78em;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .day-tab.active { color: #f0a500; border-bottom-color: #f0a500; background: rgba(240,165,0,0.06); }
+  .day-tab:hover:not(.active) { color: #c9d1d9; background: rgba(255,255,255,0.04); }
+  .day-tab .tab-day { font-size: 0.95em; }
+  .day-tab .tab-route { font-size: 0.72em; color: inherit; opacity: 0.8; margin-top: 1px; }
+
+  /* ── MAP ── */
+  #map {
+    width: 100%;
+    height: 52vh;
+    min-height: 260px;
+  }
+
+  /* ── STOPS PANEL ── */
+  .stops-panel {
+    background: #0d1117;
+    overflow-y: auto;
+    max-height: calc(100vh - 52vh - 130px);
+  }
+
+  .day-section { display: none; }
+  .day-section.active { display: block; }
+
+  .day-header {
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .day-badge {
+    background: #f0a500;
+    color: #000;
+    font-size: 0.7em;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .day-title {
+    font-size: 0.88em;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .day-meta {
+    font-size: 0.72em;
+    color: #8b949e;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .stop-list { padding: 6px 0; }
+
+  .stop-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .stop-item:hover { background: rgba(255,255,255,0.04); }
+  .stop-item:last-child { border-bottom: none; }
+
+  .stop-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72em;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #000;
+  }
+  .day1 .stop-num { background: #3b82f6; color: #fff; }
+  .day2 .stop-num { background: #10b981; color: #fff; }
+  .day3 .stop-num { background: #f59e0b; color: #000; }
+
+  .stop-info { flex: 1; min-width: 0; }
+  .stop-name { font-size: 0.88em; font-weight: 700; color: #e6edf3; }
+  .stop-name .cn { color: #8b949e; font-weight: 400; margin-left: 5px; font-size: 0.9em; }
+  .stop-desc { font-size: 0.75em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+  .stop-tag {
+    display: inline-block;
+    font-size: 0.65em;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+  .tag-pass { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+  .tag-scenic { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .tag-grassland { background: rgba(132,204,22,0.2); color: #bef264; border: 1px solid rgba(132,204,22,0.3); }
+  .tag-canyon { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+  .tag-stay { background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+  .tag-offroad { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 4px 40px;
+    font-size: 0.7em;
+    color: #484f58;
+  }
+  .connector::before {
+    content: '↓';
+    font-size: 0.9em;
+  }
+
+  /* Leaflet popup override */
+  .leaflet-popup-content-wrapper {
+    background: #161b22 !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    color: #e6edf3 !important;
+  }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; }
+  .popup-name { font-weight: 700; font-size: 1em; color: #fff; margin-bottom: 2px; }
+  .popup-cn { color: #8b949e; font-size: 0.85em; }
+  .popup-desc { margin-top: 5px; color: #c9d1d9; font-size: 0.85em; line-height: 1.4; }
+  .leaflet-control-zoom a {
+    background: #161b22 !important;
+    color: #e6edf3 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏔️ 独库公路 <span>Duku Highway</span> — 3-Day Self-Drive</h1>
+  <p>独山子 → 哈希勒根达坂 → 那拉提 → 巴音布鲁克 → 天山大峡谷 → 库车</p>
+</div>
+
+<!-- DAY TABS -->
+<div class="day-tabs">
+  <button class="day-tab active" onclick="switchDay(1)">
+    <div class="tab-day">Day 01</div>
+    <div class="tab-route">独山子 → 乔尔玛</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(2)">
+    <div class="tab-day">Day 02</div>
+    <div class="tab-route">乔尔玛 → 巴音布鲁克</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(3)">
+    <div class="tab-day">Day 03</div>
+    <div class="tab-route">巴音布鲁克 → 库车</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(0)">
+    <div class="tab-day">🗺️ All</div>
+    <div class="tab-route">Full Route</div>
+  </button>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- STOPS PANEL -->
+<div class="stops-panel">
+
+  <!-- ALL DAYS overview -->
+  <div class="day-section active" id="section-0">
+    <div class="day-header">
+      <span class="day-badge">全程 FULL ROUTE</span>
+      <span class="day-title">独山子 → 库车 · ~560 km · 3 Days</span>
+      <span class="day-meta">G217 独库公路</span>
+    </div>
+    <div class="stop-list">
+      <div class="stop-item day1" onclick="flyTo(45.60, 84.87, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi <span class="cn">独山子</span></div>
+          <div class="stop-desc">Day 1 Start · North entry point of Duku Highway</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="stop-item day1" onclick="flyTo(43.89, 84.11, 13)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi Grand Canyon <span class="cn">独山子大峡谷</span></div>
+          <div class="stop-desc">Red rock canyon · dramatic gorge scenery</div>
+          <span class="stop-tag tag-canyon">Canyon</span>
+        </div>
+      </div>
+      <div class="stop-item day1" onclick="flyTo(43.38, 83.72, 13)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Hashilagen Pass <span class="cn">哈希勒根达坂</span></div>
+          <div class="stop-desc">~3,600m · Snow-capped mountain pass · highest point Day 1</div>
+          <span class="stop-tag tag-pass">Pass 3,600m</span>
+        </div>
+      </div>
+      <div class="stop-item day1" onclick="flyTo(43.11, 83.41, 13)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Qiaerma <span class="cn">乔尔玛</span></div>
+          <div class="stop-desc">Day 1 overnight · Memorial to Duku Highway soldiers 🙏</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(43.05, 84.10, 13)">
+        <div class="stop-num">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Nalati Grasslands <span class="cn">那拉提</span></div>
+          <div class="stop-desc">Sky grasslands · Kazakh nomads · sweeping alpine meadows</div>
+          <span class="stop-tag tag-grassland">Grassland</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(42.72, 83.42, 13)">
+        <div class="stop-num">5</div>
+        <div class="stop-info">
+          <div class="stop-name">Bayanbulak <span class="cn">巴音布鲁克</span></div>
+          <div class="stop-desc">Day 2 overnight · Swan Lake · Nine-bend river · moonrise over wetlands 🌙</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(42.53, 83.30, 12)">
+        <div class="stop-num">6</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Stone Forest <span class="cn">天山石林</span></div>
+          <div class="stop-desc">⚠️ Unpaved road required · spectacular rock formations</div>
+          <span class="stop-tag tag-offroad">Off-road</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(42.20, 83.05, 13)">
+        <div class="stop-num">7</div>
+        <div class="stop-info">
+          <div class="stop-name">South Tianshan Straight Road <span class="cn">南天山直道</span></div>
+          <div class="stop-desc">Famous straight poplar-lined avenue through mountain valley</div>
+          <span class="stop-tag tag-scenic">Scenic</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(42.08, 83.52, 13)">
+        <div class="stop-num">8</div>
+        <div class="stop-info">
+          <div class="stop-name">Daxiao Longchi <span class="cn">大小龙池</span></div>
+          <div class="stop-desc">Twin alpine dragon lakes · turquoise mountain water</div>
+          <span class="stop-tag tag-scenic">Lakes</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(41.95, 83.62, 13)">
+        <div class="stop-num">9</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Grand Canyon <span class="cn">天山大峡谷</span></div>
+          <div class="stop-desc">Kiziliya Red Rock Canyon · soaring red cliffs · otherworldly formations</div>
+          <span class="stop-tag tag-canyon">Canyon</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(41.78, 83.50, 13)">
+        <div class="stop-num">10</div>
+        <div class="stop-info">
+          <div class="stop-name">Red Rock Forest <span class="cn">红山石林</span></div>
+          <div class="stop-desc">Striking red sandstone pillars · near Kuqa</div>
+          <span class="stop-tag tag-canyon">Red Rocks</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(41.72, 82.96, 13)">
+        <div class="stop-num">E</div>
+        <div class="stop-info">
+          <div class="stop-name">Kuqa <span class="cn">库车</span></div>
+          <div class="stop-desc">Day 3 End · Ancient Qiuci Kingdom · Kizil Caves nearby</div>
+          <span class="stop-tag tag-stay">End</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 1 -->
+  <div class="day-section" id="section-1">
+    <div class="day-header">
+      <span class="day-badge" style="background:#3b82f6;">DAY 01</span>
+      <span class="day-title">独山子 → 峡谷 → 哈希勒根达坂 → 乔尔玛</span>
+      <span class="day-meta">~180 km</span>
+    </div>
+    <div class="stop-list day1">
+      <div class="stop-item" onclick="flyTo(45.60, 84.87, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi <span class="cn">独山子</span></div>
+          <div class="stop-desc">Start point · North entry of G217 Duku Highway · fuel up here</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="connector">~30 km south on G217</div>
+      <div class="stop-item" onclick="flyTo(43.89, 84.11, 13)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi Grand Canyon <span class="cn">独山子大峡谷</span></div>
+          <div class="stop-desc">First dramatic stop · red rock gorge · short walk into canyon</div>
+          <span class="stop-tag tag-canyon">Canyon</span>
+        </div>
+      </div>
+      <div class="connector">~80 km · ascending into Tianshan</div>
+      <div class="stop-item" onclick="flyTo(43.38, 83.72, 13)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Hashilagen Pass <span class="cn">哈希勒根达坂</span></div>
+          <div class="stop-desc">Elevation ~3,600m · snow possible even in Sep · stunning views · photo stop</div>
+          <span class="stop-tag tag-pass">Pass 3,600m</span>
+        </div>
+      </div>
+      <div class="connector">~70 km descending · Kax River valley</div>
+      <div class="stop-item" onclick="flyTo(43.11, 83.41, 13)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Qiaerma <span class="cn">乔尔玛</span></div>
+          <div class="stop-desc">Overnight stay · Heroes Memorial for soldiers who built Duku Highway · peaceful valley</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 2 -->
+  <div class="day-section" id="section-2">
+    <div class="day-header">
+      <span class="day-badge" style="background:#10b981;">DAY 02</span>
+      <span class="day-title">乔尔玛 → 那拉提 → 巴音布鲁克</span>
+      <span class="day-meta">~160 km</span>
+    </div>
+    <div class="stop-list day2">
+      <div class="stop-item" onclick="flyTo(43.11, 83.41, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Qiaerma <span class="cn">乔尔玛</span></div>
+          <div class="stop-desc">Morning departure · scenic river valley drive</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="connector">~80 km southeast · climbing to sky grasslands</div>
+      <div class="stop-item" onclick="flyTo(43.05, 84.10, 13)">
+        <div class="stop-num">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Nalati Grasslands <span class="cn">那拉提草原</span></div>
+          <div class="stop-desc">⭐ Highlight · Sky grassland · yurts · Kazakh horse riding · panoramic mountain views · spend 2–3 hrs</div>
+          <span class="stop-tag tag-grassland">Grassland ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~80 km west · Kaidu River valley</div>
+      <div class="stop-item" onclick="flyTo(42.72, 83.42, 13)">
+        <div class="stop-num">5</div>
+        <div class="stop-info">
+          <div class="stop-name">Bayanbulak <span class="cn">巴音布鲁克</span></div>
+          <div class="stop-desc">⭐ Highlight · UNESCO wetland · Nine-Bend River sunset · Swan Lake · extraordinary golden hour photography 🌅</div>
+          <span class="stop-tag tag-stay">Overnight ⭐</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 3 -->
+  <div class="day-section" id="section-3">
+    <div class="day-header">
+      <span class="day-badge" style="background:#f59e0b; color:#000;">DAY 03</span>
+      <span class="day-title">巴音布鲁克 → 石林 → 大峡谷 → 库车</span>
+      <span class="day-meta">~220 km</span>
+    </div>
+    <div class="stop-list day3">
+      <div class="stop-item" onclick="flyTo(42.72, 83.42, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Bayanbulak <span class="cn">巴音布鲁克</span></div>
+          <div class="stop-desc">Early start · morning light on wetlands</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="connector">~30 km south (unpaved detour)</div>
+      <div class="stop-item" onclick="flyTo(42.53, 83.30, 12)">
+        <div class="stop-num">6</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Stone Forest <span class="cn">天山石林</span></div>
+          <div class="stop-desc">⚠️ Requires going off paved road · deep unpaved section · 4WD recommended · unique rock pillars</div>
+          <span class="stop-tag tag-offroad">Off-road ⚠️</span>
+        </div>
+      </div>
+      <div class="connector">~50 km south on G217</div>
+      <div class="stop-item" onclick="flyTo(42.20, 83.05, 13)">
+        <div class="stop-num">7</div>
+        <div class="stop-info">
+          <div class="stop-name">South Tianshan Straight Road <span class="cn">南天山直道</span></div>
+          <div class="stop-desc">Iconic long straight road flanked by mountains and poplars · perfect photo corridor</div>
+          <span class="stop-tag tag-scenic">Scenic Road</span>
+        </div>
+      </div>
+      <div class="connector">~40 km east</div>
+      <div class="stop-item" onclick="flyTo(42.08, 83.52, 13)">
+        <div class="stop-num">8</div>
+        <div class="stop-info">
+          <div class="stop-name">Daxiao Longchi <span class="cn">大小龙池</span></div>
+          <div class="stop-desc">Big &amp; Small Dragon Lakes · stunning turquoise alpine lakes nestled in mountains</div>
+          <span class="stop-tag tag-scenic">Twin Lakes</span>
+        </div>
+      </div>
+      <div class="connector">~20 km southeast</div>
+      <div class="stop-item" onclick="flyTo(41.95, 83.62, 13)">
+        <div class="stop-num">9</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Grand Canyon <span class="cn">天山大峡谷 · 克孜利亚</span></div>
+          <div class="stop-desc">⭐ Highlight · Kiziliya red sandstone canyon · soaring cliffs · 2–3 hrs walk</div>
+          <span class="stop-tag tag-canyon">Canyon ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~15 km to Kuqa</div>
+      <div class="stop-item" onclick="flyTo(41.78, 83.50, 13)">
+        <div class="stop-num">10</div>
+        <div class="stop-info">
+          <div class="stop-name">Red Rock Forest <span class="cn">红山石林</span></div>
+          <div class="stop-desc">Final scenic stop · red sandstone pillars · near city</div>
+          <span class="stop-tag tag-canyon">Red Rocks</span>
+        </div>
+      </div>
+      <div class="connector">~20 km into city</div>
+      <div class="stop-item" onclick="flyTo(41.72, 82.96, 13)">
+        <div class="stop-num">E</div>
+        <div class="stop-info">
+          <div class="stop-name">Kuqa <span class="cn">库车</span></div>
+          <div class="stop-desc">🎉 Journey complete · Ancient Silk Road city · celebrate with Dapanji chicken 🍗</div>
+          <span class="stop-tag tag-stay">End 🎉</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /stops-panel -->
+
+<script>
+// ── ALL STOPS DATA ──
+const stops = [
+  // Day 1
+  { lat: 45.60, lng: 84.87, day: 1, num: 'S', name: 'Dushanzi 独山子', desc: 'Start · North entry of Duku Highway', color: '#3b82f6' },
+  { lat: 43.89, lng: 84.11, day: 1, num: '1', name: 'Dushanzi Grand Canyon 独山子大峡谷', desc: 'Red rock gorge', color: '#3b82f6' },
+  { lat: 43.38, lng: 83.72, day: 1, num: '2', name: 'Hashilagen Pass 哈希勒根达坂', desc: '~3,600m · Snow mountain pass', color: '#3b82f6' },
+  { lat: 43.11, lng: 83.41, day: 1, num: '3', name: 'Qiaerma 乔尔玛', desc: 'Day 1 Overnight', color: '#8b5cf6' },
+  // Day 2
+  { lat: 43.05, lng: 84.10, day: 2, num: '4', name: 'Nalati Grasslands 那拉提', desc: '⭐ Sky grassland · Kazakh nomads', color: '#10b981' },
+  { lat: 42.72, lng: 83.42, day: 2, num: '5', name: 'Bayanbulak 巴音布鲁克', desc: '⭐ Day 2 Overnight · Swan Lake · Nine-Bend River', color: '#8b5cf6' },
+  // Day 3
+  { lat: 42.53, lng: 83.30, day: 3, num: '6', name: 'Tianshan Stone Forest 天山石林', desc: '⚠️ Off-road section required', color: '#f59e0b' },
+  { lat: 42.20, lng: 83.05, day: 3, num: '7', name: 'South Tianshan Straight Road 南天山直道', desc: 'Iconic straight road', color: '#f59e0b' },
+  { lat: 42.08, lng: 83.52, day: 3, num: '8', name: 'Daxiao Longchi 大小龙池', desc: 'Twin alpine dragon lakes', color: '#f59e0b' },
+  { lat: 41.95, lng: 83.62, day: 3, num: '9', name: 'Tianshan Grand Canyon 天山大峡谷', desc: '⭐ Kiziliya red canyon', color: '#f59e0b' },
+  { lat: 41.78, lng: 83.50, day: 3, num: '10', name: 'Red Rock Forest 红山石林', desc: 'Red sandstone pillars', color: '#f59e0b' },
+  { lat: 41.72, lng: 82.96, day: 3, num: 'E', name: 'Kuqa 库车', desc: 'End · Ancient Silk Road city', color: '#ef4444' },
+];
+
+const dayColors = { 1: '#3b82f6', 2: '#10b981', 3: '#f59e0b' };
+
+// ── INIT MAP ──
+const map = L.map('map', {
+  center: [43.0, 83.8],
+  zoom: 7,
+  zoomControl: true
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(map);
+
+// ── MARKERS ──
+const markers = [];
+const layerGroups = { 0: L.layerGroup(), 1: L.layerGroup(), 2: L.layerGroup(), 3: L.layerGroup() };
+
+stops.forEach((stop, i) => {
+  const isOvernightOrEnd = ['3','5','E'].includes(stop.num) || stop.num === 'S';
+  const size = (stop.num === 'S' || stop.num === 'E') ? 32 : 28;
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${stop.color};
+      border: 2.5px solid rgba(255,255,255,0.9);
+      display:flex;align-items:center;justify-content:center;
+      color:${stop.day===3?'#000':'#fff'};
+      font-size:${size===32?'11':'10'}px;font-weight:800;
+      box-shadow:0 2px 8px rgba(0,0,0,0.5);
+      font-family:'Segoe UI',Arial,sans-serif;
+    ">${stop.num}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+
+  const marker = L.marker([stop.lat, stop.lng], { icon })
+    .bindPopup(`
+      <div class="popup-name">${stop.name}</div>
+      <div class="popup-cn">Day ${stop.day}</div>
+      <div class="popup-desc">${stop.desc}</div>
+    `);
+
+  markers.push(marker);
+  layerGroups[0].addLayer(marker);
+  layerGroups[stop.day].addLayer(marker);
+});
+
+// ── ROUTE LINES ──
+const allCoords = stops.map(s => [s.lat, s.lng]);
+
+// Day segments
+const day1Coords = stops.filter(s => s.day === 1).map(s => [s.lat, s.lng]);
+const day2Coords = [stops[3], stops[4], stops[5]].map(s => [s.lat, s.lng]); // Qiaerma → Nalati → Bayanbulak
+const day3Coords = stops.filter(s => s.day === 3).map(s => [s.lat, s.lng]);
+day3Coords.unshift([stops[5].lat, stops[5].lng]); // start from Bayanbulak
+
+const lineOpts = (color, dash='') => ({
+  color, weight: 3.5, opacity: 0.85,
+  dashArray: dash || null
+});
+
+// Full route line for "All" view
+const fullLine = L.polyline(allCoords, { color: '#f0a500', weight: 3, opacity: 0.6, dashArray: '6,4' });
+layerGroups[0].addLayer(fullLine);
+
+// Day lines
+const d1line = L.polyline(day1Coords, lineOpts('#3b82f6'));
+const d2line = L.polyline(day2Coords, lineOpts('#10b981'));
+const d3line = L.polyline(day3Coords, lineOpts('#f59e0b'));
+layerGroups[1].addLayer(d1line);
+layerGroups[2].addLayer(d2line);
+layerGroups[3].addLayer(d3line);
+
+// Start with all layers
+layerGroups[0].addTo(map);
+let currentDay = 0;
+
+// ── SWITCH DAY ──
+function switchDay(day) {
+  // Update tabs
+  document.querySelectorAll('.day-tab').forEach((t, i) => {
+    const tabDays = [1, 2, 3, 0];
+    t.classList.toggle('active', tabDays[i] === day);
+  });
+
+  // Update sections
+  document.querySelectorAll('.day-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + day).classList.add('active');
+
+  // Update map
+  map.removeLayer(layerGroups[currentDay]);
+  currentDay = day;
+  layerGroups[day].addTo(map);
+
+  // Fit bounds
+  const dayStops = day === 0 ? stops : stops.filter(s => s.day === day);
+  if (day === 2) {
+    // Include Qiaerma start for day 2
+    const d2all = [stops[3], ...stops.filter(s => s.day === 2)];
+    map.fitBounds(d2all.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  } else if (day === 3) {
+    const d3all = [stops[5], ...stops.filter(s => s.day === 3)];
+    map.fitBounds(d3all.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  } else {
+    map.fitBounds(dayStops.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  }
+}
+
+function flyTo(lat, lng, zoom) {
+  map.flyTo([lat, lng], zoom, { duration: 0.8 });
+  // Open popup for matching marker
+  const match = stops.findIndex(s => Math.abs(s.lat - lat) < 0.01 && Math.abs(s.lng - lng) < 0.01);
+  if (match >= 0) {
+    setTimeout(() => markers[match].openPopup(), 900);
+  }
+}
+
+// Initial fit
+map.fitBounds(allCoords, { padding: [20, 20] });
+</script>
+</body>
+</html>
