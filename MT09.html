@@ -454,7 +454,17 @@ const routeStyle = { color: '#f0a500', weight: 2.8, opacity: 0.82, dashArray: '8
 const routeLayers = [];
 let completedSegs = 0;
 
+// Manual road waypoints for segments where OSRM may fail (desert/remote routes)
+const manualSegments = {
+  // Urumqi → Wulungu Lake via S21 Desert Highway through Gurbantunggut
+  '0': [[43.82,87.62],[44.10,87.75],[44.60,87.90],[45.20,87.70],[45.80,87.60],[46.40,87.52],[46.80,87.50],[47.11,87.48]],
+};
+
 async function fetchSegment(fromStop, toStop, idx) {
+  // Use manual waypoints if available for this segment
+  if (manualSegments[String(idx)]) {
+    return manualSegments[String(idx)];
+  }
   const url = `https://router.project-osrm.org/route/v1/driving/${fromStop.lng},${fromStop.lat};${toStop.lng},${toStop.lat}?overview=full&geometries=geojson`;
   try {
     const res = await fetch(url);
