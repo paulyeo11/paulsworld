@@ -3,909 +3,636 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="apple-touch-icon" href="img_xj/xj_icon.jpg">
-<meta property="og:image" content="https://paulsworld.vercel.app/img_xj/xj_icon.jpg">
-<title>MT09: Xinjiang 2026 — Full 16-Day Self-Drive Route Map</title>
+<title>独库公路 Duku Highway — 3-Day Self-Drive Route</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #0d1117;
     color: #e6edf3;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
   }
+
+  /* ── HEADER ── */
   .header {
-    padding: 12px 16px 10px;
+    padding: 16px 20px 12px;
     background: linear-gradient(135deg, #0d1117, #161b22);
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  .header-top {
-    display: flex; align-items: center;
-    justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  .header h1 {
+    font-size: 1.25em;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
   }
-  .header h1 { font-size: 1.35em; font-weight: 800; color: #fff; }
-  .header h1 span.gold { color: #f0a500; }
-  .header h1 span.teal { color: #1abc9c; }
-  .header-sub { font-size: 0.92em; color: #8b949e; margin-top: 3px; }
-  .home-btn {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
-    color: #f0a500; text-decoration: none; font-size: 0.95em; font-weight: 700;
-    padding: 6px 14px; border-radius: 16px; white-space: nowrap;
+  .header h1 span { color: #f0a500; }
+  .header p {
+    font-size: 0.8em;
+    color: #8b949e;
+    margin-top: 3px;
   }
-  .tab-bar {
-    display: flex; background: #161b22;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
+
+  /* ── DAY TABS ── */
+  .day-tabs {
+    display: flex;
+    gap: 0;
+    background: #161b22;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab-btn {
-    flex-shrink: 0; padding: 10px 18px;
-    background: transparent; border: none; cursor: pointer;
-    font-size: 0.95em; font-weight: 700; color: #8b949e;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s; white-space: nowrap;
+  .day-tab {
+    flex: 1;
+    min-width: 90px;
+    padding: 11px 8px;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    font-size: 0.78em;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
   }
-  .tab-btn.active { color: #f0a500; border-bottom-color: #f0a500; }
-  .legend-bar {
-    display: flex; align-items: center; gap: 14px;
-    padding: 7px 16px; background: #0d1117;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    flex-wrap: wrap; font-size: 0.88em; color: #8b949e;
+  .day-tab.active { color: #f0a500; border-bottom-color: #f0a500; background: rgba(240,165,0,0.06); }
+  .day-tab:hover:not(.active) { color: #c9d1d9; background: rgba(255,255,255,0.04); }
+  .day-tab .tab-day { font-size: 0.95em; }
+  .day-tab .tab-route { font-size: 0.72em; color: inherit; opacity: 0.8; margin-top: 1px; }
+
+  /* ── MAP ── */
+  #map {
+    width: 100%;
+    height: 52vh;
+    min-height: 260px;
   }
-  .legend-item { display: flex; align-items: center; gap: 5px; }
-  .legend-dot {
-    width: 11px; height: 11px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;
-  }
-  .legend-total { margin-left: auto; color: #f0a500; font-weight: 700; }
-  #map { width: 100%; flex: 1; min-height: 54vh; }
-  .panel { display: none; }
-  .panel.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+  /* ── STOPS PANEL ── */
   .stops-panel {
-    background: #0d1117; overflow-y: auto; max-height: 34vh;
+    background: #0d1117;
+    overflow-y: auto;
+    max-height: calc(100vh - 52vh - 130px);
   }
-  .panel-header {
-    padding: 9px 16px 8px;
+
+  .day-section { display: none; }
+  .day-section.active { display: block; }
+
+  .day-header {
+    padding: 12px 16px 8px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
-    display: flex; align-items: center; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .panel-title { font-size: 1.0em; font-weight: 700; color: #e6edf3; }
-  .panel-km { margin-left: auto; font-size: 0.92em; color: #f0a500; font-weight: 700; }
-  .stop-list { padding: 4px 0; }
+  .day-badge {
+    background: #f0a500;
+    color: #000;
+    font-size: 0.7em;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .day-title {
+    font-size: 0.88em;
+    font-weight: 700;
+    color: #e6edf3;
+  }
+  .day-meta {
+    font-size: 0.72em;
+    color: #8b949e;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .stop-list { padding: 6px 0; }
+
   .stop-item {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 9px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
-    cursor: pointer; transition: background 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
   }
   .stop-item:hover { background: rgba(255,255,255,0.04); }
+  .stop-item:last-child { border-bottom: none; }
+
   .stop-num {
-    width: 26px; height: 26px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.85em; font-weight: 800; flex-shrink: 0; margin-top: 1px;
-    border: 2px solid rgba(255,255,255,0.45);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72em;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #000;
   }
+  .day1 .stop-num { background: #3b82f6; color: #fff; }
+  .day2 .stop-num { background: #10b981; color: #fff; }
+  .day3 .stop-num { background: #f59e0b; color: #000; }
+
   .stop-info { flex: 1; min-width: 0; }
-  .stop-name {
-    font-size: 1.05em; font-weight: 700; color: #e6edf3;
-    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  }
-  .stop-desc { font-size: 0.9em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
-  .stop-km { font-size: 0.86em; color: #f0a500; font-weight: 700; margin-top: 3px; }
+  .stop-name { font-size: 0.88em; font-weight: 700; color: #e6edf3; }
+  .stop-name .cn { color: #8b949e; font-weight: 400; margin-left: 5px; font-size: 0.9em; }
+  .stop-desc { font-size: 0.75em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
   .stop-tag {
-    display: inline-block; font-size: 0.82em;
-    padding: 2px 7px; border-radius: 8px; font-weight: 700;
+    display: inline-block;
+    font-size: 0.65em;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-top: 3px;
   }
-  .tag-start   { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
-  .tag-city    { background:rgba(240,165,0,0.2);   color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
-  .tag-lake    { background:rgba(59,130,246,0.2);  color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
-  .tag-village { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
-  .tag-highway { background:rgba(139,92,246,0.2);  color:#c4b5fd; border:1px solid rgba(139,92,246,0.3); }
-  .tag-end     { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
-  .itin-panel {
-    background: #0d1117; overflow-y: auto; flex: 1; padding: 0;
+  .tag-pass { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+  .tag-scenic { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .tag-grassland { background: rgba(132,204,22,0.2); color: #bef264; border: 1px solid rgba(132,204,22,0.3); }
+  .tag-canyon { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+  .tag-stay { background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+  .tag-offroad { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 4px 40px;
+    font-size: 0.7em;
+    color: #484f58;
   }
-  .day-card {
-    border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 16px;
-    cursor: pointer; transition: background 0.15s;
+  .connector::before {
+    content: '↓';
+    font-size: 0.9em;
   }
-  .day-card:hover { background: rgba(255,255,255,0.03); }
-  .day-header { display: flex; align-items: flex-start; gap: 10px; }
-  .day-badge {
-    background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.35);
-    color: #f0a500; font-size: 0.86em; font-weight: 800; padding: 3px 9px;
-    border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
-  }
-  .day-title { font-size: 1.05em; font-weight: 700; color: #e6edf3; line-height: 1.35; }
-  .day-meta { font-size: 0.9em; color: #8b949e; margin-top: 4px; }
-  .day-body { font-size: 0.93em; color: #8b949e; margin-top: 8px; line-height: 1.6; display: none; }
-  .day-body.open { display: block; }
-  .day-body .section { margin-top: 7px; }
-  .day-body .section-label {
-    font-size: 0.92em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-    color: #f0a500; margin-bottom: 3px;
-  }
-  .day-body .section-text { color: #c9d1d9; }
-  .day-chevron { margin-left: auto; color: #f0a500; font-size: 1.0em; flex-shrink: 0; transition: transform 0.2s; }
-  .day-card.open .day-chevron { transform: rotate(180deg); }
-  .tips-panel {
-    background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
-  }
-  .tip-section { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 13px 16px; }
-  .tip-header { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-  .tip-icon { font-size: 1.3em; }
-  .tip-title { font-size: 1.05em; font-weight: 700; color: #e6edf3; }
-  .tip-chevron { margin-left: auto; color: #f0a500; font-size: 1.0em; transition: transform 0.2s; }
-  .tip-section.open .tip-chevron { transform: rotate(180deg); }
-  .tip-body { font-size: 0.93em; color: #8b949e; margin-top: 9px; line-height: 1.65; display: none; }
-  .tip-section.open .tip-body { display: block; }
-  .tip-body ul { padding-left: 16px; }
-  .tip-body li { margin-bottom: 5px; }
-  .tip-body strong { color: #e6edf3; }
+
+  /* Leaflet popup override */
   .leaflet-popup-content-wrapper {
-    background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important;
-    border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    background: #161b22 !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
     color: #e6edf3 !important;
   }
   .leaflet-popup-tip { background: #161b22 !important; }
-  .leaflet-popup-content { margin: 10px 14px !important; font-size: 16px !important; line-height: 1.5; }
-  .popup-day  { font-size: 0.85em; font-weight: 700; color: #f0a500; margin-bottom: 2px; }
-  .popup-name { font-weight: 800; font-size: 1.25em; color: #fff; }
-  .popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 1.0em; }
-  .popup-food { margin-top: 5px; color: #6ee7b7; font-size: 0.95em; }
-  .popup-stay { margin-top: 3px; color: #93c5fd; font-size: 0.95em; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; }
+  .popup-name { font-weight: 700; font-size: 1em; color: #fff; margin-bottom: 2px; }
+  .popup-cn { color: #8b949e; font-size: 0.85em; }
+  .popup-desc { margin-top: 5px; color: #c9d1d9; font-size: 0.85em; line-height: 1.4; }
   .leaflet-control-zoom a {
-    background: #161b22 !important; color: #e6edf3 !important;
+    background: #161b22 !important;
+    color: #e6edf3 !important;
     border-color: rgba(255,255,255,0.12) !important;
   }
-  .leaflet-control-attribution {
-    background: rgba(13,17,23,0.8) !important; color: #484f58 !important;
-  }
-  .route-status {
-    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-    background: rgba(13,17,23,0.85); border: 1px solid rgba(240,165,0,0.3);
-    color: #f0a500; font-size: 0.88em; padding: 4px 12px; border-radius: 12px;
-    z-index: 1000; pointer-events: none; display: none;
-  }
-  .vc-wrap { text-align: center; padding: 14px 16px; background: #0d1117; border-top: 1px solid rgba(255,255,255,0.06); }
-  @media (max-width: 500px) {
-    .header h1 { font-size: 1.15em; }
-    #map { min-height: 48vh; }
-    .stops-panel, .itin-panel, .tips-panel { max-height: 40vh; }
-  }
-  .budget-panel {
-    background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
-  }
-  .budget-summary {
-    display: flex; gap: 10px; padding: 12px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap;
-  }
-  .budget-stat {
-    flex: 1; min-width: 100px; background: rgba(255,255,255,0.04);
-    border-radius: 10px; padding: 10px 14px; text-align: center;
-  }
-  .budget-stat-label { font-size: 0.83em; color: #8b949e; margin-bottom: 4px; }
-  .budget-stat-value { font-size: 1.25em; font-weight: 800; color: #f0a500; }
-  .budget-table { width: 100%; border-collapse: collapse; }
-  .budget-table th {
-    font-size: 0.86em; font-weight: 700; color: #8b949e; text-align: left;
-    padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
-    letter-spacing: 0.5px; text-transform: uppercase;
-  }
-  .budget-table td {
-    font-size: 0.95em; color: #c9d1d9; padding: 10px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .budget-table tr:hover td { background: rgba(255,255,255,0.03); }
-  .budget-cat {
-    display: inline-block; font-size: 0.86em; padding: 2px 8px;
-    border-radius: 8px; font-weight: 700;
-  }
-  .cat-car   { background:rgba(168,85,247,0.2); color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); }
-  .cat-hotel { background:rgba(59,130,246,0.2); color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
-  .cat-food  { background:rgba(16,185,129,0.2); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
-  .cat-entry { background:rgba(240,165,0,0.2);  color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
-  .cat-misc  { background:rgba(156,163,175,0.2);color:#d1d5db; border:1px solid rgba(156,163,175,0.3); }
-  .budget-payer-paul { color: #f0a500; font-weight: 700; }
-  .budget-payer-eddie { color: #1abc9c; font-weight: 700; }
-  .budget-payer-shared { color: #93c5fd; font-weight: 700; }
-
-  .tasks-panel { background:#0d1117; overflow-y:auto; flex:1; padding:0 0 24px; }
-  .tasks-filter-bar { display:flex; gap:8px; padding:12px 16px 10px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; top:0; background:#0d1117; z-index:10; }
-  .tasks-filter-btn { padding:5px 14px; border-radius:16px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#8b949e; font-size:0.88em; font-weight:700; cursor:pointer; transition:all 0.2s; }
-  .tasks-filter-btn.active { background:rgba(240,165,0,0.18); border-color:#f0a500; color:#f0a500; }
-  .tfPaul.active { background:rgba(59,130,246,0.2)!important; border-color:#3b82f6!important; color:#93c5fd!important; }
-  .tfPo.active   { background:rgba(16,185,129,0.2)!important; border-color:#10b981!important; color:#6ee7b7!important; }
-  .tfEddy.active { background:rgba(168,85,247,0.2)!important; border-color:#a855f7!important; color:#d8b4fe!important; }
-  .tfDone.active { background:rgba(34,197,94,0.2)!important;  border-color:#22c55e!important; color:#86efac!important; }
-  .tasks-progress-wrap { padding:10px 16px 8px; border-bottom:1px solid rgba(255,255,255,0.06); }
-  .tasks-progress-label { font-size:0.85em; color:#8b949e; margin-bottom:6px; }
-  .tasks-progress-bar { height:6px; background:rgba(255,255,255,0.08); border-radius:3px; }
-  .tasks-progress-fill { height:100%; background:#22c55e; border-radius:3px; transition:width 0.4s; width:0%; }
-  .task-category { padding:10px 16px 6px; font-size:0.78em; font-weight:800; color:#f0a500; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid rgba(240,165,0,0.15); margin-top:4px; }
-  .task-item { display:flex; align-items:flex-start; gap:12px; padding:11px 16px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:background 0.15s; }
-  .task-item:hover { background:rgba(255,255,255,0.03); }
-  .task-item.completed .task-text { text-decoration:line-through; color:#4b5563; }
-  .task-item.completed .task-meta { opacity:0.4; }
-  .task-check { width:22px; height:22px; border-radius:50%; border:2px solid; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; font-size:0.8em; font-weight:900; transition:all 0.2s; }
-  .tck-paul { border-color:#3b82f6; color:#3b82f6; }
-  .tck-po   { border-color:#10b981; color:#10b981; }
-  .tck-eddy { border-color:#a855f7; color:#a855f7; }
-  .tck-checked { background:#22c55e!important; border-color:#22c55e!important; color:#fff!important; }
-  .task-body { flex:1; min-width:0; }
-  .task-text { font-size:0.93em; color:#e6edf3; line-height:1.4; }
-  .task-meta { margin-top:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .task-person { font-size:0.75em; font-weight:700; padding:2px 9px; border-radius:8px; }
-  .tp-paul { background:rgba(59,130,246,0.2); color:#93c5fd; }
-  .tp-po   { background:rgba(16,185,129,0.2); color:#6ee7b7; }
-  .tp-eddy { background:rgba(168,85,247,0.2); color:#d8b4fe; }
-  .task-due { font-size:0.75em; color:#6b7280; }
-  .task-deadline { font-size:0.75em; color:#f87171; font-weight:700; }
-
+  .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="header-top">
-    <div>
-      <h1>🏔️ MT09: Xinjiang 2026 — <span class="gold">16-Day</span> <span class="teal">Full Route Map</span></h1>
-      <div class="header-sub">Urumqi · Wulungu · Kanas · Hemu · Altay · Burqin · Urerhe · Sayram · Duku Highway · Kuqa · Korla · Return · 30 Aug–14 Sep · ~4,800 km</div>
+  <h1>🏔️ 独库公路 <span>Duku Highway</span> — 3-Day Self-Drive</h1>
+  <p>独山子 → 哈希勒根达坂 → 那拉提 → 巴音布鲁克 → 天山大峡谷 → 库车</p>
+</div>
+
+<!-- DAY TABS -->
+<div class="day-tabs">
+  <button class="day-tab active" onclick="switchDay(1)">
+    <div class="tab-day">Day 01</div>
+    <div class="tab-route">独山子 → 乔尔玛</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(2)">
+    <div class="tab-day">Day 02</div>
+    <div class="tab-route">乔尔玛 → 巴音布鲁克</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(3)">
+    <div class="tab-day">Day 03</div>
+    <div class="tab-route">巴音布鲁克 → 库车</div>
+  </button>
+  <button class="day-tab" onclick="switchDay(0)">
+    <div class="tab-day">🗺️ All</div>
+    <div class="tab-route">Full Route</div>
+  </button>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- STOPS PANEL -->
+<div class="stops-panel">
+
+  <!-- ALL DAYS overview -->
+  <div class="day-section active" id="section-0">
+    <div class="day-header">
+      <span class="day-badge">全程 FULL ROUTE</span>
+      <span class="day-title">独山子 → 库车 · ~560 km · 3 Days</span>
+      <span class="day-meta">G217 独库公路</span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
-      <button id="lang-btn" onclick="toggleLang()" style="background:rgba(26,188,156,0.15);border:1px solid rgba(26,188,156,0.4);color:#1abc9c;font-size:0.95em;font-weight:700;padding:6px 14px;border-radius:16px;cursor:pointer;white-space:nowrap;">中文</button>
-    </div>
-  </div>
-</div>
-
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
-  <button class="tab-btn" onclick="switchTab('itin')">📅 Itinerary</button>
-  <button class="tab-btn" onclick="switchTab('tips')">💡 Travel Tips</button>
-  <button class="tab-btn" onclick="switchTab('budget')">💰 Budget</button>
-  <button class="tab-btn" onclick="switchTab('tasks')">✅ Tasks</button>
-</div>
-
-<div class="legend-bar" id="legend-bar">
-  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Start/End</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> City</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Lake</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Village</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#a855f7;"></div> Highway</div>
-  <div class="legend-total">~4,800 km · 16 Days</div>
-</div>
-
-<div id="panel-map" class="panel active">
-  <div style="position:relative;">
-    <div id="map"></div>
-    <div class="route-status" id="route-status">Loading road routes…</div>
-  </div>
-  <div class="stops-panel">
-    <div class="panel-header">
-      <span class="panel-title">📍 Route Stops — Tap to zoom</span>
-      <span class="panel-km">16 stops · 30 Aug–14 Sep 2026</span>
-    </div>
-    <div class="stop-list" id="stop-list"></div>
-  </div>
-</div>
-
-<div id="panel-itin" class="panel">
-  <div class="itin-panel" id="itin-list"></div>
-</div>
-
-<div id="panel-tips" class="panel">
-  <div class="tips-panel" id="tips-list"></div>
-</div>
-<div id="panel-tasks" class="panel">
-  <div class="tasks-panel">
-    <div class="tasks-filter-bar">
-      <button class="tasks-filter-btn tfAll active" onclick="filterTasks('all',this)">All</button>
-      <button class="tasks-filter-btn tfPaul" onclick="filterTasks('paul',this)">👤 Paul</button>
-      <button class="tasks-filter-btn tfPo" onclick="filterTasks('po',this)">👤 Po</button>
-      <button class="tasks-filter-btn tfEddy" onclick="filterTasks('eddy',this)">👤 Eddy</button>
-      <button class="tasks-filter-btn tfDone" onclick="filterTasks('done',this)">✅ Done</button>
-    </div>
-    <div class="tasks-progress-wrap">
-      <div class="tasks-progress-label"><span id="tasks-done-count">0</span> / <span id="tasks-total-count">0</span> completed</div>
-      <div class="tasks-progress-bar"><div class="tasks-progress-fill" id="tasks-progress-fill"></div></div>
-    </div>
-    <div id="task-list"></div>
-  </div>
-</div>
-
-
-<div id="panel-budget" class="panel">
-  <div class="budget-panel">
-    <div class="budget-summary">
-      <div class="budget-stat">
-        <div class="budget-stat-label">Total Spent (RMB)</div>
-        <div class="budget-stat-value" id="total-rmb">¥0</div>
+    <div class="stop-list">
+      <div class="stop-item day1" onclick="flyTo(45.60, 84.87, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi <span class="cn">独山子</span></div>
+          <div class="stop-desc">Day 1 Start · North entry point of Duku Highway</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
       </div>
-      <div class="budget-stat">
-        <div class="budget-stat-label">Paul Paid</div>
-        <div class="budget-stat-value" id="paul-total">¥0</div>
+      <div class="stop-item day1" onclick="flyTo(43.89, 84.11, 13)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi Grand Canyon <span class="cn">独山子大峡谷</span></div>
+          <div class="stop-desc">Red rock canyon · dramatic gorge scenery</div>
+          <span class="stop-tag tag-canyon">Canyon</span>
+        </div>
       </div>
-      <div class="budget-stat">
-        <div class="budget-stat-label">Eddie Paid</div>
-        <div class="budget-stat-value" id="eddie-total">¥0</div>
+      <div class="stop-item day1" onclick="flyTo(43.38, 83.72, 13)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Hashilagen Pass <span class="cn">哈希勒根达坂</span></div>
+          <div class="stop-desc">~3,600m · Snow-capped mountain pass · highest point Day 1</div>
+          <span class="stop-tag tag-pass">Pass 3,600m</span>
+        </div>
       </div>
-      <div class="budget-stat">
-        <div class="budget-stat-label">Shared / TBD</div>
-        <div class="budget-stat-value" id="shared-total">¥0</div>
+      <div class="stop-item day1" onclick="flyTo(43.11, 83.41, 13)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Qiaerma <span class="cn">乔尔玛</span></div>
+          <div class="stop-desc">Day 1 overnight · Memorial to Duku Highway soldiers 🙏</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(43.05, 84.10, 13)">
+        <div class="stop-num">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Nalati Grasslands <span class="cn">那拉提</span></div>
+          <div class="stop-desc">Sky grasslands · Kazakh nomads · sweeping alpine meadows</div>
+          <span class="stop-tag tag-grassland">Grassland</span>
+        </div>
+      </div>
+      <div class="stop-item day2" onclick="flyTo(42.72, 83.42, 13)">
+        <div class="stop-num">5</div>
+        <div class="stop-info">
+          <div class="stop-name">Bayanbulak <span class="cn">巴音布鲁克</span></div>
+          <div class="stop-desc">Day 2 overnight · Swan Lake · Nine-bend river · moonrise over wetlands 🌙</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(42.53, 83.30, 12)">
+        <div class="stop-num">6</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Stone Forest <span class="cn">天山石林</span></div>
+          <div class="stop-desc">⚠️ Unpaved road required · spectacular rock formations</div>
+          <span class="stop-tag tag-offroad">Off-road</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(42.20, 83.05, 13)">
+        <div class="stop-num">7</div>
+        <div class="stop-info">
+          <div class="stop-name">South Tianshan Straight Road <span class="cn">南天山直道</span></div>
+          <div class="stop-desc">Famous straight poplar-lined avenue through mountain valley</div>
+          <span class="stop-tag tag-scenic">Scenic</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(42.08, 83.52, 13)">
+        <div class="stop-num">8</div>
+        <div class="stop-info">
+          <div class="stop-name">Daxiao Longchi <span class="cn">大小龙池</span></div>
+          <div class="stop-desc">Twin alpine dragon lakes · turquoise mountain water</div>
+          <span class="stop-tag tag-scenic">Lakes</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(41.95, 83.62, 13)">
+        <div class="stop-num">9</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Grand Canyon <span class="cn">天山大峡谷</span></div>
+          <div class="stop-desc">Kiziliya Red Rock Canyon · soaring red cliffs · otherworldly formations</div>
+          <span class="stop-tag tag-canyon">Canyon</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(41.78, 83.50, 13)">
+        <div class="stop-num">10</div>
+        <div class="stop-info">
+          <div class="stop-name">Red Rock Forest <span class="cn">红山石林</span></div>
+          <div class="stop-desc">Striking red sandstone pillars · near Kuqa</div>
+          <span class="stop-tag tag-canyon">Red Rocks</span>
+        </div>
+      </div>
+      <div class="stop-item day3" onclick="flyTo(41.72, 82.96, 13)">
+        <div class="stop-num">E</div>
+        <div class="stop-info">
+          <div class="stop-name">Kuqa <span class="cn">库车</span></div>
+          <div class="stop-desc">Day 3 End · Ancient Qiuci Kingdom · Kizil Caves nearby</div>
+          <span class="stop-tag tag-stay">End</span>
+        </div>
       </div>
     </div>
-    <table class="budget-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount (RMB)</th>
-          <th>Paid By</th>
-        </tr>
-      </thead>
-      <tbody id="budget-tbody"></tbody>
-    </table>
   </div>
-</div>
 
-<div class="vc-wrap"><script src="/view-counter.js"></script></div>
+  <!-- DAY 1 -->
+  <div class="day-section" id="section-1">
+    <div class="day-header">
+      <span class="day-badge" style="background:#3b82f6;">DAY 01</span>
+      <span class="day-title">独山子 → 峡谷 → 哈希勒根达坂 → 乔尔玛</span>
+      <span class="day-meta">~180 km</span>
+    </div>
+    <div class="stop-list day1">
+      <div class="stop-item" onclick="flyTo(45.60, 84.87, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi <span class="cn">独山子</span></div>
+          <div class="stop-desc">Start point · North entry of G217 Duku Highway · fuel up here</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="connector">~30 km south on G217</div>
+      <div class="stop-item" onclick="flyTo(43.89, 84.11, 13)">
+        <div class="stop-num">1</div>
+        <div class="stop-info">
+          <div class="stop-name">Dushanzi Grand Canyon <span class="cn">独山子大峡谷</span></div>
+          <div class="stop-desc">First dramatic stop · red rock gorge · short walk into canyon</div>
+          <span class="stop-tag tag-canyon">Canyon</span>
+        </div>
+      </div>
+      <div class="connector">~80 km · ascending into Tianshan</div>
+      <div class="stop-item" onclick="flyTo(43.38, 83.72, 13)">
+        <div class="stop-num">2</div>
+        <div class="stop-info">
+          <div class="stop-name">Hashilagen Pass <span class="cn">哈希勒根达坂</span></div>
+          <div class="stop-desc">Elevation ~3,600m · snow possible even in Sep · stunning views · photo stop</div>
+          <span class="stop-tag tag-pass">Pass 3,600m</span>
+        </div>
+      </div>
+      <div class="connector">~70 km descending · Kax River valley</div>
+      <div class="stop-item" onclick="flyTo(43.11, 83.41, 13)">
+        <div class="stop-num">3</div>
+        <div class="stop-info">
+          <div class="stop-name">Qiaerma <span class="cn">乔尔玛</span></div>
+          <div class="stop-desc">Overnight stay · Heroes Memorial for soldiers who built Duku Highway · peaceful valley</div>
+          <span class="stop-tag tag-stay">Overnight</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 2 -->
+  <div class="day-section" id="section-2">
+    <div class="day-header">
+      <span class="day-badge" style="background:#10b981;">DAY 02</span>
+      <span class="day-title">乔尔玛 → 那拉提 → 巴音布鲁克</span>
+      <span class="day-meta">~160 km</span>
+    </div>
+    <div class="stop-list day2">
+      <div class="stop-item" onclick="flyTo(43.11, 83.41, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Qiaerma <span class="cn">乔尔玛</span></div>
+          <div class="stop-desc">Morning departure · scenic river valley drive</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="connector">~80 km southeast · climbing to sky grasslands</div>
+      <div class="stop-item" onclick="flyTo(43.05, 84.10, 13)">
+        <div class="stop-num">4</div>
+        <div class="stop-info">
+          <div class="stop-name">Nalati Grasslands <span class="cn">那拉提草原</span></div>
+          <div class="stop-desc">⭐ Highlight · Sky grassland · yurts · Kazakh horse riding · panoramic mountain views · spend 2–3 hrs</div>
+          <span class="stop-tag tag-grassland">Grassland ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~80 km west · Kaidu River valley</div>
+      <div class="stop-item" onclick="flyTo(42.72, 83.42, 13)">
+        <div class="stop-num">5</div>
+        <div class="stop-info">
+          <div class="stop-name">Bayanbulak <span class="cn">巴音布鲁克</span></div>
+          <div class="stop-desc">⭐ Highlight · UNESCO wetland · Nine-Bend River sunset · Swan Lake · extraordinary golden hour photography 🌅</div>
+          <span class="stop-tag tag-stay">Overnight ⭐</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAY 3 -->
+  <div class="day-section" id="section-3">
+    <div class="day-header">
+      <span class="day-badge" style="background:#f59e0b; color:#000;">DAY 03</span>
+      <span class="day-title">巴音布鲁克 → 石林 → 大峡谷 → 库车</span>
+      <span class="day-meta">~220 km</span>
+    </div>
+    <div class="stop-list day3">
+      <div class="stop-item" onclick="flyTo(42.72, 83.42, 13)">
+        <div class="stop-num">S</div>
+        <div class="stop-info">
+          <div class="stop-name">Bayanbulak <span class="cn">巴音布鲁克</span></div>
+          <div class="stop-desc">Early start · morning light on wetlands</div>
+          <span class="stop-tag tag-stay">Start</span>
+        </div>
+      </div>
+      <div class="connector">~30 km south (unpaved detour)</div>
+      <div class="stop-item" onclick="flyTo(42.53, 83.30, 12)">
+        <div class="stop-num">6</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Stone Forest <span class="cn">天山石林</span></div>
+          <div class="stop-desc">⚠️ Requires going off paved road · deep unpaved section · 4WD recommended · unique rock pillars</div>
+          <span class="stop-tag tag-offroad">Off-road ⚠️</span>
+        </div>
+      </div>
+      <div class="connector">~50 km south on G217</div>
+      <div class="stop-item" onclick="flyTo(42.20, 83.05, 13)">
+        <div class="stop-num">7</div>
+        <div class="stop-info">
+          <div class="stop-name">South Tianshan Straight Road <span class="cn">南天山直道</span></div>
+          <div class="stop-desc">Iconic long straight road flanked by mountains and poplars · perfect photo corridor</div>
+          <span class="stop-tag tag-scenic">Scenic Road</span>
+        </div>
+      </div>
+      <div class="connector">~40 km east</div>
+      <div class="stop-item" onclick="flyTo(42.08, 83.52, 13)">
+        <div class="stop-num">8</div>
+        <div class="stop-info">
+          <div class="stop-name">Daxiao Longchi <span class="cn">大小龙池</span></div>
+          <div class="stop-desc">Big &amp; Small Dragon Lakes · stunning turquoise alpine lakes nestled in mountains</div>
+          <span class="stop-tag tag-scenic">Twin Lakes</span>
+        </div>
+      </div>
+      <div class="connector">~20 km southeast</div>
+      <div class="stop-item" onclick="flyTo(41.95, 83.62, 13)">
+        <div class="stop-num">9</div>
+        <div class="stop-info">
+          <div class="stop-name">Tianshan Grand Canyon <span class="cn">天山大峡谷 · 克孜利亚</span></div>
+          <div class="stop-desc">⭐ Highlight · Kiziliya red sandstone canyon · soaring cliffs · 2–3 hrs walk</div>
+          <span class="stop-tag tag-canyon">Canyon ⭐</span>
+        </div>
+      </div>
+      <div class="connector">~15 km to Kuqa</div>
+      <div class="stop-item" onclick="flyTo(41.78, 83.50, 13)">
+        <div class="stop-num">10</div>
+        <div class="stop-info">
+          <div class="stop-name">Red Rock Forest <span class="cn">红山石林</span></div>
+          <div class="stop-desc">Final scenic stop · red sandstone pillars · near city</div>
+          <span class="stop-tag tag-canyon">Red Rocks</span>
+        </div>
+      </div>
+      <div class="connector">~20 km into city</div>
+      <div class="stop-item" onclick="flyTo(41.72, 82.96, 13)">
+        <div class="stop-num">E</div>
+        <div class="stop-info">
+          <div class="stop-name">Kuqa <span class="cn">库车</span></div>
+          <div class="stop-desc">🎉 Journey complete · Ancient Silk Road city · celebrate with Dapanji chicken 🍗</div>
+          <span class="stop-tag tag-stay">End 🎉</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /stops-panel -->
 
 <script>
-let currentLang = 'en';
-// ── STOPS DATA ──────────────────────────────────────────────────
-const stopsData = [
-  { num:'①', lat:43.8200, lng:87.6200, emoji:'✈️',  type:'start',   color:'#ef4444',
-    day:{en:'Day 1',zh:'第1天'}, name:{en:'Urumqi',zh:'乌鲁木齐'},
-    desc:{en:'Assembly day · Car rental · Museum of Xinjiang · International Grand Bazaar',zh:'集合日 · 取租车 · 新疆博物馆 · 国际大巴扎'},
-    food:{en:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan with kebabs',zh:'木卡姆餐厅：薄皮包子、抓饭 · 阿不拉馕+烤串'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97+%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">亚朵酒店</a> <a href="https://map.baidu.com/search/%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E8%8A%B1%E8%AF%9E%E7%A7%98%E5%A2%83%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97+%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">花诞秘境花园酒店</a> <a href="https://map.baidu.com/search/%E8%8A%B1%E8%AF%9E%E7%A7%98%E5%A2%83%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'②', lat:47.1100, lng:87.4800, emoji:'🎣',  type:'lake',    color:'#3b82f6',
-    day:{en:'Day 2',zh:'第2天'}, name:{en:'Wulungu Lake',zh:'乌伦古湖'},
-    desc:{en:'S21 Desert Highway through Gurbantunggut Desert · "Gobi Sea" golden coast sunset · ~400 km from Urumqi',zh:'S21沙漠公路穿越古尔班通古特沙漠 · "戈壁海"黄金海岸日落 · 距乌鲁木齐约400公里'},
-    food:{en:'Fuhai County lakeside restaurants: spicy whole lake fish, deep-fried five-spot black',zh:'福海县湖边餐厅：辣味全鱼宴、油炸五道黑'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E7%A6%8F%E6%B5%B7%E8%BF%8E%E5%AE%BE%E9%A6%86+%E7%A6%8F%E6%B5%B7" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">福海迎宾馆</a> <a href="https://map.baidu.com/search/%E7%A6%8F%E6%B5%B7%E8%BF%8E%E5%AE%BE%E9%A6%86%E7%A6%8F%E6%B5%B7/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%B5%B7%E6%9C%88%E9%85%92%E5%BA%97+%E7%A6%8F%E6%B5%B7" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">海月酒店</a> <a href="https://map.baidu.com/search/%E6%B5%B7%E6%9C%88%E9%85%92%E5%BA%97%E7%A6%8F%E6%B5%B7/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%80%A1%E9%BE%99%E9%85%92%E5%BA%97+%E7%A6%8F%E6%B5%B7" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">怡龙酒店</a> <a href="https://map.baidu.com/search/%E6%80%A1%E9%BE%99%E9%85%92%E5%BA%97%E7%A6%8F%E6%B5%B7/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'③', lat:47.8500, lng:88.1300, emoji:'🏙️', type:'city',    color:'#f0a500',
-    day:{en:'Day 3',zh:'第3天'}, name:{en:'Altay City',zh:'阿勒泰市'},
-    desc:{en:'Morning mist on Wulungu Lake · G216 road · Kazakh pastures · Huahua Park · General Mountain cable car sunset',zh:'乌伦古湖晨雾 · G216公路 · 哈萨克牧场 · 花花公园 · 将军山缆车日落'},
-    food:{en:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market',zh:'早一家早餐：奶茶+包尔萨克 · 览湾夜市 · 五百夜市'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E4%BA%94%E7%99%BE%E9%87%8C+%E9%98%BF%E5%8B%92%E6%B3%B0" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">亚朵酒店·五百里</a> <a href="https://map.baidu.com/search/%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E4%BA%94%E7%99%BE%E9%87%8C%E9%98%BF%E5%8B%92%E6%B3%B0/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E7%8E%9B%E8%BF%AA%E5%B0%94%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97+%E9%98%BF%E5%8B%92%E6%B3%B0" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">玛迪尔花园酒店</a> <a href="https://map.baidu.com/search/%E7%8E%9B%E8%BF%AA%E5%B0%94%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97%E9%98%BF%E5%8B%92%E6%B3%B0/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'④', lat:48.3500, lng:86.5500, emoji:'🛖',  type:'village', color:'#10b981',
-    day:{en:'Day 4',zh:'第4天'}, name:{en:'Hemu Village',zh:'禾木村'},
-    desc:{en:'A-He Highway: Tolelhaite Grassland · Tongba Forest · River valley scenery · Rafting & forest hiking',zh:'阿禾公路：托勒海特草原 · 通巴林场 · 河谷风光 · 漂流&森林徒步'},
-    food:{en:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, yogurt, kvass',zh:'图瓦族家常菜：手抓羊肉、风干牛肉、酥油茶、酸奶、格瓦斯'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E7%A6%BE%E6%9C%A8%E6%99%B4%E6%AC%A2%E5%AE%A2%E6%A0%88+%E7%A6%BE%E6%9C%A8%E6%9D%91" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">禾木晴欢客栈</a> <a href="https://map.baidu.com/search/%E7%A6%BE%E6%9C%A8%E6%99%B4%E6%AC%A2%E5%AE%A2%E6%A0%88%E7%A6%BE%E6%9C%A8%E6%9D%91/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑤', lat:48.6800, lng:87.0000, emoji:'🏞️', type:'lake',    color:'#3b82f6',
-    day:{en:'Day 5',zh:'第5天'}, name:{en:'Kanas Lake',zh:'喀纳斯湖'},
-    desc:{en:'Dawn viewpoint: mist and smoke over fairy-tale village · Kanas Lake scenic area · Old Village free roam',zh:'清晨观景台：晨雾炊烟童话村 · 喀纳斯湖景区 · 老村自由漫游'},
-    food:{en:'Hotel dining recommended (limited options in park)',zh:'建议在酒店用餐（景区内选择有限）'},
-    stay:'<span style="color:#4ade80;font-weight:700;">✅ BOOKED</span> <a href="https://www.trip.com/m/hotels/detail/?hotelId=2165407&cityId=3327&isFromOrderDetailByClickHotel=1&checkIn=2026-09-03&checkOut=2026-09-04" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">喀纳斯回家·悠山雅居 (Kanas H Resort)</a> <a href="https://uri.amap.com/marker?position=87.15587,48.502556&name=喀纳斯回家·悠山雅居" target="_blank" style="color:#f87171;text-decoration:none;">🗺️Amap</a> <a href="https://www.baidu.com/s?wd=%E5%96%80%E7%BA%B3%E6%96%AF%E5%9B%9E%E5%AE%B6%C2%B7%E6%82%A0%E5%B1%B1%E9%9B%85%E5%B1%85+%E5%9C%B0%E5%9B%BE" target="_blank" style="color:#f87171;text-decoration:none;">🗺️Baidu</a> <a href="https://maps.google.com/?q=Kanas+H+Resort+喀纳斯回家悠山雅居+Burqin+Xinjiang" target="_blank" style="color:#34d399;text-decoration:none;">🗺️Google</a> · Triple Room · US$257.65 · Booking No: 1688898728551228 · <span style="color:#fbbf24;font-weight:700;">⚠️ Free cancellation before 17:00, 27 Aug 2026</span>' },
-  { num:'⑥', lat:47.7100, lng:86.8700, emoji:'🌅',  type:'city',    color:'#f0a500',
-    day:{en:'Day 6',zh:'第6天'}, name:{en:'Burqin',zh:'布尔津'},
-    desc:{en:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge',zh:'观鱼台 → 神仙湾 → 月亮湾 → 卧龙湾 · 驾车至布尔津 · 标志红桥'},
-    food:{en:'Irtysh Night Market: grilled pike, cold-water fish feast',zh:'额尔齐斯河夜市：烤狗鱼、冷水鱼盛宴'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%A4%9C%E5%85%89%E5%9F%8E%E9%85%92%E5%BA%97+%E5%B8%83%E5%B0%94%E6%B4%A5" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">夜光城酒店</a> <a href="https://map.baidu.com/search/%E5%A4%9C%E5%85%89%E5%9F%8E%E9%85%92%E5%BA%97%E5%B8%83%E5%B0%94%E6%B4%A5/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%B8%83%E5%B0%94%E6%B4%A5%E6%97%85%E6%B8%B8%E5%AE%BE%E9%A6%86+%E5%B8%83%E5%B0%94%E6%B4%A5" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">布尔津旅游宾馆</a> <a href="https://map.baidu.com/search/%E5%B8%83%E5%B0%94%E6%B4%A5%E6%97%85%E6%B8%B8%E5%AE%BE%E9%A6%86%E5%B8%83%E5%B0%94%E6%B4%A5/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E8%8B%8F%E9%80%9A%E5%81%87%E6%97%A5%E9%85%92%E5%BA%97+%E5%B8%83%E5%B0%94%E6%B4%A5" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">苏通假日酒店</a> <a href="https://map.baidu.com/search/%E8%8B%8F%E9%80%9A%E5%81%87%E6%97%A5%E9%85%92%E5%BA%97%E5%B8%83%E5%B0%94%E6%B4%A5/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑦', lat:46.0800, lng:84.6800, emoji:'🏙️', type:'city',    color:'#f0a500',
-    day:{en:'Day 7',zh:'第7天'}, name:{en:'Kuytun City',zh:'奎屯市'},
-    desc:{en:'Five-Coloured Beach → Ueerhe World Devil City (afternoon golden light) → Kuytun · ~450 km from Burqin',zh:'五彩滩 → 乌尔禾魔鬼城（下午金光）→ 奎屯 · 距布尔津约450公里'},
-    food:{en:'Kuytun: Cambodia Little Rooster, Wang Fei Big Plate Chicken, Yigan Qi pilaf, Wusu beer',zh:'奎屯：柬埔寨小公鸡、王飞大盘鸡、一缸七抓饭、乌苏啤酒'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97+%E5%A5%8E%E5%B1%AF" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">亚朵酒店</a> <a href="https://map.baidu.com/search/%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E5%A5%8E%E5%B1%AF/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E4%B8%87%E8%BE%BE%E7%BE%8E%E5%8D%8E%E9%85%92%E5%BA%97+%E5%A5%8E%E5%B1%AF" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">万达美华酒店</a> <a href="https://map.baidu.com/search/%E4%B8%87%E8%BE%BE%E7%BE%8E%E5%8D%8E%E9%85%92%E5%BA%97%E5%A5%8E%E5%B1%AF/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E7%BB%B4%E4%B9%9F%E7%BA%B3%E9%85%92%E5%BA%97+%E5%A5%8E%E5%B1%AF" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">维也纳酒店</a> <a href="https://map.baidu.com/search/%E7%BB%B4%E4%B9%9F%E7%BA%B3%E9%85%92%E5%BA%97%E5%A5%8E%E5%B1%AF/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑧', lat:44.6100, lng:81.1700, emoji:'💎',  type:'lake',    color:'#3b82f6',
-    day:{en:'Day 8',zh:'第8天'}, name:{en:'Sayram Lake',zh:'赛里木湖'},
-    desc:{en:"Lianhuo Expressway · Self-drive around the lake · Sunset over Sayram · Tianshan's highest lake",zh:'连霍高速 · 环湖自驾 · 赛里木湖日落 · 天山最高湖泊'},
-    food:{en:'Local cold-water fish: Coregonus peled (white salmon)',zh:'当地冷水鱼：高白鲑（白三文鱼）'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E8%B5%9B%E9%87%8C%E6%9C%A8%E6%B9%96%E6%A9%99%E5%AD%90%E9%85%92%E5%BA%97+%E5%8D%9A%E4%B9%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">赛里木湖橙子酒店</a> <a href="https://map.baidu.com/search/%E8%B5%9B%E9%87%8C%E6%9C%A8%E6%B9%96%E6%A9%99%E5%AD%90%E9%85%92%E5%BA%97%E5%8D%9A%E4%B9%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%B0%B4%E4%BA%91%E5%B1%B1%E9%93%82%E9%87%91%E9%85%92%E5%BA%97+%E5%8D%9A%E4%B9%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">水云山铂金酒店</a> <a href="https://map.baidu.com/search/%E6%B0%B4%E4%BA%91%E5%B1%B1%E9%93%82%E9%87%91%E9%85%92%E5%BA%97%E5%8D%9A%E4%B9%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑨', lat:44.3200, lng:84.8800, emoji:'⛽',  type:'highway', color:'#a855f7',
-    day:{en:'Day 9',zh:'第9天'}, name:{en:'Dushanzi District',zh:'独山子区'},
-    desc:{en:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum',zh:'再赏赛里木湖晨光 · 独山子大峡谷 · 独库公路零公里碑&博物馆'},
-    food:{en:'Yulan Bridge Big Plate Chicken (local favourite)',zh:'玉兰桥大盘鸡（当地名吃）'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%A4%A9%E6%A0%91%E5%9B%BD%E9%99%85%E5%A4%A7%E9%85%92%E5%BA%97+%E7%8B%AC%E5%B1%B1%E5%AD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">天树国际大酒店</a> <a href="https://map.baidu.com/search/%E5%A4%A9%E6%A0%91%E5%9B%BD%E9%99%85%E5%A4%A7%E9%85%92%E5%BA%97%E7%8B%AC%E5%B1%B1%E5%AD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%BE%B7%E8%8E%B1%E5%BE%B7%E9%85%92%E5%BA%97+%E7%8B%AC%E5%B1%B1%E5%AD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">德莱德酒店</a> <a href="https://map.baidu.com/search/%E5%BE%B7%E8%8E%B1%E5%BE%B7%E9%85%92%E5%BA%97%E7%8B%AC%E5%B1%B1%E5%AD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%A4%A9%E8%8B%91%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97+%E7%8B%AC%E5%B1%B1%E5%AD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">天苑国际酒店</a> <a href="https://map.baidu.com/search/%E5%A4%A9%E8%8B%91%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97%E7%8B%AC%E5%B1%B1%E5%AD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑩', lat:43.3500, lng:83.7000, emoji:'🌿',  type:'village', color:'#10b981',
-    day:{en:'Day 10',zh:'第10天'}, name:{en:'Nalati Town',zh:'那拉提镇'},
-    desc:{en:'Duku Highway North: Sentry Stone · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Valley',zh:'独库公路北段：天山哨兵石 · 哈希勒根达坂 · 乔尔玛烈士陵园 · 唐布拉河谷'},
-    food:{en:'Road-side simple lunch · Nalati: Daidai Pilaf King (local lamb leg rice)',zh:'路边简单午餐 · 那拉提：待待抓饭王（羊腿饭）'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">乌孙页岩艺术民宿</a> <a href="https://map.baidu.com/search/%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E9%82%A3%E6%8B%89%E6%8F%90%E7%A9%BA%E4%B8%AD%E8%8D%89%E5%8E%9F%E5%BA%A6%E5%81%87%E6%9D%91+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">那拉提空中草原度假村</a> <a href="https://map.baidu.com/search/%E9%82%A3%E6%8B%89%E6%8F%90%E7%A9%BA%E4%B8%AD%E8%8D%89%E5%8E%9F%E5%BA%A6%E5%81%87%E6%9D%91%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑪', lat:43.3500, lng:83.7000, emoji:'🐎',  type:'village', color:'#10b981',
-    day:{en:'Day 11',zh:'第11天'}, name:{en:'Nalati Grassland',zh:'那拉提草原'},
-    desc:{en:'Sky Grassland · River Valley Grassland · Horseback ride through forests · Steppe sunset · Bonfire',zh:'空中草原 · 河谷草原 · 骑马穿越森林 · 草原日落 · 营地篝火'},
-    food:{en:'Local restaurant: clear-simmered lamb with green onions, grassland flavours',zh:'当地餐厅：葱烧羊肉清炖，草原风味'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">乌孙页岩艺术民宿</a> <a href="https://map.baidu.com/search/%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> (continued)' },
-  { num:'⑫', lat:41.7100, lng:82.9600, emoji:'🕌',  type:'city',    color:'#f0a500',
-    day:{en:'Day 12',zh:'第12天'}, name:{en:'Kuqa City',zh:'库车市'},
-    desc:{en:'Duku Highway South → Bayanbulak Grassland · Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa',zh:'独库公路南段 → 巴音布鲁克草原 · 大小龙池 · 天山神秘大峡谷 · 抵达库车'},
-    food:{en:'Kuqa Giant Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs',zh:'库车大馕城 · 本地抓饭 · 夜市：烤鸽子、烤鸡蛋、烤肉串'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97+%E5%BA%93%E8%BD%A6" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">库车天苑大酒店</a> <a href="https://map.baidu.com/search/%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97%E5%BA%93%E8%BD%A6/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> (convenient location, rich breakfast)' },
-  { num:'⑬', lat:41.7200, lng:82.9700, emoji:'🏛️', type:'city',    color:'#f0a500',
-    day:{en:'Day 13',zh:'第13天'}, name:{en:'Kuqa Old City',zh:'库车古城'},
-    desc:{en:'Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road bazaar · Kezierqiaha Beacon Tower',zh:'龟兹古城 · 库车大清真寺 · 热斯坦路巴扎 · 克孜尔尕哈烽燧'},
-    food:{en:'Jar-braised mutton · Rice sausage with lung noodles · Baked lamb buns',zh:'坛子肉 · 米肠子肺面条 · 烤包子'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97+%E5%BA%93%E8%BD%A6" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">库车天苑大酒店</a> <a href="https://map.baidu.com/search/%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97%E5%BA%93%E8%BD%A6/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> (continued)' },
-  { num:'⑭', lat:41.7600, lng:86.1400, emoji:'🍐',  type:'city',    color:'#f0a500',
-    day:{en:'Day 14',zh:'第14天'}, name:{en:'Korla City',zh:'库尔勒市'},
-    desc:{en:'G217 → G3012 · Tiemen Pass · Bosten Lake afternoon · Peacock River night walk · Korla fragrant pears',zh:'G217→G3012 · 铁门关 · 下午博斯腾湖 · 夜游孔雀河 · 库尔勒香梨'},
-    food:{en:'Xiangli Restaurant: big plate chicken, roast whole lamb · Korla No.1 Naan',zh:'香梨餐厅：大盘鸡、烤全羊 · 一号馕坑：烤羊排、酸奶包子'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%88%A9%E5%9F%8E%E7%99%BE%E5%90%88%E9%85%92%E5%BA%97+%E5%BA%93%E5%B0%94%E5%8B%92" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">利城百合酒店</a> <a href="https://map.baidu.com/search/%E5%88%A9%E5%9F%8E%E7%99%BE%E5%90%88%E9%85%92%E5%BA%97%E5%BA%93%E5%B0%94%E5%8B%92/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%BA%B7%E5%9F%8E%E5%BB%BA%E5%9B%BD%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97+%E5%BA%93%E5%B0%94%E5%8B%92" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">康城建国国际酒店</a> <a href="https://map.baidu.com/search/%E5%BA%B7%E5%9F%8E%E5%BB%BA%E5%9B%BD%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97%E5%BA%93%E5%B0%94%E5%8B%92/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { num:'⑮', lat:43.8200, lng:87.6200, emoji:'🏙️', type:'end',     color:'#ef4444',
-    day:{en:'Day 15',zh:'第15天'}, name:{en:'Urumqi (Return)',zh:'乌鲁木齐（返程）'},
-    desc:{en:"G0712 Victory Tunnel Highway · Baluntai Yellow Temple · World's longest road tunnel · Return car",zh:'G0712胜利隧道高速 · 巴仑台黄庙 · 亚洲最长公路隧道 · 还车'},
-    food:{en:'Free choice in Urumqi for last night dinner',zh:'乌鲁木齐最后晚餐自由选择'},
-    stay:'Hotel of your choice · Return rental car' },
-  { num:'⑯', lat:43.9600, lng:87.5500, emoji:'✈️',  type:'end',     color:'#ef4444',
-    day:{en:'Day 16',zh:'第16天'}, name:{en:'Urumqi Airport',zh:'乌鲁木齐机场'},
-    desc:{en:'✈️ URC → SIN · Depart 19:15, Arrive SIN 06:50 on 15 Sep · End of 16-day Xinjiang self-drive!',zh:'✈️ URC→SIN · 起飞19:15，9月15日06:50抵达新加坡 · 16天新疆自驾圆满结束！'},
-    food:{en:'Airport dining · In-flight meal',zh:'机场用餐 · 飞机餐'},
-    stay:'Arrive Singapore 06:50+1 — trip complete!' }
+// ── ALL STOPS DATA ──
+const stops = [
+  // Day 1
+  { lat: 45.60, lng: 84.87, day: 1, num: 'S', name: 'Dushanzi 独山子', desc: 'Start · North entry of Duku Highway', color: '#3b82f6' },
+  { lat: 43.89, lng: 84.11, day: 1, num: '1', name: 'Dushanzi Grand Canyon 独山子大峡谷', desc: 'Red rock gorge', color: '#3b82f6' },
+  { lat: 43.38, lng: 83.72, day: 1, num: '2', name: 'Hashilagen Pass 哈希勒根达坂', desc: '~3,600m · Snow mountain pass', color: '#3b82f6' },
+  { lat: 43.11, lng: 83.41, day: 1, num: '3', name: 'Qiaerma 乔尔玛', desc: 'Day 1 Overnight', color: '#8b5cf6' },
+  // Day 2
+  { lat: 43.05, lng: 84.10, day: 2, num: '4', name: 'Nalati Grasslands 那拉提', desc: '⭐ Sky grassland · Kazakh nomads', color: '#10b981' },
+  { lat: 42.72, lng: 83.42, day: 2, num: '5', name: 'Bayanbulak 巴音布鲁克', desc: '⭐ Day 2 Overnight · Swan Lake · Nine-Bend River', color: '#8b5cf6' },
+  // Day 3
+  { lat: 42.53, lng: 83.30, day: 3, num: '6', name: 'Tianshan Stone Forest 天山石林', desc: '⚠️ Off-road section required', color: '#f59e0b' },
+  { lat: 42.20, lng: 83.05, day: 3, num: '7', name: 'South Tianshan Straight Road 南天山直道', desc: 'Iconic straight road', color: '#f59e0b' },
+  { lat: 42.08, lng: 83.52, day: 3, num: '8', name: 'Daxiao Longchi 大小龙池', desc: 'Twin alpine dragon lakes', color: '#f59e0b' },
+  { lat: 41.95, lng: 83.62, day: 3, num: '9', name: 'Tianshan Grand Canyon 天山大峡谷', desc: '⭐ Kiziliya red canyon', color: '#f59e0b' },
+  { lat: 41.78, lng: 83.50, day: 3, num: '10', name: 'Red Rock Forest 红山石林', desc: 'Red sandstone pillars', color: '#f59e0b' },
+  { lat: 41.72, lng: 82.96, day: 3, num: 'E', name: 'Kuqa 库车', desc: 'End · Ancient Silk Road city', color: '#ef4444' },
 ];
 
-// ── MAP SETUP ────────────────────────────────────────────────────
-const map = L.map('map', { zoomControl: true }).setView([44.5, 85.5], 6);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO', maxZoom: 19
-}).addTo(map);
+const dayColors = { 1: '#3b82f6', 2: '#10b981', 3: '#f59e0b' };
 
-// ── ROAD ROUTING via OSRM (client-side fetch) ─────────────────────
-// Each segment fetched from OSRM public API; falls back to straight line if unavailable
-const routeStyle = { color: '#f0a500', weight: 2.8, opacity: 0.82, dashArray: '8,4' };
-const routeLayers = [];
-let completedSegs = 0;
-
-async function fetchSegment(fromStop, toStop, idx) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${fromStop.lng},${fromStop.lat};${toStop.lng},${toStop.lat}?overview=full&geometries=geojson`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.code === 'Ok') {
-      const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-      return coords;
-    }
-  } catch(e) {}
-  // fallback: straight line
-  return [[fromStop.lat, fromStop.lng], [toStop.lat, toStop.lng]];
-}
-
-async function buildRoads() {
-  const statusEl = document.getElementById('route-status');
-
-  // Safety guard — catch variable name bugs early
-  if (!stopsData || stopsData.length === 0) {
-    statusEl.style.display = 'block';
-    statusEl.style.background = 'rgba(239,68,68,0.85)';
-    statusEl.style.borderColor = '#ef4444';
-    statusEl.style.color = '#fff';
-    statusEl.textContent = '❌ Route error: stopsData missing!';
-    return;
-  }
-
-  statusEl.style.display = 'block';
-  const total = stopsData.length - 1;
-  let loaded = 0, failed = 0;
-
-  for (let i = 0; i < total; i++) {
-    statusEl.textContent = `Loading routes… ${i+1}/${total}`;
-    const coords = await fetchSegment(stopsData[i], stopsData[i+1], i);
-    // Detect if it fell back to straight line (only 2 points)
-    if (coords.length === 2) failed++;
-    else loaded++;
-    const layer = L.polyline(coords, routeStyle).addTo(map);
-    routeLayers.push(layer);
-    completedSegs++;
-  }
-
-  // Show persistent route count
-  const allOk = failed === 0;
-  statusEl.style.background = allOk ? 'rgba(16,185,129,0.15)' : 'rgba(240,165,0,0.15)';
-  statusEl.style.borderColor = allOk ? 'rgba(16,185,129,0.5)' : 'rgba(240,165,0,0.5)';
-  statusEl.style.color = allOk ? '#10b981' : '#f0a500';
-  statusEl.textContent = allOk
-    ? `✅ ${total}/${total} routes loaded`
-    : `⚠️ ${loaded}/${total} routes loaded (${failed} straight-line)`;
-  // Auto-hide after 6 seconds
-  setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
-}
-
-buildRoads();
-
-
-// ── MARKERS (bilingual, rebuilt on lang switch) ──────────────────
-const markers = [];
-function buildMarkers() {
-  markers.forEach(m => map.removeLayer(m));
-  markers.length = 0;
-  const lang = currentLang;
-  const g = v => (v && typeof v === 'object') ? v[lang] : v;
-  stopsData.forEach((s, i) => {
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:28px;height:28px;border-radius:50%;background:${s.color};border:2.5px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${i+1}</div>`,
-      iconSize: [28,28], iconAnchor: [14,14]
-    });
-    const m = L.marker([s.lat, s.lng], { icon })
-      .addTo(map)
-      .bindPopup(`
-        <div class="popup-day">${g(s.day)}</div>
-        <div class="popup-name">${s.emoji} ${g(s.name)}</div>
-        <div class="popup-desc">${g(s.desc)}</div>
-        <div class="popup-food">🍜 ${g(s.food)}</div>
-        <div class="popup-stay">🏨 ${s.stay}</div>
-      `);
-    markers.push(m);
-  });
-}
-buildMarkers();
-
-// ── STOP LIST (bilingual, rebuilt on lang switch) ────────────────
-const listEl = document.getElementById('stop-list');
-function buildStopList() {
-  listEl.innerHTML = '';
-  const lang = currentLang;
-  const g = v => (v && typeof v === 'object') ? v[lang] : v;
-  const tagMap   = { start:'tag-start', city:'tag-city', lake:'tag-lake', village:'tag-village', highway:'tag-highway', end:'tag-end' };
-  const tagLabel = { start:lang==='zh'?'起点':'Start', city:lang==='zh'?'城市':'City', lake:lang==='zh'?'湖泊':'Lake', village:lang==='zh'?'村庄/草原':'Village/Grassland', highway:lang==='zh'?'公路关口':'Highway Gate', end:lang==='zh'?'终点':'End' };
-  stopsData.forEach((s, i) => {
-    const div = document.createElement('div');
-    div.className = 'stop-item';
-    div.innerHTML = `
-      <div class="stop-num" style="background:${s.color};color:#fff">${i+1}</div>
-      <div class="stop-info">
-        <div class="stop-name">${s.emoji} ${g(s.name)}<span class="stop-tag ${tagMap[s.type]}">${tagLabel[s.type]}</span></div>
-        <div class="stop-desc">${g(s.desc).split('·')[0].trim()}</div>
-        <div class="stop-km">${g(s.day)}</div>
-      </div>`;
-    div.addEventListener('click', () => {
-      map.flyTo([s.lat, s.lng], 9, { duration: 1 });
-      markers[i] && markers[i].openPopup();
-    });
-    listEl.appendChild(div);
-  });
-}
-buildStopList();
-
-
-// ── ITINERARY (EN/ZH bilingual) ─────────────────────────────────
-function toggleLang() {
-  currentLang = currentLang === 'en' ? 'zh' : 'en';
-  document.getElementById('lang-btn').textContent = currentLang === 'en' ? '中文' : 'EN';
-  renderItin();
-  buildMarkers();
-  buildStopList();
-}
-
-const itinData = [
-  { day:{en:'Day 1',zh:'第1天'}, date:'30 Aug',
-    title:{en:'Urumqi — Assembly Day',zh:'乌鲁木齐 — 集合日'},
-    route:{en:'Arrive Urumqi (URC)',zh:'抵达乌鲁木齐 (URC)'},
-    activity:{en:'Collect rental car · Stock up on snacks, water, sunscreen · Xinjiang Uyghur Autonomous Region Museum (mummies & painted pottery) · Evening at Consulate Lane / International Grand Bazaar',zh:'取租车 · 采购零食/水/防晒霜 · 新疆维吾尔自治区博物馆（木乃伊&彩陶）· 晚游领事巷/国际大巴扎'},
-    food:{en:'Mukam Restaurant: thin-skin dumplings, pilaf · Abula Naan + kebabs · Hetian 2nd Street snacks',zh:'木卡姆餐厅：薄皮包子、抓饭 · 阿不拉馕+烤串 · 和田二街小吃'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97+%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">亚朵酒店</a> <a href="https://map.baidu.com/search/%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E8%8A%B1%E8%AF%9E%E7%A7%98%E5%A2%83%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97+%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">花诞秘境花园酒店</a> <a href="https://map.baidu.com/search/%E8%8A%B1%E8%AF%9E%E7%A7%98%E5%A2%83%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%85%AD%E9%94%A6%E8%89%BA%E6%9C%AF%E9%85%92%E5%BA%97+%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">六锦艺术酒店</a> <a href="https://map.baidu.com/search/%E5%85%AD%E9%94%A6%E8%89%BA%E6%9C%AF%E9%85%92%E5%BA%97%E4%B9%8C%E9%B2%81%E6%9C%A8%E9%BD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 2',zh:'第2天'}, date:'31 Aug',
-    title:{en:'Urumqi → Wulungu Lake',zh:'乌鲁木齐 → 乌伦古湖'},
-    route:{en:'~400 km / ~5h via S21 Desert Highway',zh:'约400公里/约5小时，走S21沙漠公路'},
-    activity:{en:'Drive S21 Awu Expressway through Gurbantunggut Desert (famous road) · Afternoon: Wulungu Lake Golden Coast · "Gobi Sea" sunset',zh:'走S21阿乌高速穿越古尔班通古特沙漠（网红公路）· 下午游乌伦古湖黄金海岸 · "戈壁海"日落'},
-    food:{en:'Fuhai County: lakeside restaurant whole lake fish, deep-fried five-spot black',zh:'福海县：湖边餐厅全鱼宴、油炸五道黑'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E7%A6%8F%E6%B5%B7%E8%BF%8E%E5%AE%BE%E9%A6%86+%E7%A6%8F%E6%B5%B7" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">福海迎宾馆</a> <a href="https://map.baidu.com/search/%E7%A6%8F%E6%B5%B7%E8%BF%8E%E5%AE%BE%E9%A6%86%E7%A6%8F%E6%B5%B7/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%B5%B7%E6%9C%88%E9%85%92%E5%BA%97+%E7%A6%8F%E6%B5%B7" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">海月酒店</a> <a href="https://map.baidu.com/search/%E6%B5%B7%E6%9C%88%E9%85%92%E5%BA%97%E7%A6%8F%E6%B5%B7/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%80%A1%E9%BE%99%E9%85%92%E5%BA%97+%E7%A6%8F%E6%B5%B7" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">怡龙酒店</a> <a href="https://map.baidu.com/search/%E6%80%A1%E9%BE%99%E9%85%92%E5%BA%97%E7%A6%8F%E6%B5%B7/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 3',zh:'第3天'}, date:'1 Sep',
-    title:{en:'Wulungu Lake → Altay City',zh:'乌伦古湖 → 阿勒泰市'},
-    route:{en:'~200 km / ~3h via G216',zh:'约200公里/约3小时，走G216'},
-    activity:{en:'Early morning lake mist photos · G216 road with Kazakh pastures · Altay Huahua Park · General Mountain cable car for sunset party (if clear)',zh:'清晨拍湖面晨雾 · G216沿途哈萨克牧场 · 阿勒泰花花公园 · 将军山缆车看日落派对（晴天）'},
-    food:{en:'Early One Breakfast: milk tea + baursakhs · Lanwan Night Market · Wubai Night Market',zh:'早一家早餐：奶茶+包尔萨克 · 览湾夜市 · 五百夜市'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E4%BA%94%E7%99%BE%E9%87%8C+%E9%98%BF%E5%8B%92%E6%B3%B0" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">亚朵酒店·五百里</a> <a href="https://map.baidu.com/search/%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E4%BA%94%E7%99%BE%E9%87%8C%E9%98%BF%E5%8B%92%E6%B3%B0/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E7%8E%9B%E8%BF%AA%E5%B0%94%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97+%E9%98%BF%E5%8B%92%E6%B3%B0" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">玛迪尔花园酒店</a> <a href="https://map.baidu.com/search/%E7%8E%9B%E8%BF%AA%E5%B0%94%E8%8A%B1%E5%9B%AD%E9%85%92%E5%BA%97%E9%98%BF%E5%8B%92%E6%B3%B0/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 4',zh:'第4天'}, date:'2 Sep',
-    title:{en:'Altay → A-He Highway → Hemu Village',zh:'阿勒泰 → 阿禾公路 → 禾木村'},
-    route:{en:'~210 km / ~5h via A-He Highway',zh:'约210公里/约5小时，走阿禾公路'},
-    activity:{en:'Tolelhaite Great Grassland · Tongba Forest · River valley scenery all the way · Arrive Hemu village by dusk · Evening riverside walk · Rafting & forest hike · White birch forest sunset · Stargazing at night',zh:'托勒海特大草原 · 通巴林场 · 一路河谷风光 · 傍晚抵禾木村 · 晚间河边漫步 · 漂流&森林徒步 · 白桦林日落 · 夜晚观星'},
-    food:{en:'Tuvan family cooking: hand-pulled mutton, wind-dried beef, butter tea, yogurt, kvass',zh:'图瓦族家常菜：手抓羊肉、风干牛肉、酥油茶、酸奶、格瓦斯'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E7%A6%BE%E6%9C%A8%E6%99%B4%E6%AC%A2%E5%AE%A2%E6%A0%88+%E7%A6%BE%E6%9C%A8%E6%9D%91" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">禾木晴欢客栈</a> <a href="https://map.baidu.com/search/%E7%A6%BE%E6%9C%A8%E6%99%B4%E6%AC%A2%E5%AE%A2%E6%A0%88%E7%A6%BE%E6%9C%A8%E6%9D%91/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 5',zh:'第5天'}, date:'3 Sep',
-    title:{en:'Hemu Village → Kanas Lake',zh:'禾木村 → 喀纳斯湖'},
-    route:{en:'~70 km / ~2h',zh:'约70公里/约2小时'},
-    activity:{en:'Dawn viewpoint: mist, smoke, fairy-tale village · Kanas Lake scenic area · Old Village free exploration · <a href="https://uri.amap.com/marker?position=87.0022,48.6711&name=喀纳斯湖" target="_blank" style="color:#f87171;text-decoration:none;">🗺️Amap</a> <a href="https://www.baidu.com/s?wd=%E5%96%80%E7%BA%B3%E6%96%AF%E6%B9%96+%E5%9C%B0%E5%9B%BE" target="_blank" style="color:#f87171;text-decoration:none;">🗺️Baidu</a> <a href="https://maps.google.com/?q=Kanas+Lake+Xinjiang" target="_blank" style="color:#34d399;text-decoration:none;">🗺️Google</a>',zh:'清晨观景台：晨雾炊烟童话村 · 喀纳斯湖景区 · 老村自由漫游'},
-    food:{en:'Hotel dining recommended (limited park options)',zh:'建议在酒店用餐（景区内选择有限）'},
-    stay:'<span style="color:#4ade80;font-weight:700;">✅ BOOKED</span> <a href="https://www.trip.com/m/hotels/detail/?hotelId=2165407&cityId=3327&isFromOrderDetailByClickHotel=1&checkIn=2026-09-03&checkOut=2026-09-04" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">喀纳斯回家·悠山雅居 (Kanas H Resort)</a> <a href="https://uri.amap.com/marker?position=87.15587,48.502556&name=喀纳斯回家·悠山雅居" target="_blank" style="color:#f87171;text-decoration:none;">🗺️Amap</a> <a href="https://www.baidu.com/s?wd=%E5%96%80%E7%BA%B3%E6%96%AF%E5%9B%9E%E5%AE%B6%C2%B7%E6%82%A0%E5%B1%B1%E9%9B%85%E5%B1%85+%E5%9C%B0%E5%9B%BE" target="_blank" style="color:#f87171;text-decoration:none;">🗺️Baidu</a> <a href="https://maps.google.com/?q=Kanas+H+Resort+喀纳斯回家悠山雅居+Burqin+Xinjiang" target="_blank" style="color:#34d399;text-decoration:none;">🗺️Google</a> · Triple Room · US$257.65 · Booking No: 1688898728551228 · <span style="color:#fbbf24;font-weight:700;">⚠️ Free cancellation before 17:00, 27 Aug 2026</span>' },
-  { day:{en:'Day 6',zh:'第6天'}, date:'4 Sep',
-    title:{en:'Kanas → Burqin',zh:'喀纳斯 → 布尔津'},
-    route:{en:'Drive from Jiadengyu to Burqin',zh:'从贾登峪驾车至布尔津'},
-    activity:{en:'Observation Pavilion → Fairy Bay → Moon Bay → Crouching Dragon Bay · Drive to Burqin · Iconic Red Bridge · Russian-style street',zh:'观鱼台 → 神仙湾 → 月亮湾 → 卧龙湾 · 驾车至布尔津 · 标志红桥 · 俄罗斯风情街'},
-    food:{en:'Irtysh Night Market: grilled pike, cold-water fish feast',zh:'额尔齐斯河夜市：烤狗鱼、冷水鱼盛宴'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%A4%9C%E5%85%89%E5%9F%8E%E9%85%92%E5%BA%97+%E5%B8%83%E5%B0%94%E6%B4%A5" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">夜光城酒店</a> <a href="https://map.baidu.com/search/%E5%A4%9C%E5%85%89%E5%9F%8E%E9%85%92%E5%BA%97%E5%B8%83%E5%B0%94%E6%B4%A5/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%B8%83%E5%B0%94%E6%B4%A5%E6%97%85%E6%B8%B8%E5%AE%BE%E9%A6%86+%E5%B8%83%E5%B0%94%E6%B4%A5" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">布尔津旅游宾馆</a> <a href="https://map.baidu.com/search/%E5%B8%83%E5%B0%94%E6%B4%A5%E6%97%85%E6%B8%B8%E5%AE%BE%E9%A6%86%E5%B8%83%E5%B0%94%E6%B4%A5/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E8%8B%8F%E9%80%9A%E5%81%87%E6%97%A5%E9%85%92%E5%BA%97+%E5%B8%83%E5%B0%94%E6%B4%A5" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">苏通假日酒店</a> <a href="https://map.baidu.com/search/%E8%8B%8F%E9%80%9A%E5%81%87%E6%97%A5%E9%85%92%E5%BA%97%E5%B8%83%E5%B0%94%E6%B4%A5/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 7',zh:'第7天'}, date:'5 Sep',
-    title:{en:'Burqin → Ueerhe → Kuytun',zh:'布尔津 → 乌尔禾 → 奎屯'},
-    route:{en:'~450 km / ~6h',zh:'约450公里/约6小时'},
-    activity:{en:'Five-Coloured Beach (morning) · Ueerhe World Devil City (after 17:00 for golden light & sunset) · Night arrival Kuytun',zh:'五彩滩（上午）· 乌尔禾魔鬼城（17时后赏金光&日落）· 夜间抵奎屯'},
-    food:{en:'Ueerhe: Auwudan lamb-joint pilaf · Kuytun: Cambodia Rooster, Wang Fei Chicken, Wusu beer',zh:'乌尔禾：奥吾旦羊排抓饭 · 奎屯：柬埔寨小公鸡、王飞大盘鸡、乌苏啤酒'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97+%E5%A5%8E%E5%B1%AF" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">亚朵酒店</a> <a href="https://map.baidu.com/search/%E4%BA%9A%E6%9C%B5%E9%85%92%E5%BA%97%E5%A5%8E%E5%B1%AF/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E4%B8%87%E8%BE%BE%E7%BE%8E%E5%8D%8E%E9%85%92%E5%BA%97+%E5%A5%8E%E5%B1%AF" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">万达美华酒店</a> <a href="https://map.baidu.com/search/%E4%B8%87%E8%BE%BE%E7%BE%8E%E5%8D%8E%E9%85%92%E5%BA%97%E5%A5%8E%E5%B1%AF/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E7%BB%B4%E4%B9%9F%E7%BA%B3%E9%85%92%E5%BA%97+%E5%A5%8E%E5%B1%AF" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">维也纳酒店</a> <a href="https://map.baidu.com/search/%E7%BB%B4%E4%B9%9F%E7%BA%B3%E9%85%92%E5%BA%97%E5%A5%8E%E5%B1%AF/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 8',zh:'第8天'}, date:'6 Sep',
-    title:{en:'Kuytun → Sayram Lake Circuit',zh:'奎屯 → 赛里木湖环线'},
-    route:{en:'~420 km via Lianhuo Expressway + lakeside loop road',zh:'约420公里，走连霍高速+环湖公路'},
-    activity:{en:"Full lake circuit drive · Sunset over Sayram Lake · Tianshan's highest lake at 2,073 m",zh:'环湖自驾 · 赛里木湖日落 · 天山最高湖泊，海拔2073米'},
-    food:{en:'Local cold-water fish: Coregonus peled (white salmon)',zh:'当地冷水鱼：高白鲑（白三文鱼）'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E8%B5%9B%E9%87%8C%E6%9C%A8%E6%B9%96%E6%A9%99%E5%AD%90%E9%85%92%E5%BA%97+%E5%8D%9A%E4%B9%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">赛里木湖橙子酒店</a> <a href="https://map.baidu.com/search/%E8%B5%9B%E9%87%8C%E6%9C%A8%E6%B9%96%E6%A9%99%E5%AD%90%E9%85%92%E5%BA%97%E5%8D%9A%E4%B9%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%B0%B4%E4%BA%91%E5%B1%B1%E9%93%82%E9%87%91%E9%85%92%E5%BA%97+%E5%8D%9A%E4%B9%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">水云山铂金酒店</a> <a href="https://map.baidu.com/search/%E6%B0%B4%E4%BA%91%E5%B1%B1%E9%93%82%E9%87%91%E9%85%92%E5%BA%97%E5%8D%9A%E4%B9%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 9',zh:'第9天'}, date:'7 Sep',
-    title:{en:'Sayram Lake → Dushanzi District',zh:'赛里木湖 → 独山子区'},
-    route:{en:'~350 km via G30 + Kuytun Expressway',zh:'约350公里，走G30+奎屯高速'},
-    activity:{en:'Dawn reprise at Sayram Lake · Dushanzi Grand Canyon · Duku Highway Km-0 Monument & Museum · Fill full tank — Duku prep',zh:'再赏赛里木湖晨光 · 独山子大峡谷 · 独库公路零公里碑&博物馆 · 加满油——备战独库'},
-    food:{en:'Yulan Bridge Big Plate Chicken + belt noodles (local favourite)',zh:'玉兰桥大盘鸡+皮带面（当地名吃）'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%A4%A9%E6%A0%91%E5%9B%BD%E9%99%85%E5%A4%A7%E9%85%92%E5%BA%97+%E7%8B%AC%E5%B1%B1%E5%AD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">天树国际大酒店</a> <a href="https://map.baidu.com/search/%E5%A4%A9%E6%A0%91%E5%9B%BD%E9%99%85%E5%A4%A7%E9%85%92%E5%BA%97%E7%8B%AC%E5%B1%B1%E5%AD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%BE%B7%E8%8E%B1%E5%BE%B7%E9%85%92%E5%BA%97+%E7%8B%AC%E5%B1%B1%E5%AD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">德莱德酒店</a> <a href="https://map.baidu.com/search/%E5%BE%B7%E8%8E%B1%E5%BE%B7%E9%85%92%E5%BA%97%E7%8B%AC%E5%B1%B1%E5%AD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%A4%A9%E8%8B%91%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97+%E7%8B%AC%E5%B1%B1%E5%AD%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">天苑国际酒店</a> <a href="https://map.baidu.com/search/%E5%A4%A9%E8%8B%91%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97%E7%8B%AC%E5%B1%B1%E5%AD%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 10',zh:'第10天'}, date:'8 Sep',
-    title:{en:'Dushanzi → Duku Highway North → Nalati',zh:'独山子 → 独库公路北段 → 那拉提'},
-    route:{en:'~full day / ~350 km · PRE-BOOK PERMIT REQUIRED',zh:'全天行程/约350公里 · 须提前预约通行证'},
-    activity:{en:'Full tank before departure · Sentry Tianshan Stele · Hashilagen Pass · Qiaerma Martyrs Cemetery · Tangbula Hundred-Mile Gallery · Arrive Nalati town at dusk',zh:'出发前加满油 · 天山哨兵石碑 · 哈希勒根达坂 · 乔尔玛烈士陵园 · 唐布拉百里画廊 · 傍晚抵那拉提镇'},
-    food:{en:'Simple road-side lunch · Nalati: Daidai Pilaf King — lamb leg rice',zh:'路边简单午餐 · 那拉提：待待抓饭王——羊腿饭'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">乌孙页岩艺术民宿</a> <a href="https://map.baidu.com/search/%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E9%82%A3%E6%8B%89%E6%8F%90%E7%A9%BA%E4%B8%AD%E8%8D%89%E5%8E%9F%E5%BA%A6%E5%81%87%E6%9D%91+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">那拉提空中草原度假村</a> <a href="https://map.baidu.com/search/%E9%82%A3%E6%8B%89%E6%8F%90%E7%A9%BA%E4%B8%AD%E8%8D%89%E5%8E%9F%E5%BA%A6%E5%81%87%E6%9D%91%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E6%96%B0%E6%97%85%E9%82%A3%E6%8B%89%E6%8F%90%E5%BA%A6%E5%81%87%E6%9D%91+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">新旅那拉提度假村</a> <a href="https://map.baidu.com/search/%E6%96%B0%E6%97%85%E9%82%A3%E6%8B%89%E6%8F%90%E5%BA%A6%E5%81%87%E6%9D%91%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 11',zh:'第11天'}, date:'9 Sep',
-    title:{en:'Nalati Grassland — Full Day',zh:'那拉提草原 — 全天'},
-    route:{en:'Stay in Nalati area',zh:'留在那拉提地区'},
-    activity:{en:'Sky Grassland · River Valley Grassland · Horseback ride through forests · Steppe sunset · Evening bonfire at lodge',zh:'空中草原 · 河谷草原 · 骑马穿越森林 · 草原日落 · 晚间营地篝火'},
-    food:{en:'Local restaurant: clear-simmered lamb with green onions, grassland flavours',zh:'当地餐厅：葱烧羊肉清炖，草原风味'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF+%E6%96%B0%E6%BA%90" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">乌孙页岩艺术民宿</a> <a href="https://map.baidu.com/search/%E4%B9%8C%E5%AD%99%E9%A1%B5%E5%B2%A9%E8%89%BA%E6%9C%AF%E6%B0%91%E5%AE%BF%E6%96%B0%E6%BA%90/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> (continued)' },
-  { day:{en:'Day 12',zh:'第12天'}, date:'10 Sep',
-    title:{en:'Nalati → Duku Highway South → Kuqa',zh:'那拉提 → 独库公路南段 → 库车'},
-    route:{en:'~350 km / ~6h',zh:'约350公里/约6小时'},
-    activity:{en:'Bayanbulak Grassland · Large & Small Dragon Pools · Tianshan Mystery Grand Canyon · Arrive Kuqa City by evening',zh:'巴音布鲁克草原 · 大小龙池 · 天山神秘大峡谷 · 傍晚抵库车市'},
-    food:{en:'Kuqa Giant Naan City · local pilaf · Night market: roast pigeon, roast egg, kebabs — great value',zh:'库车大馕城 · 本地抓饭 · 夜市：烤鸽子、烤鸡蛋、烤肉串——超值'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97+%E5%BA%93%E8%BD%A6" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">库车天苑大酒店</a> <a href="https://map.baidu.com/search/%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97%E5%BA%93%E8%BD%A6/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> (convenient location, rich breakfast)' },
-  { day:{en:'Day 13',zh:'第13天'}, date:'11 Sep',
-    title:{en:'Kuqa Old City — Deep Dive',zh:'库车古城 — 深度游'},
-    route:{en:'Stay in Kuqa',zh:'留在库车'},
-    activity:{en:'Qiuci Ancient City · Kuqa Grand Mosque · Resttan Road bazaar · Afternoon: Kezierqiaha Beacon Tower · Old city golden hour sunset',zh:'龟兹古城 · 库车大清真寺 · 热斯坦路巴扎 · 下午：克孜尔尕哈烽燧 · 古城黄金时刻日落'},
-    food:{en:'Jar-braised mutton · Rice sausage with lung noodles · Baked lamb buns — authentic Silk Road street food',zh:'坛子肉 · 米肠子肺面条 · 烤包子——正宗丝路街头美食'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97+%E5%BA%93%E8%BD%A6" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">库车天苑大酒店</a> <a href="https://map.baidu.com/search/%E5%BA%93%E8%BD%A6%E5%A4%A9%E8%8B%91%E5%A4%A7%E9%85%92%E5%BA%97%E5%BA%93%E8%BD%A6/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> (continued)' },
-  { day:{en:'Day 14',zh:'第14天'}, date:'12 Sep',
-    title:{en:'Kuqa → Korla City',zh:'库车 → 库尔勒市'},
-    route:{en:'~300 km / ~4h via G217 → G3012',zh:'约300公里/约4小时，走G217→G3012'},
-    activity:{en:'Tiemen Pass (Iron Gate Pass) en route · Bosten Lake afternoon · Peacock River night stroll · Try Korla fragrant pears',zh:'途经铁门关 · 下午游博斯腾湖 · 夜游孔雀河 · 品尝库尔勒香梨'},
-    food:{en:'Xiangli Restaurant: big plate chicken, roast whole lamb · No.1 Naan: roast lamb ribs, yogurt rice dumpling, Uighur cola (Gawas)',zh:'香梨餐厅：大盘鸡、烤全羊 · 一号馕坑：烤羊排、酸奶包子、格瓦斯'},
-    stay:'<a href="https://www.baidu.com/s?wd=%E5%88%A9%E5%9F%8E%E7%99%BE%E5%90%88%E9%85%92%E5%BA%97+%E5%BA%93%E5%B0%94%E5%8B%92" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">利城百合酒店</a> <a href="https://map.baidu.com/search/%E5%88%A9%E5%9F%8E%E7%99%BE%E5%90%88%E9%85%92%E5%BA%97%E5%BA%93%E5%B0%94%E5%8B%92/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a> · <a href="https://www.baidu.com/s?wd=%E5%BA%B7%E5%9F%8E%E5%BB%BA%E5%9B%BD%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97+%E5%BA%93%E5%B0%94%E5%8B%92" target="_blank" style="color:#93c5fd;text-decoration:none;border-bottom:1px dotted #93c5fd;">康城建国国际酒店</a> <a href="https://map.baidu.com/search/%E5%BA%B7%E5%9F%8E%E5%BB%BA%E5%9B%BD%E5%9B%BD%E9%99%85%E9%85%92%E5%BA%97%E5%BA%93%E5%B0%94%E5%8B%92/" target="_blank" style="color:#f87171;text-decoration:none;border-bottom:1px dotted #f87171;">🗺️</a>' },
-  { day:{en:'Day 15',zh:'第15天'}, date:'13 Sep',
-    title:{en:'Korla → Victory Tunnel → Urumqi',zh:'库尔勒 → 胜利隧道 → 乌鲁木齐'},
-    route:{en:'~480 km / ~5h via G0712 Wuwei Expressway',zh:'约480公里/约5小时，走G0712乌威高速'},
-    activity:{en:"Baluntai: Yellow Temple (Tibetan Buddhist holy site) · Tianshan Victory Tunnel — Asia's longest road tunnel · Return to Urumqi · Return rental car",zh:'巴仑台：黄庙（藏传佛教圣地）· 天山胜利隧道——亚洲最长公路隧道 · 返回乌鲁木齐 · 还车'},
-    food:{en:'Last night dinner — free choice in Urumqi',zh:'最后一晚晚餐——乌鲁木齐自由选择'},
-    stay:'Hotel of your choice in Urumqi' },
-  { day:{en:'Day 16',zh:'第16天'}, date:'14 Sep',
-    title:{en:'Fly Home — Urumqi → Singapore',zh:'飞回家 — 乌鲁木齐 → 新加坡'},
-    route:{en:'URC → SIN · Depart 19:15, Arrive 06:50+1',zh:'URC→SIN · 起飞19:15，次日06:50抵达'},
-    activity:{en:'Morning: rest & last Urumqi breakfast · Return rental car by noon if not yet done · Transfer to Urumqi Tianshan International Airport (URC) · ✈️ Depart Urumqi 19:15 · Arrive Singapore Changi Airport 06:50 on 15 Sep · End of 16-day Xinjiang self-drive adventure!',zh:'上午：休息&最后乌鲁木齐早餐 · 中午前还车（如未还）· 前往乌鲁木齐天山国际机场 · ✈️ 19:15起飞 · 9月15日06:50抵樟宜机场 · 16天新疆自驾圆满结束！'},
-    food:{en:'Airport dining · In-flight meal',zh:'机场用餐 · 飞机餐'},
-    stay:'Arrive Singapore 06:50 on 15 Sep' }
-];
-
-const itinEl = document.getElementById('itin-list');
-
-function renderItin() {
-  itinEl.innerHTML = '';
-  itinData.forEach((d, i) => {
-    const L = currentLang;
-    const g = v => (v && typeof v === 'object') ? v[L] : v;
-    const card = document.createElement('div');
-    card.className = 'day-card';
-    card.innerHTML = `
-      <div class="day-header">
-        <span class="day-badge">${g(d.day)} · ${d.date}</span>
-        <div>
-          <div class="day-title">${g(d.title)}</div>
-          <div class="day-meta">📍 ${g(d.route)}</div>
-        </div>
-        <span class="day-chevron">▼</span>
-      </div>
-      <div class="day-body">
-        <div class="section"><div class="section-label">${L==='zh'?'🗺️ 行程活动':'🗺️ Activities'}</div><div class="section-text">${g(d.activity)}</div></div>
-        <div class="section"><div class="section-label">${L==='zh'?'🍜 美食推荐':'🍜 Food'}</div><div class="section-text">${g(d.food)}</div></div>
-        <div class="section"><div class="section-label">${L==='zh'?'🏨 住宿':'🏨 Stay'}</div><div class="section-text">${d.stay}</div></div>
-      </div>`;
-    card.addEventListener('click', () => {
-      const body = card.querySelector('.day-body');
-      const isOpen = body.classList.contains('open');
-      body.classList.toggle('open', !isOpen);
-      card.classList.toggle('open', !isOpen);
-      if (!isOpen && stopsData[i]) {
-        switchTab('map');
-        map.flyTo([stopsData[i].lat, stopsData[i].lng], 8, { duration: 1 });
-        markers[i].openPopup();
-      }
-    });
-    itinEl.appendChild(card);
-  });
-}
-
-renderItin();
-
-// ── TIPS DATA ────────────────────────────────────────────────────
-const tips = [
-  { icon:'🌡️', title:'Weather & Clothing (September: 15–25°C daily swing)', body:`<ul><li><strong>North Xinjiang (Kanas/Hemu/Duku):</strong> Daytime ~15°C, dawn/dusk 0–5°C, possible snow at altitude. Layer up: quick-dry base + fleece + windproof jacket + warm trousers. Hat, scarf, thin gloves essential.</li><li><strong>South Xinjiang (Kuqa):</strong> Daytime ~25°C, evenings 10–18°C, dry. Light shirt + sun-protection jacket by day; thin outer layer at night.</li><li><strong>Universal:</strong> Lip balm + heavy-duty moisturiser (humidity below 20%). SPF50+ sunscreen, wide-brim hat, UV-blocking glasses.</li></ul>` },
-  { icon:'🚗', title:'Driving & Road Conditions', body:`<ul><li><strong>Car choice:</strong> Prefer SUV / petrol (EV charging points almost non-existent in South Xinjiang).</li><li><strong>Pre-trip check:</strong> Tyres, brakes, coolant, washer fluid. Carry spare tyre, jack, tow rope, jump cables, pressure gauge.</li><li><strong>Fuel rule:</strong> Fill up when half-tank — North Xinjiang stations 200–300 km apart; South Xinjiang even further.</li><li><strong>Duku Highway:</strong> September usually open. Night ban 20:00–08:00. Speed limit 40–60 km/h. No random roadside stops. Watch for black ice at Hashilagen Pass.</li><li><strong>Speed cameras:</strong> Entire Xinjiang has average-speed + mobile cameras. Highways 80 km/h, mountain/scenic zones 40–60 km/h.</li><li><strong>Daily cap:</strong> Max 400 km per day. No night driving on mountain or steppe roads.</li><li><strong>Offline maps:</strong> Download Gaode (AutoNavi) / Baidu offline maps — mountain areas have zero signal.</li></ul>` },
-  { icon:'🪪', title:'Documents & Permits', body:`<ul><li><strong>ID card or passport:</strong> Carry at all times — required at petrol stations, checkpoints, hotels, and scenic gates.</li><li><strong>Duku Highway permit:</strong> Must be pre-booked through official channel before Day 10. Check 新疆交通 (Xinjiang Transport) WeChat public account for status updates.</li><li><strong>Checkpoints:</strong> Multiple police checkpoints throughout; cooperation required. Non-Chinese passport holders should carry a printed copy of hotel bookings.</li></ul>` },
-  { icon:'📅', title:'Best Timing — September Window', body:`<ul><li><strong>North Xinjiang (1–15 Sep):</strong> Green-gold mix at Kanas/Hemu; fewer crowds; lower prices. After 20 Sep: peak autumn gold but prices double and crowds surge.</li><li><strong>Duku Highway:</strong> Early September = least snow, most stable road. October may close due to snowfall.</li><li><strong>South Xinjiang (after 10 Sep):</strong> Avoid North Xinjiang peak crowds. Desert and cultural sights best in Sep.</li></ul>` },
-  { icon:'🏨', title:'Accommodation Tips', body:`<ul><li><strong>Kanas / Hemu:</strong> Book log cabins inside the park at least 1 month in advance (sold out mid-September). Staying inside avoids buying another entry ticket for sunrise/stars.</li><li><strong>Nalati / Duku area:</strong> Book Kazakh-style B&Bs early for authentic experience.</li><li><strong>South Xinjiang county towns:</strong> Plenty of hotels; no need to book far ahead.</li></ul>` },
-  { icon:'🧴', title:'Health & Sun Protection', body:`<ul><li>SPF50+ PA++++ sunscreen — reapply every 2 hours. UV is intense at altitude.</li><li>Drink 3–4 litres of water daily — extremely dry air causes rapid dehydration.</li><li><strong>Altitude:</strong> Kanas/Hemu at 1,300–1,800 m — generally fine; drink water, avoid overeating.</li><li><strong>Medicine kit:</strong> Cold & flu tablets, stomach medicine, anti-nausea, fever reducer, pain relief.</li></ul>` },
-  { icon:'🕌', title:'Cultural Respect & Safety', body:`<ul><li>Remove shoes before entering mosques. Cover shoulders and knees.</li><li>Ask permission before photographing locals, especially women and elderly.</li><li>At halal restaurants: do not mention or order pork; do not bring alcohol.</li><li>Carry CNY 500 in cash — remote villages may have no mobile payment signal.</li><li>Fire safety: September grasslands and forests are dry. No smoking or open fires outside. Follow all scenic area fire rules.</li><li>Avoid buying jade/herbs from scenic area vendors — mostly fakes. Use official markets only.</li></ul>` }
-];
-
-const tipsEl = document.getElementById('tips-list');
-tips.forEach(t => {
-  const sec = document.createElement('div');
-  sec.className = 'tip-section';
-  sec.innerHTML = `
-    <div class="tip-header" onclick="this.parentElement.classList.toggle('open')">
-      <span class="tip-icon">${t.icon}</span>
-      <span class="tip-title">${t.title}</span>
-      <span class="tip-chevron">▼</span>
-    </div>
-    <div class="tip-body">${t.body}</div>`;
-  tipsEl.appendChild(sec);
+// ── INIT MAP ──
+const map = L.map('map', {
+  center: [43.0, 83.8],
+  zoom: 7,
+  zoomControl: true
 });
 
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(map);
 
-// ── BUDGET DATA ──────────────────────────────────────────────────
-const budgetItems = [
-  { date:'Jun 2026', desc:'Rental car reservation deposit', category:'car', amountRMB:200, paidBy:'Paul' },
-  { date:'11 Jun 2026', desc:'Day 5 Hotel — Kanas H Resort (Triple Room, Sep 3–4)', category:'hotel', amountRMB:1280, paidBy:'Paul' }
-];
+// ── MARKERS ──
+const markers = [];
+const layerGroups = { 0: L.layerGroup(), 1: L.layerGroup(), 2: L.layerGroup(), 3: L.layerGroup() };
 
-const catClass = { car:'cat-car', hotel:'cat-hotel', food:'cat-food', entry:'cat-entry', misc:'cat-misc' };
-const catLabel = { car:'🚗 Car', hotel:'🏨 Hotel', food:'🍜 Food', entry:'🎟️ Entry', misc:'📦 Misc' };
+stops.forEach((stop, i) => {
+  const isOvernightOrEnd = ['3','5','E'].includes(stop.num) || stop.num === 'S';
+  const size = (stop.num === 'S' || stop.num === 'E') ? 32 : 28;
 
-function renderBudget() {
-  const tbody = document.getElementById('budget-tbody');
-  let totalRMB = 0, paulTotal = 0, eddieTotal = 0, sharedTotal = 0;
-  tbody.innerHTML = '';
-  budgetItems.forEach(item => {
-    totalRMB += item.amountRMB;
-    if (item.paidBy === 'Paul') paulTotal += item.amountRMB;
-    else if (item.paidBy === 'Eddie') eddieTotal += item.amountRMB;
-    else sharedTotal += item.amountRMB;
-    const payerClass = item.paidBy === 'Paul' ? 'budget-payer-paul' : item.paidBy === 'Eddie' ? 'budget-payer-eddie' : 'budget-payer-shared';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${item.date}</td>
-      <td>${item.desc}</td>
-      <td><span class="budget-cat ${catClass[item.category]}">${catLabel[item.category]}</span></td>
-      <td>¥${item.amountRMB.toLocaleString()}</td>
-      <td class="${payerClass}">${item.paidBy}</td>`;
-    tbody.appendChild(tr);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${stop.color};
+      border: 2.5px solid rgba(255,255,255,0.9);
+      display:flex;align-items:center;justify-content:center;
+      color:${stop.day===3?'#000':'#fff'};
+      font-size:${size===32?'11':'10'}px;font-weight:800;
+      box-shadow:0 2px 8px rgba(0,0,0,0.5);
+      font-family:'Segoe UI',Arial,sans-serif;
+    ">${stop.num}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
   });
-  document.getElementById('total-rmb').textContent = '¥' + totalRMB.toLocaleString();
-  document.getElementById('paul-total').textContent = '¥' + paulTotal.toLocaleString();
-  document.getElementById('eddie-total').textContent = '¥' + eddieTotal.toLocaleString();
-  document.getElementById('shared-total').textContent = '¥' + sharedTotal.toLocaleString();
-}
-renderBudget();
 
-// ── TAB SWITCH ───────────────────────────────────────────────────
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    const tabs = ['map','itin','tips','budget','tasks'];
-    b.classList.toggle('active', tabs[i] === tab);
+  const marker = L.marker([stop.lat, stop.lng], { icon })
+    .bindPopup(`
+      <div class="popup-name">${stop.name}</div>
+      <div class="popup-cn">Day ${stop.day}</div>
+      <div class="popup-desc">${stop.desc}</div>
+    `);
+
+  markers.push(marker);
+  layerGroups[0].addLayer(marker);
+  layerGroups[stop.day].addLayer(marker);
+});
+
+// ── ROUTE LINES ──
+const allCoords = stops.map(s => [s.lat, s.lng]);
+
+// Day segments
+const day1Coords = stops.filter(s => s.day === 1).map(s => [s.lat, s.lng]);
+const day2Coords = [stops[3], stops[4], stops[5]].map(s => [s.lat, s.lng]); // Qiaerma → Nalati → Bayanbulak
+const day3Coords = stops.filter(s => s.day === 3).map(s => [s.lat, s.lng]);
+day3Coords.unshift([stops[5].lat, stops[5].lng]); // start from Bayanbulak
+
+const lineOpts = (color, dash='') => ({
+  color, weight: 3.5, opacity: 0.85,
+  dashArray: dash || null
+});
+
+// Full route line for "All" view
+const fullLine = L.polyline(allCoords, { color: '#f0a500', weight: 3, opacity: 0.6, dashArray: '6,4' });
+layerGroups[0].addLayer(fullLine);
+
+// Day lines
+const d1line = L.polyline(day1Coords, lineOpts('#3b82f6'));
+const d2line = L.polyline(day2Coords, lineOpts('#10b981'));
+const d3line = L.polyline(day3Coords, lineOpts('#f59e0b'));
+layerGroups[1].addLayer(d1line);
+layerGroups[2].addLayer(d2line);
+layerGroups[3].addLayer(d3line);
+
+// Start with all layers
+layerGroups[0].addTo(map);
+let currentDay = 0;
+
+// ── SWITCH DAY ──
+function switchDay(day) {
+  // Update tabs
+  document.querySelectorAll('.day-tab').forEach((t, i) => {
+    const tabDays = [1, 2, 3, 0];
+    t.classList.toggle('active', tabDays[i] === day);
   });
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + tab).classList.add('active');
-  document.getElementById('legend-bar').style.display = tab === 'map' ? 'flex' : 'none';
-  if (tab === 'map') setTimeout(() => map.invalidateSize(), 50);
+
+  // Update sections
+  document.querySelectorAll('.day-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + day).classList.add('active');
+
+  // Update map
+  map.removeLayer(layerGroups[currentDay]);
+  currentDay = day;
+  layerGroups[day].addTo(map);
+
+  // Fit bounds
+  const dayStops = day === 0 ? stops : stops.filter(s => s.day === day);
+  if (day === 2) {
+    // Include Qiaerma start for day 2
+    const d2all = [stops[3], ...stops.filter(s => s.day === 2)];
+    map.fitBounds(d2all.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  } else if (day === 3) {
+    const d3all = [stops[5], ...stops.filter(s => s.day === 3)];
+    map.fitBounds(d3all.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  } else {
+    map.fitBounds(dayStops.map(s => [s.lat, s.lng]), { padding: [30, 30] });
+  }
 }
 
-// ── TASKS ────────────────────────────────────────────────────────
-const taskData = [
-  {cat:'📋 Documents & Permits', person:'paul', text:'Book Duku Highway permit (新疆交通 WeChat official)', due:'By 20 Aug', dl:true},
-  {cat:'📋 Documents & Permits', person:'paul', text:'Check China visa validity (must cover Sep 2026)', due:'By 1 Aug', dl:true},
-  {cat:'📋 Documents & Permits', person:'po',   text:'Check China visa validity', due:'By 1 Aug', dl:true},
-  {cat:'📋 Documents & Permits', person:'eddy', text:'Check China visa validity', due:'By 1 Aug', dl:true},
-  {cat:'📋 Documents & Permits', person:'paul', text:'Print hotel bookings × 3 sets (for checkpoints)', due:'Before departure'},
-  {cat:'📋 Documents & Permits', person:'paul', text:'Photocopy passports × 3 sets each', due:'Before departure'},
-
-  {cat:'✈️ Flights & Transport', person:'paul', text:'Book SIN→XIY flights 29 Aug (Paul + party)', due:'ASAP', dl:true},
-  {cat:'✈️ Flights & Transport', person:'paul', text:'Book XIY→URC flights 1 Sep', due:'ASAP', dl:true},
-  {cat:'✈️ Flights & Transport', person:'paul', text:'Confirm URC→SIN 14 Sep 19:15 (Paul & Eddy)', due:'Done'},
-  {cat:'✈️ Flights & Transport', person:'paul', text:'Reserve SUV rental car in Urumqi (petrol, not EV)', due:'By 15 Aug', dl:true},
-  {cat:'✈️ Flights & Transport', person:'po',   text:'Confirm own flights — arrive Urumqi by 30 Aug', due:'By 15 Aug', dl:true},
-  {cat:'✈️ Flights & Transport', person:'po',   text:'Confirm international driving licence', due:'By 1 Aug'},
-  {cat:'✈️ Flights & Transport', person:'eddy', text:'Confirm own flights — arrive Urumqi by 30 Aug', due:'By 15 Aug', dl:true},
-  {cat:'✈️ Flights & Transport', person:'eddy', text:'Confirm international driving licence', due:'By 1 Aug'},
-
-  {cat:'🏨 Accommodation', person:'paul', text:'Book Kanas Old Village log cabin (sells out!)', due:'ASAP', dl:true},
-  {cat:'🏨 Accommodation', person:'paul', text:'Book Hemu Village — Qinghuan Guesthouse', due:'By 15 Aug', dl:true},
-  {cat:'🏨 Accommodation', person:'paul', text:'Book Nalati — Wusun Shale Art Lodge or similar', due:'By 15 Aug', dl:true},
-  {cat:'🏨 Accommodation', person:'paul', text:'Book Urumqi hotel Day 1 (Grand Bazaar area)', due:'By 20 Aug'},
-  {cat:'🏨 Accommodation', person:'paul', text:'Book Wulungu Lake hotel (Fuhai County)', due:'By 20 Aug'},
-  {cat:'🏨 Accommodation', person:'po',   text:'Confirm room sharing arrangement with Paul', due:'By 1 Aug'},
-  {cat:'🏨 Accommodation', person:'eddy', text:'Confirm room sharing arrangement with Paul', due:'By 1 Aug'},
-
-  {cat:'🎒 Gear & Packing', person:'paul', text:'Warm layers: fleece + windproof jacket (0°C at dawn)', due:'By 27 Aug'},
-  {cat:'🎒 Gear & Packing', person:'paul', text:'SPF50+ sunscreen × 3 bottles + lip balm', due:'By 27 Aug'},
-  {cat:'🎒 Gear & Packing', person:'paul', text:'Medicine kit: cold, stomach, altitude, pain, anti-nausea', due:'By 27 Aug'},
-  {cat:'🎒 Gear & Packing', person:'paul', text:'Portable power bank + car charger + adapters', due:'By 27 Aug'},
-  {cat:'🎒 Gear & Packing', person:'paul', text:'Camera gear + extra batteries (cold drains fast)', due:'By 27 Aug'},
-  {cat:'🎒 Gear & Packing', person:'po',   text:'Warm layers for Kanas/Hemu (0–5°C at dawn)', due:'Before departure'},
-  {cat:'🎒 Gear & Packing', person:'po',   text:'Rain gear + hiking shoes + UV sunglasses', due:'Before departure'},
-  {cat:'🎒 Gear & Packing', person:'po',   text:'Heavy-duty moisturiser (humidity below 20%)', due:'Before departure'},
-  {cat:'🎒 Gear & Packing', person:'eddy', text:'Warm layers for Kanas/Hemu (0–5°C at dawn)', due:'Before departure'},
-  {cat:'🎒 Gear & Packing', person:'eddy', text:'Rain gear + hiking shoes + UV sunglasses', due:'Before departure'},
-  {cat:'🎒 Gear & Packing', person:'eddy', text:'Heavy-duty moisturiser (humidity below 20%)', due:'Before departure'},
-
-  {cat:'🚗 Car & Road Prep', person:'paul', text:'Download 高德地图 (Gaode/Amap) offline maps — all Xinjiang', due:'Before departure'},
-  {cat:'🚗 Car & Road Prep', person:'paul', text:'Check rental car: spare tyre, jack, tow rope, jump cables', due:'Day 1 Urumqi'},
-  {cat:'🚗 Car & Road Prep', person:'paul', text:'Fill FULL tank before Duku Highway (Day 9 Dushanzi)', due:'Day 9', dl:true},
-  {cat:'🚗 Car & Road Prep', person:'paul', text:'Rule: refuel at every half-tank in North Xinjiang', due:'Ongoing'},
-  {cat:'🚗 Car & Road Prep', person:'eddy', text:'Study Duku Highway rules: night ban 20:00–08:00, 40 km/h max', due:'Before departure'},
-
-  {cat:'💰 Money & Comms', person:'paul', text:'Prepare CNY 2,000 cash (remote areas no mobile pay)', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'paul', text:'Set up WeChat Pay linked to bank card', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'paul', text:'Buy China SIM or activate roaming plan', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'po',   text:'Prepare CNY 1,500 cash', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'po',   text:'Set up WeChat Pay or Alipay', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'po',   text:'Buy China SIM or activate roaming plan', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'eddy', text:'Prepare CNY 1,500 cash', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'eddy', text:'Set up WeChat Pay or Alipay', due:'Before departure'},
-  {cat:'💰 Money & Comms', person:'eddy', text:'Buy China SIM or activate roaming plan', due:'Before departure'},
-];
-
-const taskDone = JSON.parse(localStorage.getItem('mt09_tasks') || '{}');
-let taskFilter = 'all';
-
-function filterTasks(f, btn) {
-  taskFilter = f;
-  document.querySelectorAll('.tasks-filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderTasks();
+function flyTo(lat, lng, zoom) {
+  map.flyTo([lat, lng], zoom, { duration: 0.8 });
+  // Open popup for matching marker
+  const match = stops.findIndex(s => Math.abs(s.lat - lat) < 0.01 && Math.abs(s.lng - lng) < 0.01);
+  if (match >= 0) {
+    setTimeout(() => markers[match].openPopup(), 900);
+  }
 }
 
-function saveTasks() { localStorage.setItem('mt09_tasks', JSON.stringify(taskDone)); }
-
-function updateProgress() {
-  const total = taskData.length;
-  const done  = Object.values(taskDone).filter(Boolean).length;
-  document.getElementById('tasks-done-count').textContent  = done;
-  document.getElementById('tasks-total-count').textContent = total;
-  const pct = total ? (done/total*100).toFixed(1) : 0;
-  document.getElementById('tasks-progress-fill').style.width = pct + '%';
-}
-
-function renderTasks() {
-  const list = document.getElementById('task-list');
-  if (!list) return;
-  list.innerHTML = '';
-  const visible = taskData.map((t,i) => ({...t,idx:i})).filter(t => {
-    if (taskFilter === 'done') return !!taskDone[t.idx];
-    if (taskFilter === 'all')  return true;
-    return t.person === taskFilter;
-  });
-  const cats = {};
-  visible.forEach(t => { (cats[t.cat] = cats[t.cat]||[]).push(t); });
-  Object.entries(cats).forEach(([cat, tasks]) => {
-    const ch = document.createElement('div');
-    ch.className = 'task-category'; ch.textContent = cat;
-    list.appendChild(ch);
-    tasks.forEach(t => {
-      const done = !!taskDone[t.idx];
-      const div = document.createElement('div');
-      div.className = 'task-item' + (done?' completed':'');
-      div.innerHTML =
-        '<div class="task-check tck-'+t.person+(done?' tck-checked':'')+'">'+
-          (done?'✓':'')+
-        '</div>'+
-        '<div class="task-body">'+
-          '<div class="task-text">'+t.text+'</div>'+
-          '<div class="task-meta">'+
-            '<span class="task-person tp-'+t.person+'">'+
-              t.person.charAt(0).toUpperCase()+t.person.slice(1)+
-            '</span>'+
-            '<span class="'+(t.dl?'task-deadline':'task-due')+'">'+t.due+'</span>'+
-          '</div>'+
-        '</div>';
-      div.addEventListener('click', () => {
-        taskDone[t.idx] = !taskDone[t.idx];
-        saveTasks(); updateProgress(); renderTasks();
-      });
-      list.appendChild(div);
-    });
-  });
-  updateProgress();
-}
-renderTasks();
-
+// Initial fit
+map.fitBounds(allCoords, { padding: [20, 20] });
 </script>
 </body>
-</html> 
+</html>
