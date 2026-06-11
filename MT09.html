@@ -175,6 +175,42 @@
     #map { min-height: 48vh; }
     .stops-panel, .itin-panel, .tips-panel { max-height: 40vh; }
   }
+  .budget-panel {
+    background: #0d1117; overflow-y: auto; max-height: 42vh; padding: 0;
+  }
+  .budget-summary {
+    display: flex; gap: 10px; padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap;
+  }
+  .budget-stat {
+    flex: 1; min-width: 100px; background: rgba(255,255,255,0.04);
+    border-radius: 10px; padding: 10px 14px; text-align: center;
+  }
+  .budget-stat-label { font-size: 0.65em; color: #8b949e; margin-bottom: 4px; }
+  .budget-stat-value { font-size: 1.05em; font-weight: 800; color: #f0a500; }
+  .budget-table { width: 100%; border-collapse: collapse; }
+  .budget-table th {
+    font-size: 0.68em; font-weight: 700; color: #8b949e; text-align: left;
+    padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .budget-table td {
+    font-size: 0.78em; color: #c9d1d9; padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .budget-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .budget-cat {
+    display: inline-block; font-size: 0.68em; padding: 2px 8px;
+    border-radius: 8px; font-weight: 700;
+  }
+  .cat-car   { background:rgba(168,85,247,0.2); color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); }
+  .cat-hotel { background:rgba(59,130,246,0.2); color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+  .cat-food  { background:rgba(16,185,129,0.2); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+  .cat-entry { background:rgba(240,165,0,0.2);  color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
+  .cat-misc  { background:rgba(156,163,175,0.2);color:#d1d5db; border:1px solid rgba(156,163,175,0.3); }
+  .budget-payer-paul { color: #f0a500; font-weight: 700; }
+  .budget-payer-eddie { color: #1abc9c; font-weight: 700; }
+  .budget-payer-shared { color: #93c5fd; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -193,6 +229,7 @@
   <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
   <button class="tab-btn" onclick="switchTab('itin')">📅 Itinerary</button>
   <button class="tab-btn" onclick="switchTab('tips')">💡 Travel Tips</button>
+  <button class="tab-btn" onclick="switchTab('budget')">💰 Budget</button>
 </div>
 
 <div class="legend-bar" id="legend-bar">
@@ -224,6 +261,42 @@
 
 <div id="panel-tips" class="panel">
   <div class="tips-panel" id="tips-list"></div>
+</div>
+
+
+<div id="panel-budget" class="panel">
+  <div class="budget-panel">
+    <div class="budget-summary">
+      <div class="budget-stat">
+        <div class="budget-stat-label">Total Spent (RMB)</div>
+        <div class="budget-stat-value" id="total-rmb">¥0</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-label">Paul Paid</div>
+        <div class="budget-stat-value" id="paul-total">¥0</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-label">Eddie Paid</div>
+        <div class="budget-stat-value" id="eddie-total">¥0</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-label">Shared / TBD</div>
+        <div class="budget-stat-value" id="shared-total">¥0</div>
+      </div>
+    </div>
+    <table class="budget-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount (RMB)</th>
+          <th>Paid By</th>
+        </tr>
+      </thead>
+      <tbody id="budget-tbody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="vc-wrap"><script src="/view-counter.js"></script></div>
@@ -413,10 +486,45 @@ tips.forEach(t => {
   tipsEl.appendChild(sec);
 });
 
+
+// ── BUDGET DATA ──────────────────────────────────────────────────
+const budgetItems = [
+  { date:'Jun 2026', desc:'Rental car reservation deposit', category:'car', amountRMB:200, paidBy:'Paul' }
+];
+
+const catClass = { car:'cat-car', hotel:'cat-hotel', food:'cat-food', entry:'cat-entry', misc:'cat-misc' };
+const catLabel = { car:'🚗 Car', hotel:'🏨 Hotel', food:'🍜 Food', entry:'🎟️ Entry', misc:'📦 Misc' };
+
+function renderBudget() {
+  const tbody = document.getElementById('budget-tbody');
+  let totalRMB = 0, paulTotal = 0, eddieTotal = 0, sharedTotal = 0;
+  tbody.innerHTML = '';
+  budgetItems.forEach(item => {
+    totalRMB += item.amountRMB;
+    if (item.paidBy === 'Paul') paulTotal += item.amountRMB;
+    else if (item.paidBy === 'Eddie') eddieTotal += item.amountRMB;
+    else sharedTotal += item.amountRMB;
+    const payerClass = item.paidBy === 'Paul' ? 'budget-payer-paul' : item.paidBy === 'Eddie' ? 'budget-payer-eddie' : 'budget-payer-shared';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.date}</td>
+      <td>${item.desc}</td>
+      <td><span class="budget-cat ${catClass[item.category]}">${catLabel[item.category]}</span></td>
+      <td>¥${item.amountRMB.toLocaleString()}</td>
+      <td class="${payerClass}">${item.paidBy}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('total-rmb').textContent = '¥' + totalRMB.toLocaleString();
+  document.getElementById('paul-total').textContent = '¥' + paulTotal.toLocaleString();
+  document.getElementById('eddie-total').textContent = '¥' + eddieTotal.toLocaleString();
+  document.getElementById('shared-total').textContent = '¥' + sharedTotal.toLocaleString();
+}
+renderBudget();
+
 // ── TAB SWITCH ───────────────────────────────────────────────────
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    const tabs = ['map','itin','tips'];
+    const tabs = ['map','itin','tips','budget'];
     b.classList.toggle('active', tabs[i] === tab);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
