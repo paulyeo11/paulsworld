@@ -430,8 +430,8 @@ async function loadData() {
     // the exact number the Tiger app shows (e.g. 533.78), already in account
     // USD so used verbatim. Fall back to summing per-position unrealizedPnlUSD
     // only if that field is absent.
-    const tAcct = (tigerData.accountOpenPnlUSD != null) ? parseFloat(tigerData.accountOpenPnlUSD) : null;
-    const tUsingAccount = tAcct != null && isFinite(tAcct);
+    // ALWAYS compute from positions — Tiger's account-level figure (accountOpenPnlUSD)
+    // is often stale/cached from their API. Per-position unrealizedPnlUSD is more accurate.
     const tComputed = (tigerData.positions || []).reduce((s,p) => {
       if (p.unrealizedPnlUSD != null) return s + parseFloat(p.unrealizedPnlUSD);
       const cur = (p.currency||'USD').toUpperCase();
@@ -439,7 +439,8 @@ async function loadData() {
       const usdSgd = fxRates.USD || 1.35;
       return s + (pnl * (fxRates[cur]||1)) / usdSgd;
     }, 0);
-    const tigerOpenPnl = tUsingAccount ? tAcct : tComputed;
+    const tigerOpenPnl = tComputed;
+    const tUsingAccount = false;
     const el4b = document.getElementById('bal-tiger-upnl');
     if (el4b) {
       el4b.textContent = (tigerOpenPnl>=0?'+':'-') + 'US$' + Math.abs(tigerOpenPnl).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
