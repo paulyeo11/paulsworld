@@ -162,6 +162,11 @@
           <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;" id="bal-ibkr-rpnl">—</div>
           <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD</div>
         </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;" id="bal-ibkr-dpnl-card">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Daily P&L</div>
+          <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;" id="bal-ibkr-dpnl">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · today</div>
+        </div>
       </div>
     </div>
     <!-- Tiger Box -->
@@ -182,6 +187,11 @@
           <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Open P&L</div>
           <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;" id="bal-tiger-upnl">—</div>
           <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;" id="bal-tiger-upnl-sub">USD</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;" id="bal-tiger-dpnl-card">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Daily P&L</div>
+          <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;" id="bal-tiger-dpnl">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · today</div>
         </div>
       </div>
     </div>
@@ -475,6 +485,24 @@ async function loadData() {
     if(el5) { el5.textContent = (upnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(upnl)); el5.style.color = upnl>=0?'#10b981':'#ef4444'; }
     const el6 = document.getElementById('bal-ibkr-rpnl');
     if(el6) { el6.textContent = (rpnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(rpnl)); el6.style.color = rpnl>=0?'#10b981':'#ef4444'; }
+    // IBKR Daily P&L
+    const ibkrDpnl = parseFloat(ibkrData.dailyPnL || ibkrData.dailyPnl || 0);
+    const elIbkrD = document.getElementById('bal-ibkr-dpnl');
+    const elIbkrDcard = document.getElementById('bal-ibkr-dpnl-card');
+    if(elIbkrD && ibkrData.dailyPnL != null) {
+      elIbkrD.textContent = (ibkrDpnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(ibkrDpnl));
+      elIbkrD.style.color = ibkrDpnl>=0?'#10b981':'#ef4444';
+      if(elIbkrDcard) elIbkrDcard.style.borderColor = ibkrDpnl>=0?'rgba(16,185,129,.45)':'rgba(239,68,68,.45)';
+    } else if(elIbkrD) { elIbkrD.textContent = 'N/A'; elIbkrD.style.color = 'var(--muted)'; }
+    // Tiger Daily P&L
+    const tigerDpnl = parseFloat(tigerData.dailyPnlUSD || 0);
+    const elTigerD = document.getElementById('bal-tiger-dpnl');
+    const elTigerDcard = document.getElementById('bal-tiger-dpnl-card');
+    if(elTigerD && tigerData.dailyPnlUSD != null) {
+      elTigerD.textContent = (tigerDpnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(tigerDpnl));
+      elTigerD.style.color = tigerDpnl>=0?'#10b981':'#ef4444';
+      if(elTigerDcard) elTigerDcard.style.borderColor = tigerDpnl>=0?'rgba(16,185,129,.45)':'rgba(239,68,68,.45)';
+    } else if(elTigerD) { elTigerD.textContent = 'N/A'; elTigerD.style.color = 'var(--muted)'; }
     renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
