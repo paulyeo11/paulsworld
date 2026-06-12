@@ -213,7 +213,24 @@ def fetch_positions():
     realized_pnl   = get_val('RealizedPnL')
     gross_pos_val  = get_val('GrossPositionValue')
     cash           = get_val('TotalCashValue')
-    daily_pnl      = get_val('DailyPnL')
+
+    # Daily P&L: use IBKR DailyPnL tag if available; else compute from
+    # today net_liq minus previous net_liq stored in existing positions.json.
+    daily_pnl = get_val('DailyPnL')
+    if daily_pnl is None:
+        try:
+            with open("positions.json", "r") as _f:
+                _prev = json.load(_f)
+            _prev_liq = float(_prev.get("netLiquidation") or 0)
+            _today_liq = float(net_liq or 0)
+            _prev_date = (_prev.get("fetchedAt") or "")[:10]
+            _today_date = datetime.now().strftime("%Y-%m-%d")
+            # Only use prev value if it was from a different fetch (not same run)
+            if _prev_liq > 0 and _today_liq > 0:
+                daily_pnl = round(_today_liq - _prev_liq, 2)
+                print(f"Daily P&L computed: {_today_liq} - {_prev_liq} = {daily_pnl}")
+        except Exception as e:
+            print(f"Note (daily pnl fallback): {e}")
 
     output = {
         "fetchedAt"       : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
