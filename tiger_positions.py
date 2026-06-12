@@ -102,7 +102,7 @@ def fetch_positions():
         })
 
     net_value, cash = None, None
-    account_open_pnl_usd, realized_pnl_usd = None, None
+    account_open_pnl_usd, realized_pnl_usd, daily_pnl_usd = None, None, None
 
     def _f(v):
         try:
@@ -116,10 +116,12 @@ def fetch_positions():
             summary = assets[0].summary
             net_value = float(summary.net_liquidation or 0)
             cash      = float(summary.cash or 0)
-            # Average-cost basis Open P&L (Tiger's get_assets summary). Kept as a
-            # fallback only — the Tiger APP shows the COST-OF-CARRY basis instead.
             account_open_pnl_usd = _f(getattr(summary, "unrealized_pnl", None))
             realized_pnl_usd     = _f(getattr(summary, "realized_pnl", None))
+            # Daily P&L from summary
+            daily_pnl_usd        = _f(getattr(summary, "daily_pnl", None))
+            if daily_pnl_usd is None:
+                daily_pnl_usd    = _f(getattr(summary, "today_profit_loss", None))
     except Exception as e:
         print(f"Note: {e}")
 
@@ -143,19 +145,32 @@ def fetch_positions():
     except Exception as e:
         print(f"Note (cost-of-carry): {e}")
     print(f"Final accountOpenPnlUSD: {account_open_pnl_usd}")
+    print(f"Final dailyPnlUSD: {daily_pnl_usd}")
+
+    # Fallback: compute daily P&L from net value delta vs previous run
+    if daily_pnl_usd is None:
+        try:
+            with open(OUT_FILE, "r") as _f:
+                _prev = json.load(_f)
+            _prev_val = float(_prev.get("netValue") or 0)
+            _today_val = float(net_value or 0)
+            if _prev_val > 0 and _today_val > 0:
+                # Convert SGD delta to USD
+                _sgd_usd = 1.0 / 1.35  # approx SGD→USD
+                daily_pnl_usd = round((_today_val - _prev_val) * _sgd_usd, 2)
+                print(f"Daily P&L computed from netValue delta: {_today_val} - {_prev_val} = {daily_pnl_usd} USD")
+        except Exception as e:
+            print(f"Note (daily pnl fallback): {e}")
 
     output = {
-        "fetchedAt" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "netValue"  : net_value,
-        "cash"      : cash,
-        # Account-level summary fields straight from Tiger's get_assets().
-        # accountOpenPnlUSD is Tiger's OWN reported unrealized P&L for the
-        # account (the app figure). Falls back to None if the SDK didn't
-        # return it, in which case the dashboards re-sum per position.
+        "fetchedAt"         : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "netValue"          : net_value,
+        "cash"              : cash,
         "accountOpenPnlUSD" : account_open_pnl_usd,
+        "dailyPnlUSD"       : daily_pnl_usd,
         "realizedPnlUSD"    : realized_pnl_usd,
         "netLiquidationUSD" : net_value,
-        "positions" : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
+        "positions"         : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
     }
 
     with open(OUT_FILE, "w") as f:
