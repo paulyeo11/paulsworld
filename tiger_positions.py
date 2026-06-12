@@ -147,21 +147,20 @@ def fetch_positions():
     print(f"Final accountOpenPnlUSD: {account_open_pnl_usd}")
     print(f"Final dailyPnlUSD: {daily_pnl_usd}")
 
-    # Try to get daily P&L from prime assets if not found yet
+    # Fallback: compute daily P&L from net value delta vs previous run
     if daily_pnl_usd is None:
         try:
-            prime = trade_client.get_prime_assets(account=ACCOUNT, base_currency="USD")
-            segments = getattr(prime, "segments", None) or {}
-            sec_seg = segments.get("S") if hasattr(segments, "get") else None
-            if sec_seg:
-                for attr in ("daily_pnl", "today_pnl", "today_profit_loss", "daily_profit_loss"):
-                    v = _f(getattr(sec_seg, attr, None))
-                    if v is not None:
-                        daily_pnl_usd = v
-                        print(f"Daily P&L from sec_seg.{attr}: {v}")
-                        break
+            with open(OUT_FILE, "r") as _f:
+                _prev = json.load(_f)
+            _prev_val = float(_prev.get("netValue") or 0)
+            _today_val = float(net_value or 0)
+            if _prev_val > 0 and _today_val > 0:
+                # Convert SGD delta to USD
+                _sgd_usd = 1.0 / 1.35  # approx SGD→USD
+                daily_pnl_usd = round((_today_val - _prev_val) * _sgd_usd, 2)
+                print(f"Daily P&L computed from netValue delta: {_today_val} - {_prev_val} = {daily_pnl_usd} USD")
         except Exception as e:
-            print(f"Note (daily pnl): {e}")
+            print(f"Note (daily pnl fallback): {e}")
 
     output = {
         "fetchedAt"         : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
