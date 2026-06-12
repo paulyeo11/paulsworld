@@ -124,20 +124,25 @@ def fetch_positions():
         print(f"Note: {e}")
 
     # ---- App-matching Open P&L: COST OF CARRY basis ----
-    # Tiger's APP shows the cost-of-carry unrealized P&L, NOT the average-cost
-    # figure from get_assets. Pull it from get_prime_assets():
-    #   segments["S"] (S = securities) .unrealized_plby_cost_of_carry
-    # (note the spelling: "plby", no underscore before "by"). This is already in
-    # USD (base_currency). Robust: any failure falls back to the avg-cost value.
     try:
         prime = trade_client.get_prime_assets(account=ACCOUNT, base_currency="USD")
         segments = getattr(prime, "segments", None) or {}
         sec_seg = segments.get("S") if hasattr(segments, "get") else None
-        coc = _f(getattr(sec_seg, "unrealized_plby_cost_of_carry", None)) if sec_seg else None
-        if coc is not None:
-            account_open_pnl_usd = coc
+        if sec_seg:
+            for attr in ("unrealized_plby_cost_of_carry", "unrealized_pl_by_cost_of_carry",
+                         "unrealizedPnl", "unrealized_pnl", "pnl"):
+                coc = _f(getattr(sec_seg, attr, None))
+                if coc is not None:
+                    print(f"Cost-of-carry P&L from '{attr}': {coc}")
+                    account_open_pnl_usd = coc
+                    break
+            if account_open_pnl_usd is None:
+                print(f"sec_seg attrs: {[a for a in dir(sec_seg) if not a.startswith('_')]}")
+        else:
+            print(f"No S segment found. Keys: {list(segments.keys()) if hasattr(segments,'keys') else type(segments)}")
     except Exception as e:
         print(f"Note (cost-of-carry): {e}")
+    print(f"Final accountOpenPnlUSD: {account_open_pnl_usd}")
 
     output = {
         "fetchedAt" : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
