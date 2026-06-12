@@ -449,7 +449,18 @@ async function loadData() {
     if (el4c) el4c.textContent = (tUsingAccount ? 'USD · app figure' : 'USD · computed') + (tigerData.fetchedAt ? ' · ' + tigerData.fetchedAt : '');
     const el4card = document.getElementById('bal-tiger-upnl-card');
     if (el4card) el4card.style.borderColor = tigerOpenPnl>=0 ? 'rgba(16,185,129,.45)' : 'rgba(239,68,68,.45)';
-    const upnl = parseFloat(ibkrData.unrealizedPnL || 0);
+    // IBKR Unrealized P&L — prefer account-level field; fall back to summing positions
+    let upnl = parseFloat(ibkrData.unrealizedPnL);
+    if (!isFinite(upnl) || ibkrData.unrealizedPnL == null) {
+      upnl = (ibkrData.positions || []).reduce((s, p) => {
+        if (p.unrealizedPnl != null) return s + parseFloat(p.unrealizedPnl);
+        // Last resort: mktPrice vs avgCost
+        const mv  = parseFloat(p.marketValue || 0);
+        const pos = parseFloat(p.position || 0);
+        const ac  = parseFloat(p.avgCost || 0);
+        return s + (mv - pos * ac);
+      }, 0);
+    }
     const rpnl = parseFloat(ibkrData.realizedPnL || 0);
     const el5 = document.getElementById('bal-ibkr-upnl');
     if(el5) { el5.textContent = (upnl>=0?'+':'') + 'US$' + fmtBal(Math.abs(upnl)); el5.style.color = upnl>=0?'#10b981':'#ef4444'; }
