@@ -228,6 +228,23 @@
       </div>
     </div>
 
+    <!-- UOB Box -->
+    <div style="background:var(--surface);border:1px solid rgba(59,130,246,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#60a5fa;font-family:'DM Mono',monospace;margin-bottom:12px;">🏦 UOB Bank — Savings</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Saving Account</div>
+          <div style="font-size:17px;font-weight:700;color:#60a5fa;font-family:'Syne',sans-serif;">S$32,337</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD · 403-104-807-3</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">USD Equivalent</div>
+          <div style="font-size:17px;font-weight:700;color:#60a5fa;font-family:'Syne',sans-serif;" id="bal-uob-usd">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · live FX</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Property Box -->
     <div style="background:var(--surface);border:1px solid rgba(139,92,246,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
       <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#c4b5fd;font-family:'DM Mono',monospace;margin-bottom:12px;">🏠 Property</div>
@@ -276,6 +293,11 @@
             <td style="padding:9px 8px;color:#f87171;font-weight:600;">🏛️ OCBC Bank</td>
             <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ocbc-usd">—</td>
             <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ocbc-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#60a5fa;font-weight:600;">🏦 UOB Bank</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-uob-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-uob-sgd">—</td>
           </tr>
           <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
             <td style="padding:9px 8px;color:#c4b5fd;font-weight:600;">🏠 Property</td>
@@ -620,7 +642,10 @@ async function loadData() {
     // Property: North Okas Condo
     const propSGD = 1200000;
     const propUSD = propSGD * sgdUsdFx;
-    const totalUSD = ibkrUSD + tigerUSD + cpfUSD + ocbcTotalUSD + propUSD;
+    // UOB: hardcoded from last manual update (12 Jun 2026)
+    const uobSGD = 32337.13;
+    const uobUSD = uobSGD * sgdUsdFx;
+    const totalUSD = ibkrUSD + tigerUSD + cpfUSD + ocbcTotalUSD + uobUSD + propUSD;
     const totalSGD = totalUSD * usdSgdFx;
     const fmtU = v => 'US$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
     const fmtS = v => 'S$'  + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -633,6 +658,10 @@ async function loadData() {
     _s('at-cpf-sgd',   fmtS(cpfSGD));
     _s('at-ocbc-usd',  fmtU(ocbcTotalUSD));
     _s('at-ocbc-sgd',  fmtS(ocbcTotalSGD));
+    _s('at-uob-usd',   fmtU(uobUSD));
+    _s('at-uob-sgd',   fmtS(uobSGD));
+    const elUobUsd = document.getElementById('bal-uob-usd');
+    if(elUobUsd) elUobUsd.textContent = fmtU(uobUSD);
     _s('at-prop-usd',  fmtU(propUSD));
     _s('at-prop-sgd',  fmtS(propSGD));
     const elPropUsd = document.getElementById('bal-prop-usd');
