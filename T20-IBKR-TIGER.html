@@ -201,6 +201,43 @@
       </div>
     </div>
 
+    <!-- TOTAL ASSETS TABLE -->
+    <div style="background:var(--surface);border:1px solid rgba(240,165,0,0.35);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f0a500;font-family:'DM Mono',monospace;margin-bottom:14px;">💰 Total Assets Summary</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.95em;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+            <th style="text-align:left;padding:7px 8px;color:#8b949e;font-size:0.8em;letter-spacing:0.05em;font-family:'DM Mono',monospace;font-weight:600;">ACCOUNT</th>
+            <th style="text-align:right;padding:7px 8px;color:#8b949e;font-size:0.8em;letter-spacing:0.05em;font-family:'DM Mono',monospace;font-weight:600;">USD</th>
+            <th style="text-align:right;padding:7px 8px;color:#8b949e;font-size:0.8em;letter-spacing:0.05em;font-family:'DM Mono',monospace;font-weight:600;">SGD</th>
+          </tr>
+        </thead>
+        <tbody id="asset-table-body">
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#f4813f;font-weight:600;">🏦 IBKR</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ibkr-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ibkr-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#10b981;font-weight:600;">🐯 Tiger Brokers</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-tiger-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-tiger-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#93c5fd;font-weight:600;">📋 CPF / SGX</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-cpf-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-cpf-sgd">—</td>
+          </tr>
+          <tr style="background:rgba(240,165,0,0.06);border-top:1px solid rgba(240,165,0,0.3);">
+            <td style="padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;">TOTAL</td>
+            <td style="text-align:right;padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;font-family:'DM Mono',monospace;" id="at-total-usd">—</td>
+            <td style="text-align:right;padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;font-family:'DM Mono',monospace;" id="at-total-sgd">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;font-size:0.78em;color:#8b949e;font-family:'DM Mono',monospace;" id="at-note">CPF/SGX estimated · FX live</div>
+    </div>
+
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
       <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">📊 Portfolio by Stock — Invested S$</div>
       <div style="position:relative;height:560px;"><canvas id="stockChart"></canvas></div>
@@ -510,6 +547,29 @@ async function loadData() {
       elTigerD.style.color = tigerDpnl>=0?'#10b981':'#ef4444';
       if(elTigerDcard) elTigerDcard.style.borderColor = tigerDpnl>=0?'rgba(16,185,129,.45)':'rgba(239,68,68,.45)';
     } else if(elTigerD) { elTigerD.textContent = 'N/A'; elTigerD.style.color = 'var(--muted)'; }
+    // ── TOTAL ASSETS TABLE ──────────────────────────────────────
+    const usdSgdFx = fxRates.USD || 1.284;
+    const sgdUsdFx = 1 / usdSgdFx;
+    const ibkrUSD  = parseFloat(ibkrData.netLiquidation || 0);
+    const tigerSGD = parseFloat(tigerData.netValue || 0);
+    const tigerUSD = tigerSGD * sgdUsdFx;
+    // CPF/SGX: hardcoded estimate (Singtel + Astrea 8)
+    const cpfSGD   = 3500;
+    const cpfUSD   = cpfSGD * sgdUsdFx;
+    const totalUSD = ibkrUSD + tigerUSD + cpfUSD;
+    const totalSGD = totalUSD * usdSgdFx;
+    const fmtU = v => 'US$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const fmtS = v => 'S$'  + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const _s = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    _s('at-ibkr-usd',  fmtU(ibkrUSD));
+    _s('at-ibkr-sgd',  fmtS(ibkrUSD * usdSgdFx));
+    _s('at-tiger-usd', fmtU(tigerUSD));
+    _s('at-tiger-sgd', fmtS(tigerSGD));
+    _s('at-cpf-usd',   fmtU(cpfUSD));
+    _s('at-cpf-sgd',   fmtS(cpfSGD));
+    _s('at-total-usd', fmtU(totalUSD));
+    _s('at-total-sgd', fmtS(totalSGD));
+    _s('at-note', `CPF/SGX estimated S$3,500 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD · ${ibkrData.fetchedAt || ''}`);
     renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
