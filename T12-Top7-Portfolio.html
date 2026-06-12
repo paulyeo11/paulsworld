@@ -56,6 +56,63 @@
 </style>
 </head>
 <body>
+<!-- PIN LOCK SCREEN -->
+<div id="pin-overlay" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0d1117,#161b22);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div style="font-size:2em;">🔒</div>
+  <div style="font-size:1.15em;font-weight:700;color:#e6edf3;font-family:sans-serif;letter-spacing:0.05em;">Portfolio Dashboard</div>
+  <div style="font-size:0.85em;color:#8b949e;font-family:monospace;">Enter PIN to access</div>
+  <div style="display:flex;gap:12px;margin:8px 0;" id="pin-dots">
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+  </div>
+  <div id="pin-error" style="color:#f87171;font-size:0.85em;font-family:monospace;min-height:20px;text-align:center;"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px;">
+    <button class="pk" onclick="pinKey('1')">1</button>
+    <button class="pk" onclick="pinKey('2')">2</button>
+    <button class="pk" onclick="pinKey('3')">3</button>
+    <button class="pk" onclick="pinKey('4')">4</button>
+    <button class="pk" onclick="pinKey('5')">5</button>
+    <button class="pk" onclick="pinKey('6')">6</button>
+    <button class="pk" onclick="pinKey('7')">7</button>
+    <button class="pk" onclick="pinKey('8')">8</button>
+    <button class="pk" onclick="pinKey('9')">9</button>
+    <button class="pk" onclick="pinKey('clr')" style="color:#f87171;font-size:1.1em;">⌫</button>
+    <button class="pk" onclick="pinKey('0')">0</button>
+    <button class="pk" onclick="pinKey('ok')" style="color:#10b981;font-size:0.9em;font-weight:800;">OK</button>
+  </div>
+</div>
+<style>
+  .pd{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);transition:background 0.15s;}
+  .pd.filled{background:#f0a500;border-color:#f0a500;}
+  .pk{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e6edf3;font-size:1.35em;font-weight:700;cursor:pointer;transition:background 0.15s;font-family:sans-serif;}
+  .pk:active{background:rgba(240,165,0,0.25);}
+</style>
+<script>
+(function(){
+  var C='121062',SK='t20_auth_v1';
+  if(sessionStorage.getItem(SK)==='1'){document.getElementById('pin-overlay').style.display='none';return;}
+  var entered='';
+  window.pinKey=function(k){
+    var err=document.getElementById('pin-error');
+    err.textContent='';
+    if(k==='clr'){entered=entered.slice(0,-1);}
+    else if(k==='ok'){check();}
+    else{if(entered.length<6)entered+=k;if(entered.length===6)check();}
+    document.querySelectorAll('.pd').forEach(function(d,i){d.classList.toggle('filled',i<entered.length);});
+  };
+  function check(){
+    if(entered===C){sessionStorage.setItem(SK,'1');document.getElementById('pin-overlay').style.display='none';}
+    else{document.getElementById('pin-error').textContent='Incorrect PIN. Try again.';entered='';document.querySelectorAll('.pd').forEach(function(d){d.classList.remove('filled');});}
+  }
+  document.addEventListener('keydown',function(e){
+    if(document.getElementById('pin-overlay').style.display==='none')return;
+    if(e.key>='0'&&e.key<='9')pinKey(e.key);
+    else if(e.key==='Backspace')pinKey('clr');
+    else if(e.key==='Enter')pinKey('ok');
+  });
+})();
+</script>
+
 
 <header>
   <div class="header-top">
