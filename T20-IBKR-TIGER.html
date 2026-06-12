@@ -201,6 +201,33 @@
       </div>
     </div>
 
+    <!-- OCBC Box -->
+    <div style="background:var(--surface);border:1px solid rgba(220,38,38,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f87171;font-family:'DM Mono',monospace;margin-bottom:12px;">🏛️ OCBC Bank — Savings</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">360 Account</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-360">S$100,098</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD · 562-337170</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">GSA — USD</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-usd">US$11,975</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · 503-760738 · S$15,240</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">GSA — HKD</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-hkd">HK$11,193</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">HKD · 524-005287 · S$1,812</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(220,38,38,0.4);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Total OCBC</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-total">S$117,150</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD equiv · manual</div>
+        </div>
+      </div>
+    </div>
+
     <!-- TOTAL ASSETS TABLE -->
     <div style="background:var(--surface);border:1px solid rgba(240,165,0,0.35);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
       <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f0a500;font-family:'DM Mono',monospace;margin-bottom:14px;">💰 Total Assets Summary</div>
@@ -227,6 +254,11 @@
             <td style="padding:9px 8px;color:#93c5fd;font-weight:600;">📋 CPF / SGX</td>
             <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-cpf-usd">—</td>
             <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-cpf-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#f87171;font-weight:600;">🏛️ OCBC Bank</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ocbc-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ocbc-sgd">—</td>
           </tr>
           <tr style="background:rgba(240,165,0,0.06);border-top:1px solid rgba(240,165,0,0.3);">
             <td style="padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;">TOTAL</td>
@@ -549,6 +581,7 @@ async function loadData() {
     } else if(elTigerD) { elTigerD.textContent = 'N/A'; elTigerD.style.color = 'var(--muted)'; }
     // ── TOTAL ASSETS TABLE ──────────────────────────────────────
     const usdSgdFx = fxRates.USD || 1.284;
+    const hkdSgdFx = fxRates.HKD || 0.172;
     const sgdUsdFx = 1 / usdSgdFx;
     const ibkrUSD  = parseFloat(ibkrData.netLiquidation || 0);
     const tigerSGD = parseFloat(tigerData.netValue || 0);
@@ -556,7 +589,13 @@ async function loadData() {
     // CPF/SGX: hardcoded estimate (Singtel + Astrea 8)
     const cpfSGD   = 3500;
     const cpfUSD   = cpfSGD * sgdUsdFx;
-    const totalUSD = ibkrUSD + tigerUSD + cpfUSD;
+    // OCBC: hardcoded from last manual update (12 Jun 2026)
+    const ocbc360SGD  = 100097.79;
+    const ocbcGSAusd  = 11974.53;
+    const ocbcGSAhkd  = 11193.01;
+    const ocbcTotalSGD = ocbc360SGD + (ocbcGSAusd * usdSgdFx) + (ocbcGSAhkd * hkdSgdFx);
+    const ocbcTotalUSD = ocbcTotalSGD * sgdUsdFx;
+    const totalUSD = ibkrUSD + tigerUSD + cpfUSD + ocbcTotalUSD;
     const totalSGD = totalUSD * usdSgdFx;
     const fmtU = v => 'US$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
     const fmtS = v => 'S$'  + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -567,9 +606,11 @@ async function loadData() {
     _s('at-tiger-sgd', fmtS(tigerSGD));
     _s('at-cpf-usd',   fmtU(cpfUSD));
     _s('at-cpf-sgd',   fmtS(cpfSGD));
+    _s('at-ocbc-usd',  fmtU(ocbcTotalUSD));
+    _s('at-ocbc-sgd',  fmtS(ocbcTotalSGD));
     _s('at-total-usd', fmtU(totalUSD));
     _s('at-total-sgd', fmtS(totalSGD));
-    _s('at-note', `CPF/SGX estimated S$3,500 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD · ${ibkrData.fetchedAt || ''}`);
+    _s('at-note', `CPF/SGX est S$3,500 · OCBC manual 12 Jun 2026 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD`);
     renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
