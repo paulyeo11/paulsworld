@@ -213,12 +213,14 @@ def fetch_positions():
     realized_pnl   = get_val('RealizedPnL')
     gross_pos_val  = get_val('GrossPositionValue')
     cash           = get_val('TotalCashValue')
+    daily_pnl      = get_val('DailyPnL')
 
     output = {
         "fetchedAt"       : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "netLiquidation"  : net_liq,
         "unrealizedPnL"   : unrealized_pnl,
         "realizedPnL"     : realized_pnl,
+        "dailyPnL"        : daily_pnl,
         "grossPositionVal": gross_pos_val,
         "cashBalance"     : cash,
         "positions"       : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"]),
