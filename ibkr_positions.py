@@ -119,15 +119,40 @@ def fetch_positions():
     pos_list = []
     opt_list = []
     for p in positions:
+        # Fetch live/delayed market price for this contract
+        mkt_price = None
+        try:
+            ticker = ib.reqMktData(p.contract, snapshot=True)
+            ib.sleep(2)
+            # Use last price, or mid, or close as fallback
+            for attr in ('last', 'close', 'bid', 'ask'):
+                v = getattr(ticker, attr, None)
+                if v is not None and v == v and v > 0:
+                    mkt_price = float(v)
+                    break
+            ib.cancelMktData(p.contract)
+        except Exception as e:
+            print(f"⚠️  Could not get market price for {p.contract.symbol}: {e}")
+
+        if mkt_price is None:
+            # Fallback: use avgCost (P&L will show 0 but avoids crash)
+            mkt_price = p.avgCost
+
+        mkt_value   = round(float(p.position) * mkt_price, 2)
+        cost_basis  = round(float(p.position) * float(p.avgCost), 2)
+        unreal_pnl  = round(mkt_value - cost_basis, 2)
+
         pos_list.append({
-            "account"    : p.account,
-            "symbol"     : p.contract.symbol,
-            "secType"    : p.contract.secType,
-            "exchange"   : p.contract.exchange or p.contract.primaryExchange or "—",
-            "currency"   : p.contract.currency,
-            "position"   : p.position,
-            "avgCost"    : round(p.avgCost, 4),
-            "marketValue": round(p.position * p.avgCost, 2),
+            "account"       : p.account,
+            "symbol"        : p.contract.symbol,
+            "secType"       : p.contract.secType,
+            "exchange"      : p.contract.exchange or p.contract.primaryExchange or "—",
+            "currency"      : p.contract.currency,
+            "position"      : p.position,
+            "avgCost"       : round(p.avgCost, 4),
+            "mktPrice"      : round(mkt_price, 4),
+            "marketValue"   : mkt_value,
+            "unrealizedPnl" : unreal_pnl,
         })
 
         # Collect option positions for the T20 dashboard Options tab
@@ -177,8 +202,11 @@ def fetch_positions():
             })
 
     def get_val(tag, currency='USD'):
-        return next((av.value for av in account_vals
-                     if av.tag == tag and av.currency == currency), None)
+        # Try exact currency match first, then empty string (IBKR sometimes omits currency on P&L fields)
+        result = next((av.value for av in account_vals if av.tag == tag and av.currency == currency), None)
+        if result is None:
+            result = next((av.value for av in account_vals if av.tag == tag and av.currency == ''), None)
+        return result
 
     net_liq        = get_val('NetLiquidation')
     unrealized_pnl = get_val('UnrealizedPnL')
