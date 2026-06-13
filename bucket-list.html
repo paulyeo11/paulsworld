@@ -56,11 +56,8 @@
     /* ITEM CARD */
     .item-card { border-radius: 16px; margin-bottom: 14px; border: 1.5px solid; overflow: hidden; transition: opacity 0.2s; }
     .item-card.done { opacity: 0.72; }
-
-    /* Photo banner */
-    .item-photo { width: 100%; height: 140px; object-fit: cover; display: block; }
-    .item-photo-placeholder { width: 100%; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2em; background: rgba(0,0,0,0.04); }
-
+    .item-photo { width: 100%; height: 150px; object-fit: cover; display: block; }
+    .item-photo-placeholder { width: 100%; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 2em; background: rgba(0,0,0,0.04); }
     .item-body-wrap { padding: 14px 16px; }
     .item-top { display: flex; align-items: flex-start; gap: 12px; }
     .check-btn {
@@ -101,16 +98,12 @@
     .pri-btn.selected-Medium { border-color: #f59e0b; background: #fffbeb; color: #78350f; font-weight: 700; }
     .pri-btn.selected-Low { border-color: #22c55e; background: #f0fdf4; color: #14532d; font-weight: 700; }
 
-    /* Wiki preview */
-    .wiki-preview { margin-bottom: 16px; border-radius: 12px; overflow: hidden; display: none; }
+    /* Wiki preview in modal */
+    .wiki-status { font-size: 0.85em; color: #3b82f6; margin: -10px 0 12px; min-height: 20px; }
+    .wiki-preview { margin-bottom: 16px; border-radius: 12px; overflow: hidden; display: none; border: 1.5px solid #e2e8f0; }
     .wiki-preview img { width: 100%; max-height: 160px; object-fit: cover; display: block; }
-    .wiki-preview-label { font-size: 0.78em; color: #64748b; padding: 5px 10px; background: #f8fafc; }
-    .wiki-searching { font-size: 0.85em; color: #3b82f6; margin-bottom: 12px; display: none; }
-    .wiki-btn { 
-      width: 100%; padding: 10px; border-radius: 10px; border: 1.5px dashed #3b82f6;
-      background: #eff6ff; color: #1d4ed8; font-size: 0.95em; font-weight: 600;
-      cursor: pointer; margin-bottom: 16px;
-    }
+    .wiki-preview-label { font-size: 0.78em; color: #64748b; padding: 5px 10px; background: #f8fafc; display:flex; justify-content:space-between; align-items:center; }
+    .wiki-clear-btn { font-size: 0.82em; color: #ef4444; background: none; border: none; cursor: pointer; padding: 0; }
 
     .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
     .cancel-btn { flex: 1; padding: 13px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; font-size: 1.0em; color: #64748b; }
@@ -178,13 +171,15 @@
       <input type="hidden" id="edit-id" value="">
 
       <label>Dream / Goal *</label>
-      <input type="text" id="inp-title" placeholder="e.g. Sail the Adriatic in Croatia" oninput="onTitleInput()">
+      <input type="text" id="inp-title" placeholder="e.g. Sail the Adriatic in Croatia">
 
-      <button class="wiki-btn" onclick="fetchWikiPhoto()">🔍 Fetch Photo from Wikipedia</button>
-      <div class="wiki-searching" id="wiki-searching">🔍 Searching Wikipedia…</div>
+      <div class="wiki-status" id="wiki-status"></div>
       <div class="wiki-preview" id="wiki-preview">
         <img id="wiki-img" src="" alt="">
-        <div class="wiki-preview-label" id="wiki-label"></div>
+        <div class="wiki-preview-label">
+          <span id="wiki-label">📸 Wikipedia photo</span>
+          <button class="wiki-clear-btn" onclick="clearPhoto()">✕ Remove</button>
+        </div>
       </div>
       <input type="hidden" id="inp-photo" value="">
 
@@ -230,7 +225,7 @@
 
     let items = [];
     let filterStatus = 'All', filterPriority = 'All', filterCat = 'All';
-    let wikiPhotoUrl = '';
+    let wikiTimer = null;
 
     function loadItems() {
       try { items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { items = []; }
@@ -242,53 +237,52 @@
       setTimeout(() => ind.textContent = '', 1200);
     }
 
-    // ── WIKIPEDIA PHOTO FETCH ──
-    function onTitleInput() {
-      // Reset wiki photo when title changes
-      document.getElementById('wiki-preview').style.display = 'none';
-      document.getElementById('inp-photo').value = '';
-      wikiPhotoUrl = '';
-    }
+    // ── AUTO WIKI FETCH on title input (debounced 1.2s) ──
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('inp-title').addEventListener('input', function() {
+        clearTimeout(wikiTimer);
+        const val = this.value.trim();
+        if (!val || val.length < 3) {
+          document.getElementById('wiki-status').textContent = '';
+          return;
+        }
+        document.getElementById('wiki-status').textContent = '🔍 Looking up photo…';
+        wikiTimer = setTimeout(() => fetchWikiPhoto(val), 1200);
+      });
+    });
 
-    async function fetchWikiPhoto() {
-      const title = document.getElementById('inp-title').value.trim();
-      if (!title) { alert('Please enter a dream or goal first!'); return; }
-
-      document.getElementById('wiki-searching').style.display = 'block';
-      document.getElementById('wiki-preview').style.display = 'none';
-      wikiPhotoUrl = '';
-
+    async function fetchWikiPhoto(query) {
       try {
-        // Search Wikipedia for the term
-        const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(title)}&format=json&origin=*&srlimit=1`;
+        const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
         const pages = searchData.query?.search;
-        if (!pages || pages.length === 0) throw new Error('Not found');
+        if (!pages || pages.length === 0) { document.getElementById('wiki-status').textContent = ''; return; }
 
         const pageTitle = pages[0].title;
-
-        // Get the page image
-        const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=pageimages&format=json&origin=*&pithumbsize=600`;
+        const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=pageimages&format=json&origin=*&pithumbsize=800`;
         const imgRes = await fetch(imgUrl);
         const imgData = await imgRes.json();
         const page = Object.values(imgData.query.pages)[0];
 
-        document.getElementById('wiki-searching').style.display = 'none';
-
         if (page.thumbnail?.source) {
-          wikiPhotoUrl = page.thumbnail.source;
-          document.getElementById('inp-photo').value = wikiPhotoUrl;
-          document.getElementById('wiki-img').src = wikiPhotoUrl;
-          document.getElementById('wiki-label').textContent = `📸 Wikipedia: "${pageTitle}"`;
+          document.getElementById('inp-photo').value = page.thumbnail.source;
+          document.getElementById('wiki-img').src = page.thumbnail.source;
+          document.getElementById('wiki-label').textContent = `📸 "${pageTitle}"`;
           document.getElementById('wiki-preview').style.display = 'block';
+          document.getElementById('wiki-status').textContent = '';
         } else {
-          alert(`No photo found for "${pageTitle}" on Wikipedia. Try a more specific name.`);
+          document.getElementById('wiki-status').textContent = '📷 No photo found on Wikipedia';
         }
-      } catch (e) {
-        document.getElementById('wiki-searching').style.display = 'none';
-        alert('Could not fetch photo. Check your internet or try a different name.');
+      } catch(e) {
+        document.getElementById('wiki-status').textContent = '';
       }
+    }
+
+    function clearPhoto() {
+      document.getElementById('inp-photo').value = '';
+      document.getElementById('wiki-preview').style.display = 'none';
+      document.getElementById('wiki-status').textContent = '';
     }
 
     // ── RENDER ──
@@ -396,11 +390,11 @@
       document.getElementById('inp-notes').value = '';
       document.getElementById('inp-photo').value = '';
       document.getElementById('wiki-preview').style.display = 'none';
-      document.getElementById('wiki-searching').style.display = 'none';
-      wikiPhotoUrl = '';
+      document.getElementById('wiki-status').textContent = '';
       selectPriority('Medium');
       document.querySelector('.save-btn').textContent = 'Add to List 🎯';
       document.getElementById('modal-overlay').classList.remove('hidden');
+      setTimeout(() => document.getElementById('inp-title').focus(), 100);
     }
 
     function openEdit(id) {
@@ -413,27 +407,33 @@
       document.getElementById('inp-date').value = item.targetDate || '';
       document.getElementById('inp-notes').value = item.notes || '';
       document.getElementById('inp-photo').value = item.photo || '';
-      wikiPhotoUrl = item.photo || '';
+      document.getElementById('wiki-status').textContent = '';
       if (item.photo) {
         document.getElementById('wiki-img').src = item.photo;
-        document.getElementById('wiki-label').textContent = '📸 Current photo';
+        document.getElementById('wiki-label').textContent = '📸 Saved photo';
         document.getElementById('wiki-preview').style.display = 'block';
       } else {
         document.getElementById('wiki-preview').style.display = 'none';
       }
-      document.getElementById('wiki-searching').style.display = 'none';
       selectPriority(item.priority);
       document.querySelector('.save-btn').textContent = 'Save Changes';
       document.getElementById('modal-overlay').classList.remove('hidden');
     }
 
-    function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+    function closeModal() {
+      clearTimeout(wikiTimer);
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
 
     function selectPriority(p) {
       document.getElementById('inp-priority').value = p;
       document.querySelectorAll('.pri-btn').forEach(b => {
         b.className = 'pri-btn';
-        if (b.textContent.includes(p === 'High' ? '🔴' : p === 'Medium' ? '🟡' : '🟢')) b.classList.add('selected-'+p);
+        if ((p==='High' && b.textContent.includes('🔴')) ||
+            (p==='Medium' && b.textContent.includes('🟡')) ||
+            (p==='Low' && b.textContent.includes('🟢'))) {
+          b.classList.add('selected-'+p);
+        }
       });
     }
 
