@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T20: Combined Portfolio — IBKR + Tiger + CPF/SGX</title>
+<title>Paul's Invest — T20 Portfolio</title>
+<link rel="apple-touch-icon" sizes="512x512" href="/t20_icon.png">
+<link rel="apple-touch-icon" href="/t20_icon.png">
+<link rel="icon" type="image/png" href="/t20_icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Paul's Invest">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0a0f1a;--surface:#111c2d;--border:#1e3050;--accent:#f7a800;--accent2:#ff6b00;--green:#00d4aa;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;--hk:#f97316;--us:#3b82f6;}
@@ -103,6 +109,64 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+
+<!-- PIN LOCK SCREEN -->
+<div id="pin-overlay" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0d1117,#161b22);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div style="font-size:2em;">🔒</div>
+  <div style="font-size:1.15em;font-weight:700;color:#e6edf3;font-family:'Syne',sans-serif;letter-spacing:0.05em;">T20 Portfolio</div>
+  <div style="font-size:0.85em;color:#8b949e;font-family:'DM Mono',monospace;">Enter PIN to access</div>
+  <div style="display:flex;gap:12px;margin:8px 0;" id="pin-dots">
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+  </div>
+  <div id="pin-error" style="color:#f87171;font-size:0.85em;font-family:'DM Mono',monospace;min-height:20px;text-align:center;"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px;">
+    <button class="pk" onclick="pinKey('1')">1</button>
+    <button class="pk" onclick="pinKey('2')">2</button>
+    <button class="pk" onclick="pinKey('3')">3</button>
+    <button class="pk" onclick="pinKey('4')">4</button>
+    <button class="pk" onclick="pinKey('5')">5</button>
+    <button class="pk" onclick="pinKey('6')">6</button>
+    <button class="pk" onclick="pinKey('7')">7</button>
+    <button class="pk" onclick="pinKey('8')">8</button>
+    <button class="pk" onclick="pinKey('9')">9</button>
+    <button class="pk" onclick="pinKey('clr')" style="color:#f87171;font-size:1.1em;">⌫</button>
+    <button class="pk" onclick="pinKey('0')">0</button>
+    <button class="pk" onclick="pinKey('ok')" style="color:#10b981;font-size:0.9em;font-weight:800;">OK</button>
+  </div>
+</div>
+<style>
+  .pd{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);transition:background 0.15s;}
+  .pd.filled{background:#f0a500;border-color:#f0a500;}
+  .pk{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e6edf3;font-size:1.35em;font-weight:700;cursor:pointer;transition:background 0.15s;font-family:'Syne',sans-serif;}
+  .pk:active{background:rgba(240,165,0,0.25);}
+</style>
+<script>
+(function(){
+  var C='121062', SK='t20_auth_v1';
+  if(localStorage.getItem(SK)==='1'){document.getElementById('pin-overlay').style.display='none';return;}
+  var entered='';
+  window.pinKey=function(k){
+    var err=document.getElementById('pin-error');
+    err.textContent='';
+    if(k==='clr'){entered=entered.slice(0,-1);}
+    else if(k==='ok'){check();}
+    else{if(entered.length<6)entered+=k;if(entered.length===6)check();}
+    document.querySelectorAll('.pd').forEach(function(d,i){d.classList.toggle('filled',i<entered.length);});
+  };
+  function check(){
+    if(entered===C){localStorage.setItem(SK,'1');document.getElementById('pin-overlay').style.display='none';}
+    else{document.getElementById('pin-error').textContent='Incorrect PIN. Try again.';entered='';document.querySelectorAll('.pd').forEach(function(d){d.classList.remove('filled');});}
+  }
+  document.addEventListener('keydown',function(e){
+    if(document.getElementById('pin-overlay').style.display==='none')return;
+    if(e.key>='0'&&e.key<='9')pinKey(e.key);
+    else if(e.key==='Backspace')pinKey('clr');
+    else if(e.key==='Enter')pinKey('ok');
+  });
+})();
+</script>
+
 <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
 <header>
   <div class="logo">
@@ -199,6 +263,119 @@
           <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · today</div>
         </div>
       </div>
+    </div>
+
+    <!-- OCBC Box -->
+    <div style="background:var(--surface);border:1px solid rgba(220,38,38,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f87171;font-family:'DM Mono',monospace;margin-bottom:12px;">🏛️ OCBC Bank — Savings</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">360 Account</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-360">S$100,098</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD · 562-337170</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">GSA — USD</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-usd">US$11,975</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · 503-760738 · S$15,240</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">GSA — HKD</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-hkd">HK$11,193</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">HKD · 524-005287 · S$1,812</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(220,38,38,0.4);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Total OCBC</div>
+          <div style="font-size:17px;font-weight:700;color:#f87171;font-family:'Syne',sans-serif;" id="bal-ocbc-total">S$117,150</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD equiv · manual</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UOB Box -->
+    <div style="background:var(--surface);border:1px solid rgba(59,130,246,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#60a5fa;font-family:'DM Mono',monospace;margin-bottom:12px;">🏦 UOB Bank — Savings</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Saving Account</div>
+          <div style="font-size:17px;font-weight:700;color:#60a5fa;font-family:'Syne',sans-serif;">S$32,337</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD · 403-104-807-3</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">USD Equivalent</div>
+          <div style="font-size:17px;font-weight:700;color:#60a5fa;font-family:'Syne',sans-serif;" id="bal-uob-usd">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · live FX</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Property Box -->
+    <div style="background:var(--surface);border:1px solid rgba(139,92,246,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#c4b5fd;font-family:'DM Mono',monospace;margin-bottom:12px;">🏠 Property</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">North Okas Condo</div>
+          <div style="font-size:17px;font-weight:700;color:#c4b5fd;font-family:'Syne',sans-serif;">S$1,200,000</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD · est. market value</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">USD Equivalent</div>
+          <div style="font-size:17px;font-weight:700;color:#c4b5fd;font-family:'Syne',sans-serif;" id="bal-prop-usd">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · live FX</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOTAL ASSETS TABLE -->
+    <div style="background:var(--surface);border:1px solid rgba(240,165,0,0.35);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f0a500;font-family:'DM Mono',monospace;margin-bottom:14px;">💰 Total Assets Summary</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.95em;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+            <th style="text-align:left;padding:7px 8px;color:#8b949e;font-size:0.8em;letter-spacing:0.05em;font-family:'DM Mono',monospace;font-weight:600;">ACCOUNT</th>
+            <th style="text-align:right;padding:7px 8px;color:#8b949e;font-size:0.8em;letter-spacing:0.05em;font-family:'DM Mono',monospace;font-weight:600;">USD</th>
+            <th style="text-align:right;padding:7px 8px;color:#8b949e;font-size:0.8em;letter-spacing:0.05em;font-family:'DM Mono',monospace;font-weight:600;">SGD</th>
+          </tr>
+        </thead>
+        <tbody id="asset-table-body">
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#f4813f;font-weight:600;">🏦 IBKR</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ibkr-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ibkr-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#10b981;font-weight:600;">🐯 Tiger Brokers</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-tiger-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-tiger-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#93c5fd;font-weight:600;">📋 CPF / SGX</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-cpf-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-cpf-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#f87171;font-weight:600;">🏛️ OCBC Bank</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ocbc-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ocbc-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#60a5fa;font-weight:600;">🏦 UOB Bank</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-uob-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-uob-sgd">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#c4b5fd;font-weight:600;">🏠 Property</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-prop-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-prop-sgd">S$1,200,000</td>
+          </tr>
+          <tr style="background:rgba(240,165,0,0.06);border-top:1px solid rgba(240,165,0,0.3);">
+            <td style="padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;">TOTAL</td>
+            <td style="text-align:right;padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;font-family:'DM Mono',monospace;" id="at-total-usd">—</td>
+            <td style="text-align:right;padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;font-family:'DM Mono',monospace;" id="at-total-sgd">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;font-size:0.78em;color:#8b949e;font-family:'DM Mono',monospace;" id="at-note">CPF/SGX estimated · FX live</div>
     </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
@@ -510,6 +687,52 @@ async function loadData() {
       elTigerD.style.color = tigerDpnl>=0?'#10b981':'#ef4444';
       if(elTigerDcard) elTigerDcard.style.borderColor = tigerDpnl>=0?'rgba(16,185,129,.45)':'rgba(239,68,68,.45)';
     } else if(elTigerD) { elTigerD.textContent = 'N/A'; elTigerD.style.color = 'var(--muted)'; }
+    // ── TOTAL ASSETS TABLE ──────────────────────────────────────
+    const usdSgdFx = fxRates.USD || 1.284;
+    const hkdSgdFx = fxRates.HKD || 0.172;
+    const sgdUsdFx = 1 / usdSgdFx;
+    const ibkrUSD  = parseFloat(ibkrData.netLiquidation || 0);
+    const tigerSGD = parseFloat(tigerData.netValue || 0);
+    const tigerUSD = tigerSGD * sgdUsdFx;
+    // CPF/SGX: hardcoded estimate (Singtel + Astrea 8)
+    const cpfSGD   = 3500;
+    const cpfUSD   = cpfSGD * sgdUsdFx;
+    // OCBC: hardcoded from last manual update (12 Jun 2026)
+    const ocbc360SGD  = 100097.79;
+    const ocbcGSAusd  = 11974.53;
+    const ocbcGSAhkd  = 11193.01;
+    const ocbcTotalSGD = ocbc360SGD + (ocbcGSAusd * usdSgdFx) + (ocbcGSAhkd * hkdSgdFx);
+    const ocbcTotalUSD = ocbcTotalSGD * sgdUsdFx;
+    // Property: North Okas Condo
+    const propSGD = 1200000;
+    const propUSD = propSGD * sgdUsdFx;
+    // UOB: hardcoded from last manual update (12 Jun 2026)
+    const uobSGD = 32337.13;
+    const uobUSD = uobSGD * sgdUsdFx;
+    const totalUSD = ibkrUSD + tigerUSD + cpfUSD + ocbcTotalUSD + uobUSD + propUSD;
+    const totalSGD = totalUSD * usdSgdFx;
+    const fmtU = v => 'US$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const fmtS = v => 'S$'  + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const _s = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    _s('at-ibkr-usd',  fmtU(ibkrUSD));
+    _s('at-ibkr-sgd',  fmtS(ibkrUSD * usdSgdFx));
+    _s('at-tiger-usd', fmtU(tigerUSD));
+    _s('at-tiger-sgd', fmtS(tigerSGD));
+    _s('at-cpf-usd',   fmtU(cpfUSD));
+    _s('at-cpf-sgd',   fmtS(cpfSGD));
+    _s('at-ocbc-usd',  fmtU(ocbcTotalUSD));
+    _s('at-ocbc-sgd',  fmtS(ocbcTotalSGD));
+    _s('at-uob-usd',   fmtU(uobUSD));
+    _s('at-uob-sgd',   fmtS(uobSGD));
+    const elUobUsd = document.getElementById('bal-uob-usd');
+    if(elUobUsd) elUobUsd.textContent = fmtU(uobUSD);
+    _s('at-prop-usd',  fmtU(propUSD));
+    _s('at-prop-sgd',  fmtS(propSGD));
+    const elPropUsd = document.getElementById('bal-prop-usd');
+    if(elPropUsd) elPropUsd.textContent = fmtU(propUSD);
+    _s('at-total-usd', fmtU(totalUSD));
+    _s('at-total-sgd', fmtS(totalSGD));
+    _s('at-note', `CPF/SGX est S$3,500 · OCBC manual 12 Jun 2026 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD`);
     renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {

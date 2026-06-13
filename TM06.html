@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TM06: Melbourne &amp; New Zealand · 23 Sep – 27 Oct 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --ink: #1a2e1a;
+    --paper: #f4f7f4;
+    --green: #2d6a4f;
+    --lime: #52b788;
+    --gold: #c9933a;
+    --mist: #7a9e8a;
+    --pale: #e8f0eb;
+    --white: #ffffff;
+    --kiwi: #6a994e;
+    --ocean: #1b6ca8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 1rem;
+  }
+
+  /* HOME BUTTON */
+  .home-btn {
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 999;
+    background: var(--ink);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    transition: background 0.2s;
+  }
+  .home-btn:hover { background: var(--green); }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(160deg, #1a2e1a 0%, #2d5a1b 45%, #1b6ca8 100%);
+    color: white;
+    padding: 90px 24px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '🥝';
+    position: absolute;
+    font-size: 16vw;
+    opacity: 0.06;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: #a8d5b5;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 6vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+  .hero h1 span { color: #a8d5b5; }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 32px;
+    font-weight: 300;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 40px;
+    padding: 10px 22px;
+    text-align: center;
+  }
+  .stat-pill .num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #a8d5b5;
+    line-height: 1;
+  }
+  .stat-pill .lbl {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-top: 3px;
+  }
+
+  /* COUNTDOWN BANNER */
+  .countdown-banner {
+    background: var(--green);
+    color: white;
+    text-align: center;
+    padding: 14px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+  }
+  .countdown-banner strong { font-size: 1.3rem; }
+
+  /* SECTION */
+  .section {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--pale);
+  }
+
+  /* TIMELINE */
+  .timeline { display: flex; flex-direction: column; gap: 2px; }
+
+  .tl-item {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 0;
+  }
+  .tl-date {
+    padding: 18px 14px 18px 0;
+    text-align: right;
+    border-right: 2px solid var(--pale);
+    position: relative;
+  }
+  .tl-date::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--mist);
+  }
+  .tl-item.active .tl-date::after { background: var(--green); border-color: var(--green); }
+  .tl-item.transit .tl-date::after { background: var(--gold); border-color: var(--gold); }
+  .tl-item.nz .tl-date::after { background: var(--ocean); border-color: var(--ocean); }
+
+  .tl-date .day {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .tl-date .month {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mist);
+  }
+  .tl-body { padding: 14px 0 14px 20px; }
+
+  .tl-badge {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .badge-fly    { background: #e8f4fd; color: #1a6fa0; }
+  .badge-explore{ background: #fff3cd; color: #856404; }
+  .badge-nature { background: #d4edda; color: #2d6a4f; }
+  .badge-nz     { background: #dbeafe; color: #1e40af; }
+  .badge-return { background: #fde8e8; color: #c0392b; }
+
+  .tl-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .tl-desc { font-size: 0.9rem; color: #555; line-height: 1.5; }
+
+  /* CITY CARDS */
+  .city-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .city-card {
+    border-radius: 14px;
+    padding: 22px 18px;
+    position: relative;
+    overflow: hidden;
+    color: white;
+  }
+  .city-card.melb {
+    background: linear-gradient(135deg, #1a2e1a 0%, #2d6a4f 100%);
+  }
+  .city-card.nz {
+    background: linear-gradient(135deg, #1b3a6b 0%, #1b6ca8 100%);
+  }
+  .city-card .flag {
+    font-size: 2rem;
+    opacity: 0.2;
+    position: absolute;
+    top: 8px; right: 12px;
+    line-height: 1;
+  }
+  .city-card .city-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .city-card .city-dates {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    opacity: 0.7;
+    margin-bottom: 10px;
+  }
+  .city-card .city-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .city-tag {
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  /* INFO GRID */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 16px;
+    border: 1px solid var(--pale);
+  }
+  .info-card .ic-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+  .info-card .ic-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .info-card .ic-icon { font-size: 1.4rem; margin-bottom: 8px; }
+
+  /* HIGHLIGHTS */
+  .highlights { display: flex; flex-direction: column; gap: 10px; }
+  .hl-item {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--pale);
+    border-left: 4px solid var(--green);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .hl-item.blue { border-left-color: var(--ocean); }
+  .hl-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 1px; }
+  .hl-text .hl-title { font-weight: 600; font-size: 1rem; margin-bottom: 2px; }
+  .hl-text .hl-sub { font-size: 0.87rem; color: #666; }
+
+  /* VIEW COUNTER */
+  .view-counter-wrap {
+    text-align: center;
+    padding: 24px 20px 10px;
+    color: var(--mist);
+    font-size: 0.85rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    color: var(--mist);
+    border-top: 1px solid var(--pale);
+    font-family: 'Space Mono', monospace;
+  }
+
+  @media (max-width: 420px) {
+    .city-cards { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.8rem; }
+    .stat-pill .num { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-tag">TM06 · 23 Sep – 27 Oct 2026</p>
+  <h1>Melbourne &amp; <span>New Zealand</span></h1>
+  <p class="hero-sub">Paul &amp; Joanne · 23 Sep – 27 Oct 2026 · 35 days</p>
+  <div class="hero-stats">
+    <div class="stat-pill">
+      <div class="num">35</div>
+      <div class="lbl">Days</div>
+    </div>
+    <div class="stat-pill">
+      <div class="num">2</div>
+      <div class="lbl">Countries</div>
+    </div>
+    <div class="stat-pill">
+      <div class="num">2</div>
+      <div class="lbl">Travellers</div>
+    </div>
+    <div class="stat-pill">
+      <div class="num">Sep</div>
+      <div class="lbl">2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- COUNTDOWN BANNER -->
+<div class="countdown-banner" id="countdownBanner">
+  ✈️ Calculating departure countdown...
+</div>
+
+<!-- CITIES -->
+<div class="section">
+  <p class="section-label">Destinations</p>
+  <div class="city-cards">
+    <div class="city-card melb">
+      <div class="flag">🦘</div>
+      <div class="city-name">Melbourne</div>
+      <div class="city-dates">Sep 23 – 29</div>
+      <div class="city-tags">
+        <span class="city-tag">🌊 Great Ocean Rd</span>
+        <span class="city-tag">☕ Coffee</span>
+        <span class="city-tag">🎨 Culture</span>
+      </div>
+    </div>
+    <div class="city-card nz">
+      <div class="flag">🥝</div>
+      <div class="city-name">New Zealand</div>
+      <div class="city-dates">Sep 30 – Oct 27</div>
+      <div class="city-tags">
+        <span class="city-tag">🏔️ Scenery</span>
+        <span class="city-tag">🚗 Self-Drive</span>
+        <span class="city-tag">🌿 Nature</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ITINERARY -->
+<div class="section" style="padding-top:0">
+  <p class="section-label">Itinerary</p>
+  <div class="timeline">
+
+    <div class="tl-item transit">
+      <div class="tl-date">
+        <div class="day">23</div>
+        <div class="month">Sep</div>
+      </div>
+      <div class="tl-body">
+        <span class="tl-badge badge-fly">✈️ Fly</span>
+        <div class="tl-title">Depart SG → Melbourne</div>
+        <div class="tl-desc">Paul &amp; Joanne — Melbourne bound!</div>
+      </div>
+    </div>
+
+    <div class="tl-item active">
+      <div class="tl-date">
+        <div class="day">23–29</div>
+        <div class="month">Sep</div>
+      </div>
+      <div class="tl-body">
+        <span class="tl-badge badge-explore">🏙️ Explore</span>
+        <div class="tl-title">Melbourne</div>
+        <div class="tl-desc">1 week — Great Ocean Road, laneways, coffee &amp; food scene.</div>
+      </div>
+    </div>
+
+    <div class="tl-item transit">
+      <div class="tl-date">
+        <div class="day">~30</div>
+        <div class="month">Sep</div>
+      </div>
+      <div class="tl-body">
+        <span class="tl-badge badge-fly">✈️ Fly</span>
+        <div class="tl-title">Melbourne → New Zealand</div>
+        <div class="tl-desc">Fly across the Tasman — NZ adventure begins.</div>
+      </div>
+    </div>
+
+    <div class="tl-item nz">
+      <div class="tl-date">
+        <div class="day">30 Sep–27 Oct</div>
+        <div class="month"></div>
+      </div>
+      <div class="tl-body">
+        <span class="tl-badge badge-nz">🥝 Explore</span>
+        <div class="tl-title">New Zealand</div>
+        <div class="tl-desc">~4 weeks exploring New Zealand's stunning landscapes — fjords, mountains, beaches and more.</div>
+      </div>
+    </div>
+
+    <div class="tl-item transit">
+      <div class="tl-date">
+        <div class="day">27</div>
+        <div class="month">Oct</div>
+      </div>
+      <div class="tl-body">
+        <span class="tl-badge badge-return">🏠 Return</span>
+        <div class="tl-title">Fly Home to Singapore</div>
+        <div class="tl-desc">Return flight — 35 wonderful days complete.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TRIP INFO -->
+<div class="section" style="padding-top:0">
+  <p class="section-label">Trip Info</p>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="ic-icon">✈️</div>
+      <div class="ic-label">Departure</div>
+      <div class="ic-value">23 Sep 2026</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-icon">🏠</div>
+      <div class="ic-label">Return</div>
+      <div class="ic-value">27 Oct 2026</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-icon">👫</div>
+      <div class="ic-label">Travellers</div>
+      <div class="ic-value">Paul &amp; Joanne</div>
+    </div>
+    <div class="info-card">
+      <div class="ic-icon">🌏</div>
+      <div class="ic-label">Countries</div>
+      <div class="ic-value">Australia &amp; New Zealand</div>
+    </div>
+  </div>
+</div>
+
+<!-- HIGHLIGHTS -->
+<div class="section" style="padding-top:0">
+  <p class="section-label">Highlights to Look Forward To</p>
+  <div class="highlights">
+    <div class="hl-item">
+      <div class="hl-icon">🌊</div>
+      <div class="hl-text">
+        <div class="hl-title">Great Ocean Road</div>
+        <div class="hl-sub">Drive one of the world's most scenic coastal roads — Twelve Apostles &amp; rugged cliffs</div>
+      </div>
+    </div>
+    <div class="hl-item">
+      <div class="hl-icon">☕</div>
+      <div class="hl-text">
+        <div class="hl-title">Melbourne Coffee &amp; Laneways</div>
+        <div class="hl-sub">World-class coffee culture, street art laneways, and incredible food scene</div>
+      </div>
+    </div>
+    <div class="hl-item blue">
+      <div class="hl-icon">🏔️</div>
+      <div class="hl-text">
+        <div class="hl-title">Fiordland &amp; Milford Sound</div>
+        <div class="hl-sub">New Zealand's most dramatic fjords — breathtaking scenery like nowhere else on earth</div>
+      </div>
+    </div>
+    <div class="hl-item blue">
+      <div class="hl-icon">🚗</div>
+      <div class="hl-text">
+        <div class="hl-title">NZ Self-Drive Adventure</div>
+        <div class="hl-sub">4 weeks on the open road exploring NZ's epic landscapes at your own pace</div>
+      </div>
+    </div>
+    <div class="hl-item blue">
+      <div class="hl-icon">🌿</div>
+      <div class="hl-text">
+        <div class="hl-title">Spring in New Zealand</div>
+        <div class="hl-sub">October is NZ spring — wildflowers blooming, mild weather, fewer crowds</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW COUNTER -->
+<div class="view-counter-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  TM06 · Melbourne &amp; New Zealand 2026 · paulsworld.vercel.app
+</footer>
+
+<script>
+  function updateCountdown() {
+    const depart = new Date('2026-09-23T00:00:00+08:00');
+    const now = new Date();
+    const diff = depart - now;
+    const banner = document.getElementById('countdownBanner');
+    if (diff <= 0) {
+      banner.textContent = '✈️ Trip is underway — enjoy Melbourne & NZ!';
+      banner.style.background = '#1b6ca8';
+    } else {
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      banner.innerHTML = `✈️ Departing in <strong>${days}d ${hrs}h ${mins}m</strong> · 23 September 2026`;
+    }
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 60000);
+</script>
+
+</body>
+</html>
