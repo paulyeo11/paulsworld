@@ -291,12 +291,55 @@
     closing: document.getElementById('closing'),
   };
 
-  Object.values(ta).forEach(t => t.addEventListener('input', updateCount));
+  const STORAGE_KEY = 'tm02_speech_helper_data';
+
+  Object.values(ta).forEach(t => t.addEventListener('input', () => { updateCount(); saveData(); }));
 
   function updateCount() {
     const n = Object.values(ta).map(t => t.value).join('').length;
     document.getElementById('char-count').textContent = n + ' characters typed';
   }
+
+  function saveData() {
+    const data = {
+      opening: ta.opening.value,
+      bodyContent: ta.bodyContent.value,
+      closing: ta.closing.value,
+      generatedSpeech: generatedSpeech
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      ta.opening.value = data.opening || '';
+      ta.bodyContent.value = data.bodyContent || '';
+      ta.closing.value = data.closing || '';
+      generatedSpeech = data.generatedSpeech || '';
+      if (generatedSpeech) {
+        document.getElementById('speech-output').style.display = 'block';
+        document.getElementById('speech-output').textContent = generatedSpeech;
+      }
+      updateCount();
+    } catch (e) {}
+  }
+
+  function clearData() {
+    if (!confirm('This will erase all your notes and the drafted speech. Continue?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    ta.opening.value = '';
+    ta.bodyContent.value = '';
+    ta.closing.value = '';
+    generatedSpeech = '';
+    document.getElementById('speech-output').textContent = '';
+    document.getElementById('speech-output').style.display = 'none';
+    updateCount();
+  }
+
+  loadData();
 
   function showTab(name, btn) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
