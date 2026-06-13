@@ -369,17 +369,13 @@ ${closing || "(no notes — write an inspiring close about learning new things a
 Write the Chinese speech now. Start directly with the speech — no preamble.`;
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/speech', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
-        })
+        body: JSON.stringify({ opening, body: bodyText, closing })
       });
       const data = await res.json();
-      const text = (data.content || []).map(b => b.text || '').join('');
+      const text = data.text || '';
       if (!text) throw new Error('Empty response');
 
       generatedSpeech = text;
