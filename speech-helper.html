@@ -374,9 +374,11 @@ Write the Chinese speech now. Start directly with the speech — no preamble.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ opening, body: bodyContent, closing })
       });
-      const data = await res.json();
+      const rawText = await res.text();
+      let data;
+      try { data = JSON.parse(rawText); } catch(e) { throw new Error('Bad JSON: ' + rawText.slice(0,200)); }
       const text = data.text || '';
-      if (!text) throw new Error('Empty response');
+      if (!text) throw new Error('No text. Got: ' + JSON.stringify(data).slice(0,300));
 
       generatedSpeech = text;
       document.getElementById('loading-state').style.display = 'none';
