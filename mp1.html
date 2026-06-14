@@ -446,9 +446,32 @@ Respond with ONLY a JSON array of exactly 10 strings, nothing else. No markdown,
     });
 
     const data = await response.json();
+
+    if(!response.ok || data.type === 'error'){
+      const msg = data?.error?.message || `HTTP ${response.status}`;
+      throw new Error('API error: ' + msg);
+    }
+
     const textBlocks = (data.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n');
-    const clean = textBlocks.replace(/```json|```/g, '').trim();
-    const arr = JSON.parse(clean);
+
+    if(!textBlocks.trim()){
+      throw new Error('Empty response from model');
+    }
+
+    // Extract the JSON array even if Claude added stray text around it
+    const start = textBlocks.indexOf('[');
+    const end = textBlocks.lastIndexOf(']');
+    if(start === -1 || end === -1 || end <= start){
+      throw new Error('No array found in response: ' + textBlocks.slice(0,200));
+    }
+    const jsonStr = textBlocks.slice(start, end+1);
+
+    let arr;
+    try{
+      arr = JSON.parse(jsonStr);
+    }catch(parseErr){
+      throw new Error('JSON parse failed: ' + parseErr.message + ' | raw: ' + jsonStr.slice(0,300));
+    }
 
     if(Array.isArray(arr) && arr.length === 10){
       points = arr.map(s=>String(s).trim());
@@ -456,7 +479,7 @@ Respond with ONLY a JSON array of exactly 10 strings, nothing else. No markdown,
       points = arr.slice(0,10).map(s=>String(s).trim());
       while(points.length<10) points.push('');
     } else {
-      throw new Error('Unexpected response shape');
+      throw new Error('Unexpected response shape (not an array)');
     }
 
     statusEl.textContent = '✅ Done! Edit any sentence below if you want to adjust it.';
@@ -469,7 +492,7 @@ Respond with ONLY a JSON array of exactly 10 strings, nothing else. No markdown,
 
   }catch(err){
     console.error(err);
-    statusEl.textContent = '⚠️ Something went wrong. Please try again — you can also edit sentences manually in the Map tab.';
+    statusEl.textContent = '⚠️ ' + err.message;
   }finally{
     btn.disabled = false;
     btn.textContent = '✨ Turn into 10 Short Sentences';
@@ -568,5 +591,3 @@ renderAnchors();
 
 </body>
 </html>
-
-<!-- redeploy-trigger -->
