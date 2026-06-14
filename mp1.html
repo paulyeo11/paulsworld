@@ -283,16 +283,33 @@
 
     <div class="field">
       <label for="storyText">Paste your full story (opening, middle, ending — all in one)</label>
-      <textarea id="storyText" placeholder="Write or paste your whole story here..." style="min-height:280px;"></textarea>
+      <textarea id="storyText" placeholder="Write or paste your whole story here..." style="min-height:240px;"></textarea>
     </div>
 
     <div class="btn-row">
-      <button class="btn-primary" id="extractBtn">✨ Turn into 10 Short Sentences</button>
+      <button class="btn-primary" id="copyPromptBtn">📋 Step 1: Copy Prompt for Claude</button>
     </div>
-    <div class="anchor-hint" style="text-align:center;margin-top:8px;" id="extractStatus">
-      Claude will rewrite your story as 10 short sentences — one per body part — that together retell the whole story in order. Go to the Map tab to fine-tune the wording.
+    <div class="anchor-hint" style="text-align:center;margin-top:8px;" id="copyStatus">
+      Taps copies a ready-made prompt (with your story inside) to your clipboard. Then open Claude, paste it in, and Claude will reply with 10 short sentences.
     </div>
+
+    <div class="btn-row" style="margin-top:6px;">
+      <a href="https://claude.ai/new" target="_blank" style="display:block;text-align:center;padding:12px;border:1px solid var(--accent2);border-radius:8px;color:var(--accent2);text-decoration:none;font-weight:bold;">
+        🔗 Step 2: Open Claude (paste the prompt there)
+      </a>
+    </div>
+
+    <div class="section-title" style="margin-top:30px;">Step 3: Paste Claude's Answer</div>
+    <div class="field">
+      <label for="claudeReply">Paste Claude's reply here (the list of 10 sentences, or the JSON array)</label>
+      <textarea id="claudeReply" placeholder='Paste here, e.g. ["...","...", ... ] or a numbered list 1-10' style="min-height:140px;"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="applyReplyBtn">✅ Fill My 10 Body Anchors</button>
+    </div>
+    <div class="anchor-hint" style="text-align:center;margin-top:8px;" id="applyStatus"></div>
   </div>
+
 
   <!-- TAB 2: MAP -->
   <div class="view" id="view-map">
@@ -400,22 +417,9 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
-// --- Extraction via Claude API ---
-document.getElementById('extractBtn').addEventListener('click', async ()=>{
-  const story = document.getElementById('storyText').value.trim();
-  const statusEl = document.getElementById('extractStatus');
-  const btn = document.getElementById('extractBtn');
-
-  if(!story){
-    alert('Paste your story first.');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Thinking...';
-  statusEl.textContent = 'Claude is rewriting your story as 10 short sentences...';
-
-  const prompt = `Here is a personal story:
+// --- Step 1: Copy prompt to clipboard ---
+function buildPrompt(story){
+  return `Here is a personal story:
 
 """
 ${story}
@@ -429,74 +433,83 @@ Rules:
 - Use simple, vivid, concrete words (names, places, actions, feelings) — easy to picture and easy to say out loud.
 - Sentence 1 = the very start of the story. Sentence 10 = the ending/takeaway.
 - Spread the events roughly evenly across all 10 — don't cram everything into the middle.
+- Match the language of the original story (if the story is in Chinese, write the sentences in Chinese; if English, in English).
 - No numbering, bullets, or extra text in your output sentences themselves.
 
 Respond with ONLY a JSON array of exactly 10 strings, nothing else. No markdown, no code fences, no preamble. Example format:
 ["First short sentence.","Second short sentence.", ... ,"Tenth short sentence."]`;
+}
+
+document.getElementById('copyPromptBtn').addEventListener('click', async ()=>{
+  const story = document.getElementById('storyText').value.trim();
+  const statusEl = document.getElementById('copyStatus');
+
+  if(!story){
+    alert('Paste your story first.');
+    return;
+  }
+
+  const prompt = buildPrompt(story);
 
   try{
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-
-    const data = await response.json();
-
-    if(!response.ok || data.type === 'error'){
-      const msg = data?.error?.message || `HTTP ${response.status}`;
-      throw new Error('API error: ' + msg);
-    }
-
-    const textBlocks = (data.content || []).filter(b=>b.type==='text').map(b=>b.text).join('\n');
-
-    if(!textBlocks.trim()){
-      throw new Error('Empty response from model');
-    }
-
-    // Extract the JSON array even if Claude added stray text around it
-    const start = textBlocks.indexOf('[');
-    const end = textBlocks.lastIndexOf(']');
-    if(start === -1 || end === -1 || end <= start){
-      throw new Error('No array found in response: ' + textBlocks.slice(0,200));
-    }
-    const jsonStr = textBlocks.slice(start, end+1);
-
-    let arr;
-    try{
-      arr = JSON.parse(jsonStr);
-    }catch(parseErr){
-      throw new Error('JSON parse failed: ' + parseErr.message + ' | raw: ' + jsonStr.slice(0,300));
-    }
-
-    if(Array.isArray(arr) && arr.length === 10){
-      points = arr.map(s=>String(s).trim());
-    } else if(Array.isArray(arr)){
-      points = arr.slice(0,10).map(s=>String(s).trim());
-      while(points.length<10) points.push('');
-    } else {
-      throw new Error('Unexpected response shape (not an array)');
-    }
-
-    statusEl.textContent = '✅ Done! Edit any sentence below if you want to adjust it.';
-
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-    document.querySelector('.tab[data-tab="map"]').classList.add('active');
-    document.getElementById('view-map').classList.add('active');
-    renderAnchors();
-
+    await navigator.clipboard.writeText(prompt);
+    statusEl.textContent = '✅ Copied! Now tap Step 2 to open Claude, paste it in, send, then come back and paste Claude\\'s reply below.';
   }catch(err){
-    console.error(err);
-    statusEl.textContent = '⚠️ ' + err.message;
-  }finally{
-    btn.disabled = false;
-    btn.textContent = '✨ Turn into 10 Short Sentences';
+    // Fallback: show the prompt in a textarea so user can select & copy manually
+    const ta = document.getElementById('claudeReply');
+    ta.value = prompt;
+    statusEl.textContent = '⚠️ Could not auto-copy. The prompt has been placed in the box below — select all, copy it, then paste into Claude.';
   }
+});
+
+// --- Step 3: Parse Claude's pasted reply ---
+document.getElementById('applyReplyBtn').addEventListener('click', ()=>{
+  const raw = document.getElementById('claudeReply').value.trim();
+  const statusEl = document.getElementById('applyStatus');
+
+  if(!raw){
+    statusEl.textContent = '⚠️ Paste Claude\\'s reply first.';
+    return;
+  }
+
+  let result = null;
+
+  // Try 1: find a JSON array in the text
+  const start = raw.indexOf('[');
+  const end = raw.lastIndexOf(']');
+  if(start !== -1 && end !== -1 && end > start){
+    try{
+      const arr = JSON.parse(raw.slice(start, end+1));
+      if(Array.isArray(arr)) result = arr.map(s=>String(s).trim());
+    }catch(e){ /* fall through */ }
+  }
+
+  // Try 2: numbered list "1. ..." / "1) ..." / "1 ..." on separate lines
+  if(!result){
+    const lines = raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+    const numbered = lines
+      .map(l=>l.replace(/^\s*\d+[\.\)\:]?\s*/, ''))
+      .filter(l=>l.length>0);
+    if(numbered.length >= 5) result = numbered;
+  }
+
+  if(!result || result.length === 0){
+    statusEl.textContent = '⚠️ Could not find 10 sentences in that text. Try pasting just the JSON array or numbered list Claude gave you.';
+    return;
+  }
+
+  // Normalize to exactly 10
+  if(result.length > 10) result = result.slice(0,10);
+  while(result.length < 10) result.push('');
+  points = result;
+
+  statusEl.textContent = `✅ Filled ${result.filter(p=>p.trim()).length} of 10 points! Go to the Map tab to review and edit.`;
+
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelector('.tab[data-tab="map"]').classList.add('active');
+  document.getElementById('view-map').classList.add('active');
+  renderAnchors();
 });
 
 // --- Anchor map rendering ---
