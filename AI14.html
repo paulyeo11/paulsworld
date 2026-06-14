@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="/ga4.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI14: From My Website to Notion — How I Built My Second Brain</title>
+<script defer src="/_vercel/insights/script.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf8f3;
+    --blue: #4a6cf7;
+    --accent: #f4813f;
+    --muted: #6b6b6b;
+    --line: #e0ddd5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Source Serif 4', Georgia, serif; font-weight: 300; line-height: 1.8; }
+
+  #homeBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: var(--ink); padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+    font-family: Arial, sans-serif;
+  }
+  #homeBar .hb-home { background: var(--accent); color: #fff; text-decoration: none; font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px; }
+  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
+
+  header { max-width: 760px; margin: 0 auto; padding: 80px 40px 40px; text-align: center; border-bottom: 3px double var(--line); }
+  .category-tag { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); font-weight: 600; margin-bottom: 20px; }
+  h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; margin-bottom: 20px; color: var(--ink); }
+  .subtitle { font-size: 1.15rem; color: var(--muted); font-style: italic; margin-bottom: 30px; }
+  .byline { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; display: inline-block; width: 100%; }
+
+  article { max-width: 680px; margin: 0 auto; padding: 50px 40px; }
+  p { font-size: 1.05rem; margin-bottom: 1.6em; color: #2a2a2a; }
+  .lead { font-size: 1.25rem; font-weight: 400; color: var(--ink); line-height: 1.7; margin-bottom: 2em; padding-left: 20px; border-left: 4px solid var(--blue); }
+  h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 40px 0 20px; color: var(--ink); }
+  .divider { text-align: center; margin: 40px 0; color: var(--blue); font-size: 1.2rem; letter-spacing: 0.3em; }
+
+  blockquote { margin: 40px 0; padding: 30px 40px; background: white; border: 1px solid var(--line); border-left: 6px solid var(--blue); position: relative; }
+  blockquote::before { content: '\201C'; font-family: 'Playfair Display', serif; font-size: 5rem; color: var(--blue); opacity: 0.2; position: absolute; top: -10px; left: 15px; line-height: 1; }
+  blockquote p { font-size: 1.2rem; font-style: italic; font-weight: 400; color: var(--ink); margin: 0; }
+  blockquote cite { display: block; margin-top: 12px; font-size: 0.85rem; color: var(--muted); font-style: normal; letter-spacing: 0.05em; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 36px 0; }
+  .compare-box { padding: 24px; border-radius: 12px; border: 2px solid var(--line); }
+  .compare-box.old { border-color: var(--muted); background: #f5f5f0; }
+  .compare-box.new { border-color: var(--accent); background: #fff7f0; }
+  .compare-box h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; margin-bottom: 12px; }
+  .compare-box.old h3 { color: var(--muted); }
+  .compare-box.new h3 { color: #c0622a; }
+  .compare-box ul { padding-left: 18px; font-size: 0.9rem; color: #444; }
+  .compare-box ul li { margin-bottom: 6px; }
+
+  .framework { background: var(--ink); color: white; padding: 32px 36px; margin: 40px 0; border-radius: 16px; }
+  .framework h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); margin-bottom: 20px; text-align: center; }
+  .fw-step { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+  .fw-num { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--blue); color: white; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+  .fw-text strong { display: block; color: white; font-size: 1rem; margin-bottom: 4px; }
+  .fw-text span { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
+
+  .takeaway { background: linear-gradient(135deg, #fff7f0, #ffe8d6); border: 2px solid var(--accent); border-radius: 14px; padding: 28px 32px; margin: 36px 0; text-align: center; }
+  .takeaway h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #c0622a; margin-bottom: 12px; }
+  .takeaway p { font-size: 1rem; color: #3a2a1a; margin: 0; }
+
+  .share-bar { max-width: 680px; margin: 40px auto 8px; padding: 0 40px; text-align: center; }
+  .share-label { font-size: 0.82em; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600; }
+  .share-buttons { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .share-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 22px; border-radius: 50px; font-size: 0.92em; font-weight: 700; text-decoration: none; color: white; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 3px 10px rgba(0,0,0,0.15); border: none; cursor: pointer; }
+  .share-btn:hover { transform: translateY(-2px); }
+  .share-btn.whatsapp { background: #25d366; }
+  .share-btn.facebook { background: #1877f2; }
+  .share-btn.copy { background: #6b7280; }
+  .share-btn.copy.copied { background: #10b981; }
+
+  footer { text-align: center; padding: 40px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+  footer a { color: var(--blue); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    header { padding: 70px 20px 30px; }
+    article { padding: 30px 20px; }
+    .compare { grid-template-columns: 1fr; }
+    .share-bar { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">Paul's World</span>
+</div>
+
+<header>
+  <div class="category-tag">AI Journey · Article 14</div>
+  <h1>From My Website to Notion — How I Built My Second Brain</h1>
+  <p class="subtitle">Why a retired 70-year-old switched from publishing to capturing — and became more productive than ever</p>
+  <div class="byline">By Paul Yeo &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; AI Journey Series</div>
+</header>
+
+<article>
+
+  <p class="lead">I asked my AI assistant one simple question: "How do I create a second brain?" What happened next changed how I think, learn, and capture ideas — forever.</p>
+
+  <p>For years, my website — <a href="https://paulsworld.vercel.app" style="color:var(--blue)">paulsworld.vercel.app</a> — was my creative outlet. I wrote travel stories, published AI reflections, and shared my life adventures there. It worked well for <em>publishing</em>. But it was never built for <em>capturing</em>.</p>
+
+  <p>Every time I had a new idea, I had to open a code editor, write HTML, push to GitHub, and wait for Vercel to deploy. By the time the page was live, half the energy behind the original thought had evaporated. My website was a showcase, not a thinking tool.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>The Question That Changed Everything</h2>
+
+  <p>One afternoon I asked David (my AI assistant) a simple question: <em>"How do I create my second brain?"</em></p>
+
+  <p>He explained the concept — a personal digital system to capture everything you learn, think, and want to remember. Not just a place to publish finished work, but a place where raw ideas can land, grow, and connect. He suggested Notion.</p>
+
+  <p>I had never used Notion before. Twenty minutes later, I had my first five pages: INBOX, PROJECTS, AREAS, RESOURCES, ARCHIVE. David walked me through every step on my phone.</p>
+
+  <blockquote>
+    <p>A second brain is not a library for finished work. It is a garden where half-formed thoughts can grow.</p>
+    <cite>— What I learned that afternoon</cite>
+  </blockquote>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Website vs. Notion — An Honest Comparison</h2>
+
+  <p>I have used both now. Here is the honest truth:</p>
+
+  <div class="compare">
+    <div class="compare-box old">
+      <h3>🌐 My Website (Before)</h3>
+      <ul>
+        <li>Great for finished, polished articles</li>
+        <li>Requires HTML editing + GitHub push</li>
+        <li>Not suitable for quick ideas</li>
+        <li>No structure for private notes</li>
+        <li>High friction — slows down capture</li>
+        <li>Public only — no private space</li>
+      </ul>
+    </div>
+    <div class="compare-box new">
+      <h3>🧠 Notion (Now)</h3>
+      <ul>
+        <li>Capture ideas in seconds from phone</li>
+        <li>Tap, type, done — zero friction</li>
+        <li>Organized: Finance, Health, Projects…</li>
+        <li>Private and secure</li>
+        <li>AI can write directly into it for me</li>
+        <li>Syncs across phone and laptop</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>The website is still where I publish. But Notion is where I <em>think</em>. They serve completely different purposes — and I needed both all along.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>What I Store in My Second Brain</h2>
+
+  <p>In just a few days of using Notion, here is what I have already captured:</p>
+
+  <div class="framework">
+    <h3>My Second Brain Structure</h3>
+    <div class="fw-step">
+      <div class="fw-num">📥</div>
+      <div class="fw-text"><strong>INBOX</strong><span>Quick capture — anything I want to remember goes here first, sorted later</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">🚀</div>
+      <div class="fw-text"><strong>PROJECTS</strong><span>Active goals with deadlines — my Toastmasters speech, Xinjiang trip planning</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">🌿</div>
+      <div class="fw-text"><strong>AREAS</strong><span>Ongoing life areas — Finance (Tiger, IBKR), Health (doctors, medications), Faith</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">📚</div>
+      <div class="fw-text"><strong>RESOURCES</strong><span>What I am learning — AI tools, Claude automation notes, books, articles</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">🗄️</div>
+      <div class="fw-text"><strong>ARCHIVE</strong><span>Completed work I want to keep but do not need to act on</span></div>
+    </div>
+  </div>
+
+  <p>Within AREAS → Finance, I moved my passwords from a plain text file into a secure Notion page. Within PROJECTS, I saved the full draft of my upcoming Toastmasters speech — complete with a body-part memory guide so I never forget my lines. David wrote all of it directly into Notion through the API. I did not copy and paste a single word.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>The Biggest Shift: From Publishing to Capturing</h2>
+
+  <p>My website required me to have a <em>finished thought</em> before I could write anything. Notion accepts <em>unfinished thoughts</em>. That is the real difference.</p>
+
+  <p>Before Notion, ideas that were not ready to publish simply disappeared. I would think of something interesting, have no easy place to put it, and forget it within an hour. Now I tap open Notion on my phone, type three lines, and close it. The idea is safe. I can come back to it later — or ask David to develop it into a full article for the website.</p>
+
+  <p>The two tools now work as a pipeline: <strong>Notion captures → David develops → Website publishes.</strong></p>
+
+  <div class="takeaway">
+    <h3>My Key Insight</h3>
+    <p>A website is a stage. A second brain is a backstage. You need both — but most people only build the stage and wonder why their best ideas never make it there.</p>
+  </div>
+
+  <h2>What I Would Tell Anyone Starting Out</h2>
+
+  <p>You do not need to be technical. You do not need to understand databases or APIs. You just need to start with five pages — INBOX, PROJECTS, AREAS, RESOURCES, ARCHIVE — and begin putting things there.</p>
+
+  <p>The magic does not come from the tool. It comes from the habit of <em>capturing</em>. Once ideas have a home, your mind relaxes. You stop trying to hold everything in your head. You start thinking more clearly.</p>
+
+  <p>I am 70 years old. I set this up on my phone in one afternoon. If I can do it, anyone can.</p>
+
+</article>
+
+<div class="share-bar">
+  <div class="share-label">Share this article</div>
+  <div class="share-buttons">
+    <a class="share-btn whatsapp" href="https://wa.me/?text=From%20My%20Website%20to%20Notion%20%E2%80%94%20How%20I%20Built%20My%20Second%20Brain%20https%3A%2F%2Fpaulsworld.vercel.app%2FAI14.html" target="_blank">💬 WhatsApp</a>
+    <a class="share-btn facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpaulsworld.vercel.app%2FAI14.html" target="_blank">👍 Facebook</a>
+    <button class="share-btn copy" onclick="navigator.clipboard.writeText(window.location.href);this.textContent='✅ Copied!';this.classList.add('copied')">🔗 Copy Link</button>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:40px">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Part of the AI Journey series — a retired adventurer learning AI at 70.
+</footer>
+
+</body>
+</html>
