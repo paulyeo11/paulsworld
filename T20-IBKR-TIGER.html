@@ -105,6 +105,44 @@
     th.hide-sm,td.hide-sm{display:none;}
     main{padding:20px 12px;}
   }
+  /* ── Account Overview Widget (Securities / Futures / Funds) ── */
+  .acct-ov{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:22px;}
+  .acct-ov-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+  .acct-ov-total{font-size:2rem;font-weight:800;color:#fff;letter-spacing:-.03em;font-family:'Syne',sans-serif;}
+  .acct-ov-spark{width:130px;height:54px;flex-shrink:0;}
+  .acct-ov-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .acct-ov-tab{background:none;border:none;border-bottom:2.5px solid transparent;color:var(--muted);font-size:.95rem;font-weight:700;font-family:'Syne',sans-serif;padding:7px 20px 7px 0;cursor:pointer;transition:all .15s;margin-bottom:-1px;}
+  .acct-ov-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .acct-ov-panel{display:none;}
+  .acct-ov-panel.active{display:block;}
+  .acct-ov-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px 18px;}
+  .acct-ov-row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.055);}
+  .acct-ov-lbl{font-size:.68rem;color:var(--muted);margin-bottom:5px;font-family:'DM Mono',monospace;letter-spacing:.04em;}
+  .acct-ov-big{font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:-.02em;}
+  .acct-ov-dpnl{text-align:right;}
+  .acct-ov-dpnl-head{display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-bottom:4px;}
+  .acct-ov-dpnl-icon{font-size:.7rem;color:var(--muted);}
+  .acct-ov-dpnl-amt{font-size:1.1rem;font-weight:800;}
+  .acct-ov-dpnl-pct{font-size:.8rem;margin-top:2px;}
+  .acct-ov-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px;}
+  .acct-ov-g3.top{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.045);}
+  .acct-ov-clbl{font-size:.67rem;color:var(--muted);margin-bottom:4px;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .acct-ov-cval{font-size:.95rem;font-weight:700;color:#fff;}
+  .acct-ov-cval.neg{color:var(--red);}
+  .acct-ov-cval.pos{color:var(--green);}
+  .acct-ov-cval.nil{color:var(--muted);}
+  .acct-ov-exrow{display:flex;align-items:center;gap:5px;}
+  .acct-ov-dot{width:9px;height:9px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 6px var(--green);}
+  .acct-ov-no-data{text-align:center;padding:24px;color:var(--muted);font-size:.85rem;font-family:'DM Mono',monospace;}
+  @media(max-width:600px){
+    .acct-ov-total{font-size:1.55rem;}
+    .acct-ov-spark{width:90px;height:42px;}
+    .acct-ov-big{font-size:1.1rem;}
+    .acct-ov-cval{font-size:.82rem;}
+    .acct-ov-clbl{font-size:.62rem;}
+    .acct-ov{padding:14px;}
+    .acct-ov-card{padding:12px 12px;}
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -193,6 +231,134 @@
     </div>
 
     <div class="tab-panel active" id="panel-summary">
+
+    <!-- ── Account Overview: Securities / Futures / Funds ── -->
+    <div class="acct-ov">
+      <div class="acct-ov-top">
+        <div class="acct-ov-total" id="acctov-total">—</div>
+        <canvas class="acct-ov-spark" id="acctov-spark"></canvas>
+      </div>
+      <div class="acct-ov-tabs" role="tablist">
+        <button class="acct-ov-tab active" onclick="switchAcctTab('sec',this)">Securities</button>
+        <button class="acct-ov-tab" onclick="switchAcctTab('fut',this)">Futures</button>
+        <button class="acct-ov-tab" onclick="switchAcctTab('fund',this)">Funds</button>
+      </div>
+
+      <!-- Securities -->
+      <div class="acct-ov-panel active" id="acctov-sec">
+        <div class="acct-ov-card">
+          <div class="acct-ov-row1">
+            <div>
+              <div class="acct-ov-lbl">Est. Total Assets of Security</div>
+              <div class="acct-ov-big" id="acctov-sec-total">—</div>
+            </div>
+            <div class="acct-ov-dpnl">
+              <div class="acct-ov-dpnl-head">
+                <span class="acct-ov-dpnl-icon">↑</span>
+                <span class="acct-ov-lbl">Daily P&amp;L</span>
+              </div>
+              <div class="acct-ov-dpnl-amt" id="acctov-dpnl-amt">0.00</div>
+              <div class="acct-ov-dpnl-pct" id="acctov-dpnl-pct">0.00%</div>
+            </div>
+          </div>
+          <div class="acct-ov-g3 top">
+            <div>
+              <div class="acct-ov-clbl">Total Securities Value</div>
+              <div class="acct-ov-cval" id="acctov-mktval">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">P&amp;L ⓘ</div>
+              <div class="acct-ov-cval" id="acctov-pnl">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Excess Liquidity ›</div>
+              <div class="acct-ov-exrow">
+                <div class="acct-ov-cval" id="acctov-exliq">—</div>
+                <div class="acct-ov-dot" id="acctov-dot"></div>
+              </div>
+            </div>
+          </div>
+          <div class="acct-ov-g3">
+            <div>
+              <div class="acct-ov-clbl">Est. Cash Balance ˅</div>
+              <div class="acct-ov-cval" id="acctov-cash">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Max BP</div>
+              <div class="acct-ov-cval" id="acctov-maxbp">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Leverage</div>
+              <div class="acct-ov-cval nil" id="acctov-lev">No Leverage</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Futures -->
+      <div class="acct-ov-panel" id="acctov-fut">
+        <div class="acct-ov-card">
+          <div class="acct-ov-row1">
+            <div>
+              <div class="acct-ov-lbl">Est. Total Assets (Futures)</div>
+              <div class="acct-ov-big" id="acctov-fut-total">0.00</div>
+            </div>
+            <div class="acct-ov-dpnl">
+              <div class="acct-ov-dpnl-head"><span class="acct-ov-lbl">Daily P&amp;L</span></div>
+              <div class="acct-ov-dpnl-amt nil">0.00</div>
+              <div class="acct-ov-dpnl-pct nil">0.00%</div>
+            </div>
+          </div>
+          <div class="acct-ov-no-data">No futures positions</div>
+        </div>
+      </div>
+
+      <!-- Funds (Tiger Brokers) -->
+      <div class="acct-ov-panel" id="acctov-fund">
+        <div class="acct-ov-card">
+          <div class="acct-ov-row1">
+            <div>
+              <div class="acct-ov-lbl">🐯 Tiger — Est. Net Value</div>
+              <div class="acct-ov-big" id="acctov-fund-total">—</div>
+            </div>
+            <div class="acct-ov-dpnl">
+              <div class="acct-ov-dpnl-head"><span class="acct-ov-lbl">Open P&amp;L</span></div>
+              <div class="acct-ov-dpnl-amt" id="acctov-fund-pnl">—</div>
+              <div class="acct-ov-dpnl-pct nil" id="acctov-fund-pnl-sub">USD</div>
+            </div>
+          </div>
+          <div class="acct-ov-g3 top">
+            <div>
+              <div class="acct-ov-clbl">Cash Available</div>
+              <div class="acct-ov-cval" id="acctov-fund-cash">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Daily P&amp;L</div>
+              <div class="acct-ov-cval" id="acctov-fund-dpnl">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Broker</div>
+              <div class="acct-ov-cval" style="color:#10b981;">Tiger Prime</div>
+            </div>
+          </div>
+          <div class="acct-ov-g3">
+            <div>
+              <div class="acct-ov-clbl">Securities Value</div>
+              <div class="acct-ov-cval" id="acctov-fund-secval">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Positions</div>
+              <div class="acct-ov-cval" id="acctov-fund-pos">—</div>
+            </div>
+            <div>
+              <div class="acct-ov-clbl">Leverage</div>
+              <div class="acct-ov-cval nil">No Leverage</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /acct-ov -->
+
     <div class="summary-grid">
       <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">IBKR + Tiger</div></div>
       <div class="card"><div class="card-label">IBKR Positions</div><div class="card-value" id="ibkr-pos">—</div><div class="card-sub">Interactive Brokers</div></div>
@@ -743,6 +909,7 @@ async function loadData() {
     _s('at-total-usd', fmtU(totalUSD));
     _s('at-total-sgd', fmtS(totalSGD));
     _s('at-note', `CPF/SGX est S$3,500 · OCBC manual 12 Jun 2026 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD`);
+    renderAcctOverview(ibkrData, tigerData);
     renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
@@ -1270,6 +1437,164 @@ function renderOptions(options) {
       </div>
     </div>`;
   }).join('');
+}
+
+function switchAcctTab(name, btn) {
+  document.querySelectorAll('.acct-ov-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.acct-ov-tab').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('acctov-' + name);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function drawSparkline(dpnl) {
+  const canvas = document.getElementById('acctov-spark');
+  if (!canvas || !canvas.getContext) return;
+  const w = canvas.offsetWidth || 130;
+  const h = canvas.offsetHeight || 54;
+  canvas.width  = w * window.devicePixelRatio;
+  canvas.height = h * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.clearRect(0, 0, w, h);
+  const up = dpnl >= 0;
+  const lineColor = up ? '#10b981' : '#ef4444';
+  // Pseudo-historical wave that trends with daily P&L direction
+  const pts = 22;
+  const points = [];
+  for (let i = 0; i < pts; i++) {
+    const t = i / (pts - 1);
+    const wave = Math.sin(i * 0.9) * 0.14 + Math.sin(i * 0.35 + 1) * 0.07;
+    const trend = up ? (t - 0.35) * 0.45 : -(t - 0.35) * 0.45;
+    const y = h * 0.5 - (wave + trend) * h * 0.7;
+    points.push({ x: t * w, y: Math.max(3, Math.min(h - 3, y)) });
+  }
+  // Fill
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, up ? 'rgba(16,185,129,.25)' : 'rgba(239,68,68,.25)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, h);
+  points.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(points[pts-1].x, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  // Dashed baseline
+  ctx.save();
+  ctx.setLineDash([3, 5]);
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.5);
+  ctx.lineTo(w, h * 0.5);
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+  // Line
+  ctx.beginPath();
+  points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 1.8;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+}
+
+function renderAcctOverview(ibkrData, tigerData) {
+  const fmt = (n, d=2) => (n == null || !isFinite(n)) ? '—' : Number(n).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+  const _s  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const _cls = (id, c) => { const el = document.getElementById(id); if (el) el.className = 'acct-ov-cval ' + c; };
+
+  const netLiq  = parseFloat(ibkrData.netLiquidation || 0);
+  const cashBal = parseFloat(ibkrData.cashBalance   || 0);
+  const dpnl    = parseFloat(ibkrData.dailyPnL != null ? ibkrData.dailyPnL : (ibkrData.dailyPnl || 0));
+  const upnl    = parseFloat(ibkrData.unrealizedPnL != null ? ibkrData.unrealizedPnL : (ibkrData.unrealizedPnl || 0));
+  const exLiq   = parseFloat(ibkrData.excessLiquidity || ibkrData.excessLiquidation || 0);
+  const maxBP   = parseFloat(ibkrData.buyingPower    || ibkrData.maxBuyingPower || 0);
+
+  // Market value of all IBKR stock positions
+  const ibkrPositions = ibkrData.positions || [];
+  const secMktVal = ibkrPositions.reduce((s, p) => {
+    const mv = parseFloat(p.marketValue || 0);
+    return isFinite(mv) && mv > 0 ? s + mv : s;
+  }, 0);
+
+  // ── Top total
+  _s('acctov-total', fmt(netLiq));
+  drawSparkline(dpnl);
+
+  // ── Securities tab
+  _s('acctov-sec-total', fmt(netLiq));
+
+  // Daily P&L
+  const hasDpnl = ibkrData.dailyPnL != null || ibkrData.dailyPnl != null;
+  const dpnlSign = dpnl >= 0 ? '+' : '';
+  const dpnlPct  = (netLiq - dpnl) > 0 ? dpnl / (netLiq - dpnl) * 100 : 0;
+  const dpnlCls  = dpnl > 0 ? '#10b981' : (dpnl < 0 ? '#ef4444' : 'var(--muted)');
+  const dpnlAmtEl = document.getElementById('acctov-dpnl-amt');
+  if (dpnlAmtEl) { dpnlAmtEl.textContent = hasDpnl ? dpnlSign + fmt(dpnl) : '0.00'; dpnlAmtEl.style.color = dpnlCls; }
+  const dpnlPctEl = document.getElementById('acctov-dpnl-pct');
+  if (dpnlPctEl) { dpnlPctEl.textContent = hasDpnl ? dpnlSign + fmt(dpnlPct) + '%' : '0.00%'; dpnlPctEl.style.color = dpnlCls; }
+
+  // Securities market value
+  const displayMktVal = secMktVal > 0 ? secMktVal : Math.max(0, netLiq - cashBal);
+  _s('acctov-mktval', fmt(displayMktVal));
+
+  // P&L (unrealized)
+  const pnlEl = document.getElementById('acctov-pnl');
+  if (pnlEl) {
+    pnlEl.textContent = fmt(upnl);
+    pnlEl.className   = 'acct-ov-cval ' + (upnl > 0 ? 'pos' : (upnl < 0 ? 'neg' : 'nil'));
+  }
+
+  // Excess Liquidity: use direct field if present, else estimate from cash
+  const exLiqDisplay = exLiq > 0 ? exLiq : (cashBal > 0 ? cashBal : 0);
+  _s('acctov-exliq', fmt(exLiqDisplay));
+  const dot = document.getElementById('acctov-dot');
+  if (dot) dot.style.background = exLiqDisplay > 500 ? '#10b981' : '#f59e0b';
+
+  // Cash & Max BP
+  _s('acctov-cash', fmt(cashBal));
+  const maxBPDisplay = maxBP > 0 ? maxBP : (exLiqDisplay > 0 ? exLiqDisplay * 4 : cashBal * 4);
+  _s('acctov-maxbp', fmt(maxBPDisplay));
+
+  // Leverage
+  const lev = ibkrData.leverage || 'No Leverage';
+  _s('acctov-lev', lev);
+
+  // ── Funds tab (Tiger)
+  const tigerNet    = parseFloat(tigerData.netValue || 0);
+  const tigerCash   = parseFloat(tigerData.cash     || 0);
+  const tigerOpenPnl = (tigerData.accountOpenPnlUSD != null)
+    ? parseFloat(tigerData.accountOpenPnlUSD)
+    : (tigerData.positions || []).reduce((s, p) => s + parseFloat(p.unrealizedPnlUSD || 0), 0);
+  const tigerDpnl   = parseFloat(tigerData.dailyPnlUSD || 0);
+  const tigerSecVal = (tigerData.positions || []).reduce((s, p) => {
+    const mv = parseFloat(p.marketValue || 0);
+    return isFinite(mv) && mv > 0 ? s + mv : s;
+  }, 0);
+  const tigerPosCount = (tigerData.positions || []).length;
+
+  _s('acctov-fund-total', tigerNet > 0 ? 'S$' + fmt(tigerNet) : '—');
+
+  const fundPnlEl = document.getElementById('acctov-fund-pnl');
+  if (fundPnlEl) {
+    const sign = tigerOpenPnl >= 0 ? '+' : '';
+    fundPnlEl.textContent = tigerData.accountOpenPnlUSD != null ? sign + fmt(tigerOpenPnl) : '—';
+    fundPnlEl.style.color = tigerOpenPnl > 0 ? '#10b981' : (tigerOpenPnl < 0 ? '#ef4444' : 'var(--muted)');
+  }
+  _s('acctov-fund-pnl-sub', tigerData.fetchedAt ? 'USD · ' + tigerData.fetchedAt : 'USD');
+
+  _s('acctov-fund-cash', tigerCash > 0 ? 'S$' + fmt(tigerCash) : '—');
+
+  const fdDpnlEl = document.getElementById('acctov-fund-dpnl');
+  if (fdDpnlEl) {
+    const sign = tigerDpnl >= 0 ? '+' : '';
+    fdDpnlEl.textContent = tigerData.dailyPnlUSD != null ? sign + 'US$' + fmt(tigerDpnl) : '—';
+    fdDpnlEl.className   = 'acct-ov-cval ' + (tigerDpnl > 0 ? 'pos' : (tigerDpnl < 0 ? 'neg' : 'nil'));
+  }
+
+  _s('acctov-fund-secval', tigerSecVal > 0 ? 'S$' + fmt(tigerSecVal) : (tigerNet > 0 && tigerCash > 0 ? 'S$' + fmt(tigerNet - tigerCash) : '—'));
+  _s('acctov-fund-pos', tigerPosCount > 0 ? tigerPosCount + '' : '—');
 }
 
 function switchTab(name, btn) {
