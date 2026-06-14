@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story Memory Palace</title>
+<style>
+  :root{
+    --ink:#2b2420;
+    --paper:#f7f1e6;
+    --paper2:#efe6d6;
+    --line:#d8cab2;
+    --accent:#a3552c;
+    --accent2:#5f7a5f;
+    --gold:#bb8a3c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Georgia, 'Times New Roman', serif;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:1em;
+    line-height:1.55;
+    padding-bottom:60px;
+  }
+  header{
+    padding:24px 18px 16px;
+    border-bottom:3px double var(--gold);
+    text-align:center;
+    background:var(--paper2);
+  }
+  header h1{
+    font-size:1.6em;
+    margin:0 0 4px;
+    letter-spacing:0.5px;
+  }
+  header p{
+    margin:0;
+    font-size:0.95em;
+    color:#6b6157;
+    font-style:italic;
+  }
+  .home-link{
+    display:inline-block;
+    margin-top:10px;
+    font-size:0.95em;
+    color:var(--accent);
+    text-decoration:none;
+    border:1px solid var(--accent);
+    padding:6px 14px;
+    border-radius:20px;
+  }
+  main{
+    max-width:680px;
+    margin:0 auto;
+    padding:18px;
+  }
+  .section-title{
+    font-size:1.15em;
+    font-weight:bold;
+    margin:28px 0 10px;
+    color:var(--accent);
+    border-bottom:2px solid var(--line);
+    padding-bottom:4px;
+  }
+  textarea{
+    width:100%;
+    min-height:140px;
+    font-family:Georgia, serif;
+    font-size:1em;
+    padding:12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fffdf8;
+    color:var(--ink);
+    resize:vertical;
+  }
+  textarea.small{min-height:60px;}
+  label{
+    display:block;
+    font-size:0.95em;
+    font-weight:bold;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  .field{margin-bottom:14px;}
+  button{
+    font-family:inherit;
+    font-size:1em;
+    padding:12px 20px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+    width:100%;
+  }
+  .btn-secondary{
+    background:transparent;
+    border:1px solid var(--accent2);
+    color:var(--accent2);
+    width:100%;
+    margin-top:10px;
+  }
+  .btn-row{margin-top:16px;}
+
+  /* Body map */
+  .palace-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:16px;
+  }
+  .figure-box{
+    display:flex;
+    justify-content:center;
+    margin:8px 0 4px;
+  }
+  .figure-box svg{
+    width:160px;
+    height:auto;
+  }
+  .anchor-card{
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#fffdf8;
+    padding:14px;
+    position:relative;
+    border-left:6px solid var(--accent2);
+  }
+  .anchor-card.active{
+    border-left-color:var(--accent);
+    box-shadow:0 2px 8px rgba(163,85,44,0.15);
+  }
+  .anchor-head{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .anchor-num{
+    font-size:0.85em;
+    color:#a0937e;
+    font-variant-numeric:tabular-nums;
+  }
+  .anchor-part{
+    font-size:1.1em;
+    font-weight:bold;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .anchor-card textarea{
+    min-height:70px;
+    font-size:0.98em;
+  }
+  .anchor-hint{
+    font-size:0.85em;
+    color:#9a8e7c;
+    margin-top:4px;
+    font-style:italic;
+  }
+  .progress{
+    text-align:center;
+    font-size:0.9em;
+    color:#8a7e6c;
+    margin:6px 0 0;
+  }
+
+  /* Practice mode */
+  .practice-card{
+    border:2px solid var(--gold);
+    border-radius:12px;
+    background:#fffdf8;
+    padding:20px;
+    text-align:center;
+  }
+  .practice-part{
+    font-size:1.4em;
+    font-weight:bold;
+    color:var(--accent);
+    text-transform:uppercase;
+    letter-spacing:2px;
+    margin-bottom:6px;
+  }
+  .practice-figure{
+    display:flex;
+    justify-content:center;
+    margin:10px 0;
+  }
+  .practice-figure svg{width:170px;height:auto;}
+  .practice-text{
+    margin-top:14px;
+    font-size:1.05em;
+    min-height:60px;
+    padding:10px;
+    border-radius:8px;
+    background:var(--paper2);
+    display:none;
+  }
+  .practice-text.show{display:block;}
+  .practice-nav{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .practice-nav button{flex:1;}
+  .btn-show{background:var(--accent2);color:#fff;}
+  .btn-nav{background:transparent;border:1px solid var(--accent);color:var(--accent);}
+
+  /* tabs */
+  .tabbar{
+    display:flex;
+    border-bottom:2px solid var(--line);
+    margin-bottom:16px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px 4px;
+    font-size:0.95em;
+    font-weight:bold;
+    color:#a0937e;
+    border-bottom:3px solid transparent;
+    cursor:pointer;
+  }
+  .tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .recap-box{
+    background:var(--paper2);
+    border-radius:8px;
+    padding:12px;
+    font-size:0.95em;
+    margin-top:14px;
+    border:1px solid var(--line);
+  }
+  .recap-box strong{color:var(--accent);}
+
+  footer{
+    text-align:center;
+    font-size:0.85em;
+    color:#a0937e;
+    margin-top:30px;
+    padding:14px;
+    border-top:1px solid var(--line);
+  }
+  .view-counter{
+    text-align:center;
+    font-size:0.85em;
+    color:#a0937e;
+    margin-top:20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📖 Story Memory Palace</h1>
+  <p>Turn your story into 10 anchors on your own body — head to hands</p>
+  <a class="home-link" href="https://paulsworld.vercel.app/">🏠 Home</a>
+</header>
+
+<main>
+
+  <div class="tabbar">
+    <div class="tab active" data-tab="write">1. Write</div>
+    <div class="tab" data-tab="map">2. Map</div>
+    <div class="tab" data-tab="practice">3. Practice</div>
+  </div>
+
+  <!-- TAB 1: WRITE -->
+  <div class="view active" id="view-write">
+    <div class="section-title">Your Story</div>
+
+    <div class="field">
+      <label for="storyText">Paste your full story (opening, middle, ending — all in one)</label>
+      <textarea id="storyText" placeholder="Write or paste your whole story here..." style="min-height:240px;"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="copyPromptBtn">📋 Step 1: Copy Prompt for Claude</button>
+    </div>
+    <div class="anchor-hint" style="text-align:center;margin-top:8px;" id="copyStatus">
+      Taps copies a ready-made prompt (with your story inside) to your clipboard. Then open Claude, paste it in, and Claude will reply with 10 short sentences.
+    </div>
+
+    <div class="btn-row" style="margin-top:6px;">
+      <a href="https://claude.ai/new" target="_blank" style="display:block;text-align:center;padding:12px;border:1px solid var(--accent2);border-radius:8px;color:var(--accent2);text-decoration:none;font-weight:bold;">
+        🔗 Step 2: Open Claude (paste the prompt there)
+      </a>
+    </div>
+
+    <div class="section-title" style="margin-top:30px;">Step 3: Paste Claude's Answer</div>
+    <div class="field">
+      <label for="claudeReply">Paste Claude's reply here (the list of 10 sentences, or the JSON array)</label>
+      <textarea id="claudeReply" placeholder='Paste here, e.g. ["...","...", ... ] or a numbered list 1-10' style="min-height:140px;"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="applyReplyBtn">✅ Fill My 10 Body Anchors</button>
+    </div>
+    <div class="anchor-hint" style="text-align:center;margin-top:8px;" id="applyStatus"></div>
+  </div>
+
+
+  <!-- TAB 2: MAP -->
+  <div class="view" id="view-map">
+    <div class="section-title">Your 10 Body Anchors</div>
+    <div class="progress" id="progress">0 of 10 points filled</div>
+
+    <div class="figure-box">
+      <svg viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="22" rx="18" ry="20" fill="none" stroke="#a3552c" stroke-width="1.5"/>
+        <line x1="50" x2="50" y1="42" y2="100" stroke="#a3552c" stroke-width="1.5"/>
+        <line x1="50" x2="20" y1="55" y2="100" stroke="#a3552c" stroke-width="1.5"/>
+        <line x1="50" x2="80" y1="55" y2="100" stroke="#a3552c" stroke-width="1.5"/>
+        <line x1="50" x2="35" y1="100" y2="180" stroke="#a3552c" stroke-width="1.5"/>
+        <line x1="50" x2="65" y1="100" y2="180" stroke="#a3552c" stroke-width="1.5"/>
+      </svg>
+    </div>
+
+    <div class="palace-wrap" id="anchorList"></div>
+  </div>
+
+  <!-- TAB 3: PRACTICE -->
+  <div class="view" id="view-practice">
+    <div class="section-title">Recall Practice</div>
+    <div class="practice-card">
+      <div class="practice-part" id="pPart">HAIR</div>
+      <div class="practice-figure">
+        <svg viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg" id="pSvg">
+          <ellipse cx="50" cy="22" rx="18" ry="20" fill="none" stroke="#a3552c" stroke-width="1.5"/>
+          <line x1="50" x2="50" y1="42" y2="100" stroke="#a3552c" stroke-width="1.5"/>
+          <line x1="50" x2="20" y1="55" y2="100" stroke="#a3552c" stroke-width="1.5"/>
+          <line x1="50" x2="80" y1="55" y2="100" stroke="#a3552c" stroke-width="1.5"/>
+          <line x1="50" x2="35" y1="100" y2="180" stroke="#a3552c" stroke-width="1.5"/>
+          <line x1="50" x2="65" y1="100" y2="180" stroke="#a3552c" stroke-width="1.5"/>
+          <circle id="pDot" cx="50" cy="10" r="6" fill="#bb8a3c"/>
+        </svg>
+      </div>
+      <div style="font-size:0.9em;color:#9a8e7c;">Say the key point out loud, then tap to check</div>
+      <div class="practice-text" id="pText"></div>
+      <div class="practice-nav">
+        <button class="btn-nav" id="prevBtn">← Prev</button>
+        <button class="btn-show" id="showBtn">Show Answer</button>
+        <button class="btn-nav" id="nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <div class="recap-box" id="recapBox" style="display:none;">
+      <strong>Full Recap Order</strong>
+      <div id="recapList" style="margin-top:8px;"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="recapToggle">📜 Show Full Recap List</button>
+    </div>
+  </div>
+
+</main>
+
+<div class="view-counter">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  Made for Paul's Story Memory Palace · 10 points, head to hands
+</footer>
+
+<script>
+const PARTS = [
+  {key:'hair', label:'Hair', hint:'Top of the head — the very start'},
+  {key:'forehead', label:'Forehead', hint:'Where you think — the setup'},
+  {key:'eyes', label:'Eyes', hint:'What you saw'},
+  {key:'nose', label:'Nose', hint:'A smell, or "sniffing out" trouble'},
+  {key:'mouth', label:'Mouth', hint:'Something said, or your reaction'},
+  {key:'chin', label:'Chin', hint:'A turning point — chin up'},
+  {key:'neck', label:'Neck', hint:'Tension, risk, "neck on the line"'},
+  {key:'shoulders', label:'Shoulders', hint:'A burden carried, or shrugged off'},
+  {key:'chest', label:'Chest', hint:'The emotional core — heart of the story'},
+  {key:'hands', label:'Hands', hint:'The ending — what you did, the takeaway'}
+];
+
+const COORDS = {
+  hair:{x:50,y:6}, forehead:{x:50,y:16}, eyes:{x:50,y:24},
+  nose:{x:50,y:32}, mouth:{x:50,y:38}, chin:{x:50,y:44},
+  neck:{x:50,y:50}, shoulders:{x:50,y:58}, chest:{x:50,y:78}, hands:{x:50,y:165}
+};
+
+let points = Array(10).fill('');
+let current = 0;
+
+const STORAGE_KEY = 'storyMemoryPalace_v1';
+
+function load(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  }catch(e){}
+}
+
+// --- Tabs ---
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-'+tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab==='map') renderAnchors();
+    if(tab.dataset.tab==='practice') renderPractice();
+  });
+});
+
+// --- Step 1: Copy prompt to clipboard ---
+function buildPrompt(story){
+  return `Here is a personal story:
+
+"""
+${story}
+"""
+
+Rewrite this story as exactly 10 very short sentences (each under 12 words), numbered 1 to 10, in order from the beginning of the story to the end.
+
+Rules:
+- Each sentence is a single beat/moment of the story, in chronological order.
+- Together, the 10 sentences should read as a tiny condensed version of the whole story — someone reading just the 10 sentences in order should understand the whole arc (setup, what happened, the ending/lesson).
+- Use simple, vivid, concrete words (names, places, actions, feelings) — easy to picture and easy to say out loud.
+- Sentence 1 = the very start of the story. Sentence 10 = the ending/takeaway.
+- Spread the events roughly evenly across all 10 — don't cram everything into the middle.
+- Match the language of the original story (if the story is in Chinese, write the sentences in Chinese; if English, in English).
+- No numbering, bullets, or extra text in your output sentences themselves.
+
+Respond with ONLY a JSON array of exactly 10 strings, nothing else. No markdown, no code fences, no preamble. Example format:
+["First short sentence.","Second short sentence.", ... ,"Tenth short sentence."]`;
+}
+
+document.getElementById('copyPromptBtn').addEventListener('click', async ()=>{
+  const story = document.getElementById('storyText').value.trim();
+  const statusEl = document.getElementById('copyStatus');
+
+  if(!story){
+    alert('Paste your story first.');
+    return;
+  }
+
+  const prompt = buildPrompt(story);
+
+  try{
+    await navigator.clipboard.writeText(prompt);
+    statusEl.textContent = '✅ Copied! Now tap Step 2 to open Claude, paste it in, send, then come back and paste Claude\\'s reply below.';
+  }catch(err){
+    // Fallback: show the prompt in a textarea so user can select & copy manually
+    const ta = document.getElementById('claudeReply');
+    ta.value = prompt;
+    statusEl.textContent = '⚠️ Could not auto-copy. The prompt has been placed in the box below — select all, copy it, then paste into Claude.';
+  }
+});
+
+// --- Step 3: Parse Claude's pasted reply ---
+document.getElementById('applyReplyBtn').addEventListener('click', ()=>{
+  const raw = document.getElementById('claudeReply').value.trim();
+  const statusEl = document.getElementById('applyStatus');
+
+  if(!raw){
+    statusEl.textContent = '⚠️ Paste Claude\\'s reply first.';
+    return;
+  }
+
+  let result = null;
+
+  // Try 1: find a JSON array in the text
+  const start = raw.indexOf('[');
+  const end = raw.lastIndexOf(']');
+  if(start !== -1 && end !== -1 && end > start){
+    try{
+      const arr = JSON.parse(raw.slice(start, end+1));
+      if(Array.isArray(arr)) result = arr.map(s=>String(s).trim());
+    }catch(e){ /* fall through */ }
+  }
+
+  // Try 2: numbered list "1. ..." / "1) ..." / "1 ..." on separate lines
+  if(!result){
+    const lines = raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+    const numbered = lines
+      .map(l=>l.replace(/^\s*\d+[\.\)\:]?\s*/, ''))
+      .filter(l=>l.length>0);
+    if(numbered.length >= 5) result = numbered;
+  }
+
+  if(!result || result.length === 0){
+    statusEl.textContent = '⚠️ Could not find 10 sentences in that text. Try pasting just the JSON array or numbered list Claude gave you.';
+    return;
+  }
+
+  // Normalize to exactly 10
+  if(result.length > 10) result = result.slice(0,10);
+  while(result.length < 10) result.push('');
+  points = result;
+
+  statusEl.textContent = `✅ Filled ${result.filter(p=>p.trim()).length} of 10 points! Go to the Map tab to review and edit.`;
+
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelector('.tab[data-tab="map"]').classList.add('active');
+  document.getElementById('view-map').classList.add('active');
+  renderAnchors();
+});
+
+// --- Anchor map rendering ---
+function renderAnchors(){
+  const list = document.getElementById('anchorList');
+  list.innerHTML = '';
+  let filled = 0;
+
+  PARTS.forEach((part, i)=>{
+    if(points[i] && points[i].trim()) filled++;
+
+    const card = document.createElement('div');
+    card.className = 'anchor-card' + (points[i] && points[i].trim() ? ' active':'');
+
+    const head = document.createElement('div');
+    head.className = 'anchor-head';
+    head.innerHTML = `<span class="anchor-num">${i+1}/10</span><span class="anchor-part">${part.label}</span>`;
+    card.appendChild(head);
+
+    const ta = document.createElement('textarea');
+    ta.value = points[i] || '';
+    ta.placeholder = 'Your key point for this body part...';
+    ta.addEventListener('input', (e)=>{
+      points[i] = e.target.value;
+      card.classList.toggle('active', e.target.value.trim().length>0);
+      updateProgress();
+    });
+    card.appendChild(ta);
+
+    const hint = document.createElement('div');
+    hint.className = 'anchor-hint';
+    hint.textContent = '💡 ' + part.hint;
+    card.appendChild(hint);
+
+    list.appendChild(card);
+  });
+
+  updateProgress();
+}
+
+function updateProgress(){
+  const filled = points.filter(p=>p && p.trim().length>0).length;
+  document.getElementById('progress').textContent = filled + ' of 10 points filled';
+}
+
+// --- Practice mode ---
+function renderPractice(){
+  current = 0;
+  showCurrent();
+}
+
+function showCurrent(){
+  const part = PARTS[current];
+  document.getElementById('pPart').textContent = (current+1) + '. ' + part.label.toUpperCase();
+  document.getElementById('pText').textContent = points[current] || '(no key point written yet — go to Map tab)';
+  document.getElementById('pText').classList.remove('show');
+
+  const coord = COORDS[part.key];
+  document.getElementById('pDot').setAttribute('cx', coord.x);
+  document.getElementById('pDot').setAttribute('cy', coord.y);
+}
+
+document.getElementById('showBtn').addEventListener('click', ()=>{
+  document.getElementById('pText').classList.toggle('show');
+});
+
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  current = (current - 1 + 10) % 10;
+  showCurrent();
+});
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  current = (current + 1) % 10;
+  showCurrent();
+});
+
+document.getElementById('recapToggle').addEventListener('click', ()=>{
+  const box = document.getElementById('recapBox');
+  const list = document.getElementById('recapList');
+  if(box.style.display === 'none'){
+    list.innerHTML = PARTS.map((p,i)=>
+      `<div style="margin-bottom:6px;"><strong>${i+1}. ${p.label}:</strong> ${points[i] || '<em>(empty)</em>'}</div>`
+    ).join('');
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+});
+
+renderAnchors();
+</script>
+
+</body>
+</html>

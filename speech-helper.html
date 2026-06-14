@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><!-- v2 -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TM02: Toastmasters Speech Drafter — Paul's World</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+      font-size: 17px;
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 999;
+      background: #f4813f;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 10px 18px;
+      border-radius: 24px;
+      box-shadow: 0 4px 14px rgba(244,129,63,0.45);
+    }
+    .home-btn:hover { background: #e8702f; }
+
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border-bottom: 1px solid #334155;
+      padding: 24px 20px 20px;
+      padding-left: 100px;
+    }
+    header h1 { font-size: 1.5rem; font-weight: 800; color: #f8fafc; margin-bottom: 4px; }
+    header p { color: #94a3b8; font-size: 1rem; }
+    .project-badge {
+      display: inline-block;
+      background: #1e3a5f;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 0.88rem;
+      color: #93c5fd;
+      margin-top: 10px;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #334155;
+      margin-top: 22px;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+
+    .tab-panel { display: none; padding: 24px 0 50px; }
+    .tab-panel.active { display: block; }
+
+    .intro-text { color: #94a3b8; font-size: 0.95rem; margin-bottom: 22px; }
+
+    .section-group { margin-bottom: 26px; }
+    .section-label {
+      display: block;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #e2e8f0;
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      color: #f1f5f9;
+      font-size: 1rem;
+      padding: 14px;
+      resize: vertical;
+      outline: none;
+      line-height: 1.6;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    textarea:focus { border-color: #38bdf8; }
+    textarea::placeholder { color: #475569; }
+
+    .actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .char-count { color: #64748b; font-size: 0.9rem; }
+
+    .generate-btn {
+      background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 28px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+    .generate-btn:disabled {
+      background: #1e3a5f;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+
+    .error-box {
+      background: #450a0a;
+      border: 1px solid #dc2626;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fca5a5;
+      margin-bottom: 14px;
+      font-size: 0.95rem;
+      display: none;
+    }
+
+    .speech-ready-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .ready-label { color: #4ade80; font-weight: 700; font-size: 1rem; }
+    .speech-actions { display: flex; gap: 10px; }
+    .copy-btn, .redo-btn {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .copy-btn.copied { background: #166534; color: #4ade80; border-color: #4ade80; }
+
+    #speech-output {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      white-space: pre-wrap;
+      line-height: 1.9;
+      font-size: 1.05rem;
+      color: #e2e8f0;
+      max-height: 60vh;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .tip-box {
+      margin-top: 14px;
+      background: #172033;
+      border: 1px solid #1e40af;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      color: #93c5fd;
+      display: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #64748b;
+      padding: 60px 0;
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    .loading-state {
+      text-align: center;
+      color: #38bdf8;
+      padding: 60px 0;
+      display: none;
+    }
+    .loading-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<header>
+  <h1>🎤 TM02: Toastmasters Speech Drafter</h1>
+  <p>Write in English · AI drafts in <strong style="color:#38bdf8;">Chinese 中文</strong></p>
+  <div class="project-badge">📋 Project: My Last One Month AI Experience · 我的AI学习心得</div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('input', this)">✍️ My Draft</button>
+    <button class="tab-btn" onclick="showTab('speech', this)" id="speech-tab-btn">📜 Chinese Speech</button>
+    <button class="tab-btn" onclick="showTab('memorize', this)" id="memorize-tab-btn">🧠 Memorize</button>
+  </div>
+
+  <!-- INPUT TAB -->
+  <div class="tab-panel" id="tab-input" style="display:block">
+    <p class="intro-text">Type your rough notes in <strong>English</strong> for each section. Bullet points or sentences — anything works.</p>
+
+    <div class="section-group">
+      <label class="section-label">1️⃣ Opening 开场白</label>
+      <textarea id="opening" rows="4" placeholder="e.g. I never expected AI would become my daily companion at 70..."></textarea>
+    </div>
+
+    <div class="section-group">
+      <label class="section-label">2️⃣ Body 正文</label>
+      <textarea id="body" rows="7" placeholder="e.g. Last month I tried Claude for the first time. I used it to plan my Xinjiang trip, write stories, manage my portfolio..."></textarea>
+    </div>
+
+    <div class="section-group">
+      <label class="section-label">3️⃣ Closing 结语</label>
+      <textarea id="closing" rows="4" placeholder="e.g. AI is not just for the young. At 70, I am proof that it's never too late to learn..."></textarea>
+    </div>
+
+    <div class="error-box" id="error-box">⚠️ <span id="error-msg"></span></div>
+
+    <div class="actions-row">
+      <span class="char-count" id="char-count">0 characters typed</span>
+      <button class="generate-btn" id="gen-btn" onclick="generateSpeech()">✨ Draft My Chinese Speech</button>
+    </div>
+  </div>
+
+  <!-- SPEECH TAB -->
+  <div class="tab-panel" id="tab-speech">
+    <div class="empty-state" id="empty-state">
+      <div class="icon">📝</div>
+      <p>Your drafted speech will appear here.<br>Go to "My Draft" tab and click Generate.</p>
+    </div>
+
+    <div class="loading-state" id="loading-state">
+      <div class="icon">🤖</div>
+      <p>AI is drafting your Chinese speech...<br><span style="color:#64748b;">This takes about 10–15 seconds</span></p>
+    </div>
+
+    <div id="speech-ready" style="display:none;">
+      <div class="speech-ready-bar">
+        <span class="ready-label" id="ready-label">✅ Speech ready</span>
+        <div class="speech-actions">
+          <button class="copy-btn" id="copy-btn" onclick="copySpeech()">📋 Copy</button>
+          <button class="redo-btn" onclick="redo()">✏️ Edit & Redo</button>
+        </div>
+      </div>
+      <div id="speech-output"></div>
+      <div class="tip-box" id="tip-box">
+        💡 <strong>Tip:</strong> Copy the Chinese text, paste into Google Translate or DeepL to hear the pronunciation. Practice reading aloud 3–5 times before your speech.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<script>
+  let generatedSpeech = '';
+
+  const ta = {
+    opening: document.getElementById('opening'),
+    bodyContent: document.getElementById('body'),
+    closing: document.getElementById('closing'),
+  };
+
+  const STORAGE_KEY = 'tm02_speech_helper_data';
+
+  Object.values(ta).forEach(t => t.addEventListener('input', () => { updateCount(); saveData(); }));
+
+  function updateCount() {
+    const n = Object.values(ta).map(t => t.value).join('').length;
+    document.getElementById('char-count').textContent = n + ' characters typed';
+  }
+
+  function saveData() {
+    const data = {
+      opening: ta.opening.value,
+      bodyContent: ta.bodyContent.value,
+      closing: ta.closing.value,
+      generatedSpeech: generatedSpeech
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      ta.opening.value = data.opening || '';
+      ta.bodyContent.value = data.bodyContent || '';
+      ta.closing.value = data.closing || '';
+      generatedSpeech = data.generatedSpeech || '';
+      if (generatedSpeech) {
+        document.getElementById('speech-output').style.display = 'block';
+        document.getElementById('speech-output').textContent = generatedSpeech;
+      }
+      updateCount();
+    } catch (e) {}
+  }
+
+  function clearData() {
+    if (!confirm('This will erase all your notes and the drafted speech. Continue?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    ta.opening.value = '';
+    ta.bodyContent.value = '';
+    ta.closing.value = '';
+    generatedSpeech = '';
+    document.getElementById('speech-output').textContent = '';
+    document.getElementById('speech-output').style.display = 'none';
+    updateCount();
+  }
+
+  loadData();
+
+  function showTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+  }
+
+  function switchToSpeechTab() {
+    document.querySelectorAll('.tab-panel').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-speech').style.display = 'block';
+    document.getElementById('tab-speech').classList.add('active');
+    document.getElementById('speech-tab-btn').classList.add('active');
+
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('error-box');
+    document.getElementById('error-msg').textContent = msg;
+    box.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error-box').style.display = 'none';
+  }
+
+  async function generateSpeech() {
+    const opening = ta.opening.value.trim();
+    const bodyContent = ta.bodyContent.value.trim();
+    const closing = ta.closing.value.trim();
+
+    if (!opening && !bodyContent && !closing) {
+      showError('Please fill in at least one section before generating.');
+      return;
+    }
+    hideError();
+
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Drafting in Chinese...';
+
+    switchToSpeechTab();
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('loading-state').style.display = 'block';
+    document.getElementById('speech-ready').style.display = 'none';
+    document.getElementById('speech-output').style.display = 'none';
+    document.getElementById('tip-box').style.display = 'none';
+
+    const prompt = `You are a Toastmasters speech coach helping a 70-year-old retired adventurer named Paul write a speech in Chinese (Mandarin) for his Toastmasters club.
+
+The speech topic is: "My Last One Month AI Experience" — Paul's personal journey discovering AI tools like Claude over the past month.
+
+Paul has provided his English draft notes for each section. Your job is to:
+1. Write a complete, polished Toastmasters speech IN CHINESE (Mandarin, Simplified characters)
+2. Keep Paul's warm, personal, first-person storytelling style
+3. The speech should be 4–6 minutes when read aloud (~600–900 Chinese characters)
+4. Use vivid, conversational language — not stiff or formal
+5. Include natural Toastmaster structure: strong hook, clear main points, memorable close
+6. After the Chinese speech, add a section "--- 英文参考 (English Reference) ---" with a clean English version
+
+Paul's draft notes:
+
+OPENING:
+${opening || "(no notes — write a compelling hook about discovering AI at age 70)"}
+
+BODY:
+${bodyContent || "(no notes — write about discovering Claude, using it for trip planning, story writing, portfolio management)"}
+
+CLOSING:
+${closing || "(no notes — write an inspiring close about learning new things at 70, AI as a life companion)"}
+
+Write the Chinese speech now. Start directly with the speech — no preamble.`;
+
+    try {
+      const res = await fetch('/api/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opening, body: bodyContent, closing })
+      });
+      const rawText = await res.text();
+      let data;
+      try { data = JSON.parse(rawText); } catch(e) { throw new Error('Bad JSON: ' + rawText.slice(0,200)); }
+      const text = data.text || '';
+      if (!text) throw new Error('No text. Got: ' + JSON.stringify(data).slice(0,300));
+
+      generatedSpeech = text;
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('speech-ready').style.display = 'block';
+      document.getElementById('speech-output').style.display = 'block';
+      document.getElementById('speech-output').textContent = text;
+      buildMemorizeTab(text);
+      document.getElementById('tip-box').style.display = 'block';
+      document.getElementById('ready-label').textContent = '✅ Speech ready — ' + text.length + ' characters';
+
+    } catch (e) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'block';
+      showError('Error: ' + (e.message || String(e)));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ Draft My Chinese Speech';
+    }
+  }
+
+  function copySpeech() {
+    if (!generatedSpeech) return;
+    navigator.clipboard.writeText(generatedSpeech);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  }
+
+  function redo() {
+    document.querySelectorAll('.tab-panel').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-input').style.display = 'block';
+    document.getElementById('tab-input').classList.add('active');
+    document.querySelector('.tab-btn').classList.add('active');
+    generatedSpeech = '';
+    document.getElementById('speech-ready').style.display = 'none';
+    document.getElementById('speech-output').style.display = 'none';
+    document.getElementById('tip-box').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'block';
+  }
+</script>
+</body>
+</html>
