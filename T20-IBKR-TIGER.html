@@ -143,6 +143,28 @@
     .acct-ov{padding:14px;}
     .acct-ov-card{padding:12px 12px;}
   }
+  /* ── IBKR Balances Widget ── */
+  .ibkr-ov{background:var(--surface);border:1px solid rgba(244,129,63,0.3);border-radius:16px;overflow:hidden;margin-bottom:22px;}
+  .ibkr-ov-head{display:flex;align-items:center;gap:12px;padding:16px 18px 0;}
+  .ibkr-ov-icon{font-size:1.5rem;}
+  .ibkr-ov-title{font-size:1.1rem;font-weight:800;color:#fff;font-family:'Syne',sans-serif;}
+  .ibkr-ov-sub{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+  .ibkr-ov-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.07);padding:0 18px;margin-top:12px;overflow-x:auto;scrollbar-width:none;}
+  .ibkr-ov-tabs::-webkit-scrollbar{display:none;}
+  .ibkr-ov-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:.72rem;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:.08em;padding:8px 14px 8px 0;cursor:pointer;transition:all .15s;margin-bottom:-1px;white-space:nowrap;}
+  .ibkr-ov-tab.active{color:#f4813f;border-bottom-color:#f4813f;}
+  .ibkr-ov-panel{display:none;}
+  .ibkr-ov-panel.active{display:block;}
+  .ibkr-row{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.05);}
+  .ibkr-row:last-child{border-bottom:none;}
+  .ibkr-row.hl{background:rgba(244,129,63,.06);}
+  .ibkr-row-lbl{font-size:.88rem;color:#c9d1d9;font-family:'DM Mono',monospace;}
+  .ibkr-row-val{font-size:.95rem;font-weight:700;color:#e6edf3;font-family:'DM Mono',monospace;text-align:right;}
+  .ibkr-row-val.pos{color:var(--green);}
+  .ibkr-row-val.neg{color:var(--red);}
+  .ibkr-row-val.nil{color:var(--muted);}
+  .ibkr-row-val.accent{color:#f4813f;}
+  .ibkr-section-hd{padding:10px 18px 6px;font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'DM Mono',monospace;background:rgba(255,255,255,.02);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -358,6 +380,121 @@
         </div>
       </div>
     </div><!-- /acct-ov -->
+
+    <!-- ── IBKR Balances Widget ── -->
+    <div class="ibkr-ov">
+      <div class="ibkr-ov-head">
+        <div class="ibkr-ov-icon">🏦</div>
+        <div>
+          <div class="ibkr-ov-title">Market Value</div>
+          <div class="ibkr-ov-sub">IBKR · Total (USD) ˅</div>
+        </div>
+      </div>
+      <div class="ibkr-ov-tabs">
+        <button class="ibkr-ov-tab active" onclick="switchIbkrTab('bal',this)">BALANCES</button>
+        <button class="ibkr-ov-tab" onclick="switchIbkrTab('margin',this)">MARGIN</button>
+        <button class="ibkr-ov-tab" onclick="switchIbkrTab('ccy',this)">CURRENCIES</button>
+      </div>
+
+      <!-- BALANCES -->
+      <div class="ibkr-ov-panel active" id="ibkrov-bal">
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Unrealized P&amp;L</span>
+          <span class="ibkr-row-val" id="ibkrov-upnl">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Realized P&amp;L</span>
+          <span class="ibkr-row-val" id="ibkrov-rpnl">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Daily P&amp;L</span>
+          <span class="ibkr-row-val" id="ibkrov-dpnl">—</span>
+        </div>
+        <div class="ibkr-row hl">
+          <span class="ibkr-row-lbl">Net Liquidation Value</span>
+          <span class="ibkr-row-val accent" id="ibkrov-netliq">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Total Cash</span>
+          <span class="ibkr-row-val" id="ibkrov-cash">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Settled Cash</span>
+          <span class="ibkr-row-val" id="ibkrov-settled">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">MTD Interest</span>
+          <span class="ibkr-row-val nil" id="ibkrov-interest">0</span>
+        </div>
+        <div class="ibkr-section-hd">Breakdown</div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Stock</span>
+          <span class="ibkr-row-val" id="ibkrov-stock">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Options</span>
+          <span class="ibkr-row-val" id="ibkrov-options">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Futures</span>
+          <span class="ibkr-row-val nil">0</span>
+        </div>
+      </div>
+
+      <!-- MARGIN -->
+      <div class="ibkr-ov-panel" id="ibkrov-margin">
+        <div class="ibkr-row hl">
+          <span class="ibkr-row-lbl">Excess Liquidity</span>
+          <span class="ibkr-row-val accent" id="ibkrov-exliq">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Buying Power</span>
+          <span class="ibkr-row-val" id="ibkrov-bp">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Initial Margin</span>
+          <span class="ibkr-row-val" id="ibkrov-initmargin">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Maintenance Margin</span>
+          <span class="ibkr-row-val" id="ibkrov-maintmargin">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">Leverage</span>
+          <span class="ibkr-row-val nil" id="ibkrov-lev">No Leverage</span>
+        </div>
+      </div>
+
+      <!-- CURRENCIES -->
+      <div class="ibkr-ov-panel" id="ibkrov-ccy">
+        <div class="ibkr-section-hd">Positions by Currency</div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">🇺🇸 USD</span>
+          <span class="ibkr-row-val" id="ibkrov-usd-val">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">🇭🇰 HKD</span>
+          <span class="ibkr-row-val" id="ibkrov-hkd-val">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">🇸🇬 SGD</span>
+          <span class="ibkr-row-val" id="ibkrov-sgd-val">—</span>
+        </div>
+        <div class="ibkr-section-hd">FX Rates (live)</div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">USD → SGD</span>
+          <span class="ibkr-row-val" id="ibkrov-fx-usd">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">HKD → SGD</span>
+          <span class="ibkr-row-val" id="ibkrov-fx-hkd">—</span>
+        </div>
+        <div class="ibkr-row">
+          <span class="ibkr-row-lbl">HKD → USD</span>
+          <span class="ibkr-row-val" id="ibkrov-fx-hkdusd">—</span>
+        </div>
+      </div>
+    </div><!-- /ibkr-ov -->
 
     <div class="summary-grid">
       <div class="card"><div class="card-label">Total Positions</div><div class="card-value" id="total-pos">—</div><div class="card-sub">IBKR + Tiger</div></div>
@@ -910,6 +1047,7 @@ async function loadData() {
     _s('at-total-sgd', fmtS(totalSGD));
     _s('at-note', `CPF/SGX est S$3,500 · OCBC manual 12 Jun 2026 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD`);
     renderAcctOverview(ibkrData, tigerData);
+    renderIbkrBalances(ibkrData);
     renderOptions(ibkrData.options || []);
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
@@ -1445,6 +1583,95 @@ function switchAcctTab(name, btn) {
   const panel = document.getElementById('acctov-' + name);
   if (panel) panel.classList.add('active');
   if (btn) btn.classList.add('active');
+}
+
+function switchIbkrTab(name, btn) {
+  document.querySelectorAll('.ibkr-ov-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ibkr-ov-tab').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('ibkrov-' + name);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function renderIbkrBalances(ibkrData) {
+  const fmtN = (n, d=0) => (n == null || !isFinite(n)) ? '—' : Number(n).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+  const _s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const _cls = (id, c) => { const el = document.getElementById(id); if (el) el.className = 'ibkr-row-val ' + c; };
+
+  const netliq    = parseFloat(ibkrData.netLiquidation || 0);
+  const cash      = parseFloat(ibkrData.cashBalance || 0);
+  const upnl      = parseFloat(ibkrData.unrealizedPnL != null ? ibkrData.unrealizedPnL : (ibkrData.unrealizedPnl || 0));
+  const rpnl      = parseFloat(ibkrData.realizedPnL   != null ? ibkrData.realizedPnL   : (ibkrData.realizedPnl  || 0));
+  const dpnl      = parseFloat(ibkrData.dailyPnL      != null ? ibkrData.dailyPnL      : (ibkrData.dailyPnl    || 0));
+  const exliq     = parseFloat(ibkrData.excessLiquidity || ibkrData.excessLiquidation || 0);
+  const bp        = parseFloat(ibkrData.buyingPower    || ibkrData.maxBuyingPower || 0);
+  const initMgn   = parseFloat(ibkrData.initialMargin  || ibkrData.initMarginReq  || 0);
+  const maintMgn  = parseFloat(ibkrData.maintenanceMargin || ibkrData.maintMarginReq || 0);
+
+  // Stock mkt value from positions (exclude options)
+  const positions = ibkrData.positions || [];
+  const stockVal  = positions.reduce((s, p) => {
+    const mv = parseFloat(p.marketValue || 0);
+    return isFinite(mv) ? s + mv : s;
+  }, 0);
+
+  // Options mkt value from options array
+  const options   = ibkrData.options || [];
+  const optVal    = options.reduce((s, o) => {
+    const mv = parseFloat(o.marketValue || 0);
+    return isFinite(mv) ? s + mv : s;
+  }, 0);
+
+  // Currency breakdown from positions
+  const byCcy = {};
+  positions.forEach(p => {
+    const cur = (p.currency || 'USD').toUpperCase();
+    const mv = parseFloat(p.marketValue || 0);
+    if (isFinite(mv)) byCcy[cur] = (byCcy[cur] || 0) + mv;
+  });
+
+  // ── Balances tab
+  const sign = n => n >= 0 ? '+' : '';
+  const pnlCls = n => n > 0 ? 'pos' : (n < 0 ? 'neg' : 'nil');
+
+  _s('ibkrov-upnl', fmtN(upnl));
+  _cls('ibkrov-upnl', pnlCls(upnl));
+
+  _s('ibkrov-rpnl', (rpnl !== 0 ? sign(rpnl) : '') + fmtN(rpnl));
+  _cls('ibkrov-rpnl', rpnl === 0 ? 'nil' : pnlCls(rpnl));
+
+  const hasDpnl = ibkrData.dailyPnL != null || ibkrData.dailyPnl != null;
+  _s('ibkrov-dpnl', hasDpnl ? sign(dpnl) + fmtN(dpnl) : 'N/A');
+  _cls('ibkrov-dpnl', hasDpnl ? pnlCls(dpnl) : 'nil');
+
+  _s('ibkrov-netliq', fmtN(netliq));
+  _s('ibkrov-cash',   fmtN(cash));
+  _s('ibkrov-settled', fmtN(cash)); // settled ≈ total cash in IBKR securities
+  _s('ibkrov-interest', ibkrData.mtdInterest != null ? fmtN(parseFloat(ibkrData.mtdInterest)) : '0');
+
+  _s('ibkrov-stock', fmtN(stockVal > 0 ? stockVal : netliq - cash));
+  _s('ibkrov-options', fmtN(optVal));
+  if (optVal !== 0) _cls('ibkrov-options', pnlCls(optVal));
+
+  // ── Margin tab
+  const exliqDisplay = exliq > 0 ? exliq : cash;
+  const bpDisplay    = bp > 0    ? bp    : exliqDisplay * 4;
+  _s('ibkrov-exliq', fmtN(exliqDisplay));
+  _s('ibkrov-bp',    fmtN(bpDisplay));
+  _s('ibkrov-initmargin',  initMgn  > 0 ? fmtN(initMgn)  : 'N/A');
+  _s('ibkrov-maintmargin', maintMgn > 0 ? fmtN(maintMgn) : 'N/A');
+  _s('ibkrov-lev', ibkrData.leverage || 'No Leverage');
+
+  // ── Currencies tab
+  const fmtCcy = (v, cur) => v != null ? Number(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' ' + cur : '—';
+  _s('ibkrov-usd-val', fmtCcy(byCcy.USD || cash, 'USD'));
+  _s('ibkrov-hkd-val', byCcy.HKD ? fmtCcy(byCcy.HKD, 'HKD') : '—');
+  _s('ibkrov-sgd-val', byCcy.SGD ? fmtCcy(byCcy.SGD, 'SGD') : '—');
+
+  const fx = fxRates || {};
+  _s('ibkrov-fx-usd',    fx.USD ? fx.USD.toFixed(4) : '—');
+  _s('ibkrov-fx-hkd',    fx.HKD ? fx.HKD.toFixed(4) : '—');
+  _s('ibkrov-fx-hkdusd', (fx.USD && fx.HKD) ? (fx.HKD / fx.USD).toFixed(6) : '—');
 }
 
 function drawSparkline(dpnl) {
