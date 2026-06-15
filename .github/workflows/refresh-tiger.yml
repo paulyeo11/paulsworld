@@ -1,0 +1,39 @@
+name: Refresh Tiger Positions
+
+on:
+  schedule:
+    - cron: "0 9 * * 1-5"   # Mon-Fri 09:00 UTC (after HK/SG close)
+    - cron: "0 21 * * 1-5"  # Mon-Fri 21:00 UTC (after US close)
+  workflow_dispatch:          # also run on-demand from GitHub Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tigeropen
+        run: pip install tigeropen
+
+      - name: Fetch Tiger positions
+        env:
+          TIGER_PRIVATE_KEY: ${{ secrets.TIGER_PRIVATE_KEY }}
+        run: python tiger_positions.py
+
+      - name: Commit and push
+        run: |
+          git config user.name  "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add tiger_positions.json
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "Auto-refresh Tiger positions data [skip ci]" && \
+            git push origin main
