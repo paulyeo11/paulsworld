@@ -325,13 +325,17 @@
 
     <div class="map-wrap">
       <iframe
+        id="routeIframe"
         class="map-embed"
         src="https://www.google.com/maps?saddr=Chinatown+MRT+Station+Singapore&daddr=Sri+Mariamman+Temple+Singapore+to:Thian+Hock+Keng+Temple+Singapore+to:Maxwell+Food+Centre+Singapore+to:Ann+Siang+Hill+Singapore+to:Clarke+Quay+Singapore+to:Merlion+Park+Singapore&output=embed"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade">
       </iframe>
-      <div class="map-click-overlay" onclick="openMapModal('https://www.google.com/maps?saddr=Chinatown+MRT+Station+Singapore&daddr=Sri+Mariamman+Temple+Singapore+to:Thian+Hock+Keng+Temple+Singapore+to:Maxwell+Food+Centre+Singapore+to:Ann+Siang+Hill+Singapore+to:Clarke+Quay+Singapore+to:Merlion+Park+Singapore&output=embed')"><span class="map-click-hint">⛶ Tap to expand</span></div>
+      <div class="map-click-overlay" onclick="openMapModalCurrent()"><span class="map-click-hint">⛶ Tap to expand</span></div>
     </div>
+
+    <button onclick="useMyLocation()" style="margin-top:12px;background:var(--teal-bright);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:0.8rem;font-weight:700;cursor:pointer;">📍 Use My Current Location as Start</button>
+    <div id="locationStatus" style="font-size:0.78rem;color:var(--caption);margin-top:6px;"></div>
 
     <div class="map-buttons">
       <span class="map-label">Open in:</span>
@@ -340,7 +344,7 @@
       <a href="https://uri.amap.com/marker?position=103.8440,1.2839&name=%E6%96%B0%E5%8A%A0%E5%9D%A1%E7%89%9B%E8%BD%A6%E6%B0%B4" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
     </div>
 
-    <a class="directions-link" href="https://www.google.com/maps/dir/Chinatown+MRT+Station+Singapore/Sri+Mariamman+Temple+Singapore/Thian+Hock+Keng+Temple+Singapore/Maxwell+Food+Centre+Singapore/Ann+Siang+Hill+Singapore/Clarke+Quay+Singapore/Merlion+Park+Singapore" target="_blank">→ Get walking directions: Chinatown → Sri Mariamman → Thian Hock Keng → Maxwell → Ann Siang Hill → Clarke Quay → Merlion Park</a>
+    <a id="routeDirLink" class="directions-link" href="https://www.google.com/maps/dir/Chinatown+MRT+Station+Singapore/Sri+Mariamman+Temple+Singapore/Thian+Hock+Keng+Temple+Singapore/Maxwell+Food+Centre+Singapore/Ann+Siang+Hill+Singapore/Clarke+Quay+Singapore/Merlion+Park+Singapore" target="_blank">→ Get walking directions: Chinatown → Sri Mariamman → Thian Hock Keng → Maxwell → Ann Siang Hill → Clarke Quay → Merlion Park</a>
 
     <div style="margin-top:28px;">
       <div style="color:var(--teal-mid);font-weight:700;font-size:0.95rem;margin-bottom:14px;">Point-by-point breakdown (~4km, 1.5–2 hrs):</div>
@@ -455,9 +459,32 @@ function openMapModal(src) {
   document.getElementById('mapModalIframe').src = src;
   document.getElementById('mapModalOverlay').classList.add('active');
 }
+function openMapModalCurrent() {
+  openMapModal(document.getElementById('routeIframe').src);
+}
 function closeMapModal() {
   document.getElementById('mapModalOverlay').classList.remove('active');
   document.getElementById('mapModalIframe').src = '';
+}
+
+const ROUTE_STOPS = ['Sri+Mariamman+Temple+Singapore','Thian+Hock+Keng+Temple+Singapore','Maxwell+Food+Centre+Singapore','Ann+Siang+Hill+Singapore','Clarke+Quay+Singapore','Merlion+Park+Singapore'];
+function useMyLocation() {
+  const status = document.getElementById('locationStatus');
+  if (!navigator.geolocation) {
+    status.textContent = '⚠️ Location is not supported on this browser.';
+    return;
+  }
+  status.textContent = 'Getting your location…';
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const origin = pos.coords.latitude + ',' + pos.coords.longitude;
+    const daddr = ROUTE_STOPS.join('+to:');
+    const embedSrc = 'https://www.google.com/maps?saddr=' + origin + '&daddr=' + daddr + '&output=embed';
+    document.getElementById('routeIframe').src = embedSrc;
+    document.getElementById('routeDirLink').href = 'https://www.google.com/maps/dir/' + origin + '/' + ROUTE_STOPS.join('/');
+    status.textContent = '✅ Map updated to start from your current location.';
+  }, function(err) {
+    status.textContent = '⚠️ Could not get your location (' + err.message + '). Check location permission and try again.';
+  }, { enableHighAccuracy: true, timeout: 10000 });
 }
 </script>
 
