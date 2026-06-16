@@ -69,6 +69,10 @@
   }
   .legend-total { margin-left: auto; color: #f0a500; font-weight: 700; }
   #map { width: 100%; flex: 1; min-height: 54vh; }
+  #map.map-fullscreen { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; width: 100vw !important; height: 100vh !important; min-height: 100vh !important; z-index: 10000; border-radius: 0 !important; }
+  .map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
+  .map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
+  .map-fullscreen-close.active { display: block; }
   .panel { display: none; }
   .panel.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
   .stops-panel {
@@ -333,6 +337,8 @@
 <div id="panel-map" class="panel active">
   <div style="position:relative;">
     <div id="map"></div>
+    <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Expand full screen">⛶</button>
+    <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
     <div class="route-status" id="route-status">Loading road routes…</div>
   </div>
   <div class="stops-panel">
@@ -971,6 +977,15 @@ const stopsData = [
     food:{en:'Airport dining · In-flight meal',zh:'机场用餐 · 飞机餐'},
     stay:'Arrive Singapore 06:50+1 — trip complete!' }
 ];
+
+function toggleMapFullscreen() {
+  const mapEl = document.getElementById('map');
+  const closeBtn = document.getElementById('mapFullscreenClose');
+  const isFullscreen = mapEl.classList.toggle('map-fullscreen');
+  closeBtn.classList.toggle('active', isFullscreen);
+  document.body.style.overflow = isFullscreen ? 'hidden' : '';
+  setTimeout(() => map.invalidateSize(), 60);
+}
 
 // ── MAP SETUP ────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: true }).setView([44.5, 85.5], 6);
