@@ -548,12 +548,12 @@
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
           <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Net Value</div>
           <div style="font-size:17px;font-weight:700;color:#10b981;font-family:'Syne',sans-serif;" id="bal-tiger-net">—</div>
-          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
           <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Cash Available</div>
           <div style="font-size:17px;font-weight:700;color:#10b981;font-family:'Syne',sans-serif;" id="bal-tiger-cash">—</div>
-          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD</div>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;" id="bal-tiger-upnl-card">
           <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Open P&L</div>
@@ -937,8 +937,8 @@ async function loadData() {
     const el2 = document.getElementById('bal-ibkr-sgd'); if(el2) el2.textContent = 'S$' + fmtBal(ibkrNetLiq * (fxRates.USD || 1.285));
     const elIbkrCash = document.getElementById('bal-ibkr-cash');
     if(elIbkrCash) elIbkrCash.textContent = 'US$' + fmtBal(parseFloat(ibkrData.cashBalance || 0));
-    const el3 = document.getElementById('bal-tiger-net'); if(el3) el3.textContent = 'S$' + fmtBal(parseFloat(tigerData.netValue || 0));
-    const el4 = document.getElementById('bal-tiger-cash'); if(el4) el4.textContent = 'S$' + fmtBal(parseFloat(tigerData.cash || 0));
+    const el3 = document.getElementById('bal-tiger-net'); if(el3) el3.textContent = 'US$' + fmtBal(parseFloat(tigerData.netValue || 0));
+    const el4 = document.getElementById('bal-tiger-cash'); if(el4) el4.textContent = 'US$' + fmtBal(parseFloat(tigerData.cash || 0));
     // ---- Tiger Prime Open P&L (USD) ----
     // PREFER Tiger's OWN account-level figure (tigerData.accountOpenPnlUSD) —
     // the exact number the Tiger app shows (e.g. 533.78), already in account
@@ -1005,8 +1005,8 @@ async function loadData() {
     const hkdSgdFx = fxRates.HKD || 0.172;
     const sgdUsdFx = 1 / usdSgdFx;
     const ibkrUSD  = parseFloat(ibkrData.netLiquidation || 0);
-    const tigerSGD = parseFloat(tigerData.netValue || 0);
-    const tigerUSD = tigerSGD * sgdUsdFx;
+    const tigerUSD = parseFloat(tigerData.netValue || 0);
+    const tigerSGD = tigerUSD * usdSgdFx;
     // CPF/SGX: hardcoded estimate (Singtel + Astrea 8)
     const cpfSGD   = 3500;
     const cpfUSD   = cpfSGD * sgdUsdFx;
@@ -1796,12 +1796,12 @@ function renderAcctOverview(ibkrData, tigerData) {
     : (tigerData.positions || []).reduce((s, p) => s + parseFloat(p.unrealizedPnlUSD || 0), 0);
   const tigerDpnl   = parseFloat(tigerData.dailyPnlUSD || 0);
   const tigerSecVal = (tigerData.positions || []).reduce((s, p) => {
-    const mv = parseFloat(p.marketValue || 0);
+    const mv = parseFloat(p.marketValueUSD || 0);
     return isFinite(mv) && mv > 0 ? s + mv : s;
   }, 0);
   const tigerPosCount = (tigerData.positions || []).length;
 
-  _s('acctov-fund-total', tigerNet > 0 ? 'S$' + fmt(tigerNet) : '—');
+  _s('acctov-fund-total', tigerNet > 0 ? 'US$' + fmt(tigerNet) : '—');
 
   const fundPnlEl = document.getElementById('acctov-fund-pnl');
   if (fundPnlEl) {
@@ -1811,7 +1811,7 @@ function renderAcctOverview(ibkrData, tigerData) {
   }
   _s('acctov-fund-pnl-sub', tigerData.fetchedAt ? 'USD · ' + tigerData.fetchedAt : 'USD');
 
-  _s('acctov-fund-cash', tigerCash > 0 ? 'S$' + fmt(tigerCash) : '—');
+  _s('acctov-fund-cash', tigerCash > 0 ? 'US$' + fmt(tigerCash) : '—');
 
   const fdDpnlEl = document.getElementById('acctov-fund-dpnl');
   if (fdDpnlEl) {
@@ -1820,7 +1820,7 @@ function renderAcctOverview(ibkrData, tigerData) {
     fdDpnlEl.className   = 'acct-ov-cval ' + (tigerDpnl > 0 ? 'pos' : (tigerDpnl < 0 ? 'neg' : 'nil'));
   }
 
-  _s('acctov-fund-secval', tigerSecVal > 0 ? 'S$' + fmt(tigerSecVal) : (tigerNet > 0 && tigerCash > 0 ? 'S$' + fmt(tigerNet - tigerCash) : '—'));
+  _s('acctov-fund-secval', tigerSecVal > 0 ? 'US$' + fmt(tigerSecVal) : (tigerNet > 0 && tigerCash > 0 ? 'US$' + fmt(tigerNet - tigerCash) : '—'));
   _s('acctov-fund-pos', tigerPosCount > 0 ? tigerPosCount + '' : '—');
 }
 
