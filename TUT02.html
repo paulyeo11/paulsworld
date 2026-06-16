@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script src="/ga4.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TUT02: Build a Claude Investment Agent to Analyze Your Tiger Brokers Portfolio</title>
+<title>TUT02: How to Build Your Own Claude Travel Agent — Step-by-Step Setup Guide</title>
 <script defer src="/_vercel/insights/script.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
@@ -53,10 +53,6 @@
   .fw-text strong { display: block; color: white; font-size: 1rem; margin-bottom: 4px; }
   .fw-text span { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
 
-  .warning { background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px solid #dc2626; border-radius: 14px; padding: 24px 28px; margin: 36px 0; }
-  .warning h3 { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: #991b1b; margin-bottom: 10px; }
-  .warning p { font-size: 0.95rem; color: #7f1d1d; margin: 0; }
-
   .takeaway { background: linear-gradient(135deg, #e0f2fe, #bae6fd); border: 2px solid #0ea5e9; border-radius: 14px; padding: 28px 32px; margin: 36px 0; text-align: center; }
   .takeaway h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #075985; margin-bottom: 12px; }
   .takeaway p { font-size: 1rem; color: #0c4a6e; margin: 0; }
@@ -99,128 +95,120 @@
 
 <header>
   <div class="category-tag">Tutorials · Guide 2</div>
-  <h1>TUT02: Build a Claude Investment Agent to Analyze Your Tiger Brokers Portfolio</h1>
-  <p class="subtitle">Step-by-step guide to setting up an AI agent that reads your live portfolio and reports your P&amp;L</p>
+  <h1>TUT02: How to Build Your Own Claude Travel Agent — Step-by-Step Setup Guide</h1>
+  <p class="subtitle">Turn Claude into a personal trip planner that researches hotels, food, and routes for you</p>
   <div class="byline">Paul Yeo &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; Tutorials Series</div>
 </header>
 
 <article>
 
-  <p class="lead">My financial dashboard refreshes every morning with live numbers pulled straight from my Tiger Brokers account — positions, profit and loss, and what moved overnight. I built it with Claude, and it did not require me to become a programmer. This guide shows the path I took.</p>
+  <p class="lead">I built a travel agent called NOVA who helps me plan every trip — from Xinjiang self-drive routes to Tokyo hotel shortlists. She is not a real person. She is Claude, given a clear job, a clear style, and the right tools. This guide shows you exactly how to build your own version.</p>
 
-  <div class="warning">
-    <h3>⚠️ Before you start</h3>
-    <p>This guide is about building a tool that reads and summarises your own portfolio data. It is not investment advice, and Claude should never be treated as a licensed financial adviser. You make every buy and sell decision yourself.</p>
-  </div>
+  <p>You do not need to know how to code. You do not need a developer. You need three things: a clear description of the job you want done, a way to give Claude live information (maps, search), and a habit of saving what works so you do not have to repeat yourself every time.</p>
 
   <div class="divider">· · ·</div>
 
-  <h2>Step 1 — Get API Access from Tiger Brokers</h2>
+  <h2>Step 1 — Write the Job Description</h2>
 
-  <p>Tiger Brokers offers an Open API for account holders. Log into your Tiger Trade account, find the Open API / Developer section, and apply for API access. You will receive a Tiger ID, a private key, and account credentials needed to connect programmatically.</p>
-
-  <div class="warning">
-    <h3>🔒 Keep your keys private</h3>
-    <p>Never paste your API key, private key, or account number directly into a chat message or commit it to a public code repository. Store credentials in a local environment file or a secrets manager that only your own machine can read.</p>
-  </div>
-
-  <div class="divider">· · ·</div>
-
-  <h2>Step 2 — Choose How Claude Will Connect</h2>
-
-  <p>There are two practical ways to let Claude read your Tiger data:</p>
-
-  <div class="framework">
-    <h3>Two Ways to Connect</h3>
-    <div class="fw-step">
-      <div class="fw-num">A</div>
-      <div class="fw-text">
-        <strong>A small Python script + Claude Code</strong>
-        <span>Use Tiger's official Python SDK to pull positions and P&amp;L into a local file (CSV or JSON). Ask Claude Code to read that file and build you a summary or dashboard. This is the simplest path if you are comfortable running one script.</span>
-      </div>
-    </div>
-    <div class="fw-step">
-      <div class="fw-num">B</div>
-      <div class="fw-text">
-        <strong>A custom MCP server</strong>
-        <span>If you want Claude to query your account live, on demand, a Model Context Protocol (MCP) server wraps the Tiger API as a tool Claude can call directly during a conversation. This takes more setup but means you never have to re-run a script.</span>
-      </div>
-    </div>
-  </div>
-
-  <p>I started with option A — a script that pulls my positions every morning into a file — and only added the MCP layer later once I wanted live, on-demand answers.</p>
-
-  <div class="divider">· · ·</div>
-
-  <h2>Step 3 — Give Claude the Analyst's Job Description</h2>
-
-  <p>Once Claude can see your portfolio data, tell it exactly what kind of analysis you want:</p>
+  <p>Start by writing a short "persona" for your travel agent, the same way you would brief a real travel agent before a trip. Open a new chat with Claude and paste something like this:</p>
 
   <blockquote>
-    <p>You are my portfolio analyst. Each time I share my positions data, summarise: total P&amp;L, biggest winners and losers, percentage in each sector, and anything that looks like a concentration risk. Do not recommend specific trades — flag patterns and ask me clarifying questions instead.</p>
+    <p>You are my personal travel agent. Your job is to help me plan trips: researching destinations, comparing hotels, suggesting daily itineraries, finding local food, and warning me about visa or weather issues. Always ask about my budget, travel dates, and pace (relaxed vs packed) before suggesting an itinerary. Give me options in a table, not a wall of text.</p>
     <cite>— A starting persona prompt you can copy and edit</cite>
   </blockquote>
 
-  <p>This keeps Claude in the role of analyst, not adviser — it surfaces what's happening in your numbers, and you decide what to do about it.</p>
+  <p>That single paragraph changes everything. Claude now knows the role, the output format you expect, and the questions to ask before answering. Save this prompt somewhere — a note, a Google Doc, a Notion page — so you can paste it at the start of every new travel-planning chat.</p>
 
   <div class="divider">· · ·</div>
 
-  <h2>Step 4 — Build the Daily Cadence</h2>
+  <h2>Step 2 — Give It Your Travel Context</h2>
 
-  <p>The real power shows up once this becomes automatic. On my setup, a pipeline runs each morning, refreshes my Tiger positions, and updates my dashboard before I even open my laptop.</p>
+  <p>A good travel agent should not ask the same questions every trip. Add a short paragraph about your general preferences once, and reuse it:</p>
+
+  <ul style="padding-left: 24px; margin-bottom: 1.6em; color: #2a2a2a; font-size: 1.05rem;">
+    <li style="margin-bottom: 8px;">Who is travelling (just you, a couple, family with kids)</li>
+    <li style="margin-bottom: 8px;">Typical budget range per trip</li>
+    <li style="margin-bottom: 8px;">Pace — do you want 2 cities a week, or one slow base?</li>
+    <li style="margin-bottom: 8px;">Mobility or dietary needs</li>
+    <li style="margin-bottom: 8px;">What you love (hiking, museums, street food, self-drive)</li>
+  </ul>
+
+  <p>I keep mine in a single file: "Paul travels mostly self-drive, prefers mid-range hotels with good reviews, loves adventure sports and local food, and is planning trips to Xinjiang and Japan in 2026." One paste, and every plan Claude gives me already fits my life.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 3 — Connect Live Tools</h2>
+
+  <p>A travel agent that only knows what it learned during training is guessing about today's prices and opening hours. To make it genuinely useful, give it access to current information:</p>
 
   <div class="framework">
-    <h3>Example Daily Routine</h3>
+    <h3>Ways to Connect Live Travel Data</h3>
     <div class="fw-step">
-      <div class="fw-num">🌅</div>
+      <div class="fw-num">1</div>
       <div class="fw-text">
-        <strong>Morning refresh</strong>
-        <span>Script pulls latest positions and P&amp;L from the Tiger Open API.</span>
+        <strong>Web search</strong>
+        <span>Turn on web search in your Claude app or use Claude Code with web search enabled — this lets it check current hotel prices, reviews, and travel advisories instead of guessing.</span>
       </div>
     </div>
     <div class="fw-step">
-      <div class="fw-num">📊</div>
+      <div class="fw-num">2</div>
       <div class="fw-text">
-        <strong>Summary generated</strong>
-        <span>Claude reads the refreshed data and writes a short plain-language summary — what moved, what to watch.</span>
+        <strong>Maps &amp; accommodation MCP tools</strong>
+        <span>If you use Claude Code, you can connect MCP servers for accommodation search and maps. These let Claude pull real listings and distances instead of generic suggestions.</span>
       </div>
     </div>
     <div class="fw-step">
-      <div class="fw-num">📱</div>
+      <div class="fw-num">3</div>
       <div class="fw-text">
-        <strong>You check it</strong>
-        <span>Open your dashboard or chat once a day. The numbers are already there, already summarised.</span>
+        <strong>Your own notes</strong>
+        <span>Paste in flight times, visa rules, or a packing list from a past trip. Claude reuses anything you give it, which saves you retyping every time.</span>
       </div>
     </div>
   </div>
 
-  <p>You do not need full automation on day one. Even running the script manually once a day and pasting the output to Claude for a summary gets you most of the benefit.</p>
+  <p>If you are not using Claude Code and just have the regular Claude app, web search alone is enough to get most of the value — just make sure it is switched on before you ask for current prices or opening hours.</p>
 
   <div class="divider">· · ·</div>
 
-  <h2>Step 5 — Ask for Insight, Not Just Numbers</h2>
+  <h2>Step 4 — Ask for Useful Output, Not Just Text</h2>
 
-  <p>Once the basic pipeline works, the real value comes from the questions you ask:</p>
+  <p>The biggest improvement I made was asking for structured output instead of paragraphs. Try prompts like:</p>
 
   <ul style="padding-left: 24px; margin-bottom: 1.6em; color: #2a2a2a; font-size: 1.05rem;">
-    <li style="margin-bottom: 8px;">"Which 3 positions moved the most this week, and why?"</li>
-    <li style="margin-bottom: 8px;">"What percentage of my portfolio is in tech stocks right now?"</li>
-    <li style="margin-bottom: 8px;">"Compare this month's P&amp;L to last month."</li>
-    <li style="margin-bottom: 8px;">"Am I overly concentrated in any single stock or sector?"</li>
+    <li style="margin-bottom: 8px;">"Give me a table comparing 5 hotels in Niseko: price, distance to ski lift, rating, breakfast included."</li>
+    <li style="margin-bottom: 8px;">"Build me a day-by-day itinerary for 7 days in Xinjiang, self-drive, with driving times between stops."</li>
+    <li style="margin-bottom: 8px;">"What should I pack for a 16-day road trip through Xinjiang in September? Group by category."</li>
+    <li style="margin-bottom: 8px;">"Compare flying into Urumqi vs Kashgar for this route — pros and cons."</li>
   </ul>
 
-  <p>These questions turn a spreadsheet of numbers into something you can actually act on, in plain language.</p>
+  <p>Tables and structured lists are easier to scan on your phone, easier to compare, and easier to save into a trip document later.</p>
+
+  <div class="takeaway">
+    <h3>🗺️ See a Real Example</h3>
+    <p>This is exactly how I built my own 16-day Xinjiang self-drive route — full day-by-day stops, driving times, and an embedded interactive map. <a href="MT09.html" style="color:#075985;font-weight:700;">View the MT09 Xinjiang Route Map &rarr;</a></p>
+  </div>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 5 — Save and Reuse What Works</h2>
+
+  <p>Every time Claude produces a good itinerary or packing list, save it — in Notion, a Google Doc, or even just a pinned note. Next trip, you are not starting from zero; you are editing a template that already fits your travel style.</p>
+
+  <blockquote>
+    <p>The first trip you plan this way takes effort. By the third trip, you are just editing dates and destinations into a system that already knows how you like to travel.</p>
+    <cite>— What changed once I built NOVA</cite>
+  </blockquote>
 
   <div class="divider">· · ·</div>
 
   <h2>Usage Tips</h2>
 
   <ul class="tips-list">
-    <li><span class="tip-num">1</span><span><strong>Never share raw API secrets in chat.</strong> Keep them in a local environment file Claude never sees directly.</span></li>
-    <li><span class="tip-num">2</span><span><strong>Start manual, automate later.</strong> Get the script working reliably before you build a daily schedule around it.</span></li>
-    <li><span class="tip-num">3</span><span><strong>Ask for summaries, not trade calls.</strong> Use Claude to understand your portfolio, not to decide what to buy or sell.</span></li>
-    <li><span class="tip-num">4</span><span><strong>Double-check the numbers</strong> against the official Tiger Trade app periodically, especially after any setup change.</span></li>
-    <li><span class="tip-num">5</span><span><strong>Keep a simple persona prompt saved</strong> so every new chat about your portfolio starts with the same ground rules.</span></li>
+    <li><span class="tip-num">1</span><span><strong>Turn on web search</strong> before asking about prices, opening hours, or anything time-sensitive.</span></li>
+    <li><span class="tip-num">2</span><span><strong>Always state your dates and budget upfront</strong> — vague requests get vague answers.</span></li>
+    <li><span class="tip-num">3</span><span><strong>Ask for tables</strong> when comparing options — much easier to read on a phone.</span></li>
+    <li><span class="tip-num">4</span><span><strong>Double-check anything critical</strong> — visa rules, vaccination requirements, and border crossing details should be verified on an official source before you travel.</span></li>
+    <li><span class="tip-num">5</span><span><strong>Keep one master travel-preferences note</strong> and paste it into every new trip-planning chat.</span></li>
   </ul>
 
   <div class="divider">· · ·</div>
@@ -229,20 +217,20 @@
 
   <div class="qa-block">
     <div class="qa-item">
-      <div class="q">Q: Is this financial advice?</div>
-      <div class="a">A: No. This guide is about building a tool that reads and summarises your own data. Any investment decision is yours, and for personalised advice you should speak to a licensed financial adviser.</div>
+      <div class="q">Q: Do I need Claude Code, or does the regular app work?</div>
+      <div class="a">A: The regular Claude app with web search switched on covers most travel planning — destination research, itineraries, packing lists. Claude Code with MCP tools adds live accommodation search, but it is optional.</div>
     </div>
     <div class="qa-item">
-      <div class="q">Q: Can Claude place trades automatically?</div>
-      <div class="a">A: This guide only covers reading and analysing your portfolio. Giving any AI system the ability to place trades automatically carries real financial risk and is well beyond the scope of a beginner setup — proceed with extreme caution if ever considering it.</div>
+      <div class="q">Q: Can it actually book flights or hotels for me?</div>
+      <div class="a">A: No — Claude researches and compares, but you still complete the booking yourself on the airline or hotel website. Think of it as the research stage, not the checkout stage.</div>
     </div>
     <div class="qa-item">
-      <div class="q">Q: Do I need to know how to code?</div>
-      <div class="a">A: Basic comfort running a script helps for option A, but Claude Code can write and explain most of the script for you. Option B (an MCP server) is more technical and better suited if you already enjoy tinkering.</div>
+      <div class="q">Q: How accurate are the prices and details it gives me?</div>
+      <div class="a">A: With web search turned on, it is usually close to current, but prices change fast. Always confirm the final price on the booking site before you pay.</div>
     </div>
     <div class="qa-item">
-      <div class="q">Q: What if I only have one brokerage account and don't want to write any code?</div>
-      <div class="a">A: You can still get value by manually exporting a CSV of your positions from the Tiger app and pasting the contents into a Claude chat for a summary — no script required.</div>
+      <div class="q">Q: Is this safe — do I need to share my passport or payment details?</div>
+      <div class="a">A: Never share passport numbers, payment details, or passwords with Claude. It does not need them to research and plan a trip.</div>
     </div>
   </div>
 
@@ -250,11 +238,11 @@
 
   <h2>Final Thoughts</h2>
 
-  <p>Building this did not happen in one weekend — I started with a script that just printed my positions, then added a summary, then a dashboard, then automation. Each step was small. Together they replaced a manual process that used to take me twenty minutes every morning with a glance that takes twenty seconds.</p>
+  <p>You do not need a real travel agency to get a personalised trip plan anymore. You need ten minutes to write a clear job description, a paragraph about how you like to travel, and the habit of asking for tables instead of paragraphs. The rest builds itself, trip after trip.</p>
 
   <div class="takeaway">
     <h3>Your Starting Point</h3>
-    <p>Log into your Tiger Trade account today and find the Open API section. Apply for access. That single step unlocks everything else in this guide.</p>
+    <p>Open a new Claude chat right now and paste in the persona prompt from Step 1. Then describe your next trip in one sentence. That is your travel agent, born.</p>
   </div>
 
 </article>
@@ -262,7 +250,7 @@
 <div class="share-bar">
   <div class="share-label">Share this article</div>
   <div class="share-buttons">
-    <a class="share-btn whatsapp" href="https://wa.me/?text=TUT02%3A%20Build%20a%20Claude%20Investment%20Agent%20for%20Tiger%20Brokers%20https%3A%2F%2Fpaulsworld.vercel.app%2FTUT02.html" target="_blank">💬 WhatsApp</a>
+    <a class="share-btn whatsapp" href="https://wa.me/?text=TUT02%3A%20How%20to%20Build%20Your%20Own%20Claude%20Travel%20Agent%20https%3A%2F%2Fpaulsworld.vercel.app%2FTUT02.html" target="_blank">💬 WhatsApp</a>
     <a class="share-btn facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpaulsworld.vercel.app%2FTUT02.html" target="_blank">👍 Facebook</a>
     <button class="share-btn copy" onclick="navigator.clipboard.writeText('https://paulsworld.vercel.app/TUT02.html');this.textContent='✅ Copied!';this.classList.add('copied')">🔗 Copy Link</button>
   </div>
