@@ -1734,7 +1734,11 @@ function renderAcctOverview(ibkrData, tigerData) {
   const netLiq  = parseFloat(ibkrData.netLiquidation || 0);
   const cashBal = parseFloat(ibkrData.cashBalance   || 0);
   const dpnl    = parseFloat(ibkrData.dailyPnL != null ? ibkrData.dailyPnL : (ibkrData.dailyPnl || 0));
-  const upnl    = parseFloat(ibkrData.unrealizedPnL != null ? ibkrData.unrealizedPnL : (ibkrData.unrealizedPnl || 0));
+  const _upnlAcct = parseFloat(ibkrData.unrealizedPnL != null ? ibkrData.unrealizedPnL : (ibkrData.unrealizedPnl ?? 0));
+  const upnl = (_upnlAcct !== 0) ? _upnlAcct : (ibkrData.positions || []).reduce((s, p) => {
+    const v = parseFloat(p.unrealizedPnl ?? p.unrealizedPnL ?? 0);
+    return s + (isFinite(v) ? v : 0);
+  }, 0);
   const exLiq   = parseFloat(ibkrData.excessLiquidity || ibkrData.excessLiquidation || 0);
   const maxBP   = parseFloat(ibkrData.buyingPower    || ibkrData.maxBuyingPower || 0);
 
