@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="/ga4.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TUT01: How to Build Your Own Claude Travel Agent — Step-by-Step Setup Guide</title>
+<script defer src="/_vercel/insights/script.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf8f3;
+    --blue: #4a6cf7;
+    --accent: #f4813f;
+    --muted: #6b6b6b;
+    --line: #e0ddd5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Source Serif 4', Georgia, serif; font-weight: 300; line-height: 1.8; }
+
+  #homeBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: var(--ink); padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+    font-family: Arial, sans-serif;
+  }
+  #homeBar .hb-home { background: var(--accent); color: #fff; text-decoration: none; font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px; }
+  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
+
+  header { max-width: 760px; margin: 0 auto; padding: 80px 40px 40px; text-align: center; border-bottom: 3px double var(--line); }
+  .category-tag { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #0ea5e9; font-weight: 600; margin-bottom: 20px; }
+  h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; margin-bottom: 20px; color: var(--ink); }
+  .subtitle { font-size: 1.15rem; color: var(--muted); font-style: italic; margin-bottom: 30px; }
+  .byline { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; display: inline-block; width: 100%; }
+
+  article { max-width: 680px; margin: 0 auto; padding: 50px 40px; }
+  p { font-size: 1.05rem; margin-bottom: 1.6em; color: #2a2a2a; }
+  .lead { font-size: 1.25rem; font-weight: 400; color: var(--ink); line-height: 1.7; margin-bottom: 2em; padding-left: 20px; border-left: 4px solid #0ea5e9; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 40px 0 20px; color: var(--ink); }
+  .divider { text-align: center; margin: 40px 0; color: #0ea5e9; font-size: 1.2rem; letter-spacing: 0.3em; }
+
+  blockquote { margin: 40px 0; padding: 30px 40px; background: white; border: 1px solid var(--line); border-left: 6px solid #0ea5e9; position: relative; }
+  blockquote::before { content: '\201C'; font-family: 'Playfair Display', serif; font-size: 5rem; color: #0ea5e9; opacity: 0.2; position: absolute; top: -10px; left: 15px; line-height: 1; }
+  blockquote p { font-size: 1.2rem; font-style: italic; font-weight: 400; color: var(--ink); margin: 0; }
+  blockquote cite { display: block; margin-top: 12px; font-size: 0.85rem; color: var(--muted); font-style: normal; letter-spacing: 0.05em; }
+
+  .framework { background: var(--ink); color: white; padding: 32px 36px; margin: 40px 0; border-radius: 16px; }
+  .framework h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); margin-bottom: 20px; text-align: center; }
+  .fw-step { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+  .fw-num { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #0ea5e9; color: white; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+  .fw-text strong { display: block; color: white; font-size: 1rem; margin-bottom: 4px; }
+  .fw-text span { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
+
+  .takeaway { background: linear-gradient(135deg, #e0f2fe, #bae6fd); border: 2px solid #0ea5e9; border-radius: 14px; padding: 28px 32px; margin: 36px 0; text-align: center; }
+  .takeaway h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #075985; margin-bottom: 12px; }
+  .takeaway p { font-size: 1rem; color: #0c4a6e; margin: 0; }
+
+  .qa-block { margin: 36px 0; }
+  .qa-item { border-left: 4px solid #0ea5e9; padding: 16px 20px; margin-bottom: 16px; background: white; border-radius: 0 10px 10px 0; }
+  .qa-item .q { font-weight: 600; color: var(--ink); font-size: 1rem; margin-bottom: 8px; }
+  .qa-item .a { font-size: 0.95rem; color: #3a3a3a; margin: 0; }
+
+  .tips-list { list-style: none; padding: 0; margin: 24px 0; }
+  .tips-list li { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; font-size: 1rem; color: #2a2a2a; }
+  .tips-list li .tip-num { flex-shrink: 0; width: 28px; height: 28px; background: #0ea5e9; color: white; border-radius: 50%; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+  .share-bar { max-width: 680px; margin: 40px auto 8px; padding: 0 40px; text-align: center; }
+  .share-label { font-size: 0.82em; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600; }
+  .share-buttons { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .share-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 22px; border-radius: 50px; font-size: 0.92em; font-weight: 700; text-decoration: none; color: white; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 3px 10px rgba(0,0,0,0.15); border: none; cursor: pointer; }
+  .share-btn:hover { transform: translateY(-2px); }
+  .share-btn.whatsapp { background: #25d366; }
+  .share-btn.facebook { background: #1877f2; }
+  .share-btn.copy { background: #6b7280; }
+  .share-btn.copy.copied { background: #10b981; }
+
+  footer { text-align: center; padding: 40px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+  footer a { color: #0ea5e9; text-decoration: none; }
+
+  @media (max-width: 600px) {
+    header { padding: 70px 20px 30px; }
+    article { padding: 30px 20px; }
+    .share-bar { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">Paul's World</span>
+</div>
+
+<header>
+  <div class="category-tag">Tutorials · Guide 1</div>
+  <h1>TUT01: How to Build Your Own Claude Travel Agent — Step-by-Step Setup Guide</h1>
+  <p class="subtitle">Turn Claude into a personal trip planner that researches hotels, food, and routes for you</p>
+  <div class="byline">Paul Yeo &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; Tutorials Series</div>
+</header>
+
+<article>
+
+  <p class="lead">I built a travel agent called NOVA who helps me plan every trip — from Xinjiang self-drive routes to Tokyo hotel shortlists. She is not a real person. She is Claude, given a clear job, a clear style, and the right tools. This guide shows you exactly how to build your own version.</p>
+
+  <p>You do not need to know how to code. You do not need a developer. You need three things: a clear description of the job you want done, a way to give Claude live information (maps, search), and a habit of saving what works so you do not have to repeat yourself every time.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 1 — Write the Job Description</h2>
+
+  <p>Start by writing a short "persona" for your travel agent, the same way you would brief a real travel agent before a trip. Open a new chat with Claude and paste something like this:</p>
+
+  <blockquote>
+    <p>You are my personal travel agent. Your job is to help me plan trips: researching destinations, comparing hotels, suggesting daily itineraries, finding local food, and warning me about visa or weather issues. Always ask about my budget, travel dates, and pace (relaxed vs packed) before suggesting an itinerary. Give me options in a table, not a wall of text.</p>
+    <cite>— A starting persona prompt you can copy and edit</cite>
+  </blockquote>
+
+  <p>That single paragraph changes everything. Claude now knows the role, the output format you expect, and the questions to ask before answering. Save this prompt somewhere — a note, a Google Doc, a Notion page — so you can paste it at the start of every new travel-planning chat.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 2 — Give It Your Travel Context</h2>
+
+  <p>A good travel agent should not ask the same questions every trip. Add a short paragraph about your general preferences once, and reuse it:</p>
+
+  <ul style="padding-left: 24px; margin-bottom: 1.6em; color: #2a2a2a; font-size: 1.05rem;">
+    <li style="margin-bottom: 8px;">Who is travelling (just you, a couple, family with kids)</li>
+    <li style="margin-bottom: 8px;">Typical budget range per trip</li>
+    <li style="margin-bottom: 8px;">Pace — do you want 2 cities a week, or one slow base?</li>
+    <li style="margin-bottom: 8px;">Mobility or dietary needs</li>
+    <li style="margin-bottom: 8px;">What you love (hiking, museums, street food, self-drive)</li>
+  </ul>
+
+  <p>I keep mine in a single file: "Paul travels mostly self-drive, prefers mid-range hotels with good reviews, loves adventure sports and local food, and is planning trips to Xinjiang and Japan in 2026." One paste, and every plan Claude gives me already fits my life.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 3 — Connect Live Tools</h2>
+
+  <p>A travel agent that only knows what it learned during training is guessing about today's prices and opening hours. To make it genuinely useful, give it access to current information:</p>
+
+  <div class="framework">
+    <h3>Ways to Connect Live Travel Data</h3>
+    <div class="fw-step">
+      <div class="fw-num">1</div>
+      <div class="fw-text">
+        <strong>Web search</strong>
+        <span>Turn on web search in your Claude app or use Claude Code with web search enabled — this lets it check current hotel prices, reviews, and travel advisories instead of guessing.</span>
+      </div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">2</div>
+      <div class="fw-text">
+        <strong>Maps &amp; accommodation MCP tools</strong>
+        <span>If you use Claude Code, you can connect MCP servers for accommodation search and maps. These let Claude pull real listings and distances instead of generic suggestions.</span>
+      </div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">3</div>
+      <div class="fw-text">
+        <strong>Your own notes</strong>
+        <span>Paste in flight times, visa rules, or a packing list from a past trip. Claude reuses anything you give it, which saves you retyping every time.</span>
+      </div>
+    </div>
+  </div>
+
+  <p>If you are not using Claude Code and just have the regular Claude app, web search alone is enough to get most of the value — just make sure it is switched on before you ask for current prices or opening hours.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 4 — Ask for Useful Output, Not Just Text</h2>
+
+  <p>The biggest improvement I made was asking for structured output instead of paragraphs. Try prompts like:</p>
+
+  <ul style="padding-left: 24px; margin-bottom: 1.6em; color: #2a2a2a; font-size: 1.05rem;">
+    <li style="margin-bottom: 8px;">"Give me a table comparing 5 hotels in Niseko: price, distance to ski lift, rating, breakfast included."</li>
+    <li style="margin-bottom: 8px;">"Build me a day-by-day itinerary for 7 days in Xinjiang, self-drive, with driving times between stops."</li>
+    <li style="margin-bottom: 8px;">"What should I pack for a 16-day road trip through Xinjiang in September? Group by category."</li>
+    <li style="margin-bottom: 8px;">"Compare flying into Urumqi vs Kashgar for this route — pros and cons."</li>
+  </ul>
+
+  <p>Tables and structured lists are easier to scan on your phone, easier to compare, and easier to save into a trip document later.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Step 5 — Save and Reuse What Works</h2>
+
+  <p>Every time Claude produces a good itinerary or packing list, save it — in Notion, a Google Doc, or even just a pinned note. Next trip, you are not starting from zero; you are editing a template that already fits your travel style.</p>
+
+  <blockquote>
+    <p>The first trip you plan this way takes effort. By the third trip, you are just editing dates and destinations into a system that already knows how you like to travel.</p>
+    <cite>— What changed once I built NOVA</cite>
+  </blockquote>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Usage Tips</h2>
+
+  <ul class="tips-list">
+    <li><span class="tip-num">1</span><span><strong>Turn on web search</strong> before asking about prices, opening hours, or anything time-sensitive.</span></li>
+    <li><span class="tip-num">2</span><span><strong>Always state your dates and budget upfront</strong> — vague requests get vague answers.</span></li>
+    <li><span class="tip-num">3</span><span><strong>Ask for tables</strong> when comparing options — much easier to read on a phone.</span></li>
+    <li><span class="tip-num">4</span><span><strong>Double-check anything critical</strong> — visa rules, vaccination requirements, and border crossing details should be verified on an official source before you travel.</span></li>
+    <li><span class="tip-num">5</span><span><strong>Keep one master travel-preferences note</strong> and paste it into every new trip-planning chat.</span></li>
+  </ul>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Q&amp;A</h2>
+
+  <div class="qa-block">
+    <div class="qa-item">
+      <div class="q">Q: Do I need Claude Code, or does the regular app work?</div>
+      <div class="a">A: The regular Claude app with web search switched on covers most travel planning — destination research, itineraries, packing lists. Claude Code with MCP tools adds live accommodation search, but it is optional.</div>
+    </div>
+    <div class="qa-item">
+      <div class="q">Q: Can it actually book flights or hotels for me?</div>
+      <div class="a">A: No — Claude researches and compares, but you still complete the booking yourself on the airline or hotel website. Think of it as the research stage, not the checkout stage.</div>
+    </div>
+    <div class="qa-item">
+      <div class="q">Q: How accurate are the prices and details it gives me?</div>
+      <div class="a">A: With web search turned on, it is usually close to current, but prices change fast. Always confirm the final price on the booking site before you pay.</div>
+    </div>
+    <div class="qa-item">
+      <div class="q">Q: Is this safe — do I need to share my passport or payment details?</div>
+      <div class="a">A: Never share passport numbers, payment details, or passwords with Claude. It does not need them to research and plan a trip.</div>
+    </div>
+  </div>
+
+  <div class="divider">· · ·</div>
+
+  <h2>Final Thoughts</h2>
+
+  <p>You do not need a real travel agency to get a personalised trip plan anymore. You need ten minutes to write a clear job description, a paragraph about how you like to travel, and the habit of asking for tables instead of paragraphs. The rest builds itself, trip after trip.</p>
+
+  <div class="takeaway">
+    <h3>Your Starting Point</h3>
+    <p>Open a new Claude chat right now and paste in the persona prompt from Step 1. Then describe your next trip in one sentence. That is your travel agent, born.</p>
+  </div>
+
+</article>
+
+<div class="share-bar">
+  <div class="share-label">Share this article</div>
+  <div class="share-buttons">
+    <a class="share-btn whatsapp" href="https://wa.me/?text=TUT01%3A%20How%20to%20Build%20Your%20Own%20Claude%20Travel%20Agent%20https%3A%2F%2Fpaulsworld.vercel.app%2FTUT01.html" target="_blank">💬 WhatsApp</a>
+    <a class="share-btn facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpaulsworld.vercel.app%2FTUT01.html" target="_blank">👍 Facebook</a>
+    <button class="share-btn copy" onclick="navigator.clipboard.writeText('https://paulsworld.vercel.app/TUT01.html');this.textContent='✅ Copied!';this.classList.add('copied')">🔗 Copy Link</button>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:40px">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Part of the Tutorials series — practical AI guides for everyday life at any age.
+</footer>
+
+</body>
+</html>
