@@ -83,6 +83,24 @@ Button style pattern:
 3. Only THEN tell Paul it's ready — include the confirmed live link.
 - Never say "check in 1-2 minutes" without verifying it first.
 
+## Wikimedia / Wikipedia Images Rule
+Learned from MT09 Xi'an city walk task (took hours due to network block).
+
+**NEVER use hardcoded Wikimedia thumbnail URLs** (the `upload.wikimedia.org/wikipedia/commons/thumb/{hash1}/{hash2}/...` format). The hash requires MD5 of the exact filename and cannot be verified in this cloud environment (Wikimedia is blocked).
+
+**ALWAYS use the Wikipedia REST API via JavaScript instead:**
+```javascript
+fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
+  .then(r => r.json())
+  .then(d => { if (d.thumbnail) img.src = d.thumbnail.source; });
+```
+- This is CORS-enabled — works from any browser.
+- No hash needed — Wikipedia returns the correct thumbnail URL.
+- Use `display:none` on the img initially; show it only after src is set.
+- Do NOT use `onerror="this.style.display='none'"` as a fallback — it hides failures silently, making debugging impossible.
+
+**Also:** When pushing large files (>50KB) via `mcp__github__push_files`, always verify the `content` parameter is non-empty before calling — an accidental empty string wipes the file on GitHub.
+
 ## Standing Rules for All Pages & Articles
 
 ### 🏠 Home Button
