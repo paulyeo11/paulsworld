@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S23: The Secret BKE Trail — My Solo Hike to Upper Peirce Reservoir</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #0a1a10 0%, #0f1a14 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(46,204,113,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(46,204,113,0.12);
+  border: 1px solid rgba(46,204,113,0.3);
+  color: var(--green);
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 740px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(74,108,247,0.12);
+  border-color: rgba(74,108,247,0.35);
+  color: var(--blue);
+}
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid var(--green); padding-left: 18px; margin-bottom: 2em;
+}
+h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.4rem;
+  color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700;
+}
+
+/* STATS CARD */
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+/* PULL QUOTE */
+.pull-quote {
+  background: linear-gradient(135deg, rgba(46,204,113,0.07), rgba(74,108,247,0.07));
+  border: 1px solid rgba(46,204,113,0.18);
+  border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif; font-size: 1.22rem;
+  font-style: italic; color: var(--text); margin: 0; line-height: 1.6;
+}
+
+/* ── INLINE SWIPE STRIP ── */
+.strip-section { max-width: 100%; margin: 2.5em 0; overflow: hidden; }
+.strip-header {
+  max-width: 740px; margin: 0 auto 14px; padding: 0 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.strip-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+.strip-hint { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.strip-wrapper {
+  display: flex; overflow-x: auto; gap: 10px;
+  padding: 0 22px 14px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.strip-wrapper::-webkit-scrollbar { display: none; }
+.strip-card {
+  flex: 0 0 260px; scroll-snap-align: start;
+  border-radius: 12px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--border);
+  position: relative; cursor: pointer;
+}
+.strip-card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.strip-card-caption {
+  padding: 10px 12px 12px;
+  font-size: 0.78rem; color: var(--muted); line-height: 1.4;
+}
+.strip-card-num {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: 0.68rem; padding: 2px 8px; border-radius: 10px;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 480px) { .strip-card { flex: 0 0 200px; } .strip-card img { height: 140px; } }
+
+/* MAP */
+.map-section { max-width: 740px; margin: 0 auto; padding: 0 22px 50px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); margin-bottom: 14px; font-weight: 700; }
+#trail-map { width: 100%; height: 400px; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+
+/* GALLERY */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 16px; }
+.gallery-item {
+  position: relative; border-radius: 10px; overflow: hidden;
+  background: var(--card); cursor: pointer; aspect-ratio: 4/3;
+}
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.gallery-item:hover img { transform: scale(1.05); }
+.gallery-caption {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  color: #fff; font-size: 0.72rem; padding: 20px 10px 8px;
+  line-height: 1.35; opacity: 0; transition: opacity 0.2s;
+}
+.gallery-item:hover .gallery-caption { opacity: 1; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 9000;
+  align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 1.6rem; width: 44px; height: 44px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+/* FULLSCREEN SLIDESHOW */
+.slideshow-overlay {
+  display: none; position: fixed; inset: 0; background: #000; z-index: 10000;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.slideshow-overlay.active { display: flex; }
+.slide { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; animation: fadeIn 1s ease; width: 100%; }
+.slide.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.slide img { max-width: min(90vw, 820px); max-height: 70vh; object-fit: contain; border-radius: 10px; }
+.slide-caption { color: #ddd; font-size: 1rem; margin-top: 18px; font-style: italic; max-width: 620px; line-height: 1.5; font-family: 'Playfair Display', serif; }
+.slide-num { color: rgba(255,255,255,0.4); font-size: 0.78rem; margin-top: 8px; letter-spacing: 0.08em; }
+.slideshow-controls { position: absolute; bottom: 24px; display: flex; gap: 14px; align-items: center; }
+.ss-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.ss-btn:hover { background: rgba(255,255,255,0.22); }
+.ss-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 1.8rem; cursor: pointer; background: none; border: none; line-height: 1; opacity: 0.7; }
+.ss-close:hover { opacity: 1; }
+.ss-progress { position: absolute; top: 0; left: 0; height: 3px; background: var(--accent); transition: width 0.3s; }
+
+/* ALERT BOX */
+.alert-box {
+  background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.35);
+  border-left: 3px solid #e74c3c; border-radius: 10px; padding: 20px 22px; margin: 2em 0;
+}
+.alert-box .alert-title { color: #e74c3c; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.alert-box p { color: #d0d4e8; margin: 0; font-size: 0.95rem; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<!-- FULLSCREEN SLIDESHOW -->
+<div class="slideshow-overlay" id="slideshow">
+  <div class="ss-progress" id="ssProgress"></div>
+  <button class="ss-close" onclick="closeSlideshow()">&#x2715;</button>
+  <audio id="bgMusic" loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" type="audio/mpeg">
+  </audio>
+  <div class="slide active"><img src="img_S23/01-start.jpg" alt=""><div class="slide-caption">8:00 AM. I left home in my long black t-shirt and long pants, one orange in my pocket — ready for a hike no one else would take.</div><div class="slide-num">1 / 32</div></div>
+  <div class="slide"><img src="img_S23/02-zhenghua-sign.jpg" alt=""><div class="slide-caption">Zhenghua Park. Turn right here — into the green, away from the noise.</div><div class="slide-num">2 / 32</div></div>
+  <div class="slide"><img src="img_S23/03-belukar-trail.jpg" alt=""><div class="slide-caption">The Belukar Trail. My forest door for the morning.</div><div class="slide-num">3 / 32</div></div>
+  <div class="slide"><img src="img_S23/04-gate-exit.jpg" alt=""><div class="slide-caption">Out through the gate — from jungle to road in one step.</div><div class="slide-num">4 / 32</div></div>
+  <div class="slide"><img src="img_S23/05-bke-road.jpg" alt=""><div class="slide-caption">The BKE expressway. I was now on the highway — on foot. Probably the only person in Singapore doing this today.</div><div class="slide-num">5 / 32</div></div>
+  <div class="slide"><img src="img_S23/06-bke-shoulder.jpg" alt=""><div class="slide-caption">Walking the shoulder. Cars on one side, jungle on the other. Pure freedom.</div><div class="slide-num">6 / 32</div></div>
+  <div class="slide"><img src="img_S23/07-recovery-car.jpg" alt=""><div class="slide-caption">A road recovery worker spotted me and waved me back. I waited for his truck to disappear around the bend… then kept walking.</div><div class="slide-num">7 / 32</div></div>
+  <div class="slide"><img src="img_S23/08-bke-traffic.jpg" alt=""><div class="slide-caption">Morning traffic, a long green corridor, and me — the only pedestrian on the BKE.</div><div class="slide-num">8 / 32</div></div>
+  <div class="slide"><img src="img_S23/10-pipe-marker-1.jpg" alt=""><div class="slide-caption">Pipe stone MB W039 — my first entry attempt. But a fallen tree blocked the way.</div><div class="slide-num">9 / 32</div></div>
+  <div class="slide"><img src="img_S23/12-recovery-car-2.jpg" alt=""><div class="slide-caption">He spotted me again! This time he reached for his phone. I didn't wait to find out who he was calling — I ran.</div><div class="slide-num">10 / 32</div></div>
+  <div class="slide"><img src="img_S23/13-entry-point.jpg" alt=""><div class="slide-caption">Finally — the secret gap. A muddy opening beside the fence. I slipped through.</div><div class="slide-num">11 / 32</div></div>
+  <div class="slide"><img src="img_S23/14-safe-inside.jpg" alt=""><div class="slide-caption">Hidden inside, looking back at the recovery truck still on the road. Safe. And yes — I used Singapore's best open-air restroom.</div><div class="slide-num">12 / 32</div></div>
+  <div class="slide"><img src="img_S23/15-ancient-tree.jpg" alt=""><div class="slide-caption">This whole forest belongs to me now. Nobody here. Just me and the trees.</div><div class="slide-num">13 / 32</div></div>
+  <div class="slide"><img src="img_S23/16-white-marker.jpg" alt=""><div class="slide-caption">A white paint mark on a tree. The hiker's secret code — safe to follow.</div><div class="slide-num">14 / 32</div></div>
+  <div class="slide"><img src="img_S23/17-warning-sign.jpg" alt=""><div class="slide-caption">Warning: High Pressure Pipeline. Beneath this peaceful jungle — the infrastructure of a city.</div><div class="slide-num">15 / 32</div></div>
+  <div class="slide"><img src="img_S23/18-light-ahead.jpg" alt=""><div class="slide-caption">I see the light through the trees. The reservoir. I'm almost there.</div><div class="slide-num">16 / 32</div></div>
+  <div class="slide"><img src="img_S23/19-arrival.jpg" alt=""><div class="slide-caption">Arrived. Upper Peirce Reservoir. Worth every step.</div><div class="slide-num">17 / 32</div></div>
+  <div class="slide"><img src="img_S23/20-snail-eggs.jpg" alt=""><div class="slide-caption">Golden Apple Snail eggs — vivid pink on a mossy branch. Nature's quiet little surprise.</div><div class="slide-num">18 / 32</div></div>
+  <div class="slide"><img src="img_S23/21-reflection.jpg" alt=""><div class="slide-caption">The reservoir — a perfect mirror. Sky above, sky below.</div><div class="slide-num">19 / 32</div></div>
+  <div class="slide"><img src="img_S23/29-paul-orange.jpg" alt=""><div class="slide-caption">Break time. One orange, one man, one reservoir. This is retirement done right.</div><div class="slide-num">20 / 32</div></div>
+  <div class="slide"><img src="img_S23/30-wind-ripple.jpg" alt=""><div class="slide-caption">Then the wind came — soft and cool off the water. The ripples broke the mirror. It felt so nice.</div><div class="slide-num">21 / 32</div></div>
+  <div class="slide"><img src="img_S23/31-butterfly.jpg" alt=""><div class="slide-caption">A butterfly landed on the bark nearby — dark wings with brilliant teal stripes.</div><div class="slide-num">22 / 32</div></div>
+  <div class="slide"><img src="img_S23/32-dragonfly.jpg" alt=""><div class="slide-caption">A scarlet dragonfly at the water's edge. Red as fire, still as stone.</div><div class="slide-num">23 / 32</div></div>
+  <div class="slide"><img src="img_S23/27-paul-ledge.jpg" alt=""><div class="slide-caption">Taking in the view from my favourite spot. Just me and Upper Peirce.</div><div class="slide-num">24 / 32</div></div>
+  <div class="slide"><img src="img_S23/28-panorama.jpg" alt=""><div class="slide-caption">Two worlds — the reservoir and its perfect reflection. I could have sat here all day.</div><div class="slide-num">25 / 32</div></div>
+  <div class="slide"><img src="img_S23/23-no-entry.jpg" alt=""><div class="slide-caption">The No Entry sign — I came out from the other side. Technically I did not enter. I exited.</div><div class="slide-num">26 / 32</div></div>
+  <div class="slide"><img src="img_S23/25-hidden-pool.jpg" alt=""><div class="slide-caption">A secret pool deep in the forest. If only my house had this view.</div><div class="slide-num">27 / 32</div></div>
+  <div class="slide"><img src="img_S23/22-jungle-path.jpg" alt=""><div class="slide-caption">Then — no signal. Low battery. I was lost. Just jungle, silence, and a dying phone.</div><div class="slide-num">28 / 32</div></div>
+  <div class="slide"><img src="img_S23/26-reservoir-view.jpg" alt=""><div class="slide-caption">David (my AI) told me: listen for traffic. Walk toward the sound of the BKE. Keep the reservoir behind you.</div><div class="slide-num">29 / 32</div></div>
+  <div class="slide"><img src="img_S23/11-fallen-tree.jpg" alt=""><div class="slide-caption">Step by step, tree by tree. I followed the light, I followed the sound, and I found my way out.</div><div class="slide-num">30 / 32</div></div>
+  <div class="slide"><img src="img_S23/04-gate-exit.jpg" alt=""><div class="slide-caption">Out. Safe. Back in the world of roads, signals, and other people.</div><div class="slide-num">31 / 32</div></div>
+  <div class="slide"><img src="img_S23/01-start.jpg" alt=""><div class="slide-caption">8 AM to 11 AM. 9,000 steps. One orange. Zero regrets. Until next time.</div><div class="slide-num">32 / 32</div></div>
+  <div class="slideshow-controls">
+    <button class="ss-btn" onclick="ssNav(-1)">&#8592; Prev</button>
+    <button class="ss-btn" id="ssPlayPause" onclick="toggleAuto()">&#9646;&#9646; Pause</button>
+    <button class="ss-btn" onclick="ssNav(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="label">Travel Story &middot; S23</div>
+  <h1>The <span>Secret BKE Trail</span><br>My Solo Hike to Upper Peirce Reservoir</h1>
+  <div class="meta">By Paul Yeo &nbsp;&middot;&nbsp; 18 June 2026 &nbsp;&middot;&nbsp; Singapore</div>
+  <div class="hero-btns">
+    <button class="hero-btn" onclick="openSlideshow()">&#9654;&nbsp; Watch as Movie</button>
+    <a href="#story" class="hero-btn alt">&#128214;&nbsp; Read the Story</a>
+  </div>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+
+  <p class="lead">Most people drive past the Bukit Timah Expressway without a second thought. I decided to walk it — and what I found on the other side changed my morning completely.</p>
+
+  <h2>Why the BKE?</h2>
+  <p>I chose this route for one simple reason: nobody hikes from the BKE side. The regular trails at Zhenghua Park and Dairy Farm are fine — but I wanted peace. Real peace. No joggers, no families with strollers, no cyclists calling out "on your left." I wanted the whole forest to myself.</p>
+  <p>So on the morning of 18 June 2026, I set off at 8 AM in my long black pants and long black t-shirt — my standard hiking uniform — with just one orange in my pocket. No energy bars, no hiking poles. Just me and my phone.</p>
+
+  <div class="stats-card">
+    <div class="stat"><div class="stat-label">Start Time</div><div class="stat-value">8:00 AM</div></div>
+    <div class="stat"><div class="stat-label">End Time</div><div class="stat-value">~11:00 AM</div></div>
+    <div class="stat"><div class="stat-label">Duration</div><div class="stat-value">~3 Hours</div></div>
+    <div class="stat"><div class="stat-label">Steps</div><div class="stat-value">9,000</div></div>
+    <div class="stat"><div class="stat-label">Destination</div><div class="stat-value">Upper Peirce Reservoir</div></div>
+    <div class="stat"><div class="stat-label">Companions</div><div class="stat-value">Solo</div></div>
+    <div class="stat"><div class="stat-label">Entry Route</div><div class="stat-value">BKE (Unofficial)</div></div>
+    <div class="stat"><div class="stat-label">Supplies</div><div class="stat-value">One Orange</div></div>
+  </div>
+
+  <h2>Into Zhenghua Park</h2>
+  <p>I started at the open field near my area — tall blocks in the distance, bright morning sky overhead. At the old mossy Zhenghua Park signboard, I turned right into the Belukar Trail. The transition from concrete to jungle took about thirty seconds. One moment, HDB towers. The next, nothing but trees, roots and the sound of birds.</p>
+
+</div>
+
+<!-- INLINE SWIPE STRIP 1: BKE Adventure -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128247; The BKE Walk</div>
+    <div class="strip-hint">Swipe right &#8594;</div>
+  </div>
+  <div class="strip-wrapper" id="strip1">
+    <div class="strip-card" onclick="openLightbox(0)"><div class="strip-card-num">01</div><img src="img_S23/01-start.jpg" loading="lazy" alt=""><div class="strip-card-caption">Starting point — open grass, HDB blocks in the distance</div></div>
+    <div class="strip-card" onclick="openLightbox(1)"><div class="strip-card-num">02</div><img src="img_S23/02-zhenghua-sign.jpg" loading="lazy" alt=""><div class="strip-card-caption">Zhenghua Park signboard — turn right here</div></div>
+    <div class="strip-card" onclick="openLightbox(2)"><div class="strip-card-num">03</div><img src="img_S23/03-belukar-trail.jpg" loading="lazy" alt=""><div class="strip-card-caption">Belukar Trail — the forest door</div></div>
+    <div class="strip-card" onclick="openLightbox(3)"><div class="strip-card-num">04</div><img src="img_S23/04-gate-exit.jpg" loading="lazy" alt=""><div class="strip-card-caption">Exit gate — from jungle to road</div></div>
+    <div class="strip-card" onclick="openLightbox(4)"><div class="strip-card-num">05</div><img src="img_S23/05-bke-road.jpg" loading="lazy" alt=""><div class="strip-card-caption">On the BKE — on foot!</div></div>
+    <div class="strip-card" onclick="openLightbox(5)"><div class="strip-card-num">06</div><img src="img_S23/06-bke-shoulder.jpg" loading="lazy" alt=""><div class="strip-card-caption">Walking the BKE shoulder</div></div>
+    <div class="strip-card" onclick="openLightbox(6)"><div class="strip-card-num">07</div><img src="img_S23/07-recovery-car.jpg" loading="lazy" alt=""><div class="strip-card-caption">Recovery car — waves me back!</div></div>
+    <div class="strip-card" onclick="openLightbox(7)"><div class="strip-card-num">08</div><img src="img_S23/08-bke-traffic.jpg" loading="lazy" alt=""><div class="strip-card-caption">Morning traffic — I'm the only pedestrian here</div></div>
+    <div class="strip-card" onclick="openLightbox(8)"><div class="strip-card-num">09</div><img src="img_S23/10-pipe-marker-1.jpg" loading="lazy" alt=""><div class="strip-card-caption">Pipe stone MB W039 — entry blocked by fallen tree</div></div>
+    <div class="strip-card" onclick="openLightbox(9)"><div class="strip-card-num">10</div><img src="img_S23/12-recovery-car-2.jpg" loading="lazy" alt=""><div class="strip-card-caption">Spotted again! He called someone — I ran!</div></div>
+    <div class="strip-card" onclick="openLightbox(10)"><div class="strip-card-num">11</div><img src="img_S23/13-entry-point.jpg" loading="lazy" alt=""><div class="strip-card-caption">The secret entry gap — finally!</div></div>
+  </div>
+</div>
+
+<div class="content">
+  <h2>The Cat and Mouse on the BKE</h2>
+  <p>Walking the BKE shoulder is not a normal thing to do. It is a highway. Pedestrians are not supposed to be here. But there was a narrow grass verge, and I had a plan: walk along it, find the forest entry, disappear into the trees.</p>
+  <p>What I did not plan for was the road recovery car.</p>
+  <p>The first time the worker spotted me, he leaned out and waved me back firmly. I stopped, looked around innocently — and the moment his truck went around the bend, I kept going.</p>
+
+  <div class="pull-quote">
+    <p>"The second time he saw me, he stopped and reached for his phone. I didn't wait to find out who he was calling. I turned and ran."</p>
+  </div>
+
+  <p>Pure comedy: a 70-year-old retired man jogging along a Singapore expressway shoulder, diving behind a bush to escape a road recovery worker. I found my entry point: a gap beside a concrete pipe stone marked <em>MB W039</em>. I slipped through, pushed past the undergrowth — and I was in. Safe. Hidden.</p>
+  <p>And yes — I immediately used what is surely Singapore's best open-air restroom, completely invisible from the road.</p>
+
+  <h2>The Forest Belongs to Me</h2>
+  <p>Inside, it was a different world. No traffic noise. No people. Just tall trees, leafy shadows, and soft earth underfoot. White paint marks on tree trunks guided me — the silent language of forest hikers, meaning <em>safe to follow</em>. I passed ancient trees with enormous gnarled roots, and a rusting sign half-swallowed by vines: <strong>WARNING — High Pressure Pipeline in the Vicinity</strong>.</p>
+  <p>Beneath this quiet jungle, the city hums on, unseen.</p>
+  <p>Then, through the trees ahead — light. A bright opening. The reservoir.</p>
+</div>
+
+<!-- INLINE SWIPE STRIP 2: Reservoir -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128022; Upper Peirce Reservoir</div>
+    <div class="strip-hint">Swipe right &#8594;</div>
+  </div>
+  <div class="strip-wrapper" id="strip2">
+    <div class="strip-card" onclick="openLightbox(16)"><div class="strip-card-num">01</div><img src="img_S23/19-arrival.jpg" loading="lazy" alt=""><div class="strip-card-caption">Arrival! Looking up through the canopy</div></div>
+    <div class="strip-card" onclick="openLightbox(17)"><div class="strip-card-num">02</div><img src="img_S23/20-snail-eggs.jpg" loading="lazy" alt=""><div class="strip-card-caption">Golden Apple Snail eggs — vivid pink</div></div>
+    <div class="strip-card" onclick="openLightbox(18)"><div class="strip-card-num">03</div><img src="img_S23/21-reflection.jpg" loading="lazy" alt=""><div class="strip-card-caption">The reservoir — a perfect mirror</div></div>
+    <div class="strip-card" onclick="openLightbox(23)"><div class="strip-card-num">04</div><img src="img_S23/25-hidden-pool.jpg" loading="lazy" alt=""><div class="strip-card-caption">A secret pool hidden in the forest</div></div>
+    <div class="strip-card" onclick="openLightbox(24)"><div class="strip-card-num">05</div><img src="img_S23/26-reservoir-view.jpg" loading="lazy" alt=""><div class="strip-card-caption">Upper Peirce — wide and calm</div></div>
+    <div class="strip-card" onclick="openLightbox(25)"><div class="strip-card-num">06</div><img src="img_S23/27-paul-ledge.jpg" loading="lazy" alt=""><div class="strip-card-caption">My favourite spot on the bank</div></div>
+    <div class="strip-card" onclick="openLightbox(26)"><div class="strip-card-num">07</div><img src="img_S23/28-panorama.jpg" loading="lazy" alt=""><div class="strip-card-caption">The panoramic view — two worlds</div></div>
+    <div class="strip-card" onclick="openLightbox(27)"><div class="strip-card-num">08</div><img src="img_S23/29-paul-orange.jpg" loading="lazy" alt=""><div class="strip-card-caption">Sitting alone, eating my orange</div></div>
+    <div class="strip-card" onclick="openLightbox(28)"><div class="strip-card-num">09</div><img src="img_S23/30-wind-ripple.jpg" loading="lazy" alt=""><div class="strip-card-caption">The wind came — rippling the water</div></div>
+    <div class="strip-card" onclick="openLightbox(29)"><div class="strip-card-num">10</div><img src="img_S23/31-butterfly.jpg" loading="lazy" alt=""><div class="strip-card-caption">A butterfly came to visit</div></div>
+    <div class="strip-card" onclick="openLightbox(30)"><div class="strip-card-num">11</div><img src="img_S23/32-dragonfly.jpg" loading="lazy" alt=""><div class="strip-card-caption">A scarlet dragonfly at the water's edge</div></div>
+  </div>
+</div>
+
+<div class="content">
+  <h2>Upper Peirce Reservoir — The Reward</h2>
+  <p>I arrived at Upper Peirce Reservoir at around 9:10 AM. The water was glassy and perfectly still, the surrounding jungle reflected in it so clearly you could almost believe the world had been doubled. Clouds drifted above — and the same clouds drifted below, on the water's surface.</p>
+  <p>Nobody else was here. Not a single soul.</p>
+  <p>I found a spot on the bank and sat down. I peeled my orange. A cool wind came off the water — gentle, unexpected — and the surface broke into soft ripples. I sat there for a long time, just breathing.</p>
+
+  <div class="pull-quote">
+    <p>"I thought: if my house had this view, I would never leave. Morning coffee here, every single day, for the rest of my life."</p>
+  </div>
+
+  <p>Nature came to join me. A butterfly — dark wings with vivid teal-green stripes — landed on the bark beside me and stayed a while. Then a scarlet dragonfly settled at the water's edge, wings catching the light like stained glass. I also spotted a cluster of vivid pink Golden Apple Snail eggs on a branch above the waterline, and further along, a tree covered in dark growths — sick, fighting something, but still standing tall.</p>
+
+  <h2>Lost — No Signal, Low Battery</h2>
+  <p>Around 10:51 AM I began making my way out. But the jungle does not give up its secrets easily.</p>
+  <p>My phone signal disappeared. My battery was critically low. The path I expected was not where I thought it was. I was surrounded by trees in every direction, and for the first time that morning, I felt something I had not felt all day: uncertainty.</p>
+
+  <div class="alert-box">
+    <div class="alert-title">&#9888; Lost in the Jungle</div>
+    <p>No signal. Low battery. Alone in the forest near Upper Peirce Reservoir. I sent one message to my AI David — "Seek help" — and received directions before the signal died completely.</p>
+  </div>
+
+  <p>David's instructions were simple and clear:</p>
+  <p><em>"CALL 999 NOW before the battery dies. If no signal — listen for traffic. The BKE is to the WEST. Walk toward the sound of the cars. Keep the reservoir behind you and follow the lightest patches between the trees. Do not walk deeper. Stay near the reservoir edge where rescuers can find you."</em></p>
+  <p>I did exactly that. I stopped. I listened. Through the trees, faintly — the sound of traffic. I turned toward it. I walked slowly, watching for the white tree markers, watching for the light. Step by step, the sound grew louder. The trees thinned. And then — the path. The road. Sunlight.</p>
+  <p>By 11 AM, I was out. Safe. Back in the world of roads and signals and other people.</p>
+
+  <h2>What This Hike Taught Me</h2>
+  <p>I am 70 years old, retired, and I spent a Tuesday morning playing cat and mouse with a highway recovery worker, slipping through a gap in a fence marked No Entry, eating an orange alone at Singapore's most beautiful reservoir, getting briefly lost with a dying phone in a jungle — and finding my way out by listening to the sound of the BKE.</p>
+  <p>9,000 steps. Three hours. One orange. Zero regrets.</p>
+  <p>The BKE entry is not for everyone. You need long pants (the undergrowth is thick), good shoes, and a basic sense of direction. You need to know about white trail markers. You need to be comfortable with no path and no signage. And I would strongly recommend: tell someone where you are going.</p>
+  <p>But if you are willing to do all that — what you get in return is something the crowded, signposted, Instagram-famous trails cannot give you: a whole forest, and a whole reservoir, entirely to yourself.</p>
+
+  <div class="pull-quote">
+    <p>"This is what retirement looks like for me — not a beach chair and a drink, but a secret trail, muddy shoes, and the whole of Upper Peirce Reservoir at 9 AM with nobody else in sight."</p>
+  </div>
+
+</div>
+
+<!-- MAP -->
+<div class="map-section">
+  <div class="section-title">&#128205; The Route</div>
+  <div id="trail-map"></div>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;">Click the markers to see what happened at each point. Coordinates are approximate.</p>
+</div>
+
+<!-- FULL GALLERY -->
+<div class="gallery-section">
+  <div class="section-title">&#128247; Full Photo Journal</div>
+  <div class="gallery-grid" id="galleryGrid"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p>S23 &nbsp;&middot;&nbsp; Paul Yeo &nbsp;&middot;&nbsp; 18 June 2026 &nbsp;&middot;&nbsp; Upper Peirce Reservoir, Singapore</p>
+  <p style="margin-top:6px;font-size:0.75rem;">Background music: <a href="https://www.bensound.com" style="color:var(--muted);">Acoustic Breeze by Bensound</a> &nbsp;&middot;&nbsp; Licensed under Creative Commons</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── GALLERY DATA ──
+const galleryPhotos = [
+  { src: "img_S23/01-start.jpg", caption: "The starting point — open grass, HDB blocks in the distance" },
+  { src: "img_S23/02-zhenghua-sign.jpg", caption: "Zhenghua Park signboard — turn right here" },
+  { src: "img_S23/03-belukar-trail.jpg", caption: "Belukar Trail signboard — entering the forest" },
+  { src: "img_S23/04-gate-exit.jpg", caption: "Exit gate from the forest onto the main road" },
+  { src: "img_S23/05-bke-road.jpg", caption: "Out on the BKE road — morning haze, traffic ahead" },
+  { src: "img_S23/06-bke-shoulder.jpg", caption: "Walking along the BKE road shoulder" },
+  { src: "img_S23/07-recovery-car.jpg", caption: "The recovery car worker waves me back — I waited, then kept going!" },
+  { src: "img_S23/08-bke-traffic.jpg", caption: "The only pedestrian on the BKE" },
+  { src: "img_S23/10-pipe-marker-1.jpg", caption: "Pipe stone MB W039 — first entry attempt, but blocked" },
+  { src: "img_S23/11-fallen-tree.jpg", caption: "Fallen tree blocking the path — walked further" },
+  { src: "img_S23/12-recovery-car-2.jpg", caption: "Spotted again! Recovery worker calls someone — I ran!" },
+  { src: "img_S23/13-entry-point.jpg", caption: "Found it! The secret entry point into the forest" },
+  { src: "img_S23/14-safe-inside.jpg", caption: "Safe inside the forest — best open-air restroom in Singapore!" },
+  { src: "img_S23/15-ancient-tree.jpg", caption: "This whole forest belongs to me now" },
+  { src: "img_S23/16-white-marker.jpg", caption: "White marker on tree — safe to enter" },
+  { src: "img_S23/17-warning-sign.jpg", caption: "Warning: High Pressure Pipeline" },
+  { src: "img_S23/18-light-ahead.jpg", caption: "I see the light — heading toward the reservoir" },
+  { src: "img_S23/19-arrival.jpg", caption: "Arrived at Upper Peirce Reservoir — looking up through the canopy" },
+  { src: "img_S23/20-snail-eggs.jpg", caption: "Golden Apple Snail eggs — vivid pink on a mossy branch" },
+  { src: "img_S23/21-reflection.jpg", caption: "The reservoir — a perfect mirror of sky and jungle" },
+  { src: "img_S23/22-jungle-path.jpg", caption: "Deep jungle — the off-trail section" },
+  { src: "img_S23/23-no-entry.jpg", caption: "The No Entry sign — I came out from the other side!" },
+  { src: "img_S23/24-sick-tree.jpg", caption: "A sick tree — covered in growths" },
+  { src: "img_S23/25-hidden-pool.jpg", caption: "A secret pool hidden deep in the forest" },
+  { src: "img_S23/26-reservoir-view.jpg", caption: "Upper Peirce Reservoir — wide and calm" },
+  { src: "img_S23/27-paul-ledge.jpg", caption: "Taking in the view from my favourite spot" },
+  { src: "img_S23/28-panorama.jpg", caption: "The reservoir at its finest — two worlds, one reflected" },
+  { src: "img_S23/29-paul-orange.jpg", caption: "Sitting alone, eating my orange, the reservoir all to myself" },
+  { src: "img_S23/30-wind-ripple.jpg", caption: "The wind came — rippling the water, cooling my face" },
+  { src: "img_S23/31-butterfly.jpg", caption: "A beautiful butterfly came to visit" },
+  { src: "img_S23/32-dragonfly.jpg", caption: "A scarlet dragonfly resting at the water's edge" },
+];
+
+// Build gallery
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  item.innerHTML = `<img src="${p.src}" alt="" loading="lazy"><div class="gallery-caption">${p.caption}</div>`;
+  item.onclick = () => openLightbox(i);
+  grid.appendChild(item);
+});
+
+// ── LIGHTBOX ──
+let lbIndex = 0;
+function openLightbox(i) {
+  lbIndex = i;
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) { lbIndex = (lbIndex + dir + galleryPhotos.length) % galleryPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+// ── FULLSCREEN SLIDESHOW ──
+const slides = document.querySelectorAll('.slide');
+let ssIndex = 0, ssAuto = true, ssTimer = null;
+function openSlideshow() {
+  document.getElementById('slideshow').classList.add('active');
+  const audio = document.getElementById('bgMusic');
+  audio.volume = 0.45;
+  audio.play().catch(() => {});
+  showSlide(0);
+  startAuto();
+}
+function closeSlideshow() {
+  document.getElementById('slideshow').classList.remove('active');
+  document.getElementById('bgMusic').pause();
+  clearTimeout(ssTimer);
+}
+function showSlide(i) {
+  slides.forEach(s => s.classList.remove('active'));
+  ssIndex = (i + slides.length) % slides.length;
+  slides[ssIndex].classList.add('active');
+  document.getElementById('ssProgress').style.width = ((ssIndex + 1) / slides.length * 100).toFixed(1) + '%';
+}
+function ssNav(dir) { clearTimeout(ssTimer); showSlide(ssIndex + dir); if (ssAuto) startAuto(); }
+function startAuto() { clearTimeout(ssTimer); ssTimer = setTimeout(() => { showSlide(ssIndex + 1); if (ssAuto) startAuto(); }, 5000); }
+function toggleAuto() {
+  ssAuto = !ssAuto;
+  document.getElementById('ssPlayPause').innerHTML = ssAuto ? '&#9646;&#9646; Pause' : '&#9654; Play';
+  if (ssAuto) startAuto(); else clearTimeout(ssTimer);
+}
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('slideshow').classList.contains('active')) {
+    if (e.key === 'ArrowRight') ssNav(1);
+    if (e.key === 'ArrowLeft') ssNav(-1);
+    if (e.key === 'Escape') closeSlideshow();
+  }
+  if (document.getElementById('lightbox').classList.contains('active')) {
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'Escape') closeLightbox();
+  }
+});
+
+// ── MAP ──
+const map = L.map('trail-map', { zoomControl: true }).setView([1.3805, 103.7680], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 18
+}).addTo(map);
+
+const routeCoords = [
+  [1.3772, 103.7648],
+  [1.3776, 103.7644],
+  [1.3793, 103.7648],
+  [1.3803, 103.7650],
+  [1.3812, 103.7662],
+  [1.3838, 103.7718],
+];
+L.polyline(routeCoords, { color: '#f4813f', weight: 3, dashArray: '6,4', opacity: 0.85 }).addTo(map);
+
+[
+  { pos: [1.3772, 103.7648], color: '#2ecc71', label: '🟢 Start — Zhenghua Park', text: '8:00 AM · Set off alone in black t-shirt and long pants, one orange in pocket.' },
+  { pos: [1.3776, 103.7644], color: '#4a6cf7', label: '🔵 Belukar Trail', text: 'Turned right into the Belukar Trail — jungle begins immediately.' },
+  { pos: [1.3793, 103.7648], color: '#f4813f', label: '🟠 BKE Road', text: 'Exited forest onto the BKE shoulder — walking a highway on foot!' },
+  { pos: [1.3803, 103.7650], color: '#e74c3c', label: '🔴 Recovery Car Encounter', text: 'Spotted TWICE by road recovery worker. Waited, ran, then slipped into the forest.' },
+  { pos: [1.3812, 103.7662], color: '#9b59b6', label: '🟣 Secret Forest Entry', text: 'Pipe stone MB W039 — the gap in the fence. Finally inside!' },
+  { pos: [1.3838, 103.7718], color: '#1abc9c', label: '💙 Upper Peirce Reservoir', text: '9:10 AM · Arrived! Orange eaten here. Wind, butterfly, dragonfly. Lost at 10:51 AM — found way out by following BKE traffic sound.' },
+].forEach(m => {
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:15px;height:15px;border-radius:50%;background:${m.color};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>`,
+    iconSize: [15, 15], iconAnchor: [7, 7],
+  });
+  L.marker(m.pos, { icon }).addTo(map)
+    .bindPopup(`<strong style="font-size:0.88rem">${m.label}</strong><br><span style="font-size:0.8rem;line-height:1.4">${m.text}</span>`, { maxWidth: 230 });
+});
+</script>
+</body>
+</html>
