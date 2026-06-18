@@ -64,6 +64,22 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
   (via gh/git) — no need to ask Paul, never ask him to copy/paste or upload manually.
 - After every successful push, confirm with the **file name and commit SHA**.
 
+## Interactive Route Map Rule (Standing Default)
+Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
+
+- **Tiles:** ESRI satellite (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`)
+- **Markers:** Numbered coloured circle markers — 🔴 red = Start/End, 🟠 orange = road/transport section, 🟢 green = forest/nature section, 🔵 blue = water/reservoir section
+- **Route line:** Orange dashed polyline connecting all stops in order
+- **Photo popup:** Tapping any marker shows a popup with the photo + caption + "View Full Photo" button (opens lightbox)
+- **Fullscreen button:** CSS-based (NOT browser requestFullscreen API — doesn't work on iOS). Use `position:fixed; top:0; left:0; width:100vw; height:100vh` on the map div with a visible "✕ Close Map" button top-right
+- **"Open Full Screen Map" button:** Prominent button above the map (accent colour, rounded pill style)
+- **Legend:** Bottom-left corner showing colour key
+- **Leaflet fullscreen plugin** for the corner expand icon: `https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css` + `.min.js`
+- **Map placement:** Right below the hero section (NOT buried at the bottom)
+- **Note:** If GPS was stripped from uploaded photos, estimate coordinates from Google Maps screenshots or known geography — place markers in route sequence order
+
+Reference implementation: `S23.html` (The Secret BKE Trail, 18 June 2026)
+
 ## Map Links Rule
 Whenever Paul asks to "add map link", "add google location", or similar — always add **all three** map buttons together:
 1. **Google Maps** — `https://maps.google.com/?q=LAT,LNG&label=Name`
@@ -123,6 +139,13 @@ using exactly: `<script src="/view-counter.js"></script>`
   - **Tell Paul the exact folder name** he needs to create on GitHub before uploading.
 - **Image Folder Deployment Rule:** once images are added to a new folder, immediately
   push a small update to the linked HTML so Vercel picks up the new folder in the same deploy.
+
+### 🖼️ Photo Journal Rule (Standing Default)
+Every article/story that contains photos **must** include a **Photo Journal** section at the end — after the main story text. Each photo must be displayed with **visible descriptive text beneath it** (not hover-only captions). Format:
+- Photo displayed full-width (or near full-width)
+- Below it: "Photo XX of YY" label + a paragraph describing what is shown, what was happening, and what Paul was thinking or feeling
+- Tap photo to open lightbox
+- Reference implementation: `S23.html` photo journal section
 
 ### 📖 eBook Generation
 When generating an eBook, download all images and **embed** them — no external image
