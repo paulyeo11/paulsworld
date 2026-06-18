@@ -152,6 +152,31 @@ h2 {
 
 /* MAP */
 .map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#trail-map.map-fullscreen {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 9999;
+  border: none !important;
+}
+#mapCloseBtn {
+  display: none;
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 10000;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 1rem;
+  padding: 8px 16px;
+  border-radius: 22px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Source Serif 4', serif;
+}
 .map-section > .section-title,
 .map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
 .map-section > .section-title { margin-bottom: 14px; }
@@ -328,6 +353,7 @@ footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--bor
     </button>
   </div>
   <div id="trail-map"></div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; Close Map</button>
   <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;padding-bottom:10px;max-width:740px;margin-left:auto;margin-right:auto;padding-left:22px;padding-right:22px;">Each icon is a photo taken at that spot along the trail. Tap/click to see the photo and description. Coordinates are approximate.</p>
 </div>
 
@@ -682,14 +708,18 @@ document.addEventListener('keydown', function(e) {
 // ── FULLSCREEN MAP BUTTON ──
 function openMapFullscreen() {
   const el = document.getElementById('trail-map');
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
-  else if (el.msRequestFullscreen) el.msRequestFullscreen();
-  setTimeout(() => map.invalidateSize(), 300);
+  el.classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => map.invalidateSize(), 100);
 }
-document.addEventListener('fullscreenchange', () => map.invalidateSize());
-document.addEventListener('webkitfullscreenchange', () => map.invalidateSize());
+function closeMapFullscreen() {
+  const el = document.getElementById('trail-map');
+  el.classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(() => map.invalidateSize(), 100);
+}
 
 // ── PHOTO MAP — dark CARTO style ──
 const map = L.map('trail-map', { zoomControl: true, fullscreenControl: true, fullscreenControlOptions: { position: 'topright' } }).setView([1.3808, 103.7685], 15);
