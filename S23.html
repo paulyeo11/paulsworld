@@ -150,9 +150,46 @@ h2 {
 @media (max-width: 480px) { .strip-card { flex: 0 0 200px; } .strip-card img { height: 140px; } }
 
 /* MAP */
-.map-section { max-width: 740px; margin: 0 auto; padding: 0 22px 50px; }
-.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); margin-bottom: 14px; font-weight: 700; }
-#trail-map { width: 100%; height: 400px; border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+.map-section > .section-title,
+.map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#trail-map { width: 100%; height: 520px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+/* PHOTO MARKER */
+.pm-wrap {
+  width: 52px; height: 52px;
+  border: 3px solid #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.55);
+  cursor: pointer;
+  transition: transform 0.15s;
+  background: #111;
+}
+.pm-wrap:hover { transform: scale(1.18); z-index: 9999; }
+.pm-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pm-num {
+  position: absolute; top: -7px; right: -7px;
+  background: var(--accent); color: #fff;
+  font-size: 0.6rem; font-weight: 700;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid #fff;
+}
+.pm-container { position: relative; }
+
+/* MAP POPUP */
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-btn { display: inline-block; background: rgba(244,129,63,0.18); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.75rem; padding: 4px 12px; border-radius: 14px; cursor: pointer; text-decoration: none; }
+.map-popup-btn:hover { background: rgba(244,129,63,0.32); }
 
 /* PHOTO JOURNAL */
 .gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
@@ -417,11 +454,11 @@ footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--bor
 
 </div>
 
-<!-- MAP -->
+<!-- PHOTO MAP -->
 <div class="map-section">
-  <div class="section-title">&#128205; The Route</div>
+  <div class="section-title">&#128205; Interactive Photo Map — Click Any Photo Icon</div>
   <div id="trail-map"></div>
-  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;">Click the markers to see what happened at each point. Coordinates are approximate.</p>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;">Each icon is a photo taken at that spot. Tap/click to see the photo and description. Route coordinates are approximate.</p>
 </div>
 
 <!-- PHOTO JOURNAL -->
@@ -635,37 +672,81 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// ── MAP ──
-const map = L.map('trail-map', { zoomControl: true }).setView([1.3805, 103.7680], 14);
+// ── PHOTO MAP ──
+const map = L.map('trail-map', { zoomControl: true }).setView([1.3808, 103.7685], 15);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 18
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19
 }).addTo(map);
 
-const routeCoords = [
-  [1.3772, 103.7648],
-  [1.3776, 103.7644],
-  [1.3793, 103.7648],
-  [1.3803, 103.7650],
-  [1.3812, 103.7662],
-  [1.3838, 103.7718],
+// Each photo with its approximate GPS position along the trail
+const mapPhotos = [
+  { src:"img_S23/01-start.jpg",       lat:1.3772, lon:103.7648, caption:"The starting point — open grass, HDB blocks in the distance" },
+  { src:"img_S23/02-zhenghua-sign.jpg",lat:1.3774, lon:103.7646, caption:"Zhenghua Park signboard — turn right here" },
+  { src:"img_S23/03-belukar-trail.jpg",lat:1.3776, lon:103.7643, caption:"Belukar Trail signboard — entering the forest" },
+  { src:"img_S23/04-gate-exit.jpg",   lat:1.3790, lon:103.7647, caption:"Exit gate from the forest onto the main road" },
+  { src:"img_S23/05-bke-road.jpg",    lat:1.3794, lon:103.7647, caption:"Out on the BKE road — on foot!" },
+  { src:"img_S23/06-bke-shoulder.jpg",lat:1.3800, lon:103.7648, caption:"Walking along the BKE road shoulder" },
+  { src:"img_S23/07-recovery-car.jpg",lat:1.3805, lon:103.7648, caption:"Recovery car worker waves me back — I waited, then kept going!" },
+  { src:"img_S23/08-bke-traffic.jpg", lat:1.3809, lon:103.7649, caption:"The only pedestrian on the BKE" },
+  { src:"img_S23/09-road-sign.jpg",   lat:1.3812, lon:103.7649, caption:"Still walking — the reservoir entrance is somewhere ahead" },
+  { src:"img_S23/10-pipe-marker-1.jpg",lat:1.3816, lon:103.7650, caption:"Pipe stone MB W039 — first entry attempt, but blocked" },
+  { src:"img_S23/11-fallen-tree.jpg", lat:1.3818, lon:103.7651, caption:"Fallen tree blocking the path — walked further" },
+  { src:"img_S23/12-recovery-car-2.jpg",lat:1.3813,lon:103.7649, caption:"Spotted again! He called someone — I ran!" },
+  { src:"img_S23/13-entry-point.jpg", lat:1.3821, lon:103.7654, caption:"Found it! The secret entry point into the forest" },
+  { src:"img_S23/14-safe-inside.jpg", lat:1.3824, lon:103.7659, caption:"Safe inside — best open-air restroom in Singapore!" },
+  { src:"img_S23/15-ancient-tree.jpg",lat:1.3827, lon:103.7664, caption:"This whole forest belongs to me now" },
+  { src:"img_S23/16-white-marker.jpg",lat:1.3830, lon:103.7669, caption:"White marker on tree — safe to enter" },
+  { src:"img_S23/17-warning-sign.jpg",lat:1.3832, lon:103.7675, caption:"Warning: High Pressure Pipeline" },
+  { src:"img_S23/18-light-ahead.jpg", lat:1.3834, lon:103.7681, caption:"I see the light — heading toward the reservoir" },
+  { src:"img_S23/19-arrival.jpg",     lat:1.3836, lon:103.7689, caption:"Arrived at Upper Peirce Reservoir" },
+  { src:"img_S23/20-snail-eggs.jpg",  lat:1.3839, lon:103.7700, caption:"Golden Apple Snail eggs — vivid pink on a mossy branch" },
+  { src:"img_S23/21-reflection.jpg",  lat:1.3841, lon:103.7706, caption:"The reservoir — a perfect mirror of sky and jungle" },
+  { src:"img_S23/22-jungle-path.jpg", lat:1.3837, lon:103.7695, caption:"Deep jungle — the off-trail section" },
+  { src:"img_S23/23-no-entry.jpg",    lat:1.3835, lon:103.7692, caption:"The No Entry sign — I came out from the other side!" },
+  { src:"img_S23/24-sick-tree.jpg",   lat:1.3838, lon:103.7698, caption:"A sick tree — covered in growths" },
+  { src:"img_S23/25-hidden-pool.jpg", lat:1.3843, lon:103.7710, caption:"A secret pool hidden deep in the forest" },
+  { src:"img_S23/26-reservoir-view.jpg",lat:1.3841,lon:103.7713, caption:"Upper Peirce Reservoir — wide and calm" },
+  { src:"img_S23/27-paul-ledge.jpg",  lat:1.3839, lon:103.7716, caption:"Me — taking in the view from my favourite spot" },
+  { src:"img_S23/28-panorama.jpg",    lat:1.3837, lon:103.7719, caption:"The panoramic view — two worlds, one reflected" },
+  { src:"img_S23/29-paul-orange.jpg", lat:1.3835, lon:103.7721, caption:"Break time — me with my one orange" },
+  { src:"img_S23/30-wind-ripple.jpg", lat:1.3834, lon:103.7719, caption:"The wind came — rippling the water, cooling my face" },
+  { src:"img_S23/31-butterfly.jpg",   lat:1.3833, lon:103.7716, caption:"A butterfly with teal-green stripes" },
+  { src:"img_S23/32-dragonfly.jpg",   lat:1.3832, lon:103.7713, caption:"A scarlet dragonfly at the water's edge" },
 ];
-L.polyline(routeCoords, { color: '#f4813f', weight: 3, dashArray: '6,4', opacity: 0.85 }).addTo(map);
 
-[
-  { pos: [1.3772, 103.7648], color: '#2ecc71', label: '🟢 Start — Zhenghua Park', text: '8:00 AM · Set off alone in black t-shirt and long pants, one orange in pocket.' },
-  { pos: [1.3776, 103.7644], color: '#4a6cf7', label: '🔵 Belukar Trail', text: 'Turned right into the Belukar Trail — jungle begins immediately.' },
-  { pos: [1.3793, 103.7648], color: '#f4813f', label: '🟠 BKE Road', text: 'Exited forest onto the BKE shoulder — walking a highway on foot!' },
-  { pos: [1.3803, 103.7650], color: '#e74c3c', label: '🔴 Recovery Car Encounter', text: 'Spotted TWICE by road recovery worker. Waited, ran, then slipped into the forest.' },
-  { pos: [1.3812, 103.7662], color: '#9b59b6', label: '🟣 Secret Forest Entry', text: 'Pipe stone MB W039 — the gap in the fence. Finally inside!' },
-  { pos: [1.3838, 103.7718], color: '#1abc9c', label: '💙 Upper Peirce Reservoir', text: '9:10 AM · Arrived! Orange eaten here. Wind, butterfly, dragonfly. Lost at 10:51 AM — found way out by following BKE traffic sound.' },
-].forEach(m => {
+// Draw route polyline
+const routeLine = mapPhotos.map(p => [p.lat, p.lon]);
+L.polyline(routeLine, { color: '#f4813f', weight: 3.5, dashArray: '7,4', opacity: 0.85 }).addTo(map);
+
+// Start and end markers
+const mkStart = L.divIcon({ className:'', html:'<div style="background:#2ecc71;color:#fff;font-size:0.7rem;font-weight:700;padding:4px 8px;border-radius:10px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);white-space:nowrap">▶ START</div>', iconAnchor:[28,14] });
+const mkEnd   = L.divIcon({ className:'', html:'<div style="background:#e74c3c;color:#fff;font-size:0.7rem;font-weight:700;padding:4px 8px;border-radius:10px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);white-space:nowrap">■ END</div>', iconAnchor:[22,14] });
+L.marker([mapPhotos[0].lat, mapPhotos[0].lon], { icon: mkStart }).addTo(map);
+L.marker([mapPhotos[mapPhotos.length-1].lat, mapPhotos[mapPhotos.length-1].lon], { icon: mkEnd }).addTo(map);
+
+// Photo icon markers
+mapPhotos.forEach((p, i) => {
   const icon = L.divIcon({
-    className: '',
-    html: `<div style="width:15px;height:15px;border-radius:50%;background:${m.color};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>`,
-    iconSize: [15, 15], iconAnchor: [7, 7],
+    className: 'pm-container',
+    html: `<div class="pm-wrap"><img src="${p.src}" loading="lazy"></div><div class="pm-num">${i+1}</div>`,
+    iconSize: [52, 52],
+    iconAnchor: [26, 26],
+    popupAnchor: [0, -28],
   });
-  L.marker(m.pos, { icon }).addTo(map)
-    .bindPopup(`<strong style="font-size:0.88rem">${m.label}</strong><br><span style="font-size:0.8rem;line-height:1.4">${m.text}</span>`, { maxWidth: 230 });
+
+  const popupHtml = `
+    <div class="map-popup">
+      <img src="${p.src}" alt="">
+      <div class="map-popup-body">
+        <div class="map-popup-num">Photo ${String(i+1).padStart(2,'0')} of ${mapPhotos.length}</div>
+        <div class="map-popup-caption">${p.caption}</div>
+        <span class="map-popup-btn" onclick="openLightbox(${i});document.querySelector('.leaflet-popup-close-button').click()">&#128065; View Full Photo</span>
+      </div>
+    </div>`;
+
+  L.marker([p.lat, p.lon], { icon })
+    .addTo(map)
+    .bindPopup(popupHtml, { maxWidth: 240, minWidth: 220 });
 });
 </script>
 </body>
