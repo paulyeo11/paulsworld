@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S24: One Month in Japan — Our Kyushu Road Trip</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --red: #e74c3c;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --japan: #c0392b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #1a0a0a 0%, #120a18 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(192,57,43,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(192,57,43,0.12);
+  border: 1px solid rgba(192,57,43,0.3);
+  color: #e88;
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 740px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+  text-decoration: none;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(74,108,247,0.12);
+  border-color: rgba(74,108,247,0.35);
+  color: var(--blue);
+}
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid #e88; padding-left: 18px; margin-bottom: 2em;
+}
+h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.4rem;
+  color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700;
+}
+
+/* STATS CARD */
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid #e88;
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+/* PULL QUOTE */
+.pull-quote {
+  background: linear-gradient(135deg, rgba(192,57,43,0.07), rgba(74,108,247,0.07));
+  border: 1px solid rgba(192,57,43,0.18);
+  border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif; font-size: 1.22rem;
+  font-style: italic; color: var(--text); margin: 0; line-height: 1.6;
+}
+
+/* SWIPE STRIP */
+.strip-section { max-width: 100%; margin: 2.5em 0; overflow: hidden; }
+.strip-header {
+  max-width: 740px; margin: 0 auto 14px; padding: 0 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.strip-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+.strip-hint { font-size: 0.75rem; color: var(--muted); }
+.strip-wrapper {
+  display: flex; overflow-x: auto; gap: 10px;
+  padding: 0 22px 14px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.strip-wrapper::-webkit-scrollbar { display: none; }
+.strip-card {
+  flex: 0 0 260px; scroll-snap-align: start;
+  border-radius: 12px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--border);
+  position: relative; cursor: pointer;
+}
+.strip-card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.strip-card-caption {
+  padding: 10px 12px 12px;
+  font-size: 0.78rem; color: var(--muted); line-height: 1.4;
+}
+.strip-card-num {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: 0.68rem; padding: 2px 8px; border-radius: 10px;
+}
+@media (max-width: 480px) { .strip-card { flex: 0 0 200px; } .strip-card img { height: 140px; } }
+
+/* MAP */
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#japan-map.map-fullscreen {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 9999;
+  border: none !important;
+}
+#mapCloseBtn {
+  display: none;
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 10000;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 1rem;
+  padding: 8px 16px;
+  border-radius: 22px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Source Serif 4', serif;
+}
+.map-section > .section-title,
+.map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#japan-map { width: 100%; height: 520px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+/* MARKER CIRCLES */
+.pm-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 800; color: #fff;
+  font-family: 'Source Serif 4', sans-serif;
+  transition: transform 0.15s;
+  position: relative;
+}
+.pm-circle:hover { transform: scale(1.25); }
+.pm-circle.start  { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.end    { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.road   { background: #e67e22; }
+.pm-circle.nature { background: #27ae60; }
+.pm-circle.coast  { background: #2980b9; }
+.pm-container { position: relative; }
+
+/* POPUP */
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-name { font-size: 0.9rem; color: #fff; font-weight: 700; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-btn { display: inline-block; background: rgba(244,129,63,0.18); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.75rem; padding: 4px 12px; border-radius: 14px; cursor: pointer; text-decoration: none; }
+
+/* PHOTO JOURNAL */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.photo-journal { margin-top: 16px; display: flex; flex-direction: column; gap: 36px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; max-height: 420px; object-fit: cover; display: block; transition: opacity 0.2s; }
+.pj-item:hover img { opacity: 0.92; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 9000;
+  align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 1.6rem; width: 44px; height: 44px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+/* SLIDESHOW */
+.slideshow-overlay {
+  display: none; position: fixed; inset: 0; background: #000; z-index: 10000;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.slideshow-overlay.active { display: flex; }
+.slide { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; animation: fadeIn 1s ease; width: 100%; }
+.slide.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.slide img { max-width: min(90vw, 820px); max-height: 70vh; object-fit: contain; border-radius: 10px; }
+.slide-caption { color: #ddd; font-size: 1rem; margin-top: 18px; font-style: italic; max-width: 620px; line-height: 1.5; font-family: 'Playfair Display', serif; }
+.slide-num { color: rgba(255,255,255,0.4); font-size: 0.78rem; margin-top: 8px; letter-spacing: 0.08em; }
+.slideshow-controls { position: absolute; bottom: 24px; display: flex; gap: 14px; align-items: center; }
+.ss-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.ss-btn:hover { background: rgba(255,255,255,0.22); }
+.ss-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 1.8rem; cursor: pointer; background: none; border: none; line-height: 1; opacity: 0.7; }
+.ss-progress { position: absolute; top: 0; left: 0; height: 3px; background: #e88; transition: width 0.3s; }
+
+/* INFO BOX */
+.info-box {
+  background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25);
+  border-left: 3px solid #e74c3c; border-radius: 10px; padding: 20px 22px; margin: 2em 0;
+}
+.info-box .info-title { color: #e88; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.info-box p { color: #d0d4e8; margin: 0; font-size: 0.95rem; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<!-- SLIDESHOW -->
+<div class="slideshow-overlay" id="slideshow">
+  <div class="ss-progress" id="ssProgress"></div>
+  <button class="ss-close" onclick="closeSlideshow()">&#x2715;</button>
+  <div class="slide active"><img src="img_S24/01.jpg" alt=""><div class="slide-caption">October 25, 2025. We landed in Japan. One month ahead of us, no fixed plan — just a rental car and an open road.</div><div class="slide-num">1 / 12</div></div>
+  <div class="slide"><img src="img_S24/02.jpg" alt=""><div class="slide-caption">Kyoto first. Ancient streets, quiet temples, and our friend Naca waiting to show us around.</div><div class="slide-num">2 / 12</div></div>
+  <div class="slide"><img src="img_S24/03.jpg" alt=""><div class="slide-caption">The keys to our rental car. Our Kyushu adventure was about to begin.</div><div class="slide-num">3 / 12</div></div>
+  <div class="slide"><img src="img_S24/04.jpg" alt=""><div class="slide-caption">Japan's roads are immaculate. Driving here feels like a reward in itself.</div><div class="slide-num">4 / 12</div></div>
+  <div class="slide"><img src="img_S24/05.jpg" alt=""><div class="slide-caption">Nagasaki. A city that carries its history with quiet dignity.</div><div class="slide-num">5 / 12</div></div>
+  <div class="slide"><img src="img_S24/06.jpg" alt=""><div class="slide-caption">Mount Aso — we drove right into the volcano. Japan never stops surprising you.</div><div class="slide-num">6 / 12</div></div>
+  <div class="slide"><img src="img_S24/07.jpg" alt=""><div class="slide-caption">Hiking through Kyushu. Every trail led somewhere beautiful.</div><div class="slide-num">7 / 12</div></div>
+  <div class="slide"><img src="img_S24/08.jpg" alt=""><div class="slide-caption">Beppu's hot springs. After weeks of hiking, we finally relaxed in the onsen.</div><div class="slide-num">8 / 12</div></div>
+  <div class="slide"><img src="img_S24/09.jpg" alt=""><div class="slide-caption">The food. Every single meal in Japan was an event — not just a meal.</div><div class="slide-num">9 / 12</div></div>
+  <div class="slide"><img src="img_S24/10.jpg" alt=""><div class="slide-caption">Kagoshima, with Sakurajima volcano steaming in the background across the bay.</div><div class="slide-num">10 / 12</div></div>
+  <div class="slide"><img src="img_S24/11.jpg" alt=""><div class="slide-caption">The honest Japanese driver. The dent in our bumper, and a handwritten note under the wiper.</div><div class="slide-num">11 / 12</div></div>
+  <div class="slide"><img src="img_S24/12.jpg" alt=""><div class="slide-caption">One month. One car. Two people. A whole island explored. Japan, we will be back.</div><div class="slide-num">12 / 12</div></div>
+  <div class="slideshow-controls">
+    <button class="ss-btn" onclick="ssNav(-1)">&#8592; Prev</button>
+    <button class="ss-btn" id="ssPlayPause" onclick="toggleAuto()">&#9646;&#9646; Pause</button>
+    <button class="ss-btn" onclick="ssNav(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="label">Travel Story &middot; S24</div>
+  <h1>One Month in <span>Japan</span><br>Our Kyushu Road Trip</h1>
+  <div class="meta">By Paul &amp; Joanne Yeo &nbsp;&middot;&nbsp; October – November 2025 &nbsp;&middot;&nbsp; Kyushu, Japan</div>
+  <div class="hero-btns">
+    <button class="hero-btn" onclick="openSlideshow()">&#9654;&nbsp; Watch as Movie</button>
+    <a href="#routemap" class="hero-btn alt">&#128205;&nbsp; See the Route</a>
+    <a href="#story" class="hero-btn alt">&#128214;&nbsp; Read the Story</a>
+  </div>
+</div>
+
+<!-- ROUTE MAP — right below hero -->
+<div class="map-section" id="routemap">
+  <div style="max-width:740px;margin:0 auto;padding:0 22px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div class="section-title">&#128205; Our Kyushu Route — One Month, One Loop</div>
+    <button onclick="openMapFullscreen()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(244,129,63,0.15);border:1px solid rgba(244,129,63,0.4);color:var(--accent);font-size:0.88rem;padding:8px 18px;border-radius:22px;cursor:pointer;font-family:'Source Serif 4',serif;">
+      &#x26F6; Open Full Screen Map
+    </button>
+  </div>
+  <div id="japan-map"></div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; Close Map</button>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;padding-bottom:10px;max-width:740px;margin-left:auto;margin-right:auto;padding-left:22px;padding-right:22px;">One complete loop around Kyushu island. We drove every section of this route over one month — October to November 2025. Tap any marker to see the stop.</p>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+
+  <p class="lead">Japan had been on our list for years. Not just a quick visit — a proper, slow, deep journey. In October 2025, we finally did it: one month, a rental car, and the whole of Kyushu to explore at our own pace.</p>
+
+  <h2>Why Japan? Why Now?</h2>
+  <p>Retirement gives you something most people never have: time. Real time. Not just a week squeezed between meetings, but the ability to say — let's go for a month. Let's drive slowly and stop when we feel like it. Let's eat without checking the clock. That is how this trip was born.</p>
+  <p>We chose Japan because it combines everything we love: incredible food, beautiful nature, excellent hiking, and a culture unlike anything else in the world. And we chose Kyushu — Japan's southernmost main island — because it is less crowded than Tokyo or Osaka, yet every bit as extraordinary.</p>
+
+  <div class="stats-card">
+    <div class="stat"><div class="stat-label">Departure</div><div class="stat-value">25 October 2025</div></div>
+    <div class="stat"><div class="stat-label">Duration</div><div class="stat-value">One Month</div></div>
+    <div class="stat"><div class="stat-label">Island</div><div class="stat-value">Kyushu, Japan</div></div>
+    <div class="stat"><div class="stat-label">Transport</div><div class="stat-value">Rental Car (self-drive)</div></div>
+    <div class="stat"><div class="stat-label">First Stop</div><div class="stat-value">Kyoto</div></div>
+    <div class="stat"><div class="stat-label">Travellers</div><div class="stat-value">Paul &amp; Joanne</div></div>
+    <div class="stat"><div class="stat-label">Hiking</div><div class="stat-value">Many trails</div></div>
+    <div class="stat"><div class="stat-label">Verdict</div><div class="stat-value">Unforgettable</div></div>
+  </div>
+
+  <h2>Kyoto First — Meeting Naca</h2>
+  <p>Before the road trip began, we made a detour to Kyoto to visit our friend Naca. It was the perfect way to ease into Japan — old temples, narrow lanes paved with stone, the smell of incense drifting from shrines tucked between modern buildings. Kyoto does not feel like it belongs to the present. It belongs to a Japan from centuries ago, somehow still perfectly intact.</p>
+  <p>Naca showed us the Kyoto that tourists miss. Hidden spots. A little restaurant down an alley that only locals know. An evening walk along the Kamo River with the lanterns reflecting on the water. We sat and talked for hours — the kind of unhurried conversation you can only have when there is nothing else you need to do that day.</p>
+  <p>Kyoto reminded me that the best travel is not about ticking sights off a list. It is about being somewhere fully, with people who matter.</p>
+
+  <div class="pull-quote">
+    <p>"Kyoto reminded me that the best travel is not about ticking off sights — it is about being somewhere fully, with no rush and nowhere else to be."</p>
+  </div>
+
+  <h2>The Drive Begins — Keys in Fukuoka</h2>
+  <p>From Kyoto, we took the Shinkansen down to Fukuoka — Japan's gateway to Kyushu. The bullet train still amazes me every time: silent, smooth, impossibly punctual. We arrived exactly on schedule, picked up our rental car, and set the GPS to "no fixed plan."</p>
+  <p>Driving in Japan is a genuine pleasure. The roads are immaculate. Drivers are patient and courteous. Signage is clear. Petrol stations have staff who wipe your windscreen without being asked. Everything about the driving experience is thoughtful and calm — very different from Singapore's highways.</p>
+  <p>We headed west first, toward the coast. The adventure had begun.</p>
+
+</div>
+
+<!-- STRIP 1: Kyoto & Fukuoka -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128247; Kyoto &amp; The Start of the Drive</div>
+    <div class="strip-hint">Swipe &#8594;</div>
+  </div>
+  <div class="strip-wrapper">
+    <div class="strip-card" onclick="openLightbox(0)"><div class="strip-card-num">01</div><img src="img_S24/01.jpg" loading="lazy" alt=""><div class="strip-card-caption">We landed — October 25, one month ahead</div></div>
+    <div class="strip-card" onclick="openLightbox(1)"><div class="strip-card-num">02</div><img src="img_S24/02.jpg" loading="lazy" alt=""><div class="strip-card-caption">Kyoto with Naca — old temples, slow days</div></div>
+    <div class="strip-card" onclick="openLightbox(2)"><div class="strip-card-num">03</div><img src="img_S24/03.jpg" loading="lazy" alt=""><div class="strip-card-caption">The rental car keys — Kyushu, here we come</div></div>
+    <div class="strip-card" onclick="openLightbox(3)"><div class="strip-card-num">04</div><img src="img_S24/04.jpg" loading="lazy" alt=""><div class="strip-card-caption">Japan's roads — spotless, calm, effortless</div></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>Nagasaki — History Held Gently</h2>
+  <p>Our first major stop was Nagasaki. This city carries enormous history and enormous pain, yet it does not drown in either. The Peace Park and the Atomic Bomb Museum are places you need to visit slowly, quietly, with no phone in your hand. Joanne and I walked through them without speaking much. Some places do not need narration.</p>
+  <p>But Nagasaki is also a city of colour and life. The Dutch colonial influence is everywhere — in the architecture, the food, the street names. We ate Champon, the thick noodle soup unique to Nagasaki, in a small restaurant run by an elderly couple who did not speak a word of English. We ordered by pointing. The soup was outstanding.</p>
+
+  <h2>Kumamoto, Aso and the Hikes</h2>
+  <p>Inland, the landscape shifts dramatically. Kumamoto Castle — largely rebuilt after a devastating earthquake in 2016 — rose above the city like a statement of Japanese resilience. From there, we drove toward Mount Aso, the largest active volcanic caldera in the world. You drive <em>into</em> it. The road winds down into the crater floor while steam rises from the ground around you. It is surreal, beautiful, and slightly terrifying in the best way.</p>
+  <p>We hiked a lot. Every region of Kyushu had its own trails — some easy, some very steep, all rewarding. I would wake early, while Joanne was still asleep, and go out into the quiet morning air. Just me, the path, and whatever was waiting at the top. My favourite kind of morning.</p>
+
+  <div class="pull-quote">
+    <p>"I would wake before sunrise, lace up my shoes, and follow whatever trail was nearest. Every summit in Kyushu had its own reward. Japan's mountains do not disappoint."</p>
+  </div>
+
+</div>
+
+<!-- STRIP 2: Kyushu Highlights -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128247; Kyushu — Volcanoes, Onsens &amp; Open Roads</div>
+    <div class="strip-hint">Swipe &#8594;</div>
+  </div>
+  <div class="strip-wrapper">
+    <div class="strip-card" onclick="openLightbox(4)"><div class="strip-card-num">05</div><img src="img_S24/05.jpg" loading="lazy" alt=""><div class="strip-card-caption">Nagasaki — history and harbour</div></div>
+    <div class="strip-card" onclick="openLightbox(5)"><div class="strip-card-num">06</div><img src="img_S24/06.jpg" loading="lazy" alt=""><div class="strip-card-caption">Mount Aso — driving into the volcano</div></div>
+    <div class="strip-card" onclick="openLightbox(6)"><div class="strip-card-num">07</div><img src="img_S24/07.jpg" loading="lazy" alt=""><div class="strip-card-caption">Hiking — every trail, every morning</div></div>
+    <div class="strip-card" onclick="openLightbox(7)"><div class="strip-card-num">08</div><img src="img_S24/08.jpg" loading="lazy" alt=""><div class="strip-card-caption">Beppu onsen — rest after the hikes</div></div>
+    <div class="strip-card" onclick="openLightbox(9)"><div class="strip-card-num">09</div><img src="img_S24/10.jpg" loading="lazy" alt=""><div class="strip-card-caption">Kagoshima — Sakurajima across the bay</div></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <h2>The Food — Every Meal, an Event</h2>
+  <p>Japan feeds you like nowhere else on earth. Not just good food — <em>perfect</em> food. Even convenience store onigiri at 7-Eleven is better than most restaurant meals back home. The Japanese treat eating as seriously as any other craft.</p>
+  <p>We ate ramen in Fukuoka at midnight — the real tonkotsu, cloudy pork broth, thin noodles, melting chashu pork. We ate fresh sashimi in a port town where the fish came off the boat that morning. We found a tiny yakiniku restaurant where we grilled our own Wagyu at the table, and I understood, for the first time, what all the fuss is about.</p>
+  <p>We never ate badly. Not once in a month. That is Japan's quiet miracle.</p>
+
+  <h2>The Honest Japanese Driver</h2>
+  <p>Somewhere during the trip — I think it was in Miyazaki — we came back to our parked rental car to find a dent in the front bumper. My heart sank. Rental car damage, foreign country, how do we handle this?</p>
+  <p>But then I noticed something tucked under the windscreen wiper: a handwritten note. In Japanese, with a phone number.</p>
+  <p>The driver who had bumped us did not run away. They waited, left their details, and trusted us to call them. We later learned from our guesthouse host that this is simply what Japanese people do. It is the norm, not the exception. Honesty is not a special virtue in Japan — it is the baseline.</p>
+  <p>The rental company handled everything. Nobody argued. Nobody was rude. It was resolved so smoothly that it almost felt routine. I thought about this for days afterward.</p>
+
+  <div class="info-box">
+    <div class="info-title">&#127758; A Japanese Lesson in Honesty</div>
+    <p>A Japanese driver bumped our rental car while we were away — and left a handwritten note with their contact details under the wiper. They did not run. They waited, then left. In Japan, honesty is not remarkable. It is expected.</p>
+  </div>
+
+  <div class="pull-quote">
+    <p>"They bumped our car — and left a note with their number. They did not run. That small act of honesty said more about Japan than any guidebook ever could."</p>
+  </div>
+
+  <h2>Beppu, Yufuin and the South</h2>
+  <p>In Beppu we spent a full day at the famous "Jigoku" — the hell springs. Bubbling, steaming, vivid turquoise and blood-red pools of boiling water scattered across the city. It sounds ominous. It looks like another planet. After Beppu, we drove inland to Yufuin, one of Japan's most charming onsen towns. Quiet streets, craft shops, steam rising from every building. We checked into a ryokan and spent the evening soaking in the hot spring bath, watching the steam curl up into the cold night air.</p>
+  <p>Heading south, we drove through Miyazaki prefecture along the coast — dramatic cliffs, dark volcanic sand beaches, subtropical palms. Then to Kagoshima, Japan's southernmost major city, with Sakurajima volcano sitting across the bay, puffing smoke into the sky as casually as a kettle.</p>
+
+  <h2>What One Month Taught Me</h2>
+  <p>A week in Japan shows you the surface. Beautiful, yes — but surface. A month lets you go deeper. You start to notice the rhythm. The morning quiet before the shops open. The way people queue without being asked to. The care taken with packaging, presentation, service — not to impress, but because that is simply how things are done.</p>
+  <p>Japan is not a perfect country. But it is a country that takes its values seriously. Honesty. Craft. Respect. Order. These are not slogans — they are visible, every day, in everything from the way a ramen bowl is presented to the way a stranger waits by a dented car.</p>
+  <p>Joanne and I drove over 3,000 kilometres around Kyushu. We hiked mountains, soaked in hot springs, ate food that made us close our eyes with pleasure, and watched a volcano smoke from across a bay at sunset. We came home different — a little slower, a little more thoughtful, a little more careful about small things.</p>
+  <p>Japan does that to you. And I cannot wait to go back.</p>
+
+  <div class="pull-quote">
+    <p>"Japan is not just a place you visit. It is a place that quietly teaches you something — about craft, about honesty, about how much better things can be when people simply try."</p>
+  </div>
+
+</div>
+
+<!-- STRIP 3: Food & Final Days -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128247; Food, Hot Springs &amp; Reflections</div>
+    <div class="strip-hint">Swipe &#8594;</div>
+  </div>
+  <div class="strip-wrapper">
+    <div class="strip-card" onclick="openLightbox(8)"><div class="strip-card-num">10</div><img src="img_S24/09.jpg" loading="lazy" alt=""><div class="strip-card-caption">The food — every meal was an event</div></div>
+    <div class="strip-card" onclick="openLightbox(10)"><div class="strip-card-num">11</div><img src="img_S24/11.jpg" loading="lazy" alt=""><div class="strip-card-caption">The honest Japanese driver left a note</div></div>
+    <div class="strip-card" onclick="openLightbox(11)"><div class="strip-card-num">12</div><img src="img_S24/12.jpg" loading="lazy" alt=""><div class="strip-card-caption">One month done — Japan, we will be back</div></div>
+  </div>
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <div class="section-title">&#128247; Photo Journal — One Month on the Road</div>
+  <div class="photo-journal" id="galleryGrid"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p>S24 &nbsp;&middot;&nbsp; Paul &amp; Joanne Yeo &nbsp;&middot;&nbsp; October – November 2025 &nbsp;&middot;&nbsp; Kyushu, Japan</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── PHOTO JOURNAL DATA ──
+const galleryPhotos = [
+  { src: "img_S24/01.jpg",
+    caption: "Arrival in Japan — October 25, 2025",
+    story: "We landed in Japan on October 25, 2025. One month stretched ahead of us — no fixed itinerary, no schedule to keep. Just a country waiting to be explored slowly, at our own pace. Standing at the airport, I felt the same feeling I always get at the start of a long journey: a quiet excitement that is impossible to explain to someone who has never done it." },
+
+  { src: "img_S24/02.jpg",
+    caption: "Kyoto with our friend Naca",
+    story: "Before the road trip, we stopped in Kyoto to see our old friend Naca. She showed us a version of Kyoto that tour groups never reach — hidden shrines, tiny restaurants down narrow alleys, evening walks along the Kamo River. These few days were unhurried and warm. A perfect beginning to a month-long journey." },
+
+  { src: "img_S24/03.jpg",
+    caption: "Picking up our rental car in Fukuoka",
+    story: "After Kyoto, we took the Shinkansen to Fukuoka and picked up our rental car. The moment I held those keys, the trip felt real. No more trains and stations — from here, we went wherever we chose, whenever we felt like it. That is what self-driving gives you: pure freedom." },
+
+  { src: "img_S24/04.jpg",
+    caption: "Japan's roads — spotless and stress-free",
+    story: "Driving in Japan is nothing like driving anywhere else. The roads are perfectly maintained, drivers are patient and courteous, and there is always a petrol station with cheerful staff who appear out of nowhere to wipe your windscreen. We spent weeks in this car and I never once felt stressed behind the wheel." },
+
+  { src: "img_S24/05.jpg",
+    caption: "Nagasaki — a city that carries its history quietly",
+    story: "Nagasaki stopped us both in silence. The Peace Park and the Atomic Bomb Museum are not places you rush through. Joanne and I walked the museum slowly, reading every panel, looking at every photograph. By the time we came out, neither of us wanted to speak. Some places earn that silence." },
+
+  { src: "img_S24/06.jpg",
+    caption: "Mount Aso — inside the volcano",
+    story: "Driving into Mount Aso's caldera is one of the strangest, most extraordinary things I have ever done. The road descends into the crater, steam rises from vents in the ground, and the landscape turns grey and lunar. The volcano was active. You could feel the earth was alive beneath you. I have hiked many places — nothing quite prepares you for walking around inside a living volcano." },
+
+  { src: "img_S24/07.jpg",
+    caption: "Hiking Kyushu — early mornings on the trails",
+    story: "Every morning I could, I laced up my shoes and went hiking. Kyushu has trails everywhere — through forests, over ridges, around volcanic craters, along clifftops above the sea. I would wake before Joanne, step out into the quiet morning air, and follow whatever path looked interesting. Japan's mountains are beautifully maintained and almost always rewarding at the top." },
+
+  { src: "img_S24/08.jpg",
+    caption: "Beppu onsen — the world's hot spring capital",
+    story: "After weeks of driving and hiking, Beppu was a gift. The city has more hot spring vents than anywhere else in Japan. We visited the famous Jigoku — boiling, steaming pools of otherworldly colours scattered across the city. Then we checked into a ryokan and soaked in the onsen until our muscles forgave us for everything we had put them through." },
+
+  { src: "img_S24/09.jpg",
+    caption: "The food — Japan's quiet miracle",
+    story: "We did not eat a single bad meal in a month. Not one. Japan's relationship with food is unlike anywhere I have travelled. The ramen, the sashimi, the yakiniku, the convenience store rice balls — every single thing is made carefully, presented carefully, and tastes better than it has any right to. I have eaten well all my life. Japan raised the standard." },
+
+  { src: "img_S24/10.jpg",
+    caption: "Kagoshima — Sakurajima in view",
+    story: "Kagoshima is built around a bay, and across that bay sits Sakurajima — an active volcano that puffs smoke into the sky every single day as casually as a factory chimney. The city has learned to live with it. Shops sell ash-clearing brushes. There are eruption shelters on the streets. Life continues, and the volcano steams on, and somehow it is all perfectly normal. I sat at the waterfront and watched the smoke rise until the sun went down." },
+
+  { src: "img_S24/11.jpg",
+    caption: "The honest Japanese driver",
+    story: "We came back to our rental car one afternoon to find a dent in the bumper. My heart sank. But then I saw the note tucked under the windscreen wiper — a handwritten message in Japanese, with a phone number. The driver who bumped us had waited, left their details, and trusted us to handle it properly. Our guesthouse host told us later: this is simply what people do here. Japan's honesty is not a surprise — it is the expectation. The rental company handled the rest, calmly and efficiently." },
+
+  { src: "img_S24/12.jpg",
+    caption: "One month done — Paul and Joanne on the road",
+    story: "By the time we handed back the car keys, we had driven over 3,000 kilometres around Kyushu. We had hiked mountains, sat in hot springs, watched volcanoes smoke, eaten food that made us close our eyes, and witnessed a level of everyday honesty that made us think differently about how people can choose to live. Japan changed us — a little. The good kind of change. We came home slower, quieter, more careful about small things. That is the best thing travel can do for you." },
+];
+
+// Build photo journal
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'pj-item';
+  item.innerHTML = `
+    <img src="${p.src}" alt="" loading="lazy">
+    <div class="pj-body">
+      <div class="pj-num">Photo ${String(i+1).padStart(2,'0')} of ${galleryPhotos.length}</div>
+      <div class="pj-text">${p.story}</div>
+    </div>`;
+  item.onclick = () => openLightbox(i);
+  grid.appendChild(item);
+});
+
+// ── LIGHTBOX ──
+let lbIndex = 0;
+function openLightbox(i) {
+  lbIndex = i;
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) { lbIndex = (lbIndex + dir + galleryPhotos.length) % galleryPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+// ── SLIDESHOW ──
+const slides = document.querySelectorAll('.slide');
+let ssIndex = 0, ssAuto = true, ssTimer = null;
+function openSlideshow() {
+  document.getElementById('slideshow').classList.add('active');
+  showSlide(0); startAuto();
+}
+function closeSlideshow() {
+  document.getElementById('slideshow').classList.remove('active');
+  clearTimeout(ssTimer);
+}
+function showSlide(i) {
+  slides.forEach(s => s.classList.remove('active'));
+  ssIndex = (i + slides.length) % slides.length;
+  slides[ssIndex].classList.add('active');
+  document.getElementById('ssProgress').style.width = ((ssIndex + 1) / slides.length * 100).toFixed(1) + '%';
+}
+function ssNav(dir) { clearTimeout(ssTimer); showSlide(ssIndex + dir); if (ssAuto) startAuto(); }
+function startAuto() { clearTimeout(ssTimer); ssTimer = setTimeout(() => { showSlide(ssIndex + 1); if (ssAuto) startAuto(); }, 5000); }
+function toggleAuto() {
+  ssAuto = !ssAuto;
+  document.getElementById('ssPlayPause').innerHTML = ssAuto ? '&#9646;&#9646; Pause' : '&#9654; Play';
+  if (ssAuto) startAuto(); else clearTimeout(ssTimer);
+}
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('slideshow').classList.contains('active')) {
+    if (e.key === 'ArrowRight') ssNav(1);
+    if (e.key === 'ArrowLeft') ssNav(-1);
+    if (e.key === 'Escape') closeSlideshow();
+  }
+  if (document.getElementById('lightbox').classList.contains('active')) {
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'Escape') closeLightbox();
+  }
+});
+
+// ── MAP FULLSCREEN ──
+function openMapFullscreen() {
+  document.getElementById('japan-map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => map.invalidateSize(), 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('japan-map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+// ── KYUSHU ROUTE MAP ──
+const map = L.map('japan-map', {
+  zoomControl: true,
+  fullscreenControl: true,
+  fullscreenControlOptions: { position: 'topright' }
+}).setView([32.5, 130.8], 8);
+
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri',
+  maxZoom: 19
+}).addTo(map);
+
+const stops = [
+  { lat: 33.5902, lon: 130.4017, name: 'Fukuoka', caption: 'Start — picked up our rental car here', type: 'start', photo: 'img_S24/03.jpg' },
+  { lat: 33.2490, lon: 130.3001, name: 'Saga', caption: 'Heading west through Saga prefecture', type: 'road', photo: 'img_S24/04.jpg' },
+  { lat: 32.7503, lon: 129.8779, name: 'Nagasaki', caption: 'Peace Park, history and Champon noodles', type: 'road', photo: 'img_S24/05.jpg' },
+  { lat: 32.7821, lon: 130.3671, name: 'Shimabara', caption: 'Shimabara Castle and volcanic peninsula', type: 'nature', photo: 'img_S24/04.jpg' },
+  { lat: 32.8032, lon: 130.7079, name: 'Kumamoto', caption: 'Kumamoto Castle — rebuilt after the 2016 earthquake', type: 'road', photo: 'img_S24/04.jpg' },
+  { lat: 32.8844, lon: 131.0888, name: 'Mount Aso', caption: 'Driving into the volcano — largest active caldera in the world', type: 'nature', photo: 'img_S24/06.jpg' },
+  { lat: 33.2681, lon: 131.3629, name: 'Yufuin', caption: 'Charming onsen town — steam rising from every building', type: 'nature', photo: 'img_S24/08.jpg' },
+  { lat: 33.2846, lon: 131.4913, name: 'Beppu', caption: 'The Jigoku hell springs and our favourite onsen', type: 'nature', photo: 'img_S24/08.jpg' },
+  { lat: 32.5833, lon: 131.6667, name: 'Nobeoka', caption: 'Coastal drive south through Miyazaki prefecture', type: 'coast', photo: 'img_S24/04.jpg' },
+  { lat: 31.9111, lon: 131.4239, name: 'Miyazaki', caption: 'Subtropical coast, cliffs and volcanic black sand beaches', type: 'coast', photo: 'img_S24/07.jpg' },
+  { lat: 31.7267, lon: 131.0663, name: 'Miyakonojo', caption: 'Inland Miyazaki — through the mountains', type: 'nature', photo: 'img_S24/07.jpg' },
+  { lat: 31.9391, lon: 130.8693, name: 'Kirishima', caption: 'Kirishima mountains — volcanic lakes and hiking trails', type: 'nature', photo: 'img_S24/07.jpg' },
+  { lat: 31.5966, lon: 130.5571, name: 'Kagoshima', caption: 'Sakurajima volcano steaming across the bay', type: 'road', photo: 'img_S24/10.jpg' },
+  { lat: 31.2383, lon: 130.6371, name: 'Ibusuki', caption: 'Southernmost stop — famous sand baths by the sea', type: 'coast', photo: 'img_S24/10.jpg' },
+  { lat: 33.5902, lon: 130.4017, name: 'Back to Fukuoka', caption: 'One full loop — 3,000+ km around Kyushu complete', type: 'end', photo: 'img_S24/12.jpg' },
+];
+
+// Draw route line
+const routeCoords = stops.map(s => [s.lat, s.lon]);
+L.polyline(routeCoords, { color: '#f4813f', weight: 4, dashArray: '8,5', opacity: 0.9 }).addTo(map);
+
+// Draw markers
+stops.forEach((s, i) => {
+  const size = (s.type === 'start' || s.type === 'end') ? 44 : 38;
+  const label = s.type === 'start' ? '▶' : s.type === 'end' ? '■' : (i + 1);
+  const colorClass = s.type === 'start' || s.type === 'end' ? 'start' :
+    s.type === 'nature' ? 'nature' : s.type === 'coast' ? 'coast' : 'road';
+
+  const icon = L.divIcon({
+    className: 'pm-container',
+    html: `<div class="pm-circle ${colorClass}">${label}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+    popupAnchor: [0, -(size/2 + 6)],
+  });
+
+  const popupHtml = `
+    <div class="map-popup">
+      <img src="${s.photo}" alt="">
+      <div class="map-popup-body">
+        <div class="map-popup-num">Stop ${String(i+1).padStart(2,'0')} of ${stops.length}</div>
+        <div class="map-popup-name">${s.name}</div>
+        <div class="map-popup-caption">${s.caption}</div>
+      </div>
+    </div>`;
+
+  L.marker([s.lat, s.lon], { icon }).addTo(map).bindPopup(popupHtml, { maxWidth: 240, minWidth: 220 });
+});
+
+// Legend
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = () => {
+  const d = L.DomUtil.create('div');
+  d.style.cssText = 'background:rgba(15,17,23,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;font-size:0.72rem;color:#ccc;line-height:1.9;';
+  d.innerHTML = `
+    <div style="font-weight:700;color:#fff;margin-bottom:4px">Legend</div>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e74c3c;vertical-align:middle;margin-right:6px"></span>Start / End<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e67e22;vertical-align:middle;margin-right:6px"></span>City / Town<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#27ae60;vertical-align:middle;margin-right:6px"></span>Nature / Hiking<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#2980b9;vertical-align:middle;margin-right:6px"></span>Coast`;
+  return d;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
