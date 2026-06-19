@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S26: The Other Side — Day 3 of My Three-Day Reservoir Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #0a1520 0%, #0f1a20 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(41,128,185,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(41,128,185,0.12);
+  border: 1px solid rgba(41,128,185,0.3);
+  color: #5dade2;
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 740px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(74,108,247,0.12);
+  border-color: rgba(74,108,247,0.35);
+  color: var(--blue);
+}
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+
+/* SERIES NAV */
+.series-nav {
+  max-width: 740px; margin: 0 auto;
+  padding: 20px 22px 0;
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.series-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--muted); font-size: 0.78rem;
+  padding: 6px 14px; border-radius: 20px;
+  text-decoration: none; transition: border-color 0.2s, color 0.2s;
+}
+.series-chip:hover { border-color: var(--accent); color: var(--accent); }
+.series-chip.current { border-color: #5dade2; color: #5dade2; background: rgba(41,128,185,0.08); }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid #2980b9; padding-left: 18px; margin-bottom: 2em;
+}
+h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.4rem;
+  color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700;
+}
+
+/* STATS CARD */
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid #2980b9;
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+/* PULL QUOTE */
+.pull-quote {
+  background: linear-gradient(135deg, rgba(41,128,185,0.07), rgba(74,108,247,0.07));
+  border: 1px solid rgba(41,128,185,0.18);
+  border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif; font-size: 1.22rem;
+  font-style: italic; color: var(--text); margin: 0; line-height: 1.6;
+}
+
+/* SERIES TRACKER */
+.series-tracker {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+}
+.series-tracker h3 {
+  font-family: 'Playfair Display', serif; font-size: 1rem;
+  color: var(--accent); margin-bottom: 16px;
+}
+.tracker-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 14px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tracker-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.tracker-day {
+  background: rgba(41,128,185,0.15); border: 1px solid rgba(41,128,185,0.3);
+  color: #5dade2; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+}
+.tracker-day.done { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.3); color: var(--green); }
+.tracker-day.today { background: rgba(244,129,63,0.15); border-color: rgba(244,129,63,0.4); color: var(--accent); }
+.tracker-info { flex: 1; }
+.tracker-title { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+.tracker-detail { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+/* ── INLINE SWIPE STRIP ── */
+.strip-section { max-width: 100%; margin: 2.5em 0; overflow: hidden; }
+.strip-header {
+  max-width: 740px; margin: 0 auto 14px; padding: 0 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.strip-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+.strip-hint { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.strip-wrapper {
+  display: flex; overflow-x: auto; gap: 10px;
+  padding: 0 22px 14px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.strip-wrapper::-webkit-scrollbar { display: none; }
+.strip-card {
+  flex: 0 0 260px; scroll-snap-align: start;
+  border-radius: 12px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--border);
+  position: relative; cursor: pointer;
+}
+.strip-card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.strip-card-caption {
+  padding: 10px 12px 12px;
+  font-size: 0.78rem; color: var(--muted); line-height: 1.4;
+}
+.strip-card-num {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: 0.68rem; padding: 2px 8px; border-radius: 10px;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 480px) { .strip-card { flex: 0 0 200px; } .strip-card img { height: 140px; } }
+
+/* MAP */
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#trail-map.map-fullscreen {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 9999;
+  border: none !important;
+}
+#mapCloseBtn {
+  display: none;
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 10000;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 1rem;
+  padding: 8px 16px;
+  border-radius: 22px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Source Serif 4', serif;
+}
+.map-section > .section-title,
+.map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#trail-map { width: 100%; height: 520px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+/* PHOTO MARKER — numbered circle style */
+.pm-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 800; color: #fff;
+  font-family: 'Source Serif 4', sans-serif;
+  transition: transform 0.15s;
+  position: relative;
+}
+.pm-circle:hover { transform: scale(1.25); }
+.pm-circle.start  { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.end    { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.forest { background: #27ae60; }
+.pm-circle.road   { background: #e67e22; }
+.pm-circle.reservoir { background: #2980b9; }
+.pm-container { position: relative; }
+
+/* MAP POPUP */
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-btn { display: inline-block; background: rgba(244,129,63,0.18); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.75rem; padding: 4px 12px; border-radius: 14px; cursor: pointer; text-decoration: none; }
+.map-popup-btn:hover { background: rgba(244,129,63,0.32); }
+
+/* PHOTO JOURNAL */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.photo-journal { margin-top: 16px; display: flex; flex-direction: column; gap: 36px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; max-height: 420px; object-fit: cover; display: block; transition: opacity 0.2s; }
+.pj-item:hover img { opacity: 0.92; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 9000;
+  align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 1.6rem; width: 44px; height: 44px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+/* FULLSCREEN SLIDESHOW */
+.slideshow-overlay {
+  display: none; position: fixed; inset: 0; background: #000; z-index: 10000;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.slideshow-overlay.active { display: flex; }
+.slide { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; animation: fadeIn 1s ease; width: 100%; }
+.slide.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.slide img { max-width: min(90vw, 820px); max-height: 70vh; object-fit: contain; border-radius: 10px; }
+.slide-caption { color: #ddd; font-size: 1rem; margin-top: 18px; font-style: italic; max-width: 620px; line-height: 1.5; font-family: 'Playfair Display', serif; }
+.slide-num { color: rgba(255,255,255,0.4); font-size: 0.78rem; margin-top: 8px; letter-spacing: 0.08em; }
+.slideshow-controls { position: absolute; bottom: 24px; display: flex; gap: 14px; align-items: center; }
+.ss-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.ss-btn:hover { background: rgba(255,255,255,0.22); }
+.ss-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 1.8rem; cursor: pointer; background: none; border: none; line-height: 1; opacity: 0.7; }
+.ss-close:hover { opacity: 1; }
+.ss-progress { position: absolute; top: 0; left: 0; height: 3px; background: var(--accent); transition: width 0.3s; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<!-- FULLSCREEN SLIDESHOW -->
+<div class="slideshow-overlay" id="slideshow">
+  <div class="ss-progress" id="ssProgress"></div>
+  <button class="ss-close" onclick="closeSlideshow()">&#x2715;</button>
+  <audio id="bgMusic" loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" type="audio/mpeg">
+  </audio>
+  <div id="slideContainer"></div>
+  <div class="slideshow-controls">
+    <button class="ss-btn" onclick="ssNav(-1)">&#8592; Prev</button>
+    <button class="ss-btn" id="ssPlayPause" onclick="toggleAuto()">&#9646;&#9646; Pause</button>
+    <button class="ss-btn" onclick="ssNav(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="label">Travel Story &middot; S26 &middot; Day 3</div>
+  <h1>The <span>Other Side</span><br>of the Reservoir</h1>
+  <div class="meta">By Paul Yeo &nbsp;&middot;&nbsp; 19 June 2026 &nbsp;&middot;&nbsp; Upper Peirce Reservoir, Singapore</div>
+  <div class="hero-btns">
+    <button class="hero-btn" onclick="openSlideshow()">&#9654;&nbsp; Watch as Movie</button>
+    <a href="#photomap" class="hero-btn alt">&#128205;&nbsp; See the Map</a>
+    <a href="#story" class="hero-btn alt">&#128214;&nbsp; Read the Story</a>
+  </div>
+</div>
+
+<!-- SERIES NAV -->
+<div class="series-nav">
+  <a href="S20.html" class="series-chip">&#10003; Day 1 — Chestnut Nature Park (S20)</a>
+  <a href="S23.html" class="series-chip">&#10003; Day 2 — Secret BKE Trail (S23)</a>
+  <span class="series-chip current">&#128205; Day 3 — The Waterworks Route (S26)</span>
+</div>
+
+<!-- PHOTO MAP -->
+<div class="map-section" id="photomap">
+  <div style="max-width:740px;margin:0 auto;padding:0 22px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div class="section-title">&#128205; Interactive Photo Map — Click Any Photo Icon</div>
+    <button onclick="openMapFullscreen()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(244,129,63,0.15);border:1px solid rgba(244,129,63,0.4);color:var(--accent);font-size:0.88rem;padding:8px 18px;border-radius:22px;cursor:pointer;font-family:'Source Serif 4',serif;transition:background 0.2s;">
+      &#x26F6; Open Full Screen Map
+    </button>
+  </div>
+  <div id="trail-map"></div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; Close Map</button>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;padding-bottom:10px;max-width:740px;margin-left:auto;margin-right:auto;padding-left:22px;padding-right:22px;">Day 3 route: starting from the PUB Water Plant, turning left, and walking the reservoir circuit. Tap any marker to see the photo and description. Coordinates are approximate.</p>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+
+  <p class="lead">Three mornings in a row. Three different routes. The same reservoir — but today I finally saw the side of it nobody talks about.</p>
+
+  <div class="series-tracker">
+    <h3>&#128197; The Three-Day Hiking Series</h3>
+    <div class="tracker-row">
+      <div class="tracker-day done">Day 1</div>
+      <div class="tracker-info">
+        <div class="tracker-title">Chestnut Nature Park — Southern Loop</div>
+        <div class="tracker-detail">16 June 2026 &nbsp;&middot;&nbsp; 8,500 steps &nbsp;&middot;&nbsp; 2 hours &nbsp;&middot;&nbsp; <a href="S20.html" style="color:var(--blue);text-decoration:none;">Read S20</a></div>
+      </div>
+    </div>
+    <div class="tracker-row">
+      <div class="tracker-day done">Day 2</div>
+      <div class="tracker-info">
+        <div class="tracker-title">Secret BKE Trail to Upper Peirce Reservoir</div>
+        <div class="tracker-detail">18 June 2026 &nbsp;&middot;&nbsp; 9,000 steps &nbsp;&middot;&nbsp; 3 hours &nbsp;&middot;&nbsp; <a href="S23.html" style="color:var(--blue);text-decoration:none;">Read S23</a></div>
+      </div>
+    </div>
+    <div class="tracker-row">
+      <div class="tracker-day today">Day 3</div>
+      <div class="tracker-info">
+        <div class="tracker-title">PUB Water Plant Route — Around the Reservoir</div>
+        <div class="tracker-detail">19 June 2026 &nbsp;&middot;&nbsp; You are here</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Same Reservoir. Different Door.</h2>
+  <p>On Day 2, I came in through the secret BKE side — squeezing through a gap in the fence, running from a recovery car, earning every step the hard way. It was dramatic, it was memorable, and it got me to Upper Peirce Reservoir at 9 AM with the whole water to myself.</p>
+  <p>This morning — Day 3 — I took the other approach entirely.</p>
+  <p>I started from the PUB water plant. The official entrance. The organised, proper, nobody-is-going-to-radio-for-backup entry point. And then I turned left.</p>
+  <p>That left turn made all the difference.</p>
+
+  <div class="pull-quote">
+    <p>"Three mornings, three routes, the same reservoir. Each one showed me something the others could not. That is what daily hiking teaches you — that familiar places have more sides than you think."</p>
+  </div>
+
+  <h2>The PUB Gate and What Lies Beyond It</h2>
+  <p>The PUB water plant sits quietly at the edge of the reservoir. Most people walk past it on their way to the more popular trail entrances — the ones that appear on hiking apps and have proper signage and crowds on weekends. I have walked past it myself, on previous mornings, thinking: I will try that route another day.</p>
+  <p>Today was that day.</p>
+  <p>I arrived at the gate at 8 AM. The air was cool and heavy with that particular Singapore morning smell — warm earth, wet leaves, the faint chemical-clean scent of treated water somewhere behind the fence. The reservoir was already visible through the trees, catching the first real light of the day.</p>
+  <p>I turned left.</p>
+
+  <div class="stats-card">
+    <div class="stat"><div class="stat-label">Start Time</div><div class="stat-value">8:00 AM</div></div>
+    <div class="stat"><div class="stat-label">Date</div><div class="stat-value">19 June 2026</div></div>
+    <div class="stat"><div class="stat-label">Route</div><div class="stat-value">PUB Plant → Left Circuit</div></div>
+    <div class="stat"><div class="stat-label">Companions</div><div class="stat-value">Solo</div></div>
+    <div class="stat"><div class="stat-label">Destination</div><div class="stat-value">Upper Peirce Reservoir</div></div>
+    <div class="stat"><div class="stat-label">Supplies</div><div class="stat-value">One Orange</div></div>
+  </div>
+
+  <h2>The Side Nobody Talks About</h2>
+  <p>The left path follows the reservoir bank in a direction most hikers do not take. The popular routes all go right — toward the known viewpoints, the Instagram spots, the benches with the nice view across the water. Turning left means walking into quieter territory. Less worn. More honest.</p>
+  <p>The path here is narrower. The trees lean closer. The reservoir appears and disappears through the canopy as you walk — a flash of silver here, a long blue stretch there, and then jungle again closing in. It keeps you alert. You cannot switch off on this path; you have to stay with it.</p>
+  <p>I had the route entirely to myself.</p>
+
+  <div class="pull-quote">
+    <p>"Turning left when everyone else turns right — that is where the good things are. On a hiking trail, and in life."</p>
+  </div>
+
+  <h2>New Views of Old Water</h2>
+  <p>What surprised me most was how different the reservoir looked from this side. On Day 2, coming through the BKE jungle, the water had felt like a reward — something earned through difficulty, revealed at the end of a hard walk. On Day 1, at Chestnut, the reservoir was a quiet moment in the middle of a loop.</p>
+  <p>Today, from the left-turn path, the reservoir felt wide. Expansive. Like I was seeing the whole of it for the first time — not just one bank, but the full curve of the water from edge to edge.</p>
+  <p>The morning light was different too. Day 2 I was at the reservoir by 9:10 AM, and the sun was already high enough to flatten the light. Today, arriving from this direction, the angle was lower — the water was lit from the side, turning it into something between gold and green, the trees casting long reflections across the surface.</p>
+  <p>I sat for a while. I ate my orange. Nobody came.</p>
+
+  <h2>What Three Days Taught Me</h2>
+  <p>Here is what I know now that I did not know on Day 1:</p>
+  <p>The same reservoir is not the same reservoir twice. You can go back to the same water, the same jungle, the same Singapore morning — and find a completely different walk, depending on which door you choose and which direction you turn.</p>
+  <p>Day 1 was a loop. Day 2 was an expedition. Day 3 was an exploration. The same general area, three completely different experiences. Three completely different things I carried home with me.</p>
+
+  <div class="pull-quote">
+    <p>"Retirement is not about running out of new places to go. It is about discovering that the places you already know have more corners than you have seen."</p>
+  </div>
+
+  <h2>Why I Keep Coming Back</h2>
+  <p>People sometimes ask me why I hike the same parks and the same reservoirs instead of going somewhere new each time. This week answers that question. Three days at the same reservoir — and each morning was entirely its own thing.</p>
+  <p>A new country gives you novelty. A familiar trail gives you depth. Both matter. But at seventy, hiking three mornings in a row at a reservoir five minutes from home, I think I understand something about depth that I did not fully understand before retirement.</p>
+  <p>You have to go back. You have to look at the same thing again, from a slightly different angle. That is when it gives you something new.</p>
+
+</div>
+
+<!-- INLINE SWIPE STRIP -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128247; The Waterworks Route</div>
+    <div class="strip-hint">Swipe right &#8594;</div>
+  </div>
+  <div class="strip-wrapper" id="strip1">
+    <!-- Filled dynamically from galleryPhotos -->
+  </div>
+</div>
+
+<div class="content">
+  <h2>Three Days Complete</h2>
+  <p>I walked out the same way I walked in — past the PUB gate, back onto the road, back toward home. My legs were warm, my steps were lighter than when I started, and my phone said I had been walking for two hours.</p>
+  <p>Three days. Three routes. Three different versions of Upper Peirce Reservoir in the morning.</p>
+  <p>When I got home, I showered and thought about the week. On Tuesday I did Chestnut. On Wednesday the BKE. On Thursday the waterworks path. Each one under three hours. Each one finished before the day had properly started. Each one the kind of morning that makes the rest of the day feel like a bonus.</p>
+  <p>That is what retirement looks like when you refuse to let it go still.</p>
+
+  <div class="pull-quote">
+    <p>"I am 70 years old. I have walked this reservoir from three different directions this week. Every morning, just me, the water, and one orange. If you told my 40-year-old self this would be the highlight of his Thursday, he would not have believed you. He would have been wrong."</p>
+  </div>
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <div class="section-title">&#128247; Photo Journal — Every Step of the Way</div>
+  <div class="photo-journal" id="galleryGrid"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p>S26 &nbsp;&middot;&nbsp; Paul Yeo &nbsp;&middot;&nbsp; 19 June 2026 &nbsp;&middot;&nbsp; Upper Peirce Reservoir, Singapore &nbsp;&middot;&nbsp; Day 3 of 3</p>
+  <p style="margin-top:6px;font-size:0.75rem;">Background music: <a href="https://www.bensound.com" style="color:var(--muted);">Acoustic Breeze by Bensound</a> &nbsp;&middot;&nbsp; Licensed under Creative Commons</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── PHOTO JOURNAL DATA — add/update as Paul sends photos ──
+const galleryPhotos = [
+  { src: "img_S26/01.jpg",
+    caption: "The PUB water plant — starting point for Day 3",
+    story: "8:00 AM. The PUB water plant entrance — the official, proper, no-fence-squeezing way in. After two days of more adventurous routes, starting here felt almost civilised. The reservoir was already visible through the trees on my right. I turned left." },
+
+  { src: "img_S26/02.jpg",
+    caption: "Turning left — the path nobody takes",
+    story: "The left path. Narrower than the popular routes, less worn, quieter. Most hikers at this entrance turn right toward the well-known viewpoints. I went the other way. Within a few minutes I had the trail entirely to myself." },
+
+  { src: "img_S26/03.jpg",
+    caption: "First glimpse of the reservoir through the trees",
+    story: "The reservoir appearing through the canopy. From this angle it looked wider than I had ever seen it — you could see the full curve of the water. On Day 2 I saw one bank. Today I saw the shape of the whole reservoir for the first time." },
+
+  { src: "img_S26/04.jpg",
+    caption: "The reservoir bank — a different view entirely",
+    story: "Walking along the bank from the left-turn path, the reservoir stretched out to the right. The morning light was lower from this direction — hitting the water at an angle, turning it gold and green. Three days at the same reservoir, and it still surprised me." },
+
+  { src: "img_S26/05.jpg",
+    caption: "The path narrows into jungle",
+    story: "Where the bank path narrows and the trees close in. The reservoir disappears from view here — you are back in full jungle, with the sound of the water somewhere to your right but nothing to see except roots and leaves and dappled light ahead. You have to trust the path." },
+
+  { src: "img_S26/06.jpg",
+    caption: "Reservoir view from the western bank",
+    story: "A clearing along the western bank, with the full length of the reservoir visible ahead. This is the view that made the whole left-turn worthwhile. Nobody else here. Just the water, the jungle on the far side, and the morning sky." },
+
+  { src: "img_S26/07.jpg",
+    caption: "My breakfast spot — one orange, one reservoir",
+    story: "I found a good spot and sat down. One orange in my pocket — my daily hiking supply. I peeled it here, looking out across the water. Three mornings this week I have eaten an orange alone at this reservoir. There are worse habits to have in retirement." },
+
+  { src: "img_S26/08.jpg",
+    caption: "The water was calm and perfectly still",
+    story: "Upper Peirce Reservoir at 9 AM, from the left-bank path. The surface was completely flat — no wind, no ripples. The trees on the far side reflected perfectly in the water. Every time I see this reservoir it is doing something slightly different. Today it was being a mirror." },
+];
+
+// Build swipe strip
+const strip1 = document.getElementById('strip1');
+galleryPhotos.forEach((p, i) => {
+  const card = document.createElement('div');
+  card.className = 'strip-card';
+  card.onclick = () => openLightbox(i);
+  card.innerHTML = `<div class="strip-card-num">${String(i+1).padStart(2,'0')}</div><img src="${p.src}" loading="lazy" alt=""><div class="strip-card-caption">${p.caption}</div>`;
+  strip1.appendChild(card);
+});
+
+// Build photo journal
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'pj-item';
+  item.innerHTML = `
+    <img src="${p.src}" alt="" loading="lazy">
+    <div class="pj-body">
+      <div class="pj-num">Photo ${String(i+1).padStart(2,'0')} of ${galleryPhotos.length}</div>
+      <div class="pj-text">${p.story}</div>
+    </div>`;
+  item.onclick = () => openLightbox(i);
+  grid.appendChild(item);
+});
+
+// Build slideshow slides
+const slideContainer = document.getElementById('slideContainer');
+galleryPhotos.forEach((p, i) => {
+  const slide = document.createElement('div');
+  slide.className = 'slide' + (i === 0 ? ' active' : '');
+  slide.innerHTML = `<img src="${p.src}" alt=""><div class="slide-caption">${p.caption}</div><div class="slide-num">${i+1} / ${galleryPhotos.length}</div>`;
+  slideContainer.appendChild(slide);
+});
+
+// ── LIGHTBOX ──
+let lbIndex = 0;
+function openLightbox(i) {
+  lbIndex = i;
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) { lbIndex = (lbIndex + dir + galleryPhotos.length) % galleryPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+// ── FULLSCREEN SLIDESHOW ──
+let ssIndex = 0, ssAuto = true, ssTimer = null;
+function getSlides() { return document.querySelectorAll('.slide'); }
+function openSlideshow() {
+  document.getElementById('slideshow').classList.add('active');
+  const audio = document.getElementById('bgMusic');
+  audio.volume = 0.45;
+  audio.play().catch(() => {});
+  showSlide(0);
+  startAuto();
+}
+function closeSlideshow() {
+  document.getElementById('slideshow').classList.remove('active');
+  document.getElementById('bgMusic').pause();
+  clearTimeout(ssTimer);
+}
+function showSlide(i) {
+  const slides = getSlides();
+  slides.forEach(s => s.classList.remove('active'));
+  ssIndex = (i + slides.length) % slides.length;
+  slides[ssIndex].classList.add('active');
+  document.getElementById('ssProgress').style.width = ((ssIndex + 1) / slides.length * 100).toFixed(1) + '%';
+}
+function ssNav(dir) { clearTimeout(ssTimer); showSlide(ssIndex + dir); if (ssAuto) startAuto(); }
+function startAuto() { clearTimeout(ssTimer); ssTimer = setTimeout(() => { showSlide(ssIndex + 1); if (ssAuto) startAuto(); }, 5000); }
+function toggleAuto() {
+  ssAuto = !ssAuto;
+  document.getElementById('ssPlayPause').innerHTML = ssAuto ? '&#9646;&#9646; Pause' : '&#9654; Play';
+  if (ssAuto) startAuto(); else clearTimeout(ssTimer);
+}
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('slideshow').classList.contains('active')) {
+    if (e.key === 'ArrowRight') ssNav(1);
+    if (e.key === 'ArrowLeft') ssNav(-1);
+    if (e.key === 'Escape') closeSlideshow();
+  }
+  if (document.getElementById('lightbox').classList.contains('active')) {
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'Escape') closeLightbox();
+  }
+});
+
+// ── FULLSCREEN MAP ──
+function openMapFullscreen() {
+  const el = document.getElementById('trail-map');
+  el.classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => map.invalidateSize(), 100);
+}
+function closeMapFullscreen() {
+  const el = document.getElementById('trail-map');
+  el.classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+// ── PHOTO MAP — Day 3 route: PUB water plant, turn left ──
+const map = L.map('trail-map', { zoomControl: true, fullscreenControl: true, fullscreenControlOptions: { position: 'topright' } }).setView([1.3838, 103.7715], 15);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri',
+  maxZoom: 19
+}).addTo(map);
+
+const mapPhotos = [
+  { src:"img_S26/01.jpg", lat:1.3855, lon:103.7722, caption:"PUB Water Plant — start of Day 3", zone:"start" },
+  { src:"img_S26/02.jpg", lat:1.3850, lon:103.7714, caption:"Turning left — the path nobody takes", zone:"reservoir" },
+  { src:"img_S26/03.jpg", lat:1.3844, lon:103.7707, caption:"First glimpse of the reservoir", zone:"reservoir" },
+  { src:"img_S26/04.jpg", lat:1.3838, lon:103.7702, caption:"The reservoir bank — western side", zone:"reservoir" },
+  { src:"img_S26/05.jpg", lat:1.3830, lon:103.7706, caption:"Path narrows into jungle", zone:"forest" },
+  { src:"img_S26/06.jpg", lat:1.3824, lon:103.7714, caption:"Reservoir view from the western bank", zone:"reservoir" },
+  { src:"img_S26/07.jpg", lat:1.3828, lon:103.7722, caption:"Breakfast spot — one orange, one reservoir", zone:"reservoir" },
+  { src:"img_S26/08.jpg", lat:1.3836, lon:103.7728, caption:"The water, perfectly still", zone:"reservoir" },
+];
+
+// Close the route back to the start
+const endPoint = { src:"img_S26/01.jpg", lat:1.3855, lon:103.7722, caption:"Back at the PUB Water Plant — Day 3 complete", zone:"end" };
+const allPoints = [...mapPhotos, endPoint];
+
+// Draw route polyline
+const routeLine = allPoints.map(p => [p.lat, p.lon]);
+L.polyline(routeLine, { color: '#f4813f', weight: 4, dashArray: '8,5', opacity: 0.9 }).addTo(map);
+
+// Fit bounds
+map.fitBounds(L.latLngBounds(routeLine).pad(0.15));
+
+function markerClass(zone) {
+  if (zone === 'start') return 'start';
+  if (zone === 'end') return 'end';
+  if (zone === 'forest') return 'forest';
+  if (zone === 'road') return 'road';
+  return 'reservoir';
+}
+
+mapPhotos.forEach((p, i) => {
+  const cls = markerClass(p.zone);
+  const size = (cls === 'start' || cls === 'end') ? 44 : 38;
+  const label = cls === 'start' ? '▶' : (i + 1);
+  const icon = L.divIcon({
+    className: 'pm-container',
+    html: `<div class="pm-circle ${cls}">${label}</div>`,
+    iconSize: [size, size], iconAnchor: [size/2, size/2], popupAnchor: [0, -(size/2 + 6)],
+  });
+  const popupHtml = `
+    <div class="map-popup">
+      <img src="${p.src}" alt="">
+      <div class="map-popup-body">
+        <div class="map-popup-num">Stop ${String(i+1).padStart(2,'0')} of ${mapPhotos.length}</div>
+        <div class="map-popup-caption">${p.caption}</div>
+        <span class="map-popup-btn" onclick="openLightbox(${i});document.querySelector('.leaflet-popup-close-button').click()">&#128065; View Full Photo</span>
+      </div>
+    </div>`;
+  L.marker([p.lat, p.lon], { icon }).addTo(map).bindPopup(popupHtml, { maxWidth: 240, minWidth: 220 });
+});
+
+// End marker
+const endIcon = L.divIcon({
+  className: 'pm-container',
+  html: `<div class="pm-circle end">■</div>`,
+  iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -28],
+});
+L.marker([endPoint.lat, endPoint.lon], { icon: endIcon }).addTo(map)
+  .bindPopup(`<div class="map-popup"><div class="map-popup-body"><div class="map-popup-num">End</div><div class="map-popup-caption">Back at the PUB Water Plant — Day 3 complete</div></div></div>`, { maxWidth: 220 });
+
+// Legend
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = () => {
+  const d = L.DomUtil.create('div');
+  d.style.cssText = 'background:rgba(15,17,23,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;font-size:0.72rem;color:#ccc;line-height:1.9;';
+  d.innerHTML = `
+    <div style="font-weight:700;color:#fff;margin-bottom:4px">Legend</div>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e74c3c;vertical-align:middle;margin-right:6px"></span>Start / End<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#2980b9;vertical-align:middle;margin-right:6px"></span>Reservoir Path<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#27ae60;vertical-align:middle;margin-right:6px"></span>Forest Section`;
+  return d;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
