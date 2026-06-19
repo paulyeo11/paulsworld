@@ -193,6 +193,9 @@ body {
 .walk-maplinks { display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
 .walk-dirs { display:inline-block; margin:5px 0 12px; color:#93c5fd; font-size:0.82rem; text-decoration:none; border-bottom:1px dotted #93c5fd; line-height:1.5; }
 .walk-map-frame { width:100%; height:260px; border:0; border-radius:10px; margin-bottom:7px; }
+.lang-bar { display:flex; gap:8px; padding:9px 16px; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+.lang-btn { padding:5px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.18); background:transparent; color:#8b949e; font-size:0.88em; font-weight:700; cursor:pointer; transition:all 0.2s; }
+.lang-btn.active { background:rgba(240,165,0,0.15); border-color:rgba(240,165,0,0.5); color:#f0a500; }
 </style>
 </head>
 <body>
@@ -255,6 +258,10 @@ body {
 
 <!-- ITINERARY PANEL -->
 <div id="panel-itin" class="panel">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setItinLang('en',this)">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setItinLang('zh',this)">🇨🇳 中文</button>
+  </div>
   <div class="itin-panel" id="itin-panel"></div>
 </div>
 
@@ -1082,27 +1089,94 @@ const itinerary = [
     stay:"Helsinki, then 13-hr flight home" },
 ];
 
-const itinEl = document.getElementById('itin-panel');
-itinerary.forEach(d => {
-  const div = document.createElement('div');
-  div.className = 'day-card';
-  div.innerHTML = `
-    <div class="day-header" onclick="toggleDay(this.parentElement)">
-      <div class="day-badge">${d.days}</div>
-      <div>
-        <div class="day-title">${d.title}</div>
-        <div class="day-meta">${d.meta}</div>
+const itineraryCN = [
+  { days:"第1–2天", title:"赫尔辛基 — 抵达与探索", meta:"🇫🇮 芬兰 · 从新加坡飞来",
+    where:"赫尔辛基市中心", highlights:"参议院广场、赫尔辛基大教堂、老市场大厅、设计区、爱斯普拉纳迪公园",
+    food:"晚餐：在赫尔辛基餐厅享用芬兰牛排。咖啡与肉桂卷（Korvapuusti）——必吃。",
+    stay:"赫尔辛基市中心酒店" },
+  { days:"第3天", title:"乘夜班火车前往罗瓦涅米", meta:"🇫🇮 芬兰 · 赫尔辛基 → 罗瓦涅米",
+    where:"赫尔辛基中央车站 → 罗瓦涅米", highlights:"预订VR夜班火车卧铺包厢。约17:30出发，次日约08:00抵达罗瓦涅米。夜间行驶800公里，醒来便在拉普兰。",
+    food:"在火车上或登车前享用晚餐。",
+    stay:"夜班火车卧铺包厢" },
+  { days:"第4–5天", title:"罗瓦涅米与圣诞老人村", meta:"🇫🇮 芬兰 · 北极圈",
+    where:"罗瓦涅米，拉普兰", highlights:"圣诞老人村（位于北极圈上）、驯鹿雪橇、哈士奇之旅、北极雪地摩托、夜间北极光观赏。",
+    food:"🐟 务必在圣诞老人村吃三文鱼。这是全程最好吃的三文鱼，千万不要错过。",
+    stay:"圣诞老人村或罗瓦涅米市区酒店" },
+  { days:"第5–6天", title:"破冰船巡游 — 波的尼亚湾", meta:"🇫🇮 芬兰 · 全程最精彩体验",
+    where:"凯米，芬兰（从罗瓦涅米乘大巴3小时）", highlights:"乘坐破冰船在冰封的波的尼亚湾巡游。走上冰面——踏出船外，踩在冰封海面上行走。在瑞典边境渔村享用午餐。乘大巴返回罗瓦涅米。",
+    food:"🍽️ 在瑞典边境渔村餐厅享用午餐。",
+    stay:"在罗瓦涅米过夜" },
+  { days:"第7–8天", title:"返回赫尔辛基", meta:"🇫🇮 芬兰 · 罗瓦涅米 → 赫尔辛基",
+    where:"赫尔辛基", highlights:"返回赫尔辛基。探索未游览的景点。坎皮市场、岩石教堂（Temppeliaukio）、芬兰堡海洋要塞（乘短途渡轮）。",
+    food:"最后一杯芬兰咖啡与肉桂卷。如还未吃过牛排，别错过。",
+    stay:"赫尔辛基" },
+  { days:"第9天", title:"飞往维尔纽斯", meta:"🇱🇹 立陶宛 · 飞行约2.5小时",
+    where:"赫尔辛基机场 → 维尔纽斯机场", highlights:"向南飞入波罗的海国家。入住老城区住宿。",
+    food:"抵达后安顿下来，探索老城区街道。",
+    stay:"维尔纽斯老城区" },
+  { days:"第10–13天", title:"维尔纽斯 — 巴洛克老城区", meta:"🇱🇹 立陶宛 · 4天",
+    where:"维尔纽斯老城区（联合国教科文组织世界遗产）", highlights:"黎明之门、维尔纽斯大教堂、格迪米纳斯塔、乌普里斯共和国（奇特的自我宣告微型国家）、隐藏庭院、街头艺术区。",
+    food:"三国首都中物价最实惠。尝试Cepelinai（土豆饺子）、Šaltibarščiai（冷甜菜汤）、当地精酿啤酒。",
+    stay:"维尔纽斯老城区酒店或民宿" },
+  { days:"第14天", title:"乘大巴前往里加 — 波罗的海小巴黎", meta:"🇱🇻 拉脱维亚 · 乘Lux Express大巴约4小时",
+    where:"维尔纽斯 → 里加", highlights:"舒适大巴（Lux Express非常棒）。抵达里加，入住老城区。初次漫步新艺术风格街道。",
+    food:"在里加老城区享用晚餐。",
+    stay:"里加老城区" },
+  { days:"第15–18天", title:"里加 — 新艺术风格与老城区", meta:"🇱🇻 拉脱维亚 · 4天",
+    where:"里加市中心", highlights:"阿尔贝塔大街（新艺术风格建筑群）、里加老城（联合国教科文组织世界遗产）、中央市场（在改建的齐柏林机库内）、新艺术风格博物馆、自由纪念碑、里加城堡。",
+    food:"中央市场美食广场（品种极为丰富）、拉脱维亚灰豌豆配熏肉、里加黑药酒（草本利口酒）、黑麦面包。",
+    stay:"里加老城区" },
+  { days:"第19–20天", title:"面包车之旅 — 里加至塔林", meta:"🇱🇻 拉脱维亚 → 🇪🇪 爱沙尼亚 · 小团，最多8人",
+    where:"拉脱维亚 → 爱沙尼亚乡村 → 塔林", highlights:"私人面包车之旅，途经国家公园、中世纪城堡遗址、联合国教科文组织遗产地及公共交通无法到达的隐秘村庄。一天游览两国。这是波罗的海段的秘密亮点。",
+    food:"途中午餐（通常含在内）。向导会推荐当地餐厅。",
+    stay:"塔林老城区（傍晚抵达）" },
+  { days:"第21–25天", title:"塔林 — 中世纪老城区", meta:"🇪🇪 爱沙尼亚 · 5天",
+    where:"塔林老城区（联合国教科文组织世界遗产）", highlights:"托姆比亚山（俯瞰红屋顶全景）、市政厅广场、亚历山大·涅夫斯基大教堂、中世纪塔楼与城墙、特利斯基维创意城、卡德里奥宫公园。",
+    food:"老城区餐厅（中世纪主题用餐体验有趣）、爱沙尼亚黑面包、熏鱼、在行会酒馆品尝精酿啤酒。",
+    stay:"塔林老城区内住宿 — 住在城墙之内" },
+  { days:"第26天", title:"渡轮 塔林 → 赫尔辛基", meta:"🇪🇪 爱沙尼亚 → 🇫🇮 芬兰 · 约2小时",
+    where:"塔林D号码头 → 赫尔辛基西港", highlights:"渡轮横渡芬兰湾。Tallink Silja或维京航线。2小时风景如画的渡轮之旅——波罗的海段落幕。靠近赫尔辛基时，城市轮廓映入眼帘。",
+    food:"渡轮上设有餐厅和咖啡馆。抵达芬兰前的最后一顿波罗的海美食。",
+    stay:"赫尔辛基" },
+  { days:"第27–30天", title:"赫尔辛基 — 缓冲期与飞回新加坡", meta:"🇫🇮 芬兰 → 新加坡",
+    where:"赫尔辛基 → 新加坡樟宜机场", highlights:"利用缓冲天数重游赫尔辛基、补充未完成的行程、好好休息。从赫尔辛基机场飞回新加坡。",
+    food:"登机前享用最后一顿芬兰三文鱼或牛排。",
+    stay:"赫尔辛基，然后13小时飞机回家" },
+];
+
+function buildItin(data, labelWhere, labelHighlights, labelFood, labelStay) {
+  const itinEl = document.getElementById('itin-panel');
+  itinEl.innerHTML = '';
+  data.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'day-card';
+    div.innerHTML = `
+      <div class="day-header" onclick="toggleDay(this.parentElement)">
+        <div class="day-badge">${d.days}</div>
+        <div>
+          <div class="day-title">${d.title}</div>
+          <div class="day-meta">${d.meta}</div>
+        </div>
+        <div class="day-chevron">▼</div>
       </div>
-      <div class="day-chevron">▼</div>
-    </div>
-    <div class="day-body">
-      <div class="section"><div class="section-label">📍 Where</div><div class="section-text">${d.where}</div></div>
-      <div class="section"><div class="section-label">⭐ Highlights</div><div class="section-text">${d.highlights}</div></div>
-      <div class="section"><div class="section-label">🍽️ Food</div><div class="section-text">${d.food}</div></div>
-      <div class="section"><div class="section-label">🏨 Stay</div><div class="section-text">${d.stay}</div></div>
-    </div>`;
-  itinEl.appendChild(div);
-});
+      <div class="day-body">
+        <div class="section"><div class="section-label">📍 ${labelWhere}</div><div class="section-text">${d.where}</div></div>
+        <div class="section"><div class="section-label">⭐ ${labelHighlights}</div><div class="section-text">${d.highlights}</div></div>
+        <div class="section"><div class="section-label">🍽️ ${labelFood}</div><div class="section-text">${d.food}</div></div>
+        <div class="section"><div class="section-label">🏨 ${labelStay}</div><div class="section-text">${d.stay}</div></div>
+      </div>`;
+    itinEl.appendChild(div);
+  });
+}
+
+buildItin(itinerary, 'Where', 'Highlights', 'Food', 'Stay');
+
+function setItinLang(lang, btn) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (lang === 'zh') buildItin(itineraryCN, '地点', '亮点', '美食', '住宿');
+  else buildItin(itinerary, 'Where', 'Highlights', 'Food', 'Stay');
+}
 
 // ── TOGGLE FUNCTIONS ──
 function switchTab(tab) {
