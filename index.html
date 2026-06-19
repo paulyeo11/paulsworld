@@ -317,11 +317,19 @@
       max-height: 9999px;
     }
 
-    /* Stories - orange */
-    .stories-card .section-header { background: linear-gradient(135deg, #fff3e0, #ffe8cc); border-left: 6px solid #f4813f; }
-    .stories-card .section-header h2, .stories-card .section-header .chevron { color: #c0622a; }
-    .stories-card ul li a { color: #c0622a; }
-    .stories-card ul li a:hover { background: #fff3e0; }
+    /* Overseas Trips - orange */
+    .overseas-card { grid-column: 1 / -1; }
+    .overseas-card .section-header { background: linear-gradient(135deg, #fff3e0, #ffe8cc); border-left: 6px solid #f4813f; }
+    .overseas-card .section-header h2, .overseas-card .section-header .chevron { color: #c0622a; }
+    .overseas-card ul li a { color: #c0622a; }
+    .overseas-card ul li a:hover { background: #fff3e0; }
+
+    /* Singapore Hiking - forest green */
+    .hiking-card { grid-column: 1 / -1; }
+    .hiking-card .section-header { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-left: 6px solid #16a34a; }
+    .hiking-card .section-header h2, .hiking-card .section-header .chevron { color: #14532d; }
+    .hiking-card ul li a { color: #14532d; }
+    .hiking-card ul li a:hover { background: #f0fdf4; }
 
     /* AI - blue */
     .ai-card .section-header { background: linear-gradient(135deg, #e8eeff, #d8e4ff); border-left: 6px solid #4a6cf7; }
@@ -504,15 +512,26 @@
 
   <main>
 
-    <div class="section-card stories-card" id="stories">
+    <div class="section-card overseas-card" id="stories">
       <div class="section-header">
-        <h2>&#x1F4D6; My Travel Stories</h2>
+        <h2>&#x2708;&#xFE0F; My Overseas Trips</h2>
         <div class="right">
-          <span class="count" id="story-status">Loading...</span>
+          <span class="count" id="overseas-status">Loading...</span>
           <span class="chevron">&#x25BC;</span>
         </div>
       </div>
-      <ul id="story-list"></ul>
+      <ul id="overseas-list"></ul>
+    </div>
+
+    <div class="section-card hiking-card" id="hiking">
+      <div class="section-header">
+        <h2>&#x1F97E; Hiking in Singapore</h2>
+        <div class="right">
+          <span class="count" id="hiking-status">Loading...</span>
+          <span class="chevron">&#x25BC;</span>
+        </div>
+      </div>
+      <ul id="hiking-list"></ul>
     </div>
 
     <div class="section-card ai-card">
@@ -723,6 +742,26 @@
       return n < 10 ? '0' + n : '' + n;
     }
 
+    async function loadFiles(fileList, listId, statusId) {
+      const list   = document.getElementById(listId);
+      const status = document.getElementById(statusId);
+      let found = 0;
+      for (const filename of fileList) {
+        const title = await getTitle(filename);
+        if (title !== null) {
+          found++;
+          const li = document.createElement('li');
+          const a  = document.createElement('a');
+          a.href = filename;
+          a.textContent = title;
+          li.appendChild(a);
+          list.appendChild(li);
+          allDiscoveredPages.push({ key: filename.replace('.html', ''), title, url: filename });
+        }
+      }
+      status.textContent = found > 0 ? found + ' found' : 'None yet';
+    }
+
     async function loadSection({ prefix, max, listId, statusId, padded }) {
       const list   = document.getElementById(listId);
       const status = document.getElementById(statusId);
@@ -782,8 +821,16 @@
     }
 
     async function init() {
+      const overseasFiles = [
+        'S02.html','S03.html','S04.html','S05.html','S06.html','S07.html','S08.html',
+        'S09.html','S10.html','S11.html','S12.html','S13.html','S14.html','S15.html',
+        'S16.html','S17.html','S18.html','S22.html','S24.html','S25.html'
+      ];
+      const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html'];
+
       await Promise.all([
-        loadSection({ prefix: 'S',  max: 30, padded: true,  listId: 'story-list',   statusId: 'story-status'   }),
+        loadFiles(overseasFiles, 'overseas-list', 'overseas-status'),
+        loadFiles(hikingFiles,   'hiking-list',   'hiking-status'),
         loadSection({ prefix: 'AI', max: 20, padded: true,  listId: 'ai-list',      statusId: 'ai-status'      }),
         loadSection({ prefix: 'TUT', max: 10, padded: true, listId: 'tut-list',     statusId: 'tut-status'     }),
         loadSection({ prefix: 'h',  max: 10, padded: true,  listId: 'health-list',  statusId: 'health-status'  }),
