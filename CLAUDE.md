@@ -117,6 +117,15 @@ fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(
 
 **Also:** When pushing large files (>50KB) via `mcp__github__push_files`, always verify the `content` parameter is non-empty before calling — an accidental empty string wipes the file on GitHub.
 
+## 🌐 Bilingual Rule (English + Chinese) — Standing Default
+Every page and article on Paul's World must include an **English / 中文 language toggle**. This applies to ALL pages, including travel itineraries, stories, AI articles, health pages, tools, etc.
+
+- Add toggle buttons: `🇬🇧 English` and `🇨🇳 中文`
+- Buttons styled as pill-shaped, gold highlight on active
+- Toggling switches ALL text content (titles, descriptions, labels, section headers) to the selected language
+- English is default (active on load)
+- Reference implementation: `MT12.html` Itinerary panel (June 2026)
+
 ## Standing Rules for All Pages & Articles
 
 ### 🏠 Home Button
