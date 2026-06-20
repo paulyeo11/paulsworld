@@ -324,6 +324,44 @@
     .overseas-card ul li a { color: #c0622a; }
     .overseas-card ul li a:hover { background: #fff3e0; }
 
+    /* Region grouping — overseas section */
+    .region-divider { border-bottom: none; }
+    .region-subhead {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 20px 7px;
+      font-size: 0.72em; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: #a05020;
+      background: linear-gradient(90deg, #fff8f2, #fff3e8);
+      border-top: 2px solid #f4813f;
+      border-bottom: 1px solid #ffe8cc;
+    }
+    .region-count {
+      margin-left: auto; font-weight: 600; color: #c0822a;
+      background: rgba(244,129,63,0.13);
+      padding: 1px 9px; border-radius: 10px; font-size: 0.93em;
+    }
+    .region-notyet-head {
+      padding: 9px 20px 7px;
+      font-size: 0.72em; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: #aaa; background: #f9f9f9;
+      border-top: 2px dashed #ddd; border-bottom: 1px solid #eee;
+    }
+    .not-yet-li { border-bottom: none; }
+    .region-notyet-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 20px; color: #bbb;
+      font-size: 0.88em; border-bottom: 1px solid #f5f5f5;
+    }
+    .region-notyet-item strong { color: #ccc; font-weight: 600; }
+    .notyet-hint { font-size: 0.88em; color: #ddd; }
+    .notyet-badge {
+      margin-left: auto; font-size: 0.72em;
+      background: #f5f5f5; border: 1px dashed #ddd; color: #bbb;
+      padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+    }
+
     /* Singapore Hiking - forest green */
     .hiking-card { grid-column: 1 / -1; }
     .hiking-card .section-header { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-left: 6px solid #16a34a; }
@@ -820,16 +858,110 @@
       ).join('');
     }
 
-    async function init() {
+    async function loadOverseasByRegion() {
+      const regionMap = {
+        'S02.html': 'Europe',
+        'S03.html': 'South Asia',
+        'S04.html': 'Europe',
+        'S05.html': 'Personal & Reflections',
+        'S06.html': 'Personal & Reflections',
+        'S07.html': 'Personal & Reflections',
+        'S08.html': 'Personal & Reflections',
+        'S09.html': 'Europe',
+        'S10.html': 'Southeast Asia',
+        'S11.html': 'South America',
+        'S12.html': 'Southeast Asia',
+        'S13.html': 'North & Central America',
+        'S14.html': 'Personal & Reflections',
+        'S15.html': 'Africa',
+        'S16.html': 'North & Central America',
+        'S17.html': 'Personal & Reflections',
+        'S18.html': 'East Asia',
+        'S22.html': 'Personal & Reflections',
+        'S24.html': 'East Asia',
+        'S25.html': 'East Asia'
+      };
+      const regionConfig = [
+        { name: 'East Asia',               emoji: '🌏', label: 'Japan · China · Korea' },
+        { name: 'Southeast Asia',          emoji: '🌴', label: 'Philippines · Indonesia · Thailand' },
+        { name: 'South Asia',              emoji: '🏔️', label: 'Nepal · India · Sri Lanka' },
+        { name: 'Europe',                  emoji: '🌍', label: 'Portugal · Iceland · France' },
+        { name: 'Africa',                  emoji: '🦁', label: 'Tanzania · Kenya · Uganda' },
+        { name: 'South America',           emoji: '🌎', label: 'Chile · Patagonia · Antarctica' },
+        { name: 'North & Central America', emoji: '🌵', label: 'USA · Mexico · Canada' },
+        { name: 'Personal & Reflections',  emoji: '📝', label: 'Stories & Life Lessons' }
+      ];
+      const notYetRegions = [
+        { emoji: '🦘', name: 'Oceania',           hint: 'Australia · New Zealand' },
+        { emoji: '🕌', name: 'Middle East',        hint: 'Dubai · Jordan · Turkey' },
+        { emoji: '🏔️', name: 'Central Asia', hint: 'Kazakhstan · Uzbekistan · Kyrgyzstan' },
+        { emoji: '🌴', name: 'More SE Asia',       hint: 'Indonesia · Thailand · Vietnam · Bali' },
+        { emoji: '🌿', name: 'More South Asia',    hint: 'India · Sri Lanka · Bhutan' },
+        { emoji: '🌨️', name: 'Northern Europe', hint: 'Finland · Baltics · Scandinavia' }
+      ];
+
       const overseasFiles = [
         'S02.html','S03.html','S04.html','S05.html','S06.html','S07.html','S08.html',
         'S09.html','S10.html','S11.html','S12.html','S13.html','S14.html','S15.html',
         'S16.html','S17.html','S18.html','S22.html','S24.html','S25.html'
       ];
+
+      const status = document.getElementById('overseas-status');
+      const list   = document.getElementById('overseas-list');
+
+      const fetched = await Promise.all(
+        overseasFiles.map(async (f) => ({ f, title: await getTitle(f) }))
+      );
+
+      const byRegion = {};
+      let totalFound = 0;
+      for (const { f, title } of fetched) {
+        if (!title) continue;
+        totalFound++;
+        const region = regionMap[f] || 'Other';
+        if (!byRegion[region]) byRegion[region] = [];
+        byRegion[region].push({ f, title });
+        allDiscoveredPages.push({ key: f.replace('.html',''), title, url: f });
+      }
+
+      for (const { name, emoji } of regionConfig) {
+        const stories = byRegion[name];
+        if (!stories || stories.length === 0) continue;
+
+        const divLi = document.createElement('li');
+        divLi.className = 'region-divider';
+        divLi.innerHTML = '<div class="region-subhead"><span>' + emoji + '</span><span>' + name + '</span><span class="region-count">' + stories.length + ' ' + (stories.length === 1 ? 'story' : 'stories') + '</span></div>';
+        list.appendChild(divLi);
+
+        for (const { f, title } of stories) {
+          const li = document.createElement('li');
+          const a  = document.createElement('a');
+          a.href = f; a.textContent = title;
+          li.appendChild(a); list.appendChild(li);
+        }
+      }
+
+      const nyHead = document.createElement('li');
+      nyHead.className = 'region-divider';
+      nyHead.innerHTML = '<div class="region-notyet-head">&#x270F;&#xFE0F; Yet to Write</div>';
+      list.appendChild(nyHead);
+
+      for (const { emoji, name, hint } of notYetRegions) {
+        const li = document.createElement('li');
+        li.className = 'not-yet-li';
+        li.innerHTML = '<div class="region-notyet-item"><span>' + emoji + '</span><span><strong>' + name + '</strong><span class="notyet-hint"> — ' + hint + '</span></span><span class="notyet-badge">Coming soon</span></div>';
+        list.appendChild(li);
+      }
+
+      const travelRegions = Object.keys(byRegion).filter(r => r !== 'Personal & Reflections').length;
+      status.textContent = totalFound + ' stories · ' + travelRegions + ' regions';
+    }
+
+    async function init() {
       const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html'];
 
       await Promise.all([
-        loadFiles(overseasFiles, 'overseas-list', 'overseas-status'),
+        loadOverseasByRegion(),
         loadFiles(hikingFiles,   'hiking-list',   'hiking-status'),
         loadSection({ prefix: 'AI', max: 20, padded: true,  listId: 'ai-list',      statusId: 'ai-status'      }),
         loadSection({ prefix: 'TUT', max: 10, padded: true, listId: 'tut-list',     statusId: 'tut-status'     }),
