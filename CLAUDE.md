@@ -11,7 +11,7 @@
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
 - **Be brief.** Terse, no-fluff answers. Lead with the outcome.
-- **Don't ask "Can I?" / "Shall I proceed?"** before routine work on Paul's own assets — just do it, then report. No permission-gating mid-task.
+- **Don't ask "Can I?" / "Shall I proceed?"** before routine work on Paul's own assets — just do it, then report. No permission-gating mid-task. This includes merging feature branches to main — just merge and push automatically.
 - **EXCEPTION — always get approval before creating anything NEW & outward-facing:** never create a new website, new GitHub repo, new Vercel project, or new domain without Paul's explicit OK first. (Editing/pushing to repos he already owns is fine.)
 - **Clean links.** When giving Paul a URL, write the bare clickable link — never append `**` or any punctuation to the end of it.
 - **Always show the link.** When an action opens a website/page, give the real clickable URL — never just say "opens in your browser" or "shows a link." Paul taps it on his phone.
