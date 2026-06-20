@@ -203,6 +203,13 @@ Format: `[PREFIX][NUMBER]: [Article Title]`
 When creating a new page (e.g. `new-app`): create it, auto-update `index.html` to insert
 it into the right category, then push to GitHub.
 
+### 📚 AC02 eBook Auto-Update Rule (Standing Default — added 2026-06-20)
+Whenever a **new Travel Story** (S-prefix file, e.g. `S27.html`) is created:
+1. Automatically add a new `<a class="chapter-card">` entry to **AC02.html** with the correct chapter number, title, and an appropriate emoji + location meta line.
+2. Update the story count in the cover subtitle (e.g. "26 true stories" → "27 true stories") and in the footer.
+3. Push both the new story file **and** the updated `AC02.html` together in the same commit.
+Paul never needs to ask — this happens automatically every time.
+
 ## Counter API (Dashboard) Rule
 - Always use the **read-only GET** endpoint:
   `https://api.counterapi.dev/v1/paulsworld/{key}/` — never `/up` or `/down`.
