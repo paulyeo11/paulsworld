@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SP06: Drone Course Claims Outcome — Paul's World</title>
+<script src="/ga4.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --blue:#4a6cf7; --accent:#f4813f; --bg:#0f0f13; --card:#1a1a22; --muted:#888; --green:#10b981; --yellow:#f59e0b; --red:#ef4444; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8e8; font-family:'Source Serif 4',Georgia,serif; min-height:100vh; padding:0 0 60px; }
+
+  /* lang toggle */
+  #langBar { display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:10px 20px; background:rgba(15,15,19,.95); border-bottom:1px solid rgba(255,255,255,.06); }
+  .lang-btn { background:transparent; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.6); font-size:.78rem; padding:4px 12px; border-radius:20px; cursor:pointer; transition:.2s; }
+  .lang-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700; }
+
+  /* home bar */
+  #homeBar { display:flex; align-items:center; padding:12px 20px; background:rgba(15,15,19,.9); border-bottom:1px solid rgba(255,255,255,.07); position:sticky; top:0; z-index:100; }
+  .home-btn { color:rgba(255,255,255,.75); text-decoration:none; font-size:.85rem; border:1px solid rgba(255,255,255,.2); padding:6px 14px; border-radius:18px; transition:.2s; }
+  .home-btn:hover { background:rgba(255,255,255,.1); }
+
+  /* hero */
+  .hero { text-align:center; padding:50px 20px 36px; background:linear-gradient(160deg,#0a1628 0%,#0f0f13 65%); border-bottom:1px solid rgba(255,255,255,.07); }
+  .hero-tag { display:inline-block; border:1.5px solid var(--accent); color:var(--accent); font-size:.68rem; font-weight:700; letter-spacing:.15em; padding:5px 14px; border-radius:4px; margin-bottom:18px; text-transform:uppercase; }
+  .hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.7rem,5vw,2.5rem); line-height:1.25; margin-bottom:10px; }
+  .hero-sub { color:var(--muted); font-size:.93rem; margin-bottom:24px; }
+  .hero-actions { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+  .share-btn { display:inline-block; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.3); color:#fff; font-weight:700; padding:10px 26px; border-radius:28px; cursor:pointer; font-size:.95rem; font-family:'Source Serif 4',Georgia,serif; transition:.2s; }
+  .share-btn:hover { background:rgba(255,255,255,.18); }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+
+  /* status badge */
+  .status-badge { display:inline-flex; align-items:center; gap:8px; padding:8px 20px; border-radius:30px; font-size:.88rem; font-weight:700; letter-spacing:.05em; }
+  .status-pending  { background:rgba(245,158,11,.15); border:1.5px solid rgba(245,158,11,.4); color:#fbbf24; }
+  .status-approved { background:rgba(16,185,129,.15); border:1.5px solid rgba(16,185,129,.4); color:#34d399; }
+  .status-rejected { background:rgba(239,68,68,.15); border:1.5px solid rgba(239,68,68,.4); color:#f87171; }
+  .status-inprogress { background:rgba(74,108,247,.15); border:1.5px solid rgba(74,108,247,.4); color:#818cf8; }
+  .pulse-dot { width:8px; height:8px; border-radius:50%; background:currentColor; animation:pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* main layout */
+  .wrap { max-width:720px; margin:0 auto; padding:32px 20px 60px; }
+
+  /* summary cards */
+  .summary-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:32px; }
+  .sum-card { background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:18px 16px; text-align:center; }
+  .sum-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:6px; }
+  .sum-value { font-size:1.5rem; font-weight:800; color:var(--accent); }
+  .sum-sub { font-size:.78rem; color:var(--muted); margin-top:3px; }
+
+  /* section */
+  .section-title { font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--accent); margin:32px 0 14px; padding-bottom:8px; border-bottom:1px solid rgba(244,129,63,.25); }
+
+  /* timeline */
+  .timeline { position:relative; padding-left:28px; }
+  .timeline::before { content:''; position:absolute; left:8px; top:8px; bottom:8px; width:2px; background:rgba(255,255,255,.08); }
+  .tl-item { position:relative; margin-bottom:22px; }
+  .tl-dot { position:absolute; left:-24px; top:4px; width:12px; height:12px; border-radius:50%; border:2px solid var(--accent); background:var(--bg); }
+  .tl-dot.done { background:var(--accent); }
+  .tl-dot.current { background:var(--yellow); border-color:var(--yellow); box-shadow:0 0 10px rgba(245,158,11,.4); }
+  .tl-date { font-size:.75rem; color:var(--muted); margin-bottom:2px; }
+  .tl-title { font-size:.97rem; font-weight:600; color:#e8e8e8; margin-bottom:3px; }
+  .tl-desc { font-size:.85rem; color:#aaa; line-height:1.6; }
+
+  /* checklist */
+  .checklist { list-style:none; }
+  .checklist li { display:flex; align-items:flex-start; gap:12px; padding:11px 14px; background:var(--card); border:1px solid rgba(255,255,255,.07); border-radius:8px; margin-bottom:8px; font-size:.92rem; }
+  .checklist li .icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+  .checklist li.done { opacity:.7; }
+  .checklist li.done .txt { text-decoration:line-through; color:var(--muted); }
+
+  /* notes box */
+  .notes-box { background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:20px; }
+  .notes-box p { font-size:.92rem; line-height:1.8; color:#ccc; margin-bottom:10px; }
+  .notes-box p:last-child { margin-bottom:0; }
+  .note-date { font-size:.75rem; color:var(--muted); font-style:italic; }
+
+  /* outcome box */
+  .outcome-box { background:rgba(16,185,129,.06); border:1.5px solid rgba(16,185,129,.2); border-radius:12px; padding:22px; margin-top:8px; }
+  .outcome-box.pending { background:rgba(245,158,11,.06); border-color:rgba(245,158,11,.2); }
+  .outcome-label { font-size:.72rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:6px; }
+  .outcome-text { font-size:1rem; font-weight:600; color:#e8e8e8; line-height:1.7; }
+
+  /* edit hint */
+  .edit-hint { font-size:.76rem; color:rgba(255,255,255,.25); text-align:center; margin-top:40px; font-style:italic; }
+
+  footer { text-align:center; color:var(--muted); font-size:.8rem; padding:40px 20px 0; }
+
+  .zh { display:none; }
+  body.zh .en { display:none; }
+  body.zh .zh { display:inline; }
+</style>
+</head>
+<body>
+
+<div id="langBar">
+  <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+  <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<div id="homeBar">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">← Home</a>
+</div>
+
+<div class="hero">
+  <div class="hero-tag">SP06 · Claims Tracker</div>
+  <h1>
+    <span class="en">🚁 Drone Course Claims</span>
+    <span class="zh">🚁 无人机课程报销追踪</span>
+  </h1>
+  <p class="hero-sub">
+    <span class="en">Tracking the outcome of my drone course fee claim · 2026</span>
+    <span class="zh">追踪我的无人机课程费用报销结果 · 2026年</span>
+  </p>
+  <div class="hero-actions">
+    <div class="status-badge status-pending">
+      <span class="pulse-dot"></span>
+      <span class="en">⏳ Awaiting Outcome</span>
+      <span class="zh">⏳ 等待结果</span>
+    </div>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Summary row -->
+  <div class="summary-row">
+    <div class="sum-card">
+      <div class="sum-label"><span class="en">Claim Status</span><span class="zh">报销状态</span></div>
+      <div class="sum-value">⏳</div>
+      <div class="sum-sub"><span class="en">Pending</span><span class="zh">待定</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label"><span class="en">Course Completed</span><span class="zh">课程完成</span></div>
+      <div class="sum-value">✅</div>
+      <div class="sum-sub"><span class="en">Yes</span><span class="zh">是</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label"><span class="en">Claim Submitted</span><span class="zh">申请提交</span></div>
+      <div class="sum-value">✅</div>
+      <div class="sum-sub"><span class="en">Submitted</span><span class="zh">已提交</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label"><span class="en">Days Waiting</span><span class="zh">等待天数</span></div>
+      <div class="sum-value" id="daysWaiting">—</div>
+      <div class="sum-sub"><span class="en">since submission</span><span class="zh">自提交日起</span></div>
+    </div>
+  </div>
+
+  <!-- Outcome -->
+  <div class="section-title">
+    <span class="en">📋 Current Outcome</span>
+    <span class="zh">📋 当前结果</span>
+  </div>
+  <div class="outcome-box pending">
+    <div class="outcome-label"><span class="en">Status</span><span class="zh">状态</span></div>
+    <div class="outcome-text">
+      <span class="en">Claim submitted and awaiting approval. No outcome received yet. Update this page when a decision is made.</span>
+      <span class="zh">申请已提交，等待批准。尚未收到任何结果。有决定后请更新此页面。</span>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="section-title">
+    <span class="en">📅 Timeline</span>
+    <span class="zh">📅 时间线</span>
+  </div>
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-date"><span class="en">Step 1</span><span class="zh">第1步</span></div>
+      <div class="tl-title"><span class="en">Enrolled in Drone Course</span><span class="zh">报名参加无人机课程</span></div>
+      <div class="tl-desc"><span class="en">Registered and paid course fees.</span><span class="zh">完成注册并缴纳课程费用。</span></div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-date"><span class="en">Step 2</span><span class="zh">第2步</span></div>
+      <div class="tl-title"><span class="en">Completed the Course</span><span class="zh">完成课程</span></div>
+      <div class="tl-desc"><span class="en">Attended all sessions and received certification / attendance record.</span><span class="zh">参加所有课节，获得证书/出勤记录。</span></div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot done"></div>
+      <div class="tl-date"><span class="en">Step 3</span><span class="zh">第3步</span></div>
+      <div class="tl-title"><span class="en">Claim Submitted</span><span class="zh">提交报销申请</span></div>
+      <div class="tl-desc"><span class="en">Submitted claim form with receipts and supporting documents.</span><span class="zh">连同收据及支持文件提交报销表格。</span></div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot current"></div>
+      <div class="tl-date"><span class="en">Now — Waiting</span><span class="zh">现在——等待中</span></div>
+      <div class="tl-title"><span class="en">⏳ Awaiting Decision</span><span class="zh">⏳ 等待决定</span></div>
+      <div class="tl-desc"><span class="en">Claim is being reviewed. Expected response: TBC.</span><span class="zh">申请正在审核中。预期回复：待定。</span></div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-date"><span class="en">Step 5 — Pending</span><span class="zh">第5步——待定</span></div>
+      <div class="tl-title"><span class="en">Outcome Received</span><span class="zh">收到结果</span></div>
+      <div class="tl-desc"><span class="en">Approval / Rejection / Partial approval. Update here when notified.</span><span class="zh">批准 / 拒绝 / 部分批准。收到通知后在此更新。</span></div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-date"><span class="en">Step 6 — Pending</span><span class="zh">第6步——待定</span></div>
+      <div class="tl-title"><span class="en">Payment Received / Appeal Filed</span><span class="zh">收到款项 / 提出申诉</span></div>
+      <div class="tl-desc"><span class="en">If approved: payment credited. If rejected: decide whether to appeal.</span><span class="zh">若批准：款项到账。若拒绝：决定是否提出申诉。</span></div>
+    </div>
+
+  </div>
+
+  <!-- Documents checklist -->
+  <div class="section-title">
+    <span class="en">📁 Documents Checklist</span>
+    <span class="zh">📁 文件清单</span>
+  </div>
+  <ul class="checklist">
+    <li class="done">
+      <span class="icon">✅</span>
+      <span class="txt"><span class="en">Course receipt / invoice</span><span class="zh">课程收据 / 发票</span></span>
+    </li>
+    <li class="done">
+      <span class="icon">✅</span>
+      <span class="txt"><span class="en">Attendance record / certificate</span><span class="zh">出勤记录 / 证书</span></span>
+    </li>
+    <li class="done">
+      <span class="icon">✅</span>
+      <span class="txt"><span class="en">Claim form submitted</span><span class="zh">报销表已提交</span></span>
+    </li>
+    <li>
+      <span class="icon">⏳</span>
+      <span class="txt"><span class="en">Approval letter / outcome notification</span><span class="zh">批准信 / 结果通知</span></span>
+    </li>
+    <li>
+      <span class="icon">⏳</span>
+      <span class="txt"><span class="en">Payment confirmation (if approved)</span><span class="zh">付款确认（若批准）</span></span>
+    </li>
+  </ul>
+
+  <!-- Notes -->
+  <div class="section-title">
+    <span class="en">📝 Notes</span>
+    <span class="zh">📝 备注</span>
+  </div>
+  <div class="notes-box">
+    <p>
+      <span class="en">Claim submitted for drone course fees. Waiting to hear back on the outcome — approved, rejected, or partial.</span>
+      <span class="zh">已提交无人机课程费用报销申请。等待回复——批准、拒绝或部分批准。</span>
+    </p>
+    <p class="note-date">
+      <span class="en">Last updated: 20 June 2026</span>
+      <span class="zh">最后更新：2026年6月20日</span>
+    </p>
+  </div>
+
+  <p class="edit-hint">
+    <span class="en">Ask David to update this page when the outcome arrives.</span>
+    <span class="zh">收到结果后，请让David更新此页面。</span>
+  </p>
+
+</div>
+
+<script src="/view-counter.js"></script>
+
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<footer>
+  <p><span class="en">Paul's World · Drone Course Claims Tracker · SP06</span><span class="zh">保罗的世界 · 无人机课程报销追踪 · SP06</span></p>
+  <p style="margin-top:8px;font-size:.75rem;">
+    <span class="en">© 2026 Paul Yeo. All rights reserved.</span>
+    <span class="zh">© 2026 杨汉忠。保留所有权利。</span>
+  </p>
+</footer>
+
+<script>
+  // Days waiting counter (update submission date when known)
+  (function(){
+    var submitDate = new Date('2026-06-20');
+    var today = new Date();
+    var days = Math.floor((today - submitDate) / 86400000);
+    var el = document.getElementById('daysWaiting');
+    if(el && days >= 0) el.textContent = days;
+  })();
+
+  function setLang(lang){
+    document.body.classList.toggle('zh', lang === 'zh');
+    document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelector('.lang-btn[onclick*="' + lang + '"]').classList.add('active');
+  }
+
+  function shareThisPage(){
+    var url = window.location.href;
+    var title = document.title;
+    if(navigator.share){
+      navigator.share({title:title, url:url}).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url).then(function(){
+        var t = document.getElementById('shareToast');
+        t.style.display = 'block';
+        setTimeout(function(){ t.style.display = 'none'; }, 2200);
+      });
+    }
+  }
+</script>
+</body>
+</html>
