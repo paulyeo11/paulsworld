@@ -9,7 +9,11 @@
     '.zh-block{display:none!important}' +
     'body.lang-zh .zh-block{display:block!important}' +
     'body.lang-zh .en-block{display:none!important}' +
-    '.pw-lang-toggle{display:flex;gap:6px;margin-left:auto;align-items:center;flex-shrink:0}' +
+    '.pw-lang-toggle{display:flex;gap:6px;align-items:center}' +
+    '.pw-lang-toggle.in-nav{margin-left:auto;flex-shrink:0}' +
+    '.pw-lang-toggle.floating{position:fixed;top:12px;right:12px;z-index:9999;' +
+    'background:rgba(0,0,0,.55);padding:5px 8px;border-radius:22px;' +
+    'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}' +
     '.pw-lang-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);' +
     'color:rgba(255,255,255,.78);font-size:.75rem;padding:5px 11px;border-radius:18px;' +
     'cursor:pointer;transition:all .2s;font-family:Arial,sans-serif;white-space:nowrap}' +
@@ -29,14 +33,20 @@
 
   /* ── 3. Inject buttons on DOM ready ────────────────────────────────── */
   function inject() {
-    var nav = document.getElementById('homeBar') || document.querySelector('nav');
-    if (!nav) return;
     var wrap = document.createElement('div');
-    wrap.className = 'pw-lang-toggle';
     wrap.innerHTML =
       '<button class="pw-lang-btn active" onclick="setLang(\'en\')">&#x1F1EC;&#x1F1E7; EN</button>' +
       '<button class="pw-lang-btn" onclick="setLang(\'zh\')">&#x1F1E8;&#x1F1F3; 中文</button>';
-    nav.appendChild(wrap);
+
+    var nav = document.getElementById('homeBar') || document.querySelector('nav');
+    if (nav) {
+      wrap.className = 'pw-lang-toggle in-nav';
+      nav.appendChild(wrap);
+    } else {
+      /* Fallback: floating pill in top-right corner — works on any page */
+      wrap.className = 'pw-lang-toggle floating';
+      document.body.appendChild(wrap);
+    }
 
     /* Restore saved preference */
     try {
