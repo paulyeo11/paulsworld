@@ -374,27 +374,6 @@
     .ai-card .section-header h2, .ai-card .section-header .chevron { color: #2d48b5; }
     .ai-card ul li a { color: #2d48b5; }
     .ai-card ul li a:hover { background: #eef1ff; }
-    /* Per-article rainbow colors */
-    #ai-list li:nth-child(1)  a { border-left:4px solid #e05252; background:rgba(224,82,82,.06);   color:#9b1f1f; }
-    #ai-list li:nth-child(2)  a { border-left:4px solid #4a6cf7; background:rgba(74,108,247,.06);  color:#1e3a8a; }
-    #ai-list li:nth-child(3)  a { border-left:4px solid #2ecc87; background:rgba(46,204,135,.06);  color:#1a6b49; }
-    #ai-list li:nth-child(4)  a { border-left:4px solid #f59e0b; background:rgba(245,158,11,.06);  color:#92400e; }
-    #ai-list li:nth-child(5)  a { border-left:4px solid #8b5cf6; background:rgba(139,92,246,.06);  color:#5b21b6; }
-    #ai-list li:nth-child(6)  a { border-left:4px solid #ec4899; background:rgba(236,72,153,.06);  color:#831843; }
-    #ai-list li:nth-child(7)  a { border-left:4px solid #06b6d4; background:rgba(6,182,212,.06);   color:#155e75; }
-    #ai-list li:nth-child(8)  a { border-left:4px solid #f4813f; background:rgba(244,129,63,.06);  color:#a05020; }
-    #ai-list li:nth-child(9)  a { border-left:4px solid #10b981; background:rgba(16,185,129,.06);  color:#065f46; }
-    #ai-list li:nth-child(10) a { border-left:4px solid #6366f1; background:rgba(99,102,241,.06);  color:#3730a3; }
-    #ai-list li:nth-child(1)  a:hover { background:rgba(224,82,82,.12); }
-    #ai-list li:nth-child(2)  a:hover { background:rgba(74,108,247,.12); }
-    #ai-list li:nth-child(3)  a:hover { background:rgba(46,204,135,.12); }
-    #ai-list li:nth-child(4)  a:hover { background:rgba(245,158,11,.12); }
-    #ai-list li:nth-child(5)  a:hover { background:rgba(139,92,246,.12); }
-    #ai-list li:nth-child(6)  a:hover { background:rgba(236,72,153,.12); }
-    #ai-list li:nth-child(7)  a:hover { background:rgba(6,182,212,.12); }
-    #ai-list li:nth-child(8)  a:hover { background:rgba(244,129,63,.12); }
-    #ai-list li:nth-child(9)  a:hover { background:rgba(16,185,129,.12); }
-    #ai-list li:nth-child(10) a:hover { background:rgba(99,102,241,.12); }
 
     /* AI Tools - violet */
     .ait-card .section-header { background: linear-gradient(135deg, #f3e8ff, #e9d8fd); border-left: 6px solid #7c3aed; }
@@ -978,13 +957,86 @@
       status.textContent = totalFound + ' stories · ' + travelRegions + ' regions';
     }
 
+    async function loadAIByCategory() {
+      const catMap = {
+        'AI01.html': 'Building Dashboards',
+        'AI02.html': 'My AI Workspace',
+        'AI03.html': 'Getting Started',
+        'AI04.html': 'Building Dashboards',
+        'AI05.html': 'My AI Workspace',
+        'AI06.html': 'Getting Started',
+        'AI07.html': 'My AI Team',
+        'AI08.html': 'Getting Started',
+        'AI09.html': 'Getting Started',
+        'AI10.html': 'Getting Started',
+        'AI11.html': 'Building Dashboards',
+        'AI12.html': 'Building Dashboards',
+        'AI13.html': 'My AI Team',
+        'AI14.html': 'My AI Workspace',
+        'AI15.html': 'Life with AI',
+        'AI16.html': 'Life with AI',
+        'S17.html':  'Life with AI'
+      };
+      const catConfig = [
+        { name: 'Getting Started',     emoji: '🌱', hue: { bg1:'#f0fdf4', bg2:'#e6fdf0', border:'#16a34a', text:'#14532d', countBg:'rgba(22,163,74,0.13)',   countColor:'#15803d' } },
+        { name: 'Building Dashboards', emoji: '📊', hue: { bg1:'#f0f4ff', bg2:'#e8eeff', border:'#4a6cf7', text:'#1e3a8a', countBg:'rgba(74,108,247,0.13)',  countColor:'#2d4fd4' } },
+        { name: 'My AI Workspace',     emoji: '💻', hue: { bg1:'#f5f0ff', bg2:'#ede8ff', border:'#8b5cf6', text:'#5b21b6', countBg:'rgba(139,92,246,0.13)',  countColor:'#6d28d9' } },
+        { name: 'My AI Team',          emoji: '🤖', hue: { bg1:'#f0fbff', bg2:'#e0f7ff', border:'#06b6d4', text:'#155e75', countBg:'rgba(6,182,212,0.13)',   countColor:'#0e7490' } },
+        { name: 'Life with AI',        emoji: '🌟', hue: { bg1:'#fffbf0', bg2:'#fff5e0', border:'#f59e0b', text:'#92400e', countBg:'rgba(245,158,11,0.13)',  countColor:'#b45309' } }
+      ];
+
+      const aiFiles = [
+        'AI01.html','AI02.html','AI03.html','AI04.html','AI05.html','AI06.html','AI07.html','AI08.html',
+        'AI09.html','AI10.html','AI11.html','AI12.html','AI13.html','AI14.html','AI15.html','AI16.html','S17.html'
+      ];
+
+      const status = document.getElementById('ai-status');
+      const list   = document.getElementById('ai-list');
+
+      const fetched = await Promise.all(
+        aiFiles.map(async (f) => ({ f, title: await getTitle(f) }))
+      );
+
+      const byCat = {};
+      let totalFound = 0;
+      for (const { f, title } of fetched) {
+        if (!title) continue;
+        totalFound++;
+        const cat = catMap[f] || 'Life with AI';
+        if (!byCat[cat]) byCat[cat] = [];
+        byCat[cat].push({ f, title });
+        allDiscoveredPages.push({ key: f.replace('.html',''), title, url: f });
+      }
+
+      for (const { name, emoji, hue } of catConfig) {
+        const articles = byCat[name];
+        if (!articles || articles.length === 0) continue;
+
+        const divLi = document.createElement('li');
+        divLi.className = 'region-divider';
+        const subStyle = 'background:linear-gradient(90deg,'+hue.bg1+','+hue.bg2+');border-top:2px solid '+hue.border+';border-bottom:1px solid '+hue.bg2+';color:'+hue.text+';';
+        const countStyle = 'background:'+hue.countBg+';color:'+hue.countColor+';';
+        divLi.innerHTML = '<div class="region-subhead" style="'+subStyle+'"><span>'+emoji+'</span><span>'+name+'</span><span class="region-count" style="'+countStyle+'">'+articles.length+' '+(articles.length===1?'article':'articles')+'</span></div>';
+        list.appendChild(divLi);
+
+        for (const { f, title } of articles) {
+          const li = document.createElement('li');
+          const a  = document.createElement('a');
+          a.href = f; a.textContent = title;
+          li.appendChild(a); list.appendChild(li);
+        }
+      }
+
+      status.textContent = totalFound + ' articles · 5 categories';
+    }
+
     async function init() {
       const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html','S27.html'];
 
       await Promise.all([
         loadOverseasByRegion(),
         loadFiles(hikingFiles,   'hiking-list',   'hiking-status'),
-        loadSection({ prefix: 'AI', max: 20, padded: true,  listId: 'ai-list',      statusId: 'ai-status'      }).then(() => loadFiles(['S17.html'], 'ai-list',      'ai-status')),
+        loadAIByCategory(),
         loadSection({ prefix: 'TUT', max: 10, padded: true, listId: 'tut-list',     statusId: 'tut-status'     }),
         loadSection({ prefix: 'h',  max: 10, padded: true,  listId: 'health-list',  statusId: 'health-status'  }),
         loadSection({ prefix: 'AIT', max: 10, padded: true, listId: 'ait-list',     statusId: 'ait-status'     }),
