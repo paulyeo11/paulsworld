@@ -156,6 +156,41 @@ Every article/story that contains photos **must** include a **Photo Journal** se
 - Tap photo to open lightbox
 - Reference implementation: `S23.html` photo journal section
 
+### 🔗 Share Button Rule (Standing Default — added 2026-06-20)
+Every story, article, and page must include a **Share button**. Place it prominently — on stories/articles put it in the hero/header area (e.g. below the subtitle or near the top CTA). On ebook/contents pages put it on the cover section next to the main CTA.
+
+Standard implementation:
+```html
+<!-- in <style> -->
+.share-btn{display:inline-block;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;font-weight:700;letter-spacing:.04em;padding:11px 28px;border-radius:30px;cursor:pointer;font-size:1rem;font-family:'Source Serif 4',Georgia,serif;margin-left:12px;transition:background .2s;}
+.share-btn:hover{background:rgba(255,255,255,.25);}
+.share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+
+<!-- in <body> — place button next to hero CTA -->
+<button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<!-- before </body> -->
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+```
+- On iPhone: opens native iOS share sheet (WhatsApp, Messages, etc.)
+- On desktop/other: copies the link and shows "✅ Link copied!" toast
+- Use `window.location.href` (not a hardcoded URL) so it works on any page
+
 ### 📖 eBook Generation
 When generating an eBook, download all images and **embed** them — no external image
 links. Every eBook must be fully self-contained.
