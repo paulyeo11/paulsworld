@@ -186,6 +186,7 @@
   .leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
   .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
 
+  .share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
   @media (max-width: 480px) {
     .header h1 { font-size: 1.05em; }
     #map { height: 44vh; }
@@ -203,8 +204,12 @@
 <div class="header">
   <h1>🇯🇵 MT10: Japan 2026 — <span class="red">Tokyo</span> &amp; <span class="gold">Niseko</span> · <span style="font-size:0.6em;opacity:0.8;">1 Jul – 28 Jul 2026</span></h1>
   <div class="header-sub">Paul &amp; Joanne · Singapore → Tokyo (Narita) → Sapporo → Niseko · 28 Days</div>
-  <div class="countdown-chip" id="countdownChip">Calculating...</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
+    <div class="countdown-chip" id="countdownChip">Calculating...</div>
+    <button class="share-btn" onclick="shareThisPage()" style="font-size:0.78em;padding:3px 12px;border-radius:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;font-weight:700;cursor:pointer;">🔗 Share</button>
+  </div>
 </div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
 
 <!-- TAB BAR -->
 <div class="tab-bar">
@@ -802,6 +807,20 @@ function resetTasks() {
   updateTaskProgress();
 }
 loadTaskState();
+
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
 </script>
 </body>
 </html>
