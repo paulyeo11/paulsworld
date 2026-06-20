@@ -196,6 +196,7 @@ body {
 .lang-bar { display:flex; gap:8px; padding:9px 16px; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
 .lang-btn { padding:5px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.18); background:transparent; color:#8b949e; font-size:0.88em; font-weight:700; cursor:pointer; transition:all 0.2s; }
 .lang-btn.active { background:rgba(240,165,0,0.15); border-color:rgba(240,165,0,0.5); color:#f0a500; }
+@keyframes dashFlow { to { stroke-dashoffset: -100; } }
 </style>
 </head>
 <body>
@@ -974,8 +975,8 @@ const stops = [
 
 // ── MAP SETUP ──
 const map = L.map('map').setView([60.5, 24.0], 5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors', maxZoom: 18
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors &amp; CartoDB', maxZoom: 18
 }).addTo(map);
 
 function makeIcon(color, num) {
@@ -998,9 +999,13 @@ stops.forEach((s, i) => {
   markers.push(m);
 });
 
-// Route line
+// Route line — animated dashed
 const routeCoords = stops.map(s => [s.lat, s.lon]);
-L.polyline(routeCoords, { color: '#f0a500', weight: 3, dashArray: '8,5', opacity: 0.8 }).addTo(map);
+const routeLine = L.polyline(routeCoords, { color: '#f0a500', weight: 3, dashArray: '12,8', opacity: 0.9 }).addTo(map);
+setTimeout(() => {
+  const el = routeLine.getElement();
+  if (el) { el.style.animation = 'dashFlow 3s linear infinite'; el.style.strokeDashoffset = '0'; }
+}, 200);
 
 // ── WIKI IMAGE LOADER ──
 function loadWikiImg(img, title) {
