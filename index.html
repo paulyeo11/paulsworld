@@ -836,13 +836,15 @@
           const li = document.createElement('li');
           const a  = document.createElement('a');
           a.href = filename;
-          a.textContent = title;
+          makeTitleLink(a, title, filename.replace('.html',''));
           li.appendChild(a);
           list.appendChild(li);
           allDiscoveredPages.push({ key: filename.replace('.html', ''), title, url: filename });
         }
       }
-      status.textContent = found > 0 ? found + ' found' : 'None yet';
+      status.innerHTML = found > 0
+        ? '<span class="en">'+found+' found</span><span class="zh">共'+found+'篇</span>'
+        : '<span class="en">None yet</span><span class="zh">尚无内容</span>';
     }
 
     async function loadSection({ prefix, max, listId, statusId, padded }) {
@@ -858,13 +860,15 @@
           const li = document.createElement('li');
           const a  = document.createElement('a');
           a.href = filename;
-          a.textContent = title;
+          makeTitleLink(a, title, prefix + num);
           li.appendChild(a);
           list.appendChild(li);
           allDiscoveredPages.push({ key: prefix + num, title: title, url: filename });
         }
       }
-      status.textContent = found > 0 ? found + ' found' : 'None yet';
+      status.innerHTML = found > 0
+        ? '<span class="en">'+found+' found</span><span class="zh">共'+found+'篇</span>'
+        : '<span class="en">None yet</span><span class="zh">尚无内容</span>';
     }
 
     async function loadPopularStories() {
@@ -975,31 +979,35 @@
         divLi.className = 'region-divider';
         const subStyle = 'background:linear-gradient(90deg,'+hue.bg1+','+hue.bg2+');border-top:2px solid '+hue.border+';border-bottom:1px solid '+hue.bg2+';color:'+hue.text+';';
         const countStyle = 'background:'+hue.countBg+';color:'+hue.countColor+';';
-        divLi.innerHTML = '<div class="region-subhead" style="'+subStyle+'"><span>'+emoji+'</span><span>'+name+'</span><span class="region-count" style="'+countStyle+'">'+stories.length+' '+(stories.length===1?'story':'stories')+'</span></div>';
+        var zhRName = zhRegions[name] || name;
+        var enCnt = stories.length+' '+(stories.length===1?'story':'stories');
+        var zhCnt = stories.length+'篇故事';
+        divLi.innerHTML = '<div class="region-subhead" style="'+subStyle+'"><span>'+emoji+'</span><span class="en">'+name+'</span><span class="zh">'+zhRName+'</span><span class="region-count" style="'+countStyle+'"><span class="en">'+enCnt+'</span><span class="zh">'+zhCnt+'</span></span></div>';
         list.appendChild(divLi);
 
         for (const { f, title } of stories) {
           const li = document.createElement('li');
           const a  = document.createElement('a');
-          a.href = f; a.textContent = title;
+          a.href = f;
+          makeTitleLink(a, title, f.replace('.html',''));
           li.appendChild(a); list.appendChild(li);
         }
       }
 
       const nyHead = document.createElement('li');
       nyHead.className = 'region-divider';
-      nyHead.innerHTML = '<div class="region-notyet-head">&#x270F;&#xFE0F; Yet to Write</div>';
+      nyHead.innerHTML = '<div class="region-notyet-head"><span class="en">&#x270F;&#xFE0F; Yet to Write</span><span class="zh">&#x270F;&#xFE0F; 尚未撰写</span></div>';
       list.appendChild(nyHead);
 
       for (const { emoji, name, hint } of notYetRegions) {
         const li = document.createElement('li');
         li.className = 'not-yet-li';
-        li.innerHTML = '<div class="region-notyet-item"><span>' + emoji + '</span><span><strong>' + name + '</strong><span class="notyet-hint"> — ' + hint + '</span></span><span class="notyet-badge">Coming soon</span></div>';
+        li.innerHTML = '<div class="region-notyet-item"><span>' + emoji + '</span><span><strong>' + name + '</strong><span class="notyet-hint"> — ' + hint + '</span></span><span class="notyet-badge"><span class="en">Coming soon</span><span class="zh">即将推出</span></span></div>';
         list.appendChild(li);
       }
 
       const travelRegions = Object.keys(byRegion).filter(r => r !== 'Personal & Reflections').length;
-      status.textContent = totalFound + ' stories · ' + travelRegions + ' regions';
+      status.innerHTML = '<span class="en">'+totalFound+' stories · '+travelRegions+' regions</span><span class="zh">'+totalFound+'篇故事 · '+travelRegions+'个地区</span>';
     }
 
     async function loadAIByCategory() {
@@ -1061,18 +1069,96 @@
         divLi.className = 'region-divider';
         const subStyle = 'background:linear-gradient(90deg,'+hue.bg1+','+hue.bg2+');border-top:2px solid '+hue.border+';border-bottom:1px solid '+hue.bg2+';color:'+hue.text+';';
         const countStyle = 'background:'+hue.countBg+';color:'+hue.countColor+';';
-        divLi.innerHTML = '<div class="region-subhead" style="'+subStyle+'"><span>'+emoji+'</span><span>'+name+'</span><span class="region-count" style="'+countStyle+'">'+articles.length+' '+(articles.length===1?'article':'articles')+'</span></div>';
+        var zhCatName = zhCats[name] || name;
+        var enACnt = articles.length+' '+(articles.length===1?'article':'articles');
+        var zhACnt = articles.length+'篇文章';
+        divLi.innerHTML = '<div class="region-subhead" style="'+subStyle+'"><span>'+emoji+'</span><span class="en">'+name+'</span><span class="zh">'+zhCatName+'</span><span class="region-count" style="'+countStyle+'"><span class="en">'+enACnt+'</span><span class="zh">'+zhACnt+'</span></span></div>';
         list.appendChild(divLi);
 
         for (const { f, title } of articles) {
           const li = document.createElement('li');
           const a  = document.createElement('a');
-          a.href = f; a.textContent = title;
+          a.href = f;
+          makeTitleLink(a, title, f.replace('.html',''));
           li.appendChild(a); list.appendChild(li);
         }
       }
 
-      status.textContent = totalFound + ' articles · 5 categories';
+      status.innerHTML = '<span class="en">'+totalFound+' articles · 5 categories</span><span class="zh">'+totalFound+'篇文章 · 5个类别</span>';
+    }
+
+    /* ── Chinese title lookup ── */
+    const zhTitles = {
+      'S01':'S01: 迷失麦里芝 — 警察从森林中救出我的那一天',
+      'S02':'S02: 在葡萄牙丢失iPhone的那一天',
+      'S03':'S03: 70岁站上安纳普尔纳大本营',
+      'S04':'S04: 冰岛难忘的10天 — 2025年6月',
+      'S05':'S05: 活着的四年 — 一个退休故事',
+      'S06':'S06: 一章落幕 — 我的辞职与致敬',
+      'S07':'S07: 我与机器人摔跤的那一天 — 并且赢了',
+      'S08':'S08: 提前退休，充实生活',
+      'S09':'S09: 我的2027梦想 — 站上勃朗峰之巅',
+      'S10':'S10: 征服乌拉普山 — 11小时的史诗之旅',
+      'S11':'S11: 巴塔哥尼亚 — 追逐了10年的梦想',
+      'S12':'S12: 东方明珠 — 27天横跨菲律宾',
+      'S13':'S13: 让我失去友谊的汉堡 — 迷失在卡门海滩',
+      'S14':'S14: 艰难攀登让我更强大 — 三年独自背包旅行',
+      'S15':'S15: 我们多么幸运 — 27天穿越东非',
+      'S16':'S16: 阿拉斯加极地之旅 — 30天',
+      'S17':'S17: 教导Jeremy — 我如何用AI帮朋友整理生活',
+      'S18':'S18: D2701丝路列车指南 — 从西安到乌鲁木齐',
+      'S19':'S19: 一步一步 — 我70岁的丛林顶峰攀登',
+      'S20':'S20: 环线与水库 — 我在栗子自然公园的独处早晨',
+      'S21':'S21: 城市漫步 — 从唐人街到海湾',
+      'S22':'S22: 生于加冷巴鲁 — 我的新加坡根',
+      'S23':'S23: 秘密BKE小径 — 我独自徒步至上皮尔斯水库',
+      'S24':'S24: 在日本的一个月 — 我们的九州自驾游',
+      'S25':'S25: 从冰封哈尔滨到翡翠九寨沟 — 独自穿越中国冬日之旅',
+      'S26':'S26: 另一侧 — 三日水库之旅第三天',
+      'S27':'S27: 他们说这座桥是给动物的，我偏要爬上去',
+      'AI01':'AI01: 我如何用Claude AI搭建商业仪表板',
+      'AI02':'AI02: 我70岁如何搭建自己的网站',
+      'AI03':'AI03: 改变一切的一周',
+      'AI04':'AI04: 我如何用AI搭建期权交易仪表板',
+      'AI05':'AI05: 我的保罗世界AI工作区 — 一个文件夹统管所有AI',
+      'AI06':'AI06: 一个YouTube视频让Claude Code豁然开朗',
+      'AI07':'AI07: 认识我的AI团队',
+      'AI08':'AI08: 如何学得如此之快',
+      'AI09':'AI09: AI学习笔记',
+      'AI10':'AI10: 如何比99%的人更好地使用Claude',
+      'AI11':'AI11: 我如何用AI管理22个Tiger交易仓位',
+      'AI12':'AI12: 代币仪表板',
+      'AI13':'AI13: 什么是Claude Cowork？为你工作的AI',
+      'AI14':'AI14: 从我的网站到Notion — 我如何搭建第二大脑',
+      'AI15':'AI15: 我在演讲会上的第一次普通话演讲 — 70岁分享AI',
+      'AI16':'AI16: 过去一个月我的AI体验',
+      'AIT01':'AIT01: 用AI创建Power BI仪表板',
+      'AIT02':'AIT02: Superstore执行仪表板',
+      'AIT03':'AIT03: 网页版Claude Code — 无需终端，无需安装',
+      'AIT05':'AIT05: Claude Fable与我的第二大脑 — 四C框架',
+      'AIT06':'AIT06: Grill-Me — 快速学习任何技能',
+      'AC01':'AC01: 演讲会如何在70岁改变了我的人生',
+      'AC02':'AC02: 我的旅行电子书 — 杨汉忠著',
+      'h01':'H1: 我的肠镜检查之旅 — 亡羊补牢，为时未晚',
+      'h02':'H2: 胆固醇追踪器',
+      'h03':'H3: 启发我下一个十年的那张照片',
+      'h04':'H4: 我的步行习惯',
+      'h05':'H5: 我的血压之旅',
+    };
+    const zhRegions = {
+      'East Asia':'东亚','Southeast Asia':'东南亚','South Asia':'南亚',
+      'Europe':'欧洲','Africa':'非洲','South America':'南美洲',
+      'North & Central America':'北美及中美洲','Personal & Reflections':'个人故事与感悟'
+    };
+    const zhCats = {
+      'Getting Started':'入门','Building Dashboards':'搭建仪表板',
+      'My AI Workspace':'我的AI工作区','My AI Team':'我的AI团队','Life with AI':'与AI同行'
+    };
+    function makeTitleLink(a, enTitle, key) {
+      var zh = zhTitles[key] || enTitle;
+      var enSpan = document.createElement('span'); enSpan.className = 'en'; enSpan.textContent = enTitle;
+      var zhSpan = document.createElement('span'); zhSpan.className = 'zh'; zhSpan.textContent = zh;
+      a.appendChild(enSpan); a.appendChild(zhSpan);
     }
 
     async function init() {
