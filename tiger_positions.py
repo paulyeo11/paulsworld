@@ -122,6 +122,11 @@ def fetch_positions():
             daily_pnl_usd        = _f(getattr(summary, "daily_pnl", None))
             if daily_pnl_usd is None:
                 daily_pnl_usd    = _f(getattr(summary, "today_profit_loss", None))
+            # Debug: print all summary attributes to find Tiger app P&L field
+            print("=== summary attrs ===")
+            for a in [x for x in dir(summary) if not x.startswith('_')]:
+                print(f"  {a} = {getattr(summary, a, None)}")
+            print("=====================")
     except Exception as e:
         print(f"Note: {e}")
 
