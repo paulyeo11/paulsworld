@@ -3,495 +3,551 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIT08: Interactive Data Visualizations</title>
+  <title>AIT08: Paul's World — Live Visualizations</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <style>
-    :root {
-      --blue: #4a6cf7;
-      --accent: #f4813f;
-      --dark: #08080f;
-      --panel: #0f0f1a;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: var(--dark);
-      color: #fff;
-      font-family: 'Source Serif 4', Georgia, serif;
-      min-height: 100vh;
-    }
+    :root { --blue:#4a6cf7; --accent:#f4813f; --dark:#08080f; --panel:#0e0e1a; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--dark); color:#fff; font-family:'Source Serif 4',Georgia,serif; }
 
     .home-btn {
-      position: fixed;
-      top: 14px; left: 14px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: #fff;
-      padding: 7px 16px;
-      border-radius: 20px;
-      text-decoration: none;
-      font-size: 0.82rem;
-      z-index: 200;
-      transition: background .2s;
+      position:fixed; top:14px; left:14px;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+      color:#fff; padding:7px 16px; border-radius:20px;
+      text-decoration:none; font-size:.82rem; z-index:200; transition:background .2s;
     }
-    .home-btn:hover { background: rgba(255,255,255,0.16); }
+    .home-btn:hover { background:rgba(255,255,255,.16); }
 
-    /* Language toggle */
-    .lang-bar {
-      position: fixed;
-      top: 14px; right: 14px;
-      display: flex; gap: 6px;
-      z-index: 200;
-    }
+    .lang-bar { position:fixed; top:14px; right:14px; display:flex; gap:6px; z-index:200; }
     .lang-btn {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: rgba(255,255,255,0.6);
-      padding: 6px 13px;
-      border-radius: 18px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      transition: all .2s;
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+      color:rgba(255,255,255,.6); padding:6px 13px; border-radius:18px;
+      cursor:pointer; font-size:.78rem; transition:all .2s;
     }
-    .lang-btn.active {
-      background: rgba(244,193,63,0.25);
-      border-color: rgba(244,193,63,0.6);
-      color: #f4c13f;
-    }
+    .lang-btn.active { background:rgba(244,193,63,.25); border-color:rgba(244,193,63,.6); color:#f4c13f; }
 
-    /* Hero */
-    .hero {
-      text-align: center;
-      padding: 80px 20px 40px;
-    }
+    .hero { text-align:center; padding:80px 20px 30px; }
     .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(1.8rem, 5vw, 3rem);
-      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.55) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
+      font-family:'Playfair Display',serif; font-size:clamp(1.6rem,4vw,2.8rem);
+      background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.5) 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px;
     }
-    .hero p {
-      color: rgba(255,255,255,0.45);
-      font-size: 1rem;
-      margin-bottom: 20px;
-    }
+    .hero p { color:rgba(255,255,255,.4); font-size:.95rem; margin-bottom:18px; }
+
     .share-btn {
-      display: inline-block;
-      background: rgba(255,255,255,0.1);
-      border: 1.5px solid rgba(255,255,255,0.3);
-      color: #fff;
-      font-weight: 700;
-      padding: 10px 26px;
-      border-radius: 28px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-family: 'Source Serif 4', Georgia, serif;
-      transition: background .2s;
+      display:inline-block; background:rgba(255,255,255,.1);
+      border:1.5px solid rgba(255,255,255,.3); color:#fff;
+      font-weight:700; padding:10px 26px; border-radius:28px; cursor:pointer;
+      font-size:.92rem; font-family:'Source Serif 4',Georgia,serif; transition:background .2s;
     }
-    .share-btn:hover { background: rgba(255,255,255,0.2); }
+    .share-btn:hover { background:rgba(255,255,255,.2); }
     .share-toast {
-      display: none;
-      position: fixed;
-      bottom: 30px; left: 50%;
-      transform: translateX(-50%);
-      background: #1c1c1e;
-      color: #fff;
-      padding: 10px 24px;
-      border-radius: 24px;
-      font-size: 0.9rem;
-      z-index: 9999;
-      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      display:none; position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+      background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px;
+      font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.4);
     }
 
-    /* Panels */
-    .panels {
-      display: flex;
-      gap: 14px;
-      padding: 10px 20px 40px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+    .panels { display:flex; gap:14px; padding:10px 20px 16px; max-width:1400px; margin:0 auto; }
     .panel {
-      flex: 1;
-      background: var(--panel);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      overflow: hidden;
-      position: relative;
-      min-height: 520px;
+      flex:1; background:var(--panel); border:1px solid rgba(255,255,255,.07);
+      border-radius:16px; overflow:hidden; position:relative; min-height:520px;
     }
     .panel-label {
-      position: absolute;
-      top: 13px; left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.3);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      z-index: 10;
-      white-space: nowrap;
-      pointer-events: none;
+      position:absolute; top:13px; left:50%; transform:translateX(-50%);
+      font-size:.68rem; color:rgba(255,255,255,.3); letter-spacing:.12em;
+      text-transform:uppercase; z-index:10; white-space:nowrap; pointer-events:none;
     }
+    #canvas1 { width:100%; height:520px; display:block; }
+    #svg2    { width:100%; height:520px; display:block; }
+    #canvas3 { width:100%; height:520px; display:block; cursor:grab; }
+    #canvas3:active { cursor:grabbing; }
 
-    #canvas1 { width: 100%; height: 520px; display: block; }
-    #svg2    { width: 100%; height: 520px; display: block; }
-    #canvas3 { width: 100%; height: 520px; display: block; }
-
-    /* Descriptions */
-    .descs {
-      display: flex;
-      gap: 14px;
-      padding: 0 20px 50px;
-      max-width: 1400px;
-      margin: 0 auto;
+    .tip {
+      position:fixed; display:none; pointer-events:none; z-index:500;
+      background:rgba(8,8,20,.93); border:1px solid rgba(255,255,255,.14);
+      border-radius:10px; padding:9px 14px; max-width:220px;
     }
-    .desc {
-      flex: 1;
-      color: rgba(255,255,255,0.45);
-      font-size: 0.82rem;
-      line-height: 1.6;
-      text-align: center;
-    }
-    .desc strong { color: rgba(255,255,255,0.7); display: block; margin-bottom: 4px; }
+    .tip-title { font-size:.82rem; color:#fff; font-weight:600; line-height:1.3; }
+    .tip-sub   { font-size:.72rem; color:rgba(255,255,255,.45); margin-top:3px; }
+    .tip-link  { font-size:.7rem; color:#f4813f; margin-top:4px; }
 
-    footer {
-      text-align: center;
-      padding: 30px 20px;
-      color: rgba(255,255,255,0.2);
-      font-size: 0.8rem;
-      border-top: 1px solid rgba(255,255,255,0.06);
+    .globe-legend {
+      position:absolute; bottom:14px; left:14px; z-index:10;
+      font-size:.65rem; color:rgba(255,255,255,.4); line-height:1.9; pointer-events:none;
     }
+    .globe-legend span { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle; }
 
-    @media (max-width: 768px) {
-      .panels, .descs { flex-direction: column; }
-      .panel { min-height: 420px; }
-      #canvas1, #svg2, #canvas3 { height: 420px; }
+    .net-legend {
+      position:absolute; bottom:14px; left:14px; z-index:10;
+      font-size:.65rem; color:rgba(255,255,255,.4); line-height:1.9; pointer-events:none;
+    }
+    .net-legend span { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+
+    .descs { display:flex; gap:14px; padding:0 20px 40px; max-width:1400px; margin:0 auto; }
+    .desc { flex:1; color:rgba(255,255,255,.4); font-size:.8rem; line-height:1.6; text-align:center; }
+    .desc strong { color:rgba(255,255,255,.65); display:block; margin-bottom:4px; }
+
+    footer { text-align:center; padding:28px 20px; color:rgba(255,255,255,.18); font-size:.78rem; border-top:1px solid rgba(255,255,255,.06); }
+
+    @media(max-width:768px) {
+      .panels,.descs { flex-direction:column; }
+      .panel { min-height:400px; }
+      #canvas1,#svg2,#canvas3 { height:400px; }
     }
   </style>
 </head>
 <body>
 
 <a href="https://paulsworld.vercel.app" class="home-btn">🏠 Home</a>
-
 <div class="lang-bar">
   <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
   <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
 </div>
 
 <div class="hero">
-  <h1 data-en="AIT08: Interactive Data Visualizations" data-zh="AIT08：互动数据可视化">AIT08: Interactive Data Visualizations</h1>
-  <p data-en="Three live visualizations — drag, explore, interact" data-zh="三个实时可视化 — 拖拽、探索、互动">Three live visualizations — drag, explore, interact</p>
+  <h1 data-en="AIT08: Paul's World — Live Visualizations" data-zh="AIT08：保罗的世界 — 实时可视化">AIT08: Paul's World — Live Visualizations</h1>
+  <p data-en="Real data from Paul's articles and travels — tap to explore" data-zh="来自保罗文章和旅行的真实数据 — 点击探索">Real data from Paul's articles and travels — tap to explore</p>
   <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
 </div>
 <div class="share-toast" id="shareToast">✅ Link copied!</div>
 
+<div class="tip" id="tip">
+  <div class="tip-title" id="tipTitle"></div>
+  <div class="tip-sub"   id="tipSub"></div>
+  <div class="tip-link"  id="tipLink"></div>
+</div>
+
 <div class="panels">
+
   <div class="panel">
     <div class="panel-label" data-en="Particle Galaxy" data-zh="粒子星系">Particle Galaxy</div>
     <canvas id="canvas1"></canvas>
   </div>
-  <div class="panel">
-    <div class="panel-label" data-en="Force Network" data-zh="力导向网络">Force Network</div>
+
+  <div class="panel" style="position:relative">
+    <div class="panel-label" data-en="My Articles Network" data-zh="我的文章网络">My Articles Network</div>
     <svg id="svg2"></svg>
+    <div class="net-legend">
+      <div><span style="background:#f59e0b"></span><span data-en="Travel Stories" data-zh="旅行故事">Travel Stories</span></div>
+      <div><span style="background:#4a6cf7"></span><span data-en="AI Journey" data-zh="AI旅程">AI Journey</span></div>
+      <div><span style="background:#e879f9"></span><span data-en="AI Tools" data-zh="AI工具">AI Tools</span></div>
+      <div><span style="background:#ffe566"></span><span data-en="Achievements" data-zh="成就">Achievements</span></div>
+      <div><span style="background:#10b981"></span><span data-en="Health" data-zh="健康">Health</span></div>
+      <div><span style="background:#38bdf8"></span><span data-en="Books" data-zh="读书">Books</span></div>
+    </div>
   </div>
-  <div class="panel">
-    <div class="panel-label" data-en="Bubble Sphere" data-zh="气泡球体">Bubble Sphere</div>
+
+  <div class="panel" style="position:relative">
+    <div class="panel-label" data-en="Travel Globe" data-zh="旅行地球">Travel Globe</div>
     <canvas id="canvas3"></canvas>
+    <div class="globe-legend">
+      <div><span style="background:#f4813f"></span>Asia</div>
+      <div><span style="background:#4a6cf7"></span>Europe</div>
+      <div><span style="background:#e879f9"></span>Americas</div>
+      <div><span style="background:#10b981"></span>Africa</div>
+      <div style="margin-top:4px;font-size:.6rem;opacity:.6" data-en="Bubble size = stories" data-zh="气泡大小 = 故事数">Bubble size = stories</div>
+    </div>
   </div>
+
 </div>
 
 <div class="descs">
   <div class="desc">
     <strong data-en="Particle Galaxy" data-zh="粒子星系">Particle Galaxy</strong>
-    <span data-en="Hundreds of particles orbit in layered rings around a central cluster, simulating a galaxy in motion." data-zh="数百个粒子在中心星团周围的多层轨道上旋转，模拟运动中的星系。">Hundreds of particles orbit in layered rings around a central cluster, simulating a galaxy in motion.</span>
+    <span data-en="Particles orbit in layered rings — a visual metaphor for ideas circling a creative core." data-zh="粒子在多层轨道上旋转——象征着围绕创意核心旋转的思想。">Particles orbit in layered rings — a visual metaphor for ideas circling a creative core.</span>
   </div>
   <div class="desc">
-    <strong data-en="Force Network" data-zh="力导向网络">Force Network</strong>
-    <span data-en="A physics-based graph where nodes attract and repel each other. Drag any node to explore the connections." data-zh="一个基于物理的图形，节点互相吸引和排斥。拖动任意节点以探索连接关系。">A physics-based graph where nodes attract and repel each other. Drag any node to explore the connections.</span>
+    <strong data-en="My Articles Network" data-zh="我的文章网络">My Articles Network</strong>
+    <span data-en="Every article Paul has written, grouped by category. Drag any node — click any article to open it." data-zh="保罗写的每篇文章，按类别分组。拖动任意节点，点击即可打开文章。">Every article Paul has written, grouped by category. Drag any node — click any article to open it.</span>
   </div>
   <div class="desc">
-    <strong data-en="Bubble Sphere" data-zh="气泡球体">Bubble Sphere</strong>
-    <span data-en="280 coloured bubbles arranged on a spinning 3D sphere using Fibonacci distribution — the same pattern found in nature." data-zh="280个彩色气泡按斐波那契分布排列在旋转的3D球体上——这是自然界中常见的模式。">280 coloured bubbles arranged on a spinning 3D sphere using Fibonacci distribution — the same pattern found in nature.</span>
+    <strong data-en="Travel Globe" data-zh="旅行地球">Travel Globe</strong>
+    <span data-en="14 real destinations from Paul's travel stories placed at true coordinates. Bigger bubble = more stories. Tap to open." data-zh="来自保罗旅行故事的14个真实目的地，按真实坐标放置。气泡越大 = 故事越多。点击打开。">14 real destinations from Paul's travel stories placed at true coordinates. Bigger bubble = more stories. Tap to open.</span>
   </div>
 </div>
 
-<div style="text-align:center;padding:0 20px 40px;">
+<div style="text-align:center;padding:0 20px 40px">
   <script src="/view-counter.js"></script>
 </div>
 
 <footer>Paul's World © 2026 · AI Tools</footer>
 
 <script>
-// ─── Language toggle ───────────────────────────────────────────
+// ─── Language ──────────────────────────────────────────────────
+const LANG = { v:'en' };
 function setLang(lang) {
+  LANG.v = lang;
   document.querySelectorAll('[data-en]').forEach(el => {
     el.textContent = el.getAttribute('data-' + lang);
   });
+  d3.selectAll('.hub-text').each(function(d) {
+    d3.select(this).text(lang === 'en' ? d.labelEn : d.labelZh);
+  });
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.lang-btn').forEach(b => {
-    if ((lang === 'en' && b.textContent.includes('English')) ||
-        (lang === 'zh' && b.textContent.includes('中文'))) {
+    if ((lang==='en'&&b.textContent.includes('English'))||(lang==='zh'&&b.textContent.includes('中文')))
       b.classList.add('active');
-    }
   });
 }
 
 // ─── Share ─────────────────────────────────────────────────────
 function shareThisPage() {
-  var url = window.location.href;
-  var title = document.title;
-  if (navigator.share) {
-    navigator.share({ title: title, url: url }).catch(function(){});
-  } else {
-    navigator.clipboard.writeText(url).then(function() {
-      var t = document.getElementById('shareToast');
-      t.style.display = 'block';
-      setTimeout(function(){ t.style.display = 'none'; }, 2200);
-    });
-  }
+  if (navigator.share) { navigator.share({title:document.title,url:location.href}).catch(()=>{}); }
+  else { navigator.clipboard.writeText(location.href).then(()=>{
+    const t=document.getElementById('shareToast');
+    t.style.display='block'; setTimeout(()=>t.style.display='none',2200);
+  }); }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// PANEL 1 · Particle Galaxy (Canvas 2D)
-// ─────────────────────────────────────────────────────────────────
-(function() {
-  const canvas = document.getElementById('canvas1');
-  const W = canvas.offsetWidth || 420;
-  const H = canvas.offsetHeight || 520;
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  const cx = W / 2, cy = H / 2;
+// ─── Tooltip ───────────────────────────────────────────────────
+const tip=document.getElementById('tip');
+const tipTitle=document.getElementById('tipTitle');
+const tipSub=document.getElementById('tipSub');
+const tipLink=document.getElementById('tipLink');
+function showTip(x,y,title,sub,link){
+  tipTitle.textContent=title; tipSub.textContent=sub; tipLink.textContent=link||'';
+  tip.style.display='block'; tip.style.left=(x+14)+'px'; tip.style.top=(y-10)+'px';
+}
+function hideTip(){ tip.style.display='none'; }
 
-  const particles = [];
+// ═══════════════════════════════════════════════════════════════
+// PANEL 1 · Particle Galaxy
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  const canvas=document.getElementById('canvas1');
+  const W=canvas.offsetWidth||420, H=canvas.offsetHeight||520;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const cx=W/2, cy=H/2;
+  const pts=[];
 
-  function addRing(count, rMin, rMax, sizeMin, sizeMax, alphaMin, alphaMax, speedScale) {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const r     = rMin + Math.random() * (rMax - rMin);
-      const dir   = Math.random() > 0.5 ? 1 : -1;
-      particles.push({
-        angle, r,
-        size:  sizeMin + Math.random() * (sizeMax - sizeMin),
-        speed: dir * (0.0006 + Math.random() * speedScale),
-        alpha: alphaMin + Math.random() * (alphaMax - alphaMin)
-      });
+  function ring(n,r0,r1,s0,s1,a0,a1,spd){
+    for(let i=0;i<n;i++){
+      const angle=Math.random()*Math.PI*2, r=r0+Math.random()*(r1-r0);
+      pts.push({angle,r,size:s0+Math.random()*(s1-s0),
+        speed:(Math.random()>.5?1:-1)*(0.0004+Math.random()*spd),
+        alpha:a0+Math.random()*(a1-a0)});
     }
   }
+  ring(80, 0, 45, 0.6,2.2,0.25,0.85,0.003);
+  ring(110,85,135,0.8,2.4,0.35,0.95,0.002);
+  ring(70,150,170,0.4,1.5,0.10,0.40,0.0008);
+  ring(40,178,200,0.3,1.0,0.05,0.20,0.0004);
+  ring(30, 50,160,0.3,0.8,0.05,0.15,0.0003);
 
-  addRing(80,  0,  45, 0.6, 2.2, 0.25, 0.85, 0.003); // core
-  addRing(110, 85, 135, 0.8, 2.4, 0.35, 0.95, 0.002); // main ring
-  addRing(70, 148, 168, 0.4, 1.5, 0.10, 0.40, 0.0008); // outer halo
-  addRing(40, 175, 200, 0.3, 1.0, 0.05, 0.20, 0.0004); // far fringe
-
-  // A few scattered "stars" across the whole field
-  for (let i = 0; i < 30; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const r     = 50 + Math.random() * 160;
-    particles.push({
-      angle, r,
-      size:  0.3 + Math.random() * 0.8,
-      speed: (Math.random() > 0.5 ? 1 : -1) * 0.0003,
-      alpha: 0.08 + Math.random() * 0.18
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#07070e';
-    ctx.fillRect(0, 0, W, H);
-
-    // Soft core glow
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 55);
-    g.addColorStop(0, 'rgba(120,140,255,0.14)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    particles.forEach(p => {
-      p.angle += p.speed;
-      const x = cx + Math.cos(p.angle) * p.r;
-      const y = cy + Math.sin(p.angle) * p.r;
+  (function draw(){
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#07070e'; ctx.fillRect(0,0,W,H);
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,55);
+    g.addColorStop(0,'rgba(120,140,255,0.13)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.angle+=p.speed;
       ctx.beginPath();
-      ctx.arc(x, y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
-      ctx.fill();
+      ctx.arc(cx+Math.cos(p.angle)*p.r, cy+Math.sin(p.angle)*p.r, p.size, 0, Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${p.alpha})`; ctx.fill();
     });
-
     requestAnimationFrame(draw);
-  }
-  draw();
+  })();
 })();
 
-// ─────────────────────────────────────────────────────────────────
-// PANEL 2 · D3 Force Network
-// ─────────────────────────────────────────────────────────────────
-(function() {
-  const el = document.getElementById('svg2');
-  const W  = el.clientWidth  || 420;
-  const H  = el.clientHeight || 520;
-  const svg = d3.select(el).attr('width', W).attr('height', H);
+// ═══════════════════════════════════════════════════════════════
+// PANEL 2 · Article Network (Paul's real articles)
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  const CAT_COLORS=['#f59e0b','#4a6cf7','#e879f9','#ffe566','#10b981','#38bdf8'];
 
-  const N = 55;
-  const nodes = d3.range(N).map(i => ({
-    id:    i,
-    group: Math.floor(Math.random() * 6),
-    size:  i === 0 ? 14 : 3 + Math.random() * 5
-  }));
+  const FULL={
+    S01:"Lost in MacRitchie — The Day Police Rescued Me",
+    S02:"The Day I Lost My iPhone in Portugal",
+    S03:"Standing at Annapurna Base Camp at 70",
+    S04:"10 Unforgettable Days in Iceland",
+    S05:"Four Years of Living — A Retirement Story",
+    S06:"A Chapter Closes – My ECO Farewell",
+    S07:"The Day I Wrestled a Robot — and Won",
+    S08:"Retire Early — Live Fully",
+    S09:"My 2027 Dream — Standing on Top of Mont Blanc",
+    S10:"Conquering Mount Ulap — An 11-Hour Odyssey",
+    S11:"Patagonia — The Dream I Chased for 10 Years",
+    S12:"Pearl of the Orient — 27 Days Across the Philippines",
+    S13:"The Burger That Cost Me a Friendship",
+    S14:"The Hard Climbs Made Me Stronger",
+    S15:"How Lucky We Are — 27 Days Across East Africa",
+    S16:"Arctic on Alaska — 30 Days on America's Most Feared Road",
+    S17:"Teaching Jeremy — Using AI to Help My Friend",
+    S18:"D2701 Silk Road Train Guide — Xi'an to Urumqi",
+    S19:"One Step at a Time — My Jungle Summit Climb at 70",
+    S20:"The Loop and the Reservoir — Solo Morning at Chestnut",
+    S21:"City Walk — From Chinatown to the Bay",
+    S22:"Born at Kandang Kerbau — My Singapore Roots",
+    S23:"The Secret BKE Trail — Solo Hike to Upper Peirce",
+    S24:"One Month in Japan — Our Kyushu Road Trip",
+    S25:"From Frozen Harbin to Jade Jiuzhaigou",
+    S26:"The Other Side — Day 3 of My Three-Day Reservoir Journey",
+    S27:"They Said This Bridge Is for Animals. I Climbed It Anyway.",
+    AI01:"How I Built a Business Dashboard Using Claude AI",
+    AI02:"How I Built My Own Website at 70",
+    AI03:"One Week That Changed Everything",
+    AI04:"How I Used AI to Build My Options Trading Dashboard",
+    AI05:"My Paulsworld AI Workspace",
+    AI06:"How One YouTube Video Made Claude Code Click",
+    AI07:"Meet My AI Team",
+    AI08:"How to Learn So Fast It's Almost Unfair",
+    AI09:"You're Not Behind — Master AI in 30 Days",
+    AI10:"How to Use Claude Better Than 99% of People",
+    AI11:"How I Use AI to Manage My Tiger Trading Positions",
+    AI12:"Token Dashboard",
+    AI13:"What is Claude Cowork?",
+    AI14:"From My Website to Notion — My Second Brain",
+    AI15:"My First Mandarin Speech at Toastmasters",
+    AI16:"My AI Experience in the Past Month",
+    AIT01:"AI Create PBI Dashboard",
+    AIT02:"Superstore Executive Dashboard",
+    AIT03:"Claude Code on the Web — No Terminal, No Setup",
+    AIT05:"Claude Fable & My Second Brain — The Four Cs Framework",
+    AIT06:"Grill-Me — Learn Any Skill Fast",
+    AIT07:"Google Drive Connector",
+    AIT08:"Interactive Data Visualizations",
+    AC01:"How Toastmasters Changed My Life at 70",
+    AC02:"My Travel — eBook by Paul Yeo",
+    h01:"My Colonoscopy Journey",
+    h02:"Cholesterol Tracker",
+    h03:"The Photo That Inspired My Next Decade",
+    h04:"My Walking Habit",
+    h05:"My Blood Pressure Journey",
+    B01:"The Power of Now",
+    B02:"One Month to Better Sight",
+    B11:"HWMR Week 1 Day 6",
+  };
 
-  const links = [];
-  // Hub spokes from node 0
-  for (let i = 1; i <= 14; i++) links.push({ source: 0, target: i });
-  // Random mesh
-  for (let k = 0; k < 65; k++) {
-    const s = 1 + Math.floor(Math.random() * (N - 1));
-    const t = 1 + Math.floor(Math.random() * (N - 1));
-    if (s !== t) links.push({ source: s, target: t });
-  }
-  // A few local clusters
-  [[10,11],[10,12],[13,14],[15,16],[15,17],[20,21],[20,22],[20,23]].forEach(([a,b]) => {
-    links.push({ source: a, target: b });
-  });
-
-  const palette = ['#4a6cf7','#f4813f','#10b981','#e879f9','#f59e0b','#38bdf8'];
-
-  svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#07070e');
-
-  const sim = d3.forceSimulation(nodes)
-    .force('link',      d3.forceLink(links).id(d => d.id).distance(42).strength(0.25))
-    .force('charge',    d3.forceManyBody().strength(-90))
-    .force('center',    d3.forceCenter(W / 2, H / 2))
-    .force('collision', d3.forceCollide(d => d.size + 3));
-
-  const linkSel = svg.append('g').selectAll('line').data(links).join('line')
-    .attr('stroke', 'rgba(255,255,255,0.13)')
-    .attr('stroke-width', 0.9);
-
-  const nodeSel = svg.append('g').selectAll('circle').data(nodes).join('circle')
-    .attr('r',    d => d.size)
-    .attr('fill', d => d.id === 0 ? '#ffe566' : palette[d.group])
-    .attr('fill-opacity', d => d.id === 0 ? 1 : 0.75)
-    .attr('cursor', 'grab')
-    .call(
-      d3.drag()
-        .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-        .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
-        .on('end',   (e, d) => { if (!e.active) sim.alphaTarget(0);  d.fx = null; d.fy = null; })
-    );
-
-  // Glow on hub
-  svg.append('circle')
-    .datum(nodes[0])
-    .attr('r', 22)
-    .attr('fill', 'rgba(255,230,100,0.12)')
-    .attr('pointer-events', 'none')
-    .attr('id', 'hub-glow');
-
-  sim.on('tick', () => {
-    linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-           .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
-    nodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
-    d3.select('#hub-glow').attr('cx', nodes[0].x).attr('cy', nodes[0].y);
-  });
-})();
-
-// ─────────────────────────────────────────────────────────────────
-// PANEL 3 · Three.js Bubble Sphere
-// ─────────────────────────────────────────────────────────────────
-(function() {
-  const canvas = document.getElementById('canvas3');
-  const W = canvas.offsetWidth  || 420;
-  const H = canvas.offsetHeight || 520;
-  canvas.width  = W;
-  canvas.height = H;
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(W, H);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  const scene  = new THREE.Scene();
-  scene.background = new THREE.Color(0x07070e);
-
-  const camera = new THREE.PerspectiveCamera(58, W / H, 0.1, 100);
-  camera.position.z = 4.2;
-
-  // Lighting
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const pt = new THREE.PointLight(0xffffff, 1.2, 50);
-  pt.position.set(4, 5, 6);
-  scene.add(pt);
-  const pt2 = new THREE.PointLight(0x4466ff, 0.4, 30);
-  pt2.position.set(-4, -3, 2);
-  scene.add(pt2);
-
-  // Colour palette
-  const COLORS = [
-    0xff3333, 0xff6622, 0xffaa00, 0xffdd00,
-    0x44ff88, 0x00ddcc, 0x22aaff, 0x4466ff,
-    0x9944ff, 0xff44cc, 0xff8866, 0x66ffaa
+  const NODES=[
+    {id:'h-travel',labelEn:'Travel Stories',labelZh:'旅行故事',cat:0,isHub:true},
+    {id:'h-ai',    labelEn:'AI Journey',    labelZh:'AI旅程',  cat:1,isHub:true},
+    {id:'h-ait',   labelEn:'AI Tools',      labelZh:'AI工具',  cat:2,isHub:true},
+    {id:'h-ac',    labelEn:'Achievements',  labelZh:'成就',    cat:3,isHub:true},
+    {id:'h-health',labelEn:'Health',        labelZh:'健康',    cat:4,isHub:true},
+    {id:'h-books', labelEn:'Books',         labelZh:'读书',    cat:5,isHub:true},
+    {id:'S01',label:'MacRitchie',     cat:0},{id:'S02',label:'Portugal',       cat:0},
+    {id:'S03',label:'Annapurna',      cat:0},{id:'S04',label:'Iceland',        cat:0},
+    {id:'S05',label:'Retirement',     cat:0},{id:'S06',label:'ECO Farewell',   cat:0},
+    {id:'S07',label:'Robot Wrestling',cat:0},{id:'S08',label:'Retire Early',   cat:0},
+    {id:'S09',label:'Mont Blanc',     cat:0},{id:'S10',label:'Mount Ulap',     cat:0},
+    {id:'S11',label:'Patagonia',      cat:0},{id:'S12',label:'Philippines',    cat:0},
+    {id:'S13',label:'Playa del Carmen',cat:0},{id:'S14',label:'Hard Climbs',   cat:0},
+    {id:'S15',label:'East Africa',    cat:0},{id:'S16',label:'Alaska',         cat:0},
+    {id:'S17',label:'Teaching Jeremy',cat:0},{id:'S18',label:'Silk Road Train',cat:0},
+    {id:'S19',label:'Jungle Summit',  cat:0},{id:'S20',label:'Chestnut Park',  cat:0},
+    {id:'S21',label:'City Walk',      cat:0},{id:'S22',label:'Singapore Roots',cat:0},
+    {id:'S23',label:'BKE Trail',      cat:0},{id:'S24',label:'Japan Kyushu',   cat:0},
+    {id:'S25',label:'China Winter',   cat:0},{id:'S26',label:'3-Day Reservoir',cat:0},
+    {id:'S27',label:'Animals Bridge', cat:0},
+    {id:'AI01',label:'Business Dash',   cat:1},{id:'AI02',label:'Website at 70', cat:1},
+    {id:'AI03',label:'One Week Changed',cat:1},{id:'AI04',label:'Options Dash',  cat:1},
+    {id:'AI05',label:'AI Workspace',   cat:1},{id:'AI06',label:'YouTube Click',  cat:1},
+    {id:'AI07',label:'Meet AI Team',   cat:1},{id:'AI08',label:'Learn Fast',     cat:1},
+    {id:'AI09',label:"Not Behind",     cat:1},{id:'AI10',label:'Use Claude',     cat:1},
+    {id:'AI11',label:'Tiger Positions',cat:1},{id:'AI12',label:'Token Dashboard',cat:1},
+    {id:'AI13',label:'Claude Cowork',  cat:1},{id:'AI14',label:'Second Brain',   cat:1},
+    {id:'AI15',label:'Mandarin Speech',cat:1},{id:'AI16',label:'AI Month Review',cat:1},
+    {id:'AIT01',label:'PBI Dashboard', cat:2},{id:'AIT02',label:'Superstore Dash',cat:2},
+    {id:'AIT03',label:'Claude on Web', cat:2},{id:'AIT05',label:'Four Cs',       cat:2},
+    {id:'AIT06',label:'Grill-Me',      cat:2},{id:'AIT07',label:'Drive Connector',cat:2},
+    {id:'AIT08',label:'Visualizations',cat:2},
+    {id:'AC01',label:'Toastmasters',   cat:3},{id:'AC02',label:'Travel eBook',   cat:3},
+    {id:'h01', label:'Colonoscopy',    cat:4},{id:'h02', label:'Cholesterol',    cat:4},
+    {id:'h03', label:'Photo Inspired', cat:4},{id:'h04', label:'Walking Habit',  cat:4},
+    {id:'h05', label:'Blood Pressure', cat:4},
+    {id:'B01', label:'Power of Now',   cat:5},{id:'B02', label:'Better Sight',   cat:5},
+    {id:'B11', label:'HWMR Day 6',     cat:5},
   ];
 
-  // Fibonacci sphere — 280 small spheres on a larger sphere surface
-  const R       = 1.55;
-  const COUNT   = 280;
-  const GOLDEN  = (1 + Math.sqrt(5)) / 2;
-  const group   = new THREE.Group();
-  scene.add(group);
+  const HUB_MAP={0:'h-travel',1:'h-ai',2:'h-ait',3:'h-ac',4:'h-health',5:'h-books'};
+  const HUB_IDS=['h-travel','h-ai','h-ait','h-ac','h-health','h-books'];
+  const LINKS=[];
+  NODES.forEach(n=>{ if(!n.isHub) LINKS.push({source:n.id,target:HUB_MAP[n.cat],t:'a'}); });
+  for(let i=0;i<HUB_IDS.length;i++) LINKS.push({source:HUB_IDS[i],target:HUB_IDS[(i+1)%HUB_IDS.length],t:'h'});
 
-  const geo = new THREE.SphereGeometry(0.095, 10, 10);
+  const el=document.getElementById('svg2');
+  const W=el.clientWidth||420, H=el.clientHeight||520;
+  const svg=d3.select(el).attr('width',W).attr('height',H);
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#07070e');
 
-  for (let i = 0; i < COUNT; i++) {
-    const theta = Math.acos(1 - 2 * (i + 0.5) / COUNT);
-    const phi   = 2 * Math.PI * i / GOLDEN;
-    const x     = Math.sin(theta) * Math.cos(phi);
-    const y     = Math.sin(theta) * Math.sin(phi);
-    const z     = Math.cos(theta);
+  const sim=d3.forceSimulation(NODES)
+    .force('link',d3.forceLink(LINKS).id(d=>d.id).distance(d=>d.t==='h'?160:38).strength(d=>d.t==='h'?0.15:0.45))
+    .force('charge',d3.forceManyBody().strength(d=>d.isHub?-280:-45))
+    .force('center',d3.forceCenter(W/2,H/2))
+    .force('collision',d3.forceCollide(d=>d.isHub?22:7));
 
-    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-    const mat   = new THREE.MeshPhongMaterial({
-      color,
-      shininess: 90,
-      emissive:  new THREE.Color(color).multiplyScalar(0.12)
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x * R, y * R, z * R);
-    group.add(mesh);
-  }
+  const linkSel=svg.append('g').selectAll('line').data(LINKS).join('line')
+    .attr('stroke',d=>d.t==='h'?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.12)')
+    .attr('stroke-width',d=>d.t==='h'?0.6:0.5);
 
-  // Mouse-drag rotation
-  let isDragging = false, prevX = 0, prevY = 0;
-  canvas.addEventListener('mousedown',  e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
-  canvas.addEventListener('mousemove',  e => {
-    if (!isDragging) return;
-    group.rotation.y += (e.clientX - prevX) * 0.01;
-    group.rotation.x += (e.clientY - prevY) * 0.01;
-    prevX = e.clientX; prevY = e.clientY;
+  const nodeSel=svg.append('g').selectAll('g').data(NODES).join('g')
+    .attr('cursor',d=>d.isHub?'default':'pointer')
+    .on('mousemove',(e,d)=>{
+      if(!d.isHub) showTip(e.clientX,e.clientY,
+        FULL[d.id]||d.label,
+        LANG.v==='en'?'Click to open':'点击打开',d.id);
+    })
+    .on('mouseleave',hideTip)
+    .on('click',(e,d)=>{ if(!d.isHub&&d.id) window.open('/'+d.id+'.html','_blank'); })
+    .call(d3.drag()
+      .on('start',(e,d)=>{ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag', (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+      .on('end',  (e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+    );
+
+  nodeSel.append('circle')
+    .attr('r',d=>d.isHub?14:5)
+    .attr('fill',d=>CAT_COLORS[d.cat])
+    .attr('fill-opacity',d=>d.isHub?1:0.7)
+    .attr('stroke',d=>d.isHub?'#fff':'none')
+    .attr('stroke-width',d=>d.isHub?1.2:0);
+
+  nodeSel.filter(d=>d.isHub).append('text')
+    .attr('class','hub-text')
+    .attr('text-anchor','middle')
+    .attr('dy','3.2em')
+    .attr('fill','rgba(255,255,255,0.6)')
+    .attr('font-size','9px')
+    .attr('pointer-events','none')
+    .text(d=>d.labelEn);
+
+  sim.on('tick',()=>{
+    linkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+           .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeSel.attr('transform',d=>`translate(${d.x},${d.y})`);
   });
-  canvas.addEventListener('mouseup',   () => { isDragging = false; });
-  canvas.addEventListener('mouseleave',() => { isDragging = false; });
+})();
 
-  // Touch drag
-  canvas.addEventListener('touchstart', e => { prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; });
-  canvas.addEventListener('touchmove',  e => {
-    e.preventDefault();
-    group.rotation.y += (e.touches[0].clientX - prevX) * 0.012;
-    group.rotation.x += (e.touches[0].clientY - prevY) * 0.012;
-    prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
-  }, { passive: false });
+// ═══════════════════════════════════════════════════════════════
+// PANEL 3 · Travel Globe (real destinations)
+// ═══════════════════════════════════════════════════════════════
+(function(){
+  const DESTS=[
+    {name:"Singapore",    zh:"新加坡",      region:"Asia",     lat:1.35,  lng:103.82, stories:11,ids:["S01","S05","S06","S17","S19","S20","S21","S22","S23","S26","S27"]},
+    {name:"Portugal",     zh:"葡萄牙",      region:"Europe",   lat:39.40, lng:-8.22,  stories:1, ids:["S02"]},
+    {name:"Nepal",        zh:"尼泊尔",      region:"Asia",     lat:28.53, lng:83.82,  stories:1, ids:["S03"]},
+    {name:"Iceland",      zh:"冰岛",        region:"Europe",   lat:64.96, lng:-19.02, stories:1, ids:["S04"]},
+    {name:"France (Mont Blanc)", zh:"法国勃朗峰", region:"Europe", lat:45.83,lng:6.87, stories:1,ids:["S09"]},
+    {name:"Philippines",  zh:"菲律宾",      region:"Asia",     lat:12.88, lng:121.77, stories:2, ids:["S10","S12"]},
+    {name:"Patagonia",    zh:"巴塔哥尼亚",  region:"Americas", lat:-41.13,lng:-71.31, stories:1, ids:["S11"]},
+    {name:"Mexico",       zh:"墨西哥",      region:"Americas", lat:20.63, lng:-87.07, stories:1, ids:["S13"]},
+    {name:"East Africa",  zh:"东非",        region:"Africa",   lat:-1.29, lng:36.82,  stories:1, ids:["S15"]},
+    {name:"Alaska",       zh:"阿拉斯加",    region:"Americas", lat:64.20, lng:-153.49,stories:1, ids:["S16"]},
+    {name:"China (Xi'an)",zh:"中国西安",    region:"Asia",     lat:34.34, lng:108.94, stories:1, ids:["S18"]},
+    {name:"Japan (Kyushu)",zh:"日本九州",   region:"Asia",     lat:33.59, lng:130.89, stories:1, ids:["S24"]},
+    {name:"China (Harbin)",zh:"中国哈尔滨", region:"Asia",     lat:45.80, lng:126.53, stories:1, ids:["S25"]},
+    {name:"Jiuzhaigou",   zh:"九寨沟",      region:"Asia",     lat:33.26, lng:103.92, stories:1, ids:["S25"]},
+  ];
+  const REG_COL={Asia:0xf4813f, Europe:0x4a6cf7, Americas:0xe879f9, Africa:0x10b981};
 
-  function animate() {
-    requestAnimationFrame(animate);
-    if (!isDragging) {
-      group.rotation.y += 0.004;
-      group.rotation.x += 0.0008;
-    }
-    renderer.render(scene, camera);
+  const canvas=document.getElementById('canvas3');
+  const W=canvas.offsetWidth||420, H=canvas.offsetHeight||520;
+  canvas.width=W; canvas.height=H;
+
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setSize(W,H); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x07070e);
+  const camera=new THREE.PerspectiveCamera(55,W/H,0.1,100); camera.position.z=3.6;
+
+  scene.add(new THREE.AmbientLight(0xffffff,0.5));
+  const pt=new THREE.PointLight(0xffffff,1.1,50); pt.position.set(4,5,6); scene.add(pt);
+  const pt2=new THREE.PointLight(0x4466ff,0.35,30); pt2.position.set(-4,-3,2); scene.add(pt2);
+
+  const R=1.5;
+  const globe=new THREE.Group(); scene.add(globe);
+
+  // Dark sphere base
+  globe.add(new THREE.Mesh(
+    new THREE.SphereGeometry(R,48,32),
+    new THREE.MeshPhongMaterial({color:0x0a0a1a,shininess:10})
+  ));
+
+  function latlng3D(lat,lng){
+    const phi=(90-lat)*Math.PI/180, theta=(lng+180)*Math.PI/180;
+    return new THREE.Vector3(-R*Math.sin(phi)*Math.cos(theta), R*Math.cos(phi), R*Math.sin(phi)*Math.sin(theta));
   }
-  animate();
+
+  // Grid lines
+  function latLine(lat){
+    const pts=[]; for(let l=0;l<=360;l+=3) pts.push(latlng3D(lat,l));
+    globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({color:0x223355,transparent:true,opacity:0.22})));
+  }
+  function lngLine(lng){
+    const pts=[]; for(let l=-90;l<=90;l+=3) pts.push(latlng3D(l,lng));
+    globe.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({color:0x223355,transparent:true,opacity:0.22})));
+  }
+  [-60,-30,0,30,60].forEach(latLine);
+  for(let l=0;l<360;l+=30) lngLine(l);
+
+  // Destination bubbles
+  const destMeshes=[];
+  DESTS.forEach(d=>{
+    const pos=latlng3D(d.lat,d.lng);
+    const sz=0.05+Math.sqrt(d.stories)*0.044;
+    const col=REG_COL[d.region];
+    const mesh=new THREE.Mesh(
+      new THREE.SphereGeometry(sz,12,12),
+      new THREE.MeshPhongMaterial({color:col,shininess:90,emissive:new THREE.Color(col).multiplyScalar(0.35)})
+    );
+    mesh.position.copy(pos); mesh.userData=d; globe.add(mesh); destMeshes.push(mesh);
+
+    // Halo
+    const halo=new THREE.Mesh(
+      new THREE.RingGeometry(sz*1.4,sz*2.0,24),
+      new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.22,side:THREE.DoubleSide})
+    );
+    halo.position.copy(pos); halo.lookAt(pos.clone().multiplyScalar(2)); globe.add(halo);
+  });
+
+  // Hover / click
+  const ray=new THREE.Raycaster(); const mouse=new THREE.Vector2();
+  canvas.addEventListener('mousemove',e=>{
+    const r=canvas.getBoundingClientRect();
+    mouse.x=((e.clientX-r.left)/r.width)*2-1;
+    mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+    ray.setFromCamera(mouse,camera);
+    const hits=ray.intersectObjects(destMeshes);
+    if(hits.length){
+      const d=hits[0].object.userData;
+      const nm=LANG.v==='en'?d.name:d.zh;
+      const sw=LANG.v==='en'?'stories':'个故事';
+      showTip(e.clientX,e.clientY,nm,d.stories+' '+sw+' · '+d.region,
+        LANG.v==='en'?'Tap to open latest story':'点击打开最新故事');
+      canvas.style.cursor='pointer';
+    } else { hideTip(); canvas.style.cursor='grab'; }
+  });
+  canvas.addEventListener('click',e=>{
+    const r=canvas.getBoundingClientRect();
+    mouse.x=((e.clientX-r.left)/r.width)*2-1;
+    mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+    ray.setFromCamera(mouse,camera);
+    const hits=ray.intersectObjects(destMeshes);
+    if(hits.length){ const d=hits[0].object.userData; window.open('/'+d.ids[d.ids.length-1]+'.html','_blank'); }
+  });
+  canvas.addEventListener('mouseleave',()=>{ hideTip(); canvas.style.cursor='grab'; });
+
+  // Drag rotate
+  let drag=false,px=0,py=0;
+  canvas.addEventListener('mousedown', e=>{ drag=true; px=e.clientX; py=e.clientY; });
+  canvas.addEventListener('mousemove', e=>{ if(!drag) return; globe.rotation.y+=(e.clientX-px)*0.01; globe.rotation.x+=(e.clientY-py)*0.008; px=e.clientX; py=e.clientY; });
+  canvas.addEventListener('mouseup',   ()=>drag=false);
+  canvas.addEventListener('touchstart',e=>{ px=e.touches[0].clientX; py=e.touches[0].clientY; },{passive:true});
+  canvas.addEventListener('touchmove', e=>{ e.preventDefault();
+    globe.rotation.y+=(e.touches[0].clientX-px)*0.012; globe.rotation.x+=(e.touches[0].clientY-py)*0.010;
+    px=e.touches[0].clientX; py=e.touches[0].clientY;
+  },{passive:false});
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    if(!drag){ globe.rotation.y+=0.004; globe.rotation.x+=0.0007; }
+    renderer.render(scene,camera);
+  })();
 })();
 </script>
 </body>
