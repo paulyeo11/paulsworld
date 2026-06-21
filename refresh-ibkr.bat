@@ -6,6 +6,10 @@ echo   Refreshing IBKR positions...
 echo ============================================
 echo.
 
+echo Pulling latest scripts from GitHub...
+git pull --no-edit
+echo.
+
 REM --- Step 1: is IB Gateway already connected (port 4001)? ---
 powershell -NoProfile -Command "if (Test-NetConnection -ComputerName 127.0.0.1 -Port 4001 -InformationLevel Quiet) { exit 0 } else { exit 1 }"
 if not errorlevel 1 goto FETCH
