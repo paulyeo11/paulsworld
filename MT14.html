@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT14: Hong Kong Opera Trip — Joanne &amp; Sis · 2–11 Nov 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117; color: #e6edf3;
+  height: 100vh; max-height: 100vh;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.header {
+  padding: 10px 14px 9px;
+  background: linear-gradient(135deg, #0d1117, #1a0808);
+  border-bottom: 1px solid rgba(220,38,38,0.25);
+  flex-shrink: 0;
+}
+.header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.header h1 { font-size: 1.18em; font-weight: 800; color: #fff; line-height: 1.2; }
+.header h1 .red { color: #ef4444; }
+.header h1 .gold { color: #f0a500; }
+.header-sub { font-size: 0.86em; color: #8b949e; margin-top: 3px; }
+.share-btn { display:inline-flex;align-items:center;gap:4px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.4);color:#fca5a5;font-size:0.78em;font-weight:700;padding:5px 11px;border-radius:20px;cursor:pointer;white-space:nowrap; }
+.share-btn:hover { background:rgba(220,38,38,0.25); }
+.share-toast { display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.4); }
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.tab-bar {
+  display: flex; background: #161b22;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0; padding: 10px 14px;
+  background: transparent; border: none; cursor: pointer;
+  font-size: 0.9em; font-weight: 700; color: #8b949e;
+  border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: #ef4444; border-bottom-color: #ef4444; }
+.legend-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 14px; background: #0d1117;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-wrap: wrap; font-size: 0.85em; color: #8b949e; flex-shrink: 0;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
+.legend-total { margin-left: auto; color: #ef4444; font-weight: 800; font-size: 0.9em; }
+#map { width: 100%; flex: 1; min-height: 52vh; }
+#map.map-fullscreen { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; width: 100vw !important; height: 100vh !important; z-index: 10000; }
+.map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
+.map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
+.map-fullscreen-close.active { display: block; }
+.panel { display: none; flex-direction: column; flex: 1; min-height: 0; }
+.panel.active { display: flex; }
+.stops-panel { background: #0d1117; overflow-y: auto; max-height: 36vh; }
+.panel-header { padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 8px; }
+.panel-title { font-size: 0.96em; font-weight: 700; color: #e6edf3; }
+.panel-count { margin-left: auto; font-size: 0.88em; color: #ef4444; font-weight: 700; }
+.stop-list { padding: 2px 0; }
+.stop-item { display: flex; align-items: flex-start; gap: 11px; padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
+.stop-item:hover { background: rgba(255,255,255,0.04); }
+.stop-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.82em; font-weight: 800; flex-shrink: 0; margin-top: 1px; border: 2px solid rgba(255,255,255,0.4); }
+.stop-info { flex: 1; min-width: 0; }
+.stop-name { font-size: 1.0em; font-weight: 700; color: #e6edf3; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stop-desc { font-size: 0.86em; color: #8b949e; margin-top: 2px; line-height: 1.35; }
+.stop-tag { display: inline-block; font-size: 0.79em; padding: 2px 7px; border-radius: 8px; font-weight: 700; }
+.tag-start   { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.4); }
+.tag-end     { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.4); }
+.tag-opera   { background:rgba(240,165,0,0.2);   color:#fcd34d; border:1px solid rgba(240,165,0,0.35); }
+.tag-landmark{ background:rgba(59,130,246,0.2);  color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+.tag-shop    { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+.itin-panel  { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+.lang-bar { display:flex; gap:8px; padding:8px 14px; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+.lang-btn { padding:5px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.18); background:transparent; color:#8b949e; font-size:0.86em; font-weight:700; cursor:pointer; transition:all 0.2s; }
+.lang-btn.active { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.5); color:#ef4444; }
+.day-card    { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 13px 14px; cursor: pointer; transition: background 0.15s; }
+.day-card:hover { background: rgba(255,255,255,0.03); }
+.day-header  { display: flex; align-items: flex-start; gap: 10px; }
+.day-badge   { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 0.84em; font-weight: 800; padding: 3px 9px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+.day-badge.opera { background: rgba(240,165,0,0.12); border-color: rgba(240,165,0,0.35); color: #f0a500; }
+.day-title   { font-size: 1.0em; font-weight: 700; color: #e6edf3; line-height: 1.35; }
+.day-meta    { font-size: 0.86em; color: #8b949e; margin-top: 3px; }
+.day-chevron { margin-left: auto; color: #ef4444; font-size: 0.95em; flex-shrink: 0; transition: transform 0.2s; }
+.day-card.open .day-chevron { transform: rotate(180deg); }
+.day-body    { font-size: 0.91em; color: #8b949e; margin-top: 8px; line-height: 1.6; display: none; }
+.day-body.open { display: block; }
+.day-body .section { margin-top: 7px; }
+.day-body .section-label { font-size: 0.88em; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #ef4444; margin-bottom: 2px; }
+.day-body .section-text { color: #c9d1d9; }
+.tips-panel  { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+.tip-section { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 14px; }
+.tip-header  { display: flex; align-items: center; gap: 8px; cursor: pointer; touch-action: manipulation; }
+.tip-icon    { font-size: 1.25em; }
+.tip-title   { font-size: 1.0em; font-weight: 700; color: #e6edf3; }
+.tip-chevron { margin-left: auto; color: #ef4444; font-size: 0.95em; transition: transform 0.2s; }
+.tip-section.open .tip-chevron { transform: rotate(180deg); }
+.tip-body    { font-size: 0.9em; color: #8b949e; margin-top: 8px; line-height: 1.65; display: none; }
+.tip-section.open .tip-body { display: block; }
+.tip-body ul { padding-left: 16px; }
+.tip-body li { margin-bottom: 5px; }
+.tip-body strong { color: #e6edf3; }
+.mustsee-panel { background:#0d1117; overflow-y:auto; flex:1; min-height:0; padding:0 0 24px; }
+.ms-intro { padding:10px 14px 6px; font-size:0.9em; color:#8b949e; border-bottom:1px solid rgba(255,255,255,0.06); }
+.ms-intro strong { color:#ef4444; }
+.ms-place { border-bottom:1px solid rgba(255,255,255,0.06); }
+.ms-place-header { display:flex; align-items:center; gap:10px; padding:12px 14px; cursor:pointer; touch-action:manipulation; }
+.ms-num { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.86em; font-weight:800; color:#fff; flex-shrink:0; border:2px solid rgba(255,255,255,0.35); }
+.ms-info { flex:1; }
+.ms-place-name { font-size:1.05em; font-weight:800; color:#fff; }
+.ms-place-sub  { font-size:0.85em; color:#f0a500; margin-top:1px; }
+.ms-chevron { color:#ef4444; font-size:0.95em; transition:transform 0.2s; }
+.ms-place.open .ms-chevron { transform:rotate(180deg); }
+.ms-body { display:none; padding:0 14px 12px; }
+.ms-place.open .ms-body { display:block; }
+.ms-item { margin-bottom:10px; padding:9px 12px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid rgba(255,255,255,0.06); }
+.ms-item-title { font-size:0.96em; font-weight:700; color:#e6edf3; }
+.ms-item-desc  { font-size:0.88em; color:#8b949e; margin-top:4px; line-height:1.55; }
+.ms-item-tip   { font-size:0.83em; color:#f0a500; margin-top:4px; }
+.budget-panel { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+.budget-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.budget-stat { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 7px 8px; text-align: center; }
+.budget-stat-label { font-size: 0.72em; color: #8b949e; margin-bottom: 2px; }
+.budget-stat-value { font-size: 0.95em; font-weight: 800; color: #f0a500; }
+.budget-table { width: 100%; border-collapse: collapse; }
+.budget-table th { text-align:left; padding:7px 10px; font-size:0.75em; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.07); position:sticky; top:0; background:#0d1117; }
+.budget-table td { padding:9px 10px; font-size:0.9em; color:#c9d1d9; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:top; }
+.budget-table tr:hover td { background: rgba(255,255,255,0.03); }
+.budget-cat { padding:7px 10px 3px; font-size:0.72em; font-weight:800; color:#ef4444; letter-spacing:1px; text-transform:uppercase; background:#161b22; border-top:1px solid rgba(255,255,255,0.06); }
+.budget-hkd { color:#f0a500; font-weight:700; }
+.budget-note { font-size:0.78em; color:#6b7280; }
+.tasks-panel { background:#0d1117; overflow-y:auto; flex:1; padding:0 0 80px; }
+.task-category { padding:10px 14px 5px; font-size:0.75em; font-weight:800; color:#ef4444; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid rgba(239,68,68,0.15); margin-top:4px; }
+.task-item { display:flex; align-items:flex-start; gap:11px; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:background 0.15s; }
+.task-item:hover { background:rgba(255,255,255,0.03); }
+.task-item.completed .task-text { text-decoration:line-through; color:#4b5563; }
+.task-check { width:20px; height:20px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; font-size:0.75em; transition:all 0.2s; }
+.task-item.completed .task-check { background:#ef4444; border-color:#ef4444; color:#fff; }
+.task-body { flex:1; min-width:0; }
+.task-text { font-size:0.91em; color:#e6edf3; line-height:1.4; }
+.task-meta { margin-top:4px; display:flex; gap:8px; }
+.task-due { font-size:0.75em; color:#6b7280; }
+.task-deadline { font-size:0.75em; color:#f87171; font-weight:700; }
+.vc-wrap { padding:6px 14px; border-top:1px solid rgba(255,255,255,0.05); flex-shrink:0; font-size:0.78em; color:#4b5563; }
+.popup-name { font-weight:800; font-size:1.05em; margin-bottom:4px; }
+.popup-day { font-size:0.8em; color:#ef4444; font-weight:700; margin-bottom:2px; }
+.popup-desc { font-size:0.88em; color:#555; margin-bottom:3px; line-height:1.4; }
+.popup-food,.popup-stay { font-size:0.82em; color:#666; }
+@media(min-width:600px){
+  .stops-panel { max-height: 40vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🇭🇰 MT14: <span class="red">HK Opera Trip</span> — <span class="gold">Joanne &amp; Sis</span></h1>
+      <div class="header-sub">Xiqu Centre · Ko Shan · Sunbeam Theatre · 2–11 Nov 2026 · 10 days</div>
+    </div>
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
+  <button class="tab-btn" onclick="switchTab('itin')">📅 Itinerary</button>
+  <button class="tab-btn" onclick="switchTab('mustsee')">🎭 Must See</button>
+  <button class="tab-btn" onclick="switchTab('tips')">💡 Tips</button>
+  <button class="tab-btn" onclick="switchTab('budget')">💰 Budget</button>
+  <button class="tab-btn" onclick="switchTab('tasks')">✅ Tasks</button>
+</div>
+
+<div class="legend-bar" id="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Airport</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> Opera</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Landmark</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Shopping</div>
+  <div class="legend-total">10 Days · 9 Stops</div>
+</div>
+
+<div id="panel-map" class="panel active">
+  <div style="position:relative;">
+    <div id="map"></div>
+    <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Expand">⛶</button>
+    <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
+  </div>
+  <div class="stops-panel">
+    <div class="panel-header">
+      <span class="panel-title">📍 Key Stops — Tap to zoom</span>
+      <span class="panel-count">9 stops · 2–11 Nov 2026</span>
+    </div>
+    <div class="stop-list" id="stop-list"></div>
+  </div>
+</div>
+
+<div id="panel-itin" class="panel">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en',this)">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh',this)">🇨🇳 中文</button>
+  </div>
+  <div class="itin-panel" id="itin-panel"></div>
+</div>
+
+<div id="panel-mustsee" class="panel">
+  <div class="mustsee-panel" id="mustsee-panel">
+    <div class="ms-intro"><strong>Top Picks</strong> — opera venues &amp; Hong Kong highlights. Tap each to expand.</div>
+  </div>
+</div>
+
+<div id="panel-tips" class="panel">
+  <div class="tips-panel" id="tips-panel"></div>
+</div>
+
+<div id="panel-budget" class="panel">
+  <div class="budget-panel" id="budget-panel"></div>
+</div>
+
+<div id="panel-tasks" class="panel">
+  <div class="tasks-panel" id="tasks-panel"></div>
+</div>
+
+<div class="vc-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+
+<script>
+// ── STOP DATA ────────────────────────────────────────────────────────────────
+var STOPS = [
+  {
+    n:1, name:'HK Int\'l Airport', zh:'香港国际机场', emoji:'✈️',
+    lat:22.3080, lng:113.9185,
+    color:'#ef4444', tag:'start', tagLabel:'Arrive',
+    dates:'2 & 11 Nov', nights:'-',
+    hotel:'HKIA — Airport Express to Kowloon',
+    desc:'Arrive 2 Nov · Depart 11 Nov · Airport Express: 24 min to Kowloon (HK$105)'
+  },
+  {
+    n:2, name:'Xiqu Centre', zh:'西九戏曲中心', emoji:'🎭',
+    lat:22.3047, lng:114.1607,
+    color:'#f0a500', tag:'opera', tagLabel:'Opera',
+    dates:'Various nights', nights:'-',
+    hotel:'West Kowloon Cultural District',
+    desc:'Premier Cantonese opera venue — Grand Theatre & Tea House Theatre'
+  },
+  {
+    n:3, name:'HK Cultural Centre', zh:'香港文化中心', emoji:'🏛️',
+    lat:22.2975, lng:114.1722,
+    color:'#f0a500', tag:'opera', tagLabel:'Opera',
+    dates:'Various nights', nights:'-',
+    hotel:'Tsim Sha Tsui waterfront',
+    desc:'Grand Theatre (1,750 seats) · Studio Theatre · iconic TST landmark'
+  },
+  {
+    n:4, name:'Ko Shan Theatre', zh:'高山剧场', emoji:'🎪',
+    lat:22.3109, lng:114.1911,
+    color:'#f0a500', tag:'opera', tagLabel:'Opera',
+    dates:'Various nights', nights:'-',
+    hotel:'Hung Hom — MTR 5 min from TST',
+    desc:'Major Cantonese opera venue — both indoor theatre and outdoor arena'
+  },
+  {
+    n:5, name:'Sunbeam Theatre', zh:'新光戏院', emoji:'⭐',
+    lat:22.2897, lng:114.2040,
+    color:'#f0a500', tag:'opera', tagLabel:'Opera',
+    dates:'Various nights', nights:'-',
+    hotel:'North Point — MTR Island Line',
+    desc:'The spiritual home of Cantonese opera in HK — beloved 1,300-seat theatre'
+  },
+  {
+    n:6, name:'The Peak', zh:'太平山顶', emoji:'⛰️',
+    lat:22.2758, lng:114.1491,
+    color:'#3b82f6', tag:'landmark', tagLabel:'Landmark',
+    dates:'Day 3 or 7', nights:'-',
+    hotel:'Peak Tram from Garden Road',
+    desc:'Best view of Victoria Harbour & HK skyline — 552m above the city'
+  },
+  {
+    n:7, name:'Mong Kok', zh:'旺角', emoji:'🛍️',
+    lat:22.3193, lng:114.1694,
+    color:'#10b981', tag:'shop', tagLabel:'Shopping',
+    dates:'Day 4', nights:'-',
+    hotel:'MTR Tsuen Wan / Kwun Tong line',
+    desc:'Ladies Market · Flower Market · Goldfish Market · Temple Street Night Market'
+  },
+  {
+    n:8, name:'Causeway Bay', zh:'铜锣湾', emoji:'🛒',
+    lat:22.2800, lng:114.1831,
+    color:'#10b981', tag:'shop', tagLabel:'Shopping',
+    dates:'Day 6 & 9', nights:'-',
+    hotel:'MTR Island Line',
+    desc:'Times Square · SOGO · Victoria Park · Fashion Walk · Jardine\'s Crescent market'
+  },
+  {
+    n:9, name:'Lantau — Big Buddha', zh:'大屿山天坛大佛', emoji:'🏔️',
+    lat:22.2542, lng:113.9150,
+    color:'#3b82f6', tag:'landmark', tagLabel:'Landmark',
+    dates:'Day 8', nights:'-',
+    hotel:'Ngong Ping 360 cable car',
+    desc:'Tian Tan Buddha (34m) · Ngong Ping Village · Tai O fishing village'
+  }
+];
+
+// ── ITINERARY DATA (ENGLISH) ──────────────────────────────────────────────────
+var ITIN_EN = [
+  {
+    badge:'Day 1', isOpera:false,
+    title:'Sun 2 Nov — Arrival in Hong Kong',
+    meta:'Arrive HKIA · Hotel check-in · Evening harbour walk',
+    morning:'Arrive Hong Kong International Airport. Take the Airport Express train (HK$105, 24 min) to Kowloon Station. Hotel shuttle or short taxi to TST / Jordan area hotel.',
+    afternoon:'Check in, freshen up. Walk along Nathan Road to get orientated. Pop into a cha chaan teng (茶餐廳) for your first pineapple bun, milk tea, and char siu pork rice.',
+    evening:'Stroll along the TST waterfront Promenade. Watch the <strong>Symphony of Lights</strong> at 8pm — the entire Victoria Harbour lights up with lasers and music for free, nightly. Dinner at any TST restaurant.'
+  },
+  {
+    badge:'Day 2', isOpera:false,
+    title:'Mon 3 Nov — Tsim Sha Tsui & Cultural Centre',
+    meta:'Avenue of Stars · Box office · Kowloon exploring',
+    morning:'Avenue of Stars (along the waterfront) — panoramic views of HK Island. Check performance listings at <strong>Hong Kong Cultural Centre box office</strong> (open 10am). Pick up any last-minute tickets for this week.',
+    afternoon:'Explore TST: 1881 Heritage (former Marine Police HQ), K11 MUSEA art-shopping mall, Hong Kong Museum of Art (free admission). Nathan Road for window shopping.',
+    evening:'Dinner at Spring Deer Restaurant (classic Peking duck) or Ye Shanghai (dim sum). If any opera tonight — Cultural Centre Grand Theatre or Xiqu Centre.'
+  },
+  {
+    badge:'Day 3', isOpera:false,
+    title:'Tue 4 Nov — HK Island: Central & The Peak',
+    meta:'Central · Mid-Levels Escalator · Victoria Peak · Soho',
+    morning:'Take Star Ferry (HK$3!) across the harbour to Central. Walk up the world\'s longest outdoor escalator — <strong>Mid-Levels Escalator</strong>. Explore SOHO cafés and boutiques.',
+    afternoon:'Board the <strong>Peak Tram</strong> (HK$68 return) to Victoria Peak. The view of the skyline and harbour is extraordinary. Walk the Peak Circle trail (~3.5km, 45 min).',
+    evening:'Walk back down or take tram to Lan Kwai Fong area for dinner. Try Aberdeen Street Social or Peel Street restaurants. Return to Kowloon by MTR (Sheung Wan → Tsim Sha Tsui).'
+  },
+  {
+    badge:'🎭 Opera', isOpera:true,
+    title:'Wed 5 Nov — Mong Kok Day + Opera Evening',
+    meta:'Morning shopping · Evening opera at Ko Shan or Xiqu Centre',
+    morning:'Mong Kok in the morning: <strong>Ladies Market</strong> (Tung Choi Street) for bargains — clothes, accessories, souvenirs. Then <strong>Flower Market Road</strong> — stunning displays and very fragrant.',
+    afternoon:'Goldfish Market (nearby, fascinating!). Lunch at a traditional wonton noodle shop. Rest at hotel before the evening show — opera performances can run 3–4 hours.',
+    evening:'<strong>Opera evening</strong> at Ko Shan Theatre (Hung Hom) or Xiqu Centre (West Kowloon). Both accessible from TST in under 15 min by MTR. Dress code: smart casual.'
+  },
+  {
+    badge:'🎭 Opera', isOpera:true,
+    title:'Thu 6 Nov — Wan Chai Antiques + Opera Matinee',
+    meta:'Hollywood Road antiques · Wan Chai markets · Matinee show',
+    morning:'Hollywood Road (Central/Sheung Wan) — the best antique street in Asia. Jade, ceramics, Ming furniture, curios. Cat Street (Upper Lascar Row) for smaller curiosities and vintage items.',
+    afternoon:'<strong>Opera matinee</strong> at Sunbeam Theatre, North Point (if scheduled) — the most atmospheric Cantonese opera venue in HK, beloved by purists. Cantonese opera matinees typically start 2:30–3pm.',
+    evening:'Dinner in North Point (known as "Little Fujian" — excellent Fujianese restaurants) or take MTR back to TST. Rest well — full evening show tomorrow.'
+  },
+  {
+    badge:'Day 6', isOpera:false,
+    title:'Fri 7 Nov — Causeway Bay & Victoria Park',
+    meta:'Shopping day · Victoria Park · Jardine\'s Crescent market',
+    morning:'MTR to Causeway Bay. <strong>Times Square</strong> mall (great for cosmetics and fashion). SOGO Department Store — excellent Japanese-style department store with great food hall basement.',
+    afternoon:'<strong>Victoria Park</strong> — Hong Kong\'s largest urban park. Walk, people-watch, see aunties doing tai chi. Nearby <strong>Jardine\'s Crescent</strong> for bargain fashion market (open daily, best at night).',
+    evening:'<strong>Fashion Walk</strong> on Great George Street and Kingston Street — independent boutiques, cafés. Dinner at Crystal Jade or Tim Ho Wan (world\'s cheapest Michelin dim sum — queue early!).'
+  },
+  {
+    badge:'Day 7', isOpera:false,
+    title:'Sat 8 Nov — Stanley, Aberdeen & Repulse Bay',
+    meta:'South side of HK Island · Beaches · Old market · Seafood',
+    morning:'Bus 6 or 260 from Central Exchange Square to <strong>Stanley Market</strong> (~35 min). Excellent for linen, silk, paintings, gifts, and casual clothing at local prices. Murray House café for coffee.',
+    afternoon:'<strong>Repulse Bay</strong> — HK\'s most famous beach, with the beautiful twin-dragon statue and Tin Hau shrine at the water\'s edge. Walk the promenade. Then <strong>Aberdeen Harbour</strong> — floating restaurants, sampan rides (HK$100, 30 min).',
+    evening:'Aberdeen Jumbo Floating Restaurant for dinner (iconic, book ahead). Or return to TST. Early night — Lantau day trip tomorrow.'
+  },
+  {
+    badge:'Day 8', isOpera:false,
+    title:'Sun 9 Nov — Lantau Island & Big Buddha',
+    meta:'Ngong Ping 360 cable car · Tian Tan Buddha · Tai O village',
+    morning:'MTR to Tung Chung station. Take the <strong>Ngong Ping 360 cable car</strong> (25 min, HK$185 return) — spectacular views of the South China Sea. Walk up 268 steps to the <strong>Tian Tan Buddha</strong> (34m tall).',
+    afternoon:'Explore <strong>Ngong Ping Village</strong> — Walking with Buddha attraction, Wisdom Path. Take bus 21 to <strong>Tai O fishing village</strong> — stilt houses over the water, pink dolphins boat tours, dried seafood shops.',
+    evening:'Return by cable car or bus to Tung Chung, then MTR back to TST. Dinner in TST. Tonight or tomorrow — last chance for opera!'
+  },
+  {
+    badge:'🎭 Opera', isOpera:true,
+    title:'Mon 10 Nov — Final Opera Night & Jade Market',
+    meta:'Morning jade market · Final shopping · Last opera evening',
+    morning:'<strong>Jade Market</strong> (Yau Ma Tei, Canton Road) — open 9am–6pm. Hundreds of stalls selling jade, pearls, coral, and semi-precious stones. Great for gifts. Excellent at bargaining (start at 50% of asking price).',
+    afternoon:'Final shopping and packing. <strong>Temple Street Night Market</strong> opens from 5pm — fortune tellers, dai pai dongs (street food stalls), Cantonese opera buskers performing live right on the street.',
+    evening:'<strong>Final opera evening</strong> — Xiqu Centre or Sunbeam Theatre for the last Cantonese opera experience. Or if no show, watch the live opera buskers on Temple Street for free. Farewell dinner: Gaddi\'s at The Peninsula or any favourite.'
+  },
+  {
+    badge:'Day 10', isOpera:false,
+    title:'Tue 11 Nov — Departure Day',
+    meta:'Check out · Airport Express · Fly home',
+    morning:'Check out. Airport Express from Kowloon Station (HK$105, 24 min to HKIA). <strong>In-town check-in</strong>: you can check your bags at Kowloon Station the night before (available 6am–midnight) — saves time on departure morning.',
+    afternoon:'Allow 2–2.5 hours before flight at HKIA. Duty free: HKIA has excellent luxury retail, cosmetics, and HK snacks (Wife Cake, Cocktail Buns, Kee Wah mooncake tins).',
+    evening:'Fly home. Wonderful 10 days of opera, culture, food, and sisterly adventure!'
+  }
+];
+
+// ── ITINERARY DATA (CHINESE) ──────────────────────────────────────────────────
+var ITIN_ZH = [
+  {
+    badge:'第1天', isOpera:false,
+    title:'11月2日（周日）— 抵达香港',
+    meta:'抵达机场 · 酒店入住 · 维港夜景',
+    morning:'抵达香港国际机场。乘坐机场快线（HK$105，24分钟）到九龙站。打的或搭酒店穿梭巴士前往尖沙咀/佐敦一带酒店。',
+    afternoon:'入住酒店，稍作休息。沿着弥敦道走走，感受香港节奏。找一家茶餐厅吃菠萝包、奶茶和叉烧饭——正宗香港味道。',
+    evening:'漫步尖沙咀海滨长廊，晚上8时欣赏<strong>幻彩咏香江</strong>灯光表演——维多利亚港灯光激光秀，全程免费，每晚上演。在尖沙咀随意选一家餐厅用晚膳。'
+  },
+  {
+    badge:'第2天', isOpera:false,
+    title:'11月3日（周一）— 尖沙咀与香港文化中心',
+    meta:'星光大道 · 售票处 · 九龙探索',
+    morning:'沿维港步行至星光大道——欣赏对岸港岛摩天楼全景。到<strong>香港文化中心售票处</strong>（早上10时开放）查看本周演出场次，购买剩余票务。',
+    afternoon:'探索尖沙咀：1881历史建筑（前水警总部）、K11 MUSEA艺术购物馆、香港艺术馆（免费入场）。弥敦道购物一番。',
+    evening:'在春鹿餐厅（北京烤鸭）或夜上海（点心）用晚膳。若今晚有演出——可前往香港文化中心大剧院或西九戏曲中心观赏。'
+  },
+  {
+    badge:'第3天', isOpera:false,
+    title:'11月4日（周二）— 港岛：中环与太平山顶',
+    meta:'中环 · 半山自动扶梯 · 太平山 · Soho',
+    morning:'乘坐天星小轮（HK$3！）横渡维港至中环。乘搭全球最长室外扶手电梯——<strong>中环至半山自动扶梯</strong>。探索SOHO区的咖啡馆和精品店。',
+    afternoon:'乘<strong>山顶缆车</strong>（来回HK$68）上太平山顶，俯瞰全港最震撼的天际线与维港景色。沿山顶环游径漫步（约3.5公里，45分钟）。',
+    evening:'步行或乘缆车下山，到兰桂坊一带用晚膳。可尝试Aberdeen Street Social或卑利街餐厅。乘地铁（上环→尖沙咀）返回九龙。'
+  },
+  {
+    badge:'🎭 戏曲', isOpera:true,
+    title:'11月5日（周三）— 旺角购物 + 晚上看戏',
+    meta:'上午购物 · 傍晚休息 · 晚上高山剧场或西九戏曲中心',
+    morning:'旺角早上购物：<strong>女人街</strong>（通菜街）淘平价衣物、饰品和手信。再到<strong>花墟道</strong>欣赏繁花似锦的花卉市场，芬芳四溢。',
+    afternoon:'附近还有金鱼街（新奇有趣！）。在传统云吞面小店吃午餐。下午回酒店休息——粤剧演出通常长达3至4小时，需养精蓄锐。',
+    evening:'<strong>晚上看戏</strong>：前往高山剧场（红磡）或西九戏曲中心（西九龙文化区），两处均可在15分钟内从尖沙咀乘地铁抵达。着装建议：整洁休闲。'
+  },
+  {
+    badge:'🎭 戏曲', isOpera:true,
+    title:'11月6日（周四）— 荷李活道古玩 + 下午看戏',
+    meta:'古董街 · 上环市场 · 下午场粤剧',
+    morning:'荷李活道（中环/上环）——全亚洲最佳古董街。玉器、瓷器、明式家具、古玩珍品。摩罗街（Upper Lascar Row）有更多小玩意和复古物品。',
+    afternoon:'若有排期，到<strong>新光戏院</strong>（北角）看下午场粤剧——香港最具情怀的粤剧戏院，深受戏迷钟爱。粤剧下午场一般下午2时30分至3时开场。',
+    evening:'在北角（素有"小福建"之称，多优质闽菜馆）用晚膳，或乘地铁回尖沙咀。早点休息——明天还有晚场演出。'
+  },
+  {
+    badge:'第6天', isOpera:false,
+    title:'11月7日（周五）— 铜锣湾与维多利亚公园',
+    meta:'购物天 · 维多利亚公园 · 渣甸坊夜市',
+    morning:'乘地铁至铜锣湾。<strong>时代广场</strong>（化妆品和时装首选）。崇光百货（SOGO）——日式百货公司，地库美食街琳琅满目。',
+    afternoon:'<strong>维多利亚公园</strong>——香港最大市区公园。散步、看人、欣赏阿姨们打太极。附近的<strong>渣甸坊</strong>有平价时装摊档（每日营业，夜间最热闹）。',
+    evening:'前往Fashion Walk（Great George Street及金斯顿街）——独立精品店与咖啡馆林立。晚膳可选翡翠拉面小笼包（水晶坊）或添好运（全球最平价米芝莲点心——宜早到排队！）。'
+  },
+  {
+    badge:'第7天', isOpera:false,
+    title:'11月8日（周六）— 赤柱、香港仔与浅水湾',
+    meta:'港岛南区 · 沙滩 · 旧墟市场 · 海鲜',
+    morning:'从中环交易广场乘6号或260号巴士前往<strong>赤柱市场</strong>（约35分钟）。是购买亚麻衣物、丝绸制品、画作和手信的好地方，价格实惠。可在默里大厦咖啡馆喝一杯。',
+    afternoon:'<strong>浅水湾</strong>——香港最著名的海滩，滩边有精美的双龙雕塑和天后庙。沿海滨散步。再游<strong>香港仔避风塘</strong>——海上食肆、舢板游览（HK$100，30分钟）。',
+    evening:'在香港仔珍宝海鲜舫（图标性体验，建议预订）用晚膳，或返回尖沙咀。早点休息——明天大屿山一日游。'
+  },
+  {
+    badge:'第8天', isOpera:false,
+    title:'11月9日（周日）— 大屿山与天坛大佛',
+    meta:'昂坪360缆车 · 天坛大佛 · 大澳渔村',
+    morning:'乘地铁至东涌站。乘坐<strong>昂坪360缆车</strong>（25分钟，来回HK$185）——俯瞰南海美景。步行登上268级台阶，参拜<strong>天坛大佛</strong>（高34米）。',
+    afternoon:'游览<strong>昂坪市集</strong>——"与佛同行"展览、心经简林。乘21号巴士前往<strong>大澳渔村</strong>——水上棚屋、粉红海豚游船、海产干货一条街。',
+    evening:'乘缆车或巴士返回东涌，再乘地铁回尖沙咀。晚上在尖沙咀用餐。今晚或明晚——最后机会欣赏粤剧！'
+  },
+  {
+    badge:'🎭 戏曲', isOpera:true,
+    title:'11月10日（周一）— 最后一场戏 + 玉器市场',
+    meta:'上午玉器市场 · 购物打包 · 最后晚场演出',
+    morning:'<strong>玉器市场</strong>（油麻地，广东道）——早上9时至下午6时开放。数百个摊档出售玉石、珍珠、珊瑚及半宝石，是买手信的好地方（议价时从叫价的五折开始）。',
+    afternoon:'最后购物与打包行李。<strong>庙街夜市</strong>从下午5时起开档——算命先生、大排档、粤剧街头艺人在街边现场演唱，免费欣赏！',
+    evening:'<strong>最后晚场粤剧</strong>——西九戏曲中心或新光戏院。或如无演出，在庙街欣赏免费粤剧演唱。告别晚宴：半岛酒店Gaddi\'s或自选最爱餐厅。'
+  },
+  {
+    badge:'第10天', isOpera:false,
+    title:'11月11日（周二）— 离港',
+    meta:'退房 · 机场快线 · 飞回家',
+    morning:'退房。乘机场快线从九龙站出发（HK$105，24分钟至机场）。<strong>市区预办登机</strong>：可在九龙站提早托运行李（服务时间早上6时至午夜），方便出行。',
+    afternoon:'建议提前2至2.5小时抵达机场。免税店首选：高级化妆品、香港手信（老婆饼、鸡尾包、奇华月饼礼盒）。',
+    evening:'飞回家。十天的粤剧、文化、美食与姐妹同游，圆满结束！'
+  }
+];
+
+// ── MUST SEE DATA ─────────────────────────────────────────────────────────────
+var MUSTSEE = [
+  {
+    name:'Opera Venues 🎭', zh:'戏曲场馆', color:'#f0a500',
+    items:[
+      { title:'Xiqu Centre — West Kowloon', desc:'Opened 2019, this is Hong Kong\'s premier purpose-built Cantonese opera venue. The Grand Theatre seats 1,073 and has state-of-the-art acoustics designed for Chinese music. The Tea House Theatre (200 seats) hosts more intimate performances. Architecture is stunning — a modern lantern shape.', tip:'Book online at HKTIX.com or at the box office. Grand Theatre tickets HK$100–800. Allow 30 min to explore the venue before curtain.' },
+      { title:'Ko Shan Theatre — Hung Hom', desc:'Large-scale Cantonese opera venue run by LCSD (Leisure and Cultural Services). The main theatre seats 1,000+, and there is also a large outdoor performance area for arena-style opera. A favourite for major touring companies.', tip:'5 min from Hung Hom MTR. Box office opens 10am–8pm on performance days. Parking available.' },
+      { title:'Sunbeam Theatre — North Point', desc:'Hong Kong\'s most beloved traditional opera house — a 1,300-seat theatre that has been the spiritual home of Cantonese opera since 1972. Renovated 2019 but retains its classic character. The regulars (mostly older Cantonese-speaking locals) create an incredibly warm atmosphere.', tip:'MTR to North Point (Exit B3), then 5-min walk. Many performances run Tue–Sun for 1–2 week runs. Queue for standby tickets from 1pm on matinee days.' },
+      { title:'HK Cultural Centre Grand Theatre — TST', desc:'The 1,750-seat Grand Theatre is HK\'s premier multi-use performance hall on the TST waterfront. Hosts both Cantonese opera and Western opera/ballet. The iconic building with the sloping roof (no windows — to keep the interior cool) is one of HK\'s most recognisable structures.', tip:'Box office: HKCC lobby, Mon–Sat 10am–9pm. HKTIX tickets also online. Pre-show: walk the roof viewing gallery for harbour views.' }
+    ]
+  },
+  {
+    name:'HK Landmarks 🏙️', zh:'香港地标', color:'#3b82f6',
+    items:[
+      { title:'Victoria Peak (太平山頂)', desc:'The must-do for any HK visit. 552m above sea level — the night view of the city is jaw-dropping. Take the Peak Tram (since 1888, the world\'s steepest funicular) from Garden Road. The Sky Terrace 428 observation deck adds extra height. The Peak Circle walk is beautiful.', tip:'Go at dusk — arrive in daylight, stay for the city lights to come on. Peak Tram tickets: HK$68 return (buy online to skip queues — queues can be 45min+).' },
+      { title:'Victoria Harbour & Symphony of Lights', desc:'The 8pm nightly light show is one of Hong Kong\'s signature experiences. Watch from the TST waterfront promenade or from Wan Chai waterfront for a different angle. Music plays through speakers along the promenade. Free, nightly, no need to book.', tip:'Best viewing spots: TST Promenade between Star Ferry and Cultural Centre, or the IFC rooftop bar in Central (Hong Kong side). Go 10 min early to get a spot.' },
+      { title:'Star Ferry (天星小輪)', desc:'The most atmospheric transport in Asia — a 5-minute crossing of Victoria Harbour that has been running since 1888. HK$3.40 lower deck, HK$4.20 upper deck. On the iconic green-and-white double-decker ferries, this is the most scenic commute in the world.', tip:'Cross from TST to Central and back. Go on the upper deck. The crossing is short — be ready to disembark quickly. Runs 6:30am–11:30pm daily.' },
+      { title:'Tian Tan Buddha — Lantau (天壇大佛)', desc:'The largest outdoor bronze Buddha in the world (34m) sitting atop a mountain at 520m altitude. 268 steps up. On clear days, the South China Sea and nearby islands are visible. Combine with Tai O fishing village (30 min by bus) for the perfect Lantau day.', tip:'Cable car (Ngong Ping 360, HK$185 return) is the best approach. Book online to save time. The cable car has crystal cabins with glass floors — spectacular.' }
+    ]
+  },
+  {
+    name:'Shopping & Markets 🛍️', zh:'购物与市集', color:'#10b981',
+    items:[
+      { title:'Temple Street Night Market (廟街)', desc:'Hong Kong\'s most famous night market — open from 5pm, peak from 7–10pm. Stalls sell electronics, clothes, knockoff goods, jade, watches, and street food. The area around Jordan station also has fortune tellers and live Cantonese opera singers performing on the street.', tip:'Start at Jordan MTR, walk north. Bargain hard — start at 40% of asking price. The dai pai dongs (open-air food stalls) are brilliant for a late supper: oyster omelette, fish balls, typhoon shelter crab.' },
+      { title:'Jade Market (玉器市場)', desc:'More than 400 stalls selling jade, pearls, coral, and semi-precious stones at Kansu Street and Battery Street, Yau Ma Tei. Open 9am–6pm daily. A jade bangle makes a beautiful and meaningful souvenir. Quality varies widely — buy what you like, not for investment.', tip:'Bargaining is expected. Start at 50% of asking price. The market is outdoors and covered — comfortable to walk. Arrive before noon for the best selection.' },
+      { title:'Stanley Market (赤柱市場)', desc:'Relaxed, village-feel market on the southern coast of HK Island. Best for linen clothing, silk scarves, oil paintings, casual shirts, kids\' clothes, and souvenirs. Cafe culture — Murray House café and the waterfront restaurants are lovely for lunch.', tip:'Weekdays are more relaxed and less crowded than weekends. Take bus 6 from Central Exchange Square (about 35 min, HK$10) for scenic coastal views.' },
+      { title:'Causeway Bay (銅鑼灣)', desc:'Hong Kong\'s densest shopping district. Times Square (16-storey vertical mall), SOGO (Japanese department store), Mong Kok-style street markets, and Fashion Walk boutiques. The area around Jardine\'s Crescent has the best street-market bargains. The massive City\'Super supermarket in Times Square has an extraordinary range of international foods.', tip:'Open all day but busiest after 6pm. Weekends can be very crowded. The food hall in the basement of Times Square is excellent for HK-style fast food.' }
+    ]
+  }
+];
+
+// ── TIPS DATA ──────────────────────────────────────────────────────────────────
+var TIPS = [
+  {
+    icon:'🚇', title:'Getting Around — MTR & Octopus Card',
+    body:`<ul>
+      <li><strong>Buy an Octopus Card (八達通)</strong> immediately at the airport — HK$50 deposit + any top-up amount. Works on MTR, bus, tram, Star Ferry, 7-Eleven, and McDonald's.</li>
+      <li><strong>MTR is the backbone</strong> — clean, air-conditioned, on time, and covers nearly every tourist destination. A single journey is typically HK$7–18. Tourist Day Pass: HK$65/day (unlimited rides).</li>
+      <li><strong>Airport Express:</strong> Kowloon ↔ HKIA: HK$105 each way. In-town check-in at Kowloon Station (save time on departure day — check in bags the night before).</li>
+      <li><strong>Star Ferry (HK$3–4):</strong> TST ↔ Central. Iconic and scenic — do it at least once in each direction.</li>
+      <li><strong>Taxis:</strong> Red taxis cover urban areas. HK$27 flagfall. Safe, metered, and mostly English-speaking for major destinations.</li>
+      <li><strong>Bus to Stanley:</strong> Route 6 or 260 from Central Exchange Square. Scenic coastal road, about 35 min. Pay with Octopus card.</li>
+    </ul>`
+  },
+  {
+    icon:'🎭', title:'Cantonese Opera (粵劇) — Tips for Enjoyment',
+    body:`<ul>
+      <li><strong>Programme books:</strong> Buy the programme (HK$30–50) which usually has an English synopsis. Storylines are classical Chinese tales — understanding the plot makes it far more engaging.</li>
+      <li><strong>Where to sit:</strong> Stalls (orchestra level) give the best sound. Circle seats are good for seeing costumes. Front rows are very close and can be overwhelming.</li>
+      <li><strong>Duration:</strong> Full performances run 2.5–4 hours with one interval. Bring a light layer — theatres are heavily air-conditioned.</li>
+      <li><strong>The art form:</strong> Everything is symbolic — coloured costumes indicate character type (red = loyal hero, white = villain/ghost, etc). Face paint (臉譜) tells you instantly who the character is. The falsetto singing is an acquired taste — give it 20 minutes.</li>
+      <li><strong>Etiquette:</strong> Latecomers are seated at the interval only. Applause is given at the end of a particularly difficult vocal run or acrobatic move, not just at the end. Photography usually allowed, no flash.</li>
+      <li><strong>Check schedules at:</strong> HKTIX (www.hktix.com) · LCSD (www.lcsd.gov.hk/en) · Xiqu Centre (www.xiquecentre.hk)</li>
+    </ul>`
+  },
+  {
+    icon:'🌤️', title:'November Weather in Hong Kong',
+    body:`<ul>
+      <li><strong>November is the BEST time to visit HK</strong> — consistently the most pleasant month of the year. Temperature: 20–26°C during the day, 16–20°C at night. Low humidity. Clear blue skies.</li>
+      <li><strong>What to wear:</strong> Light layers — a cardigan for evenings and heavily air-conditioned places (theatres, malls). Daytime is T-shirt weather. No umbrella usually needed in November.</li>
+      <li><strong>Typhoon season:</strong> Effectively over by late October. No typhoon risk in November. Outdoor activities are reliable.</li>
+      <li><strong>Evening comfort:</strong> Ideal for walking the harbour promenade without sweating. Symphony of Lights at 8pm in pleasant cool air is delightful.</li>
+    </ul>`
+  },
+  {
+    icon:'🍽️', title:'Must-Try Hong Kong Food',
+    body:`<ul>
+      <li><strong>Dim Sum (點心):</strong> Do it at least twice. For iconic: Tim Ho Wan (Michelin, cheapest), Maxim\'s Palace at City Hall (classic old-school atmosphere), or Lung King Heen (Four Seasons, 3 Michelin stars).</li>
+      <li><strong>Wonton Noodles (雲吞麵):</strong> Mak\'s Noodle in Central — tiny portions, extraordinary broth, shrimp wontons the size of golf balls. Queue expected.</li>
+      <li><strong>Pineapple Bun (菠蘿包):</strong> Hot from the oven at a cha chaan teng (茶餐廳) — the crusty-top bun with cold butter is a HK obsession.</li>
+      <li><strong>Milk Tea (港式奶茶):</strong> HK-style milk tea is stronger and silkier than anything you\'ve had. The "silk stocking" filter makes all the difference. Order it "iced" (凍奶茶).</li>
+      <li><strong>Roast Goose (燒鵝):</strong> Yung Kee Restaurant in Central — the most famous roast goose in HK. Also excellent char siu (barbecue pork).</li>
+      <li><strong>Egg Tarts (蛋撻):</strong> Tai Cheong Bakery (Central) — the best egg tarts in HK. Former Governor Chris Patten was famously addicted to them. Queue out the door.</li>
+    </ul>`
+  },
+  {
+    icon:'📱', title:'Practical: SIM, Money & Safety',
+    body:`<ul>
+      <li><strong>SIM card / eSIM:</strong> Buy a tourist SIM at the airport (China Mobile, SmarTone, or 3HK). 8-day unlimited data ~HK$68. Or get an eSIM before leaving Singapore (Airalo app).</li>
+      <li><strong>Currency:</strong> Hong Kong Dollar (HKD). HK$10 ≈ SGD$1.70. HK is largely cashless — Octopus Card, Alipay, and WeChat Pay work everywhere. Most restaurants and shops accept credit cards.</li>
+      <li><strong>ATMs:</strong> HSBC and Hang Seng ATMs at every MTR station and 7-Eleven. No fees with most Singapore cards (check your bank).</li>
+      <li><strong>Safety:</strong> Hong Kong is extremely safe. Low crime. Petty theft is rare. You can walk anywhere at night without concern.</li>
+      <li><strong>7-Eleven & Circle K:</strong> On every corner — great for Octopus top-up, snacks, cheap lunches (HK-style sandwiches and rice boxes), and phone charging cables.</li>
+      <li><strong>WhatsApp works fine</strong> — no VPN needed in HK (unlike mainland China). Google, Instagram, Facebook, all work normally.</li>
+    </ul>`
+  }
+];
+
+// ── BUDGET DATA (HKD) ──────────────────────────────────────────────────────────
+var BUDGET = [
+  { item:'Return flights SIN→HKG per person (×2)',  cat:'Flights',  hkd:2400, note:'~HK$1,200 pp return, Scoot/SIA' },
+  { item:'Airport Express (2 return trips ×2)',      cat:'Transport', hkd:420,  note:'HK$105 × 2 persons × 2 trips' },
+  { item:'MTR Octopus Cards (10 days ×2)',           cat:'Transport', hkd:500,  note:'~HK$25/day pp for local travel' },
+  { item:'Star Ferry & buses',                       cat:'Transport', hkd:80,   note:'Casual rides throughout the trip' },
+  { item:'Taxis (Peak, Stanley, Lantau)',            cat:'Transport', hkd:300,  note:'Occasional taxis between sights' },
+  { item:'Ngong Ping 360 Cable Car (×2 persons)',   cat:'Transport', hkd:370,  note:'HK$185 return pp' },
+  { item:'Hotel TST/Jordan area (9 nights)',         cat:'Hotel',    hkd:6300,  note:'~HK$700/night (e.g. K Hotel, Kowloon Hotel, ibis TST)' },
+  { item:'Opera tickets (est. 4 shows ×2 persons)', cat:'Opera',    hkd:3200,  note:'HK$200–600 per ticket; varies by venue & seat' },
+  { item:'Dim Sum lunches (3 × 2 persons)',          cat:'Food',     hkd:900,   note:'~HK$150/person at Tim Ho Wan or similar' },
+  { item:'Daily meals × 10 days (2 persons)',        cat:'Food',     hkd:3000,  note:'~HK$150/person/day for breakfast/lunch/dinner avg' },
+  { item:'Roast goose dinner × 1 (Yung Kee)',       cat:'Food',     hkd:500,   note:'Special dinner' },
+  { item:'Aberdeen floating restaurant × 1',        cat:'Food',     hkd:600,   note:'Jumbo Kingdom — iconic experience' },
+  { item:'Peak Tram return (×2)',                    cat:'Entry',    hkd:136,   note:'HK$68 return pp' },
+  { item:'Stanley Market shopping',                  cat:'Shopping', hkd:800,   note:'Estimate — linen, silk, gifts' },
+  { item:'Jade Market purchases',                    cat:'Shopping', hkd:500,   note:'Jade bangles, pearls, keepsakes' },
+  { item:'Causeway Bay / Mong Kok shopping',         cat:'Shopping', hkd:1500,  note:'Fashion, cosmetics, gifts' },
+  { item:'Snacks, egg tarts, milk tea etc',          cat:'Misc',     hkd:400,   note:'Daily treats' },
+  { item:'SIM cards (×2)',                           cat:'Misc',     hkd:140,   note:'HK$68–70 each for tourist SIM' }
+];
+
+// ── TASKS DATA ─────────────────────────────────────────────────────────────────
+var TASKS = [
+  { cat:'FLIGHTS & TRANSPORT', items:[
+    { text:'Book return flights SIN → HKG for both (arrive 2 Nov, depart 11 Nov)', deadline:'ASAP' },
+    { text:'Pre-book Airport Express tickets or buy Octopus Card on arrival at HKIA', due:'Before trip' },
+    { text:'Set up in-town check-in at Kowloon Station for departure day (night of 10 Nov)', due:'Day 9' }
+  ]},
+  { cat:'HOTEL', items:[
+    { text:'Book 9-night hotel in TST / Jordan / Yau Ma Tei area — close to Nathan Road and MTR', deadline:'ASAP' },
+    { text:'Confirm hotel includes luggage storage (useful on departure day)', due:'At booking' },
+    { text:'Save hotel address in Chinese characters for taxi drivers', due:'Before trip' }
+  ]},
+  { cat:'OPERA TICKETS — PRIORITY', items:[
+    { text:'Check November 2026 opera schedule: hktix.com, lcsd.gov.hk, xiquecentre.hk', deadline:'Urgent — now' },
+    { text:'Book Xiqu Centre shows — Grand Theatre or Tea House Theatre tickets', deadline:'Book early' },
+    { text:'Check Sunbeam Theatre (North Point) November programme', deadline:'Book early' },
+    { text:'Check Ko Shan Theatre (Hung Hom) — major Cantonese opera runs', deadline:'Book early' },
+    { text:'Check HK Cultural Centre November listings for any additional shows', due:'Oct' }
+  ]},
+  { cat:'ACTIVITIES TO PRE-BOOK', items:[
+    { text:'Book Ngong Ping 360 cable car tickets online (avoid queues)', due:'1 week before' },
+    { text:'Book Aberdeen floating restaurant dinner if going', due:'1 week before' },
+    { text:'Peak Tram — buy tickets online to skip queues (can be 45min wait)', due:'Day before' }
+  ]},
+  { cat:'PRACTICAL PREP', items:[
+    { text:'Inform bank/card of HK travel dates to avoid transaction blocks', due:'1 week before' },
+    { text:'Set up eSIM (Airalo) OR plan to buy SIM on arrival at HKIA', due:'Before trip' },
+    { text:'Download offline Google Maps for Hong Kong Island + Kowloon + Lantau', due:'Before trip' },
+    { text:'Save Octopus Card app on phone (for top-ups at 7-Eleven)', due:'Before trip' },
+    { text:'Pack light layers + smart-casual for opera evenings', due:'Pack' },
+    { text:'Save HKTIX hotline: +852 2111 5999 (for ticket enquiries)', due:'Reference' }
+  ]}
+];
+
+// ── MAP ───────────────────────────────────────────────────────────────────────
+var map, markers = [];
+
+function makeMarker(s) {
+  var sz = 28;
+  var svg = '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">' +
+    '<circle cx="14" cy="14" r="12" fill="' + s.color + '" stroke="white" stroke-width="2.5"/>' +
+    '<text x="14" y="18.5" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">' + s.n + '</text>' +
+    '</svg>';
+  return L.divIcon({ html: svg, iconSize: [sz, sz], iconAnchor: [sz/2, sz/2], popupAnchor: [0, -sz/2], className: '' });
+}
+
+function initMap() {
+  map = L.map('map').setView([22.32, 114.12], 12);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 18, attribution: '© Esri'
+  }).addTo(map);
+
+  var latlngs = [];
+  STOPS.forEach(function(s, i) {
+    var m = L.marker([s.lat, s.lng], { icon: makeMarker(s) }).addTo(map);
+    var popup = '<div class="popup-day">' + s.dates + '</div>' +
+      '<div class="popup-name">' + s.emoji + ' ' + s.name + ' ' + s.zh + '</div>' +
+      '<div class="popup-desc">' + s.desc + '</div>' +
+      '<div class="popup-stay">📍 ' + s.hotel + '</div>';
+    m.bindPopup(popup, { maxWidth: 260 });
+    markers.push(m);
+    latlngs.push([s.lat, s.lng]);
+  });
+
+  L.polyline(latlngs, { color: '#f0a500', weight: 2, dashArray: '6,5', opacity: 0.6 }).addTo(map);
+  renderStopList();
+}
+
+function renderStopList() {
+  var html = '';
+  STOPS.forEach(function(s, i) {
+    html += '<div class="stop-item" onclick="flyTo(' + i + ')">' +
+      '<div class="stop-num" style="background:' + s.color + '20;color:' + s.color + ';border-color:' + s.color + '60">' + s.n + '</div>' +
+      '<div class="stop-info">' +
+        '<div class="stop-name">' + s.emoji + ' ' + s.name + ' <span style="color:#8b949e;font-weight:400;font-size:0.88em;">' + s.zh + '</span>' +
+          ' <span class="stop-tag tag-' + s.tag + '">' + s.tagLabel + '</span></div>' +
+        '<div class="stop-desc">' + s.desc + '</div>' +
+      '</div></div>';
+  });
+  document.getElementById('stop-list').innerHTML = html;
+}
+
+function flyTo(i) {
+  var s = STOPS[i];
+  map.flyTo([s.lat, s.lng], 14, { duration: 1 });
+  setTimeout(function() { markers[i].openPopup(); }, 1100);
+}
+
+// ── TAB SWITCH ────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  var names = ['map','itin','mustsee','tips','budget','tasks'];
+  var idx = names.indexOf(name);
+  var btns = document.querySelectorAll('.tab-btn');
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
+  var lb = document.getElementById('legend-bar');
+  if (lb) lb.style.display = name === 'map' ? 'flex' : 'none';
+  if (name === 'map') setTimeout(function() { map.invalidateSize(); }, 50);
+}
+
+// ── FULLSCREEN MAP ────────────────────────────────────────────────────────────
+function toggleMapFullscreen() {
+  var m = document.getElementById('map');
+  var c = document.getElementById('mapFullscreenClose');
+  m.classList.toggle('map-fullscreen');
+  c.classList.toggle('active');
+  setTimeout(function() { map.invalidateSize(); }, 100);
+}
+
+// ── ITINERARY BUILD ───────────────────────────────────────────────────────────
+var currentLang = 'en';
+
+function buildItin(data) {
+  var el = document.getElementById('itin-panel');
+  var html = '';
+  data.forEach(function(d, i) {
+    html += '<div class="day-card" id="itin-' + i + '" onclick="toggleDay(' + i + ')">' +
+      '<div class="day-header">' +
+        '<div class="day-badge' + (d.isOpera ? ' opera' : '') + '">' + d.badge + '</div>' +
+        '<div>' +
+          '<div class="day-title">' + d.title + '</div>' +
+          '<div class="day-meta">' + d.meta + '</div>' +
+        '</div>' +
+        '<div class="day-chevron">▼</div>' +
+      '</div>' +
+      '<div class="day-body" id="day-body-' + i + '">' +
+        '<div class="section"><div class="section-label">☀️ Morning</div><div class="section-text">' + d.morning + '</div></div>' +
+        '<div class="section"><div class="section-label">🌤️ Afternoon</div><div class="section-text">' + d.afternoon + '</div></div>' +
+        '<div class="section"><div class="section-label">🌙 Evening</div><div class="section-text">' + d.evening + '</div></div>' +
+      '</div>' +
+    '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function toggleDay(i) {
+  var card = document.getElementById('itin-' + i);
+  var body = document.getElementById('day-body-' + i);
+  card.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function setLang(lang, btn) {
+  document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  currentLang = lang;
+  buildItin(lang === 'zh' ? ITIN_ZH : ITIN_EN);
+}
+
+// ── MUST SEE BUILD ────────────────────────────────────────────────────────────
+function buildMustsee() {
+  var el = document.getElementById('mustsee-panel');
+  var html = el.innerHTML;
+  MUSTSEE.forEach(function(cat, ci) {
+    html += '<div class="ms-place" id="ms-' + ci + '">' +
+      '<div class="ms-place-header" onclick="toggleMs(' + ci + ')">' +
+        '<div class="ms-num" style="background:' + cat.color + '30;color:' + cat.color + ';border-color:' + cat.color + '60">' + (ci+1) + '</div>' +
+        '<div class="ms-info"><div class="ms-place-name">' + cat.name + '</div><div class="ms-place-sub">' + cat.zh + '</div></div>' +
+        '<div class="ms-chevron">▼</div>' +
+      '</div>' +
+      '<div class="ms-body">';
+    cat.items.forEach(function(item) {
+      html += '<div class="ms-item">' +
+        '<div class="ms-item-title">' + item.title + '</div>' +
+        '<div class="ms-item-desc">' + item.desc + '</div>' +
+        '<div class="ms-item-tip">💡 ' + item.tip + '</div>' +
+      '</div>';
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function toggleMs(i) {
+  document.getElementById('ms-' + i).classList.toggle('open');
+}
+
+// ── TIPS BUILD ────────────────────────────────────────────────────────────────
+function buildTips() {
+  var el = document.getElementById('tips-panel');
+  var html = '';
+  TIPS.forEach(function(t, i) {
+    html += '<div class="tip-section" id="tip-' + i + '">' +
+      '<div class="tip-header" onclick="toggleTip(' + i + ')">' +
+        '<span class="tip-icon">' + t.icon + '</span>' +
+        '<span class="tip-title">' + t.title + '</span>' +
+        '<span class="tip-chevron">▼</span>' +
+      '</div>' +
+      '<div class="tip-body">' + t.body + '</div>' +
+    '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function toggleTip(i) {
+  document.getElementById('tip-' + i).classList.toggle('open');
+}
+
+// ── BUDGET BUILD ──────────────────────────────────────────────────────────────
+function buildBudget() {
+  var el = document.getElementById('budget-panel');
+  var total = 0;
+  BUDGET.forEach(function(b) { total += b.hkd; });
+  var totalSGD = Math.round(total / 5.9);
+
+  var cats = {};
+  BUDGET.forEach(function(b) {
+    if (!cats[b.cat]) cats[b.cat] = 0;
+    cats[b.cat] += b.hkd;
+  });
+
+  var html = '<div class="budget-summary">' +
+    '<div class="budget-stat"><div class="budget-stat-label">Total (HKD)</div><div class="budget-stat-value">HK$' + total.toLocaleString() + '</div></div>' +
+    '<div class="budget-stat"><div class="budget-stat-label">≈ SGD</div><div class="budget-stat-value">S$' + totalSGD.toLocaleString() + '</div></div>' +
+    '<div class="budget-stat"><div class="budget-stat-label">Per Person</div><div class="budget-stat-value">HK$' + Math.round(total/2).toLocaleString() + '</div></div>' +
+  '</div>';
+
+  html += '<table class="budget-table"><thead><tr><th>Item</th><th>HKD</th><th>Note</th></tr></thead><tbody>';
+  var lastCat = '';
+  BUDGET.forEach(function(b) {
+    if (b.cat !== lastCat) {
+      html += '<tr><td colspan="3" class="budget-cat">' + b.cat + '</td></tr>';
+      lastCat = b.cat;
+    }
+    html += '<tr><td>' + b.item + '</td>' +
+      '<td class="budget-hkd">HK$' + b.hkd.toLocaleString() + '</td>' +
+      '<td class="budget-note">' + b.note + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ── TASKS BUILD ───────────────────────────────────────────────────────────────
+var taskStates = {};
+
+function buildTasks() {
+  var el = document.getElementById('tasks-panel');
+  var html = '';
+  TASKS.forEach(function(cat) {
+    html += '<div class="task-category">' + cat.cat + '</div>';
+    cat.items.forEach(function(item, i) {
+      var key = cat.cat + '_' + i;
+      var done = taskStates[key];
+      html += '<div class="task-item' + (done ? ' completed' : '') + '" id="task-' + key.replace(/[^a-z0-9]/gi,'_') + '" onclick="toggleTask(this)">' +
+        '<div class="task-check">' + (done ? '✓' : '') + '</div>' +
+        '<div class="task-body">' +
+          '<div class="task-text">' + item.text + '</div>' +
+          '<div class="task-meta">' +
+            (item.deadline ? '<span class="task-deadline">⚡ ' + item.deadline + '</span>' : '') +
+            (item.due ? '<span class="task-due">📅 ' + item.due + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+function toggleTask(el) {
+  el.classList.toggle('completed');
+  var check = el.querySelector('.task-check');
+  check.textContent = el.classList.contains('completed') ? '✓' : '';
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function() { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+initMap();
+buildItin(ITIN_EN);
+buildMustsee();
+buildTips();
+buildBudget();
+buildTasks();
+</script>
+</body>
+</html>
