@@ -124,6 +124,21 @@ def fetch_positions():
     except Exception as e:
         print(f"Note: {e}")
 
+    # Prime assets: closer to what Tiger app displays
+    try:
+        prime = trade_client.get_prime_assets(account=ACCOUNT, base_currency="USD")
+        segments = getattr(prime, "segments", None) or {}
+        sec_seg = segments.get("S") if hasattr(segments, "get") else None
+        if sec_seg:
+            for attr in ("unrealized_plby_cost_of_carry", "unrealized_pl_by_cost_of_carry",
+                         "unrealizedPnl", "unrealized_pnl", "pnl"):
+                coc = _f(getattr(sec_seg, attr, None))
+                if coc is not None:
+                    account_open_pnl_usd = coc
+                    break
+    except Exception as e:
+        print(f"Note (prime assets): {e}")
+
     print(f"Final accountOpenPnlUSD: {account_open_pnl_usd}")
     print(f"Final dailyPnlUSD: {daily_pnl_usd}")
 
