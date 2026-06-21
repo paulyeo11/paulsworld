@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="/ga4.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIT06: Grill-Me — Learn Any Skill Fast</title>
+<script defer src="/_vercel/insights/script.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1a2e;
+  --paper: #faf8f3;
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #10b981;
+  --red: #ef4444;
+  --muted: #6b6b6b;
+  --line: #e0ddd5;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: 'Source Serif 4', Georgia, serif; font-weight: 300; line-height: 1.8; }
+
+#homeBar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+  background: var(--ink); padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+  font-family: Arial, sans-serif;
+}
+#homeBar .hb-home { background: var(--accent); color: #fff; text-decoration: none; font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px; }
+#homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, var(--ink) 0%, #16213e 50%, #0f3460 100%);
+  color: #fff; text-align: center; padding: 80px 24px 50px;
+}
+.hero .badge {
+  display: inline-block; background: var(--accent); color: #fff;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 4px 14px; border-radius: 20px; margin-bottom: 16px;
+  font-family: Arial, sans-serif;
+}
+.hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 5vw, 3rem); margin-bottom: 12px; }
+.hero p { color: rgba(255,255,255,0.75); font-size: 1rem; max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+/* SKILL PICKER */
+#skillPicker { max-width: 800px; margin: 0 auto; padding: 48px 20px; }
+#skillPicker h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.5rem;
+  text-align: center; margin-bottom: 8px; color: var(--ink);
+}
+#skillPicker .sub { text-align: center; color: var(--muted); font-size: 0.95rem; margin-bottom: 32px; }
+
+.skill-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.skill-btn {
+  background: #fff; border: 2px solid var(--line); border-radius: 16px;
+  padding: 24px 16px; text-align: center; cursor: pointer;
+  transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  font-family: 'Source Serif 4', serif;
+}
+.skill-btn:hover { border-color: var(--blue); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(74,108,247,0.15); }
+.skill-btn .skill-icon { font-size: 2.4rem; margin-bottom: 10px; display: block; }
+.skill-btn .skill-name { font-weight: 600; font-size: 1rem; color: var(--ink); display: block; }
+.skill-btn .skill-count { font-size: 0.8rem; color: var(--muted); margin-top: 4px; display: block; }
+
+/* QUIZ AREA */
+#quizArea { display: none; max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; }
+
+.quiz-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.quiz-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--ink); }
+.quiz-score {
+  background: var(--ink); color: #fff; padding: 8px 20px;
+  border-radius: 25px; font-size: 0.9rem; font-weight: 600; font-family: Arial, sans-serif;
+}
+
+.progress-bar-wrap { background: var(--line); border-radius: 8px; height: 8px; margin-bottom: 28px; }
+.progress-bar { height: 8px; border-radius: 8px; background: var(--blue); transition: width 0.4s ease; }
+
+.question-card {
+  background: #fff; border-radius: 18px; padding: 32px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px;
+}
+.q-num { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue); font-family: Arial, sans-serif; margin-bottom: 14px; }
+.q-text { font-size: 1.1rem; font-weight: 400; color: var(--ink); line-height: 1.6; }
+
+.options { display: grid; gap: 12px; margin-top: 24px; }
+.opt-btn {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 2px solid var(--line); border-radius: 12px;
+  padding: 14px 18px; cursor: pointer; text-align: left;
+  transition: all 0.15s ease; font-family: 'Source Serif 4', serif; font-size: 0.98rem; color: var(--ink);
+}
+.opt-btn:hover:not([disabled]) { border-color: var(--blue); background: #f0f4ff; }
+.opt-btn .opt-letter {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--line);
+  font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+  font-family: Arial, sans-serif; color: var(--muted); transition: all 0.15s;
+}
+.opt-btn.correct { border-color: var(--green); background: #f0fdf4; }
+.opt-btn.correct .opt-letter { background: var(--green); border-color: var(--green); color: #fff; }
+.opt-btn.wrong { border-color: var(--red); background: #fff5f5; }
+.opt-btn.wrong .opt-letter { background: var(--red); border-color: var(--red); color: #fff; }
+.opt-btn[disabled] { cursor: default; }
+
+.feedback-box {
+  display: none; margin-top: 20px; padding: 18px 22px;
+  border-radius: 12px; font-size: 0.95rem; line-height: 1.6;
+  font-family: 'Source Serif 4', serif;
+}
+.feedback-box.correct { background: #f0fdf4; border: 1px solid #bbf7d0; color: #065f46; }
+.feedback-box.wrong { background: #fff5f5; border: 1px solid #fecaca; color: #7f1d1d; }
+.feedback-result { font-weight: 600; font-size: 1rem; margin-bottom: 6px; }
+.feedback-exp { margin: 0; }
+
+.next-btn {
+  display: block; width: 100%; margin-top: 20px;
+  background: var(--blue); color: #fff; border: none;
+  padding: 16px; border-radius: 12px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: Arial, sans-serif; transition: background 0.15s;
+}
+.next-btn:hover { background: #3558e8; }
+
+/* RESULTS */
+#resultsArea { display: none; max-width: 640px; margin: 0 auto; padding: 48px 20px 80px; text-align: center; }
+.result-icon { font-size: 4rem; margin-bottom: 16px; }
+.result-title { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 12px; }
+.result-sub { font-size: 1rem; color: var(--muted); margin-bottom: 32px; }
+.score-circle {
+  width: 130px; height: 130px; border-radius: 50%;
+  background: var(--ink); color: #fff; margin: 0 auto 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 8px 30px rgba(26,26,46,0.3);
+}
+.score-circle .score-num { font-size: 2.4rem; font-weight: 800; font-family: Arial, sans-serif; line-height: 1; }
+.score-circle .score-label { font-size: 0.78rem; opacity: 0.7; letter-spacing: 0.08em; margin-top: 4px; font-family: Arial, sans-serif; }
+
+.result-badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
+.badge-item {
+  background: #fff; border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 18px; font-size: 0.88rem; color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.badge-item strong { color: var(--blue); }
+
+.result-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn-retry, .btn-pick {
+  padding: 14px 28px; border-radius: 25px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; border: none; font-family: Arial, sans-serif; transition: all 0.15s;
+}
+.btn-retry { background: var(--accent); color: #fff; }
+.btn-retry:hover { background: #e06d2a; }
+.btn-pick { background: #fff; color: var(--blue); border: 2px solid var(--blue); }
+.btn-pick:hover { background: #f0f4ff; }
+
+/* streak */
+.streak-bar { display: flex; gap: 6px; justify-content: center; margin-bottom: 28px; }
+.streak-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--line); }
+.streak-dot.correct { background: var(--green); }
+.streak-dot.wrong { background: var(--red); }
+
+footer { text-align: center; padding: 24px 16px; background: var(--ink); color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 40px; }
+footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+
+@media (max-width: 600px) {
+  .skill-grid { grid-template-columns: 1fr 1fr; }
+  .quiz-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">✈️ Paul's World</span>
+</div>
+
+<div class="hero">
+  <div class="badge">AI Tools · Tool 6</div>
+  <h1>🔥 AIT06: Grill-Me — Learn Any Skill Fast</h1>
+  <p>Pick a skill, answer questions, get instant feedback. The fastest way to check what you know — and plug the gaps.</p>
+</div>
+
+<!-- SKILL PICKER -->
+<div id="skillPicker">
+  <h2>What skill do you want to learn today?</h2>
+  <p class="sub">Tap a topic to start. 8 questions per session. Takes about 5 minutes.</p>
+  <div class="skill-grid" id="skillGrid"></div>
+</div>
+
+<!-- QUIZ AREA -->
+<div id="quizArea">
+  <div class="quiz-header">
+    <div class="quiz-title" id="quizTitle"></div>
+    <div class="quiz-score" id="quizScore">Score: 0 / 0</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="streak-bar" id="streakBar"></div>
+
+  <div class="question-card" id="questionCard">
+    <div class="q-num" id="qNum"></div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback-box" id="feedbackBox">
+      <div class="feedback-result" id="feedbackResult"></div>
+      <p class="feedback-exp" id="feedbackExp"></p>
+    </div>
+    <button class="next-btn" id="nextBtn" style="display:none" onclick="nextQuestion()">Next Question →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsArea">
+  <div class="result-icon" id="resultIcon"></div>
+  <div class="result-title" id="resultTitle"></div>
+  <div class="result-sub" id="resultSub"></div>
+  <div class="score-circle">
+    <div class="score-num" id="finalScore"></div>
+    <div class="score-label">CORRECT</div>
+  </div>
+  <div class="streak-bar" id="finalStreak"></div>
+  <div class="result-badges" id="resultBadges"></div>
+  <div class="result-actions">
+    <button class="btn-retry" onclick="restartQuiz()">🔄 Try Again</button>
+    <button class="btn-pick" onclick="pickAnotherSkill()">📚 Pick Another Skill</button>
+  </div>
+</div>
+
+<div style="max-width:680px;margin:0 auto;padding:0 20px;">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  &copy; 2025 Paul Yeo &nbsp;|&nbsp; Built with AI 🚀 &nbsp;|&nbsp;
+  <a href="https://paulsworld.vercel.app/">🏠 Home</a>
+</footer>
+
+<script>
+const SKILLS = [
+  {
+    id: 'ai',
+    icon: '🤖',
+    name: 'AI Basics',
+    desc: '8 questions',
+    questions: [
+      {
+        q: 'What does "AI" stand for?',
+        options: ['Automated Intelligence','Artificial Intelligence','Augmented Intelligence','Advanced Intelligence'],
+        correct: 1,
+        exp: 'AI stands for Artificial Intelligence — technology that simulates human thinking and reasoning using computers.'
+      },
+      {
+        q: 'What is a "prompt" in AI?',
+        options: ['A computer program','The instruction or question you give to an AI','A type of AI model','A payment method'],
+        correct: 1,
+        exp: 'A prompt is the text or question you type to the AI. The clearer your prompt, the better the answer you get!'
+      },
+      {
+        q: 'Which company made Claude?',
+        options: ['Google','OpenAI','Anthropic','Microsoft'],
+        correct: 2,
+        exp: 'Claude is made by Anthropic, an AI safety company focused on building safe and helpful AI systems.'
+      },
+      {
+        q: 'What is "hallucination" in AI?',
+        options: ['When AI processes images','When AI creates artwork','When AI confidently gives wrong information','When AI responds slowly'],
+        correct: 2,
+        exp: 'AI "hallucination" is when the AI states incorrect information very confidently. Always verify important facts from AI!'
+      },
+      {
+        q: 'What does "LLM" stand for?',
+        options: ['Large Logic Machine','Limited Language Model','Large Language Model','Long-running Learning Module'],
+        correct: 2,
+        exp: 'LLM = Large Language Model. These are AI systems (like Claude and ChatGPT) trained on massive amounts of text to understand and generate human language.'
+      },
+      {
+        q: 'What is the best way to improve an AI's response?',
+        options: ['Ask the same question again','Be more specific and clear in your prompt','Use only very short sentences','Type in ALL CAPS'],
+        correct: 1,
+        exp: 'Being specific and giving context in your prompt helps the AI understand exactly what you need. This is called "prompt engineering."'
+      },
+      {
+        q: 'What does ChatGPT stand for?',
+        options: ['Chat Generative Pre-trained Transformer','Chat Global Processing Tool','Computer-Human AI GPT','Chat Growth & Productivity Tool'],
+        correct: 0,
+        exp: 'ChatGPT = Chat Generative Pre-trained Transformer. GPT describes the technology; "Chat" means it is designed for conversation.'
+      },
+      {
+        q: 'What is "context window" in AI?',
+        options: ['The computer screen size','The amount of text an AI can read and remember at once','The time it takes AI to respond','The AI\'s internet browsing window'],
+        correct: 1,
+        exp: 'The context window is how much text the AI can process in one conversation. Larger context = AI can handle longer documents and chats without "forgetting" earlier parts.'
+      }
+    ]
+  },
+  {
+    id: 'invest',
+    icon: '📈',
+    name: 'Investing',
+    desc: '8 questions',
+    questions: [
+      {
+        q: 'What is an ETF?',
+        options: ['Electronic Transfer Fund','Exchange-Traded Fund','Early Tax Filing','Extended Trade Finance'],
+        correct: 1,
+        exp: 'An ETF (Exchange-Traded Fund) is a basket of investments you can buy and sell on the stock market — like buying one share that holds many companies.'
+      },
+      {
+        q: 'What does "dividend" mean in investing?',
+        options: ['A type of stock split','A broker fee','A share of company profits paid to shareholders','The cost of a trade'],
+        correct: 2,
+        exp: 'Dividends are regular cash payments companies make to shareholders from their profits — a way to earn passive income from your investments.'
+      },
+      {
+        q: 'What is diversification?',
+        options: ['Selling all stocks at once','Investing in different assets to reduce risk','Buying only tech stocks','A type of bond'],
+        correct: 1,
+        exp: '"Don\'t put all your eggs in one basket." Spreading money across different investments means one bad loss won\'t ruin your whole portfolio.'
+      },
+      {
+        q: 'What is a "bull market"?',
+        options: ['When stock prices are falling steadily','When stock prices are rising steadily','When trading is suspended','A market for livestock'],
+        correct: 1,
+        exp: 'A "bull market" means rising stock prices over a sustained period. The opposite — falling prices — is a "bear market." Bulls charge upward; bears swipe downward!'
+      },
+      {
+        q: 'What is "compound interest"?',
+        options: ['Interest paid only on the original amount','Interest earned on both original amount AND accumulated interest','A fixed government interest rate','Interest charged on loans only'],
+        correct: 1,
+        exp: 'Compound interest means your returns earn returns. Money snowballs over time. Einstein reportedly called it "the eighth wonder of the world."'
+      },
+      {
+        q: 'What is a "blue chip" stock?',
+        options: ['A cheap penny stock','A stock only in the technology sector','Shares in a large, stable, well-established company','A government bond'],
+        correct: 2,
+        exp: 'Blue chip stocks are shares in large, reputable companies with a long track record — like DBS, Apple, or Singapore Airlines. Generally lower risk than smaller stocks.'
+      },
+      {
+        q: 'What does P/E ratio stand for?',
+        options: ['Profit/Equity','Profit/Earnings','Price/Earnings','Price/Equity'],
+        correct: 2,
+        exp: 'P/E = Price-to-Earnings ratio. It shows how expensive a stock is relative to its earnings. A lower P/E can indicate better value — but always compare within the same industry.'
+      },
+      {
+        q: 'What is IBKR?',
+        options: ['International Banking & Real estate','Interactive Brokers','Investment Bank of Korea Republic','Institutional Bond & Rates'],
+        correct: 1,
+        exp: 'IBKR = Interactive Brokers — a major global brokerage platform popular with serious investors for its low fees, wide range of markets, and powerful tools.'
+      }
+    ]
+  },
+  {
+    id: 'travel',
+    icon: '✈️',
+    name: 'Travel Planning',
+    desc: '8 questions',
+    questions: [
+      {
+        q: 'What is a travel visa?',
+        options: ['A travel credit card','Official permission from a country to enter it','Travel insurance','A type of airline ticket'],
+        correct: 1,
+        exp: 'A visa is an official stamp or document from a foreign government giving you permission to enter, stay in, or travel through their country for a set purpose and duration.'
+      },
+      {
+        q: 'What does "transit visa" mean?',
+        options: ['A long-term residence permit','Permission to stop in a country while travelling to another destination','Free visa on arrival','A work permit'],
+        correct: 1,
+        exp: 'A transit visa lets you pass through a country (often at an airport) without entering as a tourist. Often needed for connecting flights through certain countries.'
+      },
+      {
+        q: 'What does travel insurance typically cover?',
+        options: ['Cheaper flights','Faster visa processing','Medical emergencies, cancellations, and lost luggage','Hotel discounts'],
+        correct: 2,
+        exp: 'Travel insurance protects you from unexpected costs: hospital bills abroad, cancelled flights, stolen baggage, or emergency evacuation. Essential for adventure travel!'
+      },
+      {
+        q: 'What is a "layover"?',
+        options: ['An upgrade to business class','A stop between flights at a connecting airport','Extra luggage fee','A hotel included in the ticket'],
+        correct: 1,
+        exp: 'A layover is a stop at a connecting city between your origin and destination. A short one (1-2 hrs) is a transit. A long one (6+ hrs) can let you explore the connecting city!'
+      },
+      {
+        q: 'What is "jet lag"?',
+        options: ['Delays from bad weather','Tiredness from heavy luggage','Fatigue caused by crossing multiple time zones quickly','Motion sickness from turbulence'],
+        correct: 2,
+        exp: 'Jet lag happens when your body clock is out of sync with local time after flying across many time zones. Singapore to Europe (8 hrs difference) can cause days of disrupted sleep.'
+      },
+      {
+        q: 'What is a travel itinerary?',
+        options: ['A type of travel visa','A detailed day-by-day plan of a trip','Travel insurance document','A list of travel restrictions'],
+        correct: 1,
+        exp: 'An itinerary is your travel plan: where you\'ll go, what you\'ll do, and how you\'ll get there, day by day. A good itinerary makes any trip smooth and stress-free.'
+      },
+      {
+        q: 'What is the check-in deadline at airports?',
+        options: ['Time you must arrive at your destination','Latest time to register your flight before it closes','Time your luggage arrives at the carousel','The boarding gate opening time'],
+        correct: 1,
+        exp: 'Airlines close check-in typically 45–60 minutes before departure. Miss it and you could lose your seat even if you have a ticket — always arrive early!'
+      },
+      {
+        q: 'What does "carry-on" or "cabin baggage" mean?',
+        options: ['Luggage stored in the plane\'s hold below','Luggage you bring into the plane cabin with you','Checked-in baggage','Oversized baggage'],
+        correct: 1,
+        exp: 'Carry-on is the small bag you keep with you in the cabin. Most airlines allow 7–10 kg. Larger bags must be "checked in" and go into the aircraft hold below.'
+      }
+    ]
+  },
+  {
+    id: 'health',
+    icon: '🏃',
+    name: 'Health & Fitness',
+    desc: '8 questions',
+    questions: [
+      {
+        q: 'How many minutes of moderate exercise per week does WHO recommend for adults?',
+        options: ['At least 50 minutes','At least 150 minutes','At least 60 minutes','At least 300 minutes only'],
+        correct: 1,
+        exp: 'The WHO recommends at least 150 minutes of moderate exercise per week (e.g., brisk walking). That\'s just about 22 minutes a day — very achievable!'
+      },
+      {
+        q: 'What does "BMI" stand for?',
+        options: ['Body Mass Index','Basic Metabolic Intake','Bone Muscle Indicator','Body Movement Index'],
+        correct: 0,
+        exp: 'BMI = Body Mass Index. It is calculated as weight (kg) divided by height² (m²). It is a quick indicator of healthy weight range, though it doesn\'t account for muscle mass.'
+      },
+      {
+        q: 'Which vitamin is mainly produced when your skin is exposed to sunlight?',
+        options: ['Vitamin A','Vitamin B12','Vitamin C','Vitamin D'],
+        correct: 3,
+        exp: 'Vitamin D is synthesised in the skin when exposed to sunlight. Many people in Asia are deficient — it is crucial for bone health, immunity, and mood.'
+      },
+      {
+        q: 'What is the main benefit of strength training as we age?',
+        options: ['Only losing weight','Maintaining muscle mass and bone density to stay strong','Making you run faster','Improving eyesight'],
+        correct: 1,
+        exp: 'We naturally lose muscle mass (sarcopenia) from around age 30. Strength training — even light resistance exercises — slows this loss and helps prevent falls and frailty.'
+      },
+      {
+        q: 'How many hours of sleep do most adults need per night?',
+        options: ['3–5 hours','5–6 hours','7–9 hours','10–12 hours'],
+        correct: 2,
+        exp: 'Most adults need 7–9 hours of sleep. Chronic sleep deprivation raises risk of heart disease, diabetes, weight gain, and cognitive decline. Quality matters too!'
+      },
+      {
+        q: 'What is "intermittent fasting"?',
+        options: ['Eating only vegetables','Cycling between periods of eating and periods of fasting','Fasting only on weekends','Skipping breakfast permanently'],
+        correct: 1,
+        exp: 'Intermittent fasting (IF) involves eating within a set time window (e.g., 8 hours) and fasting the rest. Popular methods: 16:8, 5:2. It may help with weight control and metabolic health.'
+      },
+      {
+        q: 'What is "cardiovascular exercise"?',
+        options: ['Exercise using weights only','Stretching exercises','Activities that raise your heart rate and improve heart/lung fitness','Exercises that only target the arms'],
+        correct: 2,
+        exp: 'Cardio (cardiovascular exercise) includes walking, running, swimming, cycling — anything that elevates your heart rate. It strengthens your heart and lungs and burns calories.'
+      },
+      {
+        q: 'What is the recommended daily water intake for adults (approximately)?',
+        options: ['500 ml (half a litre)','1 litre','2 litres (8 glasses)','5 litres'],
+        correct: 2,
+        exp: 'About 2 litres (8 glasses) per day is the common recommendation. In hot climates like Singapore or during exercise you need more. Proper hydration aids energy, focus, and digestion.'
+      }
+    ]
+  },
+  {
+    id: 'photo',
+    icon: '📸',
+    name: 'Photography',
+    desc: '8 questions',
+    questions: [
+      {
+        q: 'What does "aperture" control in photography?',
+        options: ['The shutter speed','The depth of field (how much of the photo is in focus)','The ISO sensitivity','The image resolution'],
+        correct: 1,
+        exp: 'Aperture (f-stop) controls depth of field. A wide aperture (low f-number like f/1.8) blurs the background beautifully. A narrow aperture (f/11) keeps everything sharp — great for landscapes.'
+      },
+      {
+        q: 'What is the "rule of thirds"?',
+        options: ['Using only 3 colours','Dividing the frame into a 3×3 grid and placing subjects on the intersections','Taking 3 photos of the same scene','Using a tripod for 3 seconds'],
+        correct: 1,
+        exp: 'The rule of thirds divides the frame into 9 equal parts. Placing your subject at the intersection points creates a more balanced, visually interesting composition than centring everything.'
+      },
+      {
+        q: 'What does ISO control in a camera?',
+        options: ['The zoom level','The flash brightness','The camera\'s sensitivity to light','The image file format'],
+        correct: 2,
+        exp: 'ISO controls how sensitive the camera sensor is to light. Higher ISO (e.g., 3200) = brighter in dark conditions, but causes "grain" (noise). Lower ISO = cleaner image in bright light.'
+      },
+      {
+        q: 'What is "shutter speed"?',
+        options: ['How fast the camera focuses','How long the camera sensor is exposed to light','How fast photos are saved to the memory card','The speed of the lens zoom'],
+        correct: 1,
+        exp: 'Shutter speed is how long the camera\'s sensor is exposed to light. Fast speed (1/1000s) freezes motion. Slow speed (1/15s) blurs motion — good for waterfalls and light trails.'
+      },
+      {
+        q: 'What is "golden hour" in photography?',
+        options: ['The hour after midnight','The hour after sunrise and before sunset when light is soft and warm','When the camera battery lasts longest','The best hour to buy camera equipment'],
+        correct: 1,
+        exp: 'Golden hour is the period shortly after sunrise and before sunset. The light is soft, warm (golden/orange tones), and comes at a low angle — creating beautiful, flattering photos.'
+      },
+      {
+        q: 'What does "RAW" format mean for photos?',
+        options: ['Unedited JPG files','Compressed low-quality images','Unprocessed image data captured directly from the sensor (more editing flexibility)','Photos taken without flash'],
+        correct: 2,
+        exp: 'RAW files contain all the data the camera sensor captured — no compression or processing. They are much larger than JPG but give you far more control when editing in Lightroom or Photoshop.'
+      },
+      {
+        q: 'What is "white balance" in photography?',
+        options: ['Adjusting the brightness of white objects','Setting the camera to ensure colours look accurate under different lighting conditions','Balancing the left and right sides of a photo','Removing white backgrounds'],
+        correct: 1,
+        exp: 'White balance adjusts the colour "temperature" so whites appear white under any light source — whether indoors (warm yellow) or outdoors (cool blue). Wrong white balance makes photos look orange or blue.'
+      },
+      {
+        q: 'What is the "exposure triangle"?',
+        options: ['Three angles in a panoramic photo','The three settings (aperture, shutter speed, ISO) that together control a photo\'s exposure','A triangular composition technique','Three types of camera lenses'],
+        correct: 1,
+        exp: 'The exposure triangle — aperture, shutter speed, and ISO — are the three fundamental settings that control how much light hits the sensor and how your photo looks. Mastering these three unlocks great photography!'
+      }
+    ]
+  },
+  {
+    id: 'finance',
+    icon: '💰',
+    name: 'Personal Finance',
+    desc: '8 questions',
+    questions: [
+      {
+        q: 'What is CPF in Singapore?',
+        options: ['Central Pension Fund','Central Provident Fund','Company Profit Fund','Community Payment Fund'],
+        correct: 1,
+        exp: 'CPF = Central Provident Fund. Singapore\'s mandatory savings scheme where both employees and employers contribute. It covers retirement, healthcare (Medisave), and housing (HDB purchase).'
+      },
+      {
+        q: 'What is "net worth"?',
+        options: ['Your annual salary','Total assets minus total liabilities','Your take-home pay','The value of your home only'],
+        correct: 1,
+        exp: 'Net worth = Total assets (what you own: property, savings, investments) minus total liabilities (what you owe: loans, mortgages). It\'s the best measure of your true financial position.'
+      },
+      {
+        q: 'What is an "emergency fund"?',
+        options: ['A fund for stock market emergencies','Savings set aside to cover 3–6 months of living expenses','A government assistance scheme','Insurance for accidents'],
+        correct: 1,
+        exp: 'An emergency fund is 3–6 months of expenses saved in an accessible account. It protects you if you lose your job, face medical bills, or have unexpected large expenses — without going into debt.'
+      },
+      {
+        q: 'What does "inflation" mean for your money?',
+        options: ['Your money grows in value over time','The price of goods rises, reducing the purchasing power of your money','A type of bank interest','A government tax'],
+        correct: 1,
+        exp: 'Inflation means prices rise over time — S$100 buys less next year than it does today. This is why keeping all your money in a low-interest savings account actually loses value in real terms.'
+      },
+      {
+        q: 'What is a "will" or "last will and testament"?',
+        options: ['A promise to repay a loan','A legal document saying how your assets should be distributed after death','A type of insurance','A power of attorney'],
+        correct: 1,
+        exp: 'A will is a legal document specifying who gets your money, property, and possessions after you die. Without a will, Singapore\'s Intestate Succession Act decides — which may not reflect your wishes.'
+      },
+      {
+        q: 'What is the "50/30/20 budgeting rule"?',
+        options: ['Save 50%, spend 30%, invest 20%','Spend 50% on needs, 30% on wants, 20% on savings/debt','Invest 50%, spend 30%, save 20%','Pay 50% tax, 30% bills, 20% food'],
+        correct: 1,
+        exp: 'The 50/30/20 rule: 50% of after-tax income on needs (rent, food, utilities), 30% on wants (entertainment, dining), 20% on savings and debt repayment. A simple framework to start budgeting.'
+      },
+      {
+        q: 'What does "dollar-cost averaging" mean in investing?',
+        options: ['Buying investments only when prices are lowest','Investing a fixed amount at regular intervals regardless of price','Converting money to US dollars before investing','Only buying shares priced under S$1'],
+        correct: 1,
+        exp: 'Dollar-cost averaging (DCA) means investing a fixed amount (e.g., S$500/month) regularly. When prices are high, you buy fewer units; when low, you buy more. Over time this smooths out market volatility.'
+      },
+      {
+        q: 'What is "term life insurance"?',
+        options: ['Life insurance that lasts only a set period and pays out if you die within it','A savings account with life cover','Insurance that covers terminal illness only','An investment-linked insurance plan'],
+        correct: 0,
+        exp: 'Term life insurance covers you for a fixed period (e.g., 20 or 30 years). If you die during that term, your family receives a payout. It\'s the most affordable way to get large coverage while dependants still need you.'
+      }
+    ]
+  }
+];
+
+let currentSkill = null;
+let currentQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+let streakResults = [];
+
+function renderSkillPicker() {
+  const grid = document.getElementById('skillGrid');
+  grid.innerHTML = '';
+  SKILLS.forEach(skill => {
+    const btn = document.createElement('button');
+    btn.className = 'skill-btn';
+    btn.innerHTML = `<span class="skill-icon">${skill.icon}</span><span class="skill-name">${skill.name}</span><span class="skill-count">${skill.desc}</span>`;
+    btn.onclick = () => startQuiz(skill.id);
+    grid.appendChild(btn);
+  });
+}
+
+function startQuiz(skillId) {
+  currentSkill = SKILLS.find(s => s.id === skillId);
+  currentQuestions = shuffle([...currentSkill.questions]);
+  currentIndex = 0;
+  score = 0;
+  answered = false;
+  streakResults = [];
+
+  document.getElementById('skillPicker').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('quizTitle').textContent = currentSkill.icon + ' ' + currentSkill.name;
+
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = currentQuestions[currentIndex];
+  answered = false;
+
+  document.getElementById('qNum').textContent = 'Question ' + (currentIndex + 1) + ' of ' + currentQuestions.length;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('feedbackBox').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  const optsEl = document.getElementById('options');
+  optsEl.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    optsEl.appendChild(btn);
+  });
+
+  updateProgress();
+  renderStreakBar();
+}
+
+function selectAnswer(index) {
+  if (answered) return;
+  answered = true;
+
+  const q = currentQuestions[currentIndex];
+  const opts = document.querySelectorAll('.opt-btn');
+  const isCorrect = index === q.correct;
+
+  if (isCorrect) score++;
+  streakResults.push(isCorrect);
+
+  opts.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    if (i === index && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedbackBox');
+  const fbResult = document.getElementById('feedbackResult');
+  const fbExp = document.getElementById('feedbackExp');
+
+  fb.className = 'feedback-box ' + (isCorrect ? 'correct' : 'wrong');
+  fbResult.textContent = isCorrect ? '✅ Correct!' : '❌ Not quite — the answer is: ' + q.options[q.correct];
+  fbExp.textContent = q.exp;
+  fb.style.display = 'block';
+
+  document.getElementById('quizScore').textContent = 'Score: ' + score + ' / ' + currentQuestions.length;
+  document.getElementById('nextBtn').style.display = 'block';
+
+  renderStreakBar();
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= currentQuestions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function updateProgress() {
+  const pct = (currentIndex / currentQuestions.length) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+function renderStreakBar(targetId) {
+  const id = targetId || 'streakBar';
+  const bar = document.getElementById(id);
+  bar.innerHTML = '';
+  for (let i = 0; i < currentQuestions.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'streak-dot';
+    if (i < streakResults.length) dot.classList.add(streakResults[i] ? 'correct' : 'wrong');
+    bar.appendChild(dot);
+  }
+}
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'block';
+
+  const total = currentQuestions.length;
+  const pct = Math.round((score / total) * 100);
+
+  let icon, title, sub;
+  if (pct === 100) {
+    icon = '🏆'; title = 'Perfect Score!'; sub = 'Outstanding! You aced every single question. You really know your ' + currentSkill.name + '!';
+  } else if (pct >= 75) {
+    icon = '🌟'; title = 'Excellent!'; sub = 'Very strong performance! You have a solid grasp of ' + currentSkill.name + '. Review the ones you missed to go from good to great.';
+  } else if (pct >= 50) {
+    icon = '👍'; title = 'Good Effort!'; sub = 'You know the basics of ' + currentSkill.name + '. Keep practising — try again to push your score higher!';
+  } else {
+    icon = '💪'; title = 'Keep Learning!'; sub = 'Don\'t worry — learning takes time. Read the explanations carefully and try again. Each attempt builds your knowledge!';
+  }
+
+  document.getElementById('resultIcon').textContent = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = sub;
+  document.getElementById('finalScore').textContent = score + '/' + total;
+
+  renderStreakBar('finalStreak');
+
+  const badges = [];
+  badges.push(`<div class="badge-item">📊 Score: <strong>${pct}%</strong></div>`);
+  badges.push(`<div class="badge-item">✅ Correct: <strong>${score}</strong></div>`);
+  badges.push(`<div class="badge-item">❌ Missed: <strong>${total - score}</strong></div>`);
+  if (pct === 100) badges.push(`<div class="badge-item">🏅 <strong>Perfect!</strong></div>`);
+  document.getElementById('resultBadges').innerHTML = badges.join('');
+}
+
+function restartQuiz() {
+  startQuiz(currentSkill.id);
+}
+
+function pickAnotherSkill() {
+  document.getElementById('resultsArea').style.display = 'none';
+  document.getElementById('skillPicker').style.display = 'block';
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+renderSkillPicker();
+</script>
+
+</body>
+</html>

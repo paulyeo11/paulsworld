@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S27: They Said This Bridge Is for Animals. I Climbed It Anyway.</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* BILINGUAL */
+.zh-content { display: none; }
+.en-content { display: block; }
+.zh-inline { display: none; }
+.en-inline { display: inline; }
+body.lang-zh .zh-content { display: block; }
+body.lang-zh .en-content { display: none; }
+body.lang-zh .zh-inline { display: inline; }
+body.lang-zh .en-inline { display: none; }
+.lang-toggle { display: flex; gap: 8px; justify-content: center; margin-top: 18px; }
+.lang-btn { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.18); color: var(--muted); font-size: 0.82rem; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-family: 'Source Serif 4', serif; transition: all 0.2s; }
+.lang-btn.active { background: rgba(244,129,63,0.2); border-color: rgba(244,129,63,0.5); color: var(--accent); }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, #0a1218 0%, #0f1820 50%, #0f1117 100%); border-bottom: 1px solid var(--border); padding: 64px 20px 52px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at center, rgba(74,108,247,0.06) 0%, transparent 60%); pointer-events: none; }
+.label { display: inline-block; background: rgba(244,129,63,0.12); border: 1px solid rgba(244,129,63,0.3); color: var(--accent); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 20px; }
+.hero h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.7rem, 5vw, 2.6rem); font-weight: 700; color: #fff; line-height: 1.25; max-width: 760px; margin: 0 auto 16px; }
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn { position: absolute; top: 18px; left: 18px; background: rgba(74,108,247,0.15); border: 1px solid rgba(74,108,247,0.35); color: var(--blue); text-decoration: none; font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(244,129,63,0.15); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.9rem; padding: 9px 22px; border-radius: 24px; cursor: pointer; font-family: 'Source Serif 4', serif; transition: background 0.2s; text-decoration: none; }
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt { background: rgba(74,108,247,0.12); border-color: rgba(74,108,247,0.35); color: var(--blue); }
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead { font-size: 1.18rem; color: var(--text); font-style: italic; border-left: 3px solid var(--accent); padding-left: 18px; margin-bottom: 2em; }
+h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700; }
+
+/* INLINE PHOTO */
+.inline-photo { margin: 1.8em 0; border-radius: 14px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); }
+.inline-photo img { width: 100%; display: block; max-height: 500px; object-fit: cover; transition: opacity 0.2s; }
+.inline-photo:hover img { opacity: 0.93; }
+.inline-photo-caption { padding: 10px 16px 12px; background: var(--card); font-size: 0.82rem; color: var(--muted); font-style: italic; line-height: 1.5; }
+.inline-photo.hero-photo img { max-height: 460px; }
+.photo-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1.8em 0; }
+.photo-grid-2 .inline-photo { margin: 0; }
+@media (max-width: 500px) { .photo-grid-2 { grid-template-columns: 1fr; } }
+
+/* ENTER HERE badge */
+.enter-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,200,0,0.15); border: 2px solid rgba(255,200,0,0.6);
+  color: #ffd700; font-size: 0.82rem; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 10px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+/* STATS CARD */
+.stats-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; padding: 22px 24px; margin: 2em 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+/* PULL QUOTE */
+.pull-quote { background: linear-gradient(135deg, rgba(74,108,247,0.07), rgba(244,129,63,0.07)); border: 1px solid rgba(244,129,63,0.18); border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center; }
+.pull-quote p { font-family: 'Playfair Display', serif; font-size: 1.22rem; font-style: italic; color: var(--text); margin: 0; line-height: 1.6; }
+
+/* INFO BOXES */
+.military-box { background: rgba(142,68,173,0.08); border: 1px solid rgba(142,68,173,0.25); border-left: 3px solid #8e44ad; border-radius: 10px; padding: 20px 22px; margin: 2em 0; }
+.military-box .mil-title { color: #bb8fce; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.military-box p { color: #d0d4e8; margin: 0; font-size: 0.95rem; }
+.question-box { background: rgba(244,129,63,0.07); border: 1px solid rgba(244,129,63,0.25); border-left: 3px solid var(--accent); border-radius: 10px; padding: 20px 22px; margin: 2em 0; }
+.question-box .q-title { color: var(--accent); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.question-box p { color: #d0d4e8; margin: 0; font-size: 0.95rem; }
+
+/* MAP */
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#trail-map.map-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; height: 100dvh !important; z-index: 9999; border: none !important; }
+#mapCloseBtn { display: none; position: fixed; top: 14px; right: 14px; z-index: 10000; background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px; cursor: pointer; align-items: center; gap: 6px; font-family: 'Source Serif 4', serif; }
+.map-section > .section-title, .map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#trail-map { width: 100%; height: 520px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.pm-circle { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.7); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; color: #fff; transition: transform 0.15s; }
+.pm-circle:hover { transform: scale(1.25); }
+.pm-circle.start { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.end { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.forest { background: #27ae60; }
+.pm-circle.road { background: #e67e22; }
+.pm-circle.military { background: #8e44ad; }
+.pm-circle.water { background: #2980b9; }
+.pm-circle.enter { background: #f1c40f; border-color: #fff; width:46px; height:46px; font-size:0.65rem; font-weight:900; color:#000; }
+.pm-container { position: relative; }
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-btn { display: inline-block; background: rgba(244,129,63,0.18); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.75rem; padding: 4px 12px; border-radius: 14px; cursor: pointer; text-decoration: none; }
+.map-popup-enter { display: inline-block; background: rgba(241,196,15,0.2); border: 1px solid rgba(241,196,15,0.5); color: #f1c40f; font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 14px; margin-bottom: 8px; }
+
+/* MAP LINKS */
+.map-links-section { max-width: 740px; margin: 0 auto; padding: 24px 22px 40px; border-top: 1px solid var(--border); }
+.map-links-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); margin-bottom: 14px; font-weight: 700; }
+.map-links-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* PHOTO JOURNAL */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.photo-journal { margin-top: 16px; display: flex; flex-direction: column; gap: 36px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; max-height: 420px; object-fit: cover; display: block; transition: opacity 0.2s; }
+.pj-item:hover img { opacity: 0.92; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+/* LIGHTBOX */
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 9000; align-items: center; justify-content: center; flex-direction: column; padding: 20px; }
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.12); border: none; color: #fff; font-size: 1.6rem; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+/* SLIDESHOW */
+.slideshow-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 10000; flex-direction: column; align-items: center; justify-content: center; }
+.slideshow-overlay.active { display: flex; }
+.slide { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; animation: fadeIn 1s ease; width: 100%; }
+.slide.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.slide img { max-width: min(90vw, 820px); max-height: 70vh; object-fit: contain; border-radius: 10px; }
+.slide-caption { color: #ddd; font-size: 1rem; margin-top: 18px; font-style: italic; max-width: 620px; line-height: 1.5; font-family: 'Playfair Display', serif; }
+.slide-num { color: rgba(255,255,255,0.4); font-size: 0.78rem; margin-top: 8px; }
+.slideshow-controls { position: absolute; bottom: 24px; display: flex; gap: 14px; align-items: center; }
+.ss-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: 'Source Serif 4', serif; }
+.ss-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 1.8rem; cursor: pointer; background: none; border: none; line-height: 1; opacity: 0.7; }
+.ss-progress { position: absolute; top: 0; left: 0; height: 3px; background: var(--accent); transition: width 0.3s; }
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<!-- SLIDESHOW -->
+<div class="slideshow-overlay" id="slideshow">
+  <div class="ss-progress" id="ssProgress"></div>
+  <button class="ss-close" onclick="closeSlideshow()">&#x2715;</button>
+  <div class="slide active"><img src="img_S27/13-bridge-entrance.jpg" alt=""><div class="slide-caption">The secret entrance — look for the yellow circle marker on the ground. This is where you climb up. Most hikers walk straight past.</div><div class="slide-num">1 / 14</div></div>
+  <div class="slide"><img src="img_S27/14-proof-of-arrival.jpg" alt=""><div class="slide-caption">Proof I was there — Paul standing right under the Eco-Link@BKE sign, with the BKE expressway behind him. This bridge is real. I really was here.</div><div class="slide-num">2 / 14</div></div>
+  <div class="slide"><img src="img_S27/01-trail-start.jpg" alt=""><div class="slide-caption">The trail begins — a metal-grated walkway, quiet, shaded, unknown to most people driving past on Rifle Range Road.</div><div class="slide-num">3 / 14</div></div>
+  <div class="slide"><img src="img_S27/02-military-hardware.jpg" alt=""><div class="slide-caption">Rusty military rings in a long row — left behind from military activity in this corridor. Nobody moved them. The jungle is slowly taking them back.</div><div class="slide-num">4 / 14</div></div>
+  <div class="slide"><img src="img_S27/03-army-bollards.jpg" alt=""><div class="slide-caption">Yellow-black bollards mark the boundary of Rifle Range Road Camp 1. You are walking right alongside an active SAF camp.</div><div class="slide-num">5 / 14</div></div>
+  <div class="slide"><img src="img_S27/04-open-field.jpg" alt=""><div class="slide-caption">The jungle opens into a wide, well-kept green field. Only the military maintains land like this in the middle of dense jungle.</div><div class="slide-num">6 / 14</div></div>
+  <div class="slide"><img src="img_S27/11-fallen-tree.jpg" alt=""><div class="slide-caption">A massive fallen tree blocks the path just before the bridge. You have to duck under. The jungle tests you one last time.</div><div class="slide-num">7 / 14</div></div>
+  <div class="slide"><img src="img_S27/05-bridge-selfie.jpg" alt=""><div class="slide-caption">Arriving at the Eco-Link@BKE — officially Singapore's wildlife crossing. But the more you look, the more questions you have.</div><div class="slide-num">8 / 14</div></div>
+  <div class="slide"><img src="img_S27/09-highway-view.jpg" alt=""><div class="slide-caption">From the bridge, looking straight down. The BKE in full flow — cars, taxis, trucks — all completely unaware of the two men standing above them.</div><div class="slide-num">9 / 14</div></div>
+  <div class="slide"><img src="img_S27/10-paul-and-po.jpg" alt=""><div class="slide-caption">Me and Mr Po on the Eco-Link@BKE, 21 May 2022. Big smiles. We made it across. This is retirement done right.</div><div class="slide-num">10 / 14</div></div>
+  <div class="slide"><img src="img_S27/12-bridge-top.jpg" alt=""><div class="slide-caption">The top of the bridge — leaf litter, bare soil, trees and mesh fencing. And a fan running. If this is a wildlife sanctuary, why is there machinery up here?</div><div class="slide-num">11 / 14</div></div>
+  <div class="slide"><img src="img_S27/08-terrapin.jpg" alt=""><div class="slide-caption">A freshwater terrapin in the stream on the other side of the bridge. The bridge claims to help animals cross. Here is one that made it.</div><div class="slide-num">12 / 14</div></div>
+  <div class="slide"><img src="img_S27/06-wwii-bunker.jpg" alt=""><div class="slide-caption">A WWII-era British bunker hidden in the jungle. On top: a cairn of stones stacked by hikers over many years. Each stone a wish for good luck.</div><div class="slide-num">13 / 14</div></div>
+  <div class="slide"><img src="img_S27/07-rifle-range-camp.jpg" alt=""><div class="slide-caption">Rifle Range Road Camp 1 — plain gate. But beneath it, it is said, lies an underground ammunition depot invisible to satellite. Some things Singapore keeps very well hidden.</div><div class="slide-num">14 / 14</div></div>
+  <div class="slideshow-controls">
+    <button class="ss-btn" onclick="ssNav(-1)">&#8592; Prev</button>
+    <button class="ss-btn" id="ssPlayPause" onclick="toggleAuto()">&#9646;&#9646; Pause</button>
+    <button class="ss-btn" onclick="ssNav(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="label">Travel Story &middot; S27</div>
+  <h1>
+    <span class="en-inline">They Said This Bridge Is <span>for Animals.</span><br>I Climbed It Anyway.</span>
+    <span class="zh-inline">他们说这座桥是<span>为动物而建</span>——<br>我还是爬上去了</span>
+  </h1>
+  <div class="meta">
+    <span class="en-inline">By Paul Yeo &amp; Mr Po &nbsp;&middot;&nbsp; 21 May 2022 &nbsp;&middot;&nbsp; Eco-Link@BKE, Singapore</span>
+    <span class="zh-inline">Paul Yeo 与 Po先生 &nbsp;&middot;&nbsp; 2022年5月21日 &nbsp;&middot;&nbsp; 新加坡</span>
+  </div>
+  <div class="hero-btns">
+    <button class="hero-btn" onclick="openSlideshow()">&#9654;&nbsp; <span class="en-inline">Watch as Movie</span><span class="zh-inline">观看幻灯片</span></button>
+    <a href="#photomap" class="hero-btn alt">&#128205;&nbsp; <span class="en-inline">See the Map</span><span class="zh-inline">查看地图</span></a>
+    <a href="#story" class="hero-btn alt">&#128214;&nbsp; <span class="en-inline">Read the Story</span><span class="zh-inline">阅读故事</span></a>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btnEn" onclick="setLang('en')">&#127468;&#127463; English</button>
+    <button class="lang-btn" id="btnZh" onclick="setLang('zh')">&#127464;&#127475; 中文</button>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="map-section" id="photomap">
+  <div style="max-width:740px;margin:0 auto;padding:20px 22px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div class="section-title">&#128205; <span class="en-inline">Interactive Trail Map</span><span class="zh-inline">互动路线地图</span></div>
+    <button onclick="openMapFullscreen()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(244,129,63,0.15);border:1px solid rgba(244,129,63,0.4);color:var(--accent);font-size:0.88rem;padding:8px 18px;border-radius:22px;cursor:pointer;font-family:'Source Serif 4',serif;">&#x26F6; <span class="en-inline">Full Screen</span><span class="zh-inline">全屏</span></button>
+  </div>
+  <div id="trail-map"></div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; <span class="en-inline">Close Map</span><span class="zh-inline">关闭</span></button>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;padding-bottom:10px;max-width:740px;margin-left:auto;margin-right:auto;padding-left:22px;padding-right:22px;">
+    <span style="color:#f1c40f;font-weight:700;">&#9733; ENTER HERE</span> <span class="en-inline">marks the secret bridge entrance. Tap any marker to see the photo at that spot.</span><span class="zh-inline">标记了秘密入口。点击标记查看照片。</span>
+  </p>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+
+  <p class="lead">
+    <span class="en-inline">Singapore has a bridge officially built for animals to cross the BKE expressway. Most people have never heard of it. I not only walked across it — I found the secret entrance and climbed to the top. What I found up there changed the story completely.</span>
+    <span class="zh-inline">新加坡有一座桥，官方说法是为动物穿越BKE快速公路而建。大多数人从未听说过它。我不仅走过了它——我还找到了秘密入口，爬上了桥顶。我在上面发现的，彻底改变了这个故事。</span>
+  </p>
+
+  <h2><span class="en-inline">How It Started</span><span class="zh-inline">故事的开头</span></h2>
+
+  <p class="en-content">It was 21 May 2022. My friend Mr Po called me up. He had heard about a trail near Rifle Range Road — one that most people do not know about. He said: "Paul, you want to go and explore?" I said yes. That is how it starts. Two retired men with nowhere they have to be, heading into the jungle on a weekday morning.</p>
+  <p class="zh-content">那是2022年5月21日。我的朋友Po先生打电话给我。他听说靶场路附近有一条小径——大多数人不知道的那种。他说："Paul，要不要去探探？"我说好。就是这么开始的。两个退休男人，工作日早上走进丛林，没有任何非去不可的地方。</p>
+
+  <p class="en-content">We did not know exactly what we would find. I had heard vaguely about the Eco-Link@BKE — the bridge Singapore built for animals to cross the expressway. Neither of us had been. So we went.</p>
+  <p class="zh-content">我们不知道会找到什么。我隐约听说过生态廊道@BKE——新加坡为动物穿越快速公路而建的桥。我们谁都没去过。于是我们就去了。</p>
+
+  <div class="stats-card">
+    <div class="stat"><div class="stat-label"><span class="en-inline">Date</span><span class="zh-inline">日期</span></div><div class="stat-value">21 May 2022</div></div>
+    <div class="stat"><div class="stat-label"><span class="en-inline">Companions</span><span class="zh-inline">同行</span></div><div class="stat-value">Paul &amp; Mr Po</div></div>
+    <div class="stat"><div class="stat-label"><span class="en-inline">Location</span><span class="zh-inline">地点</span></div><div class="stat-value">Eco-Link@BKE, Singapore</div></div>
+    <div class="stat"><div class="stat-label"><span class="en-inline">Nearby Camp</span><span class="zh-inline">附近营地</span></div><div class="stat-value">Rifle Range Rd Camp 1</div></div>
+    <div class="stat"><div class="stat-label"><span class="en-inline">Wildlife Found</span><span class="zh-inline">发现野生动物</span></div><div class="stat-value"><span class="en-inline">Freshwater Terrapin</span><span class="zh-inline">淡水龟</span></div></div>
+    <div class="stat"><div class="stat-label"><span class="en-inline">Big Question</span><span class="zh-inline">大问题</span></div><div class="stat-value"><span class="en-inline">Why is there a fan on top?</span><span class="zh-inline">顶部为何有风扇？</span></div></div>
+  </div>
+
+  <h2><span class="en-inline">The Walk In — Singapore's Hidden Military Corridor</span><span class="zh-inline">走进去——新加坡隐藏的军事走廊</span></h2>
+
+  <p class="en-content">The trail starts as a metal-grated walkway off Rifle Range Road — quiet, shaded, unknown to most people driving past. No signs. No crowd. Just jungle.</p>
+  <p class="zh-content">小径从靶场路旁一条金属栅格步道开始——安静、阴凉，驾车经过的人大多不知道它的存在。没有指示牌，没有人群，只有丛林。</p>
+
+  <div class="inline-photo" onclick="openLightbox(0)">
+    <img src="img_S27/01-trail-start.jpg" alt="Trail start">
+    <div class="inline-photo-caption">
+      <span class="en-inline">The trail entrance — quiet, shaded, and unknown to most. This is where the hike begins.</span>
+      <span class="zh-inline">小径入口——安静、阴凉、鲜为人知。徒步就从这里开始。</span>
+    </div>
+  </div>
+
+  <p class="en-content">Within a few minutes, the trail reveals its first surprise. This is no ordinary nature walk. Rusty circular iron rings line the path — old military hardware, arranged in a long row, overgrown with moss. Nobody has moved them. The jungle is slowly reclaiming them. Then come the yellow-and-black bollards, stretching through the undergrowth — the boundary of Rifle Range Road Camp 1, an active Singapore Armed Forces camp right beside this trail.</p>
+  <p class="zh-content">走了几分钟，小径揭示了第一个惊喜。这不是一条普通的自然步道。锈迹斑斑的圆形铁环沿路排列——旧军事装备，一字排开，苔藓丛生。没人搬走它们。丛林正慢慢将它们收回。然后是黄黑警示柱，延伸入丛林——这是靶场路一号营地的边界，一座就在这条步道旁边的现役新加坡武装部队营地。</p>
+
+  <div class="photo-grid-2">
+    <div class="inline-photo" onclick="openLightbox(1)">
+      <img src="img_S27/02-military-hardware.jpg" alt="Military hardware">
+      <div class="inline-photo-caption"><span class="en-inline">Rusty military rings in a row — forgotten remnants from another era</span><span class="zh-inline">锈迹斑斑的军事铁环——另一个时代遗留的遗物</span></div>
+    </div>
+    <div class="inline-photo" onclick="openLightbox(2)">
+      <img src="img_S27/03-army-bollards.jpg" alt="Army bollards">
+      <div class="inline-photo-caption"><span class="en-inline">Yellow-black bollards — you are walking alongside an active SAF camp</span><span class="zh-inline">黄黑警示柱——你正走在一座现役武装部队营地旁边</span></div>
+    </div>
+  </div>
+
+  <p class="en-content">The jungle opens into a wide green field — perfectly maintained. In the middle of dense jungle, only the military keeps land this tidy. Then the camp gate comes into view. Plain. Unremarkable. Nothing to suggest what lies beyond or below it. A contractor who worked inside told me: the garden is beautiful — manicured and well-kept. And according to those who know, somewhere beneath this ground lies an underground ammunition depot, designed to be invisible to satellite imagery. The jungle canopy does the hiding. Singapore is very good at keeping certain things out of sight.</p>
+  <p class="zh-content">丛林豁然开朗——一片维护整洁的宽阔绿地。在茂密丛林中，只有军队才能把土地保持得这么整洁。然后营地大门出现了。普通，毫不显眼。没有任何迹象显示里面或地下有什么。一位在营地施工过的承包商告诉我：里面的花园很漂亮，修剪整洁。据知情人士透露，这片地下某处有一座地下弹药库，专门设计成卫星无法侦测的形式。丛林树冠完成了遮蔽工作。新加坡非常擅长让某些东西远离视线。</p>
+
+  <div class="photo-grid-2">
+    <div class="inline-photo" onclick="openLightbox(3)">
+      <img src="img_S27/04-open-field.jpg" alt="Open field">
+      <div class="inline-photo-caption"><span class="en-inline">Perfectly maintained green field — only the military keeps jungle land this tidy</span><span class="zh-inline">维护整洁的绿地——只有军队才能在丛林中保持这样的整洁</span></div>
+    </div>
+    <div class="inline-photo" onclick="openLightbox(6)">
+      <img src="img_S27/07-rifle-range-camp.jpg" alt="Rifle Range Camp gate">
+      <div class="inline-photo-caption"><span class="en-inline">Rifle Range Road Camp 1 — plain gate. Underground ammunition depot beneath? It is said so.</span><span class="zh-inline">靶场路一号营地——普通铁门。地下有弹药库？据说有。</span></div>
+    </div>
+  </div>
+
+  <p class="en-content">Just before the bridge, one last obstacle: a massive fallen tree across the path. Trunk wide as a car, roots ripped from the earth, branches still bearing green leaves. You duck underneath. The forest tests you one more time before it lets you through.</p>
+  <p class="zh-content">就在到达桥前，最后一个障碍：一棵巨树横倒在路上。树干宽如汽车，根部被连根拔起，枝桠上仍挂着绿叶。你弯腰钻过去。丛林在放行前最后再考验你一次。</p>
+
+  <div class="inline-photo" onclick="openLightbox(10)">
+    <img src="img_S27/11-fallen-tree.jpg" alt="Fallen tree">
+    <div class="inline-photo-caption">
+      <span class="en-inline">Massive fallen tree blocks the path just before the bridge. Duck under and keep going.</span>
+      <span class="zh-inline">就在桥前，巨树横倒在路上。弯腰钻过，继续前行。</span>
+    </div>
+  </div>
+
+  <p class="en-content">Right near the bridge, look carefully at the ground. There is a yellow circle marker — easy to miss if you are not looking for it. That is the secret entrance. Not the walkway below, but the way up to the actual surface of the bridge. I found it. I marked it. Now you know too.</p>
+  <p class="zh-content">就在桥旁边，仔细看地面。有一个黄色圆圈标记——如果不特意找，很容易错过。那就是秘密入口。不是下面的步道，而是通往桥面本身的路。我找到了，我标记了。现在你也知道了。</p>
+
+  <div class="inline-photo" onclick="openLightbox(12)">
+    <div class="enter-badge">&#9733; Enter Here</div>
+    <img src="img_S27/13-bridge-entrance.jpg" alt="Secret bridge entrance">
+    <div class="inline-photo-caption">
+      <span class="en-inline">The secret entrance to the bridge top — the yellow circle marker on the ground is your guide. Save this photo if you want to find it yourself.</span>
+      <span class="zh-inline">通往桥顶的秘密入口——地面上的黄色圆圈标记是你的指引。如果你想自己找到它，保存这张照片。</span>
+    </div>
+  </div>
+
+  <h2><span class="en-inline">The Bridge — And What I Found on Top</span><span class="zh-inline">那座桥——以及我在顶上发现的</span></h2>
+
+  <div class="inline-photo hero-photo" onclick="openLightbox(13)">
+    <img src="img_S27/14-proof-of-arrival.jpg" alt="Paul at Eco-Link BKE sign">
+    <div class="inline-photo-caption">
+      <span class="en-inline">Proof I was there — standing right under the Eco-Link@BKE sign. The BKE expressway runs right behind me.</span>
+      <span class="zh-inline">证明我到过那里——站在生态廊道@BKE标志正下方。BKE快速公路就在我身后。</span>
+    </div>
+  </div>
+
+  <p class="en-content">The Eco-Link@BKE is an elegant span of greenery stretching across six lanes of expressway. Step onto it and the world changes. City noise falls away. Leaves rustle. You are walking through a living forest corridor suspended above the BKE — and looking down through the railings, you see cars rushing past at highway speed, completely unaware of two men standing silently above them.</p>
+  <p class="zh-content">生态廊道@BKE是一道绿意盎然的桥梁，横跨六线快速公路。踏上去，世界变了。城市噪音消退，树叶沙沙作响。你正走过一条悬浮在BKE上空的活森林走廊——透过栏杆向下望，车辆以公路速度疾驰，完全不知道两个男人正静静站在他们头顶。</p>
+
+  <div class="inline-photo" onclick="openLightbox(4)">
+    <img src="img_S27/05-bridge-selfie.jpg" alt="Bridge selfie">
+    <div class="inline-photo-caption">
+      <span class="en-inline">Arriving at the Eco-Link@BKE. Officially a wildlife crossing. Officially.</span>
+      <span class="zh-inline">抵达生态廊道@BKE。官方说法是野生动物过桥。官方说法。</span>
+    </div>
+  </div>
+
+  <div class="inline-photo" onclick="openLightbox(8)">
+    <img src="img_S27/09-highway-view.jpg" alt="Highway view from bridge">
+    <div class="inline-photo-caption">
+      <span class="en-inline">Looking straight down from the bridge. The BKE at full speed below — and silence above.</span>
+      <span class="zh-inline">从桥上径直向下望。BKE在脚下全速运转——上方却是一片寂静。</span>
+    </div>
+  </div>
+
+  <div class="inline-photo hero-photo" onclick="openLightbox(9)">
+    <img src="img_S27/10-paul-and-po.jpg" alt="Paul and Mr Po on bridge">
+    <div class="inline-photo-caption">
+      <span class="en-inline">Me and Mr Po on the Eco-Link@BKE, 21 May 2022. Big smiles. We made it across.</span>
+      <span class="zh-inline">我和Po先生在生态廊道@BKE桥上，2022年5月21日。笑得灿烂。我们穿越了。</span>
+    </div>
+  </div>
+
+  <div class="pull-quote">
+    <p><span class="en-inline">"Above: silence, leaves, the smell of forest. Below: the BKE at full throttle. Two worlds, one thin bridge between them."</span><span class="zh-inline">"上方：寂静、树叶、森林的气息。下方：全速行驶的BKE。两个世界，中间只隔一座薄薄的桥。"</span></p>
+  </div>
+
+  <p class="en-content">Then I used the secret entrance I had found and climbed up onto the bridge surface itself — the top, where the greenery grows. Up there it is leaf litter, bare soil, trees, and metal mesh fencing. And then I noticed something that stopped me: a fan. There is a mechanical fan running on this bridge. Creating noise. Air movement. Vibration. And I started asking a question nobody seems to ask: if this bridge is for wildlife, why is there machinery up here? How comfortable can any animal be, crossing a humming fan-ventilated structure above six lanes of highway?</p>
+  <p class="zh-content">然后我用找到的秘密入口爬上了桥面本身——顶部，植被生长的地方。上面是落叶、裸土、树木和金属网围栏。然后我注意到了让我停下来的东西：一台风扇。桥上有一台机械风扇在运转。制造噪音、气流、震动。我开始问一个好像没人问过的问题：如果这座桥是为野生动物而建，为什么上面有机械设备？动物要穿越一个有风扇运转、嗡嗡作响、悬在六线公路上空的结构，能感到舒适吗？</p>
+
+  <div class="inline-photo" onclick="openLightbox(11)">
+    <img src="img_S27/12-bridge-top.jpg" alt="Top of bridge with fan">
+    <div class="inline-photo-caption">
+      <span class="en-inline">The top surface of the Eco-Link@BKE — leaf litter, mesh fencing, trees. And a fan running. Wildlife sanctuary? You decide.</span>
+      <span class="zh-inline">生态廊道@BKE的顶面——落叶、网围栏、树木。还有一台运转中的风扇。野生动物廊道？你来判断。</span>
+    </div>
+  </div>
+
+  <div class="question-box">
+    <div class="q-title">&#10067; <span class="en-inline">The Question Nobody Is Asking</span><span class="zh-inline">没人在问的问题</span></div>
+    <p class="en-content">The Eco-Link@BKE cost millions to build. It has a beautiful official story about reconnecting wildlife habitats split by the expressway. But mechanical equipment running on the bridge raises a real question: what is this bridge actually for? Wildlife? Something else? Singapore is very good at building things with more than one purpose — and very good at not publicising the second one.</p>
+    <p class="zh-content">生态廊道@BKE耗资数百万。它有一个关于重新连接被快速公路分割的野生动物栖息地的美丽官方故事。但桥上运转的机械设备让人心生疑问：这座桥究竟是为什么而建？野生动物？还是别的？新加坡非常擅长建造具有多重用途的设施——也非常擅长对第二个用途保持沉默。</p>
+  </div>
+
+  <h2><span class="en-inline">The Other Side — Bunkers, Terrapins, and History</span><span class="zh-inline">另一侧——碉堡、龟，与历史</span></h2>
+
+  <p class="en-content">We crossed to the west side of the BKE. And the first thing we found there — completely unexpected — was a solid British concrete bunker hidden in the jungle. Thick walls, sealed metal hatch on top. Built in 1941-42 as part of Singapore's defensive line against the Japanese advance. On top of it, hikers over many years have stacked flat stones into a cairn. In Buddhist tradition, each stone placed is a meditation: balance, peace, a wish for good luck. War gives way to peace, one stone at a time.</p>
+  <p class="zh-content">我们越过BKE到达西侧。我们在那里发现的第一样东西——完全出乎意料——是藏在丛林中的英国混凝土碉堡。厚实的墙壁，顶部封着铁盖，建于1941至42年，是新加坡抵御日军南下防线的一部分。碉堡顶上，多年来徒步者们叠起了石堆。在佛教传统中，每次叠石都是一次冥想：象征平衡、平和，祈求好运。战争一块石头一块石头地化为平和。</p>
+
+  <div class="inline-photo" onclick="openLightbox(5)">
+    <img src="img_S27/06-wwii-bunker.jpg" alt="WWII bunker with stone cairn">
+    <div class="inline-photo-caption">
+      <span class="en-inline">WWII British bunker found after crossing the bridge — and a Buddhist stone cairn on top, built by hikers over many years.</span>
+      <span class="zh-inline">过桥后发现的二战英国碉堡——顶上是多年来徒步者堆砌的佛教石堆。</span>
+    </div>
+  </div>
+
+  <p class="en-content">In a nearby stream we found a freshwater terrapin — dark shell, head just above the water, completely unbothered. Whatever else this bridge may serve, the animals are using it. That terrapin crossed. The bridge is working for him.</p>
+  <p class="zh-content">附近的溪流里，我们发现了一只淡水龟——深色龟壳，头微微抬出水面，毫不在意。无论这座桥还有什么其他用途，动物们确实在使用它。那只龟穿越了。这座桥对它发挥了作用。</p>
+
+  <div class="inline-photo" onclick="openLightbox(7)">
+    <img src="img_S27/08-terrapin.jpg" alt="Freshwater terrapin">
+    <div class="inline-photo-caption">
+      <span class="en-inline">Freshwater terrapin in the stream after crossing. At least some wildlife is definitely making it across.</span>
+      <span class="zh-inline">越桥后溪流里的淡水龟。至少有些野生动物确实在穿越。</span>
+    </div>
+  </div>
+
+  <p class="en-content">Standing there, I thought about what this one trail holds. In one morning we had walked through 80 years of Singapore compressed into a few kilometres of jungle: WWII British bunkers built in 1941; an SAF camp with a plain gate and secrets beneath it; and a bridge opened in 2013, officially for wildlife, with a fan running on top and questions left unanswered. Three eras — war, army, nature — layered on top of each other in the same strip of jungle.</p>
+  <p class="zh-content">站在那里，我想到了这条小径所承载的东西。在一个上午，我们穿越了压缩在几公里丛林中的新加坡80年历史：1941年建造的二战英国碉堡；一座有着普通铁门和地下秘密的武装部队营地；以及2013年开通、官方说是为野生动物、顶上有风扇运转、留下未解之谜的一座桥。三个时代——战争、军队、自然——层叠在同一片丛林之中。</p>
+
+  <h2><span class="en-inline">Walking Back</span><span class="zh-inline">走回去</span></h2>
+
+  <p class="en-content">We turned around and walked back the way we came — past the terrapin stream, back over the bridge, under the fallen tree, through the bollards, out to Rifle Range Road. The same jungle going the other way felt quieter. We did not talk much.</p>
+  <p class="zh-content">我们原路返回——经过龟类溪流，再次走过桥，钻过倒树，穿过警示柱，回到靶场路。同样的丛林，走回去感觉更安静。我们话不多。</p>
+
+  <p class="en-content">Now, every time I drive past that stretch of the BKE, I look up at the green bridge overhead. From the road you see it for two seconds and drive on. You do not think about it. But I know what is up there — the leaf litter, the mesh fence, the fan, the military zone alongside, the bunker on the other side, the terrapin in the stream. Two retired men who went to find out for themselves.</p>
+  <p class="zh-content">现在，每次开车经过BKE那一段，我都会抬头望向头顶那座绿色的桥。从公路上你只看见它两秒钟，然后开走了。你不会多想。但我知道上面有什么——落叶、网围栏、风扇、旁边的军事禁区、另一侧的碉堡、溪里的龟。两个退休男人，自己去探了个究竟。</p>
+
+  <p class="en-content">Mr Po, if you are reading this — thank you for the call that morning. Good adventure.</p>
+  <p class="zh-content">Po先生，如果你在读这篇文章——谢谢你那天早上的那通电话。好一趟探险。</p>
+
+  <div class="pull-quote">
+    <p><span class="en-inline">"From the road you drive past in two seconds. But up there, I found 80 years of Singapore's secrets."</span><span class="zh-inline">"从公路开车两秒就过去了。但在上面，我发现了新加坡80年的秘密。"</span></p>
+  </div>
+
+</div>
+
+<!-- MAP LINKS -->
+<div class="map-links-section">
+  <div class="map-links-title">&#128205; <span class="en-inline">Find This Location</span><span class="zh-inline">查找此地点</span></div>
+  <div class="map-links-row">
+    <a href="https://maps.app.goo.gl/CMKaf8shXdeVJS4K9?g_st=ic" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">&#128506; Google Maps</a>
+    <a href="https://map.baidu.com/search/%E7%94%9F%E6%80%81%E5%BB%8A%E9%81%93%40%E6%AD%A6%E5%90%89%E7%9F%A5%E9%A9%AC%E5%BF%AB%E9%80%9F%E5%85%AC%E8%B7%AF" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=103.7740,1.3461&name=Eco-Link%40BKE%20%E7%94%9F%E6%80%81%E5%BB%8A%E9%81%93" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <div class="section-title">&#128247; <span class="en-inline">Photo Journal — All 14 Moments</span><span class="zh-inline">照片日记——全部14个瞬间</span></div>
+  <div class="photo-journal" id="galleryGrid"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p>S27 &nbsp;&middot;&nbsp; Paul Yeo &amp; Mr Po &nbsp;&middot;&nbsp; 21 May 2022 &nbsp;&middot;&nbsp; Eco-Link@BKE, Singapore</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+function setLang(lang) {
+  document.body.classList.toggle('lang-zh', lang === 'zh');
+  document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+  document.getElementById('btnZh').classList.toggle('active', lang === 'zh');
+}
+
+const galleryPhotos = [
+  { src:"img_S27/01-trail-start.jpg", caption:"The trail entrance — quiet, shaded, unknown to most", captionZh:"小径入口——安静、阴凉、鲜为人知",
+    story:"The trail begins with this metal-grated walkway, shaded by overhanging trees. Most people who drive past on Rifle Range Road never notice this path. It is quiet, cool, and narrow — the kind of path that asks you to slow down before you go any further.",
+    storyZh:"小径从这条金属栅格步道开始，树荫遮蔽。大多数驾车经过靶场路的人从未注意到这条路。它安静、凉爽、狭窄——那种在你走进去之前，就要求你放慢脚步的小径。" },
+
+  { src:"img_S27/02-military-hardware.jpg", caption:"Rusty military hardware lining the path", captionZh:"沿路排列的生锈军事装备",
+    story:"These circular iron rings — old, rusty, heavy with age — are arranged in a long row beside the path. Nobody has moved them. Nobody cleared them away. They sit in the undergrowth, slowly being reclaimed by the jungle, quietly marking what this land once was.",
+    storyZh:"这些圆形铁环——老旧、生锈、历经岁月——沿小径一字排开。没人搬走它们。它们就待在丛林中，慢慢被大自然重新占据，悄然标记着这片土地曾经的面貌。" },
+
+  { src:"img_S27/03-army-bollards.jpg", caption:"Yellow-black bollards — army camp boundary", captionZh:"黄黑警示柱——军营边界",
+    story:"Rows of yellow-and-black bollards stretch through the undergrowth, marking the boundary of Rifle Range Road Camp 1. You are walking beside an active Singapore Armed Forces camp, and the camp is watching.",
+    storyZh:"一排排黄黑相间的警示柱延伸入丛林，标示着靶场路一号营地的边界。你正走在一座现役新加坡武装部队营地旁边，而营地在注视着你。" },
+
+  { src:"img_S27/04-open-field.jpg", caption:"Open green field beside the camp", captionZh:"营地旁的空旷草地",
+    story:"The jungle opens into a wide, well-maintained green field. A sign stands in the distance. This kind of open, manicured space in the middle of dense jungle only exists because the SAF maintains this land. In a strange way, the military has kept this corridor green.",
+    storyZh:"丛林豁然开朗，是一片宽阔整洁的绿色草地。远处竖着一块告示牌。丛林中间出现这样的开阔整洁地带，正是因为新加坡武装部队在维护这片土地。奇怪的是，正是军队让这条走廊保持了绿色。" },
+
+  { src:"img_S27/05-bridge-selfie.jpg", caption:"Arriving at the Eco-Link@BKE bridge", captionZh:"抵达生态廊道@BKE桥",
+    story:"There it is — the Eco-Link@BKE. The long span with its metal branch-pattern railings, greenery growing on top. After the bollards, the military hardware, the bunker, and the fallen tree — this bridge feels like a proper arrival. But the more you look, the more questions you have.",
+    storyZh:"就是它——生态廊道@BKE。那道覆盖着植被、配有树枝图案金属栏杆的长桥。历经警示柱、军事装备、碉堡和倒树之后——这座桥感觉像是真正意义上的抵达。但看得越多，问题也越多。" },
+
+  { src:"img_S27/06-wwii-bunker.jpg", caption:"WWII bunker with Buddhist stone cairn on top", captionZh:"二战碉堡与顶上的佛教石堆",
+    story:"Tucked beside the trail is a solid British concrete bunker from WWII — thick walls, sealed metal hatch, built in 1941-42 as part of Singapore's defensive line. On top, hikers over many years have stacked flat stones into a cairn. In Buddhist tradition, each stone placed is a meditation: a symbol of balance, a wish for good luck. War becomes peace, one stone at a time.",
+    storyZh:"小径旁隐藏着一座英国人建造的二战混凝土碉堡——厚实的墙壁，密封的铁盖，建于1941至42年，是新加坡防线的一部分。顶上，多年来徒步者们叠起石堆。在佛教传统中，每次叠石都是一次冥想：象征平衡，祈求好运。战争一块石头一块石头地化为平和。" },
+
+  { src:"img_S27/07-rifle-range-camp.jpg", caption:"Rifle Range Road Camp 1 gate", captionZh:"靶场路一号营地大门",
+    story:"Rifle Range Road Camp 1 — plain gate, no fuss. A contractor who has worked inside told me: the garden in there is beautiful. Manicured and well-kept. You would never guess from outside. And according to those who know, somewhere beneath the camp lies an underground ammunition depot, invisible to satellite. The jungle canopy does the hiding.",
+    storyZh:"靶场路一号营地。普通铁门，毫不显眼。一位曾在营地施工的承包商告诉我：里面的花园很漂亮，修剪整洁。从外面根本猜不到。据内情人士透露，营地某处地下有一座弹药库，无法被卫星侦测。丛林树冠完成了隐藏的工作。" },
+
+  { src:"img_S27/08-terrapin.jpg", caption:"Freshwater terrapin discovered after crossing the bridge", captionZh:"越过桥后发现的淡水龟",
+    story:"Cross to the west side of the BKE and the first thing we found was this freshwater terrapin in a shallow sandy stream. Dark shell, head raised just above the waterline, completely unbothered. Whatever else the Eco-Link is for — at least one terrapin is using it. The bridge is working for him.",
+    storyZh:"越过BKE西侧，我们发现的第一样东西就是这只淡水龟，待在浅浅的沙质溪流里。深色龟壳，头微微抬出水面，毫不在意。无论生态廊道还有什么其他用途——至少有一只龟在使用它。这座桥对它发挥了作用。" },
+
+  { src:"img_S27/09-highway-view.jpg", caption:"Looking down at the BKE expressway from the bridge", captionZh:"从桥上俯瞰BKE快速公路",
+    story:"Standing on the Eco-Link and looking straight down through the railings — the BKE below in full flow. A yellow taxi, cars, a flatbed truck, all moving at highway speed. They have no idea that two men are standing silently above them in a forest corridor. Two worlds, one thin bridge between them.",
+    storyZh:"站在生态廊道上，透过栏杆径直向下看——BKE就在脚下，车流涌动。一辆黄色出租车、私家车、一辆平板卡车，全以公路速度行驶。他们不知道，两个男人正静静站在他们头顶的丛林走廊里。两个世界，中间只隔一座薄薄的桥。" },
+
+  { src:"img_S27/10-paul-and-po.jpg", caption:"Paul and Mr Po on the Eco-Link@BKE — 21 May 2022", captionZh:"Paul 与 Po先生在生态廊道@BKE——2022年5月21日",
+    story:"This is the moment. Me and Mr Po on the Eco-Link@BKE, 21 May 2022. Big smiles, green jungle all around, the BKE far below. We had walked through the military zone, past the bunker, under the fallen tree — and we made it across. This is what retirement looks like.",
+    storyZh:"就是这一刻。我和Po先生在生态廊道@BKE桥上，2022年5月21日。笑得灿烂，四周是绿色丛林，BKE在远处脚下。我们穿越了军事禁区，走过了碉堡，钻过了倒树——我们成功穿越了。这就是退休生活的样子。" },
+
+  { src:"img_S27/11-fallen-tree.jpg", caption:"Fallen tree blocking the path just before the bridge", captionZh:"就在桥前横倒的大树",
+    story:"A massive fallen tree, roots ripped from the earth, blocking the entire path just before the bridge. Branches still carry green leaves — fighting to survive even in its fallen state. You have to duck underneath to continue. The jungle tests you one last time before it lets you cross.",
+    storyZh:"一棵巨大的树，根部被连根拔起，横亘在就在桥前的小径上。枝桠上仍挂着绿叶——即使倒下了仍在顽强求存。你必须弯腰钻过去才能继续。丛林在放你过桥之前，最后再考验你一次。" },
+
+  { src:"img_S27/12-bridge-top.jpg", caption:"The top of the Eco-Link@BKE bridge", captionZh:"生态廊道@BKE桥顶",
+    story:"I found the secret entrance and climbed up to the bridge surface itself. Up here it is leaf litter, bare soil, trees and mesh fencing. And I noticed something: a fan — mechanical equipment running on the bridge. If this is a peaceful wildlife sanctuary, why is there machinery creating noise and air movement up here? I don't have the answer. But standing on top of the Eco-Link, I thought: Singapore is very good at building things with more than one purpose.",
+    storyZh:"我找到了秘密入口，爬上了桥面本身。上面是落叶、裸土、树木和网围栏。然后我注意到：一台风扇——桥上有机械设备在运转。如果这是一片宁静的野生动物廊道，为什么这里有机械在制造噪音和气流？我没有答案。但站在生态廊道顶上，我想到：新加坡非常擅长建造具有多重用途的设施。" },
+
+  { src:"img_S27/13-bridge-entrance.jpg", caption:"The secret entrance to the bridge top", captionZh:"通往桥顶的秘密入口",
+    story:"The secret entrance to the top of the Eco-Link@BKE. Look for the yellow circle marker on the ground — that is where you go in. Most people walk straight past this point. Save this photo if you want to find it yourself. The yellow marker on the path is your key.",
+    storyZh:"通往生态廊道@BKE桥顶的秘密入口。找地上那个黄色圆圈标记——那就是入口。大多数人直接走过这个地点。如果你想自己找到它，保存这张照片。路上的黄色标记是你的钥匙。" },
+
+  { src:"img_S27/14-proof-of-arrival.jpg", caption:"Paul at the Eco-Link@BKE — proof of arrival", captionZh:"Paul在生态廊道@BKE——到达证明",
+    story:"Proof I was there. I am standing right under the Eco-Link@BKE sign — you can see it clearly above my head. The BKE expressway is behind me. A red car passes. This is 21 May 2022. Me and Mr Po. We made the trip, we found the secret entrance, we climbed to the top. This photo is my evidence.",
+    storyZh:"证明我到过那里。我就站在生态廊道@BKE标志正下方——你可以清楚看到头顶的标志。身后是BKE快速公路。一辆红色轿车从旁驶过。这是2022年5月21日。我和Po先生。我们来了，找到了秘密入口，爬上了桥顶。这张照片是我的证据。" },
+];
+
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'pj-item';
+  item.innerHTML = `
+    <img src="${p.src}" alt="" loading="lazy">
+    <div class="pj-body">
+      <div class="pj-num">Photo ${String(i+1).padStart(2,'0')} of ${galleryPhotos.length}</div>
+      <div class="pj-text">
+        <span class="en-inline">${p.story}</span>
+        <span class="zh-inline">${p.storyZh}</span>
+      </div>
+    </div>`;
+  item.onclick = () => openLightbox(i);
+  grid.appendChild(item);
+});
+
+let lbIndex = 0;
+const isZh = () => document.body.classList.contains('lang-zh');
+function openLightbox(i) {
+  lbIndex = i;
+  const p = galleryPhotos[i];
+  document.getElementById('lbImg').src = p.src;
+  document.getElementById('lbCaption').textContent = isZh() ? p.captionZh : p.caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) { lbIndex = (lbIndex + dir + galleryPhotos.length) % galleryPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+const slides = document.querySelectorAll('.slide');
+let ssIndex = 0, ssAuto = true, ssTimer = null;
+function openSlideshow() { document.getElementById('slideshow').classList.add('active'); showSlide(0); startAuto(); }
+function closeSlideshow() { document.getElementById('slideshow').classList.remove('active'); clearTimeout(ssTimer); }
+function showSlide(i) {
+  slides.forEach(s => s.classList.remove('active'));
+  ssIndex = (i + slides.length) % slides.length;
+  slides[ssIndex].classList.add('active');
+  document.getElementById('ssProgress').style.width = ((ssIndex + 1) / slides.length * 100).toFixed(1) + '%';
+}
+function ssNav(dir) { clearTimeout(ssTimer); showSlide(ssIndex + dir); if (ssAuto) startAuto(); }
+function startAuto() { clearTimeout(ssTimer); ssTimer = setTimeout(() => { showSlide(ssIndex + 1); if (ssAuto) startAuto(); }, 5000); }
+function toggleAuto() {
+  ssAuto = !ssAuto;
+  document.getElementById('ssPlayPause').innerHTML = ssAuto ? '&#9646;&#9646; Pause' : '&#9654; Play';
+  if (ssAuto) startAuto(); else clearTimeout(ssTimer);
+}
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('slideshow').classList.contains('active')) { if (e.key==='ArrowRight') ssNav(1); if (e.key==='ArrowLeft') ssNav(-1); if (e.key==='Escape') closeSlideshow(); }
+  if (document.getElementById('lightbox').classList.contains('active')) { if (e.key==='ArrowRight') lbNav(1); if (e.key==='ArrowLeft') lbNav(-1); if (e.key==='Escape') closeLightbox(); }
+});
+
+function openMapFullscreen() { document.getElementById('trail-map').classList.add('map-fullscreen'); document.getElementById('mapCloseBtn').style.display='flex'; document.body.style.overflow='hidden'; setTimeout(()=>map.invalidateSize(),100); }
+function closeMapFullscreen() { document.getElementById('trail-map').classList.remove('map-fullscreen'); document.getElementById('mapCloseBtn').style.display='none'; document.body.style.overflow=''; setTimeout(()=>map.invalidateSize(),100); }
+
+const map = L.map('trail-map', { zoomControl:true, fullscreenControl:true, fullscreenControlOptions:{position:'topright'} }).setView([1.3480, 103.7760], 15);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles &copy; Esri', maxZoom:19 }).addTo(map);
+
+const mapPhotos = [
+  { src:"img_S27/01-trail-start.jpg",       lat:1.3505, lon:103.7785, caption:"Trail entrance — start here", cls:"start", idx:0 },
+  { src:"img_S27/02-military-hardware.jpg",  lat:1.3495, lon:103.7775, caption:"Rusty military hardware", cls:"military", idx:1 },
+  { src:"img_S27/03-army-bollards.jpg",      lat:1.3487, lon:103.7767, caption:"Yellow-black bollards — camp boundary", cls:"military", idx:2 },
+  { src:"img_S27/04-open-field.jpg",         lat:1.3478, lon:103.7758, caption:"Open field beside Rifle Range Camp", cls:"forest", idx:3 },
+  { src:"img_S27/06-wwii-bunker.jpg",        lat:1.3473, lon:103.7753, caption:"WWII bunker + Buddhist stone cairn", cls:"military", idx:5 },
+  { src:"img_S27/11-fallen-tree.jpg",        lat:1.3469, lon:103.7751, caption:"Fallen tree — duck under!", cls:"forest", idx:10 },
+  { src:"img_S27/13-bridge-entrance.jpg",    lat:1.3465, lon:103.7747, caption:"SECRET ENTRANCE — yellow circle marker", cls:"enter", idx:12 },
+  { src:"img_S27/05-bridge-selfie.jpg",      lat:1.3463, lon:103.7744, caption:"Eco-Link@BKE bridge", cls:"road", idx:4 },
+  { src:"img_S27/09-highway-view.jpg",       lat:1.3462, lon:103.7742, caption:"View down onto BKE highway", cls:"road", idx:8 },
+  { src:"img_S27/10-paul-and-po.jpg",        lat:1.3460, lon:103.7740, caption:"Paul & Mr Po — 21 May 2022", cls:"road", idx:9 },
+  { src:"img_S27/12-bridge-top.jpg",         lat:1.3461, lon:103.7738, caption:"Bridge top — leaf litter & the fan", cls:"road", idx:11 },
+  { src:"img_S27/08-terrapin.jpg",           lat:1.3457, lon:103.7735, caption:"Freshwater terrapin in the stream", cls:"water", idx:7 },
+  { src:"img_S27/07-rifle-range-camp.jpg",   lat:1.3448, lon:103.7726, caption:"Rifle Range Road Camp 1 gate", cls:"end", idx:6 },
+];
+
+const routeCoords = mapPhotos.map(p => [p.lat, p.lon]);
+L.polyline(routeCoords, { color:'#f4813f', weight:4, dashArray:'8,5', opacity:0.9 }).addTo(map);
+
+mapPhotos.forEach((p, i) => {
+  const isEnter = p.cls === 'enter';
+  const isStartEnd = p.cls==='start' || p.cls==='end';
+  const size = isEnter ? 46 : isStartEnd ? 44 : 38;
+  const label = p.cls==='start' ? '▶' : p.cls==='end' ? '■' : isEnter ? 'ENTER' : (i+1);
+  const icon = L.divIcon({
+    className:'pm-container',
+    html:`<div class="pm-circle ${p.cls}">${label}</div>`,
+    iconSize:[size,size], iconAnchor:[size/2,size/2], popupAnchor:[0,-(size/2+6)],
+  });
+  const enterBadge = isEnter ? `<div class="map-popup-enter">&#9733; SECRET ENTRANCE — look for yellow circle on ground</div>` : '';
+  const popupHtml = `
+    <div class="map-popup">
+      <img src="${p.src}" alt="">
+      <div class="map-popup-body">
+        ${enterBadge}
+        <div class="map-popup-num">Stop ${String(i+1).padStart(2,'0')} of ${mapPhotos.length}</div>
+        <div class="map-popup-caption">${p.caption}</div>
+        <span class="map-popup-btn" onclick="openLightbox(${p.idx});document.querySelector('.leaflet-popup-close-button').click()">&#128065; View Full Photo</span>
+      </div>
+    </div>`;
+  L.marker([p.lat,p.lon],{icon}).addTo(map).bindPopup(popupHtml,{maxWidth:240,minWidth:220});
+});
+
+const legend = L.control({ position:'bottomleft' });
+legend.onAdd = () => {
+  const d = L.DomUtil.create('div');
+  d.style.cssText = 'background:rgba(15,17,23,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;font-size:0.72rem;color:#ccc;line-height:1.9;';
+  d.innerHTML = `
+    <div style="font-weight:700;color:#fff;margin-bottom:4px">Legend</div>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#f1c40f;vertical-align:middle;margin-right:6px"></span><strong style="color:#f1c40f">Enter Here</strong><br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e74c3c;vertical-align:middle;margin-right:6px"></span>Start / End<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e67e22;vertical-align:middle;margin-right:6px"></span>Bridge<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#27ae60;vertical-align:middle;margin-right:6px"></span>Forest Trail<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#8e44ad;vertical-align:middle;margin-right:6px"></span>Military Zone<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#2980b9;vertical-align:middle;margin-right:6px"></span>Water`;
+  return d;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>

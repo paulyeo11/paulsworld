@@ -117,6 +117,15 @@ fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(
 
 **Also:** When pushing large files (>50KB) via `mcp__github__push_files`, always verify the `content` parameter is non-empty before calling — an accidental empty string wipes the file on GitHub.
 
+## 🌐 Bilingual Rule (English + Chinese) — Standing Default
+Every page and article on Paul's World must include an **English / 中文 language toggle**. This applies to ALL pages, including travel itineraries, stories, AI articles, health pages, tools, etc.
+
+- Add toggle buttons: `🇬🇧 English` and `🇨🇳 中文`
+- Buttons styled as pill-shaped, gold highlight on active
+- Toggling switches ALL text content (titles, descriptions, labels, section headers) to the selected language
+- English is default (active on load)
+- Reference implementation: `MT12.html` Itinerary panel (June 2026)
+
 ## Standing Rules for All Pages & Articles
 
 ### 🏠 Home Button
@@ -147,6 +156,41 @@ Every article/story that contains photos **must** include a **Photo Journal** se
 - Tap photo to open lightbox
 - Reference implementation: `S23.html` photo journal section
 
+### 🔗 Share Button Rule (Standing Default — added 2026-06-20)
+Every story, article, and page must include a **Share button**. Place it prominently — on stories/articles put it in the hero/header area (e.g. below the subtitle or near the top CTA). On ebook/contents pages put it on the cover section next to the main CTA.
+
+Standard implementation:
+```html
+<!-- in <style> -->
+.share-btn{display:inline-block;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;font-weight:700;letter-spacing:.04em;padding:11px 28px;border-radius:30px;cursor:pointer;font-size:1rem;font-family:'Source Serif 4',Georgia,serif;margin-left:12px;transition:background .2s;}
+.share-btn:hover{background:rgba(255,255,255,.25);}
+.share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+
+<!-- in <body> — place button next to hero CTA -->
+<button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<!-- before </body> -->
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+```
+- On iPhone: opens native iOS share sheet (WhatsApp, Messages, etc.)
+- On desktop/other: copies the link and shows "✅ Link copied!" toast
+- Use `window.location.href` (not a hardcoded URL) so it works on any page
+
 ### 📖 eBook Generation
 When generating an eBook, download all images and **embed** them — no external image
 links. Every eBook must be fully self-contained.
@@ -158,6 +202,13 @@ Format: `[PREFIX][NUMBER]: [Article Title]`
 ### New Page Workflow
 When creating a new page (e.g. `new-app`): create it, auto-update `index.html` to insert
 it into the right category, then push to GitHub.
+
+### 📚 AC02 eBook Auto-Update Rule (Standing Default — added 2026-06-20)
+Whenever a **new Travel Story** (S-prefix file, e.g. `S27.html`) is created:
+1. Automatically add a new `<a class="chapter-card">` entry to **AC02.html** with the correct chapter number, title, and an appropriate emoji + location meta line.
+2. Update the story count in the cover subtitle (e.g. "26 true stories" → "27 true stories") and in the footer.
+3. Push both the new story file **and** the updated `AC02.html` together in the same commit.
+Paul never needs to ask — this happens automatically every time.
 
 ## Counter API (Dashboard) Rule
 - Always use the **read-only GET** endpoint:

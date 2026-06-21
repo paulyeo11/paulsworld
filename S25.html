@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S25: From Frozen Harbin to Jade Jiuzhaigou — Solo Winter Journey Across China</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --ice: #38bdf8;
+  --bg: #0a0f1e;
+  --card: #111827;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(160deg, #060d1f 0%, #0a1428 40%, #0c1a32 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -30%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(56,189,248,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(56,189,248,0.1);
+  border: 1px solid rgba(56,189,248,0.3);
+  color: var(--ice);
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.9rem); font-weight: 700;
+  color: #fff; line-height: 1.2;
+  max-width: 780px; margin: 0 auto 16px;
+}
+.hero h1 em { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; margin-top: 10px; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.3);
+  color: var(--ice);
+}
+.hero-btn.alt:hover { background: rgba(56,189,248,0.22); }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid var(--ice); padding-left: 18px; margin-bottom: 2em;
+}
+h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.4rem;
+  color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700;
+}
+h2 .ch-num {
+  color: var(--muted); font-size: 0.8rem; font-weight: 400;
+  font-family: 'Source Serif 4', serif; letter-spacing: 0.1em;
+  text-transform: uppercase; display: block; margin-bottom: 4px;
+}
+
+/* STATS CARD */
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid var(--ice);
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 560px) { .stats-card { grid-template-columns: 1fr 1fr; } }
+
+/* PULL QUOTE */
+.pull-quote {
+  background: linear-gradient(135deg, rgba(56,189,248,0.07), rgba(74,108,247,0.07));
+  border: 1px solid rgba(56,189,248,0.18);
+  border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif; font-size: 1.22rem;
+  font-style: italic; color: var(--text); margin: 0; line-height: 1.6;
+}
+
+/* INLINE SWIPE STRIP */
+.strip-section { max-width: 100%; margin: 2.5em 0; overflow: hidden; }
+.strip-header {
+  max-width: 740px; margin: 0 auto 14px; padding: 0 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.strip-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+.strip-hint { font-size: 0.75rem; color: var(--muted); }
+.strip-wrapper {
+  display: flex; overflow-x: auto; gap: 10px;
+  padding: 0 22px 14px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.strip-wrapper::-webkit-scrollbar { display: none; }
+.strip-card {
+  flex: 0 0 260px; scroll-snap-align: start;
+  border-radius: 12px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--border);
+  position: relative; cursor: pointer;
+}
+.strip-card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.strip-card-caption { padding: 10px 12px 12px; font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+.strip-card-num { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; }
+@media (max-width: 480px) { .strip-card { flex: 0 0 200px; } .strip-card img { height: 140px; } }
+
+/* MAP */
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#trail-map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border: none !important;
+}
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px;
+  z-index: 10000; background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.3); color: #fff;
+  font-size: 1rem; padding: 8px 16px; border-radius: 22px; cursor: pointer;
+  align-items: center; gap: 6px; font-family: 'Source Serif 4', serif;
+}
+.map-section > .section-title,
+.map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#trail-map { width: 100%; height: 540px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+/* MAP MARKERS */
+.pm-circle {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 800; color: #fff;
+  font-family: 'Source Serif 4', sans-serif; transition: transform 0.15s;
+}
+.pm-circle:hover { transform: scale(1.25); }
+.pm-circle.start { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.end   { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.city  { background: #e67e22; }
+.pm-circle.nature { background: #27ae60; }
+.pm-circle.water  { background: #2980b9; }
+.pm-container { position: relative; }
+
+/* MAP POPUP */
+.leaflet-popup-content-wrapper { background: #111827 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #111827 !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-btn { display: inline-block; background: rgba(244,129,63,0.18); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.75rem; padding: 4px 12px; border-radius: 14px; cursor: pointer; text-decoration: none; }
+.map-popup-btn:hover { background: rgba(244,129,63,0.32); }
+
+/* MAP LEGEND */
+.map-legend {
+  background: rgba(10,15,30,0.88); padding: 10px 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; color: #ccc;
+  line-height: 1.8;
+}
+.map-legend b { display: block; margin-bottom: 4px; color: #fff; font-size: 0.75rem; }
+
+/* PHOTO JOURNAL */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.photo-journal { margin-top: 16px; display: flex; flex-direction: column; gap: 36px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; max-height: 480px; object-fit: cover; display: block; transition: opacity 0.2s; }
+.pj-item:hover img { opacity: 0.92; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 9000;
+  align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 1.6rem; width: 44px; height: 44px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+/* SLIDESHOW */
+.slideshow-overlay {
+  display: none; position: fixed; inset: 0; background: #000; z-index: 10000;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.slideshow-overlay.active { display: flex; }
+.slide { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; animation: fadeIn 0.9s ease; width: 100%; }
+.slide.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.slide img { max-width: min(90vw, 820px); max-height: 70vh; object-fit: contain; border-radius: 10px; }
+.slide-caption { color: #ddd; font-size: 1rem; margin-top: 18px; font-style: italic; max-width: 620px; line-height: 1.5; font-family: 'Playfair Display', serif; }
+.slide-num { color: rgba(255,255,255,0.4); font-size: 0.78rem; margin-top: 8px; letter-spacing: 0.08em; }
+.slideshow-controls { position: absolute; bottom: 24px; display: flex; gap: 14px; align-items: center; }
+.ss-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.ss-btn:hover { background: rgba(255,255,255,0.22); }
+.ss-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 1.8rem; cursor: pointer; background: none; border: none; opacity: 0.7; }
+.ss-close:hover { opacity: 1; }
+.ss-progress { position: absolute; top: 0; left: 0; height: 3px; background: var(--accent); transition: width 0.3s; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<!-- SLIDESHOW OVERLAY -->
+<div class="slideshow-overlay" id="slideshow">
+  <div class="ss-progress" id="ssProgress"></div>
+  <button class="ss-close" onclick="closeSlideshow()">&#x2715;</button>
+  <div class="slide active"><img src="img_S25/01-IMG_1080.jpg" alt=""><div class="slide-caption">The Songhua River at dusk. Harbin. The sky burned orange over the half-frozen river. I had just arrived in northeast China and already I knew — this was going to be a journey I would never forget.</div><div class="slide-num">1 / 20</div></div>
+  <div class="slide"><img src="img_S25/04-IMG_1266.jpg" alt=""><div class="slide-caption">Beijing, Shichahai lake at golden hour. A weeping willow hung over the still water, the pale winter sun fighting through the haze. Beautiful in its own faded, quiet way.</div><div class="slide-num">2 / 20</div></div>
+  <div class="slide"><img src="img_S25/09-IMG_1305.jpg" alt=""><div class="slide-caption">She stood on the ancient temple walkway in flowing red hanfu, holding a Chinese opera lion mask to her face. I was a stranger watching history come alive.</div><div class="slide-num">3 / 20</div></div>
+  <div class="slide"><img src="img_S25/10-IMG_1306.jpg" alt=""><div class="slide-caption">The ink artist. He lay face-down on the ground beside the frozen lotus pond, painting a huge scroll with a wide brush. Completely absorbed. Pure China.</div><div class="slide-num">4 / 20</div></div>
+  <div class="slide"><img src="img_S25/11-IMG_1438.jpg" alt=""><div class="slide-caption">The Great Wall watchtower from below — rugged, unrestored, real. This section had no tourists. Just me, the cold wind, and 600 years of stone.</div><div class="slide-num">5 / 20</div></div>
+  <div class="slide"><img src="img_S25/13-IMG_1453.jpg" alt=""><div class="slide-caption">Miyun Reservoir from the Great Wall ridge. I had no idea the Wall offered views like this. The reservoir sat between dramatic mountains in a cold blue haze. Stunning.</div><div class="slide-num">6 / 20</div></div>
+  <div class="slide"><img src="img_S25/15-IMG_1526.jpg" alt=""><div class="slide-caption">Old Dragon's Head at sunset. The Great Wall's final watchtower — stepping off the land into the Bohai Sea. The sky was extraordinary. I stood here in silence for a long time.</div><div class="slide-num">7 / 20</div></div>
+  <div class="slide"><img src="img_S25/16-IMG_1532.jpg" alt=""><div class="slide-caption">Through the stone arch — the Bohai Sea horizon at sunrise, blazing orange. Two workers were already there, leaning on the ancient wall. I had my own frame of China.</div><div class="slide-num">8 / 20</div></div>
+  <div class="slide"><img src="img_S25/27-IMG_2003.jpg" alt=""><div class="slide-caption">The Leshan Giant Buddha, seen from above. Head, shoulders, lap — all carved from red sandstone cliffs. Visitors queue down the narrow staircase like ants. He has sat here for 1,300 years.</div><div class="slide-num">9 / 20</div></div>
+  <div class="slide"><img src="img_S25/31-IMG_2120.jpg" alt=""><div class="slide-caption">The Puxian Bodhisattva at Mount Emei's Golden Summit. Four faces, four elephants, pure gold — blazing against a deep winter blue sky. Nothing I had read could have prepared me for this.</div><div class="slide-num">10 / 20</div></div>
+  <div class="slide"><img src="img_S25/32-IMG_2127.jpg" alt=""><div class="slide-caption">Above the clouds at Emei's Golden Summit. A lone pine stood silhouetted against a white sea of cloud, a distant temple peak just visible. I felt I was standing at the top of the world.</div><div class="slide-num">11 / 20</div></div>
+  <div class="slide"><img src="img_S25/33-IMG_2213.jpg" alt=""><div class="slide-caption">Huanglong. Frozen travertine terraces, a Tibetan monastery in gold and ochre, snow mountains above. This place looked like it existed in a parallel world.</div><div class="slide-num">12 / 20</div></div>
+  <div class="slide"><img src="img_S25/35-IMG_2241.jpg" alt=""><div class="slide-caption">Huanglong's frozen pools at dusk — ice and still water catching the last light, mountains reflected. The cold was biting but I could not leave.</div><div class="slide-num">13 / 20</div></div>
+  <div class="slide"><img src="img_S25/40-IMG_2325.jpg" alt=""><div class="slide-caption">Jiuzhaigou — the cascading waterfalls pouring into a turquoise pool. Even in winter, this water moved. The colour was unlike anything I had seen in nature.</div><div class="slide-num">14 / 20</div></div>
+  <div class="slide"><img src="img_S25/39-IMG_2321.jpg" alt=""><div class="slide-caption">A perfect mirror. Still, emerald Jiuzhaigou water reflecting snow-capped peaks. The real and the reflected — impossible to tell apart.</div><div class="slide-num">15 / 20</div></div>
+  <div class="slide"><img src="img_S25/44-IMG_2364.jpg" alt=""><div class="slide-caption">Looking through the crystal-clear water — fallen branches preserved beneath the surface, vivid teal above. Jiuzhaigou's lakes are not just beautiful. They are transparent.</div><div class="slide-num">16 / 20</div></div>
+  <div class="slide"><img src="img_S25/48-IMG_2423.jpg" alt=""><div class="slide-caption">Azure, turquoise, teal — the rocky lake bed clearly visible through pristine water. My last photo at Jiuzhaigou. My favourite image of the whole trip.</div><div class="slide-num">17 / 20</div></div>
+  <div class="slide"><img src="img_S25/41-IMG_2332.jpg" alt=""><div class="slide-caption">Ice formations on a branch by the stream — intricate crystal sculptures built up by days of freezing spray. Nature's winter gallery, displayed quietly for anyone patient enough to stop and look.</div><div class="slide-num">18 / 20</div></div>
+  <div class="slide"><img src="img_S25/17-IMG_1535.jpg" alt=""><div class="slide-caption">The Bohai Sea at sunrise, waves rolling in over dark rocks. A container ship on the horizon. I was the only person on this beach. Alone at the edge of China.</div><div class="slide-num">19 / 20</div></div>
+  <div class="slide"><img src="img_S25/49-IMG_2433.jpg" alt=""><div class="slide-caption">The scenic shuttle bus back — packed, 17:35, a young person in full cosplay white wig hanging from the rail. This is modern China too. And I loved it.</div><div class="slide-num">20 / 20</div></div>
+  <div class="slideshow-controls">
+    <button class="ss-btn" onclick="ssNav(-1)">&#8592; Prev</button>
+    <button class="ss-btn" id="ssPlayBtn" onclick="togglePlay()">&#9654; Auto-Play</button>
+    <button class="ss-btn" onclick="ssNav(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCap"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- CLOSE MAP BUTTON -->
+<button id="mapCloseBtn" onclick="closeMap()">&#x2715; Close Map</button>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="label"><span class="en">Travel Story &middot; Solo &middot; November &ndash; December</span><span class="zh">旅行故事 · 独自 · 11月至12月</span></div>
+  <h1>From Frozen Harbin to <em>Jade Jiuzhaigou</em> — A Solo Winter Journey Across China</h1>
+  <div class="meta"><span class="en">Paul Yeo &nbsp;&middot;&nbsp; 5,000+ km across northern and southwestern China &nbsp;&middot;&nbsp; 49 photos</span><span class="zh">杨汉忠 &nbsp;&middot;&nbsp; 横跨中国北部与西地5000余公里 &nbsp;&middot;&nbsp; 49张照片</span></div>
+  <div class="hero-btns">
+    <button class="hero-btn" onclick="openSlideshow()">&#9654; Watch Slideshow</button>
+    <button class="hero-btn alt" onclick="document.getElementById('trail-map').scrollIntoView({behavior:'smooth'})">&#9783; View Route Map</button>
+  </div>
+</div>
+
+<!-- MAP SECTION (right after hero, as per standing rule) -->
+<div class="map-section">
+  <p class="section-title" style="margin-top:36px; padding-left:22px;">&#9783; The Route — 11 Stops, Two Weeks, One China</p>
+  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:14px;">Tap any marker to see the photo and story from that stop.</p>
+  <button onclick="openMap()" style="display:block; margin: 0 auto 18px; background:rgba(244,129,63,0.18); border:1px solid rgba(244,129,63,0.45); color:var(--accent); font-size:0.95rem; padding:10px 28px; border-radius:28px; cursor:pointer; font-family:'Source Serif 4',serif;">Open Full Screen Map</button>
+  <div id="trail-map"></div>
+</div>
+
+<!-- MAIN STORY -->
+<div class="content">
+
+  <p class="lead">I went to China alone in winter — not because winter was easy, but because I wanted to see China without the crowds. From the frozen northeast to the jade lakes of Sichuan, this is what I found.</p>
+
+  <div class="stats-card">
+    <div><div class="stat-label">Cities</div><div class="stat-value">7 stops</div></div>
+    <div><div class="stat-label">Distance</div><div class="stat-value">5,000+ km</div></div>
+    <div><div class="stat-label">UNESCO Sites</div><div class="stat-value">4 visited</div></div>
+    <div><div class="stat-label">Season</div><div class="stat-value">Winter</div></div>
+    <div><div class="stat-label">Travel</div><div class="stat-value">Solo</div></div>
+    <div><div class="stat-label">Photos</div><div class="stat-value">49</div></div>
+  </div>
+
+  <!-- CHAPTER 1: HARBIN -->
+  <h2><span class="ch-num">Stop 1 &middot; Harbin 哈尔滨</span>Frozen River, Burning Sky</h2>
+  <p>Harbin is the kind of city that makes you realise how little you know about China. I had thought of China as south — warm, green, crowded. Harbin is the opposite. Northeast China, just a few hundred kilometres from Russia, with winters that drop to −30°C.</p>
+  <p>I arrived in the late afternoon and walked straight to the Songhua River. The river was beginning to freeze at the edges, long grey plates of ice pushing against the shore. The sky above was extraordinary — a wide amber and orange sunset with no buildings to interrupt it. Bare trees stood silhouetted against the glow. Cold enough that my breath clouded, warm enough in spirit that I didn't want to leave.</p>
+  <p>I stood there for a long time. No agenda. Just me and a river becoming ice.</p>
+
+  <!-- CHAPTER 2: BEIJING -->
+  <h2><span class="ch-num">Stop 2 &middot; Beijing 北京</span>Fog, Temples, and the Girl in Red</h2>
+  <p>Beijing in winter is not what the tourist brochures show. The haze settles low over everything, giving the city a muted, impressionistic quality — lakes like pewter, temple walls fading into grey, the sun a red disc you can look at directly. I loved it.</p>
+  <p>I started at Shichahai, the old lake district in the Drum Tower neighbourhood. Early morning, almost no one around. A red pavilion stood beside the bare willows, the frozen lake behind it. I sat on a stone step and had a cup of tea from a stall. Simple and perfect.</p>
+  <p>The Summer Palace was busier but still quiet by peak-season standards. Walking through the arched moongates, each one framing the next, the mist turning the whole complex into something that felt ancient and slightly unreal. Near the lotus pond — brown stalks standing in black winter water — I came across something I will not forget.</p>
+  <p>A man lay face-down on a large blanket spread over the paving stones, painting a huge ink scroll on the ground. He had his ink stone, his bamboo roller, his reference papers. Completely absorbed. This was not a performance for tourists. This was just his morning. I stood and watched for five minutes, not wanting to disturb him.</p>
+  <p>Later, at a temple complex I found almost by accident, I watched a young woman in full red hanfu being photographed. She moved with the ease of someone who had done this many times — turning on the ancient walkway, holding up a Chinese opera lion mask to her face, red silk trailing behind her on the old bricks. The mist, the yellow-roofed towers, the flowing red fabric. I felt like I had stumbled into a classical painting.</p>
+
+  <div class="pull-quote">
+    <p>"He lay face-down on the ground, painting a giant scroll beside the frozen lotus pond. Not for tourists. Not for anyone. Just for the art."</p>
+  </div>
+
+  <!-- CHAPTER 3: GREAT WALL -->
+  <h2><span class="ch-num">Stop 3 &middot; Huanghua Cheng Great Wall 黄花城水长城</span>Above the Reservoir</h2>
+  <p>I had been to the Great Wall before — the busy sections at Badaling and Mutianyu. This time I went to Huanghua Cheng, a wilder, partially unrestored section north of Beijing where the Wall runs right above Miyun Reservoir. No cable cars. No souvenir stalls. Just stone and sky.</p>
+  <p>The climb was steep and the wind was cold. But when I reached the first watchtower and looked out, I understood immediately why I had come. The reservoir lay below — a long blue-grey strip of water between dramatic mountain ridges, framed by dark pine trees. I took photograph after photograph, knowing none of them would do it justice.</p>
+  <p>This section of the Wall has not been repaired in centuries. The steps are uneven, the battlements crumbling in places, the stone dark with weather. It was the Wall as it actually is — not a monument for a photo, but a thing that has been here through everything, slowly going back to the mountain.</p>
+
+  <!-- CHAPTER 4: SHANHAIGUAN -->
+  <h2><span class="ch-num">Stop 4 &middot; Shanhaiguan 山海关</span>Where the Dragon Meets the Sea</h2>
+  <p>Old Dragon's Head — 老龙头. This is where the Great Wall ends. Literally ends, stepping off the land and into the Bohai Sea. The Wall's final watchtower sits on the sand, waves lapping at its base, the horizon of the sea directly in front of it.</p>
+  <p>I arrived the evening before sunrise and stood at the wall as the sun went down. The sky turned extraordinary — mackerel clouds catching pink and orange light, the watchtower a dark silhouette against the sea. I could not believe this place existed, and that I was alone here.</p>
+  <p>At dawn I was back. I found an arched doorway in the wall that framed the sea perfectly — the dark stone arch, the grey water beyond, the first red light of sunrise on the horizon, two workers already on the platform doing maintenance. A perfect photograph that I did not plan.</p>
+  <p>Shanhaiguan itself is a pleasant city — old gates, fortress walls, a beach that stretches north and south. I walked the beach in the cold morning air, listening to waves, watching the container ships move slowly on the horizon. Alone. No schedule. Perfectly free.</p>
+
+  <!-- CHAPTER 5: TIANJIN -->
+  <h2><span class="ch-num">Stop 5 &middot; Tianjin 天津</span>Canals, Quirk, and Pork Trotters</h2>
+  <p>Tianjin sits an hour from Beijing by fast train and feels like a completely different city. It has a history of being a treaty port — French, Italian, British, German concession areas all side by side, a strange European architectural legacy in the middle of north China.</p>
+  <p>Walking the old streets I came across a building covered entirely in carved stone figures — rows and rows of Buddhas and deities in niches, all the way up several storeys, with the word "China" written in cursive script across the roofline. Eccentric, slightly surreal, uniquely Tianjin.</p>
+  <p>I found an old iron bridge over one of the canals and stood on it watching the water. Then, back in Beijing for my last night, I looked up the restaurant I had been told about: 猫嫂猪蹄 — Beijing pork trotters, slow-cooked until the meat falls away. I ordered a full serving, sat alone, and ate with great satisfaction.</p>
+  <p>The next morning I took a taxi to the airport. At the check-in counter I spotted the sign: 西雅航空 — Xiya Airlines. A small regional carrier I had never heard of. Flying west. Into Sichuan.</p>
+
+  <!-- CHAPTER 6: CHENGDU -->
+  <h2><span class="ch-num">Stop 6 &middot; Chengdu 成都</span>Gateway to the Southwest</h2>
+  <p>Chengdu feels warm even in winter. Not the temperature — November nights are cool — but the atmosphere. People sit outside at teahouses. Street food is everywhere. The city hums with a kind of contented busyness that is different from Beijing's ambition or Shanghai's pace.</p>
+  <p>I explored a riverside park — wide paths under tall trees, locals walking dogs, old men playing cards. A few shops nearby sold nothing but lottery tickets, their walls covered floor to ceiling with statistical charts tracking 大乐透 and 双色球 results. People studied these charts with the same seriousness a stockbroker studies charts. I bought one ticket. Did not win.</p>
+  <p>Chengdu was a day of rest before the real Sichuan began. I ate hotpot. I walked slowly. I prepared myself for what was coming: the Giant Buddha, the sacred mountain, and two places I had never even heard of a year ago — Huanglong and Jiuzhaigou.</p>
+
+  <!-- CHAPTER 7: LESHAN -->
+  <h2><span class="ch-num">Stop 7 &middot; Leshan Giant Buddha 乐山大佛</span>Face to Face with the Giant</h2>
+  <p>The Leshan Giant Buddha is the largest stone Buddha in the world — 71 metres tall, carved into the red sandstone cliffs where three rivers meet. It was built in the Tang Dynasty, starting in 713 AD, and took 90 years to complete.</p>
+  <p>I knew all this. But nothing prepared me for actually standing there.</p>
+  <p>I walked the clifftop path and reached the point where you stand at the same height as the Buddha's head. The scale is simply not processable. His ear alone is 7 metres long. His shoulders are 28 metres wide. I looked at his face — the stone brow, the closed eyes, the full lips in a slight half-smile — and felt something I can only call awe.</p>
+  <p>From above, looking down, you see the full figure — head, shoulders, lap, feet planted on the riverbank. Crowds of tourists descend the narrow staircase beside him, tiny against his robe. He has sat like this for 1,300 years, watching the rivers, watching the dynasties rise and fall. He did not look impressed.</p>
+
+  <div class="pull-quote">
+    <p>"His ear alone is seven metres long. I looked up at his face and felt something I can only call awe."</p>
+  </div>
+
+  <!-- CHAPTER 8: MOUNT EMEI -->
+  <h2><span class="ch-num">Stop 8 &middot; Mount Emei 峨眉山</span>Above the Clouds</h2>
+  <p>Mount Emei is one of China's Four Sacred Buddhist Mountains. The lower slopes are lush even in winter — streams rush through gorges between moss-covered boulders, ferns hang over the path, bamboo groves open to misty lakes. I walked the lower trails slowly, in no hurry.</p>
+  <p>But the real reason to come to Emei in winter is the Golden Summit — 峨眉山金顶 — at 3,077 metres. In summer it is surrounded by cloud. In winter, if you are lucky, the clouds drop below you and you stand in clear air above them.</p>
+  <p>I took the cable car up and walked out onto the summit plateau. And there it was: the four-faced Puxian Bodhisattva on his white elephant throne, covered entirely in gold leaf, blazing in the winter sun against a deep blue sky. Ten storeys tall. Absolutely magnificent.</p>
+  <p>I walked around him slowly. Then I found the viewing platform and looked out. A vast sea of white cloud stretched in every direction, infinite and perfect. A single pine tree stood in silhouette against it, a distant temple peak just visible on a far ridge. I stood there for twenty minutes, not moving, not photographing. Just being there.</p>
+  <p>One of the great moments of my life. At 70, standing above the clouds in China.</p>
+
+  <!-- CHAPTER 9: HUANGLONG -->
+  <h2><span class="ch-num">Stop 9 &middot; Huanglong 黄龙</span>The Valley of Frozen Gold</h2>
+  <p>Huanglong is not on the standard tourist trail. It is deep in northern Sichuan, a UNESCO World Heritage Site, famous for its travertine terraced pools — naturally formed limestone terraces, like the ones at Pamukkale in Turkey, but smaller, wilder, and at high altitude.</p>
+  <p>In summer the pools are turquoise blue. In winter, they freeze.</p>
+  <p>I arrived to find a landscape that looked alien. Long cascading terraces of cream-coloured limestone, frozen solid, some still holding shallow water in shades of pale jade. Above them, a Tibetan monastery in yellow and gold. And above that, snow mountains. The air was sharp and clean, the altitude noticeable.</p>
+  <p>I walked the boardwalk slowly, photographing at every turn. The ice had built strange shapes — mineral deposits visible beneath the surface, crystalline edges, a lone tree frozen in place. At dusk the light turned gold and the whole valley glowed. I did not want to leave.</p>
+
+  <!-- CHAPTER 10: JIUZHAIGOU -->
+  <h2><span class="ch-num">Stop 10 &middot; Jiuzhaigou 九寨沟</span>The Last Paradise</h2>
+  <p>I had heard about Jiuzhaigou for years. Everyone says the photos don't do it justice. They are right.</p>
+  <p>Jiuzhaigou — Nine Village Valley — is a high mountain valley in northern Sichuan with a chain of multi-coloured lakes fed by snowmelt. The water colour comes from the dissolved minerals and the lake beds of white calcium carbonate. In summer the lakes are vivid jade and emerald. In winter, some freeze, some stay open, and the water is the clearest I have ever seen.</p>
+  <p>I spent an entire day walking the valley. The lakes are at different levels, connected by waterfalls that still flow even in winter. I photographed the same turquoise lake from six different angles and could not choose between them. At one lake I could see fallen tree trunks perfectly preserved ten metres below the surface, the water above them perfectly clear. At another, I simply sat and stared.</p>
+  <p>The shuttle bus back in the evening was packed — a young person in full cosplay stood in the aisle in a white wig and bamboo hat, swaying with the curves of the mountain road. China's young people are extraordinary. Playful, creative, completely at ease with who they are.</p>
+  <p>On the last afternoon I stood at the edge of one lake and photographed the water one final time. Azure and teal, the rocky bottom clearly visible, snow mountains reflected in the surface. My favourite photograph of the whole trip. My favourite place in the whole of China.</p>
+
+  <div class="pull-quote">
+    <p>"At one lake I could see fallen trunks ten metres below the surface. The water above them was perfectly clear. I stood there a long time, just grateful to be here."</p>
+  </div>
+
+  <h2>A Note on Solo Winter Travel</h2>
+  <p>People ask if it is lonely, travelling alone. Honestly? Not for me. I chose each day's agenda. I changed plans freely. I ate what I wanted, at whatever time I felt like eating. I stood at the Old Dragon's Head at sunset for an hour and there was no one to hurry me along.</p>
+  <p>China in winter has fewer tourists, kinder prices, clearer mountain views, and a different quality of light. The cold is manageable — dress for it. The quietness is a gift.</p>
+  <p>I flew home with 49 photographs and two weeks of memories that will stay with me for the rest of my life. From frozen Harbin to jade Jiuzhaigou. From the wall that ended at the sea to the lake that reflected the sky. China is too big to understand. But this trip made me love it more.</p>
+
+</div>
+
+<!-- PHOTO STRIP -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">Highlights</div>
+    <div class="strip-hint">Swipe to browse &rarr;</div>
+  </div>
+  <div class="strip-wrapper">
+    <div class="strip-card" onclick="openLightboxAt(14)">
+      <img src="img_S25/15-IMG_1526.jpg" alt="">
+      <div class="strip-card-num">Stop 4</div>
+      <div class="strip-card-caption">Old Dragon's Head at sunset</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(30)">
+      <img src="img_S25/31-IMG_2120.jpg" alt="">
+      <div class="strip-card-num">Stop 8</div>
+      <div class="strip-card-caption">Golden Puxian Buddha, Mt. Emei</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(31)">
+      <img src="img_S25/32-IMG_2127.jpg" alt="">
+      <div class="strip-card-num">Stop 8</div>
+      <div class="strip-card-caption">Sea of clouds from Golden Summit</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(47)">
+      <img src="img_S25/48-IMG_2423.jpg" alt="">
+      <div class="strip-card-num">Stop 10</div>
+      <div class="strip-card-caption">Jiuzhaigou azure lake</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(0)">
+      <img src="img_S25/01-IMG_1080.jpg" alt="">
+      <div class="strip-card-num">Stop 1</div>
+      <div class="strip-card-caption">Harbin, Songhua River at dusk</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(8)">
+      <img src="img_S25/09-IMG_1305.jpg" alt="">
+      <div class="strip-card-num">Stop 2</div>
+      <div class="strip-card-caption">Hanfu girl with opera mask, Beijing</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(26)">
+      <img src="img_S25/27-IMG_2003.jpg" alt="">
+      <div class="strip-card-num">Stop 7</div>
+      <div class="strip-card-caption">Leshan Buddha from above</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(38)">
+      <img src="img_S25/39-IMG_2321.jpg" alt="">
+      <div class="strip-card-num">Stop 10</div>
+      <div class="strip-card-caption">Perfect mirror lake, Jiuzhaigou</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(32)">
+      <img src="img_S25/33-IMG_2213.jpg" alt="">
+      <div class="strip-card-num">Stop 9</div>
+      <div class="strip-card-caption">Huanglong frozen terraces</div>
+    </div>
+    <div class="strip-card" onclick="openLightboxAt(15)">
+      <img src="img_S25/16-IMG_1532.jpg" alt="">
+      <div class="strip-card-num">Stop 4</div>
+      <div class="strip-card-caption">Through the arch, Bohai Sea sunrise</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <p class="section-title">Photo Journal — All 49 Photographs</p>
+  <div class="photo-journal">
+
+    <div class="pj-item" onclick="openLightboxAt(0)">
+      <img src="img_S25/01-IMG_1080.jpg" alt="Harbin Songhua River sunset">
+      <div class="pj-body"><div class="pj-num">Photo 1 of 49 &middot; Harbin</div><div class="pj-text">The Songhua River at dusk, Harbin. The river was beginning to freeze at the edges — long grey plates of ice pushing against the stone shore. Bare trees stood silhouetted against an extraordinary amber sky. It was bitterly cold, maybe −10°C, but this view made the cold worthwhile. This was where the journey began.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(1)">
+      <img src="img_S25/02-IMG_1253.jpg" alt="Shichahai Beijing">
+      <div class="pj-body"><div class="pj-num">Photo 2 of 49 &middot; Beijing — Shichahai</div><div class="pj-text">Shichahai lake in the early morning. A lone red pavilion stood by the bare willows, the frozen lake behind it. Dry leaves scattered across the empty path. No tourists yet. Beijing can be very peaceful before 8am in winter.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(2)">
+      <img src="img_S25/03-IMG_1258.jpg" alt="Shichahai willows">
+      <div class="pj-body"><div class="pj-num">Photo 3 of 49 &middot; Beijing — Shichahai</div><div class="pj-text">Willow branches hanging low over the grey winter lake. There was something melancholy and beautiful about Shichahai in November — the dry seed pods floating at the water's edge, the bare trees, the flat light. I walked around the whole lake slowly and enjoyed every minute of it.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(3)">
+      <img src="img_S25/04-IMG_1266.jpg" alt="Beijing lake golden hour">
+      <div class="pj-body"><div class="pj-num">Photo 4 of 49 &middot; Beijing</div><div class="pj-text">Late afternoon at a Beijing lake, the winter sun filtering through the haze — a warm orange glow on the still water, a large traditional building lit up across the far shore. A weeping willow hung its bare branches like a curtain framing the scene. I stood here for a long time, just watching the light change.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(4)">
+      <img src="img_S25/05-IMG_1280.jpg" alt="Summer Palace arch">
+      <div class="pj-body"><div class="pj-num">Photo 5 of 49 &middot; Beijing — Summer Palace</div><div class="pj-text">The Summer Palace — looking through one stone archway to reveal another ornate marble gate beyond, framed in mist. Tourists were few. The fog turned this ancient imperial park into something completely dreamlike. The Summer Palace is big enough to get lost in, and I did, happily.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(5)">
+      <img src="img_S25/06-IMG_1287.jpg" alt="Temple complex archway">
+      <div class="pj-body"><div class="pj-num">Photo 6 of 49 &middot; Beijing — Temple Complex</div><div class="pj-text">A stone archway opening into a misty courtyard, a yellow-roofed temple hall at the far end. The cobblestones were worn smooth. A woman in red walked away in the distance. The mist was so thick that morning that the temple faded into it like a ghost. I felt I had stepped 400 years back.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(6)">
+      <img src="img_S25/07-IMG_1300.jpg" alt="Misty hill lone tree">
+      <div class="pj-body"><div class="pj-num">Photo 7 of 49 &middot; Beijing area</div><div class="pj-text">A lone bare tree on a low burial mound, the sun a dim red disc bleeding through dense haze. The stillness was absolute. I think this was at one of the royal tomb areas — the Qing Eastern Tombs perhaps. An ancient, undisturbed sort of quiet that you rarely find near a large city.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(7)">
+      <img src="img_S25/08-IMG_1304.jpg" alt="Hanfu photoshoot">
+      <div class="pj-body"><div class="pj-num">Photo 8 of 49 &middot; Beijing — Temple</div><div class="pj-text">I came around a corner and found this: a young woman in flowing red hanfu being photographed on the ancient temple rampart, a tower of golden tiles rising behind her in the mist. The photographer stepped back to get the full length of her dress in frame. A scene straight out of a Tang Dynasty painting.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(8)">
+      <img src="img_S25/09-IMG_1305.jpg" alt="Hanfu girl with opera mask">
+      <div class="pj-body"><div class="pj-num">Photo 9 of 49 &middot; Beijing — Temple</div><div class="pj-text">The same young woman — but now she was holding a traditional Chinese opera lion mask to her face, looking down, eyes closed, red silk trailing behind her on the old bricks. The mist wrapped around the entire scene. I stood and watched, mesmerised. She was completely at ease, completely beautiful.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(9)">
+      <img src="img_S25/10-IMG_1306.jpg" alt="Ink artist painting scroll">
+      <div class="pj-body"><div class="pj-num">Photo 10 of 49 &middot; Beijing — Summer Palace</div><div class="pj-text">By the frozen lotus pond — brown stalks standing in dark winter water — a man lay face-down on a blanket on the paving stones, painting a huge ink scroll spread flat on the ground. His ink stone, bamboo roller, reference papers all around him. He was completely absorbed. Not performing. Just working. This is what I love about China.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(10)">
+      <img src="img_S25/11-IMG_1438.jpg" alt="Great Wall watchtower">
+      <div class="pj-body"><div class="pj-num">Photo 11 of 49 &middot; Great Wall — Huanghua Cheng</div><div class="pj-text">The Great Wall watchtower from below. Rugged, unrestored, real. Steep stone steps leading up to a crumbling tower against a cold clear blue sky. This section of the Wall at Huanghua Cheng has not been repaired — it is the Wall as time has left it, slowly returning to the mountain it was built on.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(11)">
+      <img src="img_S25/12-IMG_1450.jpg" alt="Miyun Reservoir from Great Wall">
+      <div class="pj-body"><div class="pj-num">Photo 12 of 49 &middot; Great Wall — Huanghua Cheng</div><div class="pj-text">From the ridge of the Great Wall I looked down and saw Miyun Reservoir — a long blue-grey strip of water between dramatic mountain ridges, framed by dark pines. I had not expected this. The Wall as a viewing platform for one of northern China's most beautiful landscapes.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(12)">
+      <img src="img_S25/13-IMG_1453.jpg" alt="Miyun Reservoir panorama">
+      <div class="pj-body"><div class="pj-num">Photo 13 of 49 &middot; Great Wall — Huanghua Cheng</div><div class="pj-text">Another angle of Miyun Reservoir — the dam structure visible, a small forested island, dramatic mountain ridges above it all. The reservoir is huge, almost like a lake. I kept stopping along the Wall to photograph this view from different angles, each one better than the last.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(13)">
+      <img src="img_S25/14-IMG_1468.jpg" alt="Great Wall mountain view">
+      <div class="pj-body"><div class="pj-num">Photo 14 of 49 &middot; Great Wall — Huanghua Cheng</div><div class="pj-text">Looking east from the Wall ridge — bare rock mountains, golden afternoon light across the faces. The Wall zig-zagged away through the valleys below. The cold wind was coming off the mountains but I barely noticed it. I had the whole section to myself that afternoon.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(14)">
+      <img src="img_S25/15-IMG_1526.jpg" alt="Old Dragon's Head sunset">
+      <div class="pj-body"><div class="pj-num">Photo 15 of 49 &middot; Shanhaiguan — Old Dragon's Head</div><div class="pj-text">The Great Wall ends here. The final watchtower, stepping off the land into the Bohai Sea, the waves lapping the sand at its base. Mackerel clouds turning pink and orange above, a container ship dark on the horizon. I stood here in silence for a long time. One of the most powerful places I have ever been.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(15)">
+      <img src="img_S25/16-IMG_1532.jpg" alt="Through arch to Bohai Sea">
+      <div class="pj-body"><div class="pj-num">Photo 16 of 49 &middot; Shanhaiguan — Old Dragon's Head</div><div class="pj-text">Looking through the stone arch at Old Dragon's Head — a perfect frame for the Bohai Sea sunrise, the horizon blazing orange-pink. Two workers were already on the platform, going about their morning. I had not planned this shot. The arch was just there, and the light was just right.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(16)">
+      <img src="img_S25/17-IMG_1535.jpg" alt="Bohai Sea sunrise">
+      <div class="pj-body"><div class="pj-num">Photo 17 of 49 &middot; Shanhaiguan — Bohai Sea</div><div class="pj-text">The Bohai Sea shore at sunrise. Waves rolling in over dark mossy rocks, a container ship moving slowly on the horizon, the sky blazing red and orange. I was the only person on the beach. Alone at the edge of China, on a winter morning. I will remember this feeling for a long time.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(17)">
+      <img src="img_S25/18-IMG_1545.jpg" alt="Shanhaiguan beach straw umbrella">
+      <div class="pj-body"><div class="pj-num">Photo 18 of 49 &middot; Shanhaiguan beach</div><div class="pj-text">A single thatched straw beach umbrella planted in the sand, the sea calm and golden in the morning light. In summer this beach would be crowded. In November it belonged to me and the sandpipers. I walked the whole length of it, slowly, enjoying every step.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(18)">
+      <img src="img_S25/19-IMG_1631.jpg" alt="Tianjin ornate Buddha building">
+      <div class="pj-body"><div class="pj-num">Photo 19 of 49 &middot; Tianjin</div><div class="pj-text">Tianjin surprises you. I turned a corner and found this: an entire building covered floor to ceiling in rows of carved stone Buddhas and deities, sitting in arched niches, with the word "China" written in flowing script across the roofline. Eccentric, slightly surreal, completely unique. Tianjin has its own energy.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(19)">
+      <img src="img_S25/20-IMG_1735.jpg" alt="Tianjin canal iron bridge">
+      <div class="pj-body"><div class="pj-num">Photo 20 of 49 &middot; Tianjin</div><div class="pj-text">An old iron bridge over one of Tianjin's many canals. The city is built on water — rivers, canals, the coast — and this quiet corner felt almost European. Old buildings on both sides, the water dark and still. I stood on the bridge for a while, watching a single boat go by.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(20)">
+      <img src="img_S25/21-IMG_1741.jpg" alt="Beijing pork trotter restaurant">
+      <div class="pj-body"><div class="pj-num">Photo 21 of 49 &middot; Beijing</div><div class="pj-text">猫嫂猪蹄 — Cat's Sister Pork Trotters. The sign was bright red, the restaurant small, the menu simple. I ordered a full serving of slow-cooked pork trotters and ate alone at a small table. The meat was soft and sweet and fragrant with spices. The best meal I had in Beijing.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(21)">
+      <img src="img_S25/22-IMG_1861.jpg" alt="Xiya Airlines airport">
+      <div class="pj-body"><div class="pj-num">Photo 22 of 49 &middot; Beijing — Airport</div><div class="pj-text">The check-in counter for Xiya Airlines (西雅航空) — a small regional carrier I had never heard of until I booked this ticket. Flying west to Chengdu. The gate area was quiet, the morning cold and clear. I was heading into a different China — warmer, greener, older in a different way.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(22)">
+      <img src="img_S25/23-IMG_1962.jpg" alt="Chengdu lottery shop">
+      <div class="pj-body"><div class="pj-num">Photo 23 of 49 &middot; Chengdu</div><div class="pj-text">Inside a Chengdu lottery parlour — every wall covered with trend charts for 大乐透 (Super Lotto) and 双色球 (Two-Colour Ball). The owner glanced up at me with mild curiosity. I studied the charts seriously for five minutes, as if I knew what I was looking at. I bought one ticket. Lost.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(23)">
+      <img src="img_S25/24-IMG_1963.jpg" alt="Chengdu lottery shop 2">
+      <div class="pj-body"><div class="pj-num">Photo 24 of 49 &middot; Chengdu</div><div class="pj-text">Another angle of the same lottery shop — the charts stretching up past arm's reach, columns of numbers going back months and years. These little shops are a feature of Chengdu's street life. I passed four of them in one block. Everyone seems to be waiting for their number to come up.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(24)">
+      <img src="img_S25/25-IMG_1971.jpg" alt="Chengdu riverside park">
+      <div class="pj-body"><div class="pj-num">Photo 25 of 49 &middot; Chengdu</div><div class="pj-text">Chengdu's riverside park — lush green trees lining wide pathways, locals strolling, modern towers beyond. Chengdu barely feels like winter. The city has a warm, easy pace to it that I found immediately comfortable. I sat by the river and had a cup of green tea and felt completely at home.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(25)">
+      <img src="img_S25/26-IMG_2001.jpg" alt="Leshan Buddha head close-up">
+      <div class="pj-body"><div class="pj-num">Photo 26 of 49 &middot; Leshan Giant Buddha</div><div class="pj-text">Standing at the same height as the Leshan Buddha's head. The scale is extraordinary — his ear alone is seven metres long. I could see the texture of the stone, the slight smile on his lips, the carved curls of his hair. He has been here for 1,300 years. He looked entirely unbothered by my presence.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(26)">
+      <img src="img_S25/27-IMG_2003.jpg" alt="Leshan Buddha aerial view">
+      <div class="pj-body"><div class="pj-num">Photo 27 of 49 &middot; Leshan Giant Buddha</div><div class="pj-text">The full Buddha from above — head, shoulders, lap, feet resting on the riverbank. Visitors descend the narrow staircase carved into the cliff beside him, tiny figures against his red sandstone robe. He faces the confluence of three rivers — the Min, Dadu, and Qingyi — which he was built to calm. According to local legend, the stone chips thrown into the river during his construction changed the currents and made the waters safe.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(27)">
+      <img src="img_S25/28-IMG_2047.jpg" alt="Mount Emei rocky stream gorge">
+      <div class="pj-body"><div class="pj-num">Photo 28 of 49 &middot; Mount Emei</div><div class="pj-text">The lower trails of Mount Emei. Icy water rushing through a narrow gorge between moss-covered boulders, ferns and bamboo leaning in from both sides. The stream was partly frozen at the edges, the water white and rushing fast between the rocks. Cold, green, alive. A beautiful introduction to the mountain.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(28)">
+      <img src="img_S25/29-IMG_2053.jpg" alt="Mount Emei rocky stream 2">
+      <div class="pj-body"><div class="pj-num">Photo 29 of 49 &middot; Mount Emei</div><div class="pj-text">Another section of the stream — milky white water pooling between large moss-covered boulders, overhanging trees making a tunnel of green. The air was fresh and cold and smelled of wet stone and pine. I kept stopping every few minutes to photograph the water.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(29)">
+      <img src="img_S25/30-IMG_2070.jpg" alt="Mount Emei bamboo lake">
+      <div class="pj-body"><div class="pj-num">Photo 30 of 49 &middot; Mount Emei</div><div class="pj-text">A gap in the bamboo forest revealed a still, misty lake, perfectly reflecting the dark silhouettes of the bamboo stalks above. The fog was low, the water completely calm. I stepped off the path to photograph this and stood quietly for a minute. The mountain has many moods, and this was one of its most peaceful.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(30)">
+      <img src="img_S25/31-IMG_2120.jpg" alt="Emei Golden Puxian Buddha">
+      <div class="pj-body"><div class="pj-num">Photo 31 of 49 &middot; Mount Emei — Golden Summit</div><div class="pj-text">The Puxian Bodhisattva (普贤菩萨) at Emei's Golden Summit. Four faces looking in four directions, seated on four white elephants, covered entirely in gold leaf — blazing in the winter sun against a deep blue sky. Ten storeys tall. I walked around him slowly, looking up, unable to fully process the scale or the beauty of it.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(31)">
+      <img src="img_S25/32-IMG_2127.jpg" alt="Emei sea of clouds">
+      <div class="pj-body"><div class="pj-num">Photo 32 of 49 &middot; Mount Emei — Golden Summit</div><div class="pj-text">From the viewing platform at the Golden Summit — a lone pine tree silhouetted against a vast sea of white cloud, a distant temple peak barely visible on a far ridge. The clouds were below me. I was above them. A cool winter wind, a deep blue sky, and an infinite white ocean beneath my feet. One of the great moments of my life.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(32)">
+      <img src="img_S25/33-IMG_2213.jpg" alt="Huanglong overview">
+      <div class="pj-body"><div class="pj-num">Photo 33 of 49 &middot; Huanglong</div><div class="pj-text">Huanglong from above — frozen travertine terraces in cream and jade, a Tibetan monastery in yellow and gold in the valley, snow mountains rising steeply behind. The altitude here is 3,500 metres. The air was sharp and clean. I stood at the viewpoint for a long time, trying to make sense of a landscape that looked completely alien.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(33)">
+      <img src="img_S25/34-IMG_2227.jpg" alt="Huanglong snow mountains">
+      <div class="pj-body"><div class="pj-num">Photo 34 of 49 &middot; Huanglong</div><div class="pj-text">The mountain landscape surrounding Huanglong — wide snowfields, rugged peaks, bare terraces. This is northern Sichuan at high altitude in winter. Cold, remote, and magnificent. The drive here from Chengdu took many hours through mountain roads, and every kilometre was worth it.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(34)">
+      <img src="img_S25/35-IMG_2241.jpg" alt="Huanglong frozen pools dusk">
+      <div class="pj-body"><div class="pj-num">Photo 35 of 49 &middot; Huanglong</div><div class="pj-text">Huanglong's terraced pools at dusk — ice and shallow water catching the last golden light, mountains reflected in the still surface. A lone leafless tree stood frozen in place in the middle of a terrace. The colours were impossible — cream limestone, pale jade water, golden sky. I did not want to leave.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(35)">
+      <img src="img_S25/36-IMG_2257.jpg" alt="Huanglong boardwalk terraces">
+      <div class="pj-body"><div class="pj-num">Photo 36 of 49 &middot; Huanglong</div><div class="pj-text">The wooden boardwalk winding through the Huanglong terraces — other visitors small figures in the distance, dark pine forests rising on both sides, rugged mountain peaks above. The winter light was long and golden. I walked slowly, photographing constantly, unable to stop.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(36)">
+      <img src="img_S25/37-IMG_2268.jpg" alt="Huanglong travertine ice close-up">
+      <div class="pj-body"><div class="pj-num">Photo 37 of 49 &middot; Huanglong</div><div class="pj-text">The travertine ice terraces up close — the cream mineral deposits visible beneath the thin surface ice, water still moving slowly beneath. Bare winter trees standing in the frozen pools. The whole valley had a quality of suspended time, as if everything had been paused mid-flow.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(37)">
+      <img src="img_S25/38-IMG_2312.jpg" alt="Jiuzhaigou turquoise lake boardwalk">
+      <div class="pj-body"><div class="pj-num">Photo 38 of 49 &middot; Jiuzhaigou</div><div class="pj-text">First sight of Jiuzhaigou — a turquoise lake with a wooden boardwalk full of tourists, bare mountains rising behind it. The water colour stopped me cold. I had seen photos. I had expected something beautiful. But the actual colour of the water — vivid teal against the grey winter sky — was a shock.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(38)">
+      <img src="img_S25/39-IMG_2321.jpg" alt="Jiuzhaigou mirror lake">
+      <div class="pj-body"><div class="pj-num">Photo 39 of 49 &middot; Jiuzhaigou</div><div class="pj-text">A perfectly still lake — emerald-green water giving a flawless mirror of snow-capped peaks above. The real mountains and their reflection were inseparable, blurring into one image of mountains and water and sky. I stopped here and simply stared. Some places ask you to be quiet.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(39)">
+      <img src="img_S25/40-IMG_2325.jpg" alt="Jiuzhaigou waterfalls">
+      <div class="pj-body"><div class="pj-num">Photo 40 of 49 &middot; Jiuzhaigou</div><div class="pj-text">The cascading waterfalls of Jiuzhaigou — level after level of falls dropping into turquoise pools, bare winter trees framing each tier, mountains above. Even in winter the water flowed. The sound of it was constant throughout the valley, a steady white noise of moving water over limestone.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(40)">
+      <img src="img_S25/41-IMG_2332.jpg" alt="Jiuzhaigou ice formations on branch">
+      <div class="pj-body"><div class="pj-num">Photo 41 of 49 &middot; Jiuzhaigou</div><div class="pj-text">A twig beside the stream, encased in ice — intricate crystal formations built up by days of freezing spray, hanging in translucent drops and fins. Nature's winter sculpture. I knelt down to photograph this. Nobody else stopped. Most people walked past without seeing it.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(41)">
+      <img src="img_S25/42-IMG_2337.jpg" alt="Jiuzhaigou rushing waterfall">
+      <div class="pj-body"><div class="pj-num">Photo 42 of 49 &middot; Jiuzhaigou</div><div class="pj-text">A small rushing waterfall tumbling fast over mossy rocks, ice forming at the edges, a turquoise pool waiting below. Even the smallest streams at Jiuzhaigou have this quality of crystal purity. The water here has been filtered through limestone for decades. It shows.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(42)">
+      <img src="img_S25/43-IMG_2345.jpg" alt="Jiuzhaigou turquoise lake dead tree">
+      <div class="pj-body"><div class="pj-num">Photo 43 of 49 &middot; Jiuzhaigou</div><div class="pj-text">A dead tree trunk in the foreground, brilliant turquoise water beyond, rocky mountains across the valley. Even dead wood looks beautiful at Jiuzhaigou. The contrast of the weathered grey trunk against the vivid water was one of those compositions that just arrived — I did not arrange it.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(43)">
+      <img src="img_S25/44-IMG_2364.jpg" alt="Jiuzhaigou crystal lake underwater">
+      <div class="pj-body"><div class="pj-num">Photo 44 of 49 &middot; Jiuzhaigou</div><div class="pj-text">Through the crystal-clear water of a Jiuzhaigou lake — submerged fallen branches and tree trunks perfectly preserved beneath the surface, vivid teal above. The water is so clear it is almost invisible. I could see fallen logs ten metres down as clearly as if they were lying on dry land. I photographed this for five minutes, moving around to find the best angle.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(44)">
+      <img src="img_S25/45-IMG_2382.jpg" alt="Jiuzhaigou lake with reeds">
+      <div class="pj-body"><div class="pj-num">Photo 45 of 49 &middot; Jiuzhaigou</div><div class="pj-text">A lake with winter reeds in the foreground, a tall mountain rising steeply behind, a small tourist facility on the far shore. I had this corner of the valley almost to myself in the late afternoon — the tour groups had moved on and I was still here, reluctant to stop. The reeds were golden in the fading light.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(45)">
+      <img src="img_S25/46-IMG_2401.jpg" alt="Jiuzhaigou mirror forest reflection">
+      <div class="pj-body"><div class="pj-num">Photo 46 of 49 &middot; Jiuzhaigou</div><div class="pj-text">Perfect symmetry — a still Jiuzhaigou lake reflecting pine forests and bare trees in exact mirror image. The real and the reflected were impossible to separate. This is one of the strangest experiences in Jiuzhaigou: not knowing which way is up in a photograph of the water.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(46)">
+      <img src="img_S25/47-IMG_2411.jpg" alt="Jiuzhaigou pine island">
+      <div class="pj-body"><div class="pj-num">Photo 47 of 49 &middot; Jiuzhaigou</div><div class="pj-text">A small pine tree growing from a rocky island in the middle of a crystalline lake, its roots gripping the stone, its reflection perfectly mirrored in the still water. I loved this photograph more than almost any other I took. Simple and complete. A tree, a rock, a lake, a mountain. Everything else is extra.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(47)">
+      <img src="img_S25/48-IMG_2423.jpg" alt="Jiuzhaigou azure lake">
+      <div class="pj-body"><div class="pj-num">Photo 48 of 49 &middot; Jiuzhaigou</div><div class="pj-text">The most vivid water I have ever seen. Azure and turquoise and teal, the rocky lake bed clearly visible through water so clear it seems to have no colour of its own. Snow mountains above, bare trees at the edges. My last photograph at Jiuzhaigou, and my favourite of the entire trip. I took it and then put my phone in my pocket. Some moments are better finished than continued.</div></div>
+    </div>
+
+    <div class="pj-item" onclick="openLightboxAt(48)">
+      <img src="img_S25/49-IMG_2433.jpg" alt="Scenic area shuttle bus">
+      <div class="pj-body"><div class="pj-num">Photo 49 of 49 &middot; Jiuzhaigou — Shuttle Bus</div><div class="pj-text">The scenic area shuttle bus back at 17:35 — packed with visitors heading out for the day, a young person in full cosplay standing in the aisle in a white wig and large bamboo hat, hanging from the overhead rail, swaying with the mountain road curves. This is modern China too. Young, creative, playful, completely at ease with who they are. I stood in that bus grinning. What a trip.</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VIEW COUNTER -->
+<div style="max-width:740px; margin:0 auto; padding:0 22px 40px; text-align:center;">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  <p>S25: From Frozen Harbin to Jade Jiuzhaigou &nbsp;&middot;&nbsp; Paul's World &nbsp;&middot;&nbsp; November – December</p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/" style="color:var(--blue); text-decoration:none;">&#8592; Back to Paul's World</a></p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── MAP ──
+const stops = [
+  { num:1,  lat:45.753, lng:126.643, label:"1. Harbin 哈尔滨",               css:"start",  img:"01-IMG_1080.jpg",  desc:"Songhua River at dusk — where the journey began" },
+  { num:2,  lat:39.939, lng:116.372, label:"2. Beijing — Shichahai 什刹海",   css:"city",   img:"03-IMG_1258.jpg",  desc:"Ancient lake district, winter morning solitude" },
+  { num:3,  lat:40.002, lng:116.275, label:"3. Summer Palace 颐和园",         css:"nature", img:"10-IMG_1306.jpg",  desc:"Hanfu, ink art, and misty imperial gardens" },
+  { num:4,  lat:40.354, lng:116.467, label:"4. Great Wall 黄花城水长城",       css:"nature", img:"11-IMG_1438.jpg",  desc:"Wild unrestored Wall above Miyun Reservoir" },
+  { num:5,  lat:40.015, lng:119.806, label:"5. Old Dragon's Head 老龙头",     css:"water",  img:"15-IMG_1526.jpg",  desc:"Where the Wall meets the Bohai Sea" },
+  { num:6,  lat:39.129, lng:117.206, label:"6. Tianjin 天津",                css:"city",   img:"19-IMG_1631.jpg",  desc:"Canal city, eccentric art, pork trotters" },
+  { num:7,  lat:30.572, lng:104.067, label:"7. Chengdu 成都",                css:"city",   img:"25-IMG_1971.jpg",  desc:"Gateway to Sichuan's wonders" },
+  { num:8,  lat:29.545, lng:103.770, label:"8. Leshan Giant Buddha 乐山大佛", css:"nature", img:"27-IMG_2003.jpg",  desc:"World's largest stone Buddha (71m, Tang Dynasty)" },
+  { num:9,  lat:29.514, lng:103.325, label:"9. Mount Emei 峨眉山",           css:"nature", img:"31-IMG_2120.jpg",  desc:"Golden Summit above a sea of clouds" },
+  { num:10, lat:32.754, lng:103.822, label:"10. Huanglong 黄龙",             css:"water",  img:"33-IMG_2213.jpg",  desc:"Frozen travertine terraced pools, UNESCO site" },
+  { num:11, lat:33.240, lng:103.919, label:"11. Jiuzhaigou 九寨沟",          css:"end",    img:"48-IMG_2423.jpg",  desc:"Jade lakes of paradise — final stop" },
+];
+
+const map = L.map('trail-map', { zoomControl: true, scrollWheelZoom: false });
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Esri, Maxar, Earthstar Geographics', maxZoom: 17
+}).addTo(map);
+L.control.fullscreen({ position:'topleft', title:'Full screen', titleCancel:'Exit' }).addTo(map);
+
+const latlngs = stops.map(s => [s.lat, s.lng]);
+L.polyline(latlngs, { color:'#f4813f', weight:2.5, dashArray:'8,6', opacity:0.85 }).addTo(map);
+
+stops.forEach(s => {
+  const div = document.createElement('div');
+  div.className = 'pm-container';
+  const circle = document.createElement('div');
+  circle.className = `pm-circle ${s.css}`;
+  circle.textContent = s.num;
+  div.appendChild(circle);
+  const icon = L.divIcon({ html: div.outerHTML, className:'', iconSize:[44,44], iconAnchor:[22,22] });
+  const marker = L.marker([s.lat, s.lng], { icon }).addTo(map);
+  const popup = L.popup({ maxWidth:240, className:'' }).setContent(
+    `<div class="map-popup">
+      <img src="img_S25/${s.img}" alt="${s.label}">
+      <div class="map-popup-body">
+        <div class="map-popup-num">Stop ${s.num}</div>
+        <div class="map-popup-caption"><strong>${s.label}</strong><br>${s.desc}</div>
+        <a class="map-popup-btn" href="#pj-${s.num - 1}" onclick="document.getElementById('trail-map').classList.remove('map-fullscreen');document.getElementById('mapCloseBtn').style.display='none';">View Photo</a>
+      </div>
+    </div>`
+  );
+  marker.bindPopup(popup);
+});
+
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = () => {
+  const d = L.DomUtil.create('div','map-legend');
+  d.innerHTML = '<b>Legend</b>🔴 Start / End&nbsp;&nbsp;🟠 City&nbsp;&nbsp;🟢 Nature&nbsp;&nbsp;🔵 Water';
+  return d;
+};
+legend.addTo(map);
+map.fitBounds([[29.0,103.0],[46.2,127.5]], { padding:[30,30] });
+
+function openMap() {
+  document.getElementById('trail-map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  map.invalidateSize();
+}
+function closeMap() {
+  document.getElementById('trail-map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  map.invalidateSize();
+}
+
+// ── LIGHTBOX ──
+const pjImgs = Array.from(document.querySelectorAll('.pj-item img'));
+const pjCaps = Array.from(document.querySelectorAll('.pj-item .pj-text'));
+let lbIdx = 0;
+function openLightboxAt(i) {
+  lbIdx = i;
+  document.getElementById('lbImg').src = pjImgs[i].src;
+  document.getElementById('lbCap').textContent = pjCaps[i].textContent;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) {
+  lbIdx = (lbIdx + dir + pjImgs.length) % pjImgs.length;
+  document.getElementById('lbImg').src = pjImgs[lbIdx].src;
+  document.getElementById('lbCap').textContent = pjCaps[lbIdx].textContent;
+}
+document.getElementById('lightbox').addEventListener('click', function(e) {
+  if (e.target === this) closeLightbox();
+});
+
+// ── SLIDESHOW ──
+const slides = document.querySelectorAll('.slide');
+let ssIdx = 0, ssPlaying = false, ssTimer = null;
+function openSlideshow() {
+  document.getElementById('slideshow').classList.add('active');
+  slides.forEach((s,i) => s.classList.toggle('active', i===0));
+  ssIdx = 0; updateProgress();
+}
+function closeSlideshow() {
+  document.getElementById('slideshow').classList.remove('active');
+  if (ssTimer) clearInterval(ssTimer);
+  ssPlaying = false;
+  document.getElementById('ssPlayBtn').textContent = '▶ Auto-Play';
+}
+function ssNav(dir) {
+  slides[ssIdx].classList.remove('active');
+  ssIdx = (ssIdx + dir + slides.length) % slides.length;
+  slides[ssIdx].classList.add('active');
+  updateProgress();
+}
+function togglePlay() {
+  ssPlaying = !ssPlaying;
+  document.getElementById('ssPlayBtn').textContent = ssPlaying ? '⏸ Pause' : '▶ Auto-Play';
+  if (ssPlaying) { ssTimer = setInterval(() => ssNav(1), 4000); }
+  else { clearInterval(ssTimer); }
+}
+function updateProgress() {
+  document.getElementById('ssProgress').style.width = ((ssIdx+1)/slides.length*100)+'%';
+}
+document.addEventListener('keydown', e => {
+  if (document.getElementById('slideshow').classList.contains('active')) {
+    if (e.key==='ArrowRight') ssNav(1);
+    if (e.key==='ArrowLeft') ssNav(-1);
+    if (e.key==='Escape') closeSlideshow();
+  }
+  if (document.getElementById('lightbox').classList.contains('active')) {
+    if (e.key==='ArrowRight') lbNav(1);
+    if (e.key==='ArrowLeft') lbNav(-1);
+    if (e.key==='Escape') closeLightbox();
+  }
+});
+
+// anchor IDs for map popup links
+document.querySelectorAll('.pj-item').forEach((el,i) => el.id = 'pj-'+i);
+</script>
+</body>
+</html>

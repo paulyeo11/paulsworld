@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S26: The Other Side — Day 3 of My Three-Day Reservoir Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #0a1520 0%, #0f1a20 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(41,128,185,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(41,128,185,0.12);
+  border: 1px solid rgba(41,128,185,0.3);
+  color: #5dade2;
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 740px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(74,108,247,0.12);
+  border-color: rgba(74,108,247,0.35);
+  color: var(--blue);
+}
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+
+/* SERIES NAV */
+.series-nav {
+  max-width: 740px; margin: 0 auto;
+  padding: 20px 22px 0;
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.series-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--muted); font-size: 0.78rem;
+  padding: 6px 14px; border-radius: 20px;
+  text-decoration: none; transition: border-color 0.2s, color 0.2s;
+}
+.series-chip:hover { border-color: var(--accent); color: var(--accent); }
+.series-chip.current { border-color: #5dade2; color: #5dade2; background: rgba(41,128,185,0.08); }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid #2980b9; padding-left: 18px; margin-bottom: 2em;
+}
+h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.4rem;
+  color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700;
+}
+
+/* STATS CARD */
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid #2980b9;
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+/* PULL QUOTE */
+.pull-quote {
+  background: linear-gradient(135deg, rgba(41,128,185,0.07), rgba(74,108,247,0.07));
+  border: 1px solid rgba(41,128,185,0.18);
+  border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif; font-size: 1.22rem;
+  font-style: italic; color: var(--text); margin: 0; line-height: 1.6;
+}
+
+/* SERIES TRACKER */
+.series-tracker {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+}
+.series-tracker h3 {
+  font-family: 'Playfair Display', serif; font-size: 1rem;
+  color: var(--accent); margin-bottom: 16px;
+}
+.tracker-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 14px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tracker-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.tracker-day {
+  background: rgba(41,128,185,0.15); border: 1px solid rgba(41,128,185,0.3);
+  color: #5dade2; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+}
+.tracker-day.done { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.3); color: var(--green); }
+.tracker-day.today { background: rgba(244,129,63,0.15); border-color: rgba(244,129,63,0.4); color: var(--accent); }
+.tracker-info { flex: 1; }
+.tracker-title { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+.tracker-detail { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+/* ── INLINE SWIPE STRIP ── */
+.strip-section { max-width: 100%; margin: 2.5em 0; overflow: hidden; }
+.strip-header {
+  max-width: 740px; margin: 0 auto 14px; padding: 0 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.strip-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--accent); font-weight: 700; }
+.strip-hint { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.strip-wrapper {
+  display: flex; overflow-x: auto; gap: 10px;
+  padding: 0 22px 14px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.strip-wrapper::-webkit-scrollbar { display: none; }
+.strip-card {
+  flex: 0 0 260px; scroll-snap-align: start;
+  border-radius: 12px; overflow: hidden;
+  background: var(--card); border: 1px solid var(--border);
+  position: relative; cursor: pointer;
+}
+.strip-card img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.strip-card-caption {
+  padding: 10px 12px 12px;
+  font-size: 0.78rem; color: var(--muted); line-height: 1.4;
+}
+.strip-card-num {
+  position: absolute; top: 8px; left: 8px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: 0.68rem; padding: 2px 8px; border-radius: 10px;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 480px) { .strip-card { flex: 0 0 200px; } .strip-card img { height: 140px; } }
+
+/* MAP */
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#trail-map.map-fullscreen {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 9999;
+  border: none !important;
+}
+#mapCloseBtn {
+  display: none;
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 10000;
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 1rem;
+  padding: 8px 16px;
+  border-radius: 22px;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Source Serif 4', serif;
+}
+.map-section > .section-title,
+.map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#trail-map { width: 100%; height: 520px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+/* PHOTO MARKER — numbered circle style */
+.pm-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 800; color: #fff;
+  font-family: 'Source Serif 4', sans-serif;
+  transition: transform 0.15s;
+  position: relative;
+}
+.pm-circle:hover { transform: scale(1.25); }
+.pm-circle.start  { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.end    { background: #e74c3c; width:44px; height:44px; font-size:1rem; }
+.pm-circle.forest { background: #27ae60; }
+.pm-circle.road   { background: #e67e22; }
+.pm-circle.reservoir { background: #2980b9; }
+.pm-container { position: relative; }
+
+/* MAP POPUP */
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-btn { display: inline-block; background: rgba(244,129,63,0.18); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); font-size: 0.75rem; padding: 4px 12px; border-radius: 14px; cursor: pointer; text-decoration: none; }
+.map-popup-btn:hover { background: rgba(244,129,63,0.32); }
+
+/* PHOTO JOURNAL */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.photo-journal { margin-top: 16px; display: flex; flex-direction: column; gap: 36px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; max-height: 420px; object-fit: cover; display: block; transition: opacity 0.2s; }
+.pj-item:hover img { opacity: 0.92; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 9000;
+  align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 1.6rem; width: 44px; height: 44px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+/* FULLSCREEN SLIDESHOW */
+.slideshow-overlay {
+  display: none; position: fixed; inset: 0; background: #000; z-index: 10000;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.slideshow-overlay.active { display: flex; }
+.slide { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; animation: fadeIn 1s ease; width: 100%; }
+.slide.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.slide img { max-width: min(90vw, 820px); max-height: 70vh; object-fit: contain; border-radius: 10px; }
+.slide-caption { color: #ddd; font-size: 1rem; margin-top: 18px; font-style: italic; max-width: 620px; line-height: 1.5; font-family: 'Playfair Display', serif; }
+.slide-num { color: rgba(255,255,255,0.4); font-size: 0.78rem; margin-top: 8px; letter-spacing: 0.08em; }
+.slideshow-controls { position: absolute; bottom: 24px; display: flex; gap: 14px; align-items: center; }
+.ss-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.ss-btn:hover { background: rgba(255,255,255,0.22); }
+.ss-close { position: absolute; top: 16px; right: 20px; color: #fff; font-size: 1.8rem; cursor: pointer; background: none; border: none; line-height: 1; opacity: 0.7; }
+.ss-close:hover { opacity: 1; }
+.ss-progress { position: absolute; top: 0; left: 0; height: 3px; background: var(--accent); transition: width 0.3s; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<!-- FULLSCREEN SLIDESHOW -->
+<div class="slideshow-overlay" id="slideshow">
+  <div class="ss-progress" id="ssProgress"></div>
+  <button class="ss-close" onclick="closeSlideshow()">&#x2715;</button>
+  <audio id="bgMusic" loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" type="audio/mpeg">
+  </audio>
+  <div id="slideContainer"></div>
+  <div class="slideshow-controls">
+    <button class="ss-btn" onclick="ssNav(-1)">&#8592; Prev</button>
+    <button class="ss-btn" id="ssPlayPause" onclick="toggleAuto()">&#9646;&#9646; Pause</button>
+    <button class="ss-btn" onclick="ssNav(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="label"><span class="en">Travel Story &middot; S26 &middot; Day 3</span><span class="zh">旅行故事 · S26 · 第3天</span></div>
+  <h1>The <span>Other Side</span><br>of the Reservoir</h1>
+  <div class="meta">By Paul Yeo &nbsp;&middot;&nbsp; 19 June 2026 &nbsp;&middot;&nbsp; Upper Peirce Reservoir, Singapore</div>
+  <div class="hero-btns">
+    <button class="hero-btn" onclick="openSlideshow()">&#9654;&nbsp; Watch as Movie</button>
+    <a href="#photomap" class="hero-btn alt">&#128205;&nbsp; See the Map</a>
+    <a href="#story" class="hero-btn alt">&#128214;&nbsp; Read the Story</a>
+  </div>
+</div>
+
+<!-- SERIES NAV -->
+<div class="series-nav">
+  <a href="S20.html" class="series-chip">&#10003; Day 1 — Chestnut Nature Park (S20)</a>
+  <a href="S23.html" class="series-chip">&#10003; Day 2 — Secret BKE Trail (S23)</a>
+  <span class="series-chip current">&#128205; Day 3 — The Waterworks Route (S26)</span>
+</div>
+
+<!-- PHOTO MAP -->
+<div class="map-section" id="photomap">
+  <div style="max-width:740px;margin:0 auto;padding:0 22px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div class="section-title">&#128205; Interactive Photo Map — Click Any Photo Icon</div>
+    <button onclick="openMapFullscreen()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(244,129,63,0.15);border:1px solid rgba(244,129,63,0.4);color:var(--accent);font-size:0.88rem;padding:8px 18px;border-radius:22px;cursor:pointer;font-family:'Source Serif 4',serif;transition:background 0.2s;">
+      &#x26F6; Open Full Screen Map
+    </button>
+  </div>
+  <div id="trail-map"></div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; Close Map</button>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;padding-bottom:10px;max-width:740px;margin-left:auto;margin-right:auto;padding-left:22px;padding-right:22px;">Day 3 route: starting from the PUB Water Plant, turning left, and walking the reservoir circuit. Tap any marker to see the photo and description. Coordinates are approximate.</p>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+
+  <p class="lead">Three mornings in a row. Three different routes. The same reservoir — but today I finally saw the side of it nobody talks about.</p>
+
+  <div class="series-tracker">
+    <h3>&#128197; The Three-Day Hiking Series</h3>
+    <div class="tracker-row">
+      <div class="tracker-day done">Day 1</div>
+      <div class="tracker-info">
+        <div class="tracker-title">Chestnut Nature Park — Southern Loop</div>
+        <div class="tracker-detail">16 June 2026 &nbsp;&middot;&nbsp; 8,500 steps &nbsp;&middot;&nbsp; 2 hours &nbsp;&middot;&nbsp; <a href="S20.html" style="color:var(--blue);text-decoration:none;">Read S20</a></div>
+      </div>
+    </div>
+    <div class="tracker-row">
+      <div class="tracker-day done">Day 2</div>
+      <div class="tracker-info">
+        <div class="tracker-title">Secret BKE Trail to Upper Peirce Reservoir</div>
+        <div class="tracker-detail">18 June 2026 &nbsp;&middot;&nbsp; 9,000 steps &nbsp;&middot;&nbsp; 3 hours &nbsp;&middot;&nbsp; <a href="S23.html" style="color:var(--blue);text-decoration:none;">Read S23</a></div>
+      </div>
+    </div>
+    <div class="tracker-row">
+      <div class="tracker-day today">Day 3</div>
+      <div class="tracker-info">
+        <div class="tracker-title">PUB Water Plant → Chestnut Northern Loop → Observation Tower</div>
+        <div class="tracker-detail">19 June 2026 &nbsp;&middot;&nbsp; ~5,000 steps &nbsp;&middot;&nbsp; ~3.5 km &nbsp;&middot;&nbsp; Ended at Observation Tower</div>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="en">Same Reservoir. Different Door.</span><span class="zh">同一座水库，不同的入口。</span></h2>
+  <p>On Day 2, I came in through the secret BKE side — squeezing through a gap in the fence, jogging away from a road recovery car, earning every step the hard way. It was dramatic and memorable. On Day 1 at Chestnut, it was a clean two-hour loop, quiet and beautiful.</p>
+  <p>This morning — Day 3 — I wanted something new. I started from the PUB water plant and did something I had never done before at this spot.</p>
+  <p>I turned left.</p>
+  <p>That one decision made everything that followed.</p>
+
+  <div class="pull-quote">
+    <p>"Three mornings. Three different directions. The same reservoir. Each turn revealed a side of the place I had never seen. That is what daily hiking teaches you — familiar places have more faces than you think."</p>
+  </div>
+
+  <h2><span class="en">The Gate, the Left Turn, and the Narrow Path</span><span class="zh">大门、左转，和那条狭窄的小径</span></h2>
+  <p>The PUB water plant sits quietly beside the reservoir, its main gate facing the road. Most hikers walk straight past it. I had walked past it myself on previous mornings, always thinking: I will try the left side another day. Today was that day.</p>
+  <p>I arrived at 8 AM. The morning air was cool — that clean Singapore jungle smell of damp earth, wet leaves, and something faintly chemical from the treatment works behind the fence. I applied my insect repellent at the gate. One orange in my pocket. Phone charged. David (my AI) ready if I needed navigation help. I turned left and started walking.</p>
+  <p>The path was narrow immediately — a strip of bare earth and fallen leaves pressed between the tall PUB security fence on one side and a wall of dense tropical jungle on the other. No hikers. No joggers. Just the sound of birds and the soft crunch of leaves under my feet. Peaceful. Completely, beautifully peaceful.</p>
+
+  <div class="stats-card">
+    <div class="stat"><div class="stat-label">Start Time</div><div class="stat-value">8:00 AM</div></div>
+    <div class="stat"><div class="stat-label">Date</div><div class="stat-value">19 June 2026</div></div>
+    <div class="stat"><div class="stat-label">Route</div><div class="stat-value">PUB Plant → Turn Left</div></div>
+    <div class="stat"><div class="stat-label">Companions</div><div class="stat-value">Solo</div></div>
+    <div class="stat"><div class="stat-label">Steps (Day 3)</div><div class="stat-value">~5,000 steps</div></div>
+    <div class="stat"><div class="stat-label">Distance</div><div class="stat-value">~3.5 km</div></div>
+    <div class="stat"><div class="stat-label">Destination</div><div class="stat-value">The "Point" — Chestnut Trail</div></div>
+    <div class="stat"><div class="stat-label">Supplies</div><div class="stat-value">One Orange + Insect Repellent</div></div>
+  </div>
+
+  <div class="alert-box" style="border-color:rgba(74,108,247,0.5);background:rgba(74,108,247,0.08);">
+    <div class="alert-title" style="color:#4a6cf7;">&#128161; David's Hiker Tip — Steps to KM</div>
+    <p>Easy way to convert your step count to kilometres while on the trail:</p>
+    <p style="text-align:center;font-size:1.1rem;font-weight:700;margin:10px 0;">10,000 steps = 7 km</p>
+    <p>Just halve it, quarter it, or divide as needed:</p>
+    <ul style="margin:8px 0 0 18px;line-height:2;">
+      <li>5,000 steps = <strong>3.5 km</strong></li>
+      <li>2,500 steps = <strong>1.75 km</strong></li>
+      <li>1,500 steps = <strong>1 km</strong></li>
+    </ul>
+    <p style="margin-top:10px;">Or use the quick shortcut: <strong>divide your steps by 1,500</strong> to get km. Today's 5,000 steps ÷ 1,500 = <strong>3.3 km</strong>. Close enough for the jungle.</p>
+  </div>
+
+  <h2><span class="en">Obstacle One — The Blocked Drain</span><span class="zh">第一个障碍——堵塞的排水沟</span></h2>
+  <p>The peaceful walking lasted about five minutes. Then the path ended.</p>
+  <p>A drainage channel cut straight across the route — rocks, debris, thick overgrowth sprawling across it from both sides. I stood at the edge and looked at it. No way through, not without getting muddy and pushing through sharp undergrowth. I turned around and looked for another way.</p>
+  <p>What I found next was a large iron grate embedded in the ground, covering a deep drain structure. I peered through the bars — heavy rusted metal, and below it, a tangle of industrial water pumps and thick pipes. Singapore's reservoir infrastructure, right here at ground level, doing its quiet essential work. I studied it carefully. No gap. No way around. <em>Not this one either.</em></p>
+
+  <h2>Obstacle Two — The Proper Front Door</h2>
+  <p>I kept moving along the perimeter until I found what I was actually looking for: the official NParks trail entrance. White concrete bollards blocking vehicle access. A cluster of signs nailed to a post:</p>
+  <p><strong>Hiking Only — No Biking. No Pets Allowed. Nature Park Opening Hours: 7am to 7pm.</strong></p>
+  <p>And one more sign that made me smile: <em>What To Do When You Encounter Wild Boars.</em></p>
+  <p>On Day 2, I slipped through an unofficial BKE fence gap and ran from a recovery car worker. Today I found the proper front door. Both routes required effort. Both felt like a small victory. I walked through the bollards and into the forest.</p>
+  <p>Inside, the trail opened up properly. A brown NParks marker post on the right read: <strong>2.2 km — Marker H23. Hiking Only, No Biking.</strong> The path ahead was a beautiful winding strip of bare earth, tall trees forming a green canopy overhead, morning light filtering down through the leaves. I checked Google Maps — my destination was a point marked simply as "Point" at the northern end of the Chestnut trail, past markers M11, M15, M31, M30. I was on the right path. I kept walking.</p>
+
+  <div class="pull-quote">
+    <p>"Day 2 I used a secret gap in a BKE fence. Day 3 I used the front door. The forest does not care which entrance you choose. It opens the same way for everyone once you are inside."</p>
+  </div>
+
+  <h2>Obstacle Three — The Protected Place Gate</h2>
+  <p>The forest was everything I came for. Quiet, green, and mine alone. Tall trees, their roots spreading wide across the soft earth. Vines looping between branches. The occasional shaft of light breaking through the canopy. I walked slowly, enjoying every step.</p>
+  <p>Then I turned a corner and found a heavy metal gate across the path — padlocked shut. Mounted above it: a bold red sign.</p>
+  <p><strong>PROTECTED PLACE. TEMPAT LARANGAN.</strong></p>
+  <p>Below the title, the legal warning in full: unauthorised entry is an offence under the Protected Areas and Protected Places Act. I read it carefully. A Protected Place in Singapore is different from an NParks trail boundary. It is a government-secured location. Entering without authorisation can result in prosecution.</p>
+  <p>I sent a quick message to David: <em>"Found a Protected Place gate. Can I enter?"</em></p>
+  <p>David's answer was immediate and clear: <em>"No, Paul. Do not enter. A Protected Place carries real legal penalties in Singapore — it is not like an NParks 'No Entry' sign you can reason around. Step back and find another way."</em></p>
+  <p>I stepped back. And then I heard something that changed everything.</p>
+
+  <div class="alert-box">
+    <div class="alert-title">&#9888; Protected Place — Tempat Larangan</div>
+    <p>Unauthorised entry is a criminal offence under Singapore's Protected Areas and Protected Places Act. This is not a trail restriction — it is a legal boundary. Do not enter.</p>
+  </div>
+
+  <h2>Obstacle Four — Live Firing Area. Turn Back.</h2>
+  <p>A sound. Through the trees, faint at first — a sharp crack, then another. Then a third. My first thought: firecrackers? But the sound was too sharp, too regular, too distant. I kept walking, thinking it must be far away.</p>
+  <p>Around the next bend, I had my answer.</p>
+  <p>A bright red sign stood directly in the middle of the trail. Skull and crossbones at its centre. In four languages — English, Chinese, Tamil, and Malay:</p>
+  <p style="text-align:center;font-weight:700;color:#e74c3c;font-size:1.1rem;">DANGER &nbsp;·&nbsp; LIVE FIRING AREA &nbsp;·&nbsp; KEEP CLEAR</p>
+  <p style="text-align:center;font-weight:700;color:#e74c3c;">危险 · 实弹射击区 · 远离勿近</p>
+  <p style="text-align:center;font-weight:700;color:#e67e22;">MERBAHAYA · KAWASAN TEMBAK PELURU HIDUP</p>
+  <p>And across a yellow band at the bottom: <strong>DO NOT GO BEYOND THIS POINT — LIVE FIRING AREA — KEEP CLEAR!</strong></p>
+  <p>I stood completely still. The gunfire I had been hearing was real. Live rounds. An active SAF firing range, somewhere beyond the trees in front of me. The trail continued past the sign. I did not.</p>
+  <p>I messaged David again: <em>"I can hear firing. There is a Danger Live Firing Area sign."</em></p>
+  <p>David's reply was one sentence: <em>"Turn back immediately, Paul. Live firing range — do not go one step further."</em></p>
+  <p>I turned around and walked back the way I came.</p>
+
+  <div class="alert-box">
+    <div class="alert-title">&#9888; DANGER — Live Firing Area</div>
+    <p>SAF live ammunition range beyond this point. David (AI) advised: turn back immediately. Live rounds are being fired. This is not a sign to test. Day 3's wall — and the right decision was to walk away.</p>
+  </div>
+
+  <h2>What the Signs Taught Me</h2>
+  <p>Four obstacles on one morning. A blocked drain. An iron grate. A Protected Place gate. A live firing range with actual gunfire.</p>
+  <p>On Day 2, my obstacles were human — a road recovery worker with a radio. I ran from him. On Day 3, my obstacles were signs and sounds — and I listened to every one of them.</p>
+  <p>There is a difference between a boundary worth pushing and a boundary worth respecting. The BKE fence on Day 2 — worth pushing. An unmarked gap, no danger, just adventure. The Protected Place gate and the live firing range — not worth pushing. Not even slightly.</p>
+  <p>Knowing which is which. That is what experience gives you. At seventy, I have enough of it to know when to keep going and when to turn around. Day 3 was a turning-around day. And there is no shame in that — only sense.</p>
+
+  <div class="pull-quote">
+    <p>"A skull and crossbones, four languages, gunfire in the trees. Some signs you read once and obey immediately. This was one of them."</p>
+  </div>
+
+</div>
+
+<!-- INLINE SWIPE STRIP -->
+<div class="strip-section">
+  <div class="strip-header">
+    <div class="strip-title">&#128247; The Waterworks Route</div>
+    <div class="strip-hint">Swipe right &#8594;</div>
+  </div>
+  <div class="strip-wrapper" id="strip1">
+    <!-- Filled dynamically from galleryPhotos -->
+  </div>
+</div>
+
+<div class="content">
+  <h2>New Plan — Pump Track</h2>
+  <p>Walking back out, I passed the official NParks trail map board. I stopped and studied it properly this time. Chestnut Nature Park, Northern Biking Loop. A whole trail network laid out in front of me — winding colour-coded lines across a green shape, a red "You Are Here" pin marking my position near the entrance.</p>
+  <p>New destination: the <strong>Pump Track</strong> — the purpose-built mountain biking circuit deep inside the Northern Loop. Fully within Chestnut Nature Park, completely open, no warning signs in four languages. After the firing range and the Protected Place gate, a proper NParks trail felt like a gift.</p>
+  <p>Four obstacles, one retreat, and now a new goal. That is how a morning like this works.</p>
+
+  <h2>The Compass Dilemma — North or South?</h2>
+  <p>I opened my iPhone compass app. The needle settled at <strong>345° — nearly due north</strong>. My GPS coordinates stared back at me: 1°22'33"N 103°46'51"E. Elevation: 40 metres. I was deep inside Chestnut Nature Park's Northern Loop, and I wanted to reach Dairy Farm Road.</p>
+  <p>I messaged David: <em>"I want to hike to Dairy Farm Road. Go south. Should I walk north?"</em></p>
+  <p>David's reply came quickly: <em>"No, Paul — Dairy Farm Road is not north from here. You need to walk south."</em></p>
+  <p>I stared at the compass. South. That meant turning around completely. I typed back: <em>"I am confused. I came from the south. If I U-turn now, I will be going back to my start location."</em></p>
+  <p>There was a pause. Then David replied — and this time the answer was different: <em>"You are right, Paul. I got the direction wrong. Sorry for the confusion. Going south does take you back to where you started — the PUB water plant. Dairy Farm Road is not directly reachable from Chestnut Northern Loop in any direction. It is a different area entirely — near Bukit Timah, southwest of where you are. The only way to get there from here is to exit the park via Chestnut Avenue, then take transport. Walking through the park will not get you there."</em></p>
+  <p>I looked at the compass one more time. 345° north. The forest around me was quiet. The morning had given me a blocked drain, an iron grate, a Protected Place gate, a live firing range with real gunfire, and now a compass that could not solve the problem in front of me.</p>
+  <p>Some days the map wins.</p>
+
+  <div class="alert-box">
+    <div class="alert-title">&#9888; David's Navigation Correction</div>
+    <p>David (AI) initially said to walk south — but Paul immediately spotted the error. Walking south meant going back to the start. David acknowledged the mistake: Dairy Farm Road is southwest of Chestnut Nature Park in the Bukit Timah area, and is not accessible by walking through the park. The correct plan: exit via Chestnut Avenue, then take transport. The right call — made by Paul, not the AI.</p>
+  </div>
+
+  <div class="pull-quote">
+    <p>"I came from the south. If I U-turn now, I will go back to my start location." — Paul, correcting his AI assistant in the middle of a Singapore jungle.</p>
+  </div>
+
+  <h2>Unplanned — The Observation Tower</h2>
+  <p>I almost walked past it. Between the trees, something that did not belong — dark metal, circular, winding upward through the branches. A spiral staircase built around the trunk of a great tree, climbing through the canopy until it disappeared into the sky above. Someone in a blue shirt was already at the top, tiny against the light.</p>
+  <p>I had not planned for this. No David prompt, no Google Maps pin, no trail guide mention. Just a structure in the forest that appeared when I needed something good to happen.</p>
+  <p>I had been turned back by a firing range. I had been confused by a compass. I had made four wrong turns before finding the right door. And now, completely by accident, at the end of a morning full of obstacles — I found the Observation Tower.</p>
+  <p>I started climbing.</p>
+
+  <h2>From the Top — I Can See My House</h2>
+  <p>I reached the top of the spiral staircase and turned to look out over the forest. Green canopy in every direction. Singapore's sky, wide and blue. A breeze up here that did not exist at ground level.</p>
+  <p>And then I saw them. Three dark towers rising above the treetops. Black gridded facades, tall and familiar against the sky. I knew those towers immediately.</p>
+  <p>That is my block. The one on the right. Twenty-third floor.</p>
+  <p>I left home this morning. Walked into this forest. Got blocked by a drain. Found the proper front door. Heard gunfire. Read a skull-and-crossbones sign in four languages. Got confused by a compass. Found an observation tower by accident. And from the top of it — I can see my own home.</p>
+  <p>The window where I sleep. The floor where Joanne is probably having her morning tea right now. All of it visible from here, above the canopy, standing in the middle of a jungle I almost did not enter.</p>
+
+  <div class="pull-quote">
+    <p>"I left home, walked into the jungle, and from the top of the observation tower — I could see my own block. Twenty-third floor, right side. Some mornings hand you something you did not go looking for."</p>
+  </div>
+
+  <h2>The Bike Park — A Fork, a Map, and a New World</h2>
+  <p>I kept walking and came to a junction. A weathered wooden post stood at the fork, its painted arrows almost completely worn away by years of jungle humidity. Beside it, a large granite boulder, moss-covered and ancient. Two paths. I picked one and kept moving.</p>
+  <p>Around the next bend — a proper NParks information board. <strong>Chestnut Nature Park (Chestnut Bike Park).</strong> A full map in blue and pink, showing the complete network of biking trails looping through the park. Banked corners, switchbacks, the Pump Track circuit laid out clearly. On the right: Biking Etiquette rules. And in bold orange letters on the frame: <em>"You Are Entering A Nature Park. Please Be Responsible For Your Own Safety."</em></p>
+  <p>After everything this morning — the blocked drain, the iron grate, the Protected Place gate, the live firing range — this map felt like a reward. No skulls. No warning signs in four languages. Just a proper park, built for people, completely open.</p>
+  <p>The Pump Track was right there on the map. I was close.</p>
+
+  <h2>The Walk Home</h2>
+  <p>I came down from the tower and walked back the way I had come — through the Bike Park, back along the Northern Loop trail, past the Bike Park map board, past the junction with the weathered wooden post, past the Northern Hiking Loop map board, and eventually back through the bollard entrance, along the perimeter fence, and out through the PUB gate to the road.</p>
+  <p>The morning had thrown four obstacles at me and I had handled each one correctly. Blocked drain — find another way. Iron grate — look and move on. Protected Place gate — read the sign, message David, step back. Live Firing Area — turn around immediately, no argument. Compass confusion — trust your own instinct over the AI's first answer.</p>
+  <p>Five thousand steps. Three and a half kilometres. One observation tower. And from the top of it — my own home, visible above the canopy.</p>
+  <p>That is Day 3.</p>
+
+  <h2>What Three Days Taught Me</h2>
+  <p>Day 1 at Chestnut was a clean loop. Beautiful, peaceful, 8,500 steps. Day 2 was an adventure — secret fence entry, cat and mouse with a recovery car worker, reservoir, getting briefly lost. Day 3 was something different again: an exploration with four obstacles, a live firing range, a compass that confused both me and my AI, and an observation tower I found by accident at the end of it all.</p>
+  <p>Three mornings. Three completely different mornings. The same forest — and each time it gave me something new.</p>
+  <p>Day 1 showed me the park. Day 2 showed me the secret. Day 3 showed me the limits — and then, just when I thought the morning was done, it handed me the best thing of all: standing above the treetops, seeing my own block, knowing exactly where home was.</p>
+  <p>Some mornings you plan. Some mornings find you. The best ones do both.</p>
+
+  <div class="pull-quote">
+    <p>"I am 70 years old. I heard live gunfire in a Singapore jungle this morning, read a skull-and-crossbones sign in four languages, corrected my AI's navigation mistake, climbed an observation tower I never knew existed — and from the top of it, I saw my own home. Twenty-third floor. Right side. If that is not retirement done right, I do not know what is."</p>
+  </div>
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <div class="section-title">&#128247; Photo Journal — Every Step of the Way</div>
+  <div class="photo-journal" id="galleryGrid"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p>S26 &nbsp;&middot;&nbsp; Paul Yeo &nbsp;&middot;&nbsp; 19 June 2026 &nbsp;&middot;&nbsp; Upper Peirce Reservoir, Singapore &nbsp;&middot;&nbsp; Day 3 of 3</p>
+  <p style="margin-top:6px;font-size:0.75rem;">Background music: <a href="https://www.bensound.com" style="color:var(--muted);">Acoustic Breeze by Bensound</a> &nbsp;&middot;&nbsp; Licensed under Creative Commons</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── PHOTO JOURNAL DATA — add/update as Paul sends photos ──
+const galleryPhotos = [
+  { src: "img_S26/01.jpg",
+    caption: "The PUB water plant gate — Day 3 starts here",
+    story: "8:00 AM. The PUB water plant entrance gate, sun rising behind the clouds, yellow road markings in the foreground. This gate was yesterday's finish line — on Day 2 I arrived at the right side of this building. Today I am standing in front of it and doing something different: I am turning left. Same starting point, completely different walk." },
+
+  { src: "img_S26/02.jpg",
+    caption: "Between the fence and the jungle — the left-turn path",
+    story: "This is what turning left looked like. A narrow strip of earth and fallen leaves, with the PUB water plant security fence rising on the right and a full wall of tropical jungle on the left. Not a path you would find on any hiking app. Not a path many people know about. Just jungle on one side, infrastructure on the other, and a kind of peace that is very hard to find anywhere else in Singapore." },
+
+  { src: "img_S26/03.jpg",
+    caption: "Obstacle — drainage channel and overgrowth blocking the path",
+    story: "The narrow corridor came to an abrupt end. A drainage channel cut across the path, filled with rocks and debris, jungle plants growing right across it from both sides. No way through. This is the moment every solo hiker knows — the path you planned is not the path available. You stop, you look around, and you start thinking of another way." },
+
+  { src: "img_S26/04.jpg",
+    caption: "Scouting through the iron grate — water pumps and pipes below",
+    story: "I found this iron grate covering a deep drain structure — thick rusted bars, and below them a tangle of industrial water pumps and heavy pipes. The engineering beneath Singapore's reservoirs, right here at eye level. I looked through it carefully, hoping for a gap, a way around, a route through. Not this one either. The PUB infrastructure does not give up its space easily. I had to keep moving and find another way in." },
+
+  { src: "img_S26/05.jpg",
+    caption: "Found it — the official trail entrance, bollards and all",
+    story: "After the blocked drainage channel and the iron grate, I walked further and found this — the proper trail entrance. White concrete bollards to stop vehicles, and a cluster of NParks signs: Hiking Only No Biking, No Pets Allowed, Nature Park opening hours 7am to 7pm. And one more sign that caught my eye: What To Do When You Encounter Wild Boars. On Day 2 I slipped through a secret gap in the BKE fence. Today I used the front door. Both felt like a victory." },
+
+  { src: "img_S26/06.jpg",
+    caption: "First trail marker — 2.2 km ahead, forest all around",
+    story: "Inside the forest at last. The trail marker post reads 2.2km — marker H23. Hiking only, no biking. The path ahead is a narrow strip of bare earth and fallen leaves, winding between tall trees, dappled morning light coming down through the canopy. This is what I came for. After the blocked drain, the iron grate, the detour to the official entrance — I am finally in. And the forest is exactly as I knew it would be: quiet, green, and completely mine." },
+
+  { src: "img_S26/07.jpg",
+    caption: "My hiking kit — insect repellent balm and the trail ahead",
+    story: "My two hiking essentials: one orange in the pocket, and this — a small tin of insect repellent balm held up against the forest trail ahead. In the jungle, the mosquitoes find you whether you move or stop. This little tin has kept them off me on all three days. I apply it at the entrance and again halfway through. It is a small thing, but it makes the difference between enjoying the walk and spending it swatting. The trail tunnel ahead — branches forming a green arch overhead — is exactly the kind of path that makes you forget you are still in Singapore." },
+
+  { src: "img_S26/08.jpg",
+    caption: "The Google Maps plan — navigating to 'Point' through Chestnut Nature Park",
+    story: "8:59 AM — I checked Google Maps to confirm my route. The PUB water plant buildings are visible at the bottom, Chestnut Nature Park in green to the upper left, and my destination — marked simply as 'Point' — at the top of the screen. Trail markers M30, M31, M15, M11 (Tender Foot and Cubs Junction) line the path through the park. I had also saved H22 from a previous visit. This is what modern solo hiking looks like: one orange in your pocket, insect repellent in your hand, and Google Maps on your phone. The forest has not changed. The tools have." },
+
+  { src: "img_S26/09.jpg",
+    caption: "Protected Place gate — Tempat Larangan. This one I did not cross.",
+    story: "I turned a corner on the trail and found this waiting for me — a heavy metal gate in the middle of the forest, closed and padlocked, with a bold red sign: PROTECTED PLACE. TEMPAT LARANGAN. Below it, the legal warning: unauthorized entry is an offence. And then I noticed something else. A sound. Through the trees, faint but unmistakable — the crack and echo of gunfire. Somewhere beyond this gate, live rounds were being fired." },
+
+  { src: "img_S26/10.jpg",
+    caption: "Deep in the forest — tall trees, and the sound of gunfire ahead",
+    story: "A magnificent old tree, roots thick and bark worn smooth by decades of jungle weather. I photographed it because it was beautiful. But I was already uneasy. The gunfire was getting clearer — sharp cracks in the distance, echoing through the canopy. I kept moving, thinking maybe it was far away. It was not." },
+
+  { src: "img_S26/11.jpg",
+    caption: "DANGER — Live Firing Area. Do not go beyond this point.",
+    story: "And there it was. A bright red sign in the middle of the forest path — impossible to miss, impossible to ignore. DANGER. LIVE FIRING AREA. KEEP CLEAR. In English, Chinese, Tamil, and Malay. A skull and crossbones. And at the bottom in yellow: DO NOT GO BEYOND THIS POINT — LIVE FIRING AREA — KEEP CLEAR. The trail continued beyond it. I did not. The gunfire I had been hearing for the past few minutes was real, it was nearby, and there were live rounds going downrange on the other side of this sign. I turned around and walked back the way I came. Day 3 had found its wall. And this one I respected completely." },
+
+  { src: "img_S26/12.jpg",
+    caption: "Chestnut Nature Park Northern Loop map — navigating to Piper Hut",
+    story: "After turning back from the firing range, I passed the official NParks trail map board — Chestnut Nature Park, Northern Biking Loop. The 'You Are Here' marker told me exactly where I stood. I was already heading further into the park toward the Pump Track, the mountain biking circuit in the Northern Loop. A proper NParks facility, completely open, no skull-and-crossbones anywhere in sight. After everything that morning, a normal trail felt like a reward." },
+
+  { src: "img_S26/13.jpg",
+    caption: "My iPhone compass — 345° N, coordinates 1°22'33\"N 103°46'51\"E, 40m elevation",
+    story: "I opened my iPhone compass to figure out which way to go. The needle settled at 345° — nearly due north. I was deep in Chestnut Nature Park, 40 metres above sea level, standing at 1°22'33\"N 103°46'51\"E. I messaged David: 'I want to hike to Dairy Farm Road. Should I walk north?' David's reply made me stop and think. 'No, Paul — Dairy Farm Road is not north from here. But if you walk south, you go back to where you started — the PUB water plant.' I was confused. I typed back: 'I came from the south. If I U-turn now I will go back to my start location.' David replied: 'You are right. Dairy Farm Road is a different area — near Bukit Timah, southwest of Chestnut Nature Park. You cannot reach it by walking through this park in any direction. The best route: walk back south through the park, exit at Chestnut Avenue, then take transport.' Three obstacles, one firing range, and now a compass that could not help me. The park had given me everything it was going to give today." },
+
+  { src: "img_S26/14.jpg",
+    caption: "Trail junction — weathered wooden post in the forest, paths splitting in two directions",
+    story: "A fork in the path. A weathered wooden post stands at the junction, its paint worn off by years of humidity and rain, the wood itself almost merging with the forest floor. This is the moment every hiker knows — two paths, one choice, and no guarantee either one is correct. A large boulder sits to the right, moss-covered, ancient. The forest here is dense and green, sunlight barely making it through the canopy. I stopped, read the post as best I could, and picked a direction. That is all you can do." },
+
+  { src: "img_S26/15.jpg",
+    caption: "Chestnut Nature Park (Chestnut Bike Park) — the full trail map board",
+    story: "The official NParks map board for Chestnut Nature Park — also known as Chestnut Bike Park. Blue lines show the biking trails looping through the park, pink dashed lines for the hiking paths, and a complex network of banked curves and switchbacks that make up the Pump Track area. On the right side of the board, the Biking Etiquette rules. And in tall orange letters on the frame: 'You Are Entering A Nature Park. Please Be Responsible For Your Own Safety.' After everything this morning — the blocked drain, the iron grate, the Protected Place gate, the live firing range — this map felt like a warm welcome. A proper park, built for people, safe to explore. The Pump Track was close." },
+
+  { src: "img_S26/16.jpg",
+    caption: "The Observation Tower — a spiral staircase rising through the forest canopy",
+    story: "I almost walked past it. Between the trees, a structure that did not belong — dark metal, circular, winding upward through the branches. A spiral staircase, built around the trunk of a great tree, climbing up and up until it disappeared into the canopy above. Someone in a blue shirt was already at the top, tiny against the sky. I had been walking for hours. I had been turned back by a firing range. I had been confused by a compass. And now, completely by accident, I had found the Observation Tower. Some things you plan. Some things find you. I started climbing." },
+
+  { src: "img_S26/17.jpg",
+    caption: "View from the top — three dark towers above the canopy, and my block on the right, 23rd floor",
+    story: "I reached the top and turned to look out over the forest. Green canopy in every direction, Singapore's sky wide and blue above it. And then — three dark towers rising above the treetops. Black gridded facades, familiar. I knew those towers immediately. That is my block. The one on the right. Twenty-third floor. I left my home this morning, walked into this forest, turned back from a firing range, got confused by a compass, found an observation tower by accident — and from the top of it, I can see my own front door. At seventy years old, standing above the treetops in the middle of a Singapore jungle, looking at the window of the floor where I sleep. Some mornings hand you something you did not go looking for." },
+];
+
+// Build swipe strip
+const strip1 = document.getElementById('strip1');
+galleryPhotos.forEach((p, i) => {
+  const card = document.createElement('div');
+  card.className = 'strip-card';
+  card.onclick = () => openLightbox(i);
+  card.innerHTML = `<div class="strip-card-num">${String(i+1).padStart(2,'0')}</div><img src="${p.src}" loading="lazy" alt=""><div class="strip-card-caption">${p.caption}</div>`;
+  strip1.appendChild(card);
+});
+
+// Build photo journal
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'pj-item';
+  item.innerHTML = `
+    <img src="${p.src}" alt="" loading="lazy">
+    <div class="pj-body">
+      <div class="pj-num">Photo ${String(i+1).padStart(2,'0')} of ${galleryPhotos.length}</div>
+      <div class="pj-text">${p.story}</div>
+    </div>`;
+  item.onclick = () => openLightbox(i);
+  grid.appendChild(item);
+});
+
+// Build slideshow slides
+const slideContainer = document.getElementById('slideContainer');
+galleryPhotos.forEach((p, i) => {
+  const slide = document.createElement('div');
+  slide.className = 'slide' + (i === 0 ? ' active' : '');
+  slide.innerHTML = `<img src="${p.src}" alt=""><div class="slide-caption">${p.caption}</div><div class="slide-num">${i+1} / ${galleryPhotos.length}</div>`;
+  slideContainer.appendChild(slide);
+});
+
+// ── LIGHTBOX ──
+let lbIndex = 0;
+function openLightbox(i) {
+  lbIndex = i;
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) { lbIndex = (lbIndex + dir + galleryPhotos.length) % galleryPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+// ── FULLSCREEN SLIDESHOW ──
+let ssIndex = 0, ssAuto = true, ssTimer = null;
+function getSlides() { return document.querySelectorAll('.slide'); }
+function openSlideshow() {
+  document.getElementById('slideshow').classList.add('active');
+  const audio = document.getElementById('bgMusic');
+  audio.volume = 0.45;
+  audio.play().catch(() => {});
+  showSlide(0);
+  startAuto();
+}
+function closeSlideshow() {
+  document.getElementById('slideshow').classList.remove('active');
+  document.getElementById('bgMusic').pause();
+  clearTimeout(ssTimer);
+}
+function showSlide(i) {
+  const slides = getSlides();
+  slides.forEach(s => s.classList.remove('active'));
+  ssIndex = (i + slides.length) % slides.length;
+  slides[ssIndex].classList.add('active');
+  document.getElementById('ssProgress').style.width = ((ssIndex + 1) / slides.length * 100).toFixed(1) + '%';
+}
+function ssNav(dir) { clearTimeout(ssTimer); showSlide(ssIndex + dir); if (ssAuto) startAuto(); }
+function startAuto() { clearTimeout(ssTimer); ssTimer = setTimeout(() => { showSlide(ssIndex + 1); if (ssAuto) startAuto(); }, 5000); }
+function toggleAuto() {
+  ssAuto = !ssAuto;
+  document.getElementById('ssPlayPause').innerHTML = ssAuto ? '&#9646;&#9646; Pause' : '&#9654; Play';
+  if (ssAuto) startAuto(); else clearTimeout(ssTimer);
+}
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('slideshow').classList.contains('active')) {
+    if (e.key === 'ArrowRight') ssNav(1);
+    if (e.key === 'ArrowLeft') ssNav(-1);
+    if (e.key === 'Escape') closeSlideshow();
+  }
+  if (document.getElementById('lightbox').classList.contains('active')) {
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'Escape') closeLightbox();
+  }
+});
+
+// ── FULLSCREEN MAP ──
+function openMapFullscreen() {
+  const el = document.getElementById('trail-map');
+  el.classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => map.invalidateSize(), 100);
+}
+function closeMapFullscreen() {
+  const el = document.getElementById('trail-map');
+  el.classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+// ── PHOTO MAP — Day 3 route: PUB water plant, turn left ──
+// Photo 09 added below galleryPhotos — append here when more arrive
+const map = L.map('trail-map', { zoomControl: true, fullscreenControl: true, fullscreenControlOptions: { position: 'topright' } }).setView([1.3825, 103.7695], 16);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri',
+  maxZoom: 19
+}).addTo(map);
+
+const mapPhotos = [
+  { src:"img_S26/01.jpg", lat:1.3808, lon:103.7705, caption:"PUB Water Plant gate — Day 3 starts here", zone:"start" },
+  { src:"img_S26/02.jpg", lat:1.3812, lon:103.7699, caption:"Turning left — narrow path between fence and jungle", zone:"forest" },
+  { src:"img_S26/03.jpg", lat:1.3817, lon:103.7694, caption:"Obstacle — drainage channel blocking the path", zone:"forest" },
+  { src:"img_S26/04.jpg", lat:1.3820, lon:103.7692, caption:"Iron grate with water pumps — no way through here", zone:"forest" },
+  { src:"img_S26/05.jpg", lat:1.3824, lon:103.7690, caption:"Found it — official NParks trail entrance", zone:"forest" },
+  { src:"img_S26/06.jpg", lat:1.3831, lon:103.7688, caption:"First trail marker — 2.2km, marker H23", zone:"forest" },
+  { src:"img_S26/07.jpg", lat:1.3838, lon:103.7686, caption:"Insect repellent — hiking essentials in the forest", zone:"forest" },
+  { src:"img_S26/08.jpg", lat:1.3843, lon:103.7685, caption:"Google Maps check — navigating to 'Point'", zone:"forest" },
+  { src:"img_S26/09.jpg", lat:1.3849, lon:103.7683, caption:"Protected Place gate — Tempat Larangan", zone:"forest" },
+  { src:"img_S26/10.jpg", lat:1.3853, lon:103.7681, caption:"Deep forest — gunfire audible ahead", zone:"forest" },
+  { src:"img_S26/11.jpg", lat:1.3857, lon:103.7679, caption:"DANGER — Live Firing Area. Turned back here.", zone:"road" },
+  { src:"img_S26/13.jpg", lat:1.3758, lon:103.7808, caption:"iPhone compass — 345°N, 1°22'33\"N 103°46'51\"E, 40m elev. The moment I got confused about direction.", zone:"forest" },
+  { src:"img_S26/14.jpg", lat:1.3771, lon:103.7712, caption:"Trail junction — weathered wooden post, two paths, one choice", zone:"forest" },
+  { src:"img_S26/15.jpg", lat:1.3775, lon:103.7715, caption:"Chestnut Bike Park map board — the Pump Track is close", zone:"forest" },
+  { src:"img_S26/16.jpg", lat:1.3780, lon:103.7718, caption:"Observation Tower — spiral staircase rising through the canopy", zone:"forest" },
+  { src:"img_S26/17.jpg", lat:1.3782, lon:103.7719, caption:"View from the top — Paul's block visible on the right, 23rd floor", zone:"forest" },
+];
+
+// Close the route back to the start
+const endPoint = { src:"img_S26/01.jpg", lat:1.3808, lon:103.7705, caption:"Back at the PUB Water Plant — Day 3 complete", zone:"end" };
+const allPoints = [...mapPhotos, endPoint];
+
+// Draw route polyline
+const routeLine = allPoints.map(p => [p.lat, p.lon]);
+L.polyline(routeLine, { color: '#f4813f', weight: 4, dashArray: '8,5', opacity: 0.9 }).addTo(map);
+
+// Fit bounds
+map.fitBounds(L.latLngBounds(routeLine).pad(0.15));
+
+function markerClass(zone) {
+  if (zone === 'start') return 'start';
+  if (zone === 'end') return 'end';
+  if (zone === 'forest') return 'forest';
+  if (zone === 'road') return 'road';
+  return 'reservoir';
+}
+
+mapPhotos.forEach((p, i) => {
+  const cls = markerClass(p.zone);
+  const size = (cls === 'start' || cls === 'end') ? 44 : 38;
+  const label = cls === 'start' ? '▶' : (i + 1);
+  const icon = L.divIcon({
+    className: 'pm-container',
+    html: `<div class="pm-circle ${cls}">${label}</div>`,
+    iconSize: [size, size], iconAnchor: [size/2, size/2], popupAnchor: [0, -(size/2 + 6)],
+  });
+  const popupHtml = `
+    <div class="map-popup">
+      <img src="${p.src}" alt="">
+      <div class="map-popup-body">
+        <div class="map-popup-num">Stop ${String(i+1).padStart(2,'0')} of ${mapPhotos.length}</div>
+        <div class="map-popup-caption">${p.caption}</div>
+        <span class="map-popup-btn" onclick="openLightbox(${i});document.querySelector('.leaflet-popup-close-button').click()">&#128065; View Full Photo</span>
+      </div>
+    </div>`;
+  L.marker([p.lat, p.lon], { icon }).addTo(map).bindPopup(popupHtml, { maxWidth: 240, minWidth: 220 });
+});
+
+// End marker
+const endIcon = L.divIcon({
+  className: 'pm-container',
+  html: `<div class="pm-circle end">■</div>`,
+  iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -28],
+});
+L.marker([endPoint.lat, endPoint.lon], { icon: endIcon }).addTo(map)
+  .bindPopup(`<div class="map-popup"><div class="map-popup-body"><div class="map-popup-num">End</div><div class="map-popup-caption">Back at the PUB Water Plant — Day 3 complete</div></div></div>`, { maxWidth: 220 });
+
+// Legend
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = () => {
+  const d = L.DomUtil.create('div');
+  d.style.cssText = 'background:rgba(15,17,23,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;font-size:0.72rem;color:#ccc;line-height:1.9;';
+  d.innerHTML = `
+    <div style="font-weight:700;color:#fff;margin-bottom:4px">Legend</div>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e74c3c;vertical-align:middle;margin-right:6px"></span>Start / End<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#2980b9;vertical-align:middle;margin-right:6px"></span>Reservoir Path<br>
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#27ae60;vertical-align:middle;margin-right:6px"></span>Forest Section`;
+  return d;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>

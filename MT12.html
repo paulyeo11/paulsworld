@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT12: Finland &amp; Baltic States — Ice, History &amp; Hidden Gems</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117; color: #e6edf3;
+  height: 100vh; max-height: 100vh;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.header {
+  padding: 12px 16px 10px;
+  background: linear-gradient(135deg, #0d1117, #161b22);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.25em; font-weight: 800; color: #fff; }
+.header h1 span.gold { color: #f0a500; }
+.header h1 span.ice  { color: #60c8f0; }
+.header-sub { font-size: 0.9em; color: #8b949e; margin-top: 3px; }
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.tab-bar {
+  display: flex; background: #161b22;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0; padding: 10px 16px;
+  background: transparent; border: none; cursor: pointer;
+  font-size: 0.92em; font-weight: 700; color: #8b949e;
+  border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: #f0a500; border-bottom-color: #f0a500; }
+.legend-bar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 7px 16px; background: #0d1117;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-wrap: wrap; font-size: 0.88em; color: #8b949e;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 11px; height: 11px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0; }
+.legend-total { margin-left: auto; color: #f0a500; font-weight: 700; }
+#map { width: 100%; flex: 1; min-height: 54vh; }
+#map.map-fullscreen { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; width: 100vw !important; height: 100vh !important; z-index: 10000; }
+.map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
+.map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
+.map-fullscreen-close.active { display: block; }
+.panel { display: none; }
+.panel.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.stops-panel { background: #0d1117; overflow-y: auto; max-height: 34vh; }
+.panel-header { padding: 9px 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 10px; }
+.panel-title { font-size: 1.0em; font-weight: 700; color: #e6edf3; }
+.panel-km { margin-left: auto; font-size: 0.92em; color: #f0a500; font-weight: 700; }
+.stop-list { padding: 4px 0; }
+.stop-item { display: flex; align-items: flex-start; gap: 12px; padding: 9px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s; }
+.stop-item:hover { background: rgba(255,255,255,0.04); }
+.stop-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: 800; flex-shrink: 0; margin-top: 1px; border: 2px solid rgba(255,255,255,0.45); }
+.stop-info { flex: 1; min-width: 0; }
+.stop-name { font-size: 1.05em; font-weight: 700; color: #e6edf3; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.stop-desc { font-size: 0.9em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+.stop-km { font-size: 0.86em; color: #f0a500; font-weight: 700; margin-top: 3px; }
+.stop-tag { display: inline-block; font-size: 0.82em; padding: 2px 7px; border-radius: 8px; font-weight: 700; }
+.tag-start   { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+.tag-city    { background:rgba(240,165,0,0.2);   color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
+.tag-ice     { background:rgba(96,200,240,0.2);  color:#7dd3fc; border:1px solid rgba(96,200,240,0.4); }
+.tag-ferry   { background:rgba(59,130,246,0.2);  color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+.tag-van     { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+.tag-must    { background:rgba(239,68,68,0.25);  color:#ff6b6b; border:1px solid rgba(239,68,68,0.6); font-weight:800; }
+.itin-panel  { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+.day-card    { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 16px; cursor: pointer; transition: background 0.15s; }
+.day-card:hover { background: rgba(255,255,255,0.03); }
+.day-header  { display: flex; align-items: flex-start; gap: 10px; }
+.day-badge   { background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.35); color: #f0a500; font-size: 0.86em; font-weight: 800; padding: 3px 9px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+.day-title   { font-size: 1.05em; font-weight: 700; color: #e6edf3; line-height: 1.35; }
+.day-meta    { font-size: 0.9em; color: #8b949e; margin-top: 4px; }
+.day-body    { font-size: 0.93em; color: #8b949e; margin-top: 8px; line-height: 1.6; display: none; }
+.day-body.open { display: block; }
+.day-body .section { margin-top: 7px; }
+.day-body .section-label { font-size: 0.92em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #f0a500; margin-bottom: 3px; }
+.day-body .section-text { color: #c9d1d9; }
+.day-chevron { margin-left: auto; color: #f0a500; font-size: 1.0em; flex-shrink: 0; transition: transform 0.2s; }
+.day-card.open .day-chevron { transform: rotate(180deg); }
+.tips-panel  { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+.tip-section { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 13px 16px; }
+.tip-header  { display: flex; align-items: center; gap: 8px; cursor: pointer; touch-action: manipulation; }
+.tip-icon    { font-size: 1.3em; }
+.tip-title   { font-size: 1.05em; font-weight: 700; color: #e6edf3; }
+.tip-chevron { margin-left: auto; color: #f0a500; font-size: 1.0em; transition: transform 0.2s; }
+.tip-section.open .tip-chevron { transform: rotate(180deg); }
+.tip-body    { font-size: 0.93em; color: #8b949e; margin-top: 9px; line-height: 1.65; display: none; }
+.tip-section.open .tip-body { display: block; }
+.tip-body ul { padding-left: 16px; }
+.tip-body li { margin-bottom: 5px; }
+.tip-body strong { color: #e6edf3; }
+.mustsee-panel { background:#0d1117; overflow-y:auto; flex:1; min-height:0; padding:0 0 24px; }
+.ms-intro { padding:12px 16px 6px; font-size:0.93em; color:#8b949e; border-bottom:1px solid rgba(255,255,255,0.06); }
+.ms-intro strong { color:#f0a500; }
+.ms-place { border-bottom:1px solid rgba(255,255,255,0.06); }
+.ms-place-header { display:flex; align-items:center; gap:10px; padding:13px 16px; cursor:pointer; touch-action:manipulation; }
+.ms-place-num { width:32px; height:32px; border-radius:50%; background:#ef4444; display:flex; align-items:center; justify-content:center; font-size:0.9em; font-weight:800; color:#fff; flex-shrink:0; border:2px solid rgba(255,100,100,0.5); box-shadow:0 0 8px rgba(239,68,68,0.4); }
+.ms-place-info { flex:1; }
+.ms-place-name { font-size:1.08em; font-weight:800; color:#fff; }
+.ms-place-day  { font-size:0.88em; color:#f0a500; margin-top:1px; }
+.ms-chevron { color:#f0a500; font-size:1.0em; transition:transform 0.2s; }
+.ms-place.open .ms-chevron { transform:rotate(180deg); }
+.ms-header-thumb { width:52px; height:52px; object-fit:cover; border-radius:8px; flex-shrink:0; display:none; border:1px solid rgba(255,255,255,0.12); }
+.ms-body { display:none; padding:0 16px 14px; }
+.ms-place.open .ms-body { display:block; }
+.ms-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; overflow:hidden; margin-top:10px; }
+.ms-img { width:100%; height:160px; object-fit:cover; display:none; border-radius:12px 12px 0 0; }
+.ms-card-body { padding:12px 14px; }
+.stop-thumb { width:54px; height:54px; object-fit:cover; border-radius:8px; flex-shrink:0; display:none; }
+.ms-card-title { font-size:1.02em; font-weight:800; color:#fff; }
+.ms-card-desc  { font-size:0.92em; color:#c9d1d9; margin-top:6px; line-height:1.55; }
+.ms-card-tip   { font-size:0.88em; color:#6ee7b7; margin-top:6px; }
+.ms-card-tip::before { content:'💡 '; }
+.ms-badge { display:inline-block; font-size:0.8em; font-weight:700; padding:2px 8px; border-radius:8px; margin-top:6px; background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.35); }
+.food-panel { background:#0d1117; overflow-y:auto; flex:1; min-height:0; padding:0 0 24px; }
+.food-intro { padding:12px 16px 10px; font-size:0.93em; color:#8b949e; border-bottom:1px solid rgba(255,255,255,0.06); }
+.food-item { border-bottom:1px solid rgba(255,255,255,0.06); padding:14px 16px; }
+.food-emoji { font-size:1.5em; float:left; margin-right:12px; margin-top:2px; }
+.food-name { font-size:1.05em; font-weight:800; color:#fff; }
+.food-where { font-size:0.88em; color:#f0a500; margin-top:2px; font-weight:700; }
+.food-desc { font-size:0.9em; color:#8b949e; margin-top:5px; line-height:1.55; clear:both; }
+.food-must { display:inline-block; background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.4); font-size:0.78em; font-weight:800; padding:2px 8px; border-radius:8px; margin-top:5px; }
+.budget-panel { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+.budget-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.budget-stat { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 10px; text-align: center; }
+.budget-stat-label { font-size: 0.72em; color: #8b949e; margin-bottom: 2px; }
+.budget-stat-value { font-size: 0.95em; font-weight: 800; color: #f0a500; }
+.budget-table { width: 100%; border-collapse: collapse; }
+.budget-table th { font-size: 0.86em; font-weight: 700; color: #8b949e; text-align: left; padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); letter-spacing: 0.5px; text-transform: uppercase; }
+.budget-table td { font-size: 0.95em; color: #c9d1d9; padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.budget-table tr:hover td { background: rgba(255,255,255,0.03); }
+.budget-cat { display: inline-block; font-size: 0.75em; padding: 1px 5px; border-radius: 8px; font-weight: 700; }
+.cat-flight { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+.cat-hotel  { background:rgba(59,130,246,0.2);  color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+.cat-food   { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+.cat-cruise { background:rgba(96,200,240,0.2);  color:#7dd3fc; border:1px solid rgba(96,200,240,0.4); }
+.cat-trans  { background:rgba(168,85,247,0.2);  color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); }
+.cat-misc   { background:rgba(156,163,175,0.2); color:#d1d5db; border:1px solid rgba(156,163,175,0.3); }
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 16px !important; line-height: 1.5; }
+.popup-day  { font-size: 0.85em; font-weight: 700; color: #f0a500; margin-bottom: 2px; }
+.popup-name { font-weight: 800; font-size: 1.25em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 1.0em; }
+.popup-food { margin-top: 5px; color: #6ee7b7; font-size: 0.95em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.vc-wrap { text-align: center; padding: 14px 16px; background: #0d1117; border-top: 1px solid rgba(255,255,255,0.06); }
+@media (max-width: 500px) {
+  .header h1 { font-size: 1.05em; }
+  #map { min-height: 48vh; }
+  .stops-panel { max-height: 40vh; }
+  .budget-summary { grid-template-columns: 1fr 1fr; }
+}
+/* ── CITY WALK ── */
+.walk-panel { background:#0d1117; overflow-y:auto; flex:1; min-height:0; padding:0; }
+.walk-city-bar { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.06); }
+.walk-city-bar::-webkit-scrollbar { display:none; }
+.walk-city-btn { flex-shrink:0; padding:9px 14px; background:transparent; border:none; border-bottom:2px solid transparent; cursor:pointer; font-size:0.84em; font-weight:700; color:#8b949e; white-space:nowrap; transition:all 0.2s; }
+.walk-city-btn.active { color:#60c8f0; border-bottom-color:#60c8f0; }
+.walk-city { display:none; padding:14px; }
+.walk-city.active { display:block; }
+.walk-heading { font-size:1.05em; font-weight:800; color:#fff; margin-bottom:3px; }
+.walk-meta { font-size:0.85em; color:#8b949e; margin-bottom:10px; }
+.walk-img { width:100%; max-height:155px; object-fit:cover; border-radius:8px; display:none; margin-bottom:4px; }
+.walk-credit { font-size:0.68em; color:#6b7280; margin-bottom:5px; display:none; }
+.walk-point { border-left:3px solid #3b82f6; padding-left:10px; margin-bottom:3px; }
+.walk-point.pt-start { border-left-color:#ef4444; }
+.walk-point.pt-green { border-left-color:#10b981; }
+.walk-point.pt-gold { border-left-color:#f0a500; }
+.walk-pt-label { font-weight:700; font-size:0.87em; color:#93c5fd; margin-bottom:2px; }
+.walk-point.pt-start .walk-pt-label { color:#fca5a5; }
+.walk-point.pt-green .walk-pt-label { color:#6ee7b7; }
+.walk-point.pt-gold .walk-pt-label { color:#fcd34d; }
+.walk-pt-desc { color:#c9d1d9; font-size:0.82em; margin:2px 0 5px; line-height:1.5; }
+.walk-arrow { color:#6b7280; font-size:0.76em; margin:2px 0 10px 13px; }
+.walk-maplinks { display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+.walk-dirs { display:inline-block; margin:5px 0 12px; color:#93c5fd; font-size:0.82rem; text-decoration:none; border-bottom:1px dotted #93c5fd; line-height:1.5; }
+.walk-map-frame { width:100%; height:260px; border:0; border-radius:10px; margin-bottom:7px; }
+.lang-bar { display:flex; gap:8px; padding:9px 16px; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
+.lang-btn { padding:5px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.18); background:transparent; color:#8b949e; font-size:0.88em; font-weight:700; cursor:pointer; transition:all 0.2s; }
+.lang-btn.active { background:rgba(240,165,0,0.15); border-color:rgba(240,165,0,0.5); color:#f0a500; }
+@keyframes dashFlow { to { stroke-dashoffset: -100; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+    <div>
+      <h1>🧊 MT12: <span class="ice">Finland</span> &amp; <span class="gold">Baltic States</span> — Ice, History &amp; Hidden Gems</h1>
+      <div class="header-sub">Helsinki · Rovaniemi · Icebreaker Cruise · Vilnius · Riga · Tallinn · ~30 Days · Jan–Feb (best for thick ice)</div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
+  <button class="tab-btn" onclick="switchTab('stops')">📍 Stops</button>
+  <button class="tab-btn" onclick="switchTab('itin')">📅 Itinerary</button>
+  <button class="tab-btn" onclick="switchTab('mustsee')">🌟 Must See</button>
+  <button class="tab-btn" onclick="switchTab('food')">🍽️ Food</button>
+  <button class="tab-btn" onclick="switchTab('tips')">💡 Tips</button>
+  <button class="tab-btn" onclick="switchTab('budget')">💰 Budget</button>
+  <button class="tab-btn" onclick="switchTab('walk')">🚶 Walk</button>
+</div>
+
+<div class="legend-bar" id="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> Start/End</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> City</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#60c8f0;"></div> Ice Cruise</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> Ferry</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Van Tour</div>
+  <div class="legend-total">10 Stops · ~30 Days</div>
+</div>
+
+<!-- MAP PANEL -->
+<div id="panel-map" class="panel active">
+  <div style="position:relative;">
+    <div id="map"></div>
+    <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Full screen">⛶</button>
+    <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
+  </div>
+  <div class="stops-panel">
+    <div class="panel-header">
+      <span class="panel-title">📍 Route Stops — Tap to zoom</span>
+      <span class="panel-km">9 stops · Jan–Feb</span>
+    </div>
+    <div class="stop-list" id="stop-list"></div>
+  </div>
+</div>
+
+<!-- STOPS PANEL -->
+<div id="panel-stops" class="panel">
+  <div class="itin-panel">
+    <div class="panel-header">
+      <span class="panel-title">📍 All Stops</span>
+      <span class="panel-km">Finland + 3 Baltic States</span>
+    </div>
+    <div class="stop-list" id="stop-list-2"></div>
+  </div>
+</div>
+
+<!-- ITINERARY PANEL -->
+<div id="panel-itin" class="panel">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setItinLang('en',this)">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setItinLang('zh',this)">🇨🇳 中文</button>
+  </div>
+  <div class="itin-panel" id="itin-panel"></div>
+</div>
+
+<!-- MUST SEE PANEL -->
+<div id="panel-mustsee" class="panel">
+  <div class="mustsee-panel">
+    <div class="ms-intro">
+      <strong>7 unmissable experiences</strong> — these are the highlights that make Finland &amp; the Baltic States unforgettable. The icebreaker cruise and the van tour are the two absolute must-dos.
+    </div>
+
+    <div class="ms-place" data-wiki="Gulf of Bothnia" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">1</div>
+        <img class="ms-header-thumb" alt="Gulf of Bothnia">
+        <div class="ms-place-info">
+          <div class="ms-place-name">🧊 Icebreaker Cruise — Gulf of Bothnia</div>
+          <div class="ms-place-day">Day 5–6 · Kemi, Finland · THE highlight</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Gulf of Bothnia">
+          <img class="ms-img" alt="Gulf of Bothnia">
+          <div class="ms-card-body">
+          <div class="ms-card-title">Walk on the Frozen Sea</div>
+          <div class="ms-card-desc">A real working icebreaker ship smashes through the frozen Gulf of Bothnia between Finland and Sweden. The highlight: you step OFF the ship onto the ice and walk on a frozen sea. The ice in January–February is thick enough to stand on safely. Nothing else feels like this.</div>
+          <div class="ms-card-tip">Book the MORNING cruise — the experience is best in full daylight. Go in January–February for the thickest ice. The original Polar Explorer cruise (smaller, more intimate) may be discontinued — check for Sampo or current operators out of Kemi.</div>
+          <div class="ms-badge">⭐ #1 Experience of the Entire Trip</div>
+          </div>
+        </div>
+        <div class="ms-card">
+          <div class="ms-card-title">The Lunch at the Fishing Village</div>
+          <div class="ms-card-desc">After the cruise, lunch is at a restaurant in a fishing village on the Swedish border. Fresh fish, local bread, a warm interior after the frozen sea. One of those meals you remember for years.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-place" data-wiki="Gauja National Park" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">2</div>
+        <img class="ms-header-thumb" alt="Gauja National Park">
+        <div class="ms-place-info">
+          <div class="ms-place-name">🚐 Small Group Van Tour — Riga to Tallinn</div>
+          <div class="ms-place-day">Day 19–20 · Latvia → Estonia · Hidden gems</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Gauja National Park">
+          <img class="ms-img" alt="Gauja National Park">
+          <div class="ms-card-body">
+          <div class="ms-card-title">Two Countries, One Day, Maximum 8 People</div>
+          <div class="ms-card-desc">A private van tour (max 8 persons) connecting Riga and Tallinn via places impossible to reach by public transport — national parks, medieval ruins, UNESCO heritage sites hidden in the Estonian and Latvian countryside. This route can run either direction (Riga→Tallinn or Tallinn→Riga) depending on your itinerary.</div>
+          <div class="ms-card-tip">Book well in advance — small group tours fill up fast. The small group size means the guide can take you off the beaten path. This is not a coach tour.</div>
+          <div class="ms-badge">⭐ Best Way to See Between the Capitals</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-place" data-wiki="Santa Claus Village" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">3</div>
+        <img class="ms-header-thumb" alt="Santa Claus Village">
+        <div class="ms-place-info">
+          <div class="ms-place-name">🎅 Santa Claus Village — Rovaniemi</div>
+          <div class="ms-place-day">Day 4–5 · Arctic Circle, Finland</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Santa Claus Village">
+          <img class="ms-img" alt="Santa Claus Village">
+          <div class="ms-card-body">
+          <div class="ms-card-title">On the Arctic Circle</div>
+          <div class="ms-card-desc">The official Santa Claus Village sits exactly on the Arctic Circle in Rovaniemi. In January–February, it's a snow-covered winter wonderland — reindeer rides, husky safaris, Northern Lights, and the best salmon you will eat on the entire trip.</div>
+          <div class="ms-card-tip">Eat the salmon here. It is the best salmon on the trip — do not miss it.</div>
+          <div class="ms-badge">🐟 Must Eat: Salmon at Santa Claus Village</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-place" data-wiki="Tallinn" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">4</div>
+        <img class="ms-header-thumb" alt="Tallinn">
+        <div class="ms-place-info">
+          <div class="ms-place-name">🏰 Tallinn Medieval Old Town</div>
+          <div class="ms-place-day">Day 21–25 · Estonia</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Tallinn">
+          <img class="ms-img" alt="Tallinn">
+          <div class="ms-card-body">
+          <div class="ms-card-title">Best-Preserved Medieval City in Europe</div>
+          <div class="ms-card-desc">Tallinn's old town is a UNESCO World Heritage Site and one of the most intact medieval cities in all of Europe. Cobblestone streets, fortified towers, the Town Hall Square, and views from Toompea Hill over the red rooftops. In winter, you have it almost entirely to yourself.</div>
+          <div class="ms-card-tip">Stay in the old town itself — walking distance to everything. Evening walks on the illuminated medieval streets are magical in winter.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-place" data-wiki="Riga" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">5</div>
+        <img class="ms-header-thumb" alt="Riga">
+        <div class="ms-place-info">
+          <div class="ms-place-name">🎨 Riga — Little Paris of the Baltics</div>
+          <div class="ms-place-day">Day 15–18 · Latvia</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Riga">
+          <img class="ms-img" alt="Riga">
+          <div class="ms-card-body">
+          <div class="ms-card-title">Art Nouveau Capital of the World</div>
+          <div class="ms-card-desc">Riga has more Art Nouveau buildings than any other city on earth — ornate facades, elaborate ironwork, sculpted faces above every door. The old town is a UNESCO site. The Central Market (in converted Zeppelin hangars) is one of Europe's largest. Always called the "Little Paris" of the Baltic States.</div>
+          <div class="ms-card-tip">Walk along Alberta Street for the best concentration of Art Nouveau facades. The old town and the market are must-visits.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-place" data-wiki="Vilnius" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">6</div>
+        <img class="ms-header-thumb" alt="Vilnius">
+        <div class="ms-place-info">
+          <div class="ms-place-name">⛪ Vilnius — Baroque Old Town</div>
+          <div class="ms-place-day">Day 10–13 · Lithuania</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Vilnius">
+          <img class="ms-img" alt="Vilnius">
+          <div class="ms-card-body">
+          <div class="ms-card-title">Eastern Europe's Hidden Baroque Gem</div>
+          <div class="ms-card-desc">Vilnius has one of the largest surviving baroque old towns in Europe — over 1,500 historic buildings, hidden courtyards, and the famous Gates of Dawn. Very affordable, low on tourists in winter, and full of character. The microstate of Užupis (Republic of Užupis) inside the city is a quirky bonus.</div>
+          <div class="ms-card-tip">Most affordable capital of the three Baltic states. Great local food and coffee culture. Explore the hidden courtyards — they are everywhere.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ms-place" data-wiki="Hill of Crosses" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">7</div>
+        <img class="ms-header-thumb" alt="Hill of Crosses">
+        <div class="ms-place-info">
+          <div class="ms-place-name">✝️ 十字架山 — Hill of Crosses (Kryžių kalnas)</div>
+          <div class="ms-place-day">Day 14 · Šiauliai, Lithuania · Stop en route Vilnius → Riga</div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card" data-wiki="Hill of Crosses">
+          <img class="ms-img" alt="Hill of Crosses">
+          <div class="ms-card-body">
+          <div class="ms-card-title">用信念堆起来的山丘 — A Hill Built from Faith</div>
+          <div class="ms-card-desc">Over 200,000 crosses cover this small hill in northern Lithuania — no authority organised it, all placed spontaneously by ordinary people across two centuries.<br><br>
+          The first crosses appeared after the failed 1831 Polish-Lithuanian uprising against Russia. Families who could not find the bodies of the fallen came to this nameless hill and planted crosses as memorials. After every war, every occupation, every wave of suffering — people returned at night and planted more. The more the oppression, the more determined the people.<br><br>
+          <strong>During the Soviet era (1961–1985)</strong>, the government sent bulldozers three times to level the hill and stationed guards to prevent more crosses. The people came anyway — at night, in secret. Remove one, and ten more appeared.<br><br>
+          After Lithuanian independence, the hill was officially recognised and protected. In <strong>1993, Pope John Paul II visited in person</strong>, offered flowers, prayed, and erected his own cross — inscribed: <em>"Thank the Lithuanian people for witnessing the love of the cross."</em><br><br>
+          This is not a tourist attraction. It is a monument of faith that no government could destroy.</div>
+          <div class="ms-card-tip">Stop here on Day 14, en route from Vilnius to Riga — Šiauliai is on the Lux Express coach route. Or book a private transfer with a stop included. Allow at least 1–1.5 hours to walk among the crosses.</div>
+          <div class="ms-badge">✝️ 200,000+ Crosses · A Monument No Government Could Destroy</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOD PANEL -->
+<div id="panel-food" class="panel">
+  <div class="food-panel">
+    <div class="food-intro">Finland and the Baltic states are serious food destinations. Here are the must-eats — from a frozen sea to a Finnish café.</div>
+
+    <div class="food-item">
+      <div class="food-emoji">🐟</div>
+      <div class="food-name">Fresh Salmon</div>
+      <div class="food-where">⭐ MUST EAT · Santa Claus Village, Rovaniemi</div>
+      <div class="food-desc">The best salmon on the entire trip. The restaurant at Santa Claus Village on the Arctic Circle serves salmon that is fresh, perfectly prepared, and unlike anything you find in Singapore. Do not leave Rovaniemi without eating this.</div>
+      <div class="food-must">⭐ David's #1 Must Eat</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🍽️</div>
+      <div class="food-name">Lunch at the Fishing Village</div>
+      <div class="food-where">Swedish border · Icebreaker cruise day</div>
+      <div class="food-desc">After stepping off the icebreaker and walking on the frozen sea, lunch is at a local restaurant in a fishing village right on the border with Sweden. Fresh fish, local bread, a warm room after the cold. Included in the icebreaker cruise day programme.</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🥐</div>
+      <div class="food-name">Korvapuusti (Finnish Cinnamon Roll)</div>
+      <div class="food-where">Any café in Helsinki or Rovaniemi</div>
+      <div class="food-desc">The Finnish cinnamon roll is bigger, chewier, and more cardamom-forward than anything called a "cinnamon roll" elsewhere. It is a legal requirement to eat at least one in Finland. Every café has them. They are best warm, with strong coffee.</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🥩</div>
+      <div class="food-name">Finnish Steak</div>
+      <div class="food-where">Helsinki restaurant</div>
+      <div class="food-desc">Scandinavian beef is excellent — well-raised, well-rested, well-cooked. Helsinki has a strong restaurant scene. Worth a proper sit-down dinner on your Helsinki days.</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🍺</div>
+      <div class="food-name">Baltic Rye Bread &amp; Local Beer</div>
+      <div class="food-where">Vilnius · Riga · Tallinn</div>
+      <div class="food-desc">Each Baltic capital has its own version of dense dark rye bread — heavy, slightly sour, unforgettable with butter and smoked fish. Pair with a local craft beer in any old town pub. Very affordable in all three capitals.</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">☕</div>
+      <div class="food-name">Finnish Coffee Culture</div>
+      <div class="food-where">Throughout Finland</div>
+      <div class="food-desc">Finland is the world's #1 coffee-consuming country per capita. The coffee is strong, the cafés are warm, and sitting with a coffee and a cinnamon roll while snow falls outside is one of the great simple pleasures of the trip.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TIPS PANEL -->
+<div id="panel-tips" class="panel">
+  <div class="tips-panel">
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">🧊</span><span class="tip-title">Icebreaker Cruise — Critical Tips</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li><strong>Book the MORNING cruise</strong> — the daylight experience is far better than the afternoon. Do not book the afternoon slot.</li>
+          <li><strong>Go in January–February</strong> for the thickest ice. The sea needs to be properly frozen to walk on it. December is too early — ice may not be thick enough.</li>
+          <li><strong>The original Polar Explorer cruise</strong> (smaller, more intimate) may be discontinued or renamed. Check for Sampo icebreaker or current operators in Kemi. Sampo is larger and goes further out — more expensive but worth it.</li>
+          <li><strong>Transport:</strong> Coach picks up at Rovaniemi (~3 hrs to Kemi/Gulf of Bothnia). Do not arrange your own transport.</li>
+          <li><strong>Dress in layers:</strong> thermal base layer, insulating mid-layer, windproof outer layer. Waterproof boots essential. The ship provides flotation suits for walking on the ice.</li>
+          <li><strong>Walking on the ice</strong> is the highlight. Do not skip this part of the experience.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">🚂</span><span class="tip-title">Night Train Helsinki → Rovaniemi</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li><strong>Book a sleeper cabin</strong> — the night train is an experience in itself. Private cabin, bed, breakfast delivered. You travel 800 km overnight and wake up in Rovaniemi.</li>
+          <li>Operated by VR (Finnish Railways). Book online well in advance, especially in January–February (peak Lapland season).</li>
+          <li>Departs Helsinki around 17:00–18:00, arrives Rovaniemi ~08:00 next morning.</li>
+          <li>This is far better than flying — you save a night's hotel, arrive rested, and the journey itself is memorable.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">🚐</span><span class="tip-title">Riga–Tallinn Van Tour</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li><strong>Maximum 8 persons</strong> — this is a small group private tour, not a coach. Book well in advance.</li>
+          <li>Can run Riga→Tallinn or Tallinn→Riga depending on your itinerary direction.</li>
+          <li>Covers national parks, medieval ruins, and UNESCO sites that are impossible to reach by public transport or individual travel.</li>
+          <li>The guide takes you off the tourist trail — this is the hidden side of the Baltic states.</li>
+          <li>Search for "Riga to Tallinn private tour" or "Baltic road trip small group" — several operators run this route.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">✈️</span><span class="tip-title">Getting Between Cities</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li><strong>Helsinki → Vilnius:</strong> Fly (due to time constraints — coach is possible but long). Budget airlines like Finnair, Ryanair, Wizz Air cover this route.</li>
+          <li><strong>Vilnius → Riga:</strong> Coach, ~4 hours. Very affordable. Lux Express is the best operator.</li>
+          <li><strong>Riga → Tallinn:</strong> Via van tour, or Lux Express coach (~4.5 hours).</li>
+          <li><strong>Tallinn → Helsinki:</strong> Ferry, ~2 hours. Tallink Silja or Viking Line. A scenic end to the Baltic leg.</li>
+          <li>The ferry from Tallinn to Helsinki across the Gulf of Finland is a beautiful crossing — book a cabin if travelling overnight.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">🌡️</span><span class="tip-title">Weather &amp; What to Pack</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li><strong>Finland (Jan–Feb):</strong> −10°C to −20°C in Rovaniemi. Not as cold as it sounds if you're dressed properly.</li>
+          <li><strong>Baltic states (Jan–Feb):</strong> Milder, −2°C to +5°C. Occasional rain, especially in Lithuania.</li>
+          <li><strong>December</strong> (if you visit then): Milder than January, some rain in the Baltics. Not cold enough for guaranteed thick icebreaker ice.</li>
+          <li>Essential: thermal base layers, insulating mid-layer, windproof waterproof outer jacket, waterproof boots with good grip, wool socks, hat, gloves, scarf.</li>
+          <li>The icebreaker provides flotation suits — but you dress in your own thermals underneath.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">💳</span><span class="tip-title">Money &amp; Practical Info</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li><strong>Currency:</strong> Euro (€) in all four countries — Finland, Lithuania, Latvia, Estonia all use EUR. No currency exchange needed between countries.</li>
+          <li>Card payments accepted almost everywhere in Finland and Estonia. Lithuania and Latvia also largely cashless.</li>
+          <li>Finland and Estonia are the most expensive. Lithuania is the most affordable of the three Baltic states.</li>
+          <li>Visa: Singapore passport holders do not need a visa for Schengen (Finland) or the Baltic states (all Schengen). 90-day limit.</li>
+          <li>SIM card: Buy a Finnish SIM at Helsinki airport (works across all Schengen countries). Or use Airalo eSIM before you fly.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">⭐</span><span class="tip-title">Savonlinna — Optional Gem</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li>Savonlinna is a medieval castle town on an island in Lake Saimaa, ~330 km northeast of Helsinki. Not many people know about it.</li>
+          <li>Reached by train from Helsinki (~3.5 hrs) + lake ferry. A day trip is tight but possible; an overnight stay is better.</li>
+          <li>The centrepiece is <strong>Olavinlinna Castle</strong> — a 15th-century fortress on its own island in the middle of the lake. One of the best-preserved medieval castles in Northern Europe.</li>
+          <li>Famous for the <strong>Savonlinna Opera Festival</strong> (July) — outdoor opera performed inside the castle walls. In winter it is quiet and atmospheric.</li>
+          <li>Best added as a separate stop between Helsinki and Rovaniemi, rather than as a day trip from Helsinki.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header"><span class="tip-icon">🌌</span><span class="tip-title">Northern Lights in Rovaniemi</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">
+        <ul>
+          <li>Rovaniemi in January–February is one of the best places in the world to see the Northern Lights (Aurora Borealis).</li>
+          <li>You need: clear skies, darkness (after ~5pm), and solar activity. January–February has the longest dark periods.</li>
+          <li>Best viewed away from city lights — any husky safari or reindeer tour will take you to a dark spot.</li>
+          <li>Download the <strong>Aurora Forecast</strong> app (Space Weather) before you go. Check it every evening.</li>
+          <li>Even if clouds don't cooperate, the snow-covered Lapland landscape at night is beautiful on its own.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BUDGET PANEL -->
+<div id="panel-budget" class="panel">
+  <div class="budget-panel">
+    <div class="budget-summary">
+      <div class="budget-stat"><div class="budget-stat-label">Estimated Total</div><div class="budget-stat-value">~S$9,000–14,000</div></div>
+      <div class="budget-stat"><div class="budget-stat-label">Duration</div><div class="budget-stat-value">~30 Days</div></div>
+      <div class="budget-stat"><div class="budget-stat-label">Countries</div><div class="budget-stat-value">4 Countries</div></div>
+    </div>
+    <table class="budget-table">
+      <thead><tr><th>Item</th><th>Category</th><th>Est. Cost (SGD)</th></tr></thead>
+      <tbody>
+        <tr><td>Return flights SG ↔ Helsinki</td><td><span class="budget-cat cat-flight">Flight</span></td><td>~S$1,800–2,500</td></tr>
+        <tr><td>Helsinki → Vilnius flight</td><td><span class="budget-cat cat-flight">Flight</span></td><td>~S$150–300</td></tr>
+        <tr><td>Night train Helsinki ↔ Rovaniemi (sleeper)</td><td><span class="budget-cat cat-trans">Transport</span></td><td>~S$120–200</td></tr>
+        <tr><td>Icebreaker cruise (Sampo or current operator)</td><td><span class="budget-cat cat-cruise">Cruise</span></td><td>~S$250–400</td></tr>
+        <tr><td>Coach Rovaniemi → Helsinki</td><td><span class="budget-cat cat-trans">Transport</span></td><td>~S$50–80 (included in cruise pkg)</td></tr>
+        <tr><td>Vilnius → Riga coach (Lux Express)</td><td><span class="budget-cat cat-trans">Transport</span></td><td>~S$20–40</td></tr>
+        <tr><td>Riga → Tallinn van tour (small group)</td><td><span class="budget-cat cat-trans">Transport</span></td><td>~S$120–200</td></tr>
+        <tr><td>Tallinn → Helsinki ferry</td><td><span class="budget-cat cat-trans">Transport</span></td><td>~S$60–120</td></tr>
+        <tr><td>Accommodation (avg S$130/night × 30)</td><td><span class="budget-cat cat-hotel">Hotel</span></td><td>~S$3,000–4,500</td></tr>
+        <tr><td>Food (avg S$60/day × 30)</td><td><span class="budget-cat cat-food">Food</span></td><td>~S$1,500–2,000</td></tr>
+        <tr><td>Activities, museums, reindeer/husky tour</td><td><span class="budget-cat cat-misc">Misc</span></td><td>~S$300–600</td></tr>
+        <tr><td>Travel insurance (30 days)</td><td><span class="budget-cat cat-misc">Misc</span></td><td>~S$150–250</td></tr>
+        <tr style="font-weight:800;"><td colspan="2" style="color:#f0a500;">TOTAL ESTIMATE</td><td style="color:#f0a500;">~S$9,000–14,000</td></tr>
+      </tbody>
+    </table>
+    <div style="padding:12px 16px;font-size:0.85em;color:#8b949e;">
+      * Estimates for solo traveller. Finland and Estonia are most expensive; Lithuania is most affordable. Book flights and icebreaker cruise well in advance for best prices. All prices in Singapore dollars, estimated 2025–2026 rates.
+    </div>
+  </div>
+</div>
+
+<!-- WALK PANEL -->
+<div id="panel-walk" class="panel">
+  <div class="walk-panel">
+    <div class="walk-city-bar">
+      <button class="walk-city-btn active" onclick="switchCity('helsinki',this)">🇫🇮 Helsinki</button>
+      <button class="walk-city-btn" onclick="switchCity('rovaniemi',this)">❄️ Rovaniemi</button>
+      <button class="walk-city-btn" onclick="switchCity('vilnius',this)">🇱🇹 Vilnius</button>
+      <button class="walk-city-btn" onclick="switchCity('riga',this)">🇱🇻 Riga</button>
+      <button class="walk-city-btn" onclick="switchCity('tallinn',this)">🇪🇪 Tallinn</button>
+    </div>
+
+    <!-- ═══ HELSINKI ═══ -->
+    <div id="walk-helsinki" class="walk-city active">
+      <div class="walk-heading">🚶 Helsinki City Walk</div>
+      <div class="walk-meta">~4km · 2.5–3 hrs · Start: Helsinki Central Station</div>
+      <iframe class="walk-map-frame" loading="lazy"
+        src="https://www.google.com/maps?saddr=Helsinki+Central+Station&daddr=Helsinki+Cathedral+to:Market+Square+Helsinki+to:Old+Market+Hall+Helsinki+to:Esplanadi+Helsinki+to:Temppeliaukio+Church+Helsinki&output=embed">
+      </iframe>
+      <div class="walk-maplinks">
+        <span style="color:#8b949e;font-size:0.8rem;">Open in:</span>
+        <a href="https://maps.google.com/?q=Helsinki+Central+Station" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;">🗺️ Google</a>
+      </div>
+      <a class="walk-dirs" href="https://www.google.com/maps/dir/Helsinki+Central+Station/Helsinki+Cathedral/Market+Square+Helsinki/Old+Market+Hall+Helsinki/Esplanadi+Helsinki/Temppeliaukio+Church+Helsinki" target="_blank">→ Full walking directions: Station → Cathedral → Market Sq → Old Hall → Esplanadi → Rock Church</a>
+
+      <div class="walk-point pt-start">
+        <div class="walk-pt-label">📍 START — Helsinki Central Station (Rautatieasema)</div>
+        <div class="walk-pt-desc">Finland's grandest building — the granite railway station with its famous clock tower. The perfect starting point in the heart of the city.</div>
+        <a href="https://maps.google.com/?q=Helsinki+Central+Station" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~1.2km / 15 min walk east through the city</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">⛪ 1. Helsinki Cathedral &amp; Senate Square</div>
+        <div class="walk-pt-desc">The neoclassical white cathedral is Helsinki's icon. Senate Square below it is one of the most harmonious squares in Northern Europe. Climb the steps for a panorama.</div>
+        <img class="walk-img" data-wiki="Helsinki Cathedral" alt="Helsinki Cathedral">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Helsinki+Cathedral" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~500m / 6 min walk south to the waterfront</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🛒 2. Market Square (Kauppatori) &amp; Havis Amanda</div>
+        <div class="walk-pt-desc">Helsinki's famous harborside market — fresh fish, local produce, crafts, and coffee in a tent by the sea. The bronze Havis Amanda fountain marks the center. Great winter atmosphere.</div>
+        <img class="walk-img" data-wiki="Market Square, Helsinki" alt="Market Square Helsinki">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Market+Square+Helsinki" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~100m / 1 min — right next door on the waterfront</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">🏛️ 3. Old Market Hall (Vanha Kauppahalli)</div>
+        <div class="walk-pt-desc">An 1889 covered market hall in a stunning red-brick building. Best salmon, reindeer, pastries and Finnish specialties under one roof. Eat here.</div>
+        <img class="walk-img" data-wiki="Old Market Hall, Helsinki" alt="Old Market Hall Helsinki">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Old+Market+Hall+Helsinki" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~400m / 5 min walk west along the waterfront</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🌿 4. Esplanadi Park</div>
+        <div class="walk-pt-desc">Helsinki's elegant promenade park running through the centre — lined with restaurants, cafés and boutiques. In winter it's quiet and beautiful with snow. The Fazer café at the end is perfect for a cinnamon roll break.</div>
+        <img class="walk-img" data-wiki="Esplanadi" alt="Esplanadi Helsinki">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Esplanadi+Helsinki" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~1.5km / 20 min walk west (or 5 min tram)</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">🪨 5. Temppeliaukio Rock Church (optional)</div>
+        <div class="walk-pt-desc">A church carved directly into solid granite rock — completely unique. The copper dome, rough rock walls, and natural light make it one of the most unusual religious buildings on earth. Admission ~€5.</div>
+        <img class="walk-img" data-wiki="Temppeliaukio Church" alt="Temppeliaukio Church">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Temppeliaukio+Church+Helsinki" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+    </div>
+
+    <!-- ═══ ROVANIEMI ═══ -->
+    <div id="walk-rovaniemi" class="walk-city">
+      <div class="walk-heading">🚶 Rovaniemi City Walk</div>
+      <div class="walk-meta">~2.5km · 1.5 hrs · Start: Lordi Square (city centre)</div>
+      <iframe class="walk-map-frame" loading="lazy"
+        src="https://www.google.com/maps?saddr=Lordi+Square+Rovaniemi&daddr=Arktikum+Museum+Rovaniemi+to:Rovaniemi+Church&output=embed">
+      </iframe>
+      <div class="walk-maplinks">
+        <span style="color:#8b949e;font-size:0.8rem;">Open in:</span>
+        <a href="https://maps.google.com/?q=Lordi+Square+Rovaniemi" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;">🗺️ Google</a>
+      </div>
+      <a class="walk-dirs" href="https://www.google.com/maps/dir/Lordi+Square+Rovaniemi/Arktikum+Museum+Rovaniemi/Rovaniemi+Church" target="_blank">→ Walking directions: Lordi Square → Arktikum → Rovaniemi Church</a>
+
+      <div style="background:rgba(96,200,240,0.08);border:1px solid rgba(96,200,240,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:0.84em;color:#7dd3fc;">
+        ❄️ Note: <strong>Santa Claus Village is 8km north</strong> of the city — take a taxi (€15–20 one-way) or arranged shuttle. It is not walkable from here.
+      </div>
+
+      <div class="walk-point pt-start">
+        <div class="walk-pt-label">📍 START — Lordi Square (Lordin Aukio)</div>
+        <div class="walk-pt-desc">Named after Lordi, the Finnish rock band that won Eurovision 2006. The city's main square, lively with shops and cafés. The starting point for exploring Rovaniemi on foot.</div>
+        <a href="https://maps.google.com/?q=Lordi+Square+Rovaniemi" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~1km / 12 min walk north along Pohjoisranta river road</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">🧊 1. Arktikum Museum</div>
+        <div class="walk-pt-desc">Finland's premier Arctic museum — exhibits on the culture, history and science of Lapland and the Arctic. The glass tunnel building facing the river is stunning. Allow 1.5–2 hours inside.</div>
+        <img class="walk-img" data-wiki="Arktikum" alt="Arktikum Museum Rovaniemi">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Arktikum+Rovaniemi" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~1km / 12 min walk back through the city</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">⛪ 2. Rovaniemi Church</div>
+        <div class="walk-pt-desc">A distinctive modern church rebuilt after World War II when the retreating German army burned the entire city. The tall white tower is a Rovaniemi landmark. The church interior has beautiful Lapland-themed frescoes.</div>
+        <img class="walk-img" data-wiki="Rovaniemi Church" alt="Rovaniemi Church">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Rovaniemi+Church" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~2km / 25 min walk or short taxi — optional extension</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🏔️ 3. Ounasvaara Hill (optional)</div>
+        <div class="walk-pt-desc">A forested hill just outside the city — ski slopes in winter, panoramic views of Rovaniemi and the snow-covered Lapland forest from the top. The best vantage point to see the city from above.</div>
+        <img class="walk-img" data-wiki="Ounasvaara" alt="Ounasvaara Hill">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Ounasvaara+Rovaniemi" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+    </div>
+
+    <!-- ═══ VILNIUS ═══ -->
+    <div id="walk-vilnius" class="walk-city">
+      <div class="walk-heading">🚶 Vilnius City Walk</div>
+      <div class="walk-meta">~3km · 2 hrs · Start: Gediminas Tower (Castle Hill)</div>
+      <iframe class="walk-map-frame" loading="lazy"
+        src="https://www.google.com/maps?saddr=Gediminas+Tower+Vilnius&daddr=Vilnius+Cathedral+to:Pilies+Street+Vilnius+to:Gates+of+Dawn+Vilnius+to:Saint+Anne's+Church+Vilnius+to:Uzupis+Vilnius&output=embed">
+      </iframe>
+      <div class="walk-maplinks">
+        <span style="color:#8b949e;font-size:0.8rem;">Open in:</span>
+        <a href="https://maps.google.com/?q=Gediminas+Tower+Vilnius" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;">🗺️ Google</a>
+      </div>
+      <a class="walk-dirs" href="https://www.google.com/maps/dir/Gediminas+Tower+Vilnius/Vilnius+Cathedral/Pilies+Street+Vilnius/Gates+of+Dawn+Vilnius/Saint+Anne+Church+Vilnius/Uzupis+Vilnius" target="_blank">→ Walking directions: Gediminas Tower → Cathedral → Pilies St → Gates of Dawn → St Anne's → Užupis</a>
+
+      <div class="walk-point pt-start">
+        <div class="walk-pt-label">📍 START — Gediminas Tower (Castle Hill)</div>
+        <div class="walk-pt-desc">The remaining tower of Vilnius Upper Castle, perched on a hill above the old town. Climb up (short but steep) for the best panoramic view over the entire Baroque city. The Lithuanian flag flies here.</div>
+        <img class="walk-img" data-wiki="Gediminas Tower" alt="Gediminas Tower Vilnius">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Gediminas+Tower+Vilnius" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~500m / 7 min walk down the hill</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">⛪ 1. Vilnius Cathedral &amp; Cathedral Square</div>
+        <div class="walk-pt-desc">The grand neoclassical Cathedral of Vilnius, at the foot of Castle Hill. The large bell tower beside it is a 16th-century fortification tower. Cathedral Square is the heart of the old town.</div>
+        <img class="walk-img" data-wiki="Vilnius Cathedral" alt="Vilnius Cathedral">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Vilnius+Cathedral" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~300m / 4 min — straight into the old town</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🛍️ 2. Pilies Street (Pilies gatvė)</div>
+        <div class="walk-pt-desc">The main pedestrian street of Vilnius old town — amber sellers, craft stalls, café terraces and stunning Baroque facades on both sides. The most beautiful street in the Baltic states. Walk slowly.</div>
+        <img class="walk-img" data-wiki="Pilies Street" alt="Pilies Street Vilnius">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Pilies+Street+Vilnius" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~700m / 9 min walk south to the old town gate</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">🚪 3. Gates of Dawn (Aušros Vartai)</div>
+        <div class="walk-pt-desc">The last surviving gate of Vilnius — an important Catholic pilgrimage site. The gate chapel above contains a famous icon of the Virgin Mary. Pilgrims come from across the Catholic world to pray here.</div>
+        <img class="walk-img" data-wiki="Gates of Dawn" alt="Gates of Dawn Vilnius">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Gates+of+Dawn+Vilnius" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~700m / 9 min walk north-east through the old town</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">🧱 4. St. Anne's Church</div>
+        <div class="walk-pt-desc">A masterpiece of Gothic architecture — 33 different types of red brick used in its intricate facade. Napoleon reportedly said he wished he could put it in his hand and carry it back to Paris. One of the most beautiful small churches in Europe.</div>
+        <img class="walk-img" data-wiki="Saint Anne's Church, Vilnius" alt="St Anne's Church Vilnius">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Saint+Anne+Church+Vilnius" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~400m / 5 min walk across the river</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🎨 5. Republic of Užupis</div>
+        <div class="walk-pt-desc">A quirky self-declared "republic" within Vilnius — an artists' quarter with its own constitution, currency and president. The constitution is posted on a wall in 60+ languages. Bohemian cafés, street art, and a very different vibe to the rest of the old town.</div>
+        <img class="walk-img" data-wiki="Užupis" alt="Uzupis Vilnius">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Uzupis+Vilnius" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+    </div>
+
+    <!-- ═══ RIGA ═══ -->
+    <div id="walk-riga" class="walk-city">
+      <div class="walk-heading">🚶 Riga City Walk</div>
+      <div class="walk-meta">~3.5km · 2 hrs · Start: Riga Central Market</div>
+      <iframe class="walk-map-frame" loading="lazy"
+        src="https://www.google.com/maps?saddr=Riga+Central+Market&daddr=Freedom+Monument+Riga+to:Alberta+Street+Riga+to:Riga+Old+Town+to:Riga+Cathedral&output=embed">
+      </iframe>
+      <div class="walk-maplinks">
+        <span style="color:#8b949e;font-size:0.8rem;">Open in:</span>
+        <a href="https://maps.google.com/?q=Riga+Central+Market" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;">🗺️ Google</a>
+      </div>
+      <a class="walk-dirs" href="https://www.google.com/maps/dir/Riga+Central+Market/Freedom+Monument+Riga/Alberta+Street+Riga/Riga+Old+Town/Riga+Cathedral" target="_blank">→ Walking directions: Central Market → Freedom Monument → Alberta St → Old Town → Cathedral</a>
+
+      <div class="walk-point pt-start">
+        <div class="walk-pt-label">📍 START — Riga Central Market (Centrāltirgus)</div>
+        <div class="walk-pt-desc">One of Europe's largest markets — built inside five enormous German World War I Zeppelin hangars. Fresh produce, meat, fish, dairy and street food. An extraordinary piece of repurposed military architecture.</div>
+        <img class="walk-img" data-wiki="Riga Central Market" alt="Riga Central Market">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Riga+Central+Market" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~1km / 12 min walk north through the new town</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">🗽 1. Freedom Monument (Brīvības piemineklis)</div>
+        <div class="walk-pt-desc">Latvia's most important national symbol — a 42-metre granite monument with "Milda" holding three golden stars aloft. Built in 1935 and miraculously never demolished during Soviet occupation. The guard is changed here every hour.</div>
+        <img class="walk-img" data-wiki="Freedom Monument (Riga)" alt="Freedom Monument Riga">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Freedom+Monument+Riga" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~700m / 9 min walk north-west through the Quiet Centre</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">🏛️ 2. Alberta Street — Art Nouveau (Jūgendstils)</div>
+        <div class="walk-pt-desc">The greatest concentration of Art Nouveau architecture on earth. Every building on Alberta Street is a masterpiece — ornate sculpted faces, elaborate ironwork, flowing organic forms. Riga has more Art Nouveau buildings than any other city. This street is why Riga is called "Little Paris".</div>
+        <img class="walk-img" data-wiki="Alberta Street" alt="Alberta Street Riga">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Alberta+Street+Riga" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~1km / 12 min walk south-west to the old town</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🏰 3. Riga Old Town (Vecrīga) — UNESCO</div>
+        <div class="walk-pt-desc">The historic heart of Riga — cobblestone lanes, medieval warehouses, churches and guild halls, all UNESCO listed. Wander without a map. The Three Brothers (oldest stone buildings in Riga), St. Peter's Church, and the Swedish Gate are highlights.</div>
+        <img class="walk-img" data-wiki="Old Riga" alt="Riga Old Town">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Riga+Old+Town" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~300m / 4 min walk to the great Dome Square</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">🎵 4. Riga Cathedral &amp; Dome Square (Doma laukums)</div>
+        <div class="walk-pt-desc">The largest medieval church in the Baltic states — built in 1211. The Dome Square in front is Riga's grandest public space and the social heart of the old town. The cathedral organ (one of the world's finest) gives regular concerts.</div>
+        <img class="walk-img" data-wiki="Riga Cathedral" alt="Riga Cathedral">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Riga+Cathedral" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+    </div>
+
+    <!-- ═══ TALLINN ═══ -->
+    <div id="walk-tallinn" class="walk-city">
+      <div class="walk-heading">🚶 Tallinn City Walk</div>
+      <div class="walk-meta">~2.5km · 1.5–2 hrs · Start: Viru Gate</div>
+      <iframe class="walk-map-frame" loading="lazy"
+        src="https://www.google.com/maps?saddr=Viru+Gate+Tallinn&daddr=Town+Hall+Square+Tallinn+to:Alexander+Nevsky+Cathedral+Tallinn+to:Kohtuotsa+Viewing+Platform+Tallinn+to:Kiek+in+de+Kok+Tower+Tallinn&output=embed">
+      </iframe>
+      <div class="walk-maplinks">
+        <span style="color:#8b949e;font-size:0.8rem;">Open in:</span>
+        <a href="https://maps.google.com/?q=Viru+Gate+Tallinn" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;">🗺️ Google</a>
+      </div>
+      <a class="walk-dirs" href="https://www.google.com/maps/dir/Viru+Gate+Tallinn/Town+Hall+Square+Tallinn/Alexander+Nevsky+Cathedral+Tallinn/Kohtuotsa+Viewing+Platform+Tallinn/Kiek+in+de+Kok+Tower+Tallinn" target="_blank">→ Walking directions: Viru Gate → Town Hall Sq → Toompea → Viewing Platform → Kiek Tower</a>
+
+      <div class="walk-point pt-start">
+        <div class="walk-pt-label">📍 START — Viru Gate</div>
+        <div class="walk-pt-desc">The 14th-century gatehouse towers that mark the main entrance to Tallinn's medieval old town. Step through and you step back 700 years. The most photographed spot in Tallinn.</div>
+        <img class="walk-img" data-wiki="Viru Gate" alt="Viru Gate Tallinn">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Viru+Gate+Tallinn" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~300m / 4 min walk through the old town lanes</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">🏛️ 1. Town Hall Square (Raekoja plats)</div>
+        <div class="walk-pt-desc">The heart of medieval Tallinn — a perfectly preserved Gothic Town Hall (1404), surrounded by merchant houses, cafés and apothecaries. The oldest functioning pharmacy in Europe (since 1422) is here. In winter, the Christmas market here is magical.</div>
+        <img class="walk-img" data-wiki="Raekoja plats" alt="Town Hall Square Tallinn">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Town+Hall+Square+Tallinn" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~500m / 6 min walk up the hill to Toompea</div>
+
+      <div class="walk-point">
+        <div class="walk-pt-label">⛪ 2. Alexander Nevsky Cathedral — Toompea Hill</div>
+        <div class="walk-pt-desc">A magnificent Russian Orthodox cathedral built in 1900 on Toompea Hill — the onion domes are unmistakable against the Tallinn skyline. Built by the Tsarist Russian occupiers; still a working church and one of Tallinn's most dramatic buildings.</div>
+        <img class="walk-img" data-wiki="Alexander Nevsky Cathedral, Tallinn" alt="Alexander Nevsky Cathedral Tallinn">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Alexander+Nevsky+Cathedral+Tallinn" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~200m / 3 min walk to the viewing platform</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">👁️ 3. Kohtuotsa Viewing Platform</div>
+        <div class="walk-pt-desc">The best panoramic view in Tallinn — red-roofed medieval towers, church spires, and the modern city beyond. In winter with snow on the rooftops it looks like a movie set. Free entry. Go at golden hour if possible.</div>
+        <img class="walk-img" data-wiki="Toompea" alt="Toompea Viewing Platform Tallinn">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Kohtuotsa+Viewing+Platform+Tallinn" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~400m / 5 min walk down the hill along the city walls</div>
+
+      <div class="walk-point pt-gold">
+        <div class="walk-pt-label">🏰 4. Kiek in de Kök Tower &amp; City Walls</div>
+        <div class="walk-pt-desc">A 15th-century cannon tower — the name means "peek into the kitchen" in Low German (guards could see into houses below). Part of Tallinn's extraordinary 2.4km medieval city wall, one of the best-preserved in Northern Europe. You can walk along the wall towers.</div>
+        <img class="walk-img" data-wiki="Kiek in de Kök" alt="Kiek in de Kok Tower Tallinn">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Kiek+in+de+Kok+Tower+Tallinn" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+      <div class="walk-arrow">↓ ~300m / 4 min walk — continue along the wall back to Viru Gate</div>
+
+      <div class="walk-point pt-green">
+        <div class="walk-pt-label">🧱 5. Tallinn Old Town Walls — Maiden's Tower</div>
+        <div class="walk-pt-desc">Walk along the surviving stretch of medieval wall and towers. The Maiden's Tower (Neitsitorn) is now a café — you can have coffee inside a medieval guard tower. The walk along the wall gives you a completely different perspective on the old town.</div>
+        <img class="walk-img" data-wiki="Tallinn Old Town" alt="Tallinn Old Town Walls">
+        <div class="walk-credit">📷 Wikipedia</div>
+        <a href="https://maps.google.com/?q=Tallinn+City+Wall" target="_blank" style="color:#74b9ff;font-size:0.78em;text-decoration:none;">🔗 Google Maps</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="vc-wrap"><script src="/view-counter.js"></script></div>
+<a href="/" class="home-btn">🏠 Home</a>
+
+<script>
+// ── STOPS DATA ──
+const stops = [
+  { id:1, lat:60.1699, lon:24.9384, name:"Helsinki", country:"🇫🇮 Finland", color:"#ef4444", tag:"start", days:"Day 1–2 & Day 7–8 & Day 27–30", desc:"Capital of Finland. Gateway to the trip. Old market hall, cathedral, design district. Start and end point.", food:"🥩 Steak · 🥐 Korvapuusti (cinnamon roll) · ☕ Finnish coffee", wiki:"Helsinki" },
+  { id:2, lat:66.5039, lon:25.7294, name:"Rovaniemi", country:"🇫🇮 Finland", color:"#f0a500", tag:"city", days:"Day 3–6", desc:"The Arctic Circle city. Santa Claus Village is here. Night train from Helsinki. Base for the icebreaker cruise.", food:"🐟 BEST SALMON on the trip — eat at Santa Claus Village", wiki:"Rovaniemi" },
+  { id:3, lat:65.7342, lon:24.5602, name:"Gulf of Bothnia — Icebreaker", country:"🇫🇮 Finland / 🇸🇪 Sweden border", color:"#60c8f0", tag:"ice", days:"Day 5–6", desc:"The frozen sea between Finland and Sweden. The icebreaker cruise departs from Kemi. Walk on the ice — this is the #1 experience of the entire trip.", food:"🍽️ Lunch at fishing village on Swedish border", wiki:"Gulf of Bothnia" },
+  { id:4, lat:54.6872, lon:25.2797, name:"Vilnius", country:"🇱🇹 Lithuania", color:"#f0a500", tag:"city", days:"Day 10–13", desc:"Capital of Lithuania. Baroque old town (UNESCO). Hidden courtyards, Republic of Užupis, Gates of Dawn. Most affordable Baltic capital.", food:"🍺 Rye bread · local craft beer · café culture", wiki:"Vilnius" },
+  { id:"✝", lat:56.0152, lon:23.4165, name:"Hill of Crosses — Šiauliai", country:"🇱🇹 Lithuania", color:"#dc2626", tag:"must", days:"Day 14", desc:"Kryžių kalnas — 200,000+ crosses planted by ordinary Lithuanians over two centuries. Survived three Soviet bulldozing attempts. Pope John Paul II visited 1993 and erected his own cross.", food:"", wiki:"Hill of Crosses" },
+  { id:5, lat:56.9496, lon:24.1052, name:"Riga", country:"🇱🇻 Latvia", color:"#f0a500", tag:"city", days:"Day 15–18", desc:"Capital of Latvia. The 'Little Paris' of the Baltics. World's finest Art Nouveau architecture. Central Market in Zeppelin hangars. UNESCO old town.", food:"🍽️ Central Market food halls · local Latvian cuisine", wiki:"Riga" },
+  { id:6, lat:58.3500, lon:25.4000, name:"Riga → Tallinn Van Tour", country:"🇱🇻 Latvia / 🇪🇪 Estonia", color:"#10b981", tag:"van", days:"Day 19–20", desc:"Small group van tour (max 8 persons) through national parks, medieval ruins and UNESCO sites between Riga and Tallinn. Places impossible to reach individually.", food:"", wiki:"Gauja National Park" },
+  { id:7, lat:59.4370, lon:24.7536, name:"Tallinn", country:"🇪🇪 Estonia", color:"#f0a500", tag:"city", days:"Day 21–25", desc:"Capital of Estonia. Best-preserved medieval old town in Europe (UNESCO). Toompea Hill views, fortified towers, Town Hall Square. In winter — almost tourist-free.", food:"🍺 Old town restaurants · medieval theme dining", wiki:"Tallinn" },
+  { id:8, lat:60.1699, lon:24.9384, name:"Helsinki (via Ferry)", country:"🇫🇮 Finland", color:"#3b82f6", tag:"ferry", days:"Day 26", desc:"Ferry from Tallinn across the Gulf of Finland to Helsinki. 2-hour crossing. Tallink Silja or Viking Line. Scenic end to the Baltic leg.", food:"", wiki:"Tallink" },
+];
+
+// ── MAP SETUP ──
+const map = L.map('map').setView([60.5, 24.0], 5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors &amp; CartoDB', maxZoom: 18
+}).addTo(map);
+
+function makeIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);">${num}</div>`,
+    iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
+  });
+}
+
+const markers = [];
+stops.forEach((s, i) => {
+  const m = L.marker([s.lat, s.lon], { icon: makeIcon(s.color, s.id) }).addTo(map);
+  m.bindPopup(`
+    <div class="popup-day">${s.days}</div>
+    <div class="popup-name">${s.name}</div>
+    <div class="popup-desc">${s.country}<br>${s.desc}</div>
+    ${s.food ? `<div class="popup-food">🍽️ ${s.food}</div>` : ''}
+  `);
+  markers.push(m);
+});
+
+// START marker — flag pin above the regular Helsinki stop
+const startIcon = L.divIcon({
+  className: '',
+  html: `<div style="display:flex;flex-direction:column;align-items:center;">
+    <div style="background:#ef4444;color:#fff;font-size:10px;font-weight:900;padding:3px 7px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.6);letter-spacing:0.04em;">🏁 START</div>
+    <div style="width:2px;height:10px;background:#ef4444;margin:0 auto;"></div>
+  </div>`,
+  iconSize: [60, 30], iconAnchor: [30, 40], popupAnchor: [0, -42]
+});
+L.marker([60.1699, 24.9384], { icon: startIcon, zIndexOffset: 1000 })
+  .bindPopup('<div class="popup-name">🏁 Start &amp; End — Helsinki</div><div class="popup-desc">Day 1 departure · Day 27–30 return</div>')
+  .addTo(map);
+
+// Route line — animated dashed
+const routeCoords = stops.map(s => [s.lat, s.lon]);
+const routeLine = L.polyline(routeCoords, { color: '#f0a500', weight: 3, dashArray: '12,8', opacity: 0.9 }).addTo(map);
+setTimeout(() => {
+  const el = routeLine.getElement();
+  if (el) { el.style.animation = 'dashFlow 3s linear infinite'; el.style.strokeDashoffset = '0'; }
+}, 200);
+
+// ── WIKI IMAGE LOADER ──
+function loadWikiImg(img, title) {
+  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title))
+    .then(r => r.json())
+    .then(d => { if (d.thumbnail) { img.src = d.thumbnail.source; img.style.display = 'block'; } })
+    .catch(() => {});
+}
+
+// ── STOP LIST ──
+function buildStopList(id) {
+  const el = document.getElementById(id);
+  stops.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'stop-item';
+    div.onclick = () => { switchTab('map'); setTimeout(() => { map.setView([s.lat, s.lon], 9); markers[i].openPopup(); }, 100); };
+    const thumb = document.createElement('img');
+    thumb.className = 'stop-thumb';
+    thumb.alt = s.name;
+    div.appendChild(thumb);
+    loadWikiImg(thumb, s.wiki);
+    const numEl = document.createElement('div');
+    numEl.className = 'stop-num';
+    numEl.style.background = s.color;
+    numEl.textContent = s.id;
+    const infoEl = document.createElement('div');
+    infoEl.className = 'stop-info';
+    infoEl.innerHTML = `
+      <div class="stop-name">${s.name} <span class="stop-tag tag-${s.tag}">${s.tag}</span></div>
+      <div class="stop-desc">${s.country} · ${s.days}</div>
+      ${s.food ? `<div class="stop-km">${s.food}</div>` : ''}`;
+    div.prepend(numEl);
+    div.appendChild(infoEl);
+    el.appendChild(div);
+  });
+}
+buildStopList('stop-list');
+buildStopList('stop-list-2');
+
+// ── MUST SEE WIKI IMAGES (expanded card) ──
+document.querySelectorAll('.ms-card[data-wiki]').forEach(card => {
+  const img = card.querySelector('.ms-img');
+  if (img) loadWikiImg(img, card.dataset.wiki);
+});
+
+// ── MUST SEE WIKI IMAGES (header thumbnail) ──
+document.querySelectorAll('.ms-place[data-wiki]').forEach(place => {
+  const img = place.querySelector('.ms-header-thumb');
+  if (img) loadWikiImg(img, place.dataset.wiki);
+});
+
+// ── CITY WALK WIKI IMAGES ──
+document.querySelectorAll('.walk-img[data-wiki]').forEach(img => {
+  loadWikiImg(img, img.dataset.wiki);
+  img.addEventListener('load', () => {
+    img.nextElementSibling && img.nextElementSibling.classList.contains('walk-credit')
+      && (img.nextElementSibling.style.display = 'block');
+  });
+});
+
+// ── ITINERARY ──
+const itinerary = [
+  { days:"Day 1–2", title:"Helsinki — Arrive & Explore", meta:"🇫🇮 Finland · Fly in from Singapore",
+    where:"Helsinki city centre", highlights:"Senate Square, Helsinki Cathedral, Old Market Hall, Design District, Esplanadi park",
+    food:"Dinner: Finnish steak at a Helsinki restaurant. Coffee and cinnamon roll (Korvapuusti) at a local café — mandatory.",
+    stay:"Hotel in Helsinki city centre" },
+  { days:"Day 3", title:"Night Train to Rovaniemi", meta:"🇫🇮 Finland · Helsinki → Rovaniemi",
+    where:"Helsinki Central Station → Rovaniemi", highlights:"Book a sleeper cabin on the VR night train. Departs ~17:30, arrives Rovaniemi ~08:00. Travel 800 km overnight, wake up in Lapland.",
+    food:"Dinner on the train or before boarding.",
+    stay:"Sleeper cabin on the night train" },
+  { days:"Day 4–5", title:"Rovaniemi & Santa Claus Village", meta:"🇫🇮 Finland · Arctic Circle",
+    where:"Rovaniemi, Lapland", highlights:"Santa Claus Village (on the Arctic Circle), reindeer sleigh ride, husky safari, Arctic snowmobile, Northern Lights hunt at night.",
+    food:"🐟 EAT THE SALMON AT SANTA CLAUS VILLAGE. Best salmon on the entire trip. Do not miss.",
+    stay:"Santa Claus Village or hotel in Rovaniemi" },
+  { days:"Day 5–6", title:"Icebreaker Cruise — Gulf of Bothnia", meta:"🇫🇮 Finland · THE highlight of the trip",
+    where:"Kemi, Finland (3hr coach from Rovaniemi)", highlights:"Morning icebreaker cruise on the frozen Gulf of Bothnia. Walk on the ice — you step off the ship onto the frozen sea. Lunch at fishing village on the Swedish border. Coach back to Rovaniemi.",
+    food:"🍽️ Lunch at fishing village restaurant, Swedish border.",
+    stay:"Back in Rovaniemi overnight" },
+  { days:"Day 7–8", title:"Back to Helsinki", meta:"🇫🇮 Finland · Rovaniemi → Helsinki",
+    where:"Helsinki", highlights:"Return to Helsinki. Explore any missed sights. Kamppi market, Temppeliaukio Rock Church, Suomenlinna sea fortress (short ferry).",
+    food:"Last Finnish coffee and cinnamon roll. Steak if not done yet.",
+    stay:"Helsinki" },
+  { days:"Day 9", title:"Fly Helsinki → Vilnius", meta:"🇱🇹 Lithuania · Flight ~2.5 hrs",
+    where:"Helsinki Airport → Vilnius Airport", highlights:"Short flight south into the Baltic states. Check into old town accommodation.",
+    food:"Arrive, settle in, explore the old town streets.",
+    stay:"Old town Vilnius" },
+  { days:"Day 10–13", title:"Vilnius — Baroque Old Town", meta:"🇱🇹 Lithuania · 4 days",
+    where:"Vilnius old town (UNESCO)", highlights:"Gates of Dawn, Vilnius Cathedral, Gediminas Tower, Republic of Užupis (quirky self-declared microstate), hidden courtyards, Street art district.",
+    food:"Most affordable of the three capitals. Try cepelinai (potato dumplings), šaltibarščiai (cold beet soup), local craft beer.",
+    stay:"Old town Vilnius hotel or guesthouse" },
+  { days:"Day 14", title:"Hill of Crosses & Coach to Riga", meta:"🇱🇹 Lithuania → 🇱🇻 Latvia · Stop en route",
+    where:"Vilnius → Hill of Crosses (Šiauliai) → Riga", highlights:"Stop at the Hill of Crosses (Kryžių kalnas) en route — 200,000+ crosses planted by ordinary people over two centuries. Survived three Soviet bulldozing attempts; people sneaked back at night to replant them. Pope John Paul II visited 1993 and erected his own cross. One of the most moving places in the entire trip. Then continue by Lux Express coach to Riga.",
+    food:"Dinner in Riga old town.",
+    stay:"Old town Riga" },
+  { days:"Day 15–18", title:"Riga — Art Nouveau & Old Town", meta:"🇱🇻 Latvia · 4 days",
+    where:"Riga city centre", highlights:"Alberta Street (Art Nouveau facades), Riga old town (UNESCO), Central Market (inside converted Zeppelin hangars), Art Nouveau Museum, Freedom Monument, Riga castle.",
+    food:"Central Market food halls (incredible variety), Latvian grey peas with bacon, Riga Black Balsam (herbal liqueur), rye bread.",
+    stay:"Old town Riga" },
+  { days:"Day 19–20", title:"Van Tour — Riga to Tallinn", meta:"🇱🇻 Latvia → 🇪🇪 Estonia · Small group, max 8 persons",
+    where:"Latvia → Estonia countryside → Tallinn", highlights:"Private van tour covering national parks, medieval castle ruins, UNESCO heritage sites, and hidden villages impossible to reach by public transport. Two countries in one day. This is the secret highlight of the Baltic leg.",
+    food:"Lunch en route (usually included). Ask the guide for local recommendations.",
+    stay:"Tallinn old town (arrive evening)" },
+  { days:"Day 21–25", title:"Tallinn — Medieval Old Town", meta:"🇪🇪 Estonia · 5 days",
+    where:"Tallinn old town (UNESCO)", highlights:"Toompea Hill (views over red rooftops), Town Hall Square, Alexander Nevsky Cathedral, medieval towers and city walls, Telliskivi Creative City, Kadriorg Palace park.",
+    food:"Old town restaurants (medieval theme dining is fun), Estonian black bread, smoked fish, craft beer at a guild house.",
+    stay:"Old town Tallinn — stay inside the walls" },
+  { days:"Day 26", title:"Ferry Tallinn → Helsinki", meta:"🇪🇪 Estonia → 🇫🇮 Finland · ~2 hours",
+    where:"Tallinn D-Terminal → Helsinki West Harbour", highlights:"Ferry crossing the Gulf of Finland. Tallink Silja or Viking Line. Scenic 2-hour crossing — the end of the Baltic leg. Helsinki in the distance as you approach.",
+    food:"Ferry has restaurants and cafés. Last Baltic meal before arriving in Finland.",
+    stay:"Helsinki" },
+  { days:"Day 27–30", title:"Helsinki — Buffer & Fly Home", meta:"🇫🇮 Finland → Singapore",
+    where:"Helsinki → Singapore Changi", highlights:"Use buffer days to revisit Helsinki, catch anything missed, rest. Fly home to Singapore from Helsinki Airport.",
+    food:"One last Finnish salmon or steak before the flight.",
+    stay:"Helsinki, then 13-hr flight home" },
+];
+
+const itineraryCN = [
+  { days:"第1–2天", title:"赫尔辛基 — 抵达与探索", meta:"🇫🇮 芬兰 · 从新加坡飞来",
+    where:"赫尔辛基市中心", highlights:"参议院广场、赫尔辛基大教堂、老市场大厅、设计区、爱斯普拉纳迪公园",
+    food:"晚餐：在赫尔辛基餐厅享用芬兰牛排。咖啡与肉桂卷（Korvapuusti）——必吃。",
+    stay:"赫尔辛基市中心酒店" },
+  { days:"第3天", title:"乘夜班火车前往罗瓦涅米", meta:"🇫🇮 芬兰 · 赫尔辛基 → 罗瓦涅米",
+    where:"赫尔辛基中央车站 → 罗瓦涅米", highlights:"预订VR夜班火车卧铺包厢。约17:30出发，次日约08:00抵达罗瓦涅米。夜间行驶800公里，醒来便在拉普兰。",
+    food:"在火车上或登车前享用晚餐。",
+    stay:"夜班火车卧铺包厢" },
+  { days:"第4–5天", title:"罗瓦涅米与圣诞老人村", meta:"🇫🇮 芬兰 · 北极圈",
+    where:"罗瓦涅米，拉普兰", highlights:"圣诞老人村（位于北极圈上）、驯鹿雪橇、哈士奇之旅、北极雪地摩托、夜间北极光观赏。",
+    food:"🐟 务必在圣诞老人村吃三文鱼。这是全程最好吃的三文鱼，千万不要错过。",
+    stay:"圣诞老人村或罗瓦涅米市区酒店" },
+  { days:"第5–6天", title:"破冰船巡游 — 波的尼亚湾", meta:"🇫🇮 芬兰 · 全程最精彩体验",
+    where:"凯米，芬兰（从罗瓦涅米乘大巴3小时）", highlights:"乘坐破冰船在冰封的波的尼亚湾巡游。走上冰面——踏出船外，踩在冰封海面上行走。在瑞典边境渔村享用午餐。乘大巴返回罗瓦涅米。",
+    food:"🍽️ 在瑞典边境渔村餐厅享用午餐。",
+    stay:"在罗瓦涅米过夜" },
+  { days:"第7–8天", title:"返回赫尔辛基", meta:"🇫🇮 芬兰 · 罗瓦涅米 → 赫尔辛基",
+    where:"赫尔辛基", highlights:"返回赫尔辛基。探索未游览的景点。坎皮市场、岩石教堂（Temppeliaukio）、芬兰堡海洋要塞（乘短途渡轮）。",
+    food:"最后一杯芬兰咖啡与肉桂卷。如还未吃过牛排，别错过。",
+    stay:"赫尔辛基" },
+  { days:"第9天", title:"飞往维尔纽斯", meta:"🇱🇹 立陶宛 · 飞行约2.5小时",
+    where:"赫尔辛基机场 → 维尔纽斯机场", highlights:"向南飞入波罗的海国家。入住老城区住宿。",
+    food:"抵达后安顿下来，探索老城区街道。",
+    stay:"维尔纽斯老城区" },
+  { days:"第10–13天", title:"维尔纽斯 — 巴洛克老城区", meta:"🇱🇹 立陶宛 · 4天",
+    where:"维尔纽斯老城区（联合国教科文组织世界遗产）", highlights:"黎明之门、维尔纽斯大教堂、格迪米纳斯塔、乌普里斯共和国（奇特的自我宣告微型国家）、隐藏庭院、街头艺术区。",
+    food:"三国首都中物价最实惠。尝试Cepelinai（土豆饺子）、Šaltibarščiai（冷甜菜汤）、当地精酿啤酒。",
+    stay:"维尔纽斯老城区酒店或民宿" },
+  { days:"第14天", title:"十字架山 · 乘大巴前往里加", meta:"🇱🇹 立陶宛 → 🇱🇻 拉脱维亚 · 途中停留",
+    where:"维尔纽斯 → 十字架山（希奥利艾）→ 里加", highlights:"途经十字架山（Kryžių kalnas）——超过20万座十字架，两百年来由普通民众自发堆叠，没有任何组织。苏联时期推土机三次铲平，人们三次夜里悄悄重新种回。1993年教皇约翰·保罗二世亲临，亲手立下十字架，铭文：「感谢立陶宛人见证十字架的爱」。是全程最震撼心灵的地方之一。之后乘Lux Express大巴继续前往里加。",
+    food:"在里加老城区享用晚餐。",
+    stay:"里加老城区" },
+  { days:"第15–18天", title:"里加 — 新艺术风格与老城区", meta:"🇱🇻 拉脱维亚 · 4天",
+    where:"里加市中心", highlights:"阿尔贝塔大街（新艺术风格建筑群）、里加老城（联合国教科文组织世界遗产）、中央市场（在改建的齐柏林机库内）、新艺术风格博物馆、自由纪念碑、里加城堡。",
+    food:"中央市场美食广场（品种极为丰富）、拉脱维亚灰豌豆配熏肉、里加黑药酒（草本利口酒）、黑麦面包。",
+    stay:"里加老城区" },
+  { days:"第19–20天", title:"面包车之旅 — 里加至塔林", meta:"🇱🇻 拉脱维亚 → 🇪🇪 爱沙尼亚 · 小团，最多8人",
+    where:"拉脱维亚 → 爱沙尼亚乡村 → 塔林", highlights:"私人面包车之旅，途经国家公园、中世纪城堡遗址、联合国教科文组织遗产地及公共交通无法到达的隐秘村庄。一天游览两国。这是波罗的海段的秘密亮点。",
+    food:"途中午餐（通常含在内）。向导会推荐当地餐厅。",
+    stay:"塔林老城区（傍晚抵达）" },
+  { days:"第21–25天", title:"塔林 — 中世纪老城区", meta:"🇪🇪 爱沙尼亚 · 5天",
+    where:"塔林老城区（联合国教科文组织世界遗产）", highlights:"托姆比亚山（俯瞰红屋顶全景）、市政厅广场、亚历山大·涅夫斯基大教堂、中世纪塔楼与城墙、特利斯基维创意城、卡德里奥宫公园。",
+    food:"老城区餐厅（中世纪主题用餐体验有趣）、爱沙尼亚黑面包、熏鱼、在行会酒馆品尝精酿啤酒。",
+    stay:"塔林老城区内住宿 — 住在城墙之内" },
+  { days:"第26天", title:"渡轮 塔林 → 赫尔辛基", meta:"🇪🇪 爱沙尼亚 → 🇫🇮 芬兰 · 约2小时",
+    where:"塔林D号码头 → 赫尔辛基西港", highlights:"渡轮横渡芬兰湾。Tallink Silja或维京航线。2小时风景如画的渡轮之旅——波罗的海段落幕。靠近赫尔辛基时，城市轮廓映入眼帘。",
+    food:"渡轮上设有餐厅和咖啡馆。抵达芬兰前的最后一顿波罗的海美食。",
+    stay:"赫尔辛基" },
+  { days:"第27–30天", title:"赫尔辛基 — 缓冲期与飞回新加坡", meta:"🇫🇮 芬兰 → 新加坡",
+    where:"赫尔辛基 → 新加坡樟宜机场", highlights:"利用缓冲天数重游赫尔辛基、补充未完成的行程、好好休息。从赫尔辛基机场飞回新加坡。",
+    food:"登机前享用最后一顿芬兰三文鱼或牛排。",
+    stay:"赫尔辛基，然后13小时飞机回家" },
+];
+
+function buildItin(data, labelWhere, labelHighlights, labelFood, labelStay) {
+  const itinEl = document.getElementById('itin-panel');
+  itinEl.innerHTML = '';
+  data.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'day-card';
+    div.innerHTML = `
+      <div class="day-header" onclick="toggleDay(this.parentElement)">
+        <div class="day-badge">${d.days}</div>
+        <div>
+          <div class="day-title">${d.title}</div>
+          <div class="day-meta">${d.meta}</div>
+        </div>
+        <div class="day-chevron">▼</div>
+      </div>
+      <div class="day-body">
+        <div class="section"><div class="section-label">📍 ${labelWhere}</div><div class="section-text">${d.where}</div></div>
+        <div class="section"><div class="section-label">⭐ ${labelHighlights}</div><div class="section-text">${d.highlights}</div></div>
+        <div class="section"><div class="section-label">🍽️ ${labelFood}</div><div class="section-text">${d.food}</div></div>
+        <div class="section"><div class="section-label">🏨 ${labelStay}</div><div class="section-text">${d.stay}</div></div>
+      </div>`;
+    itinEl.appendChild(div);
+  });
+}
+
+buildItin(itinerary, 'Where', 'Highlights', 'Food', 'Stay');
+
+function setItinLang(lang, btn) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (lang === 'zh') buildItin(itineraryCN, '地点', '亮点', '美食', '住宿');
+  else buildItin(itinerary, 'Where', 'Highlights', 'Food', 'Stay');
+}
+
+// ── TOGGLE FUNCTIONS ──
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  const tabLabel = tab === 'itin' ? 'itinerary' : tab === 'mustsee' ? 'must' : tab;
+  document.querySelectorAll('.tab-btn').forEach(b => { if (b.textContent.toLowerCase().includes(tabLabel)) b.classList.add('active'); });
+  const lb = document.getElementById('legend-bar');
+  if (lb) lb.style.display = (tab === 'map') ? 'flex' : 'none';
+  if (tab === 'map') setTimeout(() => map.invalidateSize(), 50);
+}
+function toggleDay(card) {
+  card.classList.toggle('open');
+  card.querySelector('.day-body').classList.toggle('open');
+}
+function toggleTip(sec) { sec.classList.toggle('open'); }
+function toggleMs(el) { el.classList.toggle('open'); }
+function switchCity(id, btn) {
+  document.querySelectorAll('.walk-city').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.walk-city-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('walk-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+function toggleMapFullscreen() {
+  const m = document.getElementById('map');
+  const c = document.getElementById('mapFullscreenClose');
+  m.classList.toggle('map-fullscreen');
+  c.classList.toggle('active');
+  setTimeout(() => map.invalidateSize(), 100);
+}
+
+// Fix tab active state on load
+document.querySelector('.tab-btn').classList.add('active');
+</script>
+</body>
+</html>
