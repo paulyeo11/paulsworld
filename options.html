@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option Paul — Investment &amp; Options Trading</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #222; font-size: 16px; }
+
+    /* Home button */
+    .home-btn {
+      position: fixed; top: 14px; left: 14px; z-index: 999;
+      background: rgba(255,255,255,0.93); border: 1.5px solid #2563eb;
+      color: #1e3a8a; font-weight: 700; font-size: 0.9em;
+      padding: 8px 16px; border-radius: 20px; text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12); transition: all 0.2s;
+    }
+    .home-btn:hover { background: #2563eb; color: white; }
+
+    /* Hero */
+    .hero {
+      min-height: 55vh;
+      background: linear-gradient(135deg, rgba(15,23,42,0.82), rgba(30,58,138,0.70)),
+                  url('https://static.wixstatic.com/media/412a77_6ffd1563b96c4eabb1fb2a03b7898ea5~mv2.png/v1/fill/w_600,h_450,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/4chart_PNG.png') center/cover no-repeat;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; color: white; padding: 80px 20px 50px;
+    }
+    .hero h1 { font-size: 2.8em; font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+    .hero .tagline { font-size: 1.2em; font-weight: 600; opacity: 0.95; margin-bottom: 8px; }
+    .hero .sub { font-size: 1em; opacity: 0.82; margin-bottom: 28px; }
+    .hero .badge {
+      display: inline-block; background: rgba(37,99,235,0.8); border: 1px solid rgba(255,255,255,0.3);
+      color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.9em; font-weight: 600;
+      text-decoration: none; margin: 4px;
+    }
+    .hero .badge:hover { background: #2563eb; }
+
+    /* Chart image section */
+    .chart-section {
+      max-width: 700px; margin: 32px auto; padding: 0 16px; text-align: center;
+    }
+    .chart-section img {
+      width: 100%; border-radius: 14px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+    }
+    .chart-section p { color: #666; font-size: 0.9em; margin-top: 10px; font-style: italic; }
+
+    /* Section grid */
+    .sections-wrap { max-width: 960px; margin: 0 auto; padding: 0 16px 60px; }
+    .sections-wrap h2 {
+      text-align: center; font-size: 1.5em; font-weight: 800;
+      color: #1e3a8a; margin: 32px 0 20px;
+    }
+    .cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .section-card {
+      background: white; border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden;
+    }
+    .section-card .card-header {
+      padding: 14px 18px; display: flex; align-items: center;
+      justify-content: space-between; cursor: pointer;
+      user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .section-card .card-header h3 { font-size: 1em; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .section-card .card-header .count { font-size: 0.82em; opacity: 0.65; font-weight: 600; }
+    .section-card .chevron { font-size: 0.8em; transition: transform 0.25s; }
+    .section-card.open .chevron { transform: rotate(180deg); }
+    .section-card ul { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; list-style: none; }
+    .section-card.open ul { max-height: 9999px; padding: 4px 0 8px; }
+    .section-card ul li a {
+      display: block; padding: 10px 18px; font-size: 0.93em; font-weight: 600;
+      text-decoration: none; border-bottom: 1px solid #f3f4f6;
+      transition: background 0.15s;
+    }
+    .section-card ul li:last-child a { border-bottom: none; }
+
+    /* Option — blue */
+    .opt-card .card-header { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-left: 5px solid #2563eb; }
+    .opt-card .card-header h3, .opt-card .chevron { color: #1e3a8a; }
+    .opt-card ul li a { color: #1e3a8a; } .opt-card ul li a:hover { background: #eff6ff; }
+
+    /* Income — green */
+    .inc-card .card-header { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 5px solid #16a34a; }
+    .inc-card .card-header h3, .inc-card .chevron { color: #14532d; }
+    .inc-card ul li a { color: #14532d; } .inc-card ul li a:hover { background: #f0fdf4; }
+
+    /* Health — teal */
+    .hlt-card .card-header { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); border-left: 5px solid #0d9488; }
+    .hlt-card .card-header h3, .hlt-card .chevron { color: #134e4a; }
+    .hlt-card ul li a { color: #134e4a; } .hlt-card ul li a:hover { background: #f0fdfa; }
+
+    /* Share — orange */
+    .shr-card .card-header { background: linear-gradient(135deg, #fff7ed, #ffedd5); border-left: 5px solid #ea580c; }
+    .shr-card .card-header h3, .shr-card .chevron { color: #9a3412; }
+    .shr-card ul li a { color: #9a3412; } .shr-card ul li a:hover { background: #fff7ed; }
+
+    /* Learn — purple */
+    .lrn-card .card-header { background: linear-gradient(135deg, #faf5ff, #f3e8ff); border-left: 5px solid #7c3aed; }
+    .lrn-card .card-header h3, .lrn-card .chevron { color: #4c1d95; }
+    .lrn-card ul li a { color: #4c1d95; } .lrn-card ul li a:hover { background: #faf5ff; }
+
+    /* Travel — emerald */
+    .trv-card .card-header { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-left: 5px solid #059669; }
+    .trv-card .card-header h3, .trv-card .chevron { color: #064e3b; }
+    .trv-card ul li a { color: #064e3b; } .trv-card ul li a:hover { background: #ecfdf5; }
+
+    /* S Menu — slate */
+    .mnu-card .card-header { background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-left: 5px solid #475569; }
+    .mnu-card .card-header h3, .mnu-card .chevron { color: #1e293b; }
+    .mnu-card ul li a { color: #1e293b; } .mnu-card ul li a:hover { background: #f8fafc; }
+
+    /* Star indicator for important items */
+    .star { color: #f59e0b; }
+
+    footer { text-align: center; color: #aaa; font-size: 0.85em; padding: 20px 16px 60px; }
+    footer a { color: #888; text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.9em; }
+      .hero .tagline { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div>
+      <h1>📈 Option Paul</h1>
+      <p class="tagline">Investment · Options Trading · Financial Education</p>
+      <p class="sub">This site will help you make $ from option trade.</p>
+      <a href="https://paul11ipad6.wixsite.com/option-paul/home" target="_blank" class="badge">🔗 Visit Full Site</a>
+      <a href="https://paul11ipad6.wixsite.com/option-paul/about-us" target="_blank" class="badge">👤 About Us</a>
+    </div>
+  </div>
+
+  <!-- 4-Chart Image -->
+  <div class="chart-section">
+    <img src="https://static.wixstatic.com/media/412a77_6ffd1563b96c4eabb1fb2a03b7898ea5~mv2.png/v1/fill/w_600,h_450,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/4chart_PNG.png"
+         alt="Option Trading 4 Chart">
+    <p>Option Trading Chart Analysis — Paul's Investment Reference</p>
+  </div>
+
+  <div class="sections-wrap">
+    <h2>📚 Knowledge Base</h2>
+
+    <div class="cards-grid">
+
+      <!-- OPTION -->
+      <div class="section-card opt-card open">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>📊 Option Trading</h3>
+          <span class="count">16 topics <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/services-5" target="_blank">📌 Option Overview</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/ak-report" target="_blank">📄 AK Report</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/tastywork" target="_blank">🖥️ TastyWork Platform</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/how2close" target="_blank">🔒 How to Close</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/buy-or-sell" target="_blank">📖 Option Terminology</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/selling-put" target="_blank">📉 Selling Put</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/copy-of-selling-put" target="_blank">📈 Selling Call</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/avoid-mistake" target="_blank">⚠️ Avoid Mistakes</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/dte" target="_blank">📅 DTE (Days to Expiry)</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/risk-mgt" target="_blank">🛡️ Risk Management</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/option-most-impt-video" target="_blank">🎬 Important Option Videos</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/rolling" target="_blank">🔄 Rolling Options</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/option-image" target="_blank">📉 RSI Chart</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/yahoo" target="_blank">🔎 Yahoo Finance</a></li>
+        </ul>
+      </div>
+
+      <!-- INCOME STRATEGIES -->
+      <div class="section-card inc-card open">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>💰 Income Strategies</h3>
+          <span class="count">19 strategies <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/small-acc" target="_blank">👛 Small Account</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/poor-man" target="_blank">🧑 Poor Man's Strategy</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/stop-loss" target="_blank">⛔ <span class="star">★★★</span> Stop Loss</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/short-butterg-sprade" target="_blank">🦋 Short Butterfly Spread</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/put" target="_blank">📉 Put Strategy</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/vertical-spread" target="_blank">↕️ Vertical Spread</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/credit-spread-1" target="_blank">📞 <span class="star">★★★</span> Covered Call</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/cash-secure-put" target="_blank">💵 <span class="star">★★★</span> Cash Secured Put</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/naked-option" target="_blank">🎯 Naked Option</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/short-strangle" target="_blank">〰️ Short Strangle</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/iron-condor" target="_blank">🦅 <span class="star">★★★</span> Iron Condor</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/credit-spread" target="_blank">💳 <span class="star">★★</span> Credit Spread</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/broken-wing-butterfly" target="_blank">🦋 Broken Wing Butterfly</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/diagonal" target="_blank">↗️ Diagonal Spread</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/put-ratio-spread" target="_blank">📊 Put Ratio Spread</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/repair-stock-p1" target="_blank">🔧 Repair Stock P1</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/repair-stock-p2" target="_blank">📞 <span class="star">★★★</span> Poor Man Covered Call</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/denit-spread" target="_blank">📋 Debit Spread</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/leaps" target="_blank">🚀 LEAPS</a></li>
+        </ul>
+      </div>
+
+      <!-- HEALTH -->
+      <div class="section-card hlt-card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>🏥 Health &amp; Wellness</h3>
+          <span class="count">15 topics <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/health" target="_blank">🧪 Detox</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/nitri-oxide" target="_blank">💨 Nitric Oxide</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/stretching" target="_blank">🧘 Stretching</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/dates" target="_blank">🍂 Dates</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/omega-3" target="_blank">🐟 Omega 3</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/coconut-oil" target="_blank">🥥 Coconut Oil</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/why-sleep" target="_blank">😴 Why Sleep Matters</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/cholesterol" target="_blank">❤️ Cholesterol</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/olive-oil" target="_blank">🫒 Olive Oil</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/coenzyme-q10" target="_blank">💊 Coenzyme Q10</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/eye-sight" target="_blank">👁️ Eye Sight</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/slow-run" target="_blank">🏃 Slow Running</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/barbara-o-neil" target="_blank">🌿 Barbara O'Neill Detox</a></li>
+        </ul>
+      </div>
+
+      <!-- SHARES -->
+      <div class="section-card shr-card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>📈 Shares &amp; Stocks</h3>
+          <span class="count">8 topics <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/copy-of-template" target="_blank">🏊 Pool</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/mcd" target="_blank">🍟 MCD (McDonald's)</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/t-bill-2" target="_blank">🏦 T-Bill</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/baba" target="_blank">🛒 Baba (Alibaba)</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/lulu" target="_blank">👗 LULU (Lululemon)</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/mnst" target="_blank">⚡ Nvidia</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/pub-speaking" target="_blank">🎤 Public Speaking</a></li>
+        </ul>
+      </div>
+
+      <!-- LEARN -->
+      <div class="section-card lrn-card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>🎓 Learning Resources</h3>
+          <span class="count">17 topics <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/course2attend" target="_blank">📚 Courses to Attend</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/technology" target="_blank">📊 Sheet to Wix</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/services-4" target="_blank">🌐 Wix</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/ai" target="_blank">🤖 AI</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/broadchin" target="_blank">⛓️ Blockchain</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/share2sheet" target="_blank">📋 Share to Sheet</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/goo-fin-2-sheet" target="_blank">📊 Google Finance to Sheet</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/apple-info" target="_blank">🍎 Get Apple Info</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/deskboard" target="_blank">🖥️ Dashboard</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/excel-script" target="_blank">📗 Excel Script</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/table" target="_blank">📋 Table</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/csv" target="_blank">📁 Document / CSV</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/toast-master" target="_blank">🎤 Toastmasters</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/mock-data" target="_blank">🔢 Mock Data</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/csm" target="_blank">📜 CSM</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/stk-protfolio" target="_blank">💼 Stock Portfolio</a></li>
+        </ul>
+      </div>
+
+      <!-- TRAVEL -->
+      <div class="section-card trv-card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>✈️ Travel</h3>
+          <span class="count">3 topics <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/air-ticket" target="_blank">🎫 Air Ticket</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/nepal" target="_blank">🏔️ Nepal</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/indonesia" target="_blank">🌴 Indonesia</a></li>
+        </ul>
+      </div>
+
+      <!-- S MENU -->
+      <div class="section-card mnu-card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+          <h3>📋 More Resources</h3>
+          <span class="count">11 topics <span class="chevron">▼</span></span>
+        </div>
+        <ul>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/about-us" target="_blank">👤 About Us</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/lau-jo" target="_blank">🏛️ Politics — Lau Jo</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/gorden-hampton" target="_blank">🎙️ Gordon Hampton</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/master-leong" target="_blank">💰 Financial — Master Leong</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/powerfuljre" target="_blank">🎧 Powerful JRE</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/dr-goobie" target="_blank">📖 Power of Now</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/lewis-howes" target="_blank">💪 Lewis Howes</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/contact-us" target="_blank">📧 Contact Us</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/faq" target="_blank">❓ FAQ</a></li>
+          <li><a href="https://paul11ipad6.wixsite.com/option-paul/actiom" target="_blank">🚀 Action Now</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- View Counter -->
+  <script src="/view-counter.js"></script>
+
+  <footer>
+    &copy; 2025 Paul Yeo &nbsp;|&nbsp;
+    <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp;
+    <a href="https://paul11ipad6.wixsite.com/option-paul" target="_blank">Original Wix Site</a>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.card-header').forEach(h => {
+      h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
+    });
+  </script>
+
+</body>
+</html>
