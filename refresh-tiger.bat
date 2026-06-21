@@ -5,6 +5,9 @@ echo ============================================
 echo   Refreshing Tiger Brokers positions...
 echo ============================================
 echo.
+echo Pulling latest scripts from GitHub...
+git pull --no-edit
+echo.
 python tiger_positions.py
 if errorlevel 1 (
   echo.
@@ -17,7 +20,6 @@ echo.
 echo Pushing updated data to GitHub...
 git add tiger_positions.json
 git commit -m "Refresh Tiger positions"
-git pull --no-edit
 git push
 echo.
 echo ============================================
