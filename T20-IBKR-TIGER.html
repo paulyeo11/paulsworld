@@ -774,12 +774,12 @@
         <div style="font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:8px;" id="dpnl-tiger-open-sub">USD · open positions</div>
       </div>
 
-      <!-- Combined Daily P&L -->
-      <div id="dpnl-combined-card" style="background:var(--surface);border:2px solid rgba(240,165,0,.35);border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));"></div>
-        <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:12px;">💰 Combined Daily P&amp;L — IBKR + Tiger</div>
-        <div style="font-size:clamp(1.6rem,7vw,3rem);font-weight:500;font-family:'DM Mono',monospace;letter-spacing:.02em;line-height:1;word-break:break-all;" id="dpnl-combined">—</div>
-        <div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:10px;" id="dpnl-combined-sub">USD · today</div>
+      <!-- IBKR Open P&L (replaces Combined) -->
+      <div id="dpnl-ibkr-open-card" style="background:var(--surface);border:2px solid rgba(59,130,246,.35);border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa);"></div>
+        <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:#3b82f6;font-family:'DM Mono',monospace;margin-bottom:12px;">🏦 IBKR · Open P&amp;L (Unrealized)</div>
+        <div style="font-size:clamp(1.6rem,7vw,3rem);font-weight:500;font-family:'DM Mono',monospace;letter-spacing:.02em;line-height:1;word-break:break-all;" id="dpnl-ibkr-open">—</div>
+        <div style="font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:10px;" id="dpnl-ibkr-open-sub">USD · open positions</div>
       </div>
 
       <!-- Last updated -->
@@ -1887,9 +1887,15 @@ function renderDailyPnL(ibkrData, tigerData, tigerOpenPnl) {
 
   const ibkrDpnl   = parseFloat(ibkrData.dailyPnL || ibkrData.dailyPnl || 0);
   const tigerDpnl  = parseFloat(tigerData.dailyPnlUSD || 0);
-  const combined   = ibkrDpnl + tigerDpnl;
   const openPnl    = (tigerOpenPnl != null && isFinite(tigerOpenPnl)) ? tigerOpenPnl : 0;
   const fetchedAt  = tigerData.fetchedAt || ibkrData.fetchedAt || '';
+
+  // IBKR Open (unrealized) P&L
+  const _upnlAcct = parseFloat(ibkrData.unrealizedPnL != null ? ibkrData.unrealizedPnL : (ibkrData.unrealizedPnl ?? NaN));
+  const ibkrOpenPnl = isFinite(_upnlAcct) ? _upnlAcct : (ibkrData.positions || []).reduce((s, p) => {
+    const v = parseFloat(p.unrealizedPnl ?? p.unrealizedPnL ?? 0);
+    return s + (isFinite(v) ? v : 0);
+  }, 0);
 
   const _v = (id, text, color) => { const el=document.getElementById(id); if(el){el.textContent=text;if(color)el.style.color=color;} };
   const _b = (id, color) => { const el=document.getElementById(id); if(el)el.style.borderColor=color; };
@@ -1898,14 +1904,14 @@ function renderDailyPnL(ibkrData, tigerData, tigerOpenPnl) {
   _v('dpnl-tiger-amt', tigerData.dailyPnlUSD != null ? fmtPnl(tigerDpnl) : 'N/A', colorOf(tigerDpnl));
   _v('dpnl-tiger-open', fmtPnl(openPnl), colorOf(openPnl));
   _v('dpnl-tiger-open-sub', (tigerData.accountOpenPnlUSD != null ? 'USD · app figure' : 'USD · computed') + (fetchedAt ? ' · ' + fetchedAt : ''));
-  _v('dpnl-combined', fmtPnl(combined), colorOf(combined));
-  _v('dpnl-combined-sub', 'USD · today' + (fetchedAt ? ' · ' + fetchedAt : ''));
+  _v('dpnl-ibkr-open', fmtPnl(ibkrOpenPnl), colorOf(ibkrOpenPnl));
+  _v('dpnl-ibkr-open-sub', 'USD · open positions' + (ibkrData.fetchedAt ? ' · ' + ibkrData.fetchedAt : ''));
   _v('dpnl-updated', fetchedAt ? 'Last updated: ' + fetchedAt : '');
 
-  _b('dpnl-ibkr-card',        ibkrData.dailyPnL  != null ? borderOf(ibkrDpnl)  : 'rgba(244,129,63,.3)');
-  _b('dpnl-tiger-card',       tigerData.dailyPnlUSD != null ? borderOf(tigerDpnl) : 'rgba(16,185,129,.3)');
-  _b('dpnl-tiger-open-card',  borderOf(openPnl));
-  _b('dpnl-combined-card',    borderOf(combined));
+  _b('dpnl-ibkr-card',       ibkrData.dailyPnL  != null ? borderOf(ibkrDpnl)  : 'rgba(244,129,63,.3)');
+  _b('dpnl-tiger-card',      tigerData.dailyPnlUSD != null ? borderOf(tigerDpnl) : 'rgba(16,185,129,.3)');
+  _b('dpnl-tiger-open-card', borderOf(openPnl));
+  _b('dpnl-ibkr-open-card',  borderOf(ibkrOpenPnl));
 }
 
 function switchTab(name, btn) {
