@@ -110,7 +110,6 @@ def fetch_positions():
         except (TypeError, ValueError):
             return None
 
-    debug_summary = {}
     try:
         assets = trade_client.get_assets(account=ACCOUNT)
         if assets:
@@ -122,16 +121,6 @@ def fetch_positions():
             daily_pnl_usd        = _f(getattr(summary, "daily_pnl", None))
             if daily_pnl_usd is None:
                 daily_pnl_usd    = _f(getattr(summary, "today_profit_loss", None))
-            # Save all summary fields to JSON for debugging
-            try:
-                debug_summary = {k: str(v) for k, v in vars(summary).items()}
-            except Exception:
-                pass
-            if not debug_summary:
-                try:
-                    debug_summary = {k: str(v) for k, v in summary.__dict__.items()}
-                except Exception:
-                    pass
     except Exception as e:
         print(f"Note: {e}")
 
@@ -161,8 +150,7 @@ def fetch_positions():
         "dailyPnlUSD"       : daily_pnl_usd,
         "realizedPnlUSD"    : realized_pnl_usd,
         "netLiquidationUSD" : net_value,
-        "positions"         : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"]),
-        "_debug_summary"    : debug_summary,
+        "positions"         : sorted(pos_list, key=lambda x: x["currency"] + x["symbol"])
     }
 
     with open(OUT_FILE, "w") as f:
