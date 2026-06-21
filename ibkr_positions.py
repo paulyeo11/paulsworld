@@ -210,6 +210,25 @@ def fetch_positions():
 
     net_liq        = get_val('NetLiquidation')
     unrealized_pnl = get_val('UnrealizedPnL')
+
+    # reqPnL subscription uses IBKR's own P&L calculation (matches the IBKR app).
+    # accountValues() often omits UnrealizedPnL — reqPnL fills the gap.
+    if unrealized_pnl is None and pos_list:
+        try:
+            _acct_id = pos_list[0]['account']
+            _pnl_sub = ib.reqPnL(_acct_id)
+            ib.sleep(2)
+            _v = getattr(_pnl_sub, 'unrealizedPnl', None)
+            if _v is not None and _v == _v:
+                unrealized_pnl = str(round(float(_v), 2))
+                print(f"UnrealizedPnL (reqPnL): {unrealized_pnl}")
+            try:
+                ib.cancelPnL(_acct_id)
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"Note (reqPnL): {e}")
+
     realized_pnl   = get_val('RealizedPnL')
     gross_pos_val  = get_val('GrossPositionValue')
     cash           = get_val('TotalCashValue')
