@@ -125,25 +125,6 @@ def fetch_positions():
     except Exception as e:
         print(f"Note: {e}")
 
-    # ---- App-matching Open P&L: COST OF CARRY basis ----
-    try:
-        prime = trade_client.get_prime_assets(account=ACCOUNT, base_currency="USD")
-        segments = getattr(prime, "segments", None) or {}
-        sec_seg = segments.get("S") if hasattr(segments, "get") else None
-        if sec_seg:
-            for attr in ("unrealized_plby_cost_of_carry", "unrealized_pl_by_cost_of_carry",
-                         "unrealizedPnl", "unrealized_pnl", "pnl"):
-                coc = _f(getattr(sec_seg, attr, None))
-                if coc is not None:
-                    print(f"Cost-of-carry P&L from '{attr}': {coc}")
-                    account_open_pnl_usd = coc
-                    break
-            if account_open_pnl_usd is None:
-                print(f"sec_seg attrs: {[a for a in dir(sec_seg) if not a.startswith('_')]}")
-        else:
-            print(f"No S segment found. Keys: {list(segments.keys()) if hasattr(segments,'keys') else type(segments)}")
-    except Exception as e:
-        print(f"Note (cost-of-carry): {e}")
     print(f"Final accountOpenPnlUSD: {account_open_pnl_usd}")
     print(f"Final dailyPnlUSD: {daily_pnl_usd}")
 
