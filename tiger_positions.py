@@ -123,11 +123,13 @@ def fetch_positions():
             if daily_pnl_usd is None:
                 daily_pnl_usd    = _f(getattr(summary, "today_profit_loss", None))
             # Save all summary fields to JSON for debugging
-            for a in [x for x in dir(summary) if not x.startswith('_')]:
+            try:
+                debug_summary = {k: str(v) for k, v in vars(summary).items()}
+            except Exception:
+                pass
+            if not debug_summary:
                 try:
-                    v = getattr(summary, a, None)
-                    if not callable(v):
-                        debug_summary[a] = str(v)
+                    debug_summary = {k: str(v) for k, v in summary.__dict__.items()}
                 except Exception:
                     pass
     except Exception as e:
