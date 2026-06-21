@@ -236,7 +236,10 @@
       <div class="subtitle">T20 · IBKR + Tiger + CPF/SGX · All Positions in SGD</div>
     </div>
   </div>
-  <div id="fetch-time">Loading…</div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+    <div id="fetch-time-ibkr" style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);background:var(--surface);padding:4px 10px;border-radius:12px;border:1px solid var(--border);white-space:nowrap;">🏦 IBKR: —</div>
+    <div id="fetch-time-tiger" style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);background:var(--surface);padding:4px 10px;border-radius:12px;border:1px solid var(--border);white-space:nowrap;">🐯 Tiger: —</div>
+  </div>
 </header>
 
 <main>
@@ -1098,17 +1101,23 @@ async function loadData() {
     renderIbkrBalances(ibkrData);
     renderOptions(ibkrData.options || []);
     renderDailyPnL(ibkrData, tigerData, tigerOpenPnl);
+    allData._ibkrFetchedAt  = ibkrData.fetchedAt  || '';
+    allData._tigerFetchedAt = tigerData.fetchedAt || '';
     showDashboard(ibkrPositions.length, tigerPositions.length, ibkrData.fetchedAt || tigerData.fetchedAt);
   } catch(e) {
     document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('fetch-time').textContent = 'Error loading';
+    const ibkrEl = document.getElementById('fetch-time-ibkr'); if(ibkrEl) ibkrEl.textContent = 'Error loading';
   }
 }
 
 async function reloadAll() { livePrices = {}; await loadData(); }
 
 function showDashboard(ibkrCount, tigerCount, fetchedAt) {
-  document.getElementById('fetch-time').textContent = '🕐 ' + (fetchedAt || '—');
+  const fmtDate = s => s ? s.replace(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}).*/, '$1 $2') : '—';
+  const ibkrEl  = document.getElementById('fetch-time-ibkr');
+  const tigerEl = document.getElementById('fetch-time-tiger');
+  if (ibkrEl)  ibkrEl.textContent  = '🏦 IBKR: '  + fmtDate(allData._ibkrFetchedAt);
+  if (tigerEl) tigerEl.textContent = '🐯 Tiger: ' + fmtDate(allData._tigerFetchedAt);
   document.getElementById('total-pos').textContent = allData.length;
   document.getElementById('ibkr-pos').textContent = ibkrCount;
   document.getElementById('tiger-pos').textContent = tigerCount;
