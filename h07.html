@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>H07: My Hiking Log – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #fdf8f2;
+      --warm-white: #fff9f4;
+      --ink: #2c2218;
+      --mid: #6b5a4e;
+      --accent: #10b981;
+      --accent-dark: #065f46;
+      --accent-soft: #d1fae5;
+      --border: #e8ddd5;
+      --orange: #f4813f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: #059669; }
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      color: #fff;
+      text-align: center;
+      padding: 90px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.25) 0%, transparent 70%);
+    }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .hero h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(1.9rem, 5vw, 3.2rem);
+      font-weight: 600;
+      line-height: 1.25;
+      max-width: 720px;
+      margin: 0 auto 16px;
+      color: #ecfdf5;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.05em;
+    }
+    .hero-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 11px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Lora', Georgia, serif;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    /* Language toggle */
+    .lang-bar {
+      text-align: center;
+      padding: 12px 0 4px;
+      position: relative; z-index: 1;
+    }
+    .lang-btn {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.7);
+      padding: 5px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-family: 'Source Sans 3', sans-serif;
+      margin: 0 4px;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.8);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Big stats banner */
+    .stats-banner {
+      background: #fff;
+      border-bottom: 2px solid var(--accent-soft);
+      padding: 28px 24px;
+    }
+    .stats-banner-inner {
+      max-width: 740px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .stat-big {
+      flex: 1;
+      min-width: 140px;
+      text-align: center;
+      padding: 12px 16px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-big:last-child { border-right: none; }
+    .stat-big-num {
+      font-family: 'Lora', serif;
+      font-size: 2.6rem;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-big-num.highlight { color: var(--orange); }
+    .stat-big-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--mid);
+      margin-top: 6px;
+    }
+
+    .container {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 48px 24px 24px;
+    }
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 1.45rem;
+      color: var(--accent-dark);
+      margin: 40px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+
+    /* Hike log cards */
+    .hike-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      transition: box-shadow 0.2s;
+    }
+    .hike-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+    .hike-card.recent { border-left: 4px solid var(--accent); }
+    .hike-date-col {
+      min-width: 68px;
+      text-align: center;
+    }
+    .hike-day-num {
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .hike-month {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--mid);
+    }
+    .hike-info { flex: 1; }
+    .hike-title {
+      font-family: 'Lora', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .hike-meta {
+      font-size: 0.82rem;
+      color: var(--mid);
+      margin-bottom: 8px;
+    }
+    .hike-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hike-tag {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-size: 0.72rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .hike-tag.orange {
+      background: rgba(244,129,63,0.12);
+      color: var(--orange);
+    }
+    .read-link {
+      color: var(--accent);
+      font-size: 0.8rem;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 8px;
+      display: inline-block;
+    }
+    .read-link:hover { text-decoration: underline; }
+
+    /* 10-day summary box */
+    .summary-box {
+      background: linear-gradient(135deg, #064e3b, #047857);
+      color: #fff;
+      border-radius: 12px;
+      padding: 28px 28px;
+      margin: 32px 0;
+      text-align: center;
+    }
+    .summary-box .big-num {
+      font-family: 'Lora', serif;
+      font-size: 5rem;
+      font-weight: 600;
+      line-height: 1;
+      color: #6ee7b7;
+    }
+    .summary-box .label {
+      font-size: 1.1rem;
+      margin-top: 8px;
+      opacity: 0.85;
+    }
+    .summary-box .sublabel {
+      font-size: 0.82rem;
+      opacity: 0.6;
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    /* 10-day grid */
+    .grid-10 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 20px 0;
+    }
+    .grid-cell {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+    .grid-cell.hiked {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .grid-cell.rest {
+      background: var(--warm-white);
+    }
+    .grid-day { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+    .grid-date { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; margin: 2px 0; }
+    .grid-icon { font-size: 1.1rem; }
+
+    .closing-quote {
+      text-align: center;
+      padding: 36px 20px;
+      font-family: 'Lora', serif;
+      font-size: 1.3rem;
+      font-style: italic;
+      color: var(--accent-dark);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin: 40px 0 32px;
+    }
+    .view-counter-wrap {
+      text-align: center;
+      padding: 28px 0 8px;
+      font-size: 0.88rem;
+      color: var(--mid);
+    }
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      background: #064e3b;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.82rem;
+      margin-top: 40px;
+    }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+    @media (max-width: 540px) {
+      .stat-big-num { font-size: 2rem; }
+      .grid-10 { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+      .hike-card { flex-direction: column; gap: 8px; }
+      .hike-date-col { display: flex; align-items: center; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="hero">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')" id="btn-zh">🇨🇳 中文</button>
+  </div>
+  <div class="hero-tag"><span class="en">Health · Fitness · 2026</span><span class="zh" style="display:none;">健康 · 体能 · 2026年</span></div>
+  <h1><span class="en">H07: My Hiking Log</span><span class="zh" style="display:none;">H07：我的徒步记录</span></h1>
+  <div class="hero-sub">
+    <span class="en">Every trail walked. Every morning earned.</span>
+    <span class="zh" style="display:none;">走过的每条山径，赢得的每个清晨。</span>
+  </div>
+  <div class="hero-actions">
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+
+<!-- Stats banner -->
+<div class="stats-banner">
+  <div class="stats-banner-inner">
+    <div class="stat-big">
+      <div class="stat-big-num highlight">5</div>
+      <div class="stat-big-label"><span class="en">Hikes — Last 10 Days</span><span class="zh" style="display:none;">最近10天徒步</span></div>
+    </div>
+    <div class="stat-big">
+      <div class="stat-big-num">6</div>
+      <div class="stat-big-label"><span class="en">Total Hikes (Jun 2026)</span><span class="zh" style="display:none;">6月总徒步次数</span></div>
+    </div>
+    <div class="stat-big">
+      <div class="stat-big-num">~31K</div>
+      <div class="stat-big-label"><span class="en">Steps Logged</span><span class="zh" style="display:none;">已记录步数</span></div>
+    </div>
+    <div class="stat-big">
+      <div class="stat-big-num">Solo</div>
+      <div class="stat-big-label"><span class="en">Always Alone</span><span class="zh" style="display:none;">独自出行</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 10-day answer -->
+  <div class="summary-box">
+    <div class="big-num">5</div>
+    <div class="label"><span class="en">hiking days in the last 10 days</span><span class="zh" style="display:none;">最近10天的徒步天数</span></div>
+    <div class="sublabel"><span class="en">14 June – 23 June 2026</span><span class="zh" style="display:none;">2026年6月14日—6月23日</span></div>
+  </div>
+
+  <!-- 10-day grid -->
+  <h2 class="section-title"><span class="en">Last 10 Days at a Glance</span><span class="zh" style="display:none;">最近10天一览</span></h2>
+  <div class="grid-10">
+    <div class="grid-cell rest">
+      <div class="grid-day">Sun</div>
+      <div class="grid-date">14</div>
+      <div class="grid-icon">😴</div>
+    </div>
+    <div class="grid-cell rest">
+      <div class="grid-day">Mon</div>
+      <div class="grid-date">15</div>
+      <div class="grid-icon">😴</div>
+    </div>
+    <div class="grid-cell hiked">
+      <div class="grid-day">Tue</div>
+      <div class="grid-date">16</div>
+      <div class="grid-icon">🥾</div>
+    </div>
+    <div class="grid-cell rest">
+      <div class="grid-day">Wed</div>
+      <div class="grid-date">17</div>
+      <div class="grid-icon">😴</div>
+    </div>
+    <div class="grid-cell hiked">
+      <div class="grid-day">Thu</div>
+      <div class="grid-date">18</div>
+      <div class="grid-icon">🥾</div>
+    </div>
+    <div class="grid-cell hiked">
+      <div class="grid-day">Fri</div>
+      <div class="grid-date">19</div>
+      <div class="grid-icon">🥾</div>
+    </div>
+    <div class="grid-cell rest">
+      <div class="grid-day">Sat</div>
+      <div class="grid-date">20</div>
+      <div class="grid-icon">😴</div>
+    </div>
+    <div class="grid-cell rest">
+      <div class="grid-day">Sun</div>
+      <div class="grid-date">21</div>
+      <div class="grid-icon">😴</div>
+    </div>
+    <div class="grid-cell hiked">
+      <div class="grid-day">Mon</div>
+      <div class="grid-date">22</div>
+      <div class="grid-icon">🥾</div>
+    </div>
+    <div class="grid-cell hiked">
+      <div class="grid-day">Tue</div>
+      <div class="grid-date">23</div>
+      <div class="grid-icon">🥾</div>
+    </div>
+  </div>
+  <p style="font-size:0.8rem;color:var(--mid);text-align:center;margin-top:4px;">
+    <span class="en">🥾 = hike day &nbsp;·&nbsp; 😴 = rest day</span>
+    <span class="zh" style="display:none;">🥾 = 徒步日 &nbsp;·&nbsp; 😴 = 休息日</span>
+  </p>
+
+  <!-- Full hike log -->
+  <h2 class="section-title"><span class="en">June 2026 — Full Hiking Log</span><span class="zh" style="display:none;">2026年6月 — 完整徒步记录</span></h2>
+
+  <!-- Hike 6 — 23 Jun -->
+  <div class="hike-card recent">
+    <div class="hike-date-col">
+      <div class="hike-day-num">23</div>
+      <div class="hike-month">Jun</div>
+    </div>
+    <div class="hike-info">
+      <div class="hike-title">
+        <span class="en">Bukit Timah Nature Reserve — Dairy Farm Loop</span>
+        <span class="zh" style="display:none;">武吉知马自然保护区 — 乳品农场环形步道</span>
+      </div>
+      <div class="hike-meta">
+        <span class="en">Dairy Farm Rd → BTNR Trailhead → Dairy Farm Hut → Summit → Visitor Centre</span>
+        <span class="zh" style="display:none;">乳品农场路 → 保护区入口 → 乳品农场小屋 → 山顶 → 游客中心</span>
+      </div>
+      <div class="hike-tags">
+        <span class="hike-tag">Solo</span>
+        <span class="hike-tag">163.63 m Summit</span>
+        <span class="hike-tag">10 Stops</span>
+      </div>
+      <a href="S19.html" class="read-link"><span class="en">Read S19 →</span><span class="zh" style="display:none;">阅读 S19 →</span></a>
+    </div>
+  </div>
+
+  <!-- Hike 5 — 22 Jun -->
+  <div class="hike-card recent">
+    <div class="hike-date-col">
+      <div class="hike-day-num">22</div>
+      <div class="hike-month">Jun</div>
+    </div>
+    <div class="hike-info">
+      <div class="hike-title">
+        <span class="en">BKE Right Turn — A New Route to the Reservoir</span>
+        <span class="zh" style="display:none;">BKE右转 — 前往水库的新路线</span>
+      </div>
+      <div class="hike-meta">
+        <span class="en">Starting field → BKE verge → Right turn into nature reserve → Upper Peirce Reservoir</span>
+        <span class="zh" style="display:none;">出发草地 → BKE路肩 → 右转进入自然保护区 → 中央集水区水库</span>
+      </div>
+      <div class="hike-tags">
+        <span class="hike-tag">Solo</span>
+        <span class="hike-tag orange">New Route</span>
+        <span class="hike-tag">Morning</span>
+      </div>
+      <a href="S28.html" class="read-link"><span class="en">Read S28 →</span><span class="zh" style="display:none;">阅读 S28 →</span></a>
+    </div>
+  </div>
+
+  <!-- Hike 4 — 19 Jun -->
+  <div class="hike-card recent">
+    <div class="hike-date-col">
+      <div class="hike-day-num">19</div>
+      <div class="hike-month">Jun</div>
+    </div>
+    <div class="hike-info">
+      <div class="hike-title">
+        <span class="en">Upper Peirce — PUB Plant Left Turn (Day 3)</span>
+        <span class="zh" style="display:none;">中央集水区 — 公用事业局水厂左转（第3天）</span>
+      </div>
+      <div class="hike-meta">
+        <span class="en">PUB Water Plant → Narrow jungle corridor → Chestnut Northern Loop → Observation Tower</span>
+        <span class="zh" style="display:none;">公用事业局水厂 → 狭窄丛林走廊 → 栗树公园北环 → 观测塔</span>
+      </div>
+      <div class="hike-tags">
+        <span class="hike-tag">Solo</span>
+        <span class="hike-tag">~5,000 steps</span>
+        <span class="hike-tag">~3.5 km</span>
+        <span class="hike-tag">8:00 AM</span>
+      </div>
+      <a href="S26.html" class="read-link"><span class="en">Read S26 →</span><span class="zh" style="display:none;">阅读 S26 →</span></a>
+    </div>
+  </div>
+
+  <!-- Hike 3 — 18 Jun -->
+  <div class="hike-card recent">
+    <div class="hike-date-col">
+      <div class="hike-day-num">18</div>
+      <div class="hike-month">Jun</div>
+    </div>
+    <div class="hike-info">
+      <div class="hike-title">
+        <span class="en">Secret BKE Trail → Upper Peirce Reservoir (Day 2)</span>
+        <span class="zh" style="display:none;">BKE秘密小径 → 中央集水区水库（第2天）</span>
+      </div>
+      <div class="hike-meta">
+        <span class="en">Rifle Range Rd → Eco-Link fence gap → Zhenghua Park → Belukar Trail → Reservoir</span>
+        <span class="zh" style="display:none;">来福枪靶场路 → 生态走廊缺口 → 郑华公园 → Belukar小径 → 水库</span>
+      </div>
+      <div class="hike-tags">
+        <span class="hike-tag">Solo</span>
+        <span class="hike-tag">9,000 steps</span>
+        <span class="hike-tag">3 hours</span>
+        <span class="hike-tag orange">Secret Route</span>
+      </div>
+      <a href="S23.html" class="read-link"><span class="en">Read S23 →</span><span class="zh" style="display:none;">阅读 S23 →</span></a>
+    </div>
+  </div>
+
+  <!-- Hike 2 — 16 Jun -->
+  <div class="hike-card recent">
+    <div class="hike-date-col">
+      <div class="hike-day-num">16</div>
+      <div class="hike-month">Jun</div>
+    </div>
+    <div class="hike-info">
+      <div class="hike-title">
+        <span class="en">Chestnut Nature Park — Southern Loop (Day 1)</span>
+        <span class="zh" style="display:none;">栗树自然公园 — 南环步道（第1天）</span>
+      </div>
+      <div class="hike-meta">
+        <span class="en">Dairy Farm Residences → Chestnut Southern Loop → Reservoir viewpoint → Home</span>
+        <span class="zh" style="display:none;">乳品农场住宅区 → 栗树公园南环 → 水库观景点 → 回家</span>
+      </div>
+      <div class="hike-tags">
+        <span class="hike-tag">Solo</span>
+        <span class="hike-tag">8,500 steps</span>
+        <span class="hike-tag">2 hours</span>
+        <span class="hike-tag">8:00 AM</span>
+      </div>
+      <a href="S20.html" class="read-link"><span class="en">Read S20 →</span><span class="zh" style="display:none;">阅读 S20 →</span></a>
+    </div>
+  </div>
+
+  <!-- Hike 1 — 8 Jun -->
+  <div class="hike-card">
+    <div class="hike-date-col">
+      <div class="hike-day-num">8</div>
+      <div class="hike-month">Jun</div>
+    </div>
+    <div class="hike-info">
+      <div class="hike-title">
+        <span class="en">Bukit Timah Summit — Before Breakfast</span>
+        <span class="zh" style="display:none;">武吉知马山顶 — 早餐前完成</span>
+      </div>
+      <div class="hike-meta">
+        <span class="en">Dairy Farm Nature Park → Jungle summit at 163.63 m · Age 70 · 8:00 AM start</span>
+        <span class="zh" style="display:none;">乳品农场自然公园 → 163.63米丛林山顶 · 70岁 · 早上8点出发</span>
+      </div>
+      <div class="hike-tags">
+        <span class="hike-tag">Solo</span>
+        <span class="hike-tag">3,000 steps</span>
+        <span class="hike-tag orange">Summit Reached</span>
+      </div>
+      <a href="S19.html" class="read-link"><span class="en">Read S19 →</span><span class="zh" style="display:none;">阅读 S19 →</span></a>
+    </div>
+  </div>
+
+  <div class="closing-quote">
+    <span class="en">"I hike to empty my mind and fill my lungs.<br>Every morning I walk out the door, I win the day."</span>
+    <span class="zh" style="display:none;">"我徒步是为了清空思绪、充实肺腑。<br>每天早晨迈出家门，那一天就已经赢了。"</span>
+  </div>
+
+  <div class="view-counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+</div>
+
+<footer>
+  <p>H07: My Hiking Log &nbsp;·&nbsp; Paul Yeo &nbsp;·&nbsp; Updated June 2026</p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></p>
+</footer>
+
+<script>
+function setLang(lang) {
+  var enEls = document.querySelectorAll('.en');
+  var zhEls = document.querySelectorAll('.zh');
+  if (lang === 'zh') {
+    enEls.forEach(function(el){ el.style.display = 'none'; });
+    zhEls.forEach(function(el){ el.style.display = ''; });
+    document.getElementById('btn-en').classList.remove('active');
+    document.getElementById('btn-zh').classList.add('active');
+  } else {
+    enEls.forEach(function(el){ el.style.display = ''; });
+    zhEls.forEach(function(el){ el.style.display = 'none'; });
+    document.getElementById('btn-en').classList.add('active');
+    document.getElementById('btn-zh').classList.remove('active');
+  }
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title: title, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+</body>
+</html>
