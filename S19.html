@@ -738,13 +738,29 @@
   }
 
   function buildMap(id) {
-    var midLat = (stops[0].lat + stops[stops.length-1].lat) / 2;
-    var midLng = (stops[0].lng + stops[stops.length-1].lng) / 2;
-    var m = L.map(id, {scrollWheelZoom:false}).setView([midLat, midLng], 16);
+    var m = L.map(id, {scrollWheelZoom:false}).setView([stops[0].lat, stops[0].lng], 16);
     L.tileLayer(TILE, {attribution:TILE_ATTR, maxZoom:19}).addTo(m);
-    // Orange dashed route line
-    var coords = stops.map(function(s){ return [s.lat, s.lng]; });
-    L.polyline(coords, {color:'#ed8936', weight:4, dashArray:'10,7', opacity:0.9}).addTo(m);
+    // Fit map to all stop markers
+    var bounds = L.latLngBounds(stops.map(function(s){return[s.lat,s.lng];}));
+    m.fitBounds(bounds, {padding:[40,40]});
+    // Load real trail geometry from OpenStreetMap (Overpass API)
+    var bbox = '1.358,103.772,1.368,103.782';
+    var oq = '[out:json][timeout:25];(way["highway"~"path|footway|track"]('+bbox+'););out geom;';
+    fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(oq))
+      .then(function(r){return r.json();})
+      .then(function(d){
+        d.elements.forEach(function(el){
+          if(el.type==='way'&&el.geometry){
+            var pts=el.geometry.map(function(n){return[n.lat,n.lon];});
+            L.polyline(pts,{color:'#ed8936',weight:3,dashArray:'7,5',opacity:0.85}).addTo(m);
+          }
+        });
+      })
+      .catch(function(){
+        // fallback: straight lines if API unreachable
+        var pts=stops.map(function(s){return[s.lat,s.lng];});
+        L.polyline(pts,{color:'#ed8936',weight:4,dashArray:'10,7',opacity:0.9}).addTo(m);
+      });
     if (L.control.fullscreen) L.control.fullscreen({position:'topright'}).addTo(m);
 
     var legend = L.control({position:'bottomleft'});
