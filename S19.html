@@ -372,9 +372,9 @@
 <!-- ===== INTERACTIVE ROUTE MAP ===== -->
 <div style="background:#0d1f0d;padding:32px 0 0;">
   <div class="container" style="padding-bottom:0;">
-    <div class="chapter-label" style="color:var(--green-bright);">Trail Map · Point 1 — Start</div>
-    <h2 style="font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(1.4rem,4vw,2rem);color:#fff;line-height:1.2;margin-bottom:10px;">Dairy Farm Road — <em style="color:var(--gold);">Today's Starting Point</em></h2>
-    <p style="color:rgba(255,255,255,0.72);font-size:0.93rem;margin-bottom:14px;">23 June 2026 · Dairy Farm Rd / Upper Bukit Timah Rd junction, Singapore</p>
+    <div class="chapter-label" style="color:var(--green-bright);">Trail Map · Points 1 → 2</div>
+    <h2 style="font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(1.4rem,4vw,2rem);color:#fff;line-height:1.2;margin-bottom:10px;">Dairy Farm Trail — <em style="color:var(--gold);">Start to Forest Entry</em></h2>
+    <p style="color:rgba(255,255,255,0.72);font-size:0.93rem;margin-bottom:14px;">23 June 2026 · Dairy Farm Rd, Singapore · 🔴 Start → 🟢 Forest Entry</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
       <a href="https://maps.google.com/?q=1.3601,103.7750&label=Dairy+Farm+Trail+Start" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
       <a href="https://map.baidu.com/search/%E4%B9%B3%E5%86%9C%E5%9C%92%E8%B7%AF%E8%B5%B7%E7%82%B9" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
@@ -421,6 +421,22 @@
     <div class="photo-single" onclick="window.open('img_S19/00-start.jpg','_blank')" style="cursor:pointer;">
       <img src="img_S19/00-start.jpg" alt="Dairy Farm Road / Upper Bukit Timah Road junction — start point 23 June 2026" loading="lazy">
       <div class="photo-caption">Point 1 — Start. Dairy Farm Rd junction with Upper Bukit Timah Rd &amp; BKE, 23 June 2026. The sign I see every single morning before the climb begins.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider">✦ ✦ ✦</div>
+
+<!-- POINT 2 — ENTER THE FOREST -->
+<div class="container">
+  <div class="chapter">
+    <div class="chapter-label">Point 2 — Enter the Forest</div>
+    <h2><span class="en">Into the Green, <em>the Jungle Begins</em></span><span class="zh">踏入绿意，丛林开始了</span></h2>
+    <div class="dates">23 June 2026 &nbsp;·&nbsp; Dairy Farm Road — forest entry</div>
+    <p><span class="en">A few minutes from the junction, the road narrows, the trees close in, and the city disappears. This is where Dairy Farm Road becomes something else entirely — the air changes, the sounds change, the whole world changes. You are in the forest now.</span><span class="zh">离路口几分钟后，道路变窄，树木合围，城市消失了。就在这里，乳农园路变成了另一个世界——空气变了，声音变了，整个世界都变了。你已身处丛林之中。</span></p>
+    <div class="photo-single" onclick="window.open('img_S19/01-forest-entry.jpg','_blank')" style="cursor:pointer;">
+      <img src="img_S19/01-forest-entry.jpg" alt="Entering the forest along Dairy Farm Road — Point 2, 23 June 2026" loading="lazy">
+      <div class="photo-caption">Point 2 — Enter the Forest. Dairy Farm Road as the jungle takes over, 23 June 2026. Even the road works crew can't diminish the feeling — this is where the hike truly starts.</div>
     </div>
   </div>
 </div>
@@ -625,12 +641,17 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
 <script>
 (function(){
-  var TILE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  var TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  var TILE_ATTR = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   var stops = [
     { lat:1.3601, lng:103.7750, label:'1', color:'#e53e3e',
-      desc:'Start — Dairy Farm Rd / Upper Bukit Timah Rd',
+      desc:'Point 1 — Start: Dairy Farm Rd / Upper Bukit Timah Rd',
       photo:'img_S19/00-start.jpg',
-      caption:'23 June 2026 — Start point at Dairy Farm Road junction.' }
+      caption:'23 June 2026 — Start point at Dairy Farm Road junction.' },
+    { lat:1.3621, lng:103.7762, label:'2', color:'#48bb78',
+      desc:'Point 2 — Enter the Forest: Dairy Farm Road',
+      photo:'img_S19/01-forest-entry.jpg',
+      caption:'23 June 2026 — The road narrows, trees close in, jungle begins.' }
   ];
 
   function makeDot(color, label) {
@@ -642,8 +663,13 @@
   }
 
   function buildMap(id) {
-    var m = L.map(id, {scrollWheelZoom:false}).setView([stops[0].lat, stops[0].lng], 17);
-    L.tileLayer(TILE, {attribution:'Tiles &copy; Esri', maxZoom:19}).addTo(m);
+    var midLat = (stops[0].lat + stops[stops.length-1].lat) / 2;
+    var midLng = (stops[0].lng + stops[stops.length-1].lng) / 2;
+    var m = L.map(id, {scrollWheelZoom:false}).setView([midLat, midLng], 16);
+    L.tileLayer(TILE, {attribution:TILE_ATTR, maxZoom:19}).addTo(m);
+    // Orange dashed route line
+    var coords = stops.map(function(s){ return [s.lat, s.lng]; });
+    L.polyline(coords, {color:'#ed8936', weight:4, dashArray:'10,7', opacity:0.9}).addTo(m);
     if (L.control.fullscreen) L.control.fullscreen({position:'topright'}).addTo(m);
 
     var legend = L.control({position:'bottomleft'});
