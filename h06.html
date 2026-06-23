@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>h06: Joanne's Blood Test Review — 23 June 2026 – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #fdf8f2;
+      --warm-white: #fff9f4;
+      --ink: #2c2218;
+      --mid: #6b5a4e;
+      --accent: #10b981;
+      --accent-dark: #065f46;
+      --accent-soft: #d1fae5;
+      --border: #e8ddd5;
+      --warn: #f59e0b;
+      --warn-soft: #fef3c7;
+      --warn-dark: #92400e;
+      --ok: #10b981;
+      --ok-soft: #d1fae5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: #059669; }
+
+    /* Language toggle */
+    .lang-bar {
+      position: fixed;
+      top: 16px; right: 16px;
+      z-index: 999;
+      display: flex; gap: 6px;
+    }
+    .lang-btn {
+      background: rgba(255,255,255,0.9);
+      border: 1.5px solid var(--border);
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    [lang-target="zh"] { display: none; }
+
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      color: #fff;
+      text-align: center;
+      padding: 90px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.25) 0%, transparent 70%);
+    }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .hero h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.25;
+      max-width: 720px;
+      margin: 0 auto 16px;
+      color: #ecfdf5;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.03em;
+      margin-bottom: 24px;
+    }
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 24px;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* Share button */
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 11px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Source Sans 3', sans-serif;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    .container {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 48px 24px 24px;
+    }
+
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 1.45rem;
+      color: var(--accent-dark);
+      margin: 40px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+
+    /* Results table */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0 28px;
+      font-size: 0.95rem;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .results-table th {
+      background: var(--accent-dark);
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .results-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink);
+    }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table tr:nth-child(even) td { background: #fafaf8; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .badge-ok { background: var(--ok-soft); color: #065f46; }
+    .badge-warn { background: var(--warn-soft); color: var(--warn-dark); }
+    .badge-flag { background: #fee2e2; color: #991b1b; }
+
+    /* Summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 24px 0;
+    }
+    @media (max-width: 520px) { .summary-grid { grid-template-columns: 1fr; } }
+    .summary-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .summary-card .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 6px;
+    }
+    .summary-card .card-val {
+      font-family: 'Lora', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .summary-card .card-note {
+      font-size: 0.8rem;
+      color: var(--mid);
+      margin-top: 4px;
+    }
+    .summary-card.warn-card { border-left: 4px solid var(--warn); }
+    .summary-card.ok-card { border-left: 4px solid var(--ok); }
+
+    /* Alert box */
+    .alert {
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin: 20px 0;
+      font-size: 0.97rem;
+      line-height: 1.7;
+    }
+    .alert-warn {
+      background: var(--warn-soft);
+      border-left: 4px solid var(--warn);
+    }
+    .alert-ok {
+      background: var(--ok-soft);
+      border-left: 4px solid var(--ok);
+    }
+    .alert strong {
+      display: block;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .alert-warn strong { color: var(--warn-dark); }
+    .alert-ok strong { color: var(--accent-dark); }
+
+    .highlight-box {
+      background: var(--warm-white);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 0.97rem;
+    }
+    .highlight-box strong {
+      display: block;
+      font-weight: 600;
+      color: var(--accent-dark);
+      margin-bottom: 4px;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .article-body p {
+      margin-bottom: 16px;
+      font-size: 1.02rem;
+      color: #3a2a1e;
+    }
+
+    .symptom-list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0;
+    }
+    .symptom-list li {
+      padding: 7px 0 7px 28px;
+      position: relative;
+      font-size: 0.97rem;
+      border-bottom: 1px solid var(--border);
+      color: #3a2a1e;
+    }
+    .symptom-list li:last-child { border-bottom: none; }
+    .symptom-list li::before {
+      position: absolute; left: 0;
+      font-size: 1rem;
+    }
+    .symptom-list li.warn::before { content: '⚠️'; }
+    .symptom-list li.ok::before { content: '✅'; }
+
+    .disclaimer {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 32px 0 16px;
+      font-size: 0.86rem;
+      color: #475569;
+      line-height: 1.65;
+    }
+    .disclaimer strong { color: #334155; }
+
+    .view-counter-wrap {
+      text-align: center;
+      padding: 28px 0 8px;
+      font-size: 0.88rem;
+      color: var(--mid);
+    }
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      background: #064e3b;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.82rem;
+      margin-top: 40px;
+    }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+  <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span lang-target="en">Health Record · June 2026</span>
+      <span lang-target="zh">健康记录 · 2026年6月</span>
+    </div>
+    <h1>
+      <span lang-target="en">h06: Joanne's Blood Test Review</span>
+      <span lang-target="zh">h06：阿娟的血液检验报告分析</span>
+    </h1>
+    <div class="hero-sub">
+      <span lang-target="en">Full analysis of Ng Kah Joo's lab results — 23 June 2026</span>
+      <span lang-target="zh">黄家柔（阿娟）的化验报告详细解读 — 2026年6月23日</span>
+    </div>
+    <div class="hero-meta">
+      <span>🏥 <span lang-target="en">Mt Elizabeth Hospital</span><span lang-target="zh">伊丽莎白医院</span></span>
+      <span>👩‍⚕️ Dr Stanley Liew Choon Fong</span>
+      <span>🧪 Innoquest Lab</span>
+      <span>👤 <span lang-target="en">68 years, Female</span><span lang-target="zh">68岁，女</span></span>
+    </div>
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="container">
+  <div class="article-body">
+
+    <!-- OVERALL SUMMARY -->
+    <h2 class="section-title">
+      <span lang-target="en">📋 Quick Summary</span>
+      <span lang-target="zh">📋 总体摘要</span>
+    </h2>
+
+    <div class="summary-grid">
+      <div class="summary-card ok-card">
+        <div class="card-label"><span lang-target="en">Blood Sugar</span><span lang-target="zh">血糖</span></div>
+        <div class="card-val">5.0 <small style="font-size:1rem">mmol/L</small></div>
+        <div class="card-note"><span lang-target="en">Normal (3.9–6.0)</span><span lang-target="zh">正常（3.9–6.0）</span></div>
+      </div>
+      <div class="summary-card ok-card">
+        <div class="card-label"><span lang-target="en">Kidney (eGFR)</span><span lang-target="zh">肾功能（eGFR）</span></div>
+        <div class="card-val">77 <small style="font-size:1rem">mL/min</small></div>
+        <div class="card-note"><span lang-target="en">Normal (above 60 is good)</span><span lang-target="zh">正常（>60为良好）</span></div>
+      </div>
+      <div class="summary-card ok-card">
+        <div class="card-label"><span lang-target="en">Cholesterol</span><span lang-target="zh">胆固醇</span></div>
+        <div class="card-val">4.96 <small style="font-size:1rem">mmol/L</small></div>
+        <div class="card-note"><span lang-target="en">Normal (below 5.20)</span><span lang-target="zh">正常（低于5.20）</span></div>
+      </div>
+      <div class="summary-card ok-card">
+        <div class="card-label"><span lang-target="en">Thyroid (TSH)</span><span lang-target="zh">甲状腺（TSH）</span></div>
+        <div class="card-val">1.999 <small style="font-size:1rem">mU/L</small></div>
+        <div class="card-note"><span lang-target="en">Normal (0.27–4.20)</span><span lang-target="zh">正常（0.27–4.20）</span></div>
+      </div>
+      <div class="summary-card warn-card">
+        <div class="card-label"><span lang-target="en">Haemoglobin</span><span lang-target="zh">血红蛋白</span></div>
+        <div class="card-val" style="color:#b45309;">10.2 <small style="font-size:1rem">g/dL</small></div>
+        <div class="card-note"><span lang-target="en">⚠️ Low (normal 11.5–16.5)</span><span lang-target="zh">⚠️ 偏低（正常11.5–16.5）</span></div>
+      </div>
+      <div class="summary-card warn-card">
+        <div class="card-label"><span lang-target="en">Gamma GT (liver)</span><span lang-target="zh">谷氨酰转肽酶（肝脏）</span></div>
+        <div class="card-val" style="color:#b45309;">53 <small style="font-size:1rem">U/L</small></div>
+        <div class="card-note"><span lang-target="en">⚠️ Slightly high (normal &lt;40)</span><span lang-target="zh">⚠️ 轻微偏高（正常&lt;40）</span></div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: GOOD RESULTS -->
+    <h2 class="section-title">
+      <span lang-target="en">✅ What's Good</span>
+      <span lang-target="zh">✅ 正常指标</span>
+    </h2>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th><span lang-target="en">Test</span><span lang-target="zh">检测项目</span></th>
+          <th><span lang-target="en">Result</span><span lang-target="zh">结果</span></th>
+          <th><span lang-target="en">Normal Range</span><span lang-target="zh">参考范围</span></th>
+          <th><span lang-target="en">Status</span><span lang-target="zh">状态</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span lang-target="en">Fasting Blood Sugar</span><span lang-target="zh">空腹血糖</span></td>
+          <td>5.0 mmol/L</td>
+          <td>3.9–6.0</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Total Cholesterol</span><span lang-target="zh">总胆固醇</span></td>
+          <td>4.96 mmol/L</td>
+          <td>&lt;5.20</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Kidney (Creatinine)</span><span lang-target="zh">肌酐（肾功能）</span></td>
+          <td>70 µmol/L</td>
+          <td>35–83</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Kidney (eGFR)</span><span lang-target="zh">肾小球滤过率</span></td>
+          <td>77 mL/min/1.73m²</td>
+          <td>&gt;60</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Uric Acid</span><span lang-target="zh">尿酸</span></td>
+          <td>0.31 mmol/L</td>
+          <td>0.15–0.37</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Liver (ALT/SGPT)</span><span lang-target="zh">谷丙转氨酶</span></td>
+          <td>20 U/L</td>
+          <td>&lt;36</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Liver (AST/SGOT)</span><span lang-target="zh">谷草转氨酶</span></td>
+          <td>22 U/L</td>
+          <td>&lt;36</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Liver (ALP)</span><span lang-target="zh">碱性磷酸酶</span></td>
+          <td>73 U/L</td>
+          <td>&lt;105</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Thyroid (TSH)</span><span lang-target="zh">促甲状腺素</span></td>
+          <td>1.999 mU/L</td>
+          <td>0.27–4.20</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Thyroid (Free T4)</span><span lang-target="zh">游离甲状腺素</span></td>
+          <td>12.1 pmol/L</td>
+          <td>12.0–22.0</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">White Blood Cells</span><span lang-target="zh">白血球</span></td>
+          <td>7.4 ×10⁹/L</td>
+          <td>4.0–11.0</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Platelets</span><span lang-target="zh">血小板</span></td>
+          <td>291 ×10⁹/L</td>
+          <td>140–440</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Sodium</span><span lang-target="zh">钠</span></td>
+          <td>139 mmol/L</td>
+          <td>136–145</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Potassium</span><span lang-target="zh">钾</span></td>
+          <td>4.5 mmol/L</td>
+          <td>3.5–5.3</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert alert-ok">
+      <strong>
+        <span lang-target="en">Great news</span>
+        <span lang-target="zh">好消息</span>
+      </strong>
+      <span lang-target="en">Blood sugar, kidney function, cholesterol, thyroid, liver enzymes (ALT/AST), uric acid, and white blood cells are all in the normal range. For a 68-year-old, this is a very healthy profile overall.</span>
+      <span lang-target="zh">血糖、肾功能、胆固醇、甲状腺、肝酶（谷丙/谷草转氨酶）、尿酸及白血球均在正常范围内。对于68岁的女性来说，这是非常健康的整体指标。</span>
+    </div>
+
+    <!-- SECTION 2: CONCERNS -->
+    <h2 class="section-title">
+      <span lang-target="en">⚠️ Two Things to Follow Up</span>
+      <span lang-target="zh">⚠️ 两项需要跟进的指标</span>
+    </h2>
+
+    <!-- CONCERN 1: ANAEMIA -->
+    <h3 style="font-family:'Lora',serif; font-size:1.2rem; color:var(--warn-dark); margin:28px 0 12px;">
+      <span lang-target="en">1. Anaemia — Low Haemoglobin (Most Important)</span>
+      <span lang-target="zh">1. 贫血 — 血红蛋白偏低（最重要）</span>
+    </h3>
+
+    <p>
+      <span lang-target="en">Joanne's haemoglobin is <strong>10.2 g/dL</strong>, which is below the normal range of 11.5–16.5 for women. Several related markers are also flagged, all pointing to the same issue.</span>
+      <span lang-target="zh">阿娟的血红蛋白为 <strong>10.2 g/dL</strong>，低于女性正常范围11.5–16.5。多项相关指标也显示异常，均指向同一问题。</span>
+    </p>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th><span lang-target="en">Marker</span><span lang-target="zh">指标</span></th>
+          <th><span lang-target="en">Result</span><span lang-target="zh">结果</span></th>
+          <th><span lang-target="en">Normal Range</span><span lang-target="zh">参考范围</span></th>
+          <th><span lang-target="en">Status</span><span lang-target="zh">状态</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span lang-target="en">Haemoglobin</span><span lang-target="zh">血红蛋白</span></td>
+          <td><strong>10.2 g/dL</strong></td>
+          <td>11.5–16.5</td>
+          <td><span class="badge badge-flag">⚠️ Low</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Haematocrit (PCV)</span><span lang-target="zh">红细胞压积</span></td>
+          <td><strong>0.33</strong></td>
+          <td>0.36–0.47</td>
+          <td><span class="badge badge-flag">⚠️ Low</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">MCV (cell size)</span><span lang-target="zh">红细胞平均体积</span></td>
+          <td><strong>61 fL</strong></td>
+          <td>78–98</td>
+          <td><span class="badge badge-flag">⚠️ Low</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">MCH (haemoglobin per cell)</span><span lang-target="zh">平均红细胞血红蛋白含量</span></td>
+          <td><strong>19 pg</strong></td>
+          <td>27–32</td>
+          <td><span class="badge badge-flag">⚠️ Low</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">RDW (cell size variation)</span><span lang-target="zh">红细胞分布宽度</span></td>
+          <td><strong>16.5%</strong></td>
+          <td>11.0–15.5</td>
+          <td><span class="badge badge-warn">⚠️ High</span></td>
+        </tr>
+        <tr>
+          <td><span lang-target="en">Red Cell Count</span><span lang-target="zh">红细胞计数</span></td>
+          <td>5.4 ×10¹²/L</td>
+          <td>3.9–5.6</td>
+          <td><span class="badge badge-ok">✓ Normal</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert alert-warn">
+      <strong>
+        <span lang-target="en">Blood Film finding (from the lab report)</span>
+        <span lang-target="zh">血液涂片结果（来自化验报告）</span>
+      </strong>
+      <em>"Dyserythropoietic changes present. Suggestive of Iron Deficiency and/or Thalassaemia Trait."</em>
+    </div>
+
+    <p>
+      <span lang-target="en"><strong>What this means in plain language:</strong> The red blood cells are smaller than normal (low MCV = 61) and carry less haemoglobin than they should. The lab's blood film examination confirms this pattern matches either <strong>iron deficiency</strong> or <strong>thalassaemia trait</strong> — or possibly both.</span>
+      <span lang-target="zh"><strong>通俗解释：</strong> 红细胞比正常的小（MCV偏低 = 61），携带的血红蛋白量也不足。化验室的血液涂片检查确认这种模式符合<strong>缺铁性贫血</strong>或<strong>地中海贫血遗传特性</strong>——或两者兼有。</span>
+    </p>
+
+    <div class="highlight-box">
+      <strong>
+        <span lang-target="en">What the doctor should check next</span>
+        <span lang-target="zh">医生接下来应检查的项目</span>
+      </strong>
+      <span lang-target="en">Ask Dr Liew to order <strong>Serum Ferritin + Iron Studies</strong>. This simple blood test will show whether Joanne's iron stores are low (iron deficiency) or normal (suggesting thalassaemia trait instead). The two conditions look similar but have very different treatments.</span>
+      <span lang-target="zh">请刘医生开<strong>血清铁蛋白 + 铁代谢检查</strong>。这项简单的血液检查可以判断阿娟的铁储存量是否不足（缺铁性贫血），或是否正常（则可能是地中海贫血遗传特性）。两种情况看似相似，但治疗方法截然不同。</span>
+    </div>
+
+    <ul class="symptom-list" style="margin-bottom:20px;">
+      <li class="warn">
+        <span lang-target="en"><strong>Iron Deficiency Anaemia:</strong> Treatable — iron supplements + eat more iron-rich foods (spinach, red meat, lentils, tofu)</span>
+        <span lang-target="zh"><strong>缺铁性贫血：</strong> 可治疗 — 补充铁剂 + 多吃富含铁质的食物（菠菜、红肉、扁豆、豆腐）</span>
+      </li>
+      <li class="warn">
+        <span lang-target="en"><strong>Thalassaemia Minor (Trait):</strong> No treatment needed — it's a genetic characteristic, not a disease. But important to know for family planning (children may inherit it)</span>
+        <span lang-target="zh"><strong>轻型地中海贫血（遗传特性）：</strong> 无需治疗 — 这是遗传特征，不是疾病。但了解这一点对家庭规划很重要（子女可能遗传）</span>
+      </li>
+    </ul>
+
+    <div class="highlight-box">
+      <strong>
+        <span lang-target="en">Symptoms to watch for anaemia</span>
+        <span lang-target="zh">贫血需关注的症状</span>
+      </strong>
+      <span lang-target="en">Unusual fatigue · Shortness of breath doing normal activities · Dizziness or lightheadedness · Pale skin or pale lower eyelids · Heart pounding or racing</span>
+      <span lang-target="zh">异常疲劳 · 日常活动时气短 · 头晕或头重脚轻 · 皮肤或下眼睑苍白 · 心跳加速</span>
+    </div>
+
+    <!-- CONCERN 2: GAMMA GT -->
+    <h3 style="font-family:'Lora',serif; font-size:1.2rem; color:var(--warn-dark); margin:32px 0 12px;">
+      <span lang-target="en">2. Gamma GT — Mildly Elevated Liver Enzyme</span>
+      <span lang-target="zh">2. 谷氨酰转肽酶（GGT）— 肝酶轻微偏高</span>
+    </h3>
+
+    <p>
+      <span lang-target="en">Gamma GT is <strong>53 U/L</strong> against a normal range of &lt;40 U/L. This is a mild elevation. All other liver enzymes (ALT, AST, ALP, bilirubin, albumin) are normal.</span>
+      <span lang-target="zh">谷氨酰转肽酶为 <strong>53 U/L</strong>，正常范围为&lt;40 U/L，属于轻微偏高。其他所有肝脏指标（谷丙转氨酶、谷草转氨酶、碱性磷酸酶、胆红素、白蛋白）均正常。</span>
+    </p>
+
+    <div class="alert alert-warn">
+      <strong>
+        <span lang-target="en">Common causes of mild Gamma GT elevation</span>
+        <span lang-target="zh">谷氨酰转肽酶轻微偏高的常见原因</span>
+      </strong>
+      <span lang-target="en">Medication side effects · Fatty liver (NAFLD) · Alcohol · Recent illness · Even heavy exercise. Because all other liver markers are normal, this is not urgent — but worth mentioning to Dr Liew so he can monitor it.</span>
+      <span lang-target="zh">药物副作用 · 脂肪肝（非酒精性） · 饮酒 · 近期生病 · 甚至剧烈运动。由于其他所有肝脏指标正常，这并不紧急——但值得告知刘医生，以便持续监测。</span>
+    </div>
+
+    <!-- SECTION 3: NEXT STEPS -->
+    <h2 class="section-title">
+      <span lang-target="en">📌 Recommended Next Steps</span>
+      <span lang-target="zh">📌 建议后续步骤</span>
+    </h2>
+
+    <ul class="symptom-list">
+      <li class="warn">
+        <span lang-target="en"><strong>Ask Dr Liew for Ferritin + Iron Studies</strong> — to determine if anaemia is from iron deficiency or thalassaemia trait</span>
+        <span lang-target="zh"><strong>请刘医生开铁蛋白 + 铁代谢检查</strong> — 判断贫血是由缺铁还是地中海贫血遗传特性引起</span>
+      </li>
+      <li class="warn">
+        <span lang-target="en"><strong>Mention the Gamma GT elevation</strong> — let Dr Liew decide if further monitoring is needed</span>
+        <span lang-target="zh"><strong>告知刘医生谷氨酰转肽酶偏高</strong> — 由医生决定是否需要进一步监测</span>
+      </li>
+      <li class="ok">
+        <span lang-target="en"><strong>Continue current lifestyle</strong> — blood sugar, kidneys, cholesterol, thyroid all look great</span>
+        <span lang-target="zh"><strong>继续现有的生活方式</strong> — 血糖、肾功能、胆固醇、甲状腺各项指标都非常好</span>
+      </li>
+      <li class="ok">
+        <span lang-target="en"><strong>If iron deficiency confirmed:</strong> Start iron-rich foods — spinach, red meat, pumpkin seeds, tofu, lentils. Take iron supplement with Vitamin C for better absorption</span>
+        <span lang-target="zh"><strong>如确认缺铁：</strong> 多吃富含铁质的食物 — 菠菜、红肉、南瓜籽、豆腐、扁豆。配合维生素C服用铁剂以提高吸收率</span>
+      </li>
+    </ul>
+
+    <div class="disclaimer">
+      <strong>⚕️ <span lang-target="en">Medical Disclaimer</span><span lang-target="zh">医疗免责声明</span></strong><br>
+      <span lang-target="en">This is a layman's interpretation of the lab report to help Paul and Joanne understand the results. It is not medical advice. Please follow Dr Liew's professional guidance for diagnosis and treatment.</span>
+      <span lang-target="zh">本文是为帮助保罗和阿娟理解化验报告而进行的通俗解读，并非医疗建议。请遵循刘医生的专业诊断和治疗指导。</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="view-counter-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  <a href="https://paulsworld.vercel.app/">🏠 Paul's World</a> &nbsp;|&nbsp; &copy; 2026 Paul Yeo
+</footer>
+
+<script>
+function setLang(lang) {
+  document.querySelectorAll('[lang-target="en"]').forEach(function(el) {
+    el.style.display = lang === 'en' ? '' : 'none';
+  });
+  document.querySelectorAll('[lang-target="zh"]').forEach(function(el) {
+    el.style.display = lang === 'zh' ? '' : 'none';
+  });
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.classList.remove('active');
+  });
+  document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+}
+
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function() {});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function() { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+</body>
+</html>
