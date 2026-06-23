@@ -709,7 +709,7 @@ galleryPhotos.forEach(function(p, i) {
 });
 
 // ── MAP ──
-const map = L.map('trail-map', { zoomControl: true }).setView([1.3705, 103.7820], 14);
+const map = L.map('trail-map', { zoomControl: true }).setView([1.3700, 103.7830], 14);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles &copy; Esri', maxZoom: 19
 }).addTo(map);
@@ -734,17 +734,29 @@ function popupHtml(num, imgSrc, caption, btnLabel) {
 }
 
 const stops = [
-  { latlng: [1.3740, 103.7752], cls: 'start',      label: '▶',  num: 1,  img: 'img_S28/01-start.jpg',      caption: 'Starting point — open grass field, morning sky' },
-  { latlng: [1.3720, 103.7765], cls: 'forest',     label: '2',  num: 2,  img: 'img_S28/01-start.jpg',      caption: 'Zhenghua Park — through the trees' },
-  { latlng: [1.3695, 103.7785], cls: 'bke',        label: '3',  num: 3,  img: 'img_S28/01-start.jpg',      caption: 'BKE shoulder — turn RIGHT (south)' },
-  { latlng: [1.3660, 103.7810], cls: 'forest',     label: '4',  num: 4,  img: 'img_S28/01-start.jpg',      caption: 'Forest entry — into the green' },
-  { latlng: [1.3630, 103.7870], cls: 'forest',     label: '5',  num: 5,  img: 'img_S28/01-start.jpg',      caption: 'Forest trail — deep in the nature reserve' },
-  { latlng: [1.3600, 103.7940], cls: 'reservoir',  label: '6',  num: 6,  img: 'img_S28/01-start.jpg',      caption: 'The Reservoir — arrived!' },
-  { latlng: [1.3600, 103.7940], cls: 'end',        label: '■',  num: 7,  img: 'img_S28/01-start.jpg',      caption: 'End point — same reservoir, time to head home' },
+  { latlng: [1.3775, 103.7668], cls: 'start',     label: '▶', num: 1, img: 'img_S28/01-start.jpg', caption: 'Starting point — Zhenghua Park, open grass field' },
+  { latlng: [1.3758, 103.7700], cls: 'forest',    label: '2', num: 2, img: 'img_S28/01-start.jpg', caption: 'Zhenghua Park — through the trees' },
+  { latlng: [1.3740, 103.7730], cls: 'bke',       label: '3', num: 3, img: 'img_S28/01-start.jpg', caption: 'BKE shoulder — turn RIGHT (south)' },
+  { latlng: [1.3700, 103.7758], cls: 'forest',    label: '4', num: 4, img: 'img_S28/01-start.jpg', caption: 'Forest entry — into the green' },
+  { latlng: [1.3668, 103.7870], cls: 'forest',    label: '5', num: 5, img: 'img_S28/01-start.jpg', caption: 'Forest trail — deep in the nature reserve, heading east' },
+  { latlng: [1.3710, 103.8010], cls: 'reservoir', label: '6', num: 6, img: 'img_S28/01-start.jpg', caption: 'Upper Peirce Reservoir — arrived!' },
+  { latlng: [1.3710, 103.8010], cls: 'end',       label: '■', num: 7, img: 'img_S28/01-start.jpg', caption: 'End point — reservoir view, time to head home' },
 ];
 
-const routeCoords = stops.map(function(s) { return s.latlng; });
-L.polyline(routeCoords, { color: '#f4813f', weight: 3, dashArray: '8,6', opacity: 0.85 }).addTo(map);
+// OSRM foot routing — fallback to straight line
+var routeStyle28 = { color:'#f4813f', weight:3, dashArray:'8,6', opacity:0.85 };
+var wps28 = stops.map(function(s){ return s.latlng[1]+','+s.latlng[0]; }).join(';');
+fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+wps28+'?overview=full&geometries=geojson')
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if(d.code==='Ok'&&d.routes&&d.routes[0]){
+      L.geoJSON(d.routes[0].geometry,{style:routeStyle28}).addTo(map);
+    } else { drawFallback28(); }
+  }).catch(function(){ drawFallback28(); });
+function drawFallback28(){
+  L.polyline(stops.map(function(s){ return s.latlng; }),routeStyle28).addTo(map);
+}
+map.fitBounds(L.latLngBounds(stops.map(function(s){ return s.latlng; })),{padding:[40,40]});
 
 stops.forEach(function(s) {
   L.marker(s.latlng, { icon: makeIcon(s.cls, s.label) })

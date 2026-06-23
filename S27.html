@@ -568,27 +568,39 @@ document.addEventListener('keydown', function(e) {
 function openMapFullscreen() { document.getElementById('trail-map').classList.add('map-fullscreen'); document.getElementById('mapCloseBtn').style.display='flex'; document.body.style.overflow='hidden'; setTimeout(()=>map.invalidateSize(),100); }
 function closeMapFullscreen() { document.getElementById('trail-map').classList.remove('map-fullscreen'); document.getElementById('mapCloseBtn').style.display='none'; document.body.style.overflow=''; setTimeout(()=>map.invalidateSize(),100); }
 
-const map = L.map('trail-map', { zoomControl:true, fullscreenControl:true, fullscreenControlOptions:{position:'topright'} }).setView([1.3480, 103.7760], 15);
+const map = L.map('trail-map', { zoomControl:true, fullscreenControl:true, fullscreenControlOptions:{position:'topright'} }).setView([1.3495, 103.7745], 16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'Tiles &copy; Esri', maxZoom:19 }).addTo(map);
 
 const mapPhotos = [
-  { src:"img_S27/01-trail-start.jpg",       lat:1.3505, lon:103.7785, caption:"Trail entrance — start here", cls:"start", idx:0 },
-  { src:"img_S27/02-military-hardware.jpg",  lat:1.3495, lon:103.7775, caption:"Rusty military hardware", cls:"military", idx:1 },
-  { src:"img_S27/03-army-bollards.jpg",      lat:1.3487, lon:103.7767, caption:"Yellow-black bollards — camp boundary", cls:"military", idx:2 },
-  { src:"img_S27/04-open-field.jpg",         lat:1.3478, lon:103.7758, caption:"Open field beside Rifle Range Camp", cls:"forest", idx:3 },
-  { src:"img_S27/06-wwii-bunker.jpg",        lat:1.3473, lon:103.7753, caption:"WWII bunker + Buddhist stone cairn", cls:"military", idx:5 },
-  { src:"img_S27/11-fallen-tree.jpg",        lat:1.3469, lon:103.7751, caption:"Fallen tree — duck under!", cls:"forest", idx:10 },
-  { src:"img_S27/13-bridge-entrance.jpg",    lat:1.3465, lon:103.7747, caption:"SECRET ENTRANCE — yellow circle marker", cls:"enter", idx:12 },
-  { src:"img_S27/05-bridge-selfie.jpg",      lat:1.3463, lon:103.7744, caption:"Eco-Link@BKE bridge", cls:"road", idx:4 },
-  { src:"img_S27/09-highway-view.jpg",       lat:1.3462, lon:103.7742, caption:"View down onto BKE highway", cls:"road", idx:8 },
-  { src:"img_S27/10-paul-and-po.jpg",        lat:1.3460, lon:103.7740, caption:"Paul & Mr Po — 21 May 2022", cls:"road", idx:9 },
-  { src:"img_S27/12-bridge-top.jpg",         lat:1.3461, lon:103.7738, caption:"Bridge top — leaf litter & the fan", cls:"road", idx:11 },
-  { src:"img_S27/08-terrapin.jpg",           lat:1.3457, lon:103.7735, caption:"Freshwater terrapin in the stream", cls:"water", idx:7 },
-  { src:"img_S27/07-rifle-range-camp.jpg",   lat:1.3448, lon:103.7726, caption:"Rifle Range Road Camp 1 gate", cls:"end", idx:6 },
+  { src:"img_S27/01-trail-start.jpg",       lat:1.3535, lon:103.7762, caption:"Trail entrance — start here", cls:"start", idx:0 },
+  { src:"img_S27/02-military-hardware.jpg",  lat:1.3522, lon:103.7757, caption:"Rusty military hardware", cls:"military", idx:1 },
+  { src:"img_S27/03-army-bollards.jpg",      lat:1.3510, lon:103.7754, caption:"Yellow-black bollards — camp boundary", cls:"military", idx:2 },
+  { src:"img_S27/04-open-field.jpg",         lat:1.3501, lon:103.7751, caption:"Open field beside Rifle Range Camp", cls:"forest", idx:3 },
+  { src:"img_S27/06-wwii-bunker.jpg",        lat:1.3495, lon:103.7750, caption:"WWII bunker + Buddhist stone cairn", cls:"military", idx:5 },
+  { src:"img_S27/11-fallen-tree.jpg",        lat:1.3491, lon:103.7749, caption:"Fallen tree — duck under!", cls:"forest", idx:10 },
+  { src:"img_S27/13-bridge-entrance.jpg",    lat:1.3489, lon:103.7748, caption:"SECRET ENTRANCE — yellow circle marker", cls:"enter", idx:12 },
+  { src:"img_S27/05-bridge-selfie.jpg",      lat:1.3487, lon:103.7748, caption:"Eco-Link@BKE bridge — east entrance", cls:"road", idx:4 },
+  { src:"img_S27/09-highway-view.jpg",       lat:1.3487, lon:103.7742, caption:"View down onto BKE highway", cls:"road", idx:8 },
+  { src:"img_S27/10-paul-and-po.jpg",        lat:1.3487, lon:103.7736, caption:"Paul & Mr Po — 21 May 2022", cls:"road", idx:9 },
+  { src:"img_S27/12-bridge-top.jpg",         lat:1.3487, lon:103.7730, caption:"Bridge top — leaf litter & the fan", cls:"road", idx:11 },
+  { src:"img_S27/08-terrapin.jpg",           lat:1.3480, lon:103.7723, caption:"Freshwater terrapin in the stream", cls:"water", idx:7 },
+  { src:"img_S27/07-rifle-range-camp.jpg",   lat:1.3462, lon:103.7718, caption:"Rifle Range Road Camp 1 gate", cls:"end", idx:6 },
 ];
 
-const routeCoords = mapPhotos.map(p => [p.lat, p.lon]);
-L.polyline(routeCoords, { color:'#f4813f', weight:4, dashArray:'8,5', opacity:0.9 }).addTo(map);
+// OSRM foot routing — fallback to straight line
+const routeStyle = { color:'#f4813f', weight:4, dashArray:'8,5', opacity:0.9 };
+const wps27 = mapPhotos.map(p => p.lon+','+p.lat).join(';');
+fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+wps27+'?overview=full&geometries=geojson')
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.code==='Ok'&&d.routes&&d.routes[0]){
+      L.geoJSON(d.routes[0].geometry,{style:routeStyle}).addTo(map);
+    } else { drawFallback27(); }
+  }).catch(()=>drawFallback27());
+function drawFallback27(){
+  L.polyline(mapPhotos.map(p=>[p.lat,p.lon]),routeStyle).addTo(map);
+}
+map.fitBounds(L.latLngBounds(mapPhotos.map(p=>[p.lat,p.lon])),{padding:[40,40]});
 
 mapPhotos.forEach((p, i) => {
   const isEnter = p.cls === 'enter';
