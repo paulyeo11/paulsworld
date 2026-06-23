@@ -391,6 +391,43 @@
   <div id="trail-map-full" style="width:100%;height:100%;"></div>
 </div>
 
+<!-- ROUTE GUIDE -->
+<div class="container">
+  <div style="background:#fff;border-radius:14px;padding:28px 26px;margin:36px 0 0;box-shadow:0 3px 18px rgba(26,58,26,0.1);">
+    <div class="chapter-label">Follow the Route</div>
+    <h2 style="font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(1.3rem,3.5vw,1.9rem);color:var(--dark);line-height:1.2;margin-bottom:6px;">
+      <span class="en">Paul's Dairy Farm Hike — Step by Step</span>
+      <span class="zh">保罗的乳农园徒步路线——一步一步</span>
+    </h2>
+    <p style="font-size:0.88rem;color:var(--caption);margin-bottom:18px;font-style:italic;">
+      <span class="en">Follow the numbered points below to walk the same route. Each section has photos and a map marker.</span>
+      <span class="zh">按以下编号逐点跟随，即可走上同一条路线。每个路段都有照片与地图标记。</span>
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(229,62,62,0.07);border-left:4px solid #e53e3e;border-radius:0 8px 8px 0;">
+        <span style="font-weight:900;font-size:1.1rem;color:#e53e3e;min-width:28px;">1</span>
+        <span style="font-size:0.92rem;color:var(--text);"><strong><span class="en">Start</span><span class="zh">出发</span></strong> — <span class="en">Dairy Farm Rd / Upper Bukit Timah Rd junction</span><span class="zh">乳农园路 / 武吉知马上段路交界处</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(72,187,120,0.07);border-left:4px solid #48bb78;border-radius:0 8px 8px 0;">
+        <span style="font-weight:900;font-size:1.1rem;color:#48bb78;min-width:28px;">2</span>
+        <span style="font-size:0.92rem;color:var(--text);"><strong><span class="en">Enter the Forest</span><span class="zh">进入丛林</span></strong> — <span class="en">Dairy Farm Road, jungle begins</span><span class="zh">乳农园路，丛林开始</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(72,187,120,0.07);border-left:4px solid #48bb78;border-radius:0 8px 8px 0;">
+        <span style="font-weight:900;font-size:1.1rem;color:#48bb78;min-width:28px;">3</span>
+        <span style="font-size:0.92rem;color:var(--text);"><strong><span class="en">Start the Climb</span><span class="zh">开始攀登</span></strong> — <span class="en">Bukit Timah Nature Reserve trailhead, stairs up</span><span class="zh">武吉知马自然保护区入口，台阶向上</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(72,187,120,0.07);border-left:4px solid #48bb78;border-radius:0 8px 8px 0;">
+        <span style="font-weight:900;font-size:1.1rem;color:#48bb78;min-width:28px;">4</span>
+        <span style="font-size:0.92rem;color:var(--text);"><strong><span class="en">Dairy Farm Hut</span><span class="zh">乳农园小屋</span></strong> — <span class="en">Rest shelter, trail junction, Wallace Trail above</span><span class="zh">休息亭、路线交汇处，华莱士步道在上方</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(72,187,120,0.07);border-left:4px solid #48bb78;border-radius:0 8px 8px 0;">
+        <span style="font-weight:900;font-size:1.1rem;color:#48bb78;min-width:28px;">5</span>
+        <span style="font-size:0.92rem;color:var(--text);"><strong><span class="en">North View Hut</span><span class="zh">北望亭</span></strong> — <span class="en">Upper Dairy Farm Loop, summit ahead</span><span class="zh">乳农园上段环线，山顶就在前方</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- STATS STRIP -->
 <div class="stats-strip">
   <div class="stat-item">
@@ -743,24 +780,22 @@
     // Fit map to all stop markers
     var bounds = L.latLngBounds(stops.map(function(s){return[s.lat,s.lng];}));
     m.fitBounds(bounds, {padding:[40,40]});
-    // Load real trail geometry from OpenStreetMap (Overpass API)
-    var bbox = '1.358,103.772,1.368,103.782';
-    var oq = '[out:json][timeout:25];(way["highway"~"path|footway|track"]('+bbox+'););out geom;';
-    fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(oq))
+    // Route along real OSM foot paths using OSRM walking profile
+    var wps = stops.map(function(s){return s.lng+','+s.lat;}).join(';');
+    fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+wps+'?overview=full&geometries=geojson')
       .then(function(r){return r.json();})
       .then(function(d){
-        d.elements.forEach(function(el){
-          if(el.type==='way'&&el.geometry){
-            var pts=el.geometry.map(function(n){return[n.lat,n.lon];});
-            L.polyline(pts,{color:'#ed8936',weight:3,dashArray:'7,5',opacity:0.85}).addTo(m);
-          }
-        });
+        if(d.code==='Ok'&&d.routes&&d.routes[0]){
+          L.geoJSON(d.routes[0].geometry,{
+            style:{color:'#ed8936',weight:4,dashArray:'9,6',opacity:0.9}
+          }).addTo(m);
+        } else { drawFallback(m); }
       })
-      .catch(function(){
-        // fallback: straight lines if API unreachable
-        var pts=stops.map(function(s){return[s.lat,s.lng];});
-        L.polyline(pts,{color:'#ed8936',weight:4,dashArray:'10,7',opacity:0.9}).addTo(m);
-      });
+      .catch(function(){ drawFallback(m); });
+    function drawFallback(map){
+      var pts=stops.map(function(s){return[s.lat,s.lng];});
+      L.polyline(pts,{color:'#ed8936',weight:4,dashArray:'10,7',opacity:0.9}).addTo(map);
+    }
     if (L.control.fullscreen) L.control.fullscreen({position:'topright'}).addTo(m);
 
     var legend = L.control({position:'bottomleft'});
