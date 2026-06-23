@@ -391,6 +391,245 @@
   <div id="trail-map-full" style="width:100%;height:100%;"></div>
 </div>
 
+<!-- ===== ANIMATED DARK MAP (MT09 style) ===== -->
+<div style="background:#111827;padding:36px 0 0;">
+  <div class="container" style="padding-bottom:0;">
+    <div class="chapter-label" style="color:#f0a500;">🎬 Animated Route</div>
+    <h2 style="font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(1.4rem,4vw,2rem);color:#fff;line-height:1.2;margin-bottom:10px;">
+      <span class="en">Watch the Hike Come Alive</span><span class="zh">观看登山路线动态演示</span>
+    </h2>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.88rem;margin-bottom:14px;">
+      <span class="en">The orange line draws itself from Point 1 → 10. Tap any marker for details.</span>
+      <span class="zh">橙色路线从第1点自动延伸至第10点。点击标记查看详情。</span>
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+      <span style="font-size:0.82rem;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:#ef4444;display:inline-block;border:2px solid #fff;"></span><span class="en">Start / Finish / Summit</span><span class="zh">起点/终点/山顶</span></span>
+      <span style="font-size:0.82rem;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:#f0a500;display:inline-block;border:2px solid #fff;"></span><span class="en">Summit ⭐</span><span class="zh">山顶⭐</span></span>
+      <span style="font-size:0.82rem;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border-radius:50%;background:#10b981;display:inline-block;border:2px solid #fff;"></span><span class="en">Forest Trail</span><span class="zh">森林步道</span></span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+      <button id="hikAnimReplayBtn" onclick="replayHikeAnim()" style="background:#f0a500;color:#111;border:none;padding:10px 24px;border-radius:24px;font-size:0.93rem;font-weight:700;cursor:pointer;letter-spacing:.03em;">▶ <span class="en">Replay Animation</span><span class="zh">重播动画</span></button>
+      <button onclick="toggleHikeAnimFullscreen()" style="background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.3);padding:10px 20px;border-radius:24px;font-size:0.93rem;font-weight:600;cursor:pointer;">⛶ <span class="en">Full Screen</span><span class="zh">全屏</span></button>
+    </div>
+    <div id="hike-anim-status" style="display:none;font-size:0.82rem;padding:7px 14px;border-radius:8px;margin-bottom:12px;border:1px solid rgba(240,165,0,0.4);background:rgba(240,165,0,0.1);color:#f0a500;"></div>
+  </div>
+  <div id="hike-anim-map" style="height:480px;width:100%;position:relative;"></div>
+  <div id="hike-anim-fullscreen" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:8888;background:#111827;">
+    <button onclick="toggleHikeAnimFullscreen()" style="position:absolute;top:14px;right:14px;z-index:8889;background:rgba(0,0,0,0.75);color:#fff;border:1.5px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:20px;font-size:0.9rem;font-weight:700;cursor:pointer;">✕ <span class="en">Close</span><span class="zh">关闭</span></button>
+    <div id="hike-anim-map-full" style="width:100%;height:100%;"></div>
+  </div>
+  <!-- Stop List -->
+  <div class="container" style="padding-top:20px;padding-bottom:32px;">
+    <div style="color:rgba(255,255,255,0.5);font-size:0.8rem;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+      <span>📍 <span class="en">Trail Stops — Tap to zoom</span><span class="zh">步道站点——点击放大</span></span>
+      <span style="color:#f0a500;font-weight:700;"><span class="en">10 stops · 23 June 2026</span><span class="zh">10个站点 · 2026年6月23日</span></span>
+    </div>
+    <div id="hike-anim-stoplist" style="display:flex;flex-direction:column;gap:4px;"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ANIM_STOPS = [
+    { lat:1.3601, lng:103.7750, label:'1', color:'#ef4444', emoji:'🚦', mustSee:false,
+      en:'Start — Dairy Farm Rd / Upper Bukit Timah Rd', zh:'起点 — 乳农园路/武吉知马上段路' },
+    { lat:1.3621, lng:103.7762, label:'2', color:'#10b981', emoji:'🌿', mustSee:false,
+      en:'Enter the Forest — Dairy Farm Road', zh:'进入丛林 — 乳农园路' },
+    { lat:1.3630, lng:103.7768, label:'3', color:'#10b981', emoji:'🪜', mustSee:false,
+      en:'Start the Climb — BTNR Trailhead, Stairs Up', zh:'开始攀登 — 自然保护区入口，台阶向上' },
+    { lat:1.3620, lng:103.7770, label:'4', color:'#10b981', emoji:'🏕️', mustSee:false,
+      en:'Dairy Farm Hut — Rest Shelter, Trail Junction', zh:'乳农园小屋 — 休息亭、路线交汇处' },
+    { lat:1.3608, lng:103.7756, label:'5', color:'#10b981', emoji:'👁️', mustSee:false,
+      en:'North View Hut — Upper Dairy Farm Loop', zh:'北望亭 — 乳农园上段环线' },
+    { lat:1.3582, lng:103.7762, label:'6', color:'#10b981', emoji:'🌲', mustSee:false,
+      en:'Kuring Hut — Trail Junction, Summit Ahead', zh:'Kuring小屋 — 路线交汇，山顶在前' },
+    { lat:1.3560, lng:103.7763, label:'7', color:'#10b981', emoji:'🪧', mustSee:false,
+      en:'Summit Junction — "Summit →" Sign, Tall Trees', zh:'登顶岔路口 — "山顶→"路牌，参天大树' },
+    { lat:1.3547, lng:103.7764, label:'8', color:'#f0a500', emoji:'⭐', mustSee:true,
+      en:'Bukit Timah Summit — 163.63m, Highest Point in SG!', zh:'武吉知马山顶 — 163.63米，新加坡最高点！' },
+    { lat:1.3535, lng:103.7773, label:'9', color:'#10b981', emoji:'⬇️', mustSee:false,
+      en:'Simpang Hut — Descending South of Summit', zh:'Simpang小屋 — 山顶南侧下山中' },
+    { lat:1.3494, lng:103.7764, label:'10', color:'#ef4444', emoji:'🏁', mustSee:false,
+      en:'Finish — BTNR Visitor Centre, Mission Complete!', zh:'终点 — 自然保护区游客中心，圆满完成！' }
+  ];
+
+  var hikemap = null;
+  var animRouteCoords = [];
+  var animLine = null;
+  var animMarkers = [];
+  var animInterval = null;
+
+  function initHikeAnimMap() {
+    if (hikemap) { hikemap.remove(); hikemap = null; }
+    hikemap = L.map('hike-anim-map', { scrollWheelZoom:false, zoomControl:true });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution:'© OpenStreetMap © CARTO', maxZoom:19
+    }).addTo(hikemap);
+    var bounds = L.latLngBounds(ANIM_STOPS.map(function(s){ return [s.lat,s.lng]; }));
+    hikemap.fitBounds(bounds, { padding:[50,50] });
+    buildStopListUI();
+    loadRouteAndAnimate();
+  }
+
+  function buildStopListUI() {
+    var el = document.getElementById('hike-anim-stoplist');
+    var lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+    el.innerHTML = '';
+    ANIM_STOPS.forEach(function(s, i) {
+      var row = document.createElement('div');
+      row.id = 'anim-stop-row-' + i;
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);opacity:0.35;';
+      row.innerHTML = '<div style="width:26px;height:26px;border-radius:50%;background:'+ s.color +';border:'+(s.mustSee?'2.5px solid #ef4444':'2px solid rgba(255,255,255,0.5)')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0;">'+(s.mustSee?'⭐':s.label)+'</div>'
+        +'<span style="font-size:0.84rem;color:rgba(255,255,255,0.85);">'+ s.emoji +' <span class="en">'+ s.en +'</span><span class="zh">'+ s.zh +'</span></span>';
+      row.onclick = (function(stop){ return function(){ hikemap.flyTo([stop.lat,stop.lng],17,{duration:1}); }; })(s);
+      el.appendChild(row);
+    });
+  }
+
+  function revealStopRow(i) {
+    var row = document.getElementById('anim-stop-row-' + i);
+    if (row) { row.style.opacity = '1'; row.style.background = 'rgba(255,255,255,0.06)'; }
+  }
+
+  function interpolate(p1, p2, steps) {
+    var pts = [];
+    for (var i = 0; i <= steps; i++) {
+      pts.push([ p1[0] + (p2[0]-p1[0])*(i/steps), p1[1] + (p2[1]-p1[1])*(i/steps) ]);
+    }
+    return pts;
+  }
+
+  function buildFallbackCoords() {
+    var coords = [];
+    for (var i = 0; i < ANIM_STOPS.length-1; i++) {
+      var pts = interpolate([ANIM_STOPS[i].lat,ANIM_STOPS[i].lng],[ANIM_STOPS[i+1].lat,ANIM_STOPS[i+1].lng], 30);
+      if (i > 0) pts.shift();
+      coords = coords.concat(pts);
+    }
+    return coords;
+  }
+
+  function loadRouteAndAnimate() {
+    var statusEl = document.getElementById('hike-anim-status');
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Loading trail route…';
+    var wps = ANIM_STOPS.map(function(s){ return s.lng+','+s.lat; }).join(';');
+    fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+wps+'?overview=full&geometries=geojson')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.code==='Ok' && d.routes && d.routes[0]) {
+          animRouteCoords = d.routes[0].geometry.coordinates.map(function(c){ return [c[1],c[0]]; });
+          statusEl.textContent = '✅ Route loaded — animating…';
+        } else { throw new Error('no route'); }
+      })
+      .catch(function(){
+        animRouteCoords = buildFallbackCoords();
+        statusEl.textContent = '⚠️ Using estimated trail line';
+      })
+      .finally(function(){
+        setTimeout(function(){ statusEl.style.display='none'; }, 3000);
+        startAnimation();
+      });
+  }
+
+  function startAnimation() {
+    if (animInterval) clearInterval(animInterval);
+    if (animLine) { hikemap.removeLayer(animLine); animLine = null; }
+    animMarkers.forEach(function(m){ hikemap.removeLayer(m); });
+    animMarkers = [];
+
+    animLine = L.polyline([], { color:'#f0a500', weight:3, opacity:0.9, dashArray:'8,4' }).addTo(hikemap);
+
+    // Reset stop rows
+    ANIM_STOPS.forEach(function(_, i){ document.getElementById('anim-stop-row-'+i).style.opacity='0.35'; document.getElementById('anim-stop-row-'+i).style.background='rgba(255,255,255,0.03)'; });
+
+    var total = animRouteCoords.length;
+    var STEPS_PER_STOP = Math.floor(total / ANIM_STOPS.length);
+    var idx = 0;
+    var stopReached = new Array(ANIM_STOPS.length).fill(false);
+
+    // Calculate which coord index is closest to each stop
+    var stopIndices = ANIM_STOPS.map(function(s){
+      var best = 0, bestDist = Infinity;
+      animRouteCoords.forEach(function(c, ci){
+        var d = Math.pow(c[0]-s.lat,2)+Math.pow(c[1]-s.lng,2);
+        if (d < bestDist){ bestDist=d; best=ci; }
+      });
+      return best;
+    });
+
+    function addMarker(stopIdx) {
+      var s = ANIM_STOPS[stopIdx];
+      var icon = L.divIcon({
+        className:'',
+        html:'<div style="width:'+(s.mustSee?'32px':'26px')+';height:'+(s.mustSee?'32px':'26px')+';border-radius:50%;background:'+s.color+';border:'+(s.mustSee?'3px solid #ef4444':'2px solid rgba(255,255,255,0.7)')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 0 0 '+(s.mustSee?'3px #ef4444,':'')+'0 2px 10px rgba(0,0,0,0.7);">'+(s.mustSee?'⭐':s.label)+'</div>',
+        iconSize:[s.mustSee?32:26,s.mustSee?32:26], iconAnchor:[s.mustSee?16:13,s.mustSee?16:13]
+      });
+      var m = L.marker([s.lat,s.lng],{icon:icon}).addTo(hikemap)
+        .bindPopup('<div style="font-weight:700;font-size:0.95rem;">'+s.emoji+' Point '+s.label+'</div><div style="font-size:0.82rem;color:#555;margin-top:4px;"><span class="en">'+s.en+'</span><span class="zh">'+s.zh+'</span></div>');
+      animMarkers.push(m);
+      revealStopRow(stopIdx);
+    }
+
+    var msPerStep = Math.max(15, Math.round(4000 / total));
+    animInterval = setInterval(function(){
+      if (idx >= total) { clearInterval(animInterval); return; }
+      animLine.addLatLng(animRouteCoords[idx]);
+      // Check stops
+      stopIndices.forEach(function(si, stopIdx){
+        if (!stopReached[stopIdx] && idx >= si) {
+          stopReached[stopIdx] = true;
+          addMarker(stopIdx);
+        }
+      });
+      idx++;
+    }, msPerStep);
+  }
+
+  window.replayHikeAnim = function() {
+    if (!hikemap) return;
+    startAnimation();
+  };
+
+  window.toggleHikeAnimFullscreen = function() {
+    var overlay = document.getElementById('hike-anim-fullscreen');
+    var mapDiv  = document.getElementById('hike-anim-map-full');
+    if (overlay.style.display === 'none') {
+      overlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      if (!overlay._fmap) {
+        overlay._fmap = L.map(mapDiv, { scrollWheelZoom:true, zoomControl:true });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          { attribution:'© OpenStreetMap © CARTO', maxZoom:19 }).addTo(overlay._fmap);
+        var bounds = L.latLngBounds(ANIM_STOPS.map(function(s){ return [s.lat,s.lng]; }));
+        overlay._fmap.fitBounds(bounds, { padding:[40,40] });
+        // Static markers + line for fullscreen
+        ANIM_STOPS.forEach(function(s, i){
+          var icon = L.divIcon({ className:'',
+            html:'<div style="width:26px;height:26px;border-radius:50%;background:'+s.color+';border:2px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.7);">'+s.label+'</div>',
+            iconSize:[26,26], iconAnchor:[13,13] });
+          L.marker([s.lat,s.lng],{icon:icon}).addTo(overlay._fmap)
+            .bindPopup('<b>'+s.emoji+' Point '+s.label+'</b><br><span class="en">'+s.en+'</span>');
+        });
+        if (animRouteCoords.length > 0) {
+          L.polyline(animRouteCoords, { color:'#f0a500', weight:3, opacity:0.9, dashArray:'8,4' }).addTo(overlay._fmap);
+        } else {
+          L.polyline(ANIM_STOPS.map(function(s){ return [s.lat,s.lng]; }), { color:'#f0a500', weight:3, opacity:0.9, dashArray:'8,4' }).addTo(overlay._fmap);
+        }
+      }
+      setTimeout(function(){ overlay._fmap.invalidateSize(); }, 80);
+    } else {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  };
+
+  // Init on load
+  document.addEventListener('DOMContentLoaded', function(){ initHikeAnimMap(); });
+  if (document.readyState !== 'loading') initHikeAnimMap();
+})();
+</script>
+
 <!-- ROUTE GUIDE -->
 <div class="container">
   <div style="background:#fff;border-radius:14px;padding:28px 26px;margin:36px 0 0;box-shadow:0 3px 18px rgba(26,58,26,0.1);">
