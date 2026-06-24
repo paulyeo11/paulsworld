@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S29: ECO Sanctuary Neighbourhood Walk — 24 June 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, #0a1a10 0%, #0f1a14 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(46,204,113,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(46,204,113,0.12);
+  border: 1px solid rgba(46,204,113,0.3);
+  color: var(--green);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 740px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(240,165,0,0.15); border-color: rgba(240,165,0,0.5); color: #f0a500; }
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+  text-decoration: none;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(74,108,247,0.12);
+  border-color: rgba(74,108,247,0.35);
+  color: var(--blue);
+}
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+.share-btn { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.3); color: #fff; font-weight: 700; letter-spacing: .04em; padding: 9px 22px; border-radius: 24px; cursor: pointer; font-size: .9rem; font-family: 'Source Serif 4',Georgia,serif; transition: background .2s; }
+.share-btn:hover { background: rgba(255,255,255,.22); }
+.share-toast { display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+
+/* LIVE BADGE */
+.live-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.4);
+  color: #e74c3c; font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 16px; margin-bottom: 16px;
+}
+.live-dot { width: 7px; height: 7px; background: #e74c3c; border-radius: 50%; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.4)} }
+
+/* OVERVIEW MAP */
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 30px; }
+#overview-map { width: 100%; height: 480px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+#overview-map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border: none !important;
+}
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px; font-family: 'Source Serif 4', serif;
+}
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+.map-header { max-width: 740px; margin: 0 auto; padding: 30px 22px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+/* MAP POPUPS */
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-num { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; margin-bottom: 8px; }
+.map-popup-links { display: flex; gap: 5px; flex-wrap: wrap; }
+
+/* MARKER CIRCLES */
+.pm-circle {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 800; color: #fff;
+  font-family: 'Source Serif 4', sans-serif;
+}
+.pm-circle.start { background: #e74c3c; width: 44px; height: 44px; font-size: 1rem; }
+.pm-circle.water { background: #2980b9; }
+.pm-circle.forest { background: #27ae60; }
+.pm-circle.road { background: #e67e22; }
+.pm-container { position: relative; }
+
+/* LEGEND */
+.map-legend {
+  background: rgba(15,17,23,0.88); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 10px 14px; font-size: 0.72rem; color: #d0d4e8;
+  line-height: 1.9;
+}
+.legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* STOPS SECTION */
+.stops-section { max-width: 740px; margin: 0 auto; padding: 10px 22px 50px; }
+.stops-section h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; margin-bottom: 24px; }
+
+.stop-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden; margin-bottom: 36px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.stop-card-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.stop-num-badge {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.1rem; color: #fff;
+  flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.stop-num-badge.start { background: #e74c3c; }
+.stop-num-badge.water { background: #2980b9; }
+.stop-num-badge.forest { background: #27ae60; }
+.stop-num-badge.road { background: #e67e22; }
+.stop-card-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+.stop-card-meta { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.04em; margin-top: 3px; }
+
+/* INDIVIDUAL MINI-MAP */
+.stop-mini-map { width: 100%; height: 300px; display: block; position: relative; }
+.stop-mini-map-hint {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.65); color: #fff; font-size: 0.7rem;
+  padding: 4px 12px; border-radius: 14px; pointer-events: none; white-space: nowrap;
+  z-index: 500;
+}
+
+/* MAP LINKS */
+.stop-map-links { padding: 10px 16px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+
+/* STOP PHOTO */
+.stop-photo-area { padding: 16px 20px 0; }
+.stop-photo-area img { width: 100%; border-radius: 10px; max-height: 380px; object-fit: cover; display: block; cursor: pointer; }
+.stop-photo-placeholder { width: 100%; height: 200px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 2px dashed rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.85rem; }
+
+/* STOP TEXT */
+.stop-body { padding: 16px 20px 20px; }
+.stop-body p { color: #d0d4e8; font-size: 0.97rem; line-height: 1.75; margin-bottom: 0.8em; }
+.stop-body p:last-child { margin-bottom: 0; }
+
+/* STATS */
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 12px; padding: 22px 24px; margin: 0 22px 36px;
+  max-width: 740px; margin-left: auto; margin-right: auto;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+/* CONTENT */
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid var(--green); padding-left: 18px; margin-bottom: 2em;
+}
+.content h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700; }
+
+/* PHOTO JOURNAL */
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.gallery-section h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; margin-bottom: 20px; }
+.photo-journal { display: flex; flex-direction: column; gap: 36px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; max-height: 420px; object-fit: cover; display: block; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+/* LIGHTBOX */
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.93); z-index: 9000; align-items: center; justify-content: center; flex-direction: column; padding: 20px; }
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.12); border: none; color: #fff; font-size: 1.6rem; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 EN</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+  <div class="live-badge"><span class="live-dot"></span> <span class="en">Live · In Progress</span><span class="zh">直播中</span></div>
+  <div class="label"><span class="en">Travel Story &middot; S29</span><span class="zh">旅行故事 · S29</span></div>
+  <h1 class="en-block">ECO Sanctuary Neighbourhood <span>Walk</span></h1>
+  <h1 class="zh-block">ECO Sanctuary社区<span>漫步</span></h1>
+  <div class="meta"><span class="en">By Paul Yeo &nbsp;&middot;&nbsp; 24 June 2026 &nbsp;&middot;&nbsp; Singapore</span><span class="zh">郑保罗 著 &nbsp;&middot;&nbsp; 2026年6月24日 &nbsp;&middot;&nbsp; 新加坡</span></div>
+  <div class="hero-btns">
+    <a href="#stops" class="hero-btn">&#128205;&nbsp;<span class="en">See All Stops</span><span class="zh">查看各站</span></a>
+    <a href="#overview" class="hero-btn alt">&#128506;&nbsp;<span class="en">Route Map</span><span class="zh">路线地图</span></a>
+    <button class="share-btn" onclick="shareThisPage()">&#128279;&nbsp;<span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">&#x2705; Link copied!</div>
+
+<!-- STATS -->
+<div class="stats-card" style="margin-top:32px;">
+  <div class="stat"><div class="stat-label"><span class="en">Date</span><span class="zh">日期</span></div><div class="stat-value"><span class="en">24 June 2026</span><span class="zh">2026年6月24日</span></div></div>
+  <div class="stat"><div class="stat-label"><span class="en">Start</span><span class="zh">出发地</span></div><div class="stat-value"><span class="en">ECO Sanctuary Pool</span><span class="zh">ECO Sanctuary游泳池</span></div></div>
+  <div class="stat"><div class="stat-label"><span class="en">Stops</span><span class="zh">停留点</span></div><div class="stat-value" id="stopCount">1 <span style="color:var(--muted);font-size:0.8rem"><span class="en">(adding...)</span><span class="zh">(进行中)</span></span></div></div>
+  <div class="stat"><div class="stat-label"><span class="en">Type</span><span class="zh">类型</span></div><div class="stat-value"><span class="en">Neighbourhood Walk</span><span class="zh">社区漫步</span></div></div>
+</div>
+
+<!-- OVERVIEW ROUTE MAP -->
+<div class="map-section" id="overview">
+  <div class="map-header">
+    <div class="section-title">&#128506; <span class="en">Route Overview Map</span><span class="zh">路线总览地图</span></div>
+    <button onclick="openMapFullscreen()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(244,129,63,0.15);border:1px solid rgba(244,129,63,0.4);color:var(--accent);font-size:0.88rem;padding:8px 18px;border-radius:22px;cursor:pointer;font-family:'Source Serif 4',serif;transition:background 0.2s;">
+      &#x26F6; <span class="en">Open Full Screen</span><span class="zh">全屏查看</span>
+    </button>
+  </div>
+  <div id="overview-map"></div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+  <p style="font-size:0.75rem;color:var(--muted);padding:8px 22px 0;max-width:740px;margin:0 auto;">
+    <span class="en">Tap any marker to see the photo and location details. Route updates as Paul walks.</span>
+    <span class="zh">点击任意图标查看照片和位置详情。路线随保罗行走实时更新。</span>
+  </p>
+</div>
+
+<!-- INDIVIDUAL STOPS -->
+<div class="stops-section" id="stops">
+  <h2>&#128205; <span class="en">Stop-by-Stop with Precise Maps</span><span class="zh">逐站精准地图</span></h2>
+  <p style="color:var(--muted);font-size:0.88rem;margin-bottom:28px;">
+    <span class="en">Each stop has a satellite map zoomed in for maximum detail, plus 3 map app links so you can navigate there yourself.</span>
+    <span class="zh">每个停留点都有高度缩放的卫星地图，并附三个地图应用链接，方便您导航前往。</span>
+  </p>
+
+  <!-- STOP 1 — ECO Sanctuary Swimming Pool (Start)
+       Coordinates: 1.37127N, 103.77639E -->
+  <div class="stop-card" id="stop-1">
+    <div class="stop-card-header">
+      <div class="stop-num-badge start">S</div>
+      <div>
+        <div class="stop-card-title"><span class="en">Start — ECO Sanctuary Swimming Pool</span><span class="zh">出发点 — ECO Sanctuary游泳池</span></div>
+        <div class="stop-card-meta">1° 22' 16.6" N, 103° 46' 34.9" E</div>
+      </div>
+    </div>
+
+    <div style="position:relative;">
+      <div id="minimap-1" class="stop-mini-map"></div>
+      <div class="stop-mini-map-hint"><span class="en">🛰️ Drag to explore · Pinch to zoom</span><span class="zh">🛰️ 拖动浏览 · 捏合缩放</span></div>
+    </div>
+
+    <div class="stop-map-links">
+      <a href="https://maps.google.com/?q=1.37127,103.77639&label=ECO+Sanctuary+Swimming+Pool" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google Maps</a>
+      <a href="https://map.baidu.com/search/ECO%E6%B8%B8%E6%B3%B3%E6%B1%A0/@103.77639,1.37127,19z" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+      <a href="https://uri.amap.com/marker?position=103.77639,1.37127&name=ECO%E6%B8%B8%E6%B3%B3%E6%B1%A0" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+      <span style="color:var(--muted);font-size:0.7rem;align-self:center;margin-left:4px;">📍 1.37127, 103.77639</span>
+    </div>
+
+    <div class="stop-photo-area">
+      <img src="img_S29/01-eco-pool.jpg" alt="ECO Sanctuary Swimming Pool — Start" onclick="openLightbox(0)" onerror="this.outerHTML='<div class=\'stop-photo-placeholder\'>📸 Photo coming soon</div>'">
+    </div>
+
+    <div class="stop-body">
+      <p class="en-block">This is where today's walk begins — the swimming pool at ECO Sanctuary, my new home. The pool sits between the two towers, catching the morning light. I left my towel on the lounger and set off to explore the neighbourhood.</p>
+      <p class="zh-block">今天的漫步从这里开始——我的新家ECO Sanctuary的游泳池。泳池夹在两座高楼之间，沐浴着晨光。我把毛巾放在躺椅上，便出发探索社区了。</p>
+    </div>
+  </div>
+
+  <!-- MORE STOPS WILL BE ADDED HERE AS PAUL WALKS -->
+  <div style="text-align:center;padding:24px;border:2px dashed rgba(255,255,255,0.1);border-radius:14px;color:var(--muted);">
+    <div style="font-size:1.6rem;margin-bottom:8px;">🚶</div>
+    <div style="font-size:0.88rem;"><span class="en">Paul is still walking — more stops will appear here.</span><span class="zh">保罗还在行走中——更多停留点即将出现。</span></div>
+  </div>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+  <p class="lead en-block">A morning walk from the ECO Sanctuary pool, exploring the neighbourhood block by block — no destination, just curiosity and comfortable shoes.</p>
+  <p class="lead zh-block">从ECO Sanctuary游泳池出发，沿着社区一条街一条街地探索——没有目的地，只有好奇心和一双舒适的鞋。</p>
+  <p class="en-block">More to come as the walk unfolds…</p>
+  <p class="zh-block">随着行程推进，更多内容将陆续更新……</p>
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <h2>&#128247; <span class="en">Photo Journal</span><span class="zh">照片日志</span></h2>
+  <div class="photo-journal" id="photoJournal">
+
+    <div class="pj-item" onclick="openLightbox(0)">
+      <img src="img_S29/01-eco-pool.jpg" alt="ECO Sanctuary Pool" onerror="this.style.display='none'">
+      <div class="pj-body">
+        <div class="pj-num"><span class="en">Photo 1 of 1</span><span class="zh">第1张，共1张</span></div>
+        <div class="pj-text en-block">The ECO Sanctuary swimming pool at the start of the walk. The two towers rise on either side, palm trees catching the morning breeze. My towel is still on the lounger — I'll be back.</div>
+        <div class="pj-text zh-block">漫步开始时的ECO Sanctuary游泳池。两座高楼矗立两侧，棕榈树在晨风中摇曳。我的毛巾还放在躺椅上——我会回来的。</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VIEW COUNTER -->
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p><span class="en">S29: ECO Sanctuary Neighbourhood Walk &nbsp;&middot;&nbsp; 24 June 2026 &nbsp;&middot;&nbsp; Paul's World</span><span class="zh">S29：ECO Sanctuary社区漫步 &nbsp;&middot;&nbsp; 2026年6月24日 &nbsp;&middot;&nbsp; 保罗的世界</span></p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/" style="color:var(--blue);text-decoration:none;">&#8592; <span class="en">Back to Paul's World</span><span class="zh">返回保罗的世界</span></a></p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// LANGUAGE TOGGLE
+function setLang(lang) {
+  document.body.classList.toggle('lang-zh', lang === 'zh');
+  document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"').classList.add('active');
+}
+
+// SHARE
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// LIGHTBOX
+var lbPhotos = [
+  { src: 'img_S29/01-eco-pool.jpg', caption: 'Stop 1 — ECO Sanctuary Swimming Pool. The start of today\'s walk.' }
+];
+var lbIndex = 0;
+function openLightbox(i) {
+  lbIndex = i;
+  document.getElementById('lbImg').src = lbPhotos[i].src;
+  document.getElementById('lbCaption').textContent = lbPhotos[i].caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function lbNav(dir) { lbIndex = (lbIndex + dir + lbPhotos.length) % lbPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('lightbox').classList.contains('active')) {
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'Escape') closeLightbox();
+  }
+});
+
+// ESRI SATELLITE
+var ESRI_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+var ESRI_ATTR = 'Tiles &copy; Esri';
+
+// STOP DATA
+var stops = [
+  {
+    id: 1,
+    lat: 1.37127, lng: 103.77639,
+    label: 'S', type: 'start',
+    name_en: 'Start — ECO Sanctuary Swimming Pool',
+    name_zh: '出发点 — ECO Sanctuary游泳池',
+    caption_en: 'Left my towel here. The walk begins.',
+    caption_zh: '毛巾留在这里。漫步开始。',
+    photo: 'img_S29/01-eco-pool.jpg'
+  }
+];
+
+// MARKER FACTORY
+function makeMarker(stop) {
+  var colorMap = { start:'#e74c3c', water:'#2980b9', forest:'#27ae60', road:'#e67e22' };
+  var color = colorMap[stop.type] || '#e67e22';
+  var size = (stop.type === 'start') ? 44 : 38;
+  var html = '<div class="pm-container"><div class="pm-circle ' + stop.type + '" style="background:' + color + ';width:' + size + 'px;height:' + size + 'px;">' + stop.label + '</div></div>';
+  return L.divIcon({ html: html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2], popupAnchor: [0, -size/2-4] });
+}
+
+function makePopupHTML(stop) {
+  var name = stop.name_en;
+  var caption = stop.caption_en;
+  return '<div class="map-popup">' +
+    '<img src="' + stop.photo + '" alt="' + name + '" onerror="this.style.display=\'none\'">' +
+    '<div class="map-popup-body">' +
+      '<div class="map-popup-num">Stop ' + stop.id + '</div>' +
+      '<div class="map-popup-caption">' + caption + '</div>' +
+      '<div class="map-popup-links">' +
+        '<a href="https://maps.google.com/?q=' + stop.lat + ',' + stop.lng + '&label=' + encodeURIComponent(name) + '" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;">🗺️ Google</a>' +
+        '<a href="https://uri.amap.com/marker?position=' + stop.lng + ',' + stop.lat + '&name=' + encodeURIComponent(name) + '" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;">高德</a>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// OVERVIEW MAP
+var overviewMap = L.map('overview-map', {
+  zoomControl: true,
+  fullscreenControl: true,
+  fullscreenControlOptions: { position: 'topright' },
+  scrollWheelZoom: false
+}).setView([1.37127, 103.77639], 16);
+
+L.tileLayer(ESRI_TILES, { attribution: ESRI_ATTR, maxZoom: 20 }).addTo(overviewMap);
+
+var overviewMarkers = [];
+stops.forEach(function(stop) {
+  var marker = L.marker([stop.lat, stop.lng], { icon: makeMarker(stop) })
+    .bindPopup(makePopupHTML(stop), { maxWidth: 240 })
+    .addTo(overviewMap);
+  overviewMarkers.push(marker);
+});
+
+function drawRoute() {
+  var latlngs = stops.map(function(s) { return [s.lat, s.lng]; });
+  if (window._routeLine) overviewMap.removeLayer(window._routeLine);
+  if (latlngs.length > 1) {
+    window._routeLine = L.polyline(latlngs, {
+      color: '#f4813f', weight: 3, opacity: 0.85,
+      dashArray: '8, 6'
+    }).addTo(overviewMap);
+  }
+}
+drawRoute();
+
+var legend = L.control({ position: 'bottomleft' });
+legend.onAdd = function() {
+  var div = L.DomUtil.create('div', 'map-legend');
+  div.innerHTML =
+    '<b style="color:#fff;font-size:0.8rem;">Key</b><br>' +
+    '<span class="legend-dot" style="background:#e74c3c"></span> Start/End<br>' +
+    '<span class="legend-dot" style="background:#2980b9"></span> Water<br>' +
+    '<span class="legend-dot" style="background:#27ae60"></span> Park/Forest<br>' +
+    '<span class="legend-dot" style="background:#e67e22"></span> Road/Transport';
+  return div;
+};
+legend.addTo(overviewMap);
+
+function openMapFullscreen() {
+  document.getElementById('overview-map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){ overviewMap.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('overview-map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(function(){ overviewMap.invalidateSize(); }, 100);
+}
+
+// STOP 1 MINI-MAP — zoom 19 to see pool/towel detail
+var miniMap1 = L.map('minimap-1', {
+  center: [1.37127, 103.77639],
+  zoom: 19,
+  zoomControl: true,
+  scrollWheelZoom: false,
+  dragging: true
+});
+L.tileLayer(ESRI_TILES, { attribution: ESRI_ATTR, maxZoom: 20 }).addTo(miniMap1);
+L.marker([1.37127, 103.77639], { icon: makeMarker(stops[0]) })
+  .addTo(miniMap1)
+  .bindPopup('<div style="color:#fff;font-size:0.8rem;padding:4px 6px;">📍 ECO Sanctuary Swimming Pool</div>')
+  .openPopup();
+</script>
+</body>
+</html>
