@@ -432,7 +432,7 @@ footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--bor
 function setLang(lang) {
   document.body.classList.toggle('lang-zh', lang === 'zh');
   document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
-  document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+  document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"').classList.add('active');
 }
 
 // SHARE
@@ -544,15 +544,44 @@ stops.forEach(function(stop) {
   overviewMarkers.push(marker);
 });
 
-function drawRoute() {
+// Decode OSRM encoded polyline
+function decodePolyline(encoded) {
+  var result = [], index = 0, lat = 0, lng = 0;
+  while (index < encoded.length) {
+    var b, shift = 0, val = 0;
+    do { b = encoded.charCodeAt(index++) - 63; val |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (val & 1) ? ~(val >> 1) : (val >> 1);
+    shift = 0; val = 0;
+    do { b = encoded.charCodeAt(index++) - 63; val |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (val & 1) ? ~(val >> 1) : (val >> 1);
+    result.push([lat / 1e5, lng / 1e5]);
+  }
+  return result;
+}
+
+function drawStraightRoute() {
   var latlngs = stops.map(function(s) { return [s.lat, s.lng]; });
   if (window._routeLine) overviewMap.removeLayer(window._routeLine);
   if (latlngs.length > 1) {
-    window._routeLine = L.polyline(latlngs, {
-      color: '#f4813f', weight: 3, opacity: 0.85,
-      dashArray: '8, 6'
-    }).addTo(overviewMap);
+    window._routeLine = L.polyline(latlngs, { color: '#f4813f', weight: 3, opacity: 0.85, dashArray: '8, 6' }).addTo(overviewMap);
   }
+}
+
+function drawRoute() {
+  if (stops.length < 2) return;
+  var coords = stops.map(function(s) { return s.lng + ',' + s.lat; }).join(';');
+  fetch('https://router.project-osrm.org/route/v1/foot/' + coords + '?overview=full&geometries=polyline')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.routes && data.routes[0] && data.routes[0].geometry) {
+        var latlngs = decodePolyline(data.routes[0].geometry);
+        if (window._routeLine) overviewMap.removeLayer(window._routeLine);
+        window._routeLine = L.polyline(latlngs, {
+          color: '#f4813f', weight: 4, opacity: 0.9, dashArray: '10, 6'
+        }).addTo(overviewMap);
+      } else { drawStraightRoute(); }
+    })
+    .catch(function() { drawStraightRoute(); });
 }
 drawRoute();
 
