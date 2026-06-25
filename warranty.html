@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warranty Tracker — Paul's World</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --blue:#4a6cf7; --accent:#f4813f; --bg:#0f0f13; --card:#1a1a22; --muted:#888; --green:#10b981; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:#e8e8e8; font-family:'Source Serif 4',Georgia,serif; min-height:100vh; padding:0 0 80px; }
+
+  /* home bar */
+  #homeBar { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:rgba(15,15,19,.95); border-bottom:1px solid rgba(255,255,255,.07); position:sticky; top:0; z-index:100; }
+  .home-btn { color:rgba(255,255,255,.75); text-decoration:none; font-size:.85rem; border:1px solid rgba(255,255,255,.2); padding:6px 14px; border-radius:18px; transition:.2s; }
+  .home-btn:hover { background:rgba(255,255,255,.1); }
+  .lang-toggle { display:flex; gap:8px; }
+  .lang-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); color:rgba(255,255,255,.65); font-size:.78rem; padding:5px 13px; border-radius:16px; cursor:pointer; transition:all .2s; }
+  .lang-btn.active { background:rgba(244,165,0,.22); border-color:rgba(244,165,0,.65); color:#ffd700; font-weight:700; }
+
+  /* bilingual */
+  .zh { display:none; }
+  body.lang-zh .zh { display:inline; }
+  body.lang-zh .en { display:none; }
+  .zh-block { display:none; }
+  body.lang-zh .zh-block { display:block; }
+  body.lang-zh .en-block { display:none; }
+
+  /* hero */
+  .hero { text-align:center; padding:50px 20px 36px; background:linear-gradient(160deg,#0a1628 0%,#0f0f13 60%); border-bottom:1px solid rgba(255,255,255,.07); }
+  .hero-icon { font-size:3rem; margin-bottom:12px; }
+  .hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:2.2rem; font-weight:700; color:#fff; margin-bottom:8px; }
+  .hero p { color:var(--muted); font-size:1rem; max-width:520px; margin:0 auto 22px; }
+  .share-btn { display:inline-block; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.3); color:#fff; font-weight:700; padding:10px 24px; border-radius:28px; cursor:pointer; font-size:.95rem; font-family:'Source Serif 4',Georgia,serif; transition:background .2s; }
+  .share-btn:hover { background:rgba(255,255,255,.2); }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  /* main content */
+  .container { max-width:900px; margin:0 auto; padding:30px 16px; }
+
+  /* summary cards */
+  .summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:28px; }
+  .sum-card { background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px 16px; text-align:center; }
+  .sum-card .num { font-size:2rem; font-weight:700; margin-bottom:4px; }
+  .sum-card .label { font-size:.8rem; color:var(--muted); }
+  .sum-card.green .num { color:var(--green); }
+  .sum-card.yellow .num { color:#f59e0b; }
+  .sum-card.red .num { color:#ef4444; }
+  .sum-card.grey .num { color:var(--muted); }
+
+  /* add form */
+  .add-section { background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:22px; margin-bottom:28px; }
+  .add-section h2 { font-size:1.05rem; font-weight:600; margin-bottom:16px; color:#ccc; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:600px){ .form-grid { grid-template-columns:1fr; } }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group label { font-size:.78rem; color:var(--muted); }
+  .form-group input, .form-group select { background:#111118; border:1px solid rgba(255,255,255,.15); color:#e8e8e8; padding:9px 12px; border-radius:8px; font-size:.9rem; font-family:'Source Serif 4',Georgia,serif; outline:none; transition:border .2s; }
+  .form-group input:focus, .form-group select:focus { border-color:var(--accent); }
+  .form-group select option { background:#111118; }
+  .add-btn { margin-top:14px; background:var(--accent); color:#fff; border:none; padding:11px 28px; border-radius:24px; font-size:.95rem; font-weight:700; cursor:pointer; font-family:'Source Serif 4',Georgia,serif; transition:opacity .2s; }
+  .add-btn:hover { opacity:.85; }
+
+  /* warranty list */
+  .list-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .list-header h2 { font-size:1.05rem; color:#ccc; }
+  .sort-select { background:#1a1a22; border:1px solid rgba(255,255,255,.15); color:#ccc; padding:6px 10px; border-radius:8px; font-size:.8rem; cursor:pointer; }
+
+  .warranty-item { background:var(--card); border:1px solid rgba(255,255,255,.07); border-radius:14px; padding:18px; margin-bottom:12px; position:relative; border-left:4px solid transparent; }
+  .warranty-item.status-green { border-left-color:var(--green); }
+  .warranty-item.status-yellow { border-left-color:#f59e0b; }
+  .warranty-item.status-red { border-left-color:#ef4444; }
+  .warranty-item.status-expired { border-left-color:#555; opacity:.65; }
+
+  .item-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:8px; }
+  .item-name { font-size:1.05rem; font-weight:600; color:#f0f0f0; }
+  .item-store { font-size:.82rem; color:var(--muted); margin-top:2px; }
+  .item-badge { flex-shrink:0; font-size:.75rem; font-weight:700; padding:4px 11px; border-radius:20px; }
+  .badge-green { background:rgba(16,185,129,.18); color:#10b981; }
+  .badge-yellow { background:rgba(245,158,11,.18); color:#f59e0b; }
+  .badge-red { background:rgba(239,68,68,.18); color:#ef4444; }
+  .badge-expired { background:rgba(100,100,100,.18); color:#888; }
+
+  .item-details { display:flex; flex-wrap:wrap; gap:16px; font-size:.82rem; color:var(--muted); margin-bottom:10px; }
+  .item-details span strong { color:#ccc; }
+  .item-progress { height:5px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; margin-bottom:10px; }
+  .item-progress-bar { height:100%; border-radius:4px; transition:width .3s; }
+  .item-actions { display:flex; gap:8px; justify-content:flex-end; }
+  .del-btn { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25); color:#ef4444; padding:5px 14px; border-radius:16px; font-size:.78rem; cursor:pointer; transition:.2s; }
+  .del-btn:hover { background:rgba(239,68,68,.2); }
+
+  .empty-state { text-align:center; color:var(--muted); padding:50px 20px; font-size:.95rem; }
+
+  /* view counter */
+  .view-counter-wrap { margin-top:40px; text-align:center; }
+
+  footer { text-align:center; padding:30px 20px 0; color:var(--muted); font-size:.8rem; }
+</style>
+</head>
+<body>
+
+<div id="homeBar">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')" id="btn-zh">🇨🇳 中文</button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-icon">🛡️</div>
+  <h1><span class="en">Warranty Tracker</span><span class="zh">保修追踪器</span></h1>
+  <p class="en">Track your appliances, electronics & home items — never miss a warranty claim.</p>
+  <p class="zh-block" style="color:var(--muted);font-size:1rem;max-width:520px;margin:0 auto 22px;">追踪您的家电、电子产品及家居物品 — 绝不错过保修索赔。</p>
+  <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+</div>
+
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="container">
+
+  <!-- Summary -->
+  <div class="summary" id="summaryCards">
+    <div class="sum-card green"><div class="num" id="count-green">0</div><div class="label"><span class="en">Active (>90 days)</span><span class="zh">有效 (>90天)</span></div></div>
+    <div class="sum-card yellow"><div class="num" id="count-yellow">0</div><div class="label"><span class="en">Expiring Soon</span><span class="zh">即将到期</span></div></div>
+    <div class="sum-card red"><div class="num" id="count-red">0</div><div class="label"><span class="en">Urgent (<30 days)</span><span class="zh">紧急 (<30天)</span></div></div>
+    <div class="sum-card grey"><div class="num" id="count-expired">0</div><div class="label"><span class="en">Expired</span><span class="zh">已过期</span></div></div>
+  </div>
+
+  <!-- Add Form -->
+  <div class="add-section">
+    <h2>➕ <span class="en">Add New Warranty</span><span class="zh">添加新保修</span></h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label><span class="en">Item Name</span><span class="zh">物品名称</span></label>
+        <input type="text" id="f-name" placeholder="e.g. Air Circulation Fan">
+      </div>
+      <div class="form-group">
+        <label><span class="en">Store / Brand</span><span class="zh">商店/品牌</span></label>
+        <input type="text" id="f-store" placeholder="e.g. Harvey Norman">
+      </div>
+      <div class="form-group">
+        <label><span class="en">Purchase Date</span><span class="zh">购买日期</span></label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-group">
+        <label><span class="en">Price (SGD)</span><span class="zh">价格（新元）</span></label>
+        <input type="number" id="f-price" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label><span class="en">Warranty Period</span><span class="zh">保修期</span></label>
+        <select id="f-period">
+          <option value="6">6 months</option>
+          <option value="12" selected>1 year</option>
+          <option value="24">2 years</option>
+          <option value="36">3 years</option>
+          <option value="60">5 years</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label><span class="en">Receipt / Order No.</span><span class="zh">收据/订单号</span></label>
+        <input type="text" id="f-receipt" placeholder="e.g. 037044">
+      </div>
+    </div>
+    <button class="add-btn" onclick="addWarranty()">
+      <span class="en">Add Warranty</span><span class="zh">添加保修</span>
+    </button>
+  </div>
+
+  <!-- List -->
+  <div class="list-header">
+    <h2>📋 <span class="en">My Warranties</span><span class="zh">我的保修</span></h2>
+    <select class="sort-select" onchange="renderList()" id="sortSelect">
+      <option value="expiry">Sort by Expiry</option>
+      <option value="name">Sort by Name</option>
+      <option value="date">Sort by Purchase Date</option>
+    </select>
+  </div>
+  <div id="warrantyList"></div>
+
+</div>
+
+<div class="view-counter-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  <p>Paul's World &copy; 2026</p>
+</footer>
+
+<script>
+const DEFAULT_DATA = [
+  {
+    id: 'hn-fan-2026',
+    name: 'Air Circulation Fan',
+    store: 'Harvey Norman',
+    date: '2026-05-02',
+    price: 199.00,
+    period: 12,
+    receipt: '037044'
+  }
+];
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem('pw-warranties');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+function saveData(data) {
+  localStorage.setItem('pw-warranties', JSON.stringify(data));
+}
+
+function getDaysRemaining(dateStr, periodMonths) {
+  const purchase = new Date(dateStr);
+  const expiry = new Date(purchase);
+  expiry.setMonth(expiry.getMonth() + periodMonths);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const diff = Math.round((expiry - today) / (1000 * 60 * 60 * 24));
+  return { days: diff, expiry };
+}
+
+function getStatus(days) {
+  if (days < 0) return 'expired';
+  if (days < 30) return 'red';
+  if (days < 90) return 'yellow';
+  return 'green';
+}
+
+function getBadge(status, days) {
+  if (status === 'expired') return '<span class="item-badge badge-expired">Expired</span>';
+  if (status === 'red') return `<span class="item-badge badge-red">⚠️ ${days}d left</span>`;
+  if (status === 'yellow') return `<span class="item-badge badge-yellow">⏳ ${days}d left</span>`;
+  return `<span class="item-badge badge-green">✅ ${days}d left</span>`;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function renderList() {
+  const data = loadData();
+  const sort = document.getElementById('sortSelect').value;
+
+  data.sort((a, b) => {
+    if (sort === 'expiry') {
+      const aD = getDaysRemaining(a.date, a.period).days;
+      const bD = getDaysRemaining(b.date, b.period).days;
+      return aD - bD;
+    }
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    if (sort === 'date') return new Date(b.date) - new Date(a.date);
+    return 0;
+  });
+
+  let cG=0, cY=0, cR=0, cE=0;
+  let html = '';
+
+  data.forEach(item => {
+    const { days, expiry } = getDaysRemaining(item.date, item.period);
+    const status = getStatus(days);
+    if (status === 'green') cG++;
+    else if (status === 'yellow') cY++;
+    else if (status === 'red') cR++;
+    else cE++;
+
+    const purchase = new Date(item.date);
+    const totalDays = item.period * 30.4;
+    const usedDays = totalDays - Math.max(days, 0);
+    const pct = Math.min(100, Math.max(0, (usedDays / totalDays) * 100));
+    const barColor = status === 'green' ? '#10b981' : status === 'yellow' ? '#f59e0b' : status === 'red' ? '#ef4444' : '#555';
+
+    const periodLabel = item.period === 6 ? '6 months' : item.period === 12 ? '1 year' : item.period === 24 ? '2 years' : item.period === 36 ? '3 years' : '5 years';
+
+    html += `
+      <div class="warranty-item status-${status}">
+        <div class="item-top">
+          <div>
+            <div class="item-name">${escHtml(item.name)}</div>
+            <div class="item-store">${escHtml(item.store)}</div>
+          </div>
+          ${getBadge(status, days)}
+        </div>
+        <div class="item-details">
+          <span>📅 <strong>Purchased:</strong> ${formatDate(purchase)}</span>
+          <span>🛡️ <strong>Warranty:</strong> ${periodLabel}</span>
+          <span>⏰ <strong>Expires:</strong> ${formatDate(expiry)}</span>
+          ${item.price ? `<span>💵 <strong>SGD</strong> ${parseFloat(item.price).toFixed(2)}</span>` : ''}
+          ${item.receipt ? `<span>🧾 <strong>Receipt:</strong> ${escHtml(item.receipt)}</span>` : ''}
+        </div>
+        <div class="item-progress">
+          <div class="item-progress-bar" style="width:${pct}%;background:${barColor};"></div>
+        </div>
+        <div class="item-actions">
+          <button class="del-btn" onclick="deleteItem('${item.id}')">🗑️ Remove</button>
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('count-green').textContent = cG;
+  document.getElementById('count-yellow').textContent = cY;
+  document.getElementById('count-red').textContent = cR;
+  document.getElementById('count-expired').textContent = cE;
+
+  const listEl = document.getElementById('warrantyList');
+  listEl.innerHTML = data.length === 0
+    ? '<div class="empty-state">No warranties yet. Add your first one above!</div>'
+    : html;
+}
+
+function addWarranty() {
+  const name = document.getElementById('f-name').value.trim();
+  const store = document.getElementById('f-store').value.trim();
+  const date = document.getElementById('f-date').value;
+  const price = document.getElementById('f-price').value;
+  const period = parseInt(document.getElementById('f-period').value);
+  const receipt = document.getElementById('f-receipt').value.trim();
+
+  if (!name || !date) {
+    alert('Please enter item name and purchase date.');
+    return;
+  }
+
+  const data = loadData();
+  data.push({
+    id: 'w-' + Date.now(),
+    name, store, date,
+    price: price ? parseFloat(price) : null,
+    period,
+    receipt
+  });
+  saveData(data);
+
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-store').value = '';
+  document.getElementById('f-date').value = '';
+  document.getElementById('f-price').value = '';
+  document.getElementById('f-receipt').value = '';
+
+  renderList();
+}
+
+function deleteItem(id) {
+  if (!confirm('Remove this warranty?')) return;
+  const data = loadData().filter(i => i.id !== id);
+  saveData(data);
+  renderList();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setLang(lang) {
+  document.body.classList.toggle('lang-zh', lang === 'zh');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  localStorage.setItem('pw-lang', lang);
+}
+
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// init
+const savedLang = localStorage.getItem('pw-lang');
+if (savedLang) setLang(savedLang);
+renderList();
+</script>
+</body>
+</html>
