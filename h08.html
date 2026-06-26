@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>h08: My Ear Block — Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #fdf8f2;
+      --warm-white: #fff9f4;
+      --ink: #2c2218;
+      --mid: #6b5a4e;
+      --accent: #10b981;
+      --accent-dark: #065f46;
+      --accent-soft: #d1fae5;
+      --border: #e8ddd5;
+      --warn: #f59e0b;
+      --warn-soft: #fef3c7;
+      --warn-dark: #92400e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: #059669; }
+
+    /* Language toggle */
+    .lang-bar {
+      position: fixed;
+      top: 16px; right: 16px;
+      z-index: 999;
+      display: flex; gap: 6px;
+    }
+    .lang-btn {
+      background: rgba(255,255,255,0.9);
+      border: 1.5px solid var(--border);
+      color: var(--ink);
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-family: 'Source Sans 3', sans-serif;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      color: #fff;
+      text-align: center;
+      padding: 100px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.25) 0%, transparent 70%);
+    }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      position: relative; z-index: 1;
+    }
+    .hero h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(1.9rem, 5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.25;
+      max-width: 700px;
+      margin: 0 auto 16px;
+      color: #ecfdf5;
+      position: relative; z-index: 1;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.05em;
+      position: relative; z-index: 1;
+    }
+    .hero-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: relative; z-index: 1;
+    }
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 11px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Lora', Georgia, serif;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    /* Stats banner */
+    .stats-banner {
+      background: #fff;
+      border-bottom: 2px solid var(--accent-soft);
+      padding: 24px 24px;
+    }
+    .stats-banner-inner {
+      max-width: 740px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .stat-big {
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+      padding: 10px 16px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-big:last-child { border-right: none; }
+    .stat-big-num {
+      font-family: 'Lora', serif;
+      font-size: 2.4rem;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-big-num.warn { color: var(--warn); }
+    .stat-big-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--mid);
+      margin-top: 6px;
+    }
+
+    .container {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 48px 24px 24px;
+    }
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 1.4rem;
+      color: var(--accent-dark);
+      margin: 40px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+    p { margin-bottom: 14px; font-size: 1.02rem; }
+
+    /* Timeline */
+    .timeline {
+      border-left: 3px solid var(--accent-soft);
+      padding-left: 24px;
+      margin: 24px 0;
+    }
+    .tl-event {
+      position: relative;
+      margin-bottom: 28px;
+    }
+    .tl-event::before {
+      content: '';
+      position: absolute;
+      left: -33px; top: 5px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .tl-event.warn::before { background: var(--warn); box-shadow: 0 0 0 2px var(--warn); }
+    .tl-date {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--mid);
+      margin-bottom: 4px;
+    }
+    .tl-title {
+      font-family: 'Lora', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .tl-body { font-size: 0.95rem; color: var(--mid); }
+
+    /* Symptom cards */
+    .symptom-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 18px 0;
+    }
+    .symptom-card {
+      background: var(--warn-soft);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .symptom-icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .symptom-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--warn-dark);
+      margin-bottom: 4px;
+    }
+    .symptom-desc { font-size: 0.82rem; color: var(--mid); }
+
+    /* Treatment steps */
+    .treatment-steps {
+      counter-reset: step;
+      margin: 18px 0;
+    }
+    .step {
+      counter-increment: step;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Lora', serif;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .step-body { flex: 1; }
+    .step-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .step-desc { font-size: 0.9rem; color: var(--mid); }
+
+    /* Tips box */
+    .tips-box {
+      background: var(--accent-soft);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin: 28px 0;
+    }
+    .tips-box h3 {
+      font-family: 'Lora', serif;
+      font-size: 1.05rem;
+      color: var(--accent-dark);
+      margin-bottom: 12px;
+    }
+    .tips-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tips-list li {
+      display: flex;
+      gap: 10px;
+      font-size: 0.92rem;
+      color: var(--accent-dark);
+    }
+    .tips-list li::before {
+      content: '✓';
+      font-weight: 700;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+
+    /* Warning box */
+    .warn-box {
+      background: var(--warn-soft);
+      border-left: 4px solid var(--warn);
+      border-radius: 0 10px 10px 0;
+      padding: 16px 20px;
+      margin: 24px 0;
+      font-size: 0.92rem;
+      color: var(--warn-dark);
+    }
+    .warn-box strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+    /* Quote / highlight */
+    .pullquote {
+      border-left: 4px solid var(--accent);
+      padding: 14px 20px;
+      margin: 28px 0;
+      font-family: 'Lora', serif;
+      font-size: 1.15rem;
+      font-style: italic;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      border-radius: 0 10px 10px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--mid);
+      font-size: 0.82rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    .view-counter-wrap { text-align: center; margin: 32px 0 8px; }
+
+    @media (max-width: 500px) {
+      .symptom-grid { grid-template-columns: 1fr 1fr; }
+      .stats-banner-inner { gap: 8px; }
+      .stat-big { min-width: 90px; }
+      .stat-big-num { font-size: 1.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+  <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag" data-en="Health · June 2026" data-zh="健康 · 2026年6月">Health · June 2026</div>
+  <h1 data-en="h08: My Ear Block" data-zh="h08：我的耳堵">h08: My Ear Block</h1>
+  <p class="hero-sub" data-en="When the world goes muffled — a personal account" data-zh="当世界变得沉闷——一段亲身经历">When the world goes muffled — a personal account</p>
+  <div class="hero-actions">
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<!-- STATS BANNER -->
+<div class="stats-banner">
+  <div class="stats-banner-inner">
+    <div class="stat-big">
+      <div class="stat-big-num warn">~3</div>
+      <div class="stat-big-label" data-en="Weeks blocked" data-zh="堵塞周数">Weeks blocked</div>
+    </div>
+    <div class="stat-big">
+      <div class="stat-big-num">1</div>
+      <div class="stat-big-label" data-en="Doctor visit" data-zh="就诊次数">Doctor visit</div>
+    </div>
+    <div class="stat-big">
+      <div class="stat-big-num">70%</div>
+      <div class="stat-big-label" data-en="Hearing loss (est.)" data-zh="估计听力损失">Hearing loss (est.)</div>
+    </div>
+    <div class="stat-big">
+      <div class="stat-big-num">1 min</div>
+      <div class="stat-big-label" data-en="To fix it" data-zh="治疗时间">To fix it</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+  <!-- The story -->
+  <h2 class="section-title" data-en="How It Started" data-zh="怎么开始的">How It Started</h2>
+
+  <p data-en="It crept up on me quietly. One morning I woke up and the world sounded like I was underwater. My right ear felt full — like someone had stuffed cotton wool deep inside. I kept tilting my head, yawning, swallowing. Nothing helped." data-zh="它悄悄地来了。某天早上醒来，世界听起来就像我在水下。我的右耳感觉很胀，就像有人把棉花深深地塞进去了。我不停地歪头、打哈欠、吞咽。什么都没用。">
+    It crept up on me quietly. One morning I woke up and the world sounded like I was underwater. My right ear felt full — like someone had stuffed cotton wool deep inside. I kept tilting my head, yawning, swallowing. Nothing helped.
+  </p>
+
+  <p data-en="At first I didn't think much of it. Maybe I slept on it funny. Maybe a bit of water from the shower. But days went by and nothing changed. Conversations became harder. I kept asking people to repeat themselves. Watching TV, I had to turn the volume up much higher than Joanne liked." data-zh="起初我没太在意。也许是睡姿不对，也许是淋浴时进了水。但日子一天天过去，什么都没变。对话变得更困难了。我不停地让人重复。看电视时，我不得不把音量调得比Joanne喜欢的高很多。">
+    At first I didn't think much of it. Maybe I slept on it funny. Maybe a bit of water from the shower. But days went by and nothing changed. Conversations became harder. I kept asking people to repeat themselves. Watching TV, I had to turn the volume up much higher than Joanne liked.
+  </p>
+
+  <div class="pullquote" data-en="Three weeks of muffled sound. It's amazing how much you take clear hearing for granted — until it's gone." data-zh="三周的沉闷声音。真是令人惊讶，你是多么理所当然地认为清晰的听力是理所当然的——直到它消失。">
+    Three weeks of muffled sound. It's amazing how much you take clear hearing for granted — until it's gone.
+  </div>
+
+  <!-- Symptoms -->
+  <h2 class="section-title" data-en="My Symptoms" data-zh="我的症状">My Symptoms</h2>
+  <div class="symptom-grid">
+    <div class="symptom-card">
+      <div class="symptom-icon">🔇</div>
+      <div class="symptom-name" data-en="Muffled hearing" data-zh="听力模糊">Muffled hearing</div>
+      <div class="symptom-desc" data-en="Right ear, like hearing through a pillow" data-zh="右耳，像隔着枕头听声音">Right ear, like hearing through a pillow</div>
+    </div>
+    <div class="symptom-card">
+      <div class="symptom-icon">😮‍💨</div>
+      <div class="symptom-name" data-en="Ear fullness" data-zh="耳部胀满感">Ear fullness</div>
+      <div class="symptom-desc" data-en="Constant pressure, like after a flight" data-zh="持续的压迫感，像坐飞机后那样">Constant pressure, like after a flight</div>
+    </div>
+    <div class="symptom-card">
+      <div class="symptom-icon">🔊</div>
+      <div class="symptom-name" data-en="Echo / tinnitus" data-zh="回声/耳鸣">Echo / tinnitus</div>
+      <div class="symptom-desc" data-en="My own voice sounded loud inside my head" data-zh="我自己的声音在脑子里听起来很大">My own voice sounded loud inside my head</div>
+    </div>
+    <div class="symptom-card">
+      <div class="symptom-icon">🤔</div>
+      <div class="symptom-name" data-en="No pain" data-zh="没有疼痛">No pain</div>
+      <div class="symptom-desc" data-en="Uncomfortable but not painful — easy to ignore" data-zh="不舒服但不痛——很容易被忽视">Uncomfortable but not painful — easy to ignore</div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <strong data-en="⚠️ Why I waited too long" data-zh="⚠️ 为什么我等得太久">⚠️ Why I waited too long</strong>
+    <span data-en="Because there was no pain, I kept telling myself it would clear on its own. Three weeks passed. Lesson learned — no pain doesn't mean no problem. Earwax impaction is silent but sneaky." data-zh="因为没有疼痛，我一直告诉自己它会自行消除。三周过去了。吸取了教训——没有疼痛并不意味着没有问题。耳垢堵塞是无声的，但很狡猾。">
+      Because there was no pain, I kept telling myself it would clear on its own. Three weeks passed. Lesson learned — no pain doesn't mean no problem. Earwax impaction is silent but sneaky.
+    </span>
+  </div>
+
+  <!-- Timeline -->
+  <h2 class="section-title" data-en="What Happened" data-zh="发生了什么">What Happened</h2>
+  <div class="timeline">
+    <div class="tl-event warn">
+      <div class="tl-date" data-en="Early June 2026" data-zh="2026年6月初">Early June 2026</div>
+      <div class="tl-title" data-en="First signs" data-zh="最初的迹象">First signs</div>
+      <div class="tl-body" data-en="Right ear starts feeling blocked after a long hike. I assume it's sweat / humidity and ignore it." data-zh="长途远足后右耳开始感觉堵塞。我以为是出汗/潮湿导致的，就忽视了它。">Right ear starts feeling blocked after a long hike. I assume it's sweat / humidity and ignore it.</div>
+    </div>
+    <div class="tl-event warn">
+      <div class="tl-date" data-en="Week 1–2" data-zh="第1-2周">Week 1–2</div>
+      <div class="tl-title" data-en="Getting worse" data-zh="越来越严重">Getting worse</div>
+      <div class="tl-body" data-en="Muffled sound persists. I try tilting my head, chewing, yawning. I even try a few drops of olive oil — which I'd read about online. Some temporary relief but the block remains." data-zh="沉闷的声音持续。我尝试歪头、咀嚼、打哈欠。我甚至试了几滴橄榄油——这是我在网上看到的。有些暂时的缓解，但堵塞依然存在。">Muffled sound persists. I try tilting my head, chewing, yawning. I even try a few drops of olive oil — which I'd read about online. Some temporary relief but the block remains.</div>
+    </div>
+    <div class="tl-event">
+      <div class="tl-date" data-en="Week 3 — Doctor visit" data-zh="第3周——就医">Week 3 — Doctor visit</div>
+      <div class="tl-title" data-en="Finally went to the clinic" data-zh="终于去了诊所">Finally went to the clinic</div>
+      <div class="tl-body" data-en="The doctor looked in my ear and said 'ah yes, big wax plug'. She used a small suction device — the whole thing took less than a minute. The relief was instant and remarkable." data-zh="医生看了看我的耳朵说'啊是的，有个大耳垢塞'。她用了一个小型抽吸装置——整个过程不到一分钟。立竿见影的缓解令人印象深刻。">The doctor looked in my ear and said 'ah yes, big wax plug'. She used a small suction device — the whole thing took less than a minute. The relief was instant and remarkable.</div>
+    </div>
+    <div class="tl-event">
+      <div class="tl-date" data-en="Immediately after" data-zh="治疗后立即">Immediately after</div>
+      <div class="tl-title" data-en="Hearing restored" data-zh="听力恢复">Hearing restored</div>
+      <div class="tl-body" data-en="Walking out of the clinic was like stepping into HD sound. I could hear birds, distant traffic, everything with such clarity. I'd forgotten what normal hearing felt like." data-zh="走出诊所就像进入了高清声音世界。我能听到鸟鸣声、远处的车声，一切都如此清晰。我已经忘记了正常听力是什么感觉了。">Walking out of the clinic was like stepping into HD sound. I could hear birds, distant traffic, everything with such clarity. I'd forgotten what normal hearing felt like.</div>
+    </div>
+  </div>
+
+  <!-- Treatment -->
+  <h2 class="section-title" data-en="What the Doctor Did" data-zh="医生做了什么">What the Doctor Did</h2>
+  <div class="treatment-steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title" data-en="Ear inspection with otoscope" data-zh="用耳镜检查耳朵">Ear inspection with otoscope</div>
+        <div class="step-desc" data-en="A small lit scope to see inside the ear canal and confirm earwax impaction (cerumen impaction)." data-zh="一个带灯的小镜子，用来查看耳道内部，确认耳垢堵塞（耵聍栓塞）。">A small lit scope to see inside the ear canal and confirm earwax impaction (cerumen impaction).</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title" data-en="Micro-suction" data-zh="微型抽吸">Micro-suction</div>
+        <div class="step-desc" data-en="A tiny vacuum-like device removes the wax plug safely without pushing it further in. Preferred over ear syringing (water irrigation) as it's gentler and more precise." data-zh="一个微型吸尘器般的设备安全地取出耳垢塞，而不会将其进一步推入。与耳部灌洗（水冲洗）相比更受青睐，因为它更温和精确。">A tiny vacuum-like device removes the wax plug safely without pushing it further in. Preferred over ear syringing (water irrigation) as it's gentler and more precise.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title" data-en="Done in under 1 minute" data-zh="不到1分钟完成">Done in under 1 minute</div>
+        <div class="step-desc" data-en="No pain, no water, no fuss. Just a little suction sound, and then crystal-clear hearing returned immediately." data-zh="没有疼痛，没有水，没有麻烦。只是一点点抽吸声，然后立即恢复了清晰的听力。">No pain, no water, no fuss. Just a little suction sound, and then crystal-clear hearing returned immediately.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What I learned -->
+  <h2 class="section-title" data-en="What I Learned" data-zh="我学到了什么">What I Learned</h2>
+  <p data-en="Earwax (cerumen) is natural and protective. It traps dust and bacteria and normally works its way out on its own. But as we get older, earwax can become drier and harder, and the self-cleaning mechanism slows down. For people who are active — especially hikers and swimmers — sweat and humidity can soften wax and push it deeper." data-zh="耳垢（耵聍）是自然的、有保护作用的。它能捕获灰尘和细菌，通常会自行排出。但随着年龄增长，耳垢会变得更干更硬，自洁机制会减慢。对于活跃的人——尤其是徒步旅行者和游泳者——汗水和湿度会软化耳垢并将其推得更深。">
+    Earwax (cerumen) is natural and protective. It traps dust and bacteria and normally works its way out on its own. But as we get older, earwax can become drier and harder, and the self-cleaning mechanism slows down. For people who are active — especially hikers and swimmers — sweat and humidity can soften wax and push it deeper.
+  </p>
+  <p data-en="The biggest mistake people make — myself included — is using cotton buds. They don't remove wax; they push it deeper and compact it, making a blockage worse. I've now thrown all our cotton buds away (much to Joanne's protest)." data-zh="人们最大的错误——包括我自己——是使用棉签。它们不能去除耳垢；它们会将耳垢推得更深并压实，使堵塞更严重。我现在已经把我们所有的棉签都扔掉了（Joanne对此抗议不已）。">
+    The biggest mistake people make — myself included — is using cotton buds. They don't remove wax; they push it deeper and compact it, making a blockage worse. I've now thrown all our cotton buds away (much to Joanne's protest).
+  </p>
+
+  <div class="tips-box">
+    <h3 data-en="🌿 My Ear Care Rules Going Forward" data-zh="🌿 我今后的耳部护理规则">🌿 My Ear Care Rules Going Forward</h3>
+    <ul class="tips-list">
+      <li data-en="No cotton buds — ever. The ear canal is self-cleaning." data-zh="永远不用棉签。耳道会自洁。">No cotton buds — ever. The ear canal is self-cleaning.</li>
+      <li data-en="If my ear feels blocked for more than 3 days, see a doctor — don't wait 3 weeks." data-zh="如果耳朵感觉堵塞超过3天，就去看医生——不要等3周。">If my ear feels blocked for more than 3 days, see a doctor — don't wait 3 weeks.</li>
+      <li data-en="Once a year ear check at the GP, especially since I hike and sweat a lot." data-zh="每年去全科医生检查耳朵，尤其是因为我经常徒步且大量出汗。">Once a year ear check at the GP, especially since I hike and sweat a lot.</li>
+      <li data-en="Olive oil drops (2–3 drops, 3–4 days) can help soften wax early on." data-zh="橄榄油滴剂（2-3滴，3-4天）可以帮助在早期软化耳垢。">Olive oil drops (2–3 drops, 3–4 days) can help soften wax early on.</li>
+      <li data-en="After swimming, tilt head and let water drain — don't dig with anything." data-zh="游泳后，倾斜头部让水排出——不要用任何东西挖。">After swimming, tilt head and let water drain — don't dig with anything.</li>
+    </ul>
+  </div>
+
+  <!-- Final reflection -->
+  <h2 class="section-title" data-en="A Moment of Gratitude" data-zh="一刻感恩">A Moment of Gratitude</h2>
+  <p data-en="Standing outside the clinic, I just listened. The air conditioner hum, a car passing, a child laughing somewhere — all of it crystal clear. Three weeks of muffled sound makes you realise how precious normal hearing is." data-zh="站在诊所外面，我只是聆听。空调的嗡嗡声、一辆车经过、某处孩子的笑声——一切都清晰如水晶。三周的沉闷声音让你意识到正常听力是多么宝贵。">
+    Standing outside the clinic, I just listened. The air conditioner hum, a car passing, a child laughing somewhere — all of it crystal clear. Three weeks of muffled sound makes you realise how precious normal hearing is.
+  </p>
+  <p data-en="At 70, I'm learning that good health isn't just about big things — the heart, the joints, the blood pressure. It's also about the small, silent things we take for granted every single day. Hearing. Sight. Smell. Things that just work — until they don't." data-zh="70岁时，我学到了，健康不仅仅是关于大事——心脏、关节、血压。也是关于我们每天理所当然的微小、无声的事情。听觉。视觉。嗅觉。一直在工作的东西——直到它们不工作了。">
+    At 70, I'm learning that good health isn't just about big things — the heart, the joints, the blood pressure. It's also about the small, silent things we take for granted every single day. Hearing. Sight. Smell. Things that just work — until they don't.
+  </p>
+
+  <!-- View counter -->
+  <div class="view-counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+</div>
+
+<footer>
+  <p data-en="Paul's World · Health Series · h08" data-zh="Paul的世界 · 健康系列 · h08">Paul's World · Health Series · h08</p>
+  <p style="margin-top:6px"><a href="https://paulsworld.vercel.app/">← Back to Home</a></p>
+</footer>
+
+<script>
+var currentLang = 'en';
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.includes(lang === 'en' ? 'English' : '中文'));
+  });
+  document.querySelectorAll('[data-en]').forEach(function(el) {
+    el.textContent = lang === 'zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+  });
+}
+
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title: title, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+</body>
+</html>
