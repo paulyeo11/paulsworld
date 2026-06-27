@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10: Japan Earthquake Safety — Tokyo & Niseko 2026</title>
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  padding: 10px 16px 8px;
+  background: linear-gradient(135deg, #0d1117, #1a0a0a);
+  border-bottom: 1px solid rgba(255,80,80,0.2);
+  flex-shrink: 0;
+}
+.header h1 { font-size: 1.1em; font-weight: 800; color: #fff; line-height: 1.3; }
+.header h1 .red { color: #ef4444; }
+.header h1 .gold { color: #f0a500; }
+.header-sub { font-size: 0.82em; color: #8b949e; margin-top: 2px; }
+.alert-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.4);
+  color: #fca5a5; font-size: 0.75em; font-weight: 700;
+  padding: 3px 10px; border-radius: 12px; margin-top: 5px;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.tab-bar {
+  display: flex; background: #161b22;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0; padding: 10px 15px;
+  background: transparent; border: none; cursor: pointer;
+  font-size: 0.88em; font-weight: 700; color: #8b949e;
+  border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn.active { color: #ef4444; border-bottom-color: #ef4444; }
+.panels-wrap { flex: 1; min-height: 0; position: relative; }
+.panel { display: none; position: absolute; inset: 0; flex-direction: column; overflow: hidden; }
+.panel.active { display: flex; }
+.panel-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 60px; }
+
+/* MAP */
+#eq-map { width: 100%; height: 46vh; min-height: 180px; }
+#eq-map.map-fullscreen { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; width: 100vw !important; height: 100vh !important; z-index: 10000; }
+.map-wrap { position: relative; flex-shrink: 0; }
+.map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
+.map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,80,80,0.4); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
+.map-fullscreen-close.active { display: block; }
+
+/* RISK BANNER */
+.risk-banner { margin: 12px 16px 4px; border-radius: 12px; overflow: hidden; }
+.risk-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(255,255,255,0.06); }
+.risk-cell { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.risk-cell.tokyo { background: linear-gradient(135deg, #1a0f0f, #2a1515); }
+.risk-cell.niseko { background: linear-gradient(135deg, #0f1a15, #152a1f); }
+.risk-city { font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.1em; color: #8b949e; }
+.risk-level { font-size: 1.3em; font-weight: 900; }
+.risk-level.high   { color: #ef4444; }
+.risk-level.medium { color: #f0a500; }
+.risk-level.low    { color: #22c55e; }
+.risk-note { font-size: 0.72em; color: #6b7280; line-height: 1.4; margin-top: 2px; }
+
+/* SECTION */
+.section { border-bottom: 1px solid rgba(255,255,255,0.06); }
+.sec-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; touch-action: manipulation; }
+.sec-icon { font-size: 1.3em; flex-shrink: 0; }
+.sec-title { font-size: 1.0em; font-weight: 700; color: #e6edf3; flex: 1; }
+.sec-chevron { color: #ef4444; font-size: 1.0em; transition: transform 0.2s; }
+.section.open .sec-chevron { transform: rotate(180deg); }
+.sec-body { display: none; padding: 0 16px 14px; font-size: 0.9em; color: #8b949e; line-height: 1.7; }
+.section.open .sec-body { display: block; }
+.sec-body strong { color: #e6edf3; }
+.sec-body ul { padding-left: 18px; margin: 6px 0; }
+.sec-body li { margin: 3px 0; }
+.sec-body .note { background: rgba(240,165,0,0.1); border: 1px solid rgba(240,165,0,0.25); border-radius: 8px; padding: 9px 12px; margin-top: 10px; color: #fcd34d; font-size: 0.9em; }
+.sec-body .danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 9px 12px; margin-top: 10px; color: #fca5a5; font-size: 0.9em; }
+.sec-body .safe { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 8px; padding: 9px 12px; margin-top: 10px; color: #86efac; font-size: 0.9em; }
+
+/* STEPS */
+.steps { margin: 8px 0; }
+.step { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); align-items: flex-start; }
+.step:last-child { border-bottom: none; }
+.step-num { width: 24px; height: 24px; border-radius: 50%; background: rgba(239,68,68,0.2); border: 1.5px solid rgba(239,68,68,0.5); color: #f87171; font-size: 0.8em; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.step-text { font-size: 0.9em; color: #c9d1d9; line-height: 1.5; }
+.step-text strong { color: #fff; }
+
+/* APPS */
+.app-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+.app-icon { font-size: 2em; flex-shrink: 0; }
+.app-name { font-weight: 800; color: #fff; font-size: 0.95em; }
+.app-desc { font-size: 0.82em; color: #8b949e; margin-top: 3px; line-height: 1.4; }
+.app-tag { display: inline-block; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; font-size: 0.7em; padding: 2px 7px; border-radius: 8px; margin-top: 5px; font-weight: 700; }
+.app-tag.free { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); color: #86efac; }
+
+/* CONTACTS */
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.contact-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; text-align: center; }
+.contact-num { font-size: 1.6em; font-weight: 900; font-family: monospace; color: #ef4444; line-height: 1; }
+.contact-label { font-size: 0.72em; color: #8b949e; margin-top: 4px; }
+.contact-card.green .contact-num { color: #22c55e; }
+.contact-card.blue .contact-num { color: #60a5fa; }
+.contact-card.gold .contact-num { color: #f0a500; }
+.full-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.full-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.1em; color: #8b949e; }
+.full-val { font-size: 0.92em; color: #e6edf3; font-weight: 600; margin-top: 3px; }
+.full-val a { color: #60a5fa; text-decoration: none; }
+
+/* SITUATION */
+.sit-card { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; border-left: 3px solid #ef4444; }
+.sit-card.amber { border-left-color: #f0a500; }
+.sit-card.green { border-left-color: #22c55e; }
+.sit-date { font-size: 0.7em; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; }
+.sit-title { font-size: 0.95em; font-weight: 700; color: #fff; margin: 3px 0; }
+.sit-text { font-size: 0.85em; color: #8b949e; line-height: 1.55; }
+.sit-badge { display: inline-block; font-size: 0.68em; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-top: 5px; }
+.sit-badge.red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+.sit-badge.amber { background: rgba(240,165,0,0.2); color: #fcd34d; border: 1px solid rgba(240,165,0,0.35); }
+.sit-badge.green { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+
+.share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+
+/* LANG TOGGLE */
+.lang-bar { display: flex; gap: 6px; padding: 10px 16px 6px; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.lang-btn { padding: 4px 12px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.15); background: transparent; color: #8b949e; font-size: 0.8em; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.lang-btn.active { background: rgba(240,165,0,0.2); border-color: #f0a500; color: #f0a500; }
+.zh { display: none; }
+
+@media (max-width: 480px) {
+  .header h1 { font-size: 0.98em; }
+  .contact-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>🇯🇵 MT10: <span class="red">Earthquake Safety</span> — Japan <span class="gold">2026</span></h1>
+  <div class="header-sub">Tokyo · Niseko · Paul &amp; Joanne · Jul 1 – 28, 2026</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
+    <div class="alert-chip">⚠️ Japan Seismic Risk — Read Before You Go</div>
+    <button onclick="shareThisPage()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:0.75em;font-weight:700;padding:3px 12px;border-radius:12px;cursor:pointer;">🔗 Share</button>
+    <a href="MT10.html" style="background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.75em;font-weight:700;padding:3px 12px;border-radius:12px;text-decoration:none;">← MT10 Trip</a>
+  </div>
+</div>
+
+<!-- LANG TOGGLE -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+  <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('situation')"><span class="en">🌏 Situation</span><span class="zh">🌏 现况</span></button>
+  <button class="tab-btn" onclick="switchTab('map')"><span class="en">🗺️ Risk Map</span><span class="zh">🗺️ 风险图</span></button>
+  <button class="tab-btn" onclick="switchTab('during')"><span class="en">🆘 What To Do</span><span class="zh">🆘 应对措施</span></button>
+  <button class="tab-btn" onclick="switchTab('apps')"><span class="en">📱 Apps</span><span class="zh">📱 应用</span></button>
+  <button class="tab-btn" onclick="switchTab('contacts')"><span class="en">☎️ Emergency</span><span class="zh">☎️ 紧急联系</span></button>
+</div>
+
+<div class="panels-wrap">
+
+  <!-- SITUATION PANEL -->
+  <div id="panel-situation" class="panel active">
+    <div class="panel-scroll" style="padding: 12px 16px 60px;">
+
+      <div class="sit-card amber">
+        <div class="sit-date"><span class="en">As of June 2026</span><span class="zh">截至2026年6月</span></div>
+        <div class="sit-title"><span class="en">Japan Seismic Situation Overview</span><span class="zh">日本地震现状概述</span></div>
+        <div class="sit-text">
+          <span class="en">Japan sits on the Pacific "Ring of Fire" and experiences around 1,500 earthquakes annually. The JMA (Japan Meteorological Agency) monitors all seismic activity 24/7. Both Tokyo and Hokkaido/Niseko have active fault systems — but Japan's infrastructure and emergency response is world-class.</span>
+          <span class="zh">日本位于太平洋"火圈"上，每年约发生1,500次地震。日本气象厅（JMA）全天候监测所有地震活动。东京和北海道/二世谷均有活动断层，但日本的基础设施和紧急响应体系属世界一流水平。</span>
+        </div>
+        <span class="sit-badge amber"><span class="en">MODERATE ALERT — Stay Informed</span><span class="zh">中度警报 — 保持关注</span></span>
+      </div>
+
+      <div class="sit-card">
+        <div class="sit-date"><span class="en">Noto Peninsula — Ongoing</span><span class="zh">能登半岛 — 持续活动</span></div>
+        <div class="sit-title"><span class="en">Noto Peninsula Aftershocks (Ishikawa)</span><span class="zh">能登半岛余震（石川县）</span></div>
+        <div class="sit-text">
+          <span class="en">Following the M7.6 earthquake on Jan 1, 2024, the Noto Peninsula continues to experience aftershocks. Ishikawa Prefecture is NOT on Paul's itinerary — Tokyo and Niseko/Hokkaido are at safe distance from this zone.</span>
+          <span class="zh">继2024年1月1日M7.6级地震后，能登半岛持续有余震。石川县不在Paul的行程范围内 — 东京和二世谷/北海道距该区域较远。</span>
+        </div>
+        <span class="sit-badge red"><span class="en">Noto only — Not your area</span><span class="zh">仅限能登 — 不影响你的行程</span></span>
+      </div>
+
+      <div class="sit-card">
+        <div class="sit-date"><span class="en">Tokyo Risk</span><span class="zh">东京风险</span></div>
+        <div class="sit-title"><span class="en">Tokyo — Sagami Trough Fault Zone</span><span class="zh">东京 — 相模海槽断层带</span></div>
+        <div class="sit-text">
+          <span class="en">Tokyo sits near the Sagami Trough and the junction of three tectonic plates. Experts estimate a 70% probability of a major earthquake (M7+) in the Tokyo region within 30 years. Short-stay visitors face very low probability during a 5-day window. All major buildings are built to strict seismic codes.</span>
+          <span class="zh">东京位于相模海槽附近，处于三大板块交汇处。专家估计30年内东京发生7级以上强震的概率为70%。短期访客在5天内遭遇的概率极低。所有主要建筑均按严格抗震标准建造。</span>
+        </div>
+        <span class="sit-badge amber"><span class="en">Long-term risk / Low short-visit risk</span><span class="zh">长期风险 / 短期访问风险低</span></span>
+      </div>
+
+      <div class="sit-card green">
+        <div class="sit-date"><span class="en">Niseko / Hokkaido</span><span class="zh">二世谷 / 北海道</span></div>
+        <div class="sit-title"><span class="en">Niseko — Mt. Yotei &amp; Hokkaido Faults</span><span class="zh">二世谷 — 羊蹄山与北海道断层</span></div>
+        <div class="sit-text">
+          <span class="en">Niseko is located near Mt. Yotei (dormant volcano — last eruption ~7,800 years ago). The 2018 Hokkaido Eastern Iburi M6.7 caused landslides in eastern Hokkaido. Niseko is in western Hokkaido and generally less affected. Low volcanic and seismic risk for your dates.</span>
+          <span class="zh">二世谷位于羊蹄山（休眠火山，上次喷发约7,800年前）附近。2018年北海道东部胆振M6.7级地震造成东部北海道山体滑坡。二世谷位于北海道西部，受影响较小。你出行期间火山和地震风险较低。</span>
+        </div>
+        <span class="sit-badge green"><span class="en">LOW RISK for your dates</span><span class="zh">你出行期间 — 低风险</span></span>
+      </div>
+
+      <div class="sit-card amber" style="border-left-color:#60a5fa;">
+        <div class="sit-date"><span class="en">Tsunami Awareness</span><span class="zh">海啸意识</span></div>
+        <div class="sit-title"><span class="en">Coastal Awareness — Hokkaido</span><span class="zh">海岸线意识 — 北海道</span></div>
+        <div class="sit-text">
+          <span class="en">Niseko is inland (~30km from coast) — no direct tsunami risk. If near the coast, always follow JMA tsunami alerts immediately. Japan's sirens and J-Alert system give early warning.</span>
+          <span class="zh">二世谷位于内陆（距海岸约30公里）— 无直接海啸风险。若在海岸附近，请立即遵从JMA海啸警报。日本的警报和J-Alert系统可提前预警。</span>
+        </div>
+        <span class="sit-badge" style="background:rgba(96,165,250,0.2);color:#93c5fd;border-color:rgba(96,165,250,0.35)"><span class="en">Inland — Safe from tsunamis</span><span class="zh">内陆 — 海啸安全</span></span>
+      </div>
+
+      <div style="text-align:center;padding:16px 0 4px;font-size:0.72em;color:#484f58;">
+        <span class="en">Source: JMA · Japan Meteorological Agency · Updated Jun 2026</span>
+        <span class="zh">来源：日本气象厅（JMA）· 2026年6月更新</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RISK MAP PANEL -->
+  <div id="panel-map" class="panel">
+    <div class="map-wrap">
+      <div id="eq-map"></div>
+      <button class="map-fullscreen-btn" onclick="toggleMapFs()" title="Expand">⛶</button>
+      <button class="map-fullscreen-close" id="mapFsClose" onclick="toggleMapFs()">✕</button>
+    </div>
+    <div class="panel-scroll" style="padding-bottom:60px;">
+      <div class="risk-banner">
+        <div class="risk-row">
+          <div class="risk-cell tokyo">
+            <div class="risk-city">TOKYO</div>
+            <div class="risk-level high">HIGH</div>
+            <div class="risk-note"><span class="en">Sagami Trough · 3 plate junction · World-class building codes</span><span class="zh">相模海槽 · 三板块交汇 · 世界级建筑标准</span></div>
+          </div>
+          <div class="risk-cell niseko">
+            <div class="risk-city">NISEKO</div>
+            <div class="risk-level medium">MEDIUM</div>
+            <div class="risk-note"><span class="en">Western Hokkaido · Inland · Lower seismic zone</span><span class="zh">北海道西部 · 内陆 · 较低地震区</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:10px 16px;font-size:0.8em;color:#6b7280;text-align:center;">
+        <span class="en">🔴 Your locations · ⬤ Seismic zones · Tap markers for info</span>
+        <span class="zh">🔴 你的位置 · ⬤ 地震区 · 点击标记查看信息</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT TO DO PANEL -->
+  <div id="panel-during" class="panel">
+    <div class="panel-scroll" style="padding-bottom:60px;">
+
+      <!-- During -->
+      <div class="section open">
+        <div class="sec-header" onclick="toggleSec(this)">
+          <div class="sec-icon">🔴</div>
+          <div class="sec-title"><span class="en">During an Earthquake</span><span class="zh">地震发生时</span></div>
+          <div class="sec-chevron">▼</div>
+        </div>
+        <div class="sec-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong><span class="en">DROP</span><span class="zh">趴下</span></strong> — <span class="en">Get on your hands and knees immediately</span><span class="zh">立即双手双膝着地</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong><span class="en">COVER</span><span class="zh">掩护</span></strong> — <span class="en">Cover head and neck under a sturdy table or against an interior wall</span><span class="zh">在坚固桌子下或内墙旁保护头颈部</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong><span class="en">HOLD ON</span><span class="zh">抓紧</span></strong> — <span class="en">Stay in place until shaking stops. Do NOT run outside</span><span class="zh">保持不动直到震动停止。切勿跑向室外</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong><span class="en">Away from windows</span><span class="zh">远离窗户</span></strong> — <span class="en">Glass shatters. Stay away from all windows and external walls</span><span class="zh">玻璃会碎裂。远离所有窗户和外墙</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-text"><strong><span class="en">In bed</span><span class="zh">在床上</span></strong> — <span class="en">Stay there. Cover your head with a pillow</span><span class="zh">留在床上，用枕头保护头部</span></div>
+            </div>
+          </div>
+          <div class="danger">
+            <span class="en">⛔ Do NOT: Use elevators · Stand in doorways · Run outside during shaking · Light matches (gas leaks)</span>
+            <span class="zh">⛔ 禁止：使用电梯 · 站在门框里 · 震动时跑向室外 · 点火（防止燃气泄漏）</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- After -->
+      <div class="section">
+        <div class="sec-header" onclick="toggleSec(this)">
+          <div class="sec-icon">🟠</div>
+          <div class="sec-title"><span class="en">Immediately After</span><span class="zh">地震结束后</span></div>
+          <div class="sec-chevron">▼</div>
+        </div>
+        <div class="sec-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-text"><strong><span class="en">Check for injuries</span><span class="zh">检查伤情</span></strong> — <span class="en">Check yourself and Joanne first before moving</span><span class="zh">先检查自己和Joanne的伤情再移动</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-text"><strong><span class="en">Smell for gas</span><span class="zh">闻气体</span></strong> — <span class="en">If you smell gas, open windows, leave immediately, do not use switches</span><span class="zh">如闻到燃气，开窗后立即离开，不要触动开关</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-text"><strong><span class="en">Grab Go-Bag</span><span class="zh">拿紧急包</span></strong> — <span class="en">Passport, cards, phone, medication, water. Keep them together in one bag</span><span class="zh">护照、卡、手机、药物、水。放在同一个袋子里</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-text"><strong><span class="en">Open doors first</span><span class="zh">先开门</span></strong> — <span class="en">Doors can jam after quake. Open exit doors before doing anything else</span><span class="zh">地震后门可能会卡住。在做任何事之前先打开出口门</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-text"><strong><span class="en">Evacuation point</span><span class="zh">疏散地点</span></strong> — <span class="en">Ask your hotel where the designated earthquake assembly point is</span><span class="zh">询问酒店指定的地震集合点在哪里</span></div>
+            </div>
+          </div>
+          <div class="note">
+            <span class="en">💡 Expect aftershocks for hours to days after a major quake. Stay calm — Japanese buildings are designed for this.</span>
+            <span class="zh">💡 预计主震后数小时至数天内会有余震。保持冷静 — 日本建筑就是为此设计的。</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- In Hotel -->
+      <div class="section">
+        <div class="sec-header" onclick="toggleSec(this)">
+          <div class="sec-icon">🏨</div>
+          <div class="sec-title"><span class="en">In Your Hotel Room</span><span class="zh">在酒店房间</span></div>
+          <div class="sec-chevron">▼</div>
+        </div>
+        <div class="sec-body">
+          <ul>
+            <li><strong><span class="en">Know your floor's fire exit</span><span class="zh">了解你所在楼层的紧急出口</span></strong> — <span class="en">Check on check-in</span><span class="zh">入住时确认</span></li>
+            <li><strong><span class="en">Do NOT use lifts</span><span class="zh">不要使用电梯</span></strong> — <span class="en">Always use stairs after a quake</span><span class="zh">地震后始终走楼梯</span></li>
+            <li><strong><span class="en">Lower floors = faster exit</span><span class="zh">低楼层 = 更快逃出</span></strong> — <span class="en">If possible request floors 3-7</span><span class="zh">如可能，请求3-7楼的房间</span></li>
+            <li><span class="en">Ask the front desk for their earthquake procedure on arrival</span><span class="zh">到达时向前台询问他们的地震应对程序</span></li>
+          </ul>
+          <div class="safe">
+            <span class="en">✅ Japan hotels are legally required to have earthquake procedures and regular drills. Staff are trained to assist guests.</span>
+            <span class="zh">✅ 日本酒店依法必须制定地震应对程序并定期演练。员工经过专业培训，能够协助客人。</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tsunami -->
+      <div class="section">
+        <div class="sec-header" onclick="toggleSec(this)">
+          <div class="sec-icon">🌊</div>
+          <div class="sec-title"><span class="en">Tsunami Warning</span><span class="zh">海啸警报</span></div>
+          <div class="sec-chevron">▼</div>
+        </div>
+        <div class="sec-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-text"><span class="en"><strong>If near the coast</strong> and strong quake occurs — move to high ground immediately, do not wait for official warning</span><span class="zh"><strong>若在海岸附近</strong>发生强烈地震 — 立即转移到高处，不要等待官方警报</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-text"><span class="en">Tsunami sirens = leave NOW. Do not photograph, do not return for belongings</span><span class="zh">海啸警报响起 = 立刻离开。不要拍照，不要回去取物品</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-text"><span class="en">Niseko is inland — no tsunami risk. Tokyo coasts: move 3km+ inland to high ground</span><span class="zh">二世谷为内陆地区 — 无海啸风险。东京海岸：向内陆3公里以上高处转移</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- APPS PANEL -->
+  <div id="panel-apps" class="panel">
+    <div class="panel-scroll" style="padding: 14px 16px 60px;">
+
+      <div style="font-size:0.82em;color:#8b949e;margin-bottom:12px;">
+        <span class="en">⬇️ Install all these apps BEFORE leaving Singapore. Works offline in Japan.</span>
+        <span class="zh">⬇️ 在离开新加坡前安装所有应用程序。在日本可离线使用。</span>
+      </div>
+
+      <div class="app-card">
+        <div class="app-icon">📱</div>
+        <div>
+          <div class="app-name">Safety Tips</div>
+          <div class="app-desc">
+            <span class="en">Official Japan Tourism Agency disaster app. Real-time JMA earthquake/tsunami/typhoon alerts in English & Chinese. Sends push notifications for your location.</span>
+            <span class="zh">日本观光厅官方灾害应用。英文和中文的JMA地震/海啸/台风实时警报。根据您的位置发送推送通知。</span>
+          </div>
+          <span class="app-tag free">FREE</span>
+          <span class="app-tag" style="background:rgba(240,165,0,0.15);border-color:rgba(240,165,0,0.3);color:#fcd34d;">MUST HAVE</span>
+        </div>
+      </div>
+
+      <div class="app-card">
+        <div class="app-icon">🗞️</div>
+        <div>
+          <div class="app-name">NHK World TV</div>
+          <div class="app-desc">
+            <span class="en">Japan's public broadcaster. English-language live news, emergency broadcasts, and disaster updates. Works when internet is available.</span>
+            <span class="zh">日本公共广播电台。英文直播新闻、紧急广播和灾害更新。在有网络时可使用。</span>
+          </div>
+          <span class="app-tag free">FREE</span>
+        </div>
+      </div>
+
+      <div class="app-card">
+        <div class="app-icon">🔵</div>
+        <div>
+          <div class="app-name">Google Maps (Offline)</div>
+          <div class="app-desc">
+            <span class="en">Download offline maps for Tokyo and Niseko/Hokkaido BEFORE leaving. Works without data after a disaster when towers may be overloaded.</span>
+            <span class="zh">出发前下载东京和二世谷/北海道的离线地图。灾后数据信号可能拥挤时，离线地图仍可使用。</span>
+          </div>
+          <span class="app-tag free">FREE · Download Offline</span>
+        </div>
+      </div>
+
+      <div class="app-card">
+        <div class="app-icon">🌐</div>
+        <div>
+          <div class="app-name">Google Translate (Japanese)</div>
+          <div class="app-desc">
+            <span class="en">Download Japanese language pack for offline use. Camera translation works for reading Japanese emergency signs and instructions.</span>
+            <span class="zh">下载日语语言包供离线使用。相机翻译可用于阅读日文紧急标志和说明。</span>
+          </div>
+          <span class="app-tag free">FREE · Download Japanese pack</span>
+        </div>
+      </div>
+
+      <div class="app-card">
+        <div class="app-icon">🇸🇬</div>
+        <div>
+          <div class="app-name">MFA Singapass / Overseas SOS</div>
+          <div class="app-desc">
+            <span class="en">Singapore MFA Overseas Citizens Emergency Assistance. Register your trip at mfa.gov.sg/oraas so Singapore Embassy can reach you in a crisis.</span>
+            <span class="zh">新加坡外交部海外公民紧急协助。在mfa.gov.sg/oraas登记您的行程，以便新加坡大使馆在危机时可以联系您。</span>
+          </div>
+          <span class="app-tag free">Register at MFA website</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EMERGENCY CONTACTS PANEL -->
+  <div id="panel-contacts" class="panel">
+    <div class="panel-scroll" style="padding: 14px 16px 60px;">
+
+      <div style="font-size:0.82em;color:#8b949e;margin-bottom:12px;">
+        <span class="en">📸 Screenshot this page — save it offline before you go.</span>
+        <span class="zh">📸 截图保存此页面 — 出发前离线保存。</span>
+      </div>
+
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-num">110</div>
+          <div class="contact-label"><span class="en">Japan Police</span><span class="zh">日本警察</span></div>
+        </div>
+        <div class="contact-card green">
+          <div class="contact-num">119</div>
+          <div class="contact-label"><span class="en">Fire / Ambulance</span><span class="zh">消防 / 救护车</span></div>
+        </div>
+        <div class="contact-card blue">
+          <div class="contact-num">118</div>
+          <div class="contact-label"><span class="en">Coast Guard</span><span class="zh">海上保安厅</span></div>
+        </div>
+        <div class="contact-card gold">
+          <div class="contact-num">171</div>
+          <div class="contact-label"><span class="en">Disaster Message Dial</span><span class="zh">灾害留言热线</span></div>
+        </div>
+      </div>
+
+      <div style="height:12px;"></div>
+
+      <div class="full-card">
+        <div class="full-label"><span class="en">Japan Visitor Hotline (24h, English)</span><span class="zh">日本访客热线（24小时，英语）</span></div>
+        <div class="full-val">050-3816-2787</div>
+      </div>
+
+      <div class="full-card">
+        <div class="full-label"><span class="en">Singapore Embassy Tokyo</span><span class="zh">新加坡驻东京大使馆</span></div>
+        <div class="full-val">+81-3-3586-9111</div>
+      </div>
+
+      <div class="full-card">
+        <div class="full-label"><span class="en">Singapore Consulate Osaka (also covers Hokkaido emergencies)</span><span class="zh">新加坡驻大阪领事馆（负责北海道紧急事务）</span></div>
+        <div class="full-val">+81-6-6213-1131</div>
+      </div>
+
+      <div class="full-card">
+        <div class="full-label"><span class="en">JMA Earthquake Info (English)</span><span class="zh">JMA地震信息（英语）</span></div>
+        <div class="full-val"><a href="https://www.jma.go.jp/en/quake/">www.jma.go.jp/en/quake</a></div>
+      </div>
+
+      <div class="full-card">
+        <div class="full-label"><span class="en">Singapore MFA Emergency Overseas</span><span class="zh">新加坡外交部海外紧急联系</span></div>
+        <div class="full-val">+65-6379-8855</div>
+      </div>
+
+      <div class="full-card" style="border-color:rgba(240,165,0,0.3);">
+        <div class="full-label" style="color:#f0a500;"><span class="en">J-Alert — Japan's National Warning System</span><span class="zh">J-Alert — 日本全国瞬时警戒系统</span></div>
+        <div class="full-val" style="font-size:0.84em;color:#8b949e;">
+          <span class="en">When J-Alert activates: TV/radio/outdoor speakers broadcast warnings automatically. Your phone will receive an emergency alert (loud alarm even on silent). Follow the instructions immediately.</span>
+          <span class="zh">J-Alert启动时：电视/广播/室外扬声器自动广播警报。您的手机将收到紧急警报（即使在静音状态下也会发出响亮警报）。请立即遵照指示行动。</span>
+        </div>
+      </div>
+
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px 14px;margin-top:4px;">
+        <div style="font-size:0.75em;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">
+          <span class="en">PAUL'S GRAB BAG CHECKLIST</span><span class="zh">PAUL的紧急包清单</span>
+        </div>
+        <div style="font-size:0.85em;color:#c9d1d9;line-height:1.7;">
+          <span class="en">☐ Both passports &nbsp; ☐ Credit cards &nbsp; ☐ iPhone (charged) &nbsp; ☐ Hotel address card in Japanese &nbsp; ☐ Any medications &nbsp; ☐ Small cash (¥10,000+) &nbsp; ☐ Portable charger</span>
+          <span class="zh">☐ 两本护照 &nbsp; ☐ 信用卡 &nbsp; ☐ iPhone（已充电）&nbsp; ☐ 日语酒店地址卡 &nbsp; ☐ 药物 &nbsp; ☐ 少量现金（¥10,000以上）&nbsp; ☐ 移动充电器</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// TABS
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'map') setTimeout(initMap, 100);
+}
+
+// SECTIONS
+function toggleSec(hdr) {
+  hdr.parentElement.classList.toggle('open');
+}
+
+// LANG
+function setLang(lang) {
+  document.querySelectorAll('.en').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
+  document.querySelectorAll('.zh').forEach(el => el.style.display = lang === 'zh' ? '' : 'none');
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// MAP
+var mapInited = false;
+function initMap() {
+  if (mapInited) return;
+  mapInited = true;
+  var map = L.map('eq-map', { center: [37.5, 138], zoom: 5, zoomControl: true });
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri', maxZoom: 17
+  }).addTo(map);
+
+  function circleMarker(lat, lng, color, r, label, body) {
+    L.circle([lat, lng], { radius: r, color: color, fillColor: color, fillOpacity: 0.18, weight: 2 })
+      .addTo(map)
+      .bindPopup('<b style="color:' + color + '">' + label + '</b><br><span style="font-size:0.9em;color:#c9d1d9;">' + body + '</span>');
+  }
+  function pinMarker(lat, lng, emoji, label, body) {
+    var icon = L.divIcon({ html: '<div style="font-size:1.6em;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.8))">' + emoji + '</div>', className: '', iconAnchor: [12, 12] });
+    L.marker([lat, lng], { icon: icon }).addTo(map)
+      .bindPopup('<b style="color:#fff">' + label + '</b><br><span style="font-size:0.9em;color:#c9d1d9;">' + body + '</span>');
+  }
+
+  // Risk zones
+  circleMarker(35.68, 139.69, '#ef4444', 120000, 'Tokyo Seismic Zone', 'High risk · Sagami Trough fault · 3 plate junction');
+  circleMarker(42.73, 140.69, '#f0a500', 80000, 'Niseko / Hokkaido', 'Medium risk · Western Hokkaido · Lower seismic zone');
+  circleMarker(37.5, 137.2, '#ef4444', 60000, 'Noto Peninsula', 'M7.6 Jan 2024 · Aftershocks ongoing · NOT your area');
+
+  // Paul's locations
+  pinMarker(35.6762, 139.6503, '🔴', 'Tokyo — Paul & Joanne', 'Jul 1–6, 2026 · 5 nights');
+  pinMarker(42.7927, 140.6897, '🏔️', 'Niseko, Hokkaido', 'Jul 6–27, 2026 · 21 nights · Mt. Yotei nearby');
+  pinMarker(35.7720, 140.3929, '✈️', 'Narita Airport', 'SQ636 arrive 17:55 Jul 1');
+  pinMarker(42.9800, 141.5550, '✈️', 'New Chitose Airport (Sapporo)', 'Fly SIN → NRT → CTS');
+}
+
+// MAP FULLSCREEN
+function toggleMapFs() {
+  var m = document.getElementById('eq-map');
+  var c = document.getElementById('mapFsClose');
+  m.classList.toggle('map-fullscreen');
+  c.classList.toggle('active');
+}
+
+// SHARE
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<script src="/view-counter.js"></script>
+</body>
+</html>
