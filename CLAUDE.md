@@ -154,6 +154,23 @@ Every page and article on Paul's World must include an **English / 中文 langua
 - English is default (active on load)
 - Reference implementation: `MT12.html` Itinerary panel (June 2026)
 
+## CSS Layout Rule — Grid over Flex for Row Cards
+**NEVER use `margin-left:auto` inside a flex row when the middle element must fill space.**
+`margin-left:auto` on a flex child consumes ALL remaining free space, collapsing the content
+div next to it to zero width (text becomes invisible). This caused the MT15 itinerary blank-card bug.
+
+**Always use CSS Grid for icon/title/action row layouts:**
+```css
+/* CORRECT — badge | title (fills) | chevron */
+.row-header { display:grid; grid-template-columns:auto 1fr auto; align-items:start; gap:10px; }
+```
+This guarantees:
+- Column 1 (`auto`): icon/badge takes its natural size
+- Column 2 (`1fr`): title/content always fills the remaining space
+- Column 3 (`auto`): action/chevron sits flush right
+
+Never use flexbox + `margin-left:auto` for this 3-column pattern.
+
 ## Standing Rules for All Pages & Articles
 
 ### 🏠 Home Button
