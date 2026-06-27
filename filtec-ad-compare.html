@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ad Compare — PT. Filtec Head of Sales</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #f5f0e8; color: #1a1a1a; }
+
+  .home-btn {
+    position: fixed; top: 14px; left: 14px; z-index: 9999;
+    background: #1a1a2e; color: #fff; text-decoration: none;
+    font-size: 0.82rem; font-weight: 700; padding: 9px 18px;
+    border-radius: 24px; box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+  }
+
+  .top-bar {
+    background: #1a1a2e;
+    padding: 60px 20px 24px;
+    text-align: center;
+  }
+  .top-bar h1 { color: #fff; font-size: 1.3rem; margin-bottom: 6px; }
+  .top-bar p { color: rgba(255,255,255,0.55); font-size: 0.82rem; font-family: Arial, sans-serif; margin-bottom: 24px; }
+
+  .toggle-wrap {
+    display: inline-flex;
+    background: rgba(255,255,255,0.1);
+    border-radius: 40px;
+    padding: 5px;
+    gap: 4px;
+  }
+  .toggle-btn {
+    padding: 12px 36px;
+    border-radius: 35px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    transition: all 0.25s ease;
+    letter-spacing: 0.02em;
+  }
+  .toggle-btn.before { background: transparent; color: rgba(255,255,255,0.6); }
+  .toggle-btn.before.active { background: #e53e3e; color: #fff; box-shadow: 0 4px 14px rgba(229,62,62,0.5); }
+  .toggle-btn.after { background: transparent; color: rgba(255,255,255,0.6); }
+  .toggle-btn.after.active { background: #27ae60; color: #fff; box-shadow: 0 4px 14px rgba(39,174,96,0.5); }
+
+  .status-pill { display: inline-block; margin-top: 16px; padding: 6px 18px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: 0.05em; }
+  .status-pill.before { background: rgba(229,62,62,0.2); color: #ff8080; border: 1px solid rgba(229,62,62,0.4); }
+  .status-pill.after  { background: rgba(39,174,96,0.2); color: #6ee09c; border: 1px solid rgba(39,174,96,0.4); }
+
+  .panel { display: none; padding: 28px 20px 50px; max-width: 700px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  .paper {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    padding: 32px 28px 28px 72px;
+    margin-bottom: 20px;
+    position: relative;
+    border-left: 6px solid #e8e0d0;
+  }
+  .paper::before { content: ''; position: absolute; left: 54px; top: 0; bottom: 0; width: 2px; background: rgba(255,100,100,0.2); }
+  .doc-title { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .doc-company { color: #0077b5; font-size: 0.92rem; font-weight: 600; margin-bottom: 14px; }
+  .doc-body { font-size: 0.93rem; line-height: 1.8; color: #222; }
+  .doc-body p { margin-bottom: 10px; }
+  .doc-body ul { margin: 4px 0 12px 20px; }
+  .doc-body ul li { margin-bottom: 3px; }
+  .doc-body .sec { font-weight: 700; margin: 14px 0 4px; }
+
+  .err { background: #FFE500; padding: 1px 3px; border-radius: 3px; border-bottom: 2px solid #e6a800; }
+  .err-num { display: inline-flex; align-items: center; justify-content: center; background: #e53e3e; color: #fff; font-size: 0.58rem; font-weight: 700; width: 15px; height: 15px; border-radius: 50%; margin-left: 2px; vertical-align: middle; font-family: Arial, sans-serif; }
+
+  .fix-list { background: #fff8e1; border-left: 4px solid #e53e3e; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; }
+  .fix-list h3 { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #c0392b; margin-bottom: 12px; font-family: Arial, sans-serif; }
+  .fix-row { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px dashed #e0d0a0; font-size: 0.84rem; }
+  .fix-row:last-child { border-bottom: none; }
+  .fn { background: #e53e3e; color: #fff; font-size: 0.65rem; font-weight: 700; min-width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-family: Arial, sans-serif; }
+  .fw { color: #c0392b; text-decoration: line-through; margin-right: 4px; }
+  .fa { color: #1a7a40; font-weight: 700; }
+  .fi { color: #888; font-size: 0.76rem; font-style: italic; display: block; margin-top: 2px; }
+
+  .cta-block { background: #f0f7ff; border-left: 4px solid #0077b5; border-radius: 8px; padding: 12px 16px; margin-top: 14px; font-size: 0.9rem; line-height: 1.7; }
+  .cta-block a { color: #0077b5; font-weight: 700; }
+
+  .banner { background: linear-gradient(135deg, #1a2744 0%, #0d3b7a 100%); border-radius: 12px; padding: 24px 24px 20px; margin-bottom: 20px; color: #fff; }
+  .banner-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .banner-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.6); font-family: Arial, sans-serif; }
+  .banner-title { font-size: 1.5rem; font-weight: 900; font-family: Arial, sans-serif; }
+  .banner-logo { background: #fff; border-radius: 6px; padding: 5px 10px; font-size: 0.7rem; font-weight: 700; color: #1a2744; font-family: Arial, sans-serif; text-align: center; flex-shrink: 0; }
+  .banner-logo small { display: block; font-size: 0.55rem; color: #666; }
+  .banner-search { background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 7px; padding: 9px 14px; font-size: 0.9rem; font-weight: 700; font-family: Arial, sans-serif; margin-bottom: 16px; }
+  .banner-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .banner-col h4 { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.55); text-decoration: underline; margin-bottom: 7px; font-family: Arial, sans-serif; }
+  .banner-col ul { list-style: disc; padding-left: 14px; font-size: 0.74rem; line-height: 1.6; color: rgba(255,255,255,0.85); font-family: Arial, sans-serif; }
+  .banner-cta { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 7px; padding: 9px 13px; font-size: 0.76rem; color: rgba(255,255,255,0.82); font-family: Arial, sans-serif; margin-top: 14px; line-height: 1.6; }
+  .banner-cta strong { color: #fff; }
+
+  .before-banner { background: linear-gradient(135deg, #1a2744 0%, #0d3b7a 100%); border-radius: 12px; padding: 24px; margin-bottom: 20px; color: #fff; }
+  .before-banner .banner-title { font-size: 1.5rem; font-weight: 900; font-family: Arial, sans-serif; margin-bottom: 14px; }
+  .before-banner ul { list-style: disc; padding-left: 16px; font-size: 0.78rem; line-height: 1.7; color: rgba(255,255,255,0.85); font-family: Arial, sans-serif; margin-bottom: 10px; }
+  .before-banner .sec { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.55); text-decoration: underline; margin: 10px 0 5px; font-family: Arial, sans-serif; }
+  .before-banner p { font-size: 0.78rem; font-family: Arial, sans-serif; color: rgba(255,255,255,0.82); line-height: 1.6; margin-top: 10px; }
+  .err-dark { background: #FFE500; color: #1a1a1a; padding: 1px 3px; border-radius: 3px; border-bottom: 2px solid #e6a800; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; background: #fff; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.8rem; font-family: Arial, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+
+  .badge-strip { display: flex; flex-wrap: wrap; gap: 8px; background: #fff; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 0.78rem; font-family: Arial, sans-serif; align-items: center; }
+  .badge-strip strong { color: #27ae60; }
+  .fix-badge { background: #e0f5eb; color: #1a7a40; border: 1px solid #a8d8b9; border-radius: 20px; padding: 2px 9px; font-size: 0.72rem; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+
+<div class="top-bar">
+  <h1>✏️ Ad Review — PT. Filtec Indo Teknologi</h1>
+  <p>LinkedIn Post · Head of Sales · 27 June 2026</p>
+  <div class="toggle-wrap">
+    <button class="toggle-btn before active" onclick="showPanel('before')">&#10060; Before</button>
+    <button class="toggle-btn after" onclick="showPanel('after')">&#9989; After</button>
+  </div>
+  <div id="statusPill" class="status-pill before">8 mistakes found</div>
+</div>
+
+<div id="panel-before" class="panel active">
+  <div class="legend">
+    <strong>KEY:</strong>
+    <div class="legend-item"><span style="background:#FFE500;padding:1px 8px;border-radius:3px;font-size:0.78rem;">highlighted</span> = mistake</div>
+    <div class="legend-item"><span style="background:#e53e3e;color:#fff;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;">1</span> = error number</div>
+    <div class="legend-item"><span style="background:#ffe0e0;color:#c0392b;padding:1px 7px;border-radius:3px;text-decoration:line-through;font-size:0.78rem;">wrong</span> → <span style="background:#e0f5eb;color:#1a7a40;padding:1px 7px;border-radius:3px;font-weight:700;font-size:0.78rem;">correct</span></div>
+  </div>
+
+  <div class="paper">
+    <div class="doc-title">We Are Hiring! – Head of Sales</div>
+    <div class="doc-company">PT Filtec Indo Teknologi</div>
+    <div class="doc-body">
+      <p>We are looking for an experienced Head of Sales to lead and develop our sales team in the HVAC filter systems, compressors, and diesel engine industry.</p>
+      <p><span class="err">(Job Description):<span class="err-num">1</span></span></p>
+      <ul>
+        <li>Develop and implement national sales strategies for filter products and solutions.</li>
+        <li>Lead the sales team to achieve monthly and annual sales targets.</li>
+        <li>Build and maintain long-term relationships with key clients and business partners.</li>
+        <li>Analyze market trends and customer needs to develop new business strategies.</li>
+        <li>Coordinate with technical, engineering, and project teams to ensure customer satisfaction.</li>
+        <li>Prepare sales reports, team performance <span class="err">analyses<span class="err-num">2</span></span>, and strategy improvement recommendations.</li>
+      </ul>
+      <p class="sec">Qualifications:</p>
+      <ul>
+        <li>Minimum high school diploma or equivalent in Management, Marketing, Business, Economics, or related fields.</li>
+        <li>2–5 years of experience as a Sales Manager, Regional Sales Manager, or Head of Sales.</li>
+        <li>Strong leadership and team management skills (able to motivate and develop teams).</li>
+        <li>Excellent analytical, negotiation, and communication skills.</li>
+        <li>In-depth understanding of market trends and customer needs to develop new business strategies.</li>
+        <li>Understanding of HVAC Filter/Compressor/Diesel Engine systems is a plus.</li>
+        <li>Ability to develop sales strategies, budgets, and sales projections.</li>
+        <li>Proficiency in Microsoft Office.</li>
+      </ul>
+      <p>Please <span class="err">sent<span class="err-num">3</span></span> your <span class="err">update<span class="err-num">4</span></span> CV to <strong>recruitmentfiltechind@gmail.com</strong></p>
+      <p>Subject : <span class="err">name_position<span class="err-num">5</span></span></p>
+    </div>
+  </div>
+
+  <div class="before-banner">
+    <div class="banner-label" style="margin-bottom:4px;">We Are Hiring</div>
+    <div class="banner-title">🔍 <span class="err-dark">HEAD SALES<span class="err-num">6</span></span></div>
+    <div class="sec">Qualification</div>
+    <ul>
+      <li>Min. diploma in Management, Marketing, Business or related fields.</li>
+      <li>2–5 years as Sales Manager / Regional Sales Manager / Head of Sales.</li>
+      <li>Strong leadership and team management skills.</li>
+      <li>Excellent analytical, negotiation, and communication skills.</li>
+      <li>In-depth understanding of market trends and effective sales strategies.</li>
+      <li>Good understanding of <span class="err-dark">HVAC Filter / COMPRESSOR / DIESEL ENGINE<span class="err-num">7</span></span> systems.</li>
+      <li>Able to develop sales strategies, budgets, and sales forecasts.</li>
+      <li>Able to operate <span class="err-dark">Ms. Office<span class="err-num">8</span></span>.</li>
+    </ul>
+    <div class="sec">Job Description</div>
+    <ul>
+      <li>Develop and implement national sales strategies for filter products and solutions.</li>
+      <li>Lead the sales team to achieve monthly and annual sales targets.</li>
+      <li>Establish and maintain long-term relationships with key clients and business partners.</li>
+      <li>Analyze market trends and customer needs to develop new business strategies.</li>
+      <li>Coordinate with technical, engineering, and project teams to ensure customer satisfaction.</li>
+      <li>Compile sales reports, team performance analysis, and improvement recommendations.</li>
+    </ul>
+    <p>Please <span class="err-dark">sent<span class="err-num">3</span></span> your <span class="err-dark">update<span class="err-num">4</span></span> CV to recruitmentfiltechind@gmail.com<br>
+    Subject : <span class="err-dark">name_position<span class="err-num">5</span></span></p>
+  </div>
+
+  <div class="fix-list">
+    <h3>✏️ Teacher's Corrections</h3>
+    <div class="fix-row"><div class="fn">1</div><div><span class="fw">(Job Description):</span> → <span class="fa">Job Description:</span><span class="fi">Remove parentheses — looks informal</span></div></div>
+    <div class="fix-row"><div class="fn">2</div><div><span class="fw">team performance analyses</span> → <span class="fa">team performance analysis</span><span class="fi">Use singular "analysis" consistently</span></div></div>
+    <div class="fix-row"><div class="fn">3</div><div><span class="fw">Please sent</span> → <span class="fa">Please send</span><span class="fi">"Sent" is past tense — use command form "send"</span></div></div>
+    <div class="fix-row"><div class="fn">4</div><div><span class="fw">update CV</span> → <span class="fa">updated CV</span><span class="fi">"Update" is a verb — need adjective "updated"</span></div></div>
+    <div class="fix-row"><div class="fn">5</div><div><span class="fw">Subject : name_position</span> → <span class="fa">Subject: [Full Name] – Head of Sales</span><span class="fi">Give a clear example format</span></div></div>
+    <div class="fix-row"><div class="fn">6</div><div><span class="fw">HEAD SALES</span> → <span class="fa">HEAD OF SALES</span><span class="fi">Missing word "OF" in banner graphic</span></div></div>
+    <div class="fix-row"><div class="fn">7</div><div><span class="fw">HVAC Filter / COMPRESSOR / DIESEL ENGINE</span> → <span class="fa">HVAC Filter / Compressor / Diesel Engine</span><span class="fi">Inconsistent capitalisation</span></div></div>
+    <div class="fix-row"><div class="fn">8</div><div><span class="fw">Ms. Office</span> → <span class="fa">MS Office</span><span class="fi">"Ms." is a title for women — correct is "MS"</span></div></div>
+  </div>
+</div>
+
+<div id="panel-after" class="panel">
+  <div class="badge-strip">
+    <strong>8 fixes applied:</strong>
+    <span class="fix-badge">✓ send</span>
+    <span class="fix-badge">✓ updated CV</span>
+    <span class="fix-badge">✓ Job Description:</span>
+    <span class="fix-badge">✓ analysis</span>
+    <span class="fix-badge">✓ Subject format</span>
+    <span class="fix-badge">✓ HEAD OF SALES</span>
+    <span class="fix-badge">✓ Consistent caps</span>
+    <span class="fix-badge">✓ MS Office</span>
+  </div>
+
+  <div class="paper">
+    <div class="doc-title">We Are Hiring! – Head of Sales</div>
+    <div class="doc-company">PT Filtec Indo Teknologi</div>
+    <div class="doc-body">
+      <p>We are looking for an experienced Head of Sales to lead and develop our sales team in the HVAC filter systems, compressors, and diesel engine industry.</p>
+      <p>📍 <strong>Location:</strong> Jakarta, Indonesia</p>
+      <p class="sec">Job Description:</p>
+      <ul>
+        <li>Develop and implement national sales strategies for filter products and solutions.</li>
+        <li>Lead the sales team to achieve monthly and annual sales targets.</li>
+        <li>Build and maintain long-term relationships with key clients and business partners.</li>
+        <li>Analyze market trends and customer needs to develop new business strategies.</li>
+        <li>Coordinate with technical, engineering, and project teams to ensure customer satisfaction.</li>
+        <li>Prepare sales reports, team performance analysis, and strategy improvement recommendations.</li>
+      </ul>
+      <p class="sec">Qualifications:</p>
+      <ul>
+        <li>Minimum high school diploma or equivalent in Management, Marketing, Business, Economics, or related fields.</li>
+        <li>2–5 years of experience as a Sales Manager, Regional Sales Manager, or Head of Sales.</li>
+        <li>Strong leadership and team management skills (able to motivate and develop teams).</li>
+        <li>Excellent analytical, negotiation, and communication skills.</li>
+        <li>In-depth understanding of market trends and customer needs to develop new business strategies.</li>
+        <li>Understanding of HVAC Filter / Compressor / Diesel Engine systems is a plus.</li>
+        <li>Ability to develop sales strategies, budgets, and sales projections.</li>
+        <li>Proficiency in MS Office.</li>
+      </ul>
+      <div class="cta-block">
+        📩 Please <strong>send</strong> your <strong>updated</strong> CV to
+        <a href="mailto:recruitmentfiltechind@gmail.com">recruitmentfiltechind@gmail.com</a><br>
+        Subject: <strong>[Your Full Name] – Head of Sales</strong><br>
+        📅 Application deadline: <strong>31 July 2026</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner">
+    <div class="banner-top">
+      <div>
+        <div class="banner-label">We Are Hiring</div>
+        <div class="banner-title">HEAD OF SALES</div>
+      </div>
+      <div class="banner-logo">🔷 Filtec<small>PT. FILTEC INDO TEKNOLOGI</small></div>
+    </div>
+    <div class="banner-search">🔍 Head of Sales — PT. Filtec Indo Teknologi</div>
+    <div class="banner-cols">
+      <div class="banner-col">
+        <h4>Qualification</h4>
+        <ul>
+          <li>Min. diploma in Management, Marketing, Business or related fields.</li>
+          <li>2–5 years as Sales Manager / Regional Sales Manager / Head of Sales.</li>
+          <li>Strong leadership and team management skills.</li>
+          <li>Excellent analytical, negotiation, and communication skills.</li>
+          <li>In-depth understanding of market trends and effective sales strategies.</li>
+          <li>Good understanding of HVAC Filter / Compressor / Diesel Engine systems.</li>
+          <li>Able to develop sales strategies, budgets, and sales forecasts.</li>
+          <li>Able to operate MS Office.</li>
+        </ul>
+      </div>
+      <div class="banner-col">
+        <h4>Job Description</h4>
+        <ul>
+          <li>Develop and implement national sales strategies for filter products and solutions.</li>
+          <li>Lead the sales team to achieve monthly and annual sales targets.</li>
+          <li>Establish and maintain long-term relationships with key clients and business partners.</li>
+          <li>Analyze market trends and customer needs to develop new business strategies.</li>
+          <li>Coordinate with technical, engineering, and project teams to ensure customer satisfaction.</li>
+          <li>Compile sales reports, team performance analysis, and improvement recommendations.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="banner-cta">
+      📩 Please <strong>send</strong> your <strong>updated</strong> CV to <strong>recruitmentfiltechind@gmail.com</strong><br>
+      Subject: <strong>[Your Full Name] – Head of Sales</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPanel(which) {
+  document.getElementById('panel-before').classList.remove('active');
+  document.getElementById('panel-after').classList.remove('active');
+  document.getElementById('panel-' + which).classList.add('active');
+  document.querySelector('.toggle-btn.before').classList.remove('active');
+  document.querySelector('.toggle-btn.after').classList.remove('active');
+  document.querySelector('.toggle-btn.' + which).classList.add('active');
+  var pill = document.getElementById('statusPill');
+  if (which === 'before') {
+    pill.className = 'status-pill before';
+    pill.textContent = '8 mistakes found';
+  } else {
+    pill.className = 'status-pill after';
+    pill.textContent = 'All 8 mistakes fixed ✓';
+  }
+}
+</script>
+</body>
+</html>
