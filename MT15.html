@@ -880,26 +880,62 @@ stops.forEach(function(s, i) {
   stopList.appendChild(div);
 });
 
-// Itinerary render
+// Itinerary render — DOM-based (avoids innerHTML/CSS inheritance issues)
 var itinPanel = document.getElementById('itin-panel');
 days.forEach(function(d, i) {
   var card = document.createElement('div');
   card.className = 'day-card';
-  card.innerHTML = '<div class="day-header">'
-    +'<div class="day-badge"><span class="en">'+d.badge+'</span><span class="zh">'+d.badgeZh+'</span></div>'
-    +'<div class="day-info"><div class="day-title"><span class="en">'+d.title+'</span><span class="zh">'+d.titleZh+'</span></div>'
-    +'<div class="day-meta"><span class="en">'+d.meta+'</span><span class="zh">'+d.metaZh+'</span></div></div>'
-    +'<div class="day-chevron">▼</div></div>'
-    +'<div class="day-body">'
-    +'<div class="section"><div class="section-label"><span class="en">☀️ Morning</span><span class="zh">☀️ 上午</span></div><div class="section-text"><span class="en">'+d.morning+'</span><span class="zh">'+d.morningZh+'</span></div></div>'
+
+  // Header row: badge | info | chevron
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:flex-start;gap:10px;';
+
+  var badgeEl = document.createElement('div');
+  badgeEl.className = 'day-badge';
+  badgeEl.setAttribute('data-en', d.badge);
+  badgeEl.setAttribute('data-zh', d.badgeZh);
+  badgeEl.textContent = d.badge;
+
+  var infoEl = document.createElement('div');
+  infoEl.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+
+  var titleEl = document.createElement('div');
+  titleEl.style.cssText = 'font-size:1.03em;font-weight:700;color:#e6edf3;line-height:1.35;';
+  titleEl.setAttribute('data-en', d.title);
+  titleEl.setAttribute('data-zh', d.titleZh);
+  titleEl.textContent = d.title;
+
+  var metaEl = document.createElement('div');
+  metaEl.style.cssText = 'font-size:0.88em;color:#8b949e;margin-top:3px;';
+  metaEl.setAttribute('data-en', d.meta);
+  metaEl.setAttribute('data-zh', d.metaZh);
+  metaEl.textContent = d.meta;
+
+  infoEl.appendChild(titleEl);
+  infoEl.appendChild(metaEl);
+
+  var chevEl = document.createElement('div');
+  chevEl.className = 'day-chevron';
+  chevEl.textContent = '▼';
+
+  hdr.appendChild(badgeEl);
+  hdr.appendChild(infoEl);
+  hdr.appendChild(chevEl);
+  card.appendChild(hdr);
+
+  // Body (collapsed by default)
+  var bodyEl = document.createElement('div');
+  bodyEl.className = 'day-body';
+  bodyEl.innerHTML =
+    '<div class="section"><div class="section-label"><span class="en">☀️ Morning</span><span class="zh">☀️ 上午</span></div><div class="section-text"><span class="en">'+d.morning+'</span><span class="zh">'+d.morningZh+'</span></div></div>'
     +'<div class="section"><div class="section-label"><span class="en">🌤️ Afternoon</span><span class="zh">🌤️ 下午</span></div><div class="section-text"><span class="en">'+d.afternoon+'</span><span class="zh">'+d.afternoonZh+'</span></div></div>'
     +'<div class="section"><div class="section-label"><span class="en">🌙 Evening</span><span class="zh">🌙 傍晚</span></div><div class="section-text"><span class="en">'+d.evening+'</span><span class="zh">'+d.eveningZh+'</span></div></div>'
-    +'<div class="section"><div class="section-label"><span class="en">💡 Tip</span><span class="zh">💡 贴士</span></div><div class="section-text" style="color:#34d399;"><span class="en">'+d.tip+'</span><span class="zh">'+d.tipZh+'</span></div></div>'
-    +'</div>';
+    +'<div class="section"><div class="section-label"><span class="en">💡 Tip</span><span class="zh">💡 贴士</span></div><div class="section-text" style="color:#34d399;"><span class="en">'+d.tip+'</span><span class="zh">'+d.tipZh+'</span></div></div>';
+  card.appendChild(bodyEl);
+
   card.onclick = function(){
-    var body = card.querySelector('.day-body');
     card.classList.toggle('open');
-    body.classList.toggle('open');
+    bodyEl.classList.toggle('open');
   };
   itinPanel.appendChild(card);
 });
@@ -925,6 +961,10 @@ function setLang(lang) {
   currentLang = lang;
   document.querySelectorAll('.en').forEach(function(el){el.style.display=(lang==='en')?'':'none';});
   document.querySelectorAll('.zh').forEach(function(el){el.style.display=(lang==='zh')?'':'none';});
+  // Update day card header text (rendered via textContent, not .en/.zh spans)
+  document.querySelectorAll('[data-en][data-zh]').forEach(function(el){
+    el.textContent = lang==='zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+  });
   document.querySelectorAll('.lang-btn').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.lang-btn').forEach(function(b){
     if((lang==='en'&&b.textContent.indexOf('English')!==-1)||(lang==='zh'&&b.textContent.indexOf('中文')!==-1)) b.classList.add('active');
