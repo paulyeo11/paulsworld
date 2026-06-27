@@ -859,13 +859,14 @@
         : '<span class="en">None yet</span><span class="zh">尚无内容</span>';
     }
 
-    async function loadSection({ prefix, max, listId, statusId, padded }) {
+    async function loadSection({ prefix, max, listId, statusId, padded, skip }) {
       const list   = document.getElementById(listId);
       const status = document.getElementById(statusId);
       let found = 0;
       for (let i = 1; i <= max; i++) {
         const num = padded ? pad2(i) : i;
         const filename = prefix + num + '.html';
+        if (skip && skip.includes(filename)) continue;
         const title = await getTitle(filename);
         if (title !== null) {
           found++;
@@ -1178,14 +1179,14 @@
     }
 
     async function init() {
-      const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html','S27.html','S28.html','S29.html','S30.html','S31.html'];
+      const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html','S27.html','S28.html','S29.html','S30.html','S31.html','h07.html'];
 
       await Promise.all([
         loadOverseasByRegion(),
         loadFiles(hikingFiles,   'hiking-list',   'hiking-status'),
         loadAIByCategory(),
         loadSection({ prefix: 'TUT', max: 10, padded: true, listId: 'tut-list',     statusId: 'tut-status'     }),
-        loadSection({ prefix: 'h',  max: 10, padded: true,  listId: 'health-list',  statusId: 'health-status'  }),
+        loadSection({ prefix: 'h',  max: 10, padded: true,  listId: 'health-list',  statusId: 'health-status', skip: ['h07.html']  }),
         loadSection({ prefix: 'AIT', max: 10, padded: true, listId: 'ait-list',     statusId: 'ait-status'     }),
         loadSection({ prefix: 'AC', max: 10, padded: true,  listId: 'achieve-list', statusId: 'achieve-status' }).then(() => loadFiles(['S22.html'], 'achieve-list', 'achieve-status')),
         loadSection({ prefix: 'B',  max: 15, padded: true,  listId: 'book-list',    statusId: 'book-status'    })
