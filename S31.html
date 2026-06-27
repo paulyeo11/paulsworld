@@ -462,17 +462,42 @@ const galleryPhotos = [
   }
 ];
 
+const photoCoords = [
+  { lat:1.3748, lng:103.7738, loc:"Dairy Farm Nature Park Entrance, Petir Road", locZh:"乳农园自然公园白沙路入口" },
+  { lat:1.3752, lng:103.7748, loc:"Dairy Farm Nature Park Shelter", locZh:"乳农园自然公园运动场" },
+  { lat:1.3720, lng:103.7778, loc:"Singapore Quarry Signpost", locZh:"新加坡采石场路牌" },
+  { lat:1.3706, lng:103.7792, loc:"Singapore Quarry Entrance", locZh:"新加坡采石场入口" },
+  { lat:1.3706, lng:103.7792, loc:"Singapore Quarry", locZh:"新加坡采石场" },
+  { lat:1.3706, lng:103.7792, loc:"Singapore Quarry Rock Face", locZh:"新加坡采石场岩壁" },
+  { lat:1.3707, lng:103.7790, loc:"Singapore Quarry Cliff Edge", locZh:"新加坡采石场悬崖边" },
+  { lat:1.3720, lng:103.7780, loc:"Dairy Farm Forest Trail", locZh:"乳农园森林步道" },
+  { lat:1.3730, lng:103.7760, loc:"Strangler Fig Tree, Dairy Farm", locZh:"乳农园大榕树" },
+  { lat:1.3740, lng:103.7750, loc:"Dairy Farm Nature Park Forest", locZh:"乳农园自然公园森林" },
+  { lat:1.3735, lng:103.7755, loc:"Dairy Farm Forest Trail", locZh:"乳农园森林步道" },
+  { lat:1.3401, lng:103.7756, loc:"Zheng Xing Desserts, Beauty World Food Centre", locZh:"正兴甜品美世界熟食中心" }
+];
 const grid = document.getElementById('galleryGrid');
 galleryPhotos.forEach((p, i) => {
   const item = document.createElement('div');
   item.className = 'pj-item';
+  const c = photoCoords[i] || {};
+  const ms = 'text-decoration:none;font-size:0.72rem;padding:5px 9px;border-radius:8px;white-space:nowrap;';
+  const gLink = `https://maps.google.com/?q=${c.lat},${c.lng}&label=${encodeURIComponent(c.loc)}`;
+  const bLink = `https://map.baidu.com/search/${encodeURIComponent(c.locZh)}`;
+  const aLink = `https://uri.amap.com/marker?position=${c.lng},${c.lat}&name=${encodeURIComponent(c.loc)}`;
   item.innerHTML = `
     <img src="${p.src}" alt="" loading="lazy">
     <div class="pj-body">
       <div class="pj-num">Photo ${String(i+1).padStart(2,'0')} of ${galleryPhotos.length}</div>
       <div class="pj-text">${p.story}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+        <a href="${gLink}" target="_blank" style="${ms}background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;">&#128506;&#65039; Google</a>
+        <a href="${bLink}" target="_blank" style="${ms}background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;">百度地图</a>
+        <a href="${aLink}" target="_blank" style="${ms}background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;">高德地图</a>
+      </div>
     </div>`;
   item.onclick = () => openLightbox(i);
+  item.querySelectorAll('a').forEach(a => a.addEventListener('click', e => e.stopPropagation()));
   grid.appendChild(item);
 });
 
