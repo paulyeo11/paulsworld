@@ -64,6 +64,10 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
 - Whenever an HTML file is created or updated, push it directly to `main` automatically
   (via gh/git) — no need to ask Paul, never ask him to copy/paste or upload manually.
 - After every successful push, confirm with the **file name and commit SHA**.
+- **ALWAYS fetch + rebase before pushing** — never push cold. Every push must follow:
+  `git fetch origin main && git rebase origin/main && git push -u origin main`
+  This prevents the "remote contains work you do not have" rejection that happens when
+  another session or commit has already advanced `main`. Never skip this step.
 
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
