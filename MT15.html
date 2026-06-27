@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT15: Gannan &amp; North Sichuan — Tibetan Highlands · 10 Days</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1117;color:#e6edf3;height:100vh;max-height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+.header{padding:10px 14px 9px;background:linear-gradient(135deg,#0d1117,#160a00);border-bottom:1px solid rgba(245,158,11,0.25);flex-shrink:0;}
+.header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.header h1{font-size:1.18em;font-weight:800;color:#fff;line-height:1.2;}
+.header h1 .gold{color:#f59e0b;}
+.header h1 .red{color:#ef4444;}
+.header h1 .green{color:#34d399;}
+.header-sub{font-size:0.86em;color:#8b949e;margin-top:3px;}
+.share-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#fcd34d;font-size:0.78em;font-weight:700;padding:5px 11px;border-radius:20px;cursor:pointer;white-space:nowrap;}
+.share-btn:hover{background:rgba(245,158,11,0.25);}
+.share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.home-btn{position:fixed;bottom:16px;right:16px;z-index:999;display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);text-decoration:none;font-size:0.75em;padding:5px 10px;border-radius:20px;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.home-btn:hover{color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3);}
+.lang-bar{display:flex;gap:8px;padding:7px 14px;background:#161b22;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
+.lang-btn{padding:4px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.18);background:transparent;color:#8b949e;font-size:0.86em;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.lang-btn.active{background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.5);color:#f59e0b;}
+.tab-bar{display:flex;background:#161b22;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0;}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;padding:9px 13px;background:transparent;border:none;cursor:pointer;font-size:0.88em;font-weight:700;color:#8b949e;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.tab-btn.active{color:#f59e0b;border-bottom-color:#f59e0b;}
+.legend-bar{display:flex;align-items:center;gap:12px;padding:6px 14px;background:#0d1117;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;font-size:0.84em;color:#8b949e;flex-shrink:0;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);flex-shrink:0;}
+.legend-total{margin-left:auto;color:#f59e0b;font-weight:700;}
+#map{width:100%;flex:1;min-height:50vh;}
+#map.map-fullscreen{position:fixed!important;top:0;left:0;right:0;bottom:0;width:100vw!important;height:100vh!important;z-index:10000;}
+.map-fullscreen-btn{position:absolute;top:8px;right:8px;z-index:1000;background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:36px;height:36px;font-size:1.1rem;cursor:pointer;}
+.map-fullscreen-close{display:none;position:fixed;top:12px;right:12px;z-index:10001;background:rgba(255,255,255,0.18);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:1.3rem;cursor:pointer;}
+.map-fullscreen-close.active{display:block;}
+.panel{display:none;}
+.panel.active{display:flex;flex-direction:column;flex:1;min-height:0;}
+.stops-panel{background:#0d1117;overflow-y:auto;max-height:36vh;}
+.panel-header{padding:9px 14px 8px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;}
+.panel-title{font-size:1.0em;font-weight:700;color:#e6edf3;}
+.panel-km{margin-left:auto;font-size:0.9em;color:#f59e0b;font-weight:700;}
+.stop-list{padding:4px 0;}
+.stop-item{display:flex;align-items:flex-start;gap:11px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s;}
+.stop-item:hover{background:rgba(255,255,255,0.04);}
+.stop-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.83em;font-weight:800;flex-shrink:0;margin-top:1px;border:2px solid rgba(255,255,255,0.45);}
+.stop-info{flex:1;min-width:0;}
+.stop-name{font-size:1.02em;font-weight:700;color:#e6edf3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.stop-desc{font-size:0.88em;color:#8b949e;margin-top:2px;line-height:1.4;}
+.stop-tag{display:inline-block;font-size:0.8em;padding:2px 7px;border-radius:8px;font-weight:700;}
+.tag-start{background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+.tag-lake{background:rgba(59,130,246,0.2);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);}
+.tag-grass{background:rgba(52,211,153,0.2);color:#6ee7b7;border:1px solid rgba(52,211,153,0.3);}
+.tag-temple{background:rgba(167,139,250,0.2);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);}
+.tag-city{background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);}
+.tag-must{background:rgba(239,68,68,0.25);color:#ff6b6b;border:1px solid rgba(239,68,68,0.6);font-weight:800;}
+.itin-panel{background:#0d1117;overflow-y:auto;flex:1;min-height:0;padding:0;}
+.day-card{border-bottom:1px solid rgba(255,255,255,0.06);padding:13px 14px;cursor:pointer;transition:background 0.15s;}
+.day-card:hover{background:rgba(255,255,255,0.03);}
+.day-header{display:flex;align-items:flex-start;gap:10px;}
+.day-badge{background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;font-size:0.84em;font-weight:800;padding:3px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:1px;}
+.day-title{font-size:1.03em;font-weight:700;color:#e6edf3;line-height:1.35;}
+.day-meta{font-size:0.88em;color:#8b949e;margin-top:3px;}
+.day-body{font-size:0.91em;color:#8b949e;margin-top:8px;line-height:1.6;display:none;}
+.day-body.open{display:block;}
+.section{margin-top:7px;}
+.section-label{font-size:0.9em;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#f59e0b;margin-bottom:3px;}
+.section-text{color:#c9d1d9;}
+.day-chevron{margin-left:auto;color:#f59e0b;font-size:1.0em;flex-shrink:0;transition:transform 0.2s;}
+.day-card.open .day-chevron{transform:rotate(180deg);}
+.alt-badge{display:inline-block;font-size:0.75em;padding:2px 7px;border-radius:8px;background:rgba(167,139,250,0.15);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);font-weight:700;margin-left:4px;}
+.mustsee-panel{background:#0d1117;overflow-y:auto;flex:1;min-height:0;padding:0 0 24px;}
+.ms-intro{padding:11px 14px 6px;font-size:0.91em;color:#8b949e;border-bottom:1px solid rgba(255,255,255,0.06);}
+.ms-intro strong{color:#f59e0b;}
+.ms-place{border-bottom:1px solid rgba(255,255,255,0.06);}
+.ms-place-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;touch-action:manipulation;}
+.ms-place-num{width:32px;height:32px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;font-size:0.88em;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,100,100,0.5);box-shadow:0 0 8px rgba(239,68,68,0.4);}
+.ms-place-info{flex:1;}
+.ms-place-name{font-size:1.06em;font-weight:800;color:#fff;}
+.ms-place-day{font-size:0.86em;color:#f59e0b;margin-top:1px;}
+.ms-chevron{color:#f59e0b;font-size:1.0em;transition:transform 0.2s;}
+.ms-place.open .ms-chevron{transform:rotate(180deg);}
+.ms-body{display:none;padding:0 14px 13px;}
+.ms-place.open .ms-body{display:block;}
+.ms-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;margin-top:10px;}
+.ms-card-body{padding:12px 14px;}
+.ms-card-title{font-size:1.0em;font-weight:800;color:#fff;}
+.ms-card-desc{font-size:0.9em;color:#c9d1d9;margin-top:5px;line-height:1.55;}
+.ms-card-tip{font-size:0.87em;color:#6ee7b7;margin-top:6px;}
+.ms-card-tip::before{content:'💡 ';}
+.ms-badge{display:inline-block;font-size:0.78em;font-weight:700;padding:2px 8px;border-radius:8px;margin-top:6px;background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.35);}
+.food-panel{background:#0d1117;overflow-y:auto;flex:1;min-height:0;padding:0 0 24px;}
+.food-intro{padding:11px 14px 9px;font-size:0.91em;color:#8b949e;border-bottom:1px solid rgba(255,255,255,0.06);}
+.food-item{border-bottom:1px solid rgba(255,255,255,0.06);padding:13px 14px;}
+.food-emoji{font-size:1.5em;float:left;margin-right:11px;margin-top:2px;}
+.food-name{font-size:1.03em;font-weight:800;color:#fff;}
+.food-where{font-size:0.87em;color:#f59e0b;margin-top:2px;font-weight:700;}
+.food-desc{font-size:0.89em;color:#8b949e;margin-top:5px;line-height:1.55;clear:both;}
+.food-must{display:inline-block;background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.4);font-size:0.77em;font-weight:800;padding:2px 8px;border-radius:8px;margin-top:5px;}
+.tips-panel{background:#0d1117;overflow-y:auto;flex:1;min-height:0;padding:0;}
+.tip-section{border-bottom:1px solid rgba(255,255,255,0.06);padding:12px 14px;}
+.tip-header{display:flex;align-items:center;gap:8px;cursor:pointer;touch-action:manipulation;}
+.tip-icon{font-size:1.3em;}
+.tip-title{font-size:1.03em;font-weight:700;color:#e6edf3;}
+.tip-chevron{margin-left:auto;color:#f59e0b;font-size:1.0em;transition:transform 0.2s;}
+.tip-section.open .tip-chevron{transform:rotate(180deg);}
+.tip-body{font-size:0.91em;color:#8b949e;margin-top:9px;line-height:1.65;display:none;}
+.tip-section.open .tip-body{display:block;}
+.tip-body ul{padding-left:16px;}
+.tip-body li{margin-bottom:5px;}
+.tip-body strong{color:#e6edf3;}
+.budget-panel{background:#0d1117;overflow-y:auto;flex:1;min-height:0;padding:0;}
+.budget-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.budget-stat{background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;text-align:center;}
+.budget-stat-label{font-size:0.7em;color:#8b949e;margin-bottom:2px;}
+.budget-stat-value{font-size:0.94em;font-weight:800;color:#f59e0b;}
+.budget-table{width:100%;border-collapse:collapse;}
+.budget-table th{font-size:0.84em;font-weight:700;color:#8b949e;text-align:left;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.08);letter-spacing:0.5px;text-transform:uppercase;}
+.budget-table td{font-size:0.93em;color:#c9d1d9;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.budget-table tr:hover td{background:rgba(255,255,255,0.03);}
+.budget-cat{display:inline-block;font-size:0.74em;padding:1px 5px;border-radius:8px;font-weight:700;}
+.cat-flight{background:rgba(239,68,68,0.2);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+.cat-hotel{background:rgba(59,130,246,0.2);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);}
+.cat-food{background:rgba(52,211,153,0.2);color:#6ee7b7;border:1px solid rgba(52,211,153,0.3);}
+.cat-entry{background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);}
+.cat-trans{background:rgba(167,139,250,0.2);color:#c4b5fd;border:1px solid rgba(167,139,250,0.3);}
+.cat-misc{background:rgba(156,163,175,0.2);color:#d1d5db;border:1px solid rgba(156,163,175,0.3);}
+.leaflet-popup-content-wrapper{background:#161b22!important;border:1px solid rgba(255,255,255,0.12)!important;border-radius:10px!important;box-shadow:0 8px 24px rgba(0,0,0,0.5)!important;color:#e6edf3!important;}
+.leaflet-popup-tip{background:#161b22!important;}
+.leaflet-popup-content{margin:10px 14px!important;font-size:15px!important;line-height:1.5;}
+.popup-day{font-size:0.84em;font-weight:700;color:#f59e0b;margin-bottom:2px;}
+.popup-name{font-weight:800;font-size:1.22em;color:#fff;}
+.popup-desc{margin-top:4px;color:#c9d1d9;font-size:0.95em;}
+.popup-alt{margin-top:4px;color:#c4b5fd;font-size:0.88em;}
+.leaflet-control-zoom a{background:#161b22!important;color:#e6edf3!important;border-color:rgba(255,255,255,0.12)!important;}
+.vc-wrap{text-align:center;padding:12px 14px;background:#0d1117;border-top:1px solid rgba(255,255,255,0.06);}
+.zh{display:none;}
+@media(max-width:500px){
+  .header h1{font-size:1.02em;}
+  #map{min-height:44vh;}
+  .stops-panel{max-height:42vh;}
+  .budget-summary{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>🏔️ MT15: <span class="gold">Gannan</span> &amp; <span class="green">North Sichuan</span> — <span class="red">Tibetan Highlands</span></h1>
+      <div class="header-sub">
+        <span class="en">Chengdu · Jiuzhaigou · Huanglong · Zoige · Langmusi · Xiahe · 10 Days</span>
+        <span class="zh">成都·九寨沟·黄龙·若尔盖·郎木寺·夏河·10天行程</span>
+      </div>
+    </div>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+  <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('map')">🗺️ <span class="en">Map</span><span class="zh">地图</span></button>
+  <button class="tab-btn" onclick="switchTab('itin')">📅 <span class="en">Itinerary</span><span class="zh">行程</span></button>
+  <button class="tab-btn" onclick="switchTab('mustsee')">🌟 <span class="en">Must See</span><span class="zh">必看</span></button>
+  <button class="tab-btn" onclick="switchTab('food')">🍽️ <span class="en">Food</span><span class="zh">美食</span></button>
+  <button class="tab-btn" onclick="switchTab('tips')">💡 <span class="en">Tips</span><span class="zh">贴士</span></button>
+  <button class="tab-btn" onclick="switchTab('budget')">💰 <span class="en">Budget</span><span class="zh">预算</span></button>
+</div>
+
+<div class="legend-bar" id="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> <span class="en">Start/End</span><span class="zh">起终点</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> <span class="en">Lakes</span><span class="zh">湖泊</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#34d399;"></div> <span class="en">Grasslands</span><span class="zh">草原</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a78bfa;"></div> <span class="en">Temples</span><span class="zh">寺庙</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> <span class="en">Cities</span><span class="zh">城市</span></div>
+  <div class="legend-total">13 <span class="en">stops · 10 days</span><span class="zh">站·10天</span></div>
+</div>
+
+<!-- MAP PANEL -->
+<div id="panel-map" class="panel active">
+  <div style="position:relative;">
+    <div id="map"></div>
+    <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Full screen">⛶</button>
+    <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
+  </div>
+  <div class="stops-panel">
+    <div class="panel-header">
+      <span class="panel-title">📍 <span class="en">Route Stops — Tap to zoom</span><span class="zh">路线站点 — 点击缩放</span></span>
+      <span class="panel-km">~1,400 km</span>
+    </div>
+    <div class="stop-list" id="stop-list"></div>
+  </div>
+</div>
+
+<!-- ITINERARY PANEL -->
+<div id="panel-itin" class="panel">
+  <div class="itin-panel" id="itin-panel"></div>
+</div>
+
+<!-- MUST SEE PANEL -->
+<div id="panel-mustsee" class="panel">
+  <div class="mustsee-panel">
+    <div class="ms-intro"><span class="en"><strong>10 unmissable highlights</strong> on the Gannan & North Sichuan route.</span><span class="zh"><strong>10个必看亮点</strong> — 甘南与川北精华。</span></div>
+
+    <!-- 1 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">1</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Jiuzhaigou National Park</span><span class="zh">九寨沟国家公园</span></div>
+          <div class="ms-place-day"><span class="en">Day 2 · North Sichuan</span><span class="zh">第2天 · 川北</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Rainbow Lakes &amp; Waterfalls</span><span class="zh">彩虹湖泊与瀑布</span></div>
+            <div class="ms-card-desc"><span class="en">UNESCO World Heritage Site with 108 multicoloured turquoise, emerald and sapphire lakes set among snow peaks. Three valleys: Shuzheng, Rize and Zechawa. Best colour in autumn (Sep–Nov).</span><span class="zh">联合国教科文组织世界遗产，108个五彩斑斓的湖泊镶嵌于雪山之间。三条沟：树正沟、日则沟、则查洼沟。秋季（9-11月）色彩最美。</span></div>
+            <div class="ms-card-tip"><span class="en">Book tickets online weeks in advance. Enter early (8 am) to avoid crowds. Take the scenic bus up, walk down.</span><span class="zh">提前数周网上订票。早上8点入场避开人潮。乘观光车上山，步行下山。</span></div>
+            <div class="ms-badge">⭐ #1 Must Do</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">2</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Huanglong Scenic Area</span><span class="zh">黄龙风景区</span></div>
+          <div class="ms-place-day"><span class="en">Day 3 · North Sichuan</span><span class="zh">第3天 · 川北</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Golden Travertine Terraces</span><span class="zh">黄金钙化彩池</span></div>
+            <div class="ms-card-desc"><span class="en">3,400–3,600 m altitude. Over 3,400 golden travertine pools cascade down a 3.6 km valley. Also a UNESCO site. The hike takes 3–4 hours. Altitude sickness common — take it slow.</span><span class="zh">海拔3400-3600米。超过3400个金色钙化池沿3.6公里谷地层叠流淌。同为世界遗产。徒步需3-4小时。高原反应常见，慢行为宜。</span></div>
+            <div class="ms-card-tip"><span class="en">Cable car up, walk down. Altitude acclimatisation pills (Rhodiola) help. Morning light best for photos.</span><span class="zh">乘缆车上山，步行下山。红景天有助于高原适应。晨光拍照最佳。</span></div>
+            <div class="ms-badge">⭐ UNESCO Heritage</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">3</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Huahu Wetland Lake</span><span class="zh">花湖湿地</span></div>
+          <div class="ms-place-day"><span class="en">Day 4 · Zoige, North Sichuan</span><span class="zh">第4天 · 若尔盖 川北</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Mirror Lake on the Plateau</span><span class="zh">高原镜面湖</span></div>
+            <div class="ms-card-desc"><span class="en">A stunning highland lake (3,468 m) surrounded by endless grasslands. In summer it fills with water lilies and black-necked cranes. The surrounding Zoige Wetland is China's largest highland peat marsh.</span><span class="zh">令人窒息的高原湖泊（海拔3468米），四周是无边草甸。夏季盛开睡莲，黑颈鹤栖息于此。周边若尔盖湿地是中国最大高原泥炭沼泽。</span></div>
+            <div class="ms-card-tip"><span class="en">Best in July when wildflowers bloom. Black-necked cranes migrate here Oct–Mar. Free entry.</span><span class="zh">7月野花盛开最美。黑颈鹤10月至次年3月迁徙至此。免费入场。</span></div>
+            <div class="ms-badge">🦢 Bird Paradise</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">4</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Yellow River First Bend (Tangke)</span><span class="zh">黄河第一湾（唐克）</span></div>
+          <div class="ms-place-day"><span class="en">Day 4 · Zoige, North Sichuan</span><span class="zh">第4天 · 若尔盖 川北</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">The Yellow River's Grand Meander</span><span class="zh">黄河大湾</span></div>
+            <div class="ms-card-desc"><span class="en">At Tangke village, the Yellow River makes its first dramatic bend, creating a vast S-shaped meander across golden grasslands. Climb the viewing platform at sunset for an unforgettable panorama. Nomadic Tibetan tent camps dot the banks.</span><span class="zh">在唐克村，黄河形成第一个壮观大湾，在金色草原上蜿蜒成S形。日落时登上观景台，俯瞰令人难忘的全景。黄河两岸点缀着游牧藏族帐篷营地。</span></div>
+            <div class="ms-card-tip"><span class="en">Go at golden hour (6–7 pm in summer). You can ride horses to the riverbank with local Tibetan herders.</span><span class="zh">夏季黄金时段（下午6-7点）前往。可随当地藏族牧民骑马至河边。</span></div>
+            <div class="ms-badge">🌅 Best at Sunset</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">5</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Langmusi (Taktsang Lhamo)</span><span class="zh">郎木寺（达仓郎木）</span></div>
+          <div class="ms-place-day"><span class="en">Day 5 · Gannan / Sichuan border</span><span class="zh">第5天 · 甘南 / 川甘边境</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Little Switzerland of Tibet</span><span class="zh">藏区的小瑞士</span></div>
+            <div class="ms-card-desc"><span class="en">A magical village straddling the Sichuan-Gansu border, split by a tiny stream. Two Tibetan monasteries face each other across the gorge. Dramatic red cliffs, sky burial sites, and crystal-clear gorge walks. Very few tourists.</span><span class="zh">一个神奇的村庄横跨川甘边界，被一条小溪分开。两座藏传佛教寺院隔峡相望。壮观的红色悬崖、天葬台和清澈的峡谷栈道。游客极少。</span></div>
+            <div class="ms-card-tip"><span class="en">Walk the gorge trail behind the Sichuan monastery (1–2 hrs). Early morning mist is magical. Respect sky burial sites.</span><span class="zh">走四川寺庙后方的峡谷栈道（1-2小时）。清晨雾气弥漫，如梦如幻。请尊重天葬台。</span></div>
+            <div class="ms-badge">🏔️ Hidden Gem</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">6</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Labrang Monastery, Xiahe</span><span class="zh">夏河拉卜楞寺</span></div>
+          <div class="ms-place-day"><span class="en">Day 7 · Gannan</span><span class="zh">第7天 · 甘南</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">World's Largest Tibetan Buddhist Monastic Complex</span><span class="zh">世界最大藏传佛教寺院建筑群</span></div>
+            <div class="ms-card-desc"><span class="en">Founded in 1709, Labrang houses over 1,000 monks across six colleges. Its 3 km prayer wheel kora (circuit) is one of the most sacred walks in Tibetan Buddhism. Morning debates and prayer ceremonies draw pilgrims from across the Tibetan plateau.</span><span class="zh">创建于1709年，拉卜楞寺拥有六大学院，逾千名僧侣。3公里转经廊是藏传佛教最神圣的转经道之一。晨间辩经和祈福法会吸引藏区各地朝圣者。</span></div>
+            <div class="ms-card-tip"><span class="en">Join the morning kora walk at 7 am with pilgrims. Hire a monk guide for monastery interior. Wear modest clothing.</span><span class="zh">早上7点随朝圣者参加晨间转经。雇佣僧侣向导参观寺院内部。着装需端庄。</span></div>
+            <div class="ms-badge">⭐ #1 in Gannan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">7</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Sangke Grasslands</span><span class="zh">桑科草原</span></div>
+          <div class="ms-place-day"><span class="en">Day 7 · Xiahe, Gannan</span><span class="zh">第7天 · 夏河 甘南</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Nomadic Yak Country</span><span class="zh">游牧牦牛大草原</span></div>
+            <div class="ms-card-desc"><span class="en">Just 14 km from Xiahe, Sangke is a sweeping highland meadow at 3,000 m where Tibetan nomads graze yaks. Wildflowers carpet the ground in summer. You can stay in a traditional yak-wool tent (black tent camp) for the night.</span><span class="zh">距夏河仅14公里，桑科是海拔3000米的宽阔高原草甸，藏族游牧民在此放牧牦牛。夏季野花遍地。可在传统黑色牦牛毛帐篷营地住一夜。</span></div>
+            <div class="ms-card-tip"><span class="en">Stay in a nomad tent camp for a genuine experience. Yak butter tea and tsampa breakfast included.</span><span class="zh">住在游牧帐篷营地，体验真实生活。含酥油茶和糌粑早餐。</span></div>
+            <div class="ms-badge">🏕️ Nomad Stay</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">8</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Maqu Yellow River Grand Bend</span><span class="zh">玛曲黄河大拐弯</span></div>
+          <div class="ms-place-day"><span class="en">Day 8 · Gannan</span><span class="zh">第8天 · 甘南</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Yellow River's 433 km Detour</span><span class="zh">黄河433公里大迂回</span></div>
+            <div class="ms-card-desc"><span class="en">At Maqu (Machu), the Yellow River enters Gannan and makes a massive 433 km horseshoe bend before exiting back into Qinghai. The plateau meadows here are some of the most pristine on earth. Tibetan herders graze yaks right along the riverbanks.</span><span class="zh">在玛曲，黄河进入甘南，划出一个433公里的巨大马蹄形大弯后重新流入青海。这里的高原草甸是地球上最原始的草地之一。藏族牧民在黄河岸边放牧牦牛。</span></div>
+            <div class="ms-card-tip"><span class="en">Drive to Awancang Wetland (阿万仓) 30 km from Maqu for the best river views. Very few tourists.</span><span class="zh">从玛曲驱车30公里至阿万仓湿地，欣赏最佳黄河景观。游客极少。</span></div>
+            <div class="ms-badge">🌊 Off the Beaten Path</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">9</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Hongyuan Red Grasslands</span><span class="zh">红原大草原</span></div>
+          <div class="ms-place-day"><span class="en">Day 9 · North Sichuan</span><span class="zh">第9天 · 川北</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Long March Wetlands</span><span class="zh">长征湿地</span></div>
+            <div class="ms-card-desc"><span class="en">Hongyuan (Red Prairie) was where Mao's Red Army crossed the deadly Zoige marshes in 1935 during the Long March. The grasslands turn brilliant red-gold in autumn. The Red Army Memorial Museum tells the story. Vast and wild — you can camp here.</span><span class="zh">1935年长征期间，毛泽东的红军穿越了死亡沼泽若尔盖。秋季草原变为绚烂的红金色。红军纪念馆述说着那段历史。广阔荒野，可在此野营。</span></div>
+            <div class="ms-card-tip"><span class="en">Visit the Long March Memorial site. September when grass turns red-gold is the best photo season.</span><span class="zh">参观长征纪念地。9月草色变为红金色，是拍照最佳季节。</span></div>
+            <div class="ms-badge">🏴 Historical Site</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="ms-place" onclick="toggleMs(this)">
+      <div class="ms-place-header">
+        <div class="ms-place-num">10</div>
+        <div class="ms-place-info">
+          <div class="ms-place-name"><span class="en">Songpan Ancient Town</span><span class="zh">松潘古城</span></div>
+          <div class="ms-place-day"><span class="en">Day 10 · North Sichuan</span><span class="zh">第10天 · 川北</span></div>
+        </div>
+        <div class="ms-chevron">▼</div>
+      </div>
+      <div class="ms-body">
+        <div class="ms-card">
+          <div class="ms-card-body">
+            <div class="ms-card-title"><span class="en">Ming Dynasty Frontier Town</span><span class="zh">明朝边疆古城</span></div>
+            <div class="ms-card-desc"><span class="en">A remarkably preserved Ming-era walled town at the crossroads of Tibetan, Han and Qiang cultures. Ancient city walls, mosques, temples and teahouses coexist. Famous for horse trekking into surrounding mountain valleys.</span><span class="zh">一座保存完好的明代古城，是藏、汉、羌文化的交汇之地。古城墙、清真寺、寺庙与茶馆共存。以骑马进入周边山谷而著名。</span></div>
+            <div class="ms-card-tip"><span class="en">Walk the full city wall circuit (45 min). Try the local Hui Muslim beef noodles. Horse treks bookable at town gates.</span><span class="zh">绕城墙走一圈（45分钟）。品尝当地回族牛肉面。城门口可预订骑马游。</span></div>
+            <div class="ms-badge">🏯 Cultural Gem</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOD PANEL -->
+<div id="panel-food" class="panel">
+  <div class="food-panel">
+    <div class="food-intro"><span class="en">Tibetan plateau cuisine — hearty, warming, and unlike anything else.</span><span class="zh">藏族高原美食 — 丰盛暖胃，独一无二。</span></div>
+
+    <div class="food-item">
+      <div class="food-emoji">🧈</div>
+      <div class="food-name"><span class="en">Yak Butter Tea (酥油茶)</span><span class="zh">酥油茶</span></div>
+      <div class="food-where"><span class="en">Everywhere on the plateau</span><span class="zh">高原各地均有</span></div>
+      <div class="food-desc"><span class="en">Churned tea mixed with yak butter and salt. Warming and energising at altitude. It's an acquired taste — salty, rich, almost soup-like. Tibetan hosts offer it as welcome; always accept the first cup.</span><span class="zh">酥油与盐茶搅打而成。在高海拔地区暖身提神。口味独特——咸香浓郁，近似浓汤。藏族主人以此待客，务必接受第一杯。</span></div>
+      <div class="food-must">Must Try</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🌾</div>
+      <div class="food-name"><span class="en">Tsampa (糌粑)</span><span class="zh">糌粑</span></div>
+      <div class="food-where"><span class="en">Tibetan guesthouses and tent camps</span><span class="zh">藏族客栈和帐篷营地</span></div>
+      <div class="food-desc"><span class="en">Roasted highland barley flour kneaded with yak butter tea. The Tibetan staple — dense, nutty and incredibly filling. Pilgrims carry it in pouches for the kora walk. Mix it yourself at the table — a social ritual.</span><span class="zh">青稞炒面与酥油茶揉和而成。藏族主食，质地紧实，口感香浓，极为饱腹。朝圣者将其装袋，转经途中食用。在餐桌上亲自揉制——是一种社交仪式。</span></div>
+      <div class="food-must">Staple Food</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🥩</div>
+      <div class="food-name"><span class="en">Yak Meat Dishes (牦牛肉)</span><span class="zh">牦牛肉菜肴</span></div>
+      <div class="food-where"><span class="en">Restaurants in Zoige, Langmusi, Xiahe</span><span class="zh">若尔盖、郎木寺、夏河餐厅</span></div>
+      <div class="food-desc"><span class="en">Yak roams at 4,000 m — its meat is lean, gamey and mineral-rich. Try yak hot pot, yak jerky, yak steak and yak dumpling (momo). Also try yak yoghurt — thick, tangy and delicious.</span><span class="zh">牦牛在海拔4000米处自由放牧，其肉质精瘦，带野味，矿物质丰富。可尝牦牛火锅、牦牛肉干、牦牛排和牦牛饺子（馍馍）。还可试试牦牛酸奶——浓稠微酸，美味可口。</span></div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🍜</div>
+      <div class="food-name"><span class="en">Niuroumian — Lanzhou Beef Noodles (牛肉拉面)</span><span class="zh">牛肉拉面（兰州风味）</span></div>
+      <div class="food-where"><span class="en">Hezuo, Xiahe, Langmusi</span><span class="zh">合作、夏河、郎木寺</span></div>
+      <div class="food-desc"><span class="en">Gannan is close to Lanzhou, and hand-pulled beef noodles are everywhere. Clear broth, springy noodles, tender beef slices, chilli oil on top. Breakfast and lunch staple across Gannan.</span><span class="zh">甘南毗邻兰州，手工拉面随处可见。清汤、劲道面条、嫩滑牛肉片，加一勺辣椒油。是甘南早午餐主食。</span></div>
+      <div class="food-must">Under ¥15</div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🥟</div>
+      <div class="food-name"><span class="en">Momo — Tibetan Dumplings (藏式饺子)</span><span class="zh">藏式馍馍饺子</span></div>
+      <div class="food-where"><span class="en">Langmusi, Xiahe, Zoige</span><span class="zh">郎木寺、夏河、若尔盖</span></div>
+      <div class="food-desc"><span class="en">Steamed or fried dumplings filled with yak meat, vegetables or cheese. Popular in Tibetan cafés. The Nepali-Tibetan version with sauce is particularly good in Langmusi's backpacker cafés.</span><span class="zh">蒸制或油煎饺子，馅料为牦牛肉、蔬菜或奶酪。在藏式咖啡馆颇受欢迎。郎木寺背包客咖啡馆的尼泊尔藏式馍馍配酱汁尤为美味。</span></div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🍺</div>
+      <div class="food-name"><span class="en">Highland Barley Wine (青稞酒)</span><span class="zh">青稞酒</span></div>
+      <div class="food-where"><span class="en">Tibetan guesthouses and festivals</span><span class="zh">藏族客栈和节庆活动</span></div>
+      <div class="food-desc"><span class="en">Fermented highland barley — slightly fizzy, mildly alcoholic and malty. Served in wooden bowls. Tibetan hosts fill your bowl as a sign of hospitality. Note: altitude amplifies alcohol effects — drink very little.</span><span class="zh">青稞发酵而成，略带气泡，酒精度低，麦香浓郁。盛于木碗中奉客。藏族主人不断添酒以示盛情。注意：高原环境放大酒精效果，饮用需格外节制。</span></div>
+    </div>
+
+    <div class="food-item">
+      <div class="food-emoji">🍲</div>
+      <div class="food-name"><span class="en">Sichuan Hot Pot &amp; Mapo Tofu</span><span class="zh">四川火锅与麻婆豆腐</span></div>
+      <div class="food-where"><span class="en">Jiuzhaigou town, Songpan, return to Chengdu</span><span class="zh">九寨沟、松潘及返回成都途中</span></div>
+      <div class="food-desc"><span class="en">Once you descend back to Sichuan towns, celebrate with classic Sichuan food. The numbing-spicy mala hot pot of Chengdu is the perfect end to a highland journey.</span><span class="zh">下山回到四川城镇后，用正宗川菜犒劳自己。成都麻辣火锅是高原之旅的完美收尾。</span></div>
+      <div class="food-must">End-of-trip Reward</div>
+    </div>
+  </div>
+</div>
+
+<!-- TIPS PANEL -->
+<div id="panel-tips" class="panel">
+  <div class="tips-panel">
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">🏔️</span>
+        <span class="tip-title"><span class="en">Altitude Sickness — Critical</span><span class="zh">高原反应 — 非常重要</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en"><strong>Acclimatise in Chengdu for 1 night</strong> before flying to Jiuzhai (3,448 m airport). Altitude rises fast.</span><span class="zh"><strong>在成都适应1晚</strong>再飞九寨（机场3448米）。海拔骤升。</span></li>
+          <li><span class="en">Take <strong>Rhodiola rosea (红景天)</strong> capsules 3 days before arriving at altitude. Available at all Chinese pharmacies.</span><span class="zh">抵达高原前3天服用<strong>红景天</strong>胶囊。各中药房均有售。</span></li>
+          <li><span class="en"><strong>Huanglong is highest at 3,600 m</strong> — walk slowly, rest often. Cable car available.</span><span class="zh"><strong>黄龙最高海拔3600米</strong> — 缓慢行走，多休息。有缆车可乘。</span></li>
+          <li><span class="en">Symptoms: headache, nausea, breathlessness. Rest and drink water. <strong>Descent is the only cure.</strong></span><span class="zh">症状：头痛、恶心、气短。休息并多喝水。<strong>下山是唯一根治方法。</strong></span></li>
+          <li><span class="en">Avoid alcohol, heavy food and exercise on first 2 days at altitude.</span><span class="zh">在高原的前两天避免饮酒、进食过量和剧烈运动。</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">📅</span>
+        <span class="tip-title"><span class="en">Best Time to Visit</span><span class="zh">最佳游览时间</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en"><strong>May–June:</strong> Green grasslands, wildflowers, fewer tourists. Some passes may still have snow.</span><span class="zh"><strong>5-6月：</strong>草原碧绿，野花盛开，游客较少。部分山口可能仍有积雪。</span></li>
+          <li><span class="en"><strong>September–October:</strong> Best for Jiuzhaigou autumn colours (red, orange, gold). Peak season — book months ahead.</span><span class="zh"><strong>9-10月：</strong>九寨沟秋色最佳（红、橙、金）。旺季——提前数月订票。</span></li>
+          <li><span class="en"><strong>July–August:</strong> Rainy season. Jiuzhaigou may be partially closed due to landslides. Roads can be dangerous.</span><span class="zh"><strong>7-8月：</strong>雨季。九寨沟可能因滑坡局部关闭。道路可能危险。</span></li>
+          <li><span class="en"><strong>November–April:</strong> Cold, some roads blocked by snow. Jiuzhaigou is quietest and most beautiful in light snow.</span><span class="zh"><strong>11月-次年4月：</strong>寒冷，部分道路被雪封堵。九寨沟在薄雪中最为宁静美丽。</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">🚗</span>
+        <span class="tip-title"><span class="en">Getting Around</span><span class="zh">交通出行</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en"><strong>Fly Chengdu → Jiuzhai Huanglong Airport</strong> (GHN, 45 min). Book early — sells out fast. Or drive from Chengdu (~6 hrs via Dujiangyan).</span><span class="zh"><strong>飞成都→九寨黄龙机场</strong>（GHN，45分钟）。提早预订——票源紧张。或从成都自驾（经都江堰约6小时）。</span></li>
+          <li><span class="en"><strong>Hire a driver</strong> (包车, bāo chē) for the Zoige–Langmusi–Xiahe leg. About ¥800–1,200/day for a private car. Driver shares accommodation cost.</span><span class="zh"><strong>包车</strong>走若尔盖-郎木寺-夏河段。私家车约¥800-1200/天。司机费用含住宿。</span></li>
+          <li><span class="en">Shared minibuses run between main towns but schedules are irregular. Good for Zoige ↔ Langmusi (¥30–50).</span><span class="zh">各主要城镇间有共享面包车，但班次不固定。适合若尔盖↔郎木寺段（¥30-50）。</span></li>
+          <li><span class="en">Roads are mostly paved now but mountain sections can be narrow and winding. Allow extra time.</span><span class="zh">道路大多已铺设硬化，但山区路段仍可能狭窄弯曲，需预留额外时间。</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">🎫</span>
+        <span class="tip-title"><span class="en">Entry Tickets &amp; Permits</span><span class="zh">门票与许可证</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en"><strong>Jiuzhaigou:</strong> ¥169 (low season) to ¥202 (peak). Book on official WeChat mini-program — no walk-ins during peak.</span><span class="zh"><strong>九寨沟：</strong>淡季¥169，旺季¥202。在官方微信小程序订票——旺季不接受现场购票。</span></li>
+          <li><span class="en"><strong>Huanglong:</strong> ¥200 (Apr–Nov) or ¥115 (winter). Cable car extra ¥80 up/down.</span><span class="zh"><strong>黄龙：</strong>4-11月¥200，冬季¥115。缆车另收¥80（单程）。</span></li>
+          <li><span class="en">No special Tibet permit required for Gannan or North Sichuan — standard Chinese visa is sufficient.</span><span class="zh">甘南和川北无需西藏特别许可证——标准中国签证即可。</span></li>
+          <li><span class="en">Foreigners need to register at hotels (automatic for most, but check in rural areas).</span><span class="zh">外籍人士须在酒店登记（多数自动处理，但在农村地区需确认）。</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">📱</span>
+        <span class="tip-title"><span class="en">Connectivity &amp; Money</span><span class="zh">网络与货币</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en"><strong>WeChat Pay &amp; Alipay</strong> are essential — most rural vendors don't accept cards. Link to a Chinese bank account or set up the international version.</span><span class="zh"><strong>微信支付和支付宝</strong>必不可少——大多数农村商户不接受银行卡。关联中国银行账户或开通国际版。</span></li>
+          <li><span class="en">Mobile signal is patchy between towns. China Telecom has best coverage in rural Gannan. Download offline maps (Maps.me or Baidu Maps).</span><span class="zh">城镇之间手机信号断断续续。中国电信在甘南农村覆盖最好。下载离线地图（Maps.me或百度地图）。</span></li>
+          <li><span class="en">ATMs in larger towns (Zoige, Hezuo, Xiahe) but not in villages. Carry ¥3,000–5,000 cash.</span><span class="zh">较大城镇（若尔盖、合作、夏河）有ATM，但村庄没有。随身携带¥3000-5000现金。</span></li>
+          <li><span class="en">VPN is needed for Google, WhatsApp etc. Set it up before entering China.</span><span class="zh">访问谷歌、WhatsApp等需使用VPN。入境前提前安装配置好。</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">🙏</span>
+        <span class="tip-title"><span class="en">Cultural Respect</span><span class="zh">文化礼仪</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en">Always walk <strong>clockwise</strong> around monasteries, stupas and mani stone piles.</span><span class="zh">绕寺庙、佛塔和玛尼石堆时，务必按<strong>顺时针</strong>方向行走。</span></li>
+          <li><span class="en">Remove shoes before entering monastery halls. Ask permission before photographing monks or ceremonies.</span><span class="zh">进入寺庙大殿前脱鞋。拍摄僧侣或法会前须征得许可。</span></li>
+          <li><span class="en">Don't touch religious statues or point feet at sacred objects. Don't step over prayer flags.</span><span class="zh">勿触摸宗教雕像，勿将脚指向圣物。勿踩踏经幡。</span></li>
+          <li><span class="en">Dress modestly at monasteries — cover shoulders and knees. Carry a scarf.</span><span class="zh">在寺庙着装端庄——遮盖肩膀和膝盖。随身携带围巾。</span></li>
+          <li><span class="en">Never approach a sky burial site (天葬台) without a local guide's explicit permission.</span><span class="zh">未经当地向导明确许可，切勿靠近天葬台。</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-section" onclick="toggleTip(this)">
+      <div class="tip-header">
+        <span class="tip-icon">🎒</span>
+        <span class="tip-title"><span class="en">What to Pack</span><span class="zh">行李清单</span></span>
+        <span class="tip-chevron">▼</span>
+      </div>
+      <div class="tip-body">
+        <ul>
+          <li><span class="en"><strong>Layering is key:</strong> +30°C midday to +5°C at night in summer at altitude. Down jacket essential.</span><span class="zh"><strong>分层穿着是关键：</strong>高原夏季白天可达30°C，夜晚降至5°C。羽绒服必备。</span></li>
+          <li><span class="en">High-SPF sunscreen (SPF 50+) and quality sunglasses — UV is intense at 3,500 m.</span><span class="zh">高SPF防晒霜（SPF 50+）和优质太阳镜 —— 海拔3500米紫外线极强。</span></li>
+          <li><span class="en">Diamox (acetazolamide) tablets if altitude sickness is a concern. Consult doctor before trip.</span><span class="zh">若担心高原反应可带乙酰唑胺（Diamox）。出发前咨询医生。</span></li>
+          <li><span class="en">Rain jacket — weather changes fast. Waterproof hiking shoes strongly recommended.</span><span class="zh">雨衣必备，天气变化迅速。强烈建议穿防水徒步鞋。</span></li>
+          <li><span class="en">Power bank (cold weather drains batteries fast). Universal adapter (China type A/I).</span><span class="zh">充电宝（低温会快速耗尽电量）。万能转换插头（中国A/I型）。</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BUDGET PANEL -->
+<div id="panel-budget" class="panel">
+  <div class="budget-panel">
+    <div class="budget-summary">
+      <div class="budget-stat">
+        <div class="budget-stat-label"><span class="en">Total (2 pax)</span><span class="zh">总计（2人）</span></div>
+        <div class="budget-stat-value">~S$4,200</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-label"><span class="en">Per Person</span><span class="zh">每人</span></div>
+        <div class="budget-stat-value">~S$2,100</div>
+      </div>
+      <div class="budget-stat">
+        <div class="budget-stat-label"><span class="en">Per Day</span><span class="zh">每日</span></div>
+        <div class="budget-stat-value">~S$420</div>
+      </div>
+    </div>
+    <table class="budget-table">
+      <thead>
+        <tr>
+          <th><span class="en">Item</span><span class="zh">项目</span></th>
+          <th><span class="en">Type</span><span class="zh">类别</span></th>
+          <th><span class="en">Est. Cost (2 pax)</span><span class="zh">估算费用（2人）</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="en">Singapore ↔ Chengdu flights</span><span class="zh">新加坡↔成都机票</span></td>
+          <td><span class="budget-cat cat-flight">Flight</span></td>
+          <td>S$700–900</td>
+        </tr>
+        <tr>
+          <td><span class="en">Chengdu ↔ Jiuzhaigou domestic flight</span><span class="zh">成都↔九寨沟国内机票</span></td>
+          <td><span class="budget-cat cat-flight">Flight</span></td>
+          <td>¥1,600–2,400 (S$300–450)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Accommodation (10 nights avg ¥500/night)</span><span class="zh">住宿（10晚平均¥500/晚）</span></td>
+          <td><span class="budget-cat cat-hotel">Hotel</span></td>
+          <td>¥5,000 (S$900)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Private car hire 7 days (包车)</span><span class="zh">包车7天</span></td>
+          <td><span class="budget-cat cat-trans">Transport</span></td>
+          <td>¥5,600–7,000 (S$1,000–1,250)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Jiuzhaigou entry × 2</span><span class="zh">九寨沟门票×2</span></td>
+          <td><span class="budget-cat cat-entry">Entry</span></td>
+          <td>¥404 (S$73)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Huanglong entry + cable car × 2</span><span class="zh">黄龙门票+缆车×2</span></td>
+          <td><span class="budget-cat cat-entry">Entry</span></td>
+          <td>¥560 (S$100)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Labrang Monastery entry × 2</span><span class="zh">拉卜楞寺门票×2</span></td>
+          <td><span class="budget-cat cat-entry">Entry</span></td>
+          <td>¥90 (S$16)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Food (avg ¥200/day for 2, 10 days)</span><span class="zh">餐饮（2人均¥200/天，10天）</span></td>
+          <td><span class="budget-cat cat-food">Food</span></td>
+          <td>¥2,000 (S$360)</td>
+        </tr>
+        <tr>
+          <td><span class="en">Nomad tent stay, horse rides, misc</span><span class="zh">游牧帐篷、骑马、杂费</span></td>
+          <td><span class="budget-cat cat-misc">Misc</span></td>
+          <td>¥1,200 (S$220)</td>
+        </tr>
+        <tr style="font-weight:700;">
+          <td><span class="en"><strong>TOTAL (approx.)</strong></span><span class="zh"><strong>总计（约）</strong></span></td>
+          <td></td>
+          <td style="color:#f59e0b;"><strong>S$3,800–4,600</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:10px 14px;font-size:0.83em;color:#6b7280;border-top:1px solid rgba(255,255,255,0.05);">
+      <span class="en">Exchange rate: S$1 ≈ ¥5.5. Budget version possible at S$2,800 (shared minibuses, budget guesthouses). Luxury version S$6,000+ (private driver, 4-star hotels). Jiuzhaigou & Huanglong add ¥1,000+ per person for shuttle buses inside parks.</span>
+      <span class="zh">汇率：S$1 ≈ ¥5.5。经济版约S$2,800（乘共享面包车、住平价客栈）。豪华版S$6,000+（私人司机、四星酒店）。九寨沟和黄龙园区内部观光车每人另加¥1,000+。</span>
+    </div>
+  </div>
+</div>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="vc-wrap"><script src="/view-counter.js"></script></div>
+
+<script>
+// ── STOPS DATA ──
+var stops = [
+  {n:1, lat:30.5728, lng:104.0668, color:'#ef4444', name:'Chengdu 成都', nameZh:'成都', tag:'start', tagLabel:'Start/End', desc:'Gateway to the Tibetan Plateau. Fly to Jiuzhai Huanglong Airport.',descZh:'通往藏族高原的门户。飞往九寨黄龙机场。', day:'Day 1 & 10'},
+  {n:2, lat:32.8531, lng:103.6822, color:'#f97316', name:'Jiuzhai Huanglong Airport', nameZh:'九寨黄龙机场', tag:'city', tagLabel:'Gateway', desc:'45-min flight from Chengdu. Altitude 3,448 m — acclimatise slowly.',descZh:'距成都飞行45分钟。海拔3448米，慢慢适应。', day:'Day 1'},
+  {n:3, lat:33.1199, lng:103.9180, color:'#3b82f6', name:'Jiuzhaigou 九寨沟', nameZh:'九寨沟', tag:'lake', tagLabel:'Lakes', desc:'108 coloured lakes, waterfalls, UNESCO World Heritage Site.',descZh:'108个彩色湖泊、瀑布，世界遗产。', day:'Day 2'},
+  {n:4, lat:32.7500, lng:103.8167, color:'#3b82f6', name:'Huanglong 黄龙', nameZh:'黄龙', tag:'lake', tagLabel:'Lakes', desc:'3,400+ golden travertine pools, UNESCO. Best viewed after 9 am.',descZh:'3400多个金色钙华池，世界遗产。上午9点后光线最佳。', day:'Day 3'},
+  {n:5, lat:33.5762, lng:102.9618, color:'#34d399', name:'Zoige / Ruoergai 若尔盖', nameZh:'若尔盖', tag:'grass', tagLabel:'Grasslands', desc:'China\'s largest highland peat wetland. Base for grassland exploration.',descZh:'中国最大高原泥炭湿地，草原探索基地。', day:'Day 3–5'},
+  {n:6, lat:33.7833, lng:102.7333, color:'#3b82f6', name:'Huahu Lake 花湖', nameZh:'花湖', tag:'lake', tagLabel:'Lake', desc:'Mirror lake at 3,468 m. Black-necked cranes, water lilies. Free entry.',descZh:'海拔3468米的镜面湖。黑颈鹤栖息，睡莲盛开。免费入场。', day:'Day 4'},
+  {n:7, lat:33.4667, lng:102.0167, color:'#34d399', name:'Yellow River First Bend 黄河第一湾', nameZh:'黄河第一湾', tag:'grass', tagLabel:'Grasslands', desc:'The Yellow River\'s first dramatic meander at Tangke village. Sunset views.',descZh:'黄河在唐克村的第一个壮观大湾。日落景观绝美。', day:'Day 4'},
+  {n:8, lat:34.0870, lng:102.6360, color:'#a78bfa', name:'Langmusi 郎木寺', nameZh:'郎木寺', tag:'temple', tagLabel:'Temple', desc:'Village straddling Sichuan-Gansu border. Two monasteries, red cliffs, gorge walk.',descZh:'跨越川甘边界的村庄。两座寺院、红色悬崖、峡谷栈道。', day:'Day 5'},
+  {n:9, lat:34.9833, lng:102.8897, color:'#f59e0b', name:'Hezuo 合作', nameZh:'合作', tag:'city', tagLabel:'City', desc:'Capital of Gannan Tibetan Autonomous Prefecture. Milarepa Tower.',descZh:'甘南藏族自治州首府。米拉日巴佛阁。', day:'Day 6'},
+  {n:10, lat:35.1862, lng:102.5154, color:'#a78bfa', name:'Xiahe / Labrang 夏河·拉卜楞寺', nameZh:'夏河·拉卜楞寺', tag:'temple', tagLabel:'Temple', desc:'World\'s largest Tibetan monastic complex. 3 km prayer wheel kora.',descZh:'世界最大藏传佛教寺院建筑群。3公里转经廊。', day:'Day 6–7'},
+  {n:11, lat:35.2167, lng:102.4333, color:'#34d399', name:'Sangke Grasslands 桑科草原', nameZh:'桑科草原', tag:'grass', tagLabel:'Grasslands', desc:'Nomadic yak pastures 14 km from Xiahe. Overnight in black yak-wool tents.',descZh:'距夏河14公里的游牧牦牛草场。在黑色牦牛毛帐篷中过夜。', day:'Day 7'},
+  {n:12, lat:34.0667, lng:102.0833, color:'#34d399', name:'Maqu 玛曲', nameZh:'玛曲', tag:'grass', tagLabel:'Grasslands', desc:'Yellow River makes its 433 km grand horseshoe bend. Pristine Tibetan rangeland.',descZh:'黄河在此划出433公里的巨大马蹄形大弯。原始藏族牧场。', day:'Day 8'},
+  {n:13, lat:32.7833, lng:102.5500, color:'#34d399', name:'Hongyuan 红原', nameZh:'红原', tag:'grass', tagLabel:'Grasslands', desc:'Red grasslands. Long March site where Red Army crossed deadly marshes in 1935.',descZh:'红色大草原。1935年红军穿越死亡沼泽的长征遗址。', day:'Day 9'}
+];
+
+// ── ITINERARY DATA ──
+var days = [
+  {
+    badge:'Day 1',badgeZh:'第1天',
+    title:'Chengdu → Fly to Jiuzhaigou · Arrive & Settle',titleZh:'成都→飞往九寨沟·抵达安顿',
+    meta:'Flight ~45 min · Drive to valley 1.5 hrs',metaZh:'飞行约45分钟·驾车至景区1.5小时',
+    morning:'Morning: Fly from Chengdu to Jiuzhai Huanglong Airport (GHN). The flight path passes Minshan mountains — sit on the right for views. Airport altitude is 3,448 m — take it slow.',morningZh:'上午：从成都飞往九寨黄龙机场（GHN）。航线经过岷山——坐右侧欣赏雪山。机场海拔3448米，行动需缓慢。',
+    afternoon:'Afternoon: 90-min drive down to Jiuzhaigou valley (2,000 m). Check in. Walk gently to Zhuozhuo Lake just outside the park gate. No rushing today.',afternoonZh:'下午：驱车90分钟下山至九寨沟景区（海拔2000米）。办理入住。在公园门口外的卓卓湖轻松散步，今天不赶路。',
+    evening:'Evening: Rest and hydrate. Light dinner in Jiuzhaigou Zhengying. Don\'t drink alcohol — altitude amplifies it.',eveningZh:'傍晚：休息多补水。在九寨沟正营吃份清淡晚餐。不要饮酒——高原放大酒精效应。',
+    tip:'Altitude acclimatisation: rest, water, no alcohol, no exercise.',tipZh:'高原适应：休息、补水、不饮酒、不剧烈运动。'
+  },
+  {
+    badge:'Day 2',badgeZh:'第2天',
+    title:'Jiuzhaigou National Park — Full Day',titleZh:'九寨沟国家公园·全天游览',
+    meta:'Walking 8–12 km · Altitude 2,000–3,100 m',metaZh:'步行8-12公里·海拔2000-3100米',
+    morning:'Morning: Enter at 8 am sharp. Take the park bus to Long Lake (长海, highest point 3,100 m) and work your way DOWN through Zechawa Valley.',morningZh:'上午：早上8点准时入园。乘观光车直达长海（最高点3100米），沿则查洼沟步道往下走。',
+    afternoon:'Afternoon: Shuzheng Valley: Five Flower Lake (五花海) — the jewel of Jiuzhaigou with its impossible turquoise colour. Mirror Lake, Arrow Bamboo Lake, Panda Lake and waterfall.',afternoonZh:'下午：树正沟：五花海——九寨沟最绚丽的彩池，湖色令人叹为观止。镜海、箭竹海、熊猫海及瀑布。',
+    evening:'Evening: Nuorilang Waterfall (诺日朗瀑布) — widest in Sichuan. Exit by 5 pm. Local Tibetan restaurant dinner.',eveningZh:'傍晚：诺日朗瀑布——四川最宽瀑布。下午5点前出园。晚餐选择当地藏族餐厅。',
+    tip:'Use the park shuttle bus to go UP, then walk DOWN — knees and altitude both easier.',tipZh:'乘观光车上山，步行下山——膝盖和高原反应都更容易应对。'
+  },
+  {
+    badge:'Day 3',badgeZh:'第3天',
+    title:'Huanglong Travertine Pools → Drive to Zoige Grasslands',titleZh:'黄龙钙华彩池→驱车若尔盖草原',
+    meta:'Huanglong 3–4 hrs · Drive to Zoige 3 hrs',metaZh:'黄龙游览3-4小时·驾车至若尔盖3小时',
+    morning:'Morning: Drive 2 hrs to Huanglong. Take the cable car up (save energy). Walk the 3.6 km valley downhill: Jade Pool, Golden Beach, Five-Colour Pond at the top is the highlight.',morningZh:'上午：驱车2小时至黄龙。乘缆车上山（节省体力）。沿3.6公里山谷步道下行：玉翠彩池、金沙铺地、顶端的五彩池是最大亮点。',
+    afternoon:'Afternoon: Drive north ~3 hrs through Minshan mountains on G213 highway to Zoige (若尔盖). Landscape transforms from forested mountains to open golden steppe grasslands.',afternoonZh:'下午：沿G213国道向北驾车约3小时穿越岷山，抵达若尔盖。景色从茂密山林转变为开阔金色草原。',
+    evening:'Evening: Arrive Zoige county town. Check in. Dinner with yak hot pot.',eveningZh:'傍晚：抵达若尔盖县城。办理入住。晚餐品尝牦牛火锅。',
+    tip:'Walk Huanglong slowly — altitude 3,600 m. Diamox or Rhodiola rosea helps.',tipZh:'缓慢游览黄龙——海拔3600米。乙酰唑胺或红景天有助于适应。'
+  },
+  {
+    badge:'Day 4',badgeZh:'第4天',
+    title:'Huahu Wetland Lake & Yellow River First Bend (Tangke)',titleZh:'花湖湿地与黄河第一湾（唐克）',
+    meta:'Huahu 60 km N · Tangke 120 km NW · Return to Zoige',metaZh:'花湖向北60公里·唐克向西北120公里·返回若尔盖',
+    morning:'Morning: Drive 60 km north to Huahu Lake (花湖). A mirror-calm lake surrounded by grasslands. Walk the boardwalk (1.5 km loop). Look for black-necked cranes and bar-headed geese.',morningZh:'上午：向北驾车60公里至花湖。宁静如镜的湖泊四周是无边草原。沿木栈道行走（1.5公里环线）。留意黑颈鹤和斑头雁。',
+    afternoon:'Afternoon: Drive 60 km further west to Tangke (唐克). The Yellow River makes its first dramatic bend here — visible from the hilltop viewing platform. Golden grasslands + winding river = stunning.',afternoonZh:'下午：继续向西驾车60公里至唐克。黄河在此形成第一个壮观大湾——从山顶观景台清晰可见。金色草原与蜿蜒河流构成绝美画卷。',
+    evening:'Evening: Sunset at the Yellow River bend (best 6–7 pm in summer). Horse ride with Tibetan nomads along the river (¥80–150/hr). Return to Zoige for dinner.',eveningZh:'傍晚：在黄河大湾观赏日落（夏季下午6-7点最佳）。随藏族牧民骑马沿河而行（¥80-150/小时）。返回若尔盖用餐。',
+    tip:'Full day loop from Zoige — pack lunch and water. No restaurants at Tangke.',tipZh:'若尔盖出发全天环线游——自备午餐和水。唐克没有餐厅。'
+  },
+  {
+    badge:'Day 5',badgeZh:'第5天',
+    title:'Zoige → Langmusi — Cross into Gannan',titleZh:'若尔盖→郎木寺·进入甘南',
+    meta:'Drive ~2 hrs · Sichuan-Gansu border crossing',metaZh:'驱车约2小时·穿越川甘边界',
+    morning:'Morning: Check out Zoige. Short stop at Zoige Wetland (若尔盖湿地 reserve). See the black-necked crane reserve if not visited yesterday.',morningZh:'上午：退房若尔盖。顺道游览若尔盖湿地自然保护区。如昨日未到，可参观黑颈鹤保护区。',
+    afternoon:'Afternoon: Drive 2 hrs south-west to Langmusi (郎木寺). The road crosses the Sichuan-Gansu provincial border — marked by a small river. The Sichuan monastery (格尔底寺) and Gansu monastery (赛赤寺) face each other across the stream.',afternoonZh:'下午：向西南驾车2小时至郎木寺。途中穿越川甘省界——以一条小溪为界。四川寺院（格尔底寺）与甘肃寺院（赛赤寺）隔溪相望。',
+    evening:'Evening: Walk the canyon trail behind the Sichuan monastery (1.5 hrs, free). Crystal-clear gorge with red cliffs. Dinner in one of Langmusi\'s Tibetan or backpacker cafés.',eveningZh:'傍晚：走四川寺院后方的峡谷栈道（1.5小时，免费）。红色峭壁夹着清澈峡谷。晚餐选郎木寺藏族餐厅或背包客咖啡馆。',
+    tip:'Langmusi is one of the most authentic Tibetan towns — stay the night and feel the atmosphere.',tipZh:'郎木寺是最原汁原味的藏族小镇之一——在此过夜，感受独特氛围。'
+  },
+  {
+    badge:'Day 6',badgeZh:'第6天',
+    title:'Langmusi Morning → Hezuo → Arrive Xiahe',titleZh:'郎木寺早晨→合作→抵达夏河',
+    meta:'Drive 3.5 hrs total · Enter deep Gannan',metaZh:'总驾车约3.5小时·深入甘南腹地',
+    morning:'Morning: Early morning at Langmusi is magical — mist fills the canyon. Visit the Gansu side monastery (Sertri Gompa). Morning prayer ceremonies at 8 am. Walk the sky burial platform ridge (respectfully, with a guide).',morningZh:'上午：郎木寺清晨云雾弥漫，宛若仙境。参观甘肃侧赛赤寺。早上8点有晨祷法会。在向导陪同下，虔诚地参观天葬台山脊。',
+    afternoon:'Afternoon: Drive 1.5 hrs north to Hezuo (合作) — capital of Gannan Prefecture. Visit the impressive 9-storey Milarepa Tower (米拉日巴佛阁). Drive 1 hr more to Xiahe (夏河).',afternoonZh:'下午：向北驾车1.5小时至合作——甘南藏族自治州首府。参观气势宏伟的九层米拉日巴佛阁。再行驶1小时抵达夏河。',
+    evening:'Evening: Walk the 3 km prayer wheel kora along Labrang\'s outer circuit at dusk with pilgrims. The turning of thousands of golden prayer wheels is deeply moving.',eveningZh:'傍晚：黄昏时随朝圣者沿拉卜楞寺外围3公里转经廊转经。千盏金色转经筒旋转不止，令人深深动容。',
+    tip:'Hezuo Milarepa Tower: ¥30 entry. Xiahe hotels are plentiful and cheap (¥150–300/night).',tipZh:'合作米拉日巴佛阁：门票¥30。夏河旅馆众多且价格实惠（¥150-300/晚）。'
+  },
+  {
+    badge:'Day 7',badgeZh:'第7天',
+    title:'Xiahe Full Day — Labrang Monastery & Sangke Grasslands',titleZh:'夏河全天·拉卜楞寺与桑科草原',
+    meta:'Full day in Xiahe area',metaZh:'全天游览夏河地区',
+    morning:'Morning: Labrang Monastery deep tour (拉卜楞寺). Join the 7 am kora walk with pilgrims. Hire a monk guide (¥100/hr) for inside the 6 monastic colleges — Tantric, Medicine, Astrology colleges. Monks\' debate session at 9 am in the courtyard.',morningZh:'上午：深度游览拉卜楞寺。参加早上7点的转经朝圣之行。雇佣僧侣向导（¥100/小时）参观六大学院——密宗学院、医学院、时轮学院。早上9点在院落内观看僧侣辩经。',
+    afternoon:'Afternoon: Drive 14 km to Sangke Grasslands (桑科草原). Horse ride across the open meadows. Visit nomadic Tibetan families in their black yak-wool tents. Optional: stay overnight in a tent camp.',afternoonZh:'下午：驱车14公里至桑科草原。骑马穿越辽阔草甸。拜访游牧藏族家庭，走进他们的黑色牦牛毛帐篷。可选：在帐篷营地过夜。',
+    evening:'Evening: Yak butter tea and tsampa dinner at a nomad tent. Incredible stargazing at 3,000 m with no light pollution.',eveningZh:'傍晚：在游牧帐篷内喝酥油茶、吃糌粑晚餐。海拔3000米、无光污染，夜空星斗璀璨，令人叹为观止。',
+    tip:'Sangke nomad tent stay: ¥200–350/person including dinner & breakfast. Book at Xiahe hotels.',tipZh:'桑科游牧帐篷住宿：每人¥200-350，含晚餐和早餐。可在夏河旅馆代订。'
+  },
+  {
+    badge:'Day 8',badgeZh:'第8天',
+    title:'Sangke → Maqu — Yellow River Grand Bend',titleZh:'桑科→玛曲·黄河大拐弯',
+    meta:'Drive ~4 hrs · Deep into southern Gannan',metaZh:'驱车约4小时·深入甘南南部',
+    morning:'Morning: Leave Sangke/Xiahe. Drive south-west ~4 hours on G213 to Maqu (玛曲) — the southernmost point of the Yellow River\'s huge meander into Gannan. Road passes sweeping grasslands and occasional nomad camps.',morningZh:'上午：从桑科/夏河出发。沿G213向西南驾车约4小时至玛曲——黄河深入甘南大弯的最南端。途经辽阔草原和零星游牧营地。',
+    afternoon:'Afternoon: Drive 30 km from Maqu town to Awancang Wetland (阿万仓湿地) — one of the most dramatic river meander landscapes in China. The Yellow River curves in huge loops across flat marshy grassland. Virtually no tourists.',afternoonZh:'下午：从玛曲县城驾车30公里至阿万仓湿地——中国最壮观的河曲景观之一。黄河在平坦沼泽草原上以巨大弧线蜿蜒流淌。几乎没有游客。',
+    evening:'Evening: Return to Maqu. Overnight in Maqu county. Simple but genuine Tibetan guesthouse experience.',eveningZh:'傍晚：返回玛曲。在玛曲县城过夜。简朴而真实的藏族客栈体验。',
+    tip:'Awancang is a 4WD track in wet season. Ask locals/driver about road conditions. Carry extra water.',tipZh:'雨季阿万仓路段需四驱车。向当地人/司机了解路况。多备用水。'
+  },
+  {
+    badge:'Day 9',badgeZh:'第9天',
+    title:'Maqu → Zoige → Hongyuan Red Grasslands',titleZh:'玛曲→若尔盖→红原大草原',
+    meta:'Drive ~5 hrs · Re-enter North Sichuan',metaZh:'驾车约5小时·重返川北',
+    morning:'Morning: Drive from Maqu back east through Zoige (若尔盖) then south to Hongyuan (红原) — about 5 hours total. The grasslands along this route are among the most pristine in China.',morningZh:'上午：从玛曲向东驾车经过若尔盖，再向南至红原——全程约5小时。沿途草原是中国最原始的草地之一。',
+    afternoon:'Afternoon: Hongyuan — the Red Army Long March memorial site. The Red Army crossed these treacherous marshes in 1935, losing thousands of soldiers. Visit the memorial museum (纪念馆). The grasslands turn brilliant red-gold in September.',afternoonZh:'下午：红原——红军长征纪念地。1935年红军穿越这片险恶沼泽，数千将士牺牲于此。参观长征纪念馆。每年9月草原变为绚丽的红金色。',
+    evening:'Evening: Sunset over Hongyuan\'s vast grasslands. Overnight in Hongyuan. Try local highland barley wine (carefully).',eveningZh:'傍晚：在红原辽阔草原观看日落。红原县城过夜。谨慎品尝当地青稞酒。',
+    tip:'Hongyuan altitude: 3,491 m. Rest well tonight for tomorrow\'s return journey.',tipZh:'红原海拔：3491米。今晚好好休息，为明日返程做准备。'
+  },
+  {
+    badge:'Day 10',badgeZh:'第10天',
+    title:'Hongyuan → Songpan Ancient Town → Return Chengdu',titleZh:'红原→松潘古城→返回成都',
+    meta:'Drive 6–7 hrs total · Return flight to Singapore',metaZh:'总驾车6-7小时·返回新加坡航班',
+    morning:'Morning: Drive 2 hrs south from Hongyuan to Songpan Ancient Town (松潘古城, 2,850 m). A remarkably preserved Ming-dynasty walled town at the crossroads of Tibetan, Han and Qiang cultures.',morningZh:'上午：从红原向南驾车2小时至松潘古城（海拔2850米）。这座保存完好的明代古城是藏、汉、羌文化交汇之地。',
+    afternoon:'Afternoon: Walk Songpan\'s ancient city walls (45 min circuit). Browse the Tibetan-Muslim market street. Lunch: Hui Muslim beef noodles (¥12 a bowl, excellent). Drive 4 hrs south to Chengdu via Maoxian (茂县) and Dujiangyan (都江堰).',afternoonZh:'下午：沿松潘古城墙环游（45分钟一圈）。逛藏回融合的市集街道。午餐：回族牛肉面（每碗¥12，味道极佳）。沿茂县、都江堰向南驾车4小时返回成都。',
+    evening:'Evening: Arrive Chengdu. Celebratory Sichuan hot pot dinner. Overnight in Chengdu before flight home.',eveningZh:'傍晚：抵达成都。庆祝性四川火锅晚餐。翌日搭机回国前在成都过夜。',
+    tip:'Songpan to Chengdu via Dujiangyan: beautiful gorge road (G213 + S303). Allow 4–5 hrs.',tipZh:'松潘经都江堰返回成都：途经壮美峡谷（G213+S303）。预留4-5小时。'
+  }
+];
+
+// ── MAP SETUP ──
+var map = L.map('map', {zoomControl:true}).setView([33.5, 103.0], 7);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}).addTo(map);
+
+function makeIcon(color, num) {
+  return L.divIcon({
+    html: '<div style="width:28px;height:28px;border-radius:50%;background:'+color+';border:2.5px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);">'+num+'</div>',
+    iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-16], className:''
+  });
+}
+
+var markers = [];
+stops.forEach(function(s) {
+  var m = L.marker([s.lat, s.lng], {icon: makeIcon(s.color, s.n)}).addTo(map);
+  m.bindPopup('<div class="popup-day">'+s.day+'</div><div class="popup-name">'+s.name+'</div><div class="popup-desc">'+s.desc+'</div><div class="popup-alt">'+s.nameZh+'</div>');
+  markers.push(m);
+});
+
+// Route polyline
+var latlngs = stops.map(function(s){return [s.lat,s.lng];});
+L.polyline(latlngs, {color:'#f97316', weight:2.5, opacity:0.7, dashArray:'8,5'}).addTo(map);
+
+// Stop list render
+var stopList = document.getElementById('stop-list');
+stops.forEach(function(s, i) {
+  var div = document.createElement('div');
+  div.className = 'stop-item';
+  div.innerHTML = '<div class="stop-num" style="background:'+s.color+';color:#fff;">'+s.n+'</div>'
+    +'<div class="stop-info"><div class="stop-name">'+s.name+' <span class="stop-tag tag-'+s.tag+'">'+s.tagLabel+'</span></div>'
+    +'<div class="stop-desc"><span class="en">'+s.desc+'</span><span class="zh">'+s.descZh+'</span></div></div>';
+  div.onclick = function(){
+    map.setView([s.lat, s.lng], 11, {animate:true});
+    markers[i].openPopup();
+    switchTab('map');
+    window.scrollTo(0,0);
+  };
+  stopList.appendChild(div);
+});
+
+// Itinerary render
+var itinPanel = document.getElementById('itin-panel');
+days.forEach(function(d, i) {
+  var card = document.createElement('div');
+  card.className = 'day-card';
+  card.innerHTML = '<div class="day-header">'
+    +'<div class="day-badge"><span class="en">'+d.badge+'</span><span class="zh">'+d.badgeZh+'</span></div>'
+    +'<div><div class="day-title"><span class="en">'+d.title+'</span><span class="zh">'+d.titleZh+'</span></div>'
+    +'<div class="day-meta"><span class="en">'+d.meta+'</span><span class="zh">'+d.metaZh+'</span></div></div>'
+    +'<div class="day-chevron">▼</div></div>'
+    +'<div class="day-body">'
+    +'<div class="section"><div class="section-label"><span class="en">☀️ Morning</span><span class="zh">☀️ 上午</span></div><div class="section-text"><span class="en">'+d.morning+'</span><span class="zh">'+d.morningZh+'</span></div></div>'
+    +'<div class="section"><div class="section-label"><span class="en">🌤️ Afternoon</span><span class="zh">🌤️ 下午</span></div><div class="section-text"><span class="en">'+d.afternoon+'</span><span class="zh">'+d.afternoonZh+'</span></div></div>'
+    +'<div class="section"><div class="section-label"><span class="en">🌙 Evening</span><span class="zh">🌙 傍晚</span></div><div class="section-text"><span class="en">'+d.evening+'</span><span class="zh">'+d.eveningZh+'</span></div></div>'
+    +'<div class="section"><div class="section-label"><span class="en">💡 Tip</span><span class="zh">💡 贴士</span></div><div class="section-text" style="color:#34d399;"><span class="en">'+d.tip+'</span><span class="zh">'+d.tipZh+'</span></div></div>'
+    +'</div>';
+  card.onclick = function(){
+    var body = card.querySelector('.day-body');
+    card.classList.toggle('open');
+    body.classList.toggle('open');
+  };
+  itinPanel.appendChild(card);
+});
+
+// ── TAB SWITCHING ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  var panel = document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  var btns = document.querySelectorAll('.tab-btn');
+  btns.forEach(function(b){
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+name+"'") !== -1) b.classList.add('active');
+  });
+  var leg = document.getElementById('legend-bar');
+  if(leg) leg.style.display = (name==='map') ? 'flex' : 'none';
+  if(name==='map') setTimeout(function(){map.invalidateSize();},100);
+}
+
+// ── LANG TOGGLE ──
+var currentLang = 'en';
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.en').forEach(function(el){el.style.display=(lang==='en')?'':'none';});
+  document.querySelectorAll('.zh').forEach(function(el){el.style.display=(lang==='zh')?'':'none';});
+  document.querySelectorAll('.lang-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    if((lang==='en'&&b.textContent.indexOf('English')!==-1)||(lang==='zh'&&b.textContent.indexOf('中文')!==-1)) b.classList.add('active');
+  });
+}
+
+// ── MAP FULLSCREEN ──
+function toggleMapFullscreen() {
+  var m = document.getElementById('map');
+  var btn = document.getElementById('mapFullscreenClose');
+  m.classList.toggle('map-fullscreen');
+  btn.classList.toggle('active');
+  setTimeout(function(){map.invalidateSize();},100);
+}
+
+// ── TOGGLE HELPERS ──
+function toggleMs(el){el.classList.toggle('open');}
+function toggleTip(el){el.classList.toggle('open');}
+
+// ── SHARE ──
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){navigator.share({title:title,url:url}).catch(function(){});}
+  else{navigator.clipboard.writeText(url).then(function(){
+    var t=document.getElementById('shareToast');
+    t.style.display='block';
+    setTimeout(function(){t.style.display='none';},2200);
+  });}
+}
+
+// Init: hide zh spans
+document.querySelectorAll('.zh').forEach(function(el){el.style.display='none';});
+</script>
+</body>
+</html>
