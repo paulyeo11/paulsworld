@@ -72,14 +72,14 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
 
-- **Map Type Toggle (MANDATORY — always include):** Two buttons top-right of the map: `🛰 Satellite` and `🗺 Street`. Satellite = ESRI World Imagery (default, gold highlight); Street = OpenStreetMap (shows roads, town names, nearby locations). Implementation pattern:
+- **Map Type Toggle (MANDATORY — always include):** Two buttons top-right of the map: `🛰 Satellite` and `🗺 Street`. **Street is the default (gold highlight)**; Satellite = ESRI World Imagery. Implementation pattern:
   ```javascript
   var tileLayers = {
     satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
     street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
   };
-  tileLayers.satellite.addTo(map);
-  var currentTile = 'satellite';
+  tileLayers.street.addTo(map);
+  var currentTile = 'street';
   function setMapType(type) {
     if (type === currentTile) return;
     map.removeLayer(tileLayers[currentTile]);
@@ -91,11 +91,11 @@ Whenever Paul's article/story includes a hiking route, travel route, or any sequ
   Button HTML (place inside the map's `position:relative` wrapper):
   ```html
   <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
-    <button onclick="setMapType('satellite')" id="btn-satellite" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
-    <button onclick="setMapType('street')" id="btn-street" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    <button onclick="setMapType('satellite')" id="btn-satellite" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+    <button onclick="setMapType('street')" id="btn-street" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
   </div>
   ```
-- **Tiles:** ESRI satellite default (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`)
+- **Tiles:** Street (OSM) is the default. Satellite = ESRI (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`)
 - **Markers:** Numbered coloured circle markers — 🔴 red = Start/End, 🟠 orange = road/transport section, 🟢 green = forest/nature section, 🔵 blue = water/reservoir section
 - **Route line:** Orange dashed polyline connecting all stops in order
 - **Photo popup:** Tapping any marker shows a popup with the photo + caption + "View Full Photo" button (opens lightbox)
