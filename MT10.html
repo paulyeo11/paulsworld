@@ -202,6 +202,7 @@
 </head>
 <body>
 
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
 
 <!-- HEADER -->
 <div class="header">
@@ -307,6 +308,54 @@
               <a href="https://uri.amap.com/marker?position=139.7152,35.5626&name=%E8%92%B2%E7%94%B04-26-10%20%E5%A4%A7%E7%94%B0%E5%8C%BA%E4%B8%9C%E4%BA%AC" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
             </div>
           </div>
+
+          <!-- Tokyo Hotel Map -->
+          <div style="margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:relative;">
+              <div id="hotel-tokyo-map" style="width:100%;height:220px;"></div>
+              <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+                <button onclick="setHotelTokyoType('satellite')" id="htok-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+                <button onclick="setHotelTokyoType('street')" id="htok-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+                <button onclick="toggleHotelTokyoFs()" style="background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:30px;height:30px;font-size:0.95rem;cursor:pointer;">⛶</button>
+              </div>
+              <button id="htok-close" onclick="toggleHotelTokyoFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ Close Map</button>
+            </div>
+          </div>
+          <script>
+          (function(){
+            if(typeof L==='undefined')return;
+            var hTokMap=L.map('hotel-tokyo-map',{zoomControl:true,scrollWheelZoom:false}).setView([35.5626,139.7152],15);
+            var hTokTiles={
+              satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
+              street:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
+            };
+            hTokTiles.street.addTo(hTokMap);
+            var hTokCur='street';
+            window.setHotelTokyoType=function(type){
+              if(type===hTokCur)return;
+              hTokMap.removeLayer(hTokTiles[hTokCur]);
+              hTokTiles[type].addTo(hTokMap);
+              hTokCur=type;
+              var a='background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;';
+              var i='background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;';
+              document.getElementById('htok-sat').style.cssText=type==='satellite'?a:i;
+              document.getElementById('htok-str').style.cssText=type==='street'?a:i;
+            };
+            var icon=L.divIcon({className:'',html:'<div style="background:#f0a500;color:#fff;font-weight:800;font-size:13px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">🏠</div>',iconSize:[30,30],iconAnchor:[15,15]});
+            L.marker([35.5626,139.7152],{icon:icon}).addTo(hTokMap)
+              .bindPopup('<strong>🏠 Tokyo Hotel — Kamata</strong><br>4-26-10 Kamata, Ota-ku<br>Tokyo 144-0052<br><span style="color:#8b949e;font-size:0.9em;">Check-in 1 Jul · Check-out 6 Jul · 5 nights</span>')
+              .openPopup();
+            var hTokFs=false;
+            window.toggleHotelTokyoFs=function(){
+              var el=document.getElementById('hotel-tokyo-map');
+              var cl=document.getElementById('htok-close');
+              hTokFs=!hTokFs;
+              el.style.cssText=hTokFs?'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;':'width:100%;height:220px;';
+              cl.style.display=hTokFs?'block':'none';
+              hTokMap.invalidateSize();
+            };
+          })();
+          </script>
 
           <!-- Distance card: Narita → Kamata -->
           <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid #3b82f6;">
@@ -441,6 +490,54 @@
             </div>
           </div>
 
+          <!-- Niseko Hotel Map -->
+          <div style="margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+            <div style="position:relative;">
+              <div id="hotel-niseko-map" style="width:100%;height:220px;"></div>
+              <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+                <button onclick="setHotelNisekoType('satellite')" id="hnsk-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+                <button onclick="setHotelNisekoType('street')" id="hnsk-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+                <button onclick="toggleHotelNisekoFs()" style="background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:30px;height:30px;font-size:0.95rem;cursor:pointer;">⛶</button>
+              </div>
+              <button id="hnsk-close" onclick="toggleHotelNisekoFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ Close Map</button>
+            </div>
+          </div>
+          <script>
+          (function(){
+            if(typeof L==='undefined')return;
+            var hNskMap=L.map('hotel-niseko-map',{zoomControl:true,scrollWheelZoom:false}).setView([42.9007,140.7537],14);
+            var hNskTiles={
+              satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
+              street:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
+            };
+            hNskTiles.street.addTo(hNskMap);
+            var hNskCur='street';
+            window.setHotelNisekoType=function(type){
+              if(type===hNskCur)return;
+              hNskMap.removeLayer(hNskTiles[hNskCur]);
+              hNskTiles[type].addTo(hNskMap);
+              hNskCur=type;
+              var a='background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;';
+              var i='background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;';
+              document.getElementById('hnsk-sat').style.cssText=type==='satellite'?a:i;
+              document.getElementById('hnsk-str').style.cssText=type==='street'?a:i;
+            };
+            var icon=L.divIcon({className:'',html:'<div style="background:#10b981;color:#fff;font-weight:800;font-size:13px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">🏠</div>',iconSize:[30,30],iconAnchor:[15,15]});
+            L.marker([42.9007,140.7537],{icon:icon}).addTo(hNskMap)
+              .bindPopup('<strong>🏠 Niseko Hotel — Kutchan</strong><br>Minami 11 Jo Nishi 1-46-1<br>Kutchan-cho, Hokkaido 044-0045<br><span style="color:#8b949e;font-size:0.9em;">Check-in 6 Jul · Check-out 28 Jul · 22 nights</span>')
+              .openPopup();
+            var hNskFs=false;
+            window.toggleHotelNisekoFs=function(){
+              var el=document.getElementById('hotel-niseko-map');
+              var cl=document.getElementById('hnsk-close');
+              hNskFs=!hNskFs;
+              el.style.cssText=hNskFs?'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;':'width:100%;height:220px;';
+              cl.style.display=hNskFs?'block':'none';
+              hNskMap.invalidateSize();
+            };
+          })();
+          </script>
+
           <!-- Distance card -->
           <div style="margin-top:10px;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid #3b82f6;">
             <div style="font-size:0.78em;color:#8b949e;margin-bottom:8px;">🚗 Toyota Rent a Car (Chitose Airport) → Hotel</div>
@@ -524,73 +621,6 @@
           </div>
         </div>
       </div>
-
-      <!-- New Chitose Airport Map -->
-      <div style="margin:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
-        <div style="padding:10px 14px 8px;background:#161b22;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-          <div>
-            <div style="font-size:0.88em;font-weight:800;color:#e6edf3;">✈️ New Chitose Airport (CTS)</div>
-            <div style="font-size:0.72em;color:#8b949e;margin-top:1px;">Hokkaido's main airport · Gate D · Arrive 15:30</div>
-          </div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            <a href="https://maps.google.com/?q=42.7752,141.6922&label=New+Chitose+Airport" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.68rem;padding:4px 8px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
-            <a href="https://map.baidu.com/search/%E6%96%B0%E5%8D%83%E6%AD%B3%E7%A9%BA%E6%B8%AF" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.68rem;padding:4px 8px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
-            <a href="https://uri.amap.com/marker?position=141.6922,42.7752&name=%E6%96%B0%E5%8D%83%E6%AD%B3%E7%A9%BA%E6%B8%AF" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.68rem;padding:4px 8px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
-          </div>
-        </div>
-        <div style="position:relative;">
-          <div id="cts-map" style="width:100%;height:260px;"></div>
-          <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
-            <button onclick="setCtsMapType('satellite')" id="cts-btn-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
-            <button onclick="setCtsMapType('street')" id="cts-btn-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;">🗺 Street</button>
-            <button onclick="toggleCtsFs()" id="cts-btn-fs" style="background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:32px;height:32px;font-size:1rem;cursor:pointer;">⛶</button>
-          </div>
-          <button id="cts-fs-close" onclick="toggleCtsFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ Close Map</button>
-        </div>
-        <div style="padding:8px 14px 10px;background:#161b22;font-size:0.78em;color:#8b949e;line-height:1.6;">
-          🔴 <strong style="color:#fca5a5;">New Chitose Airport (CTS)</strong> · Domestic Gate D · Toyota counter at Arrivals 1F Exit 3
-        </div>
-      </div>
-      <script>
-      (function(){
-        if(typeof L==='undefined')return;
-        var ctsMap=L.map('cts-map',{zoomControl:true,scrollWheelZoom:false}).setView([42.7752,141.6922],13);
-        var ctsTiles={
-          satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
-          street:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
-        };
-        ctsTiles.street.addTo(ctsMap);
-        var ctsCurrent='street';
-        window.setCtsMapType=function(type){
-          if(type===ctsCurrent)return;
-          ctsMap.removeLayer(ctsTiles[ctsCurrent]);
-          ctsTiles[type].addTo(ctsMap);
-          ctsCurrent=type;
-          var active='background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;';
-          var inactive='background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;';
-          document.getElementById('cts-btn-sat').style.cssText=type==='satellite'?active:inactive;
-          document.getElementById('cts-btn-str').style.cssText=type==='street'?active:inactive;
-        };
-        var icon=L.divIcon({className:'',html:'<div style="background:#ef4444;color:#fff;font-weight:800;font-size:12px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">✈</div>',iconSize:[30,30],iconAnchor:[15,15]});
-        L.marker([42.7752,141.6922],{icon:icon}).addTo(ctsMap)
-          .bindPopup('<strong>✈️ New Chitose Airport (CTS)</strong><br>New Chitose Airport Road, Bibi<br>Chitose-shi, Hokkaido 066-0012<br><span style="color:#8b949e;font-size:0.9em;">Gate D · Arrive 15:30 · 6 Jul 2026</span>')
-          .openPopup();
-        var ctsFsOpen=false;
-        window.toggleCtsFs=function(){
-          var el=document.getElementById('cts-map');
-          var cl=document.getElementById('cts-fs-close');
-          ctsFsOpen=!ctsFsOpen;
-          if(ctsFsOpen){
-            el.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;';
-            cl.style.display='block';
-          } else {
-            el.style.cssText='width:100%;height:260px;';
-            cl.style.display='none';
-          }
-          ctsMap.invalidateSize();
-        };
-      })();
-      </script>
 
       <div class="flt-card">
         <div class="flt-header">
@@ -731,75 +761,6 @@
           <a href="/toyota-car-rental-confirmation.pdf" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.78em;font-weight:700;padding:5px 12px;border-radius:20px;text-decoration:none;white-space:nowrap;">📄 View PDF</a>
         </div>
       </div>
-
-      <!-- Pick-up Location Map -->
-      <div style="margin:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
-        <div style="padding:10px 14px 8px;background:#161b22;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-          <div style="font-size:0.88em;font-weight:800;color:#e6edf3;">📍 Pick-up Location</div>
-          <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            <a href="https://maps.google.com/?q=42.7595,141.6707&label=Toyota+Rent+a+Car+Chitose" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.68rem;padding:4px 8px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
-            <a href="https://map.baidu.com/search/%E6%96%B0%E5%8D%83%E6%AD%B3%E7%A9%BA%E6%B8%AF%E4%B8%B0%E7%94%B0%E7%A7%9F%E8%BD%A6" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.68rem;padding:4px 8px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
-            <a href="https://uri.amap.com/marker?position=141.6707,42.7595&name=Toyota+Rent+a+Car+Chitose" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.68rem;padding:4px 8px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
-          </div>
-        </div>
-        <div style="position:relative;">
-          <div id="car-pickup-map" style="width:100%;height:260px;"></div>
-          <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
-            <button onclick="setCarMapType('satellite')" id="car-btn-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
-            <button onclick="setCarMapType('street')" id="car-btn-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;">🗺 Street</button>
-            <button onclick="toggleCarFs()" id="car-btn-fs" style="background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:32px;height:32px;font-size:1rem;cursor:pointer;">⛶</button>
-          </div>
-          <button id="car-fs-close" onclick="toggleCarFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ Close Map</button>
-        </div>
-        <div style="padding:8px 14px 10px;background:#161b22;font-size:0.78em;color:#8b949e;line-height:1.6;">
-          🔴 <strong style="color:#fca5a5;">New Chitose Airport</strong> — Go to counter, Domestic Arrivals 1F (Exit 3)<br>
-          🟢 <strong style="color:#6ee7b7;">Toyota Rent a Car Shop</strong> — 758-134 Bibi · 9-min free shuttle
-        </div>
-      </div>
-      <script>
-      (function(){
-        if(typeof L==='undefined')return;
-        var carMap=L.map('car-pickup-map',{zoomControl:true,scrollWheelZoom:false}).setView([42.767,141.682],12);
-        var carTiles={
-          satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
-          street:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
-        };
-        carTiles.street.addTo(carMap);
-        var carCurrent='street';
-        window.setCarMapType=function(type){
-          if(type===carCurrent)return;
-          carMap.removeLayer(carTiles[carCurrent]);
-          carTiles[type].addTo(carMap);
-          carCurrent=type;
-          document.getElementById('car-btn-sat').style.cssText=type==='satellite'?'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;':'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;';
-          document.getElementById('car-btn-str').style.cssText=type==='street'?'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;':'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;';
-        };
-        function mk(color,label){
-          return L.divIcon({className:'',html:'<div style="background:'+color+';color:#fff;font-weight:800;font-size:11px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">'+label+'</div>',iconSize:[28,28],iconAnchor:[14,14]});
-        }
-        var airport=[42.7752,141.6922];
-        var shop=[42.7595,141.6707];
-        L.marker(airport,{icon:mk('#ef4444','✈')}).addTo(carMap)
-          .bindPopup('<strong>✈️ New Chitose Airport</strong><br>Domestic Arrivals 1F · Exit 3 (ANA side)<br><span style="color:#8b949e;font-size:0.9em;">Go to Toyota counter here first</span>');
-        L.marker(shop,{icon:mk('#22c55e','🚗')}).addTo(carMap)
-          .bindPopup('<strong>🚗 Toyota Rent a Car</strong><br>758-134 Bibi, Chitose-shi<br><span style="color:#8b949e;font-size:0.9em;">Free shuttle ~9 min · Open until 22:00</span>');
-        L.polyline([airport,shop],{color:'#f0a500',weight:3,dashArray:'8,6',opacity:0.9}).addTo(carMap);
-        var carFsOpen=false;
-        window.toggleCarFs=function(){
-          var el=document.getElementById('car-pickup-map');
-          var cl=document.getElementById('car-fs-close');
-          carFsOpen=!carFsOpen;
-          if(carFsOpen){
-            el.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;';
-            cl.style.display='block';
-          } else {
-            el.style.cssText='width:100%;height:260px;';
-            cl.style.display='none';
-          }
-          carMap.invalidateSize();
-        };
-      })();
-      </script>
 
     </div>
   </div>
