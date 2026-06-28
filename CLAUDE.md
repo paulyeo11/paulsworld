@@ -155,6 +155,20 @@ Every page and article on Paul's World must include an **English / 中文 langua
 - English is default (active on load)
 - Reference implementation: `MT12.html` Itinerary panel (June 2026)
 
+### ⚠️ Bilingual Completeness Rule (learned from MT10 bug — 2026-06-28)
+**Including `bilingual.js` is NOT enough.** The toggle only works if every visible text node is wrapped:
+```html
+<span class="en">English text</span><span class="zh">中文翻译</span>
+```
+For block elements use `en-block` / `zh-block`. **Never write plain text inside a page that has `bilingual.js`.**
+
+**Pre-push hook enforces this automatically** (`.githooks/pre-push`) — a push will be blocked if any HTML file has `bilingual.js` but zero `.zh` elements.
+
+**Self-check command** (run before pushing if unsure):
+```bash
+for f in *.html; do grep -q 'bilingual.js' "$f" && ! grep -q 'class="zh"' "$f" && echo "MISSING ZH: $f"; done
+```
+
 ## CSS Layout Rule — Grid over Flex for Row Cards
 **NEVER use `margin-left:auto` inside a flex row when the middle element must fill space.**
 `margin-left:auto` on a flex child consumes ALL remaining free space, collapsing the content
