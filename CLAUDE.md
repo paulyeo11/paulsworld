@@ -1,5 +1,8 @@
 # Paul's World — CLAUDE.md
 
+## People / Contacts Paul Has Met
+- **爱同 Vivian** — Met at Toastmasters. From Harbin (China). Now in Singapore. Loves dogs and cats. WeChat: 爱同 Vivian. Status: 只为灵魂飞舞，相信了就可以看到.
+
 ## Owner / Profile Context
 - Paul Yeo — 70-year-old retired male (retired at **67**).
 - Hobbies: travel, adventure sports, learning AI.
