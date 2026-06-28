@@ -171,6 +171,21 @@ This guarantees:
 
 Never use flexbox + `margin-left:auto` for this 3-column pattern.
 
+## 🐛 Debug Pattern: Text Invisible in a Row Layout
+**Symptom:** Left icon shows ✅, right chevron shows ✅, middle title text invisible ❌
+
+**Diagnosis checklist (in order — stop when found):**
+1. **Check for `margin-left:auto` on any sibling** — this is the #1 cause. It eats all free space, collapsing the middle element to zero width.
+2. **Check the middle div has `flex:1;min-width:0`** (flex) or `grid-column:auto` with `1fr` column (grid).
+3. **Check color** — is text color same as background? (`color:#0d1117` on dark bg = invisible text).
+4. **Check overflow** — parent `overflow:hidden` + zero height/width clips content silently.
+5. **Nuclear option** — rebuild with `createElement` + `textContent` + inline `style.cssText`. Bypasses ALL CSS inheritance. If this also fails, the element is not in the DOM.
+
+**Fix order (fastest to most drastic):**
+1. Switch to `display:grid; grid-template-columns:auto 1fr auto` — solves 90% of cases.
+2. If grid doesn't fix it: use `createElement`+`textContent`+inline styles.
+3. If still broken: the panel/container itself may have zero size — check parent heights.
+
 ## Standing Rules for All Pages & Articles
 
 ### 🏠 Home Button
