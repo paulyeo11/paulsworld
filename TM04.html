@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TM04: Toastmaster Friend — Your AI Speech Companion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink: #db2777;
+      --pink-light: #f472b6;
+      --pink-dim: rgba(219,39,119,0.15);
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --surface2: #16213e;
+      --border: #2d2d4e;
+      --text: #f1f0ff;
+      --muted: #8888aa;
+      --user-bubble: #1e3a5f;
+      --ai-bubble: #1a1a30;
+      --accent: #f4813f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    /* ── FIXED TOP BAR ── */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: rgba(15,15,26,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .home-btn {
+      background: var(--pink);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 8px 16px;
+      border-radius: 20px;
+      box-shadow: 0 3px 10px rgba(219,39,119,0.35);
+      transition: opacity 0.2s;
+    }
+    .home-btn:hover { opacity: 0.88; }
+
+    .lang-bar { display: flex; gap: 6px; }
+    .lang-btn {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 13px;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn.active { background: #c9a227; border-color: #c9a227; color: #0f0f1a; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 80px 20px 36px;
+      text-align: center;
+      background: linear-gradient(155deg, #0f0f1a 0%, #1a0a2e 45%, #2a0a1e 100%);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 50%, rgba(219,39,119,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 75% 25%, rgba(244,129,63,0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; }
+    .hero-icon { font-size: 3rem; margin-bottom: 10px; }
+    .hero h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .hero h1 span { color: var(--pink-light); }
+    .hero-sub {
+      color: #c8b8d8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+    .hero-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.12);
+      border: 1.5px solid rgba(255,255,255,.3);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 10px 24px;
+      border-radius: 28px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.22); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e; color: #fff;
+      padding: 10px 22px; border-radius: 22px;
+      font-size: .88rem; z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    }
+
+    /* ── QUICK ACTIONS ── */
+    .quick-bar {
+      padding: 14px 12px 10px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
+    }
+    .quick-bar::-webkit-scrollbar { display: none; }
+    .q-chip {
+      flex-shrink: 0;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 22px;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .q-chip:hover { border-color: var(--pink); color: var(--pink-light); }
+    .q-chip.active { background: var(--pink-dim); border-color: var(--pink); color: var(--pink-light); }
+
+    /* ── ROLE SELECT ── */
+    .role-row {
+      display: none;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .role-row.open { display: flex; }
+    .role-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .role-chip:hover { border-color: var(--pink); color: var(--pink-light); }
+
+    /* ── CHAT AREA ── */
+    .chat-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 14px 160px;
+    }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+    }
+    .msg.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .avatar.ai { background: rgba(219,39,119,0.2); border: 1.5px solid var(--pink); }
+    .avatar.user { background: rgba(74,108,247,0.2); border: 1.5px solid #4a6cf7; }
+
+    .bubble {
+      max-width: calc(100% - 60px);
+      padding: 12px 16px;
+      border-radius: 16px;
+      line-height: 1.75;
+      font-size: 0.95rem;
+    }
+    .msg.ai .bubble {
+      background: var(--ai-bubble);
+      border: 1px solid var(--border);
+      border-top-left-radius: 4px;
+      color: #e8e0ff;
+    }
+    .msg.user .bubble {
+      background: var(--user-bubble);
+      border: 1px solid rgba(74,108,247,0.4);
+      border-top-right-radius: 4px;
+      color: #dce8ff;
+    }
+    .bubble strong { color: var(--pink-light); }
+    .bubble em { color: #c8b8d8; font-style: normal; font-size: 0.88em; }
+
+    .typing-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--pink);
+      border-radius: 50%;
+      animation: bounce 1s infinite;
+      margin-right: 3px;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); opacity:.5; }
+      40% { transform: translateY(-6px); opacity:1; }
+    }
+
+    .date-divider {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin: 10px 0 16px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── INPUT AREA ── */
+    .input-wrap {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(15,15,26,0.96);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px 14px;
+    }
+    .input-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .msg-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding: 11px 16px;
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      min-height: 44px;
+      overflow-y: auto;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+    .msg-input:focus { border-color: var(--pink); }
+    .msg-input::placeholder { color: var(--muted); }
+
+    .send-btn {
+      background: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 44px; height: 44px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.18s, transform 0.15s;
+    }
+    .send-btn:hover { opacity: 0.88; transform: scale(1.06); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .input-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+      max-width: 760px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 2px;
+    }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.78rem;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .clear-btn:hover { color: #ff8888; }
+    .char-hint { color: var(--muted); font-size: 0.76rem; }
+
+    /* ── SPEECH EVAL PANEL ── */
+    .eval-panel {
+      display: none;
+      padding: 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .eval-panel.open { display: block; }
+    .eval-panel textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 12px;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .eval-panel textarea:focus { border-color: var(--pink); }
+    .eval-panel textarea::placeholder { color: var(--muted); }
+    .eval-submit {
+      margin-top: 8px;
+      background: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 22px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.18s;
+    }
+    .eval-submit:hover { opacity: 0.88; }
+
+    /* ── RESPONSIVE ── */
+    @media (min-width: 600px) {
+      .hero h1 { font-size: 2.4rem; }
+      .bubble { font-size: 1rem; }
+    }
+
+    /* hide lang spans */
+    [lang-only] .zh { display: none; }
+    .lang-zh .en { display: none; }
+    .lang-zh .zh { display: inline; }
+    .en, .zh { display: inline; }
+    body:not(.lang-zh) .zh { display: none; }
+    body.lang-zh .en { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+  <div class="lang-bar">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-icon">🎤</div>
+    <h1>TM04: <span>Toastmaster Friend</span></h1>
+    <p class="hero-sub">
+      <span class="en">Your 24/7 AI companion for speeches, roles &amp; Table Topics</span>
+      <span class="zh">全天候AI演讲助理 — 演讲、角色与即兴主题</span>
+    </p>
+    <div class="hero-actions">
+      <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    </div>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<!-- QUICK ACTIONS -->
+<div class="quick-bar">
+  <button class="q-chip" onclick="quickAction('table-topic')">🎯 <span class="en">Table Topic</span><span class="zh">即兴演讲</span></button>
+  <button class="q-chip" id="role-chip" onclick="toggleRoleMenu()">🎭 <span class="en">Role Prep</span><span class="zh">角色准备</span> ▾</button>
+  <button class="q-chip" id="eval-chip" onclick="toggleEvalPanel()">✏️ <span class="en">Evaluate Speech</span><span class="zh">评估演讲</span></button>
+  <button class="q-chip" onclick="quickAction('topic-ideas')">💡 <span class="en">Speech Ideas</span><span class="zh">演讲主题</span></button>
+  <button class="q-chip" onclick="quickAction('pathways')">📚 <span class="en">Pathways Help</span><span class="zh">Pathways指导</span></button>
+  <button class="q-chip" onclick="quickAction('next-speech')">🗓️ <span class="en">Plan Next Speech</span><span class="zh">策划下次演讲</span></button>
+</div>
+
+<!-- ROLE SUBMENU -->
+<div class="role-row" id="role-row">
+  <button class="role-chip" onclick="rolePrep('Toastmaster of the Evening (TMOE)')">🎩 TMOE</button>
+  <button class="role-chip" onclick="rolePrep('Timer')">⏱️ Timer</button>
+  <button class="role-chip" onclick="rolePrep('Grammarian')">📖 Grammarian</button>
+  <button class="role-chip" onclick="rolePrep('Ah-Counter')">🔕 Ah-Counter</button>
+  <button class="role-chip" onclick="rolePrep('General Evaluator')">🧐 Gen. Evaluator</button>
+  <button class="role-chip" onclick="rolePrep('Table Topics Master')">🎤 TT Master</button>
+  <button class="role-chip" onclick="rolePrep('Speaker')">📜 Speech Prep</button>
+</div>
+
+<!-- SPEECH EVAL PANEL -->
+<div class="eval-panel" id="eval-panel">
+  <p style="font-size:0.85rem;color:var(--muted);margin-bottom:8px;">
+    <span class="en">Paste your speech below for Toastmaster-style feedback:</span>
+    <span class="zh">在下方贴上您的演讲稿，获取演讲评估：</span>
+  </p>
+  <textarea id="eval-text" rows="5" placeholder="Paste your speech here..."></textarea>
+  <button class="eval-submit" onclick="submitEval()">
+    🔍 <span class="en">Evaluate</span><span class="zh">评估</span>
+  </button>
+</div>
+
+<!-- CHAT AREA -->
+<div class="chat-wrap" id="chat-wrap"></div>
+
+<!-- INPUT -->
+<div class="input-wrap">
+  <div class="input-meta">
+    <button class="clear-btn" onclick="clearChat()">🗑️ <span class="en">Clear chat</span><span class="zh">清除对话</span></button>
+    <span class="char-hint" id="char-hint"></span>
+  </div>
+  <div class="input-inner">
+    <textarea class="msg-input" id="msg-input" rows="1"
+      placeholder="Ask me anything about Toastmasters... / 问我任何关于演讲会的问题..."
+      onkeydown="handleKey(event)" oninput="autoResize(this); updateHint(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">➤</button>
+  </div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<script>
+  /* ── SYSTEM PROMPT ── */
+  const SYSTEM = `You are Paul's personal Toastmaster Friend — a warm, knowledgeable AI companion for his Toastmasters journey.
+
+About Paul:
+- 70 years old, retired at 67, lives in Singapore
+- Enthusiastic new Toastmaster member
+- Loves adventure travel (Xinjiang, Japan, Patagonia), AI tools, storytelling
+- Learning to give speeches in Mandarin Chinese
+- Gave his first Mandarin speech on 26 June 2026: "From Failure to Success — My AI Leadership Project"
+- Warm, practical, down-to-earth personality
+
+Your role as Toastmaster Friend:
+- Table Topics: Give a realistic impromptu topic + gentle coaching tips
+- Role Prep: Explain the specific meeting role clearly and give Paul practical tips
+- Speech Evaluation: Give structured feedback (Commendations, Recommendations, Commendations — CRC method)
+- Speech Ideas: Suggest topics tied to Paul's rich life (travel, retirement, AI, family, faith)
+- Pathways: Help Paul understand the Toastmasters Pathways learning program
+- General coaching: Be encouraging, specific, practical
+
+Response style:
+- Warm and friendly — like a knowledgeable TM club friend, not a lecturer
+- Concise but complete — Paul is on his phone so no walls of text
+- Use bold for key terms and emoji sparingly for warmth
+- If Paul asks for Chinese (Mandarin) help, give the key phrases in Chinese too
+- Keep responses under 300 words unless giving full speech evaluation`;
+
+  /* ── STATE ── */
+  const STORAGE_KEY = 'tm04_chat_v1';
+  let history = [];
+  let isLoading = false;
+
+  /* ── INIT ── */
+  window.addEventListener('DOMContentLoaded', () => {
+    loadHistory();
+    if (history.length === 0) {
+      appendAIMsg(getWelcomeMsg());
+    } else {
+      renderHistory();
+    }
+    setLang(localStorage.getItem('tm04_lang') || 'en');
+  });
+
+  function getWelcomeMsg() {
+    return `**Hello Paul! 👋 Welcome to your Toastmaster Friend!**
+
+I'm here to help you with every part of your TM journey:
+
+🎯 **Table Topics** — want an impromptu topic to practice?
+🎭 **Role Prep** — preparing for Timer, Grammarian, TMOE or any role?
+✏️ **Speech Eval** — paste a speech and I'll give you CRC feedback
+💡 **Speech Ideas** — new topics from your amazing life story
+📚 **Pathways** — questions about your Pathways program
+
+*Just tap a quick action above or ask me anything here!*
+
+Since you gave your first Mandarin speech last week, great job getting started! 🎉`;
+  }
+
+  /* ── LANGUAGE ── */
+  function setLang(lang) {
+    localStorage.setItem('tm04_lang', lang);
+    document.body.classList.toggle('lang-zh', lang === 'zh');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  }
+
+  /* ── QUICK ACTIONS ── */
+  const QUICK_PROMPTS = {
+    'table-topic': "Give me a random Table Topics question to practice on. Make it interesting and relevant to everyday life or retirement. Then give me 2-3 quick tips for answering it well.",
+    'topic-ideas': "Suggest 5 speech topic ideas that would work well for me. Draw from my life — my 3 years of travel adventures, learning AI at 70, retirement, faith, family, or Singapore life. For each topic give a one-line speech angle.",
+    'pathways': "Explain the Toastmasters Pathways program in simple terms. What are the main paths? How does it work? Which path would you recommend for someone like me who loves storytelling and wants to improve in English and Mandarin?",
+    'next-speech': "Help me plan my next Toastmasters speech. Ask me a few questions about what topic I'm considering, what project level I'm on, and when the meeting is. Then give me a 5-step prep plan."
+  };
+
+  function quickAction(key) {
+    closeAllPanels();
+    const prompt = QUICK_PROMPTS[key];
+    if (prompt) {
+      addUserMsg(prompt);
+      callAI(prompt);
+    }
+  }
+
+  function toggleRoleMenu() {
+    const row = document.getElementById('role-row');
+    const chip = document.getElementById('role-chip');
+    const isOpen = row.classList.contains('open');
+    closeAllPanels();
+    if (!isOpen) {
+      row.classList.add('open');
+      chip.classList.add('active');
+    }
+  }
+
+  function rolePrep(role) {
+    closeAllPanels();
+    const prompt = `I'm preparing for the **${role}** role at my next Toastmasters meeting. Give me: (1) a brief description of what this role does, (2) 3-4 practical tips to do it well, and (3) any key phrases or scripts I might need.`;
+    addUserMsg(`Help me prepare for the ${role} role.`);
+    callAI(prompt);
+  }
+
+  function toggleEvalPanel() {
+    const panel = document.getElementById('eval-panel');
+    const chip = document.getElementById('eval-chip');
+    const isOpen = panel.classList.contains('open');
+    closeAllPanels();
+    if (!isOpen) {
+      panel.classList.add('open');
+      chip.classList.add('active');
+      document.getElementById('eval-text').focus();
+    }
+  }
+
+  function submitEval() {
+    const text = document.getElementById('eval-text').value.trim();
+    if (!text) { alert('Please paste your speech first.'); return; }
+    closeAllPanels();
+    const prompt = `Please evaluate this Toastmasters speech using the CRC method (Commendation → Recommendation → Commendation). Be specific and encouraging. Here's the speech:\n\n---\n${text}\n---\n\nStructure your feedback as: What worked well → What to improve → Overall encouragement.`;
+    addUserMsg('📋 [Submitted speech for evaluation]');
+    callAI(prompt);
+    document.getElementById('eval-text').value = '';
+  }
+
+  function closeAllPanels() {
+    document.getElementById('role-row').classList.remove('open');
+    document.getElementById('eval-panel').classList.remove('open');
+    document.querySelectorAll('.q-chip').forEach(c => c.classList.remove('active'));
+  }
+
+  /* ── SEND MESSAGE ── */
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function sendMessage() {
+    if (isLoading) return;
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    autoResize(input);
+    updateHint(input);
+    closeAllPanels();
+    addUserMsg(text);
+    callAI(text);
+  }
+
+  /* ── AI CALL ── */
+  async function callAI(userText) {
+    if (isLoading) return;
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+
+    history.push({ role: 'user', content: userText });
+
+    const typingId = appendTyping();
+
+    try {
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 800,
+          system: SYSTEM,
+          messages: history.slice(-20)
+        })
+      });
+
+      const data = await res.json();
+      const reply = (data.content || []).map(b => b.text || '').join('').trim();
+
+      if (!reply) throw new Error(data.error?.message || 'No response from AI');
+
+      removeTyping(typingId);
+      history.push({ role: 'assistant', content: reply });
+      appendAIMsg(reply);
+      saveHistory();
+
+    } catch (err) {
+      removeTyping(typingId);
+      appendAIMsg(`⚠️ *Sorry, something went wrong: ${err.message}. Please try again.*`);
+    } finally {
+      isLoading = false;
+      document.getElementById('send-btn').disabled = false;
+    }
+  }
+
+  /* ── RENDER MESSAGES ── */
+  function appendAIMsg(text) {
+    const wrap = document.getElementById('chat-wrap');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = `
+      <div class="avatar ai">🎤</div>
+      <div class="bubble">${formatMsg(text)}</div>`;
+    wrap.appendChild(div);
+    scrollBottom();
+  }
+
+  function addUserMsg(text) {
+    const wrap = document.getElementById('chat-wrap');
+    const div = document.createElement('div');
+    div.className = 'msg user';
+    div.innerHTML = `
+      <div class="avatar user">👤</div>
+      <div class="bubble">${escapeHtml(text)}</div>`;
+    wrap.appendChild(div);
+    scrollBottom();
+  }
+
+  let typingCounter = 0;
+  function appendTyping() {
+    const id = 'typing-' + (++typingCounter);
+    const wrap = document.getElementById('chat-wrap');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = id;
+    div.innerHTML = `
+      <div class="avatar ai">🎤</div>
+      <div class="bubble">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>`;
+    wrap.appendChild(div);
+    scrollBottom();
+    return id;
+  }
+
+  function removeTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function renderHistory() {
+    const wrap = document.getElementById('chat-wrap');
+    wrap.innerHTML = '';
+    history.forEach(msg => {
+      if (msg.role === 'user') addUserMsg(msg.content);
+      else appendAIMsg(msg.content);
+    });
+  }
+
+  /* ── STORAGE ── */
+  function saveHistory() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-40)));
+    } catch (e) {}
+  }
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) history = JSON.parse(raw);
+    } catch (e) { history = []; }
+  }
+
+  function clearChat() {
+    if (!confirm('Clear all chat history?')) return;
+    history = [];
+    localStorage.removeItem(STORAGE_KEY);
+    document.getElementById('chat-wrap').innerHTML = '';
+    appendAIMsg(getWelcomeMsg());
+  }
+
+  /* ── UTILS ── */
+  function scrollBottom() {
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 60);
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function updateHint(el) {
+    const len = el.value.length;
+    document.getElementById('char-hint').textContent = len > 0 ? len + ' chars' : '';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatMsg(text) {
+    return escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function shareThisPage() {
+    const url = window.location.href;
+    const title = document.title;
+    if (navigator.share) {
+      navigator.share({ title, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        const t = document.getElementById('shareToast');
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 2200);
+      });
+    }
+  }
+</script>
+</body>
+</html>
