@@ -556,6 +556,79 @@
               Collect car first, then set GPS to hotel address.
             </div>
           </div>
+
+          <!-- Route map: Airport → Toyota → Hotel -->
+          <div style="margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+            <div style="padding:8px 12px;background:rgba(255,255,255,0.04);font-size:0.75em;color:#8b949e;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">🗺 Route: Airport → Pick Up Car → Niseko Hotel</div>
+            <div style="position:relative;">
+              <div id="airport-to-hotel-map" style="width:100%;height:260px;"></div>
+              <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+                <button onclick="setA2HType('satellite')" id="a2h-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+                <button onclick="setA2HType('street')" id="a2h-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+                <button onclick="toggleA2HFs()" style="background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:30px;height:30px;font-size:0.95rem;cursor:pointer;">⛶</button>
+              </div>
+              <button id="a2h-close" onclick="toggleA2HFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ Close Map</button>
+            </div>
+            <div style="display:flex;gap:0;border-top:1px solid rgba(255,255,255,0.06);">
+              <div style="flex:1;padding:8px 10px;text-align:center;border-right:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:1.1em;">✈️</div>
+                <div style="font-size:0.7em;color:#ef4444;font-weight:700;margin-top:2px;">CTS Airport</div>
+                <div style="font-size:0.65em;color:#6b7280;">Land 15:30</div>
+              </div>
+              <div style="flex:1;padding:8px 10px;text-align:center;border-right:1px solid rgba(255,255,255,0.06);">
+                <div style="font-size:1.1em;">🚐</div>
+                <div style="font-size:0.7em;color:#f0a500;font-weight:700;margin-top:2px;">Toyota Pick-up</div>
+                <div style="font-size:0.65em;color:#6b7280;">9-min shuttle</div>
+              </div>
+              <div style="flex:1;padding:8px 10px;text-align:center;">
+                <div style="font-size:1.1em;">🏠</div>
+                <div style="font-size:0.7em;color:#10b981;font-weight:700;margin-top:2px;">Niseko Hotel</div>
+                <div style="font-size:0.65em;color:#6b7280;">~2h drive</div>
+              </div>
+            </div>
+          </div>
+          <script>
+          (function(){
+            if(typeof L==='undefined')return;
+            var pts=[[42.7752,141.6922],[42.7693,141.6712],[42.9007,140.7537]];
+            var a2hMap=L.map('airport-to-hotel-map',{zoomControl:true,scrollWheelZoom:false});
+            var a2hTiles={
+              satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
+              street:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
+            };
+            a2hTiles.street.addTo(a2hMap);
+            var a2hCur='street';
+            window.setA2HType=function(type){
+              if(type===a2hCur)return;
+              a2hMap.removeLayer(a2hTiles[a2hCur]);
+              a2hTiles[type].addTo(a2hMap);
+              a2hCur=type;
+              var act='background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;';
+              var inact='background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:4px 10px;font-size:0.68rem;font-weight:700;cursor:pointer;';
+              document.getElementById('a2h-sat').style.cssText=type==='satellite'?act:inact;
+              document.getElementById('a2h-str').style.cssText=type==='street'?act:inact;
+            };
+            function mk(col,label){return L.divIcon({className:'',html:'<div style="background:'+col+';color:#fff;font-weight:800;font-size:11px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">'+label+'</div>',iconSize:[28,28],iconAnchor:[14,14]});}
+            L.marker(pts[0],{icon:mk('#ef4444','✈️')}).addTo(a2hMap)
+              .bindPopup('<strong>① New Chitose Airport (CTS)</strong><br>Land 15:30 · Go to Domestic Arrivals 1F Exit 3<br><span style="color:#8b949e;font-size:0.9em;">Take free Toyota shuttle (~9 min)</span>');
+            L.marker(pts[1],{icon:mk('#f0a500','🚗')}).addTo(a2hMap)
+              .bindPopup('<strong>② Toyota Rent a Car — Chitose</strong><br>Collect car · Open until 22:00<br><span style="color:#8b949e;font-size:0.9em;">Set GPS → Niseko hotel</span>');
+            L.marker(pts[2],{icon:mk('#10b981','🏠')}).addTo(a2hMap)
+              .bindPopup('<strong>③ Niseko Hotel — Kutchan</strong><br>Minami 11 Jo Nishi 1-46-1<br><span style="color:#8b949e;font-size:0.9em;">~2h drive via 道央自動車道 → Route 230</span>');
+            L.polyline(pts,{color:'#f0a500',weight:3,dashArray:'6,8',opacity:0.85}).addTo(a2hMap);
+            a2hMap.fitBounds(L.latLngBounds(pts),{padding:[28,28]});
+            var a2hFs=false;
+            window.toggleA2HFs=function(){
+              var el=document.getElementById('airport-to-hotel-map');
+              var cl=document.getElementById('a2h-close');
+              a2hFs=!a2hFs;
+              el.style.cssText=a2hFs?'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;':'width:100%;height:260px;';
+              cl.style.display=a2hFs?'block':'none';
+              a2hMap.invalidateSize();
+              if(a2hFs)a2hMap.fitBounds(L.latLngBounds(pts),{padding:[40,40]});
+            };
+          })();
+          </script>
         </div>
       </div>
 
