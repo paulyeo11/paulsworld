@@ -1,0 +1,45 @@
+#!/bin/bash
+# Pre-push hook: block any push where an HTML file includes bilingual.js
+# but has zero class="zh" elements (meaning Chinese toggle is broken).
+
+FAILED=0
+
+while IFS= read -r -d '' file; do
+  if grep -q 'bilingual\.js' "$file" && ! grep -q 'class="zh"' "$file"; then
+    echo "❌ BILINGUAL CHECK FAILED: $file"
+    echo "   Has bilingual.js but no Chinese (.zh) text."
+    echo "   Add <span class=\"en\">...</span><span class=\"zh\">...</span> to all visible text."
+    FAILED=1
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACM -z | grep '\.html$')
+
+# Also check unstaged files being pushed (compare with remote)
+while IFS= read -r line; do
+  local_ref=$(echo "$line" | awk '{print $1}')
+  remote_ref=$(echo "$line" | awk '{print $4}')
+  [ "$local_ref" = "(delete)" ] && continue
+
+  range="${remote_ref}..${local_ref}"
+  # If remote ref is all zeros (new branch), check all HTML files changed in this branch
+  if echo "$remote_ref" | grep -q '^0\{40\}$'; then
+    range="HEAD"
+  fi
+
+  while IFS= read -r -d '' file; do
+    [ -f "$file" ] || continue
+    if grep -q 'bilingual\.js' "$file" && ! grep -q 'class="zh"' "$file"; then
+      echo "❌ BILINGUAL CHECK FAILED: $file"
+      echo "   Has bilingual.js but no Chinese (.zh) text."
+      echo "   Add <span class=\"en\">...</span><span class=\"zh\">...</span> to all visible text."
+      FAILED=1
+    fi
+  done < <(git diff --name-only "${range}" -z 2>/dev/null | grep '\.html$' || true)
+done
+
+if [ $FAILED -ne 0 ]; then
+  echo ""
+  echo "Push blocked. Fix the bilingual issue above first."
+  exit 1
+fi
+
+exit 0
