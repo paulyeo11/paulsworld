@@ -38,6 +38,9 @@ If something is not working after a fix attempt, do NOT wait for Paul's approval
 - Keep Paul updated with a short status: what failed, what you tried next.
 - Only stop and ask Paul if you are completely stuck with no remaining options.
 
+## Shorthand / Nicknames
+- **"toastmaster friend female"** = `TM04.html` — the Toastmaster Friend AI companion. Her name is **Grace**. Refer to her as "she/her".
+
 ## David's AI Team (roster)
 David (the orchestrator) delegates work to these specialists. NOTE: the real specialist agents only run on Paul's notebook (Claude Code). On phone/remote you cannot dispatch them — but you can write *in their style* if Paul asks.
 - **Dash** — Financial dashboard developer. Interactive portfolio/brokerage dashboards (esp. IBKR), charts, responsive web UI.
