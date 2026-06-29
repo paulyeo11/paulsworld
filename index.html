@@ -525,6 +525,77 @@
     .projects-card .section-header h2, .projects-card .section-header .chevron { color: #7a5c1e; }
     .projects-card ul li a { color: #7a5c1e; }
     .projects-card ul li a:hover { background: #fdf8e1; }
+
+    /* Daily Encouragement Card */
+    .encourage-wrap {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+    .encourage-card {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      border-radius: 18px;
+      padding: 28px 28px 22px;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(15,52,96,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .encourage-card::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(244,129,63,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .encourage-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(244,129,63,0.2);
+      border: 1px solid rgba(244,129,63,0.4);
+      color: #f4813f;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .encourage-title {
+      font-size: 1.55em;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+    .encourage-lines {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 16px;
+    }
+    .encourage-lines li {
+      font-size: 0.97em;
+      color: rgba(255,255,255,0.88);
+      line-height: 1.7;
+      padding: 2px 0;
+    }
+    .encourage-lines li strong {
+      color: #f4813f;
+    }
+    .encourage-footer {
+      font-size: 0.9em;
+      color: rgba(255,255,255,0.75);
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+    .encourage-footer strong {
+      color: #fff;
+      font-weight: 700;
+    }
   </style>
 <!-- deploy trigger 04Jun2226 -->
 <!-- redeploy 2026-06-20 bilingual -->
@@ -584,6 +655,15 @@
       <li class="loading"><span class="en">Loading rankings...</span><span class="zh">加载排名中...</span></li>
     </ol>
   </section>
+
+  <div class="encourage-wrap">
+    <div class="encourage-card" id="encourageCard">
+      <div class="encourage-label">&#x2728; <span class="en">Today's Encouragement</span><span class="zh">今日鼓励</span></div>
+      <div class="encourage-title" id="encourageTitle"></div>
+      <ul class="encourage-lines" id="encourageLines"></ul>
+      <div class="encourage-footer" id="encourageFooter"></div>
+    </div>
+  </div>
 
   <main>
 
@@ -1178,6 +1258,94 @@
       var zhSpan = document.createElement('span'); zhSpan.className = 'zh'; zhSpan.textContent = zh;
       a.appendChild(enSpan); a.appendChild(zhSpan);
     }
+
+    (function loadEncouragement() {
+      var quotes = [
+        {
+          title:    { en: 'Consistency is key…',   zh: '坚持是关键……' },
+          lines:    [
+            { en: 'When you start <strong>reading books</strong>, be consistent.',  zh: '开始<strong>读书</strong>时，要坚持。' },
+            { en: 'When you start going to <strong>the gym</strong>, be consistent.',zh: '开始<strong>健身</strong>时，要坚持。' },
+            { en: 'When you start building <strong>a skill</strong>, be consistent.',zh: '开始<strong>培养技能</strong>时，要坚持。' },
+            { en: 'When you start chasing <strong>your dream</strong>, be consistent.',zh: '开始<strong>追梦</strong>时，要坚持。' }
+          ],
+          footer:   { en: 'To be <strong>successful</strong>, you simply have to be what most people aren\'t: <strong>CONSISTENT</strong>.', zh: '要想<strong>成功</strong>，你只需做到大多数人做不到的事：<strong>坚持不懈</strong>。' }
+        },
+        {
+          title:    { en: 'Start before you\'re ready.',   zh: '在准备好之前就开始。' },
+          lines:    [
+            { en: 'Don\'t wait for the <strong>perfect moment</strong>.', zh: '不要等待<strong>完美时机</strong>。' },
+            { en: 'Take the <strong>first step</strong> while you\'re still afraid.', zh: '在还害怕的时候，迈出<strong>第一步</strong>。' },
+            { en: 'Growth happens <strong>outside the comfort zone</strong>.', zh: '成长发生在<strong>舒适区之外</strong>。' }
+          ],
+          footer:   { en: 'The secret to getting ahead is <strong>getting started</strong>.', zh: '超越他人的秘诀是<strong>立刻开始</strong>。' }
+        },
+        {
+          title:    { en: 'Small steps every day.',   zh: '每天一小步。' },
+          lines:    [
+            { en: '<strong>1% better</strong> every day = 37x better in a year.', zh: '每天进步<strong>1%</strong> = 一年后提升37倍。' },
+            { en: 'You don\'t rise to your goals — you fall to your <strong>systems</strong>.', zh: '你不会达到目标——你会跌落到你的<strong>系统</strong>水平。' },
+            { en: 'Habits compound like <strong>interest</strong>.', zh: '习惯像<strong>利息</strong>一样复利增长。' }
+          ],
+          footer:   { en: 'What you do <strong>every day</strong> matters more than what you do once in a while.', zh: '你<strong>每天</strong>所做的事，比你偶尔做的事更重要。' }
+        },
+        {
+          title:    { en: 'Your best years are still ahead.',   zh: '你最好的年华还在前方。' },
+          lines:    [
+            { en: 'At <strong>67</strong>, Paul chose adventure over comfort.', zh: '<strong>67岁</strong>，Paul选择了冒险而非安逸。' },
+            { en: 'Visited <strong>38+ countries</strong> and still counting.', zh: '走过<strong>38+个国家</strong>，仍在继续。' },
+            { en: 'Learned <strong>AI</strong> from scratch — and built this website.', zh: '从零开始学习<strong>人工智能</strong>——并建立了这个网站。' }
+          ],
+          footer:   { en: 'It\'s never too late to <strong>start something new</strong>.', zh: '<strong>开始新事物</strong>，永远不嫌晚。' }
+        },
+        {
+          title:    { en: 'Discipline beats motivation.',   zh: '自律胜过动力。' },
+          lines:    [
+            { en: 'Motivation is <strong>temporary</strong>. Discipline is <strong>permanent</strong>.', zh: '动力是<strong>短暂</strong>的，自律是<strong>持久</strong>的。' },
+            { en: 'Show up even when you <strong>don\'t feel like it</strong>.', zh: '即使<strong>不想做</strong>，也要坚持出现。' },
+            { en: 'Champions train when <strong>no one is watching</strong>.', zh: '冠军在<strong>无人注视时</strong>仍在训练。' }
+          ],
+          footer:   { en: 'Do it <strong>anyway</strong> — future you will be grateful.', zh: '<strong>无论如何都去做</strong>——未来的你会感谢现在的自己。' }
+        },
+        {
+          title:    { en: 'Invest in yourself first.',   zh: '先投资自己。' },
+          lines:    [
+            { en: 'Your <strong>mind</strong> is your greatest asset.', zh: '你的<strong>思维</strong>是你最大的资产。' },
+            { en: 'Read <strong>one book</strong> a week — 52 books a year.', zh: '每周读<strong>一本书</strong>——一年读52本。' },
+            { en: 'The <strong>ROI on self-improvement</strong> is infinite.', zh: '<strong>自我提升的回报</strong>是无限的。' }
+          ],
+          footer:   { en: 'Invest in your <strong>skills, health, and mindset</strong> — no one can take those from you.', zh: '投资你的<strong>技能、健康和思维方式</strong>——这些谁都夺不走。' }
+        },
+        {
+          title:    { en: 'Gratitude opens every door.',   zh: '感恩开启每扇门。' },
+          lines:    [
+            { en: 'Count your <strong>blessings</strong>, not your problems.', zh: '数算你的<strong>祝福</strong>，而不是问题。' },
+            { en: 'What you <strong>appreciate</strong> appreciates in value.', zh: '你所<strong>感恩</strong>的，会不断增值。' },
+            { en: 'A thankful heart sees <strong>opportunity everywhere</strong>.', zh: '感恩的心，处处都能看见<strong>机遇</strong>。' }
+          ],
+          footer:   { en: 'Start each day by listing <strong>3 things you\'re grateful for</strong>.', zh: '每天从列出<strong>3件感恩的事</strong>开始。' }
+        }
+      ];
+
+      var now  = new Date();
+      var day  = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+      var q    = quotes[day % quotes.length];
+      var isZh = document.body.classList.contains('lang-zh');
+
+      function renderEncourage() {
+        var z = document.body.classList.contains('lang-zh');
+        document.getElementById('encourageTitle').innerHTML = z ? q.title.zh : q.title.en;
+        var ul = document.getElementById('encourageLines');
+        ul.innerHTML = q.lines.map(function(l){ return '<li>' + (z ? l.zh : l.en) + '</li>'; }).join('');
+        document.getElementById('encourageFooter').innerHTML = z ? q.footer.zh : q.footer.en;
+      }
+
+      renderEncourage();
+
+      document.querySelectorAll('.lang-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { setTimeout(renderEncourage, 0); });
+      });
+    })();
 
     async function init() {
       const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html','S27.html','S28.html','S29.html','S30.html','S31.html','h07.html'];
