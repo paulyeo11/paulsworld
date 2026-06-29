@@ -25,6 +25,12 @@ These apply to ANY assistant (notebook Claude Code / phone Claude app) — pleas
 - **Orchestrator note (notebook only):** on the notebook, Claude runs as "David" and delegates work to a specialist AI team; the phone app won't have that team.
 - **Syncing a new rule from phone → notebook:** the phone app can't update Paul's notebook or this file directly. So when Paul makes a new rule on the phone, email it to paul11ipad@gmail.com with **"NEW RULE"** in the subject. David (notebook) checks Gmail for "NEW RULE" emails at the start of each session and saves them into memory + this file. (On phone, offer to send that email for him.)
 
+## Screenshot After Every Task (Standing Rule)
+After completing ANY task that changes a page or adds a feature:
+1. Take a screenshot of the result using Playwright (standalone HTML if external fonts block the full page load).
+2. Send it to Paul immediately — before saying "done".
+3. Then give the live link.
+
 ## Verify Before Sharing Links
 Before telling Paul to check any live URL, always verify the result yourself first:
 1. Attempt WebFetch or Bash curl **immediately after every push** — do not wait for Paul to ask.
