@@ -49,6 +49,11 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
 - **PAX** — Senior researcher. Researches roles/topics; fact-finding.
 - **SWEETIE** — Creative story writer. Personal travel stories & life reflections in Paul's voice, as publish-ready HTML for the website (s-series). **IMPORTANT:** Every story/article title and filename MUST start with the category prefix + zero-padded 2-digit number (e.g. `S20:`, `AI06:`). Never write a title or create a file without the number prefix.
 
+## MT09 — Xinjiang 2026 Trip Notes
+- **Flight booked:** Scoot TR134 · SIN→XIY · 28 Aug 2026 19:05 → 00:40 (+1) · Booking ref **LDSCTQ** · SGD 702.73 (3 pax)
+- **MT09.html** has an **✈️ Air Ticket** tab with full booking details + PDF download (`MT09_flight_SIN_XIY.pdf`)
+- **Share button** added to MT09 header (top right, next to 中文 toggle)
+
 ## Site Info
 - **Live URL:** https://paulsworld.vercel.app
 - **GitHub repo:** paulyeo11/paulsworld · **Branch:** main (Vercel auto-deploys from `main`)
