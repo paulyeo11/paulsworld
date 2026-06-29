@@ -1,420 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <script src="/ga4.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI202: One Week That Changed Everything</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --ink: #1a1209;
-      --paper: #faf7f2;
-      --gold: #c8922a;
-      --gold-light: #f5c842;
-      --orange: #e05d20;
-      --deep: #2c1a0e;
-      --muted: #7a6a56;
-      --rule: #ddd0bb;
-    }
+<meta charset="UTF-8">
+<script src="/ga4.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI202: From My Website to Notion — How I Built My Second Brain</title>
+<script defer src="/_vercel/insights/script.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf8f3;
+    --blue: #4a6cf7;
+    --accent: #f4813f;
+    --muted: #6b6b6b;
+    --line: #e0ddd5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Source Serif 4', Georgia, serif; font-weight: 300; line-height: 1.8; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  #homeBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: var(--ink); padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+    font-family: Arial, sans-serif;
+  }
+  #homeBar .hb-home { background: var(--accent); color: #fff; text-decoration: none; font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px; }
+  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--paper);
-      color: var(--ink);
-      font-size: 18px;
-      line-height: 1.8;
-    }
+  header { max-width: 760px; margin: 0 auto; padding: 80px 40px 40px; text-align: center; border-bottom: 3px double var(--line); }
+  .category-tag { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); font-weight: 600; margin-bottom: 20px; }
+  h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; margin-bottom: 20px; color: var(--ink); }
+  .subtitle { font-size: 1.15rem; color: var(--muted); font-style: italic; margin-bottom: 30px; }
+  .byline { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; display: inline-block; width: 100%; }
 
-    .home-btn {
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      z-index: 1000;
-      background: var(--gold);
-      color: white;
-      text-decoration: none;
-      font-size: 0.85em;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 20px;
-      box-shadow: 0 3px 12px rgba(200,146,42,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(200,146,42,0.5); }
+  article { max-width: 680px; margin: 0 auto; padding: 50px 40px; }
+  p { font-size: 1.05rem; margin-bottom: 1.6em; color: #2a2a2a; }
+  .lead { font-size: 1.25rem; font-weight: 400; color: var(--ink); line-height: 1.7; margin-bottom: 2em; padding-left: 20px; border-left: 4px solid var(--blue); }
+  h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 40px 0 20px; color: var(--ink); }
+  .divider { text-align: center; margin: 40px 0; color: var(--blue); font-size: 1.2rem; letter-spacing: 0.3em; }
 
-    .hero {
-      background: linear-gradient(160deg, var(--deep) 0%, #3d2410 40%, #5c3418 100%);
-      color: white;
-      padding: 120px 24px 80px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(200,146,42,0.25) 0%, transparent 70%);
-    }
-    .hero-label {
-      display: inline-block;
-      background: rgba(200,146,42,0.25);
-      border: 1px solid rgba(200,146,42,0.5);
-      color: var(--gold-light);
-      font-size: 0.75em;
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      padding: 6px 18px;
-      border-radius: 20px;
-      margin-bottom: 24px;
-    }
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2em, 6vw, 3.8em);
-      font-weight: 900;
-      line-height: 1.15;
-      margin-bottom: 20px;
-    }
-    .hero h1 .accent { color: var(--gold-light); }
-    .hero-sub {
-      font-size: 1.05em;
-      color: rgba(255,255,255,0.75);
-      max-width: 580px;
-      margin: 0 auto 36px;
-      font-weight: 300;
-    }
-    .hero-meta {
-      display: flex;
-      justify-content: center;
-      gap: 28px;
-      flex-wrap: wrap;
-      font-size: 0.85em;
-      color: rgba(255,255,255,0.65);
-    }
-    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+  blockquote { margin: 40px 0; padding: 30px 40px; background: white; border: 1px solid var(--line); border-left: 6px solid var(--blue); position: relative; }
+  blockquote::before { content: '\201C'; font-family: 'Playfair Display', serif; font-size: 5rem; color: var(--blue); opacity: 0.2; position: absolute; top: -10px; left: 15px; line-height: 1; }
+  blockquote p { font-size: 1.2rem; font-style: italic; font-weight: 400; color: var(--ink); margin: 0; }
+  blockquote cite { display: block; margin-top: 12px; font-size: 0.85rem; color: var(--muted); font-style: normal; letter-spacing: 0.05em; }
 
-    /* Hero image banner below hero */
-    .hero-img {
-      width: 100%;
-      max-height: 380px;
-      object-fit: cover;
-      display: block;
-    }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 36px 0; }
+  .compare-box { padding: 24px; border-radius: 12px; border: 2px solid var(--line); }
+  .compare-box.old { border-color: var(--muted); background: #f5f5f0; }
+  .compare-box.new { border-color: var(--accent); background: #fff7f0; }
+  .compare-box h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; margin-bottom: 12px; }
+  .compare-box.old h3 { color: var(--muted); }
+  .compare-box.new h3 { color: #c0622a; }
+  .compare-box ul { padding-left: 18px; font-size: 0.9rem; color: #444; }
+  .compare-box ul li { margin-bottom: 6px; }
 
-    article {
-      max-width: 740px;
-      margin: 0 auto;
-      padding: 60px 24px 20px;
-    }
+  .framework { background: var(--ink); color: white; padding: 32px 36px; margin: 40px 0; border-radius: 16px; }
+  .framework h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); margin-bottom: 20px; text-align: center; }
+  .fw-step { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+  .fw-num { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--blue); color: white; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+  .fw-text strong { display: block; color: white; font-size: 1rem; margin-bottom: 4px; }
+  .fw-text span { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
 
-    .intro-pull {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.45em;
-      font-style: italic;
-      color: var(--gold);
-      line-height: 1.5;
-      border-left: 4px solid var(--gold);
-      padding: 12px 0 12px 28px;
-      margin-bottom: 48px;
-    }
+  .takeaway { background: linear-gradient(135deg, #fff7f0, #ffe8d6); border: 2px solid var(--accent); border-radius: 14px; padding: 28px 32px; margin: 36px 0; text-align: center; }
+  .takeaway h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #c0622a; margin-bottom: 12px; }
+  .takeaway p { font-size: 1rem; color: #3a2a1a; margin: 0; }
 
-    .lesson { margin-bottom: 56px; }
-    .lesson-num {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      background: var(--gold);
-      color: white;
-      font-family: 'Playfair Display', serif;
-      font-size: 1.3em;
-      font-weight: 900;
-      border-radius: 50%;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 14px rgba(200,146,42,0.35);
-    }
-    .lesson h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.55em;
-      font-weight: 700;
-      color: var(--deep);
-      margin-bottom: 16px;
-      line-height: 1.3;
-    }
-    .lesson p { color: #3a3028; margin-bottom: 14px; }
+  .share-bar { max-width: 680px; margin: 40px auto 8px; padding: 0 40px; text-align: center; }
+  .share-label { font-size: 0.82em; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600; }
+  .share-buttons { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .share-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 22px; border-radius: 50px; font-size: 0.92em; font-weight: 700; text-decoration: none; color: white; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 3px 10px rgba(0,0,0,0.15); border: none; cursor: pointer; }
+  .share-btn:hover { transform: translateY(-2px); }
+  .share-btn.whatsapp { background: #25d366; }
+  .share-btn.facebook { background: #1877f2; }
+  .share-btn.copy { background: #6b7280; }
+  .share-btn.copy.copied { background: #10b981; }
 
-    /* Lesson image */
-    .lesson-img {
-      width: 100%;
-      border-radius: 14px;
-      margin: 20px 0 24px;
-      object-fit: cover;
-      max-height: 280px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-      display: block;
-    }
-    .img-caption {
-      text-align: center;
-      font-size: 0.8em;
-      color: var(--muted);
-      margin-top: -16px;
-      margin-bottom: 20px;
-      font-style: italic;
-    }
+  footer { text-align: center; padding: 40px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); }
+  footer a { color: var(--blue); text-decoration: none; }
 
-    .callout {
-      background: linear-gradient(135deg, #fff8eb, #fdf1d6);
-      border-left: 5px solid var(--gold);
-      border-radius: 0 12px 12px 0;
-      padding: 18px 22px;
-      margin: 22px 0;
-      font-weight: 500;
-      color: var(--deep);
-      font-size: 0.95em;
-    }
-    .callout strong { color: var(--orange); }
-
-    .tips { list-style: none; padding: 0; margin: 16px 0; }
-    .tips li {
-      display: flex;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--rule);
-      font-size: 0.95em;
-    }
-    .tips li:last-child { border-bottom: none; }
-    .tips li .tip-icon { font-size: 1.2em; flex-shrink: 0; margin-top: 2px; }
-
-    .rule { border: none; border-top: 2px solid var(--rule); margin: 48px 0; }
-
-    .reflection {
-      background: var(--deep);
-      color: white;
-      border-radius: 20px;
-      padding: 40px 36px;
-      margin: 56px 0 48px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .reflection::before {
-      content: '"';
-      position: absolute;
-      top: -20px;
-      left: 20px;
-      font-family: 'Playfair Display', serif;
-      font-size: 12em;
-      color: rgba(200,146,42,0.12);
-      line-height: 1;
-      pointer-events: none;
-    }
-    .reflection h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.6em;
-      color: var(--gold-light);
-      margin-bottom: 16px;
-    }
-    .reflection p {
-      font-size: 1.05em;
-      color: rgba(255,255,255,0.85);
-      line-height: 1.75;
-      max-width: 520px;
-      margin: 0 auto;
-    }
-
-    .view-counter-wrap {
-      text-align: center;
-      padding: 28px 0 8px;
-      border-top: 2px solid var(--rule);
-      margin-top: 32px;
-      max-width: 740px;
-      margin-left: auto;
-      margin-right: auto;
-      color: var(--muted);
-      font-size: 0.9em;
-    }
-
-    footer {
-      text-align: center;
-      padding: 24px 16px 60px;
-      font-size: 0.82em;
-      color: var(--muted);
-    }
-    footer a { color: var(--gold); text-decoration: none; }
-
-    @media (max-width: 600px) {
-      .hero { padding: 90px 20px 60px; }
-      article { padding: 40px 20px 20px; }
-      .intro-pull { font-size: 1.2em; }
-      .lesson h2 { font-size: 1.3em; }
-      .reflection { padding: 30px 22px; }
-      .lesson-img { max-height: 200px; }
-    }
-  </style>
+  @media (max-width: 600px) {
+    header { padding: 70px 20px 30px; }
+    article { padding: 30px 20px; }
+    .compare { grid-template-columns: 1fr; }
+    .share-bar { padding: 0 20px; }
+  }
+</style>
 <script src="/bilingual.js"></script>
 </head>
 <body>
 
-  <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">Paul's World</span>
+</div>
 
-  <header class="hero">
-    <div class="hero-label"><span class="en">AI JOURNEY · LESSONS LEARNED</span><span class="zh">AI之旅 · 所学所悟</span></div>
-    <h1>AI202: One Week That <span class="accent">Changed Everything</span></h1>
-    <p class="hero-sub"><span class="en">What I learned building my own website with AI — as a 70-year-old retiree with no coding background.</span><span class="zh">作为一位没有编程背景的70岁退休人员，我用AI构建自己网站时学到的东西。</span></p>
-    <div class="hero-meta">
-      <span>✍️ Paul Yeo</span>
-      <span>📅 May 2026</span>
-      <span>⏱ 5 min read</span>
-    </div>
-  </header>
+<header>
+  <div class="category-tag">AI Journey · Article 14</div>
+  <h1>From My Website to Notion — How I Built My Second Brain</h1>
+  <p class="subtitle"><span class="en">Why a retired 70-year-old switched from publishing to capturing — and became more productive than ever</span><span class="zh">一位70岁退休老人为何从"发布"转向"捕捉"——并因此比以往更高效</span></p>
+  <div class="byline">By Paul Yeo &nbsp;·&nbsp; June 2026 &nbsp;·&nbsp; AI Journey Series</div>
+</header>
 
-  <!-- Hero banner image -->
-  <img class="hero-img"
-    src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&q=80"
-    alt="Laptop open on a desk with a coffee cup — ready to learn">
+<article>
 
-  <article>
+  <p class="lead">I asked my AI assistant one simple question: "How do I create a second brain?" What happened next changed how I think, learn, and capture ideas — forever.</p>
 
-    <p class="intro-pull">"I spent one week building a website with AI. I expected to learn a little technology. What I discovered was a whole new way of thinking."</p>
+  <p>For years, my website — <a href="https://paulsworld.vercel.app" style="color:var(--blue)">paulsworld.vercel.app</a> — was my creative outlet. I wrote travel stories, published AI reflections, and shared my life adventures there. It worked well for <em>publishing</em>. But it was never built for <em>capturing</em>.</p>
 
-    <!-- LESSON 1 -->
-    <div class="lesson">
-      <div class="lesson-num">1</div>
-      <h2><span class="en">I Now Know How to Use AI Better</span><span class="zh">我现在更懂得如何使用AI</span></h2>
-      <img class="lesson-img"
-        src="https://images.unsplash.com/photo-1655720408733-2b8e8e9b0d04?w=900&q=80"
-        alt="Person typing a prompt into an AI chat interface">
-      <p class="img-caption">The secret: give AI more context, get far better results.</p>
-      <p>Before this week, I used AI like a search engine — type a question, read an answer, move on. Now I understand that AI is a <em>collaborator</em>. The more context and detail you give it, the better the result.</p>
-      <p>I learned to give AI the raw link to my code. Once I did that, it could read the actual file, understand exactly what was wrong, and fix it. That was a turning point.</p>
-      <div class="callout">
-        <strong>Key insight:</strong> AI is not a vending machine. It is a thinking partner. The quality of your output depends on the quality of your input.
-      </div>
-    </div>
+  <p>Every time I had a new idea, I had to open a code editor, write HTML, push to GitHub, and wait for Vercel to deploy. By the time the page was live, half the energy behind the original thought had evaporated. My website was a showcase, not a thinking tool.</p>
 
-    <hr class="rule">
+  <div class="divider">· · ·</div>
 
-    <!-- LESSON 2 -->
-    <div class="lesson">
-      <div class="lesson-num">2</div>
-      <h2><span class="en">AI Can Troubleshoot Like a Real Engineer</span><span class="zh">AI能像真正的工程师一样排查问题</span></h2>
-      <img class="lesson-img"
-        src="https://images.unsplash.com/photo-1580894742597-87bc8789db3d?w=900&q=80"
-        alt="Code on a screen being debugged">
-      <p class="img-caption">AI reads your actual code — it is not guessing.</p>
-      <p>My view counter stopped working. I had no idea why. I tried refreshing, guessing, worrying. Then I gave Claude the raw link to my page and asked it to look.</p>
-      <p>Within seconds it identified the exact line causing the problem, explained why it failed, and gave me the corrected code. What might have taken me days to figure out was solved in minutes.</p>
-      <div class="callout">
-        <strong>The lesson:</strong> Once you provide the raw link, AI can SEE the code. It is not guessing — it is reading. This changes everything about how you ask for help.
-      </div>
-    </div>
+  <h2><span class="en">The Question That Changed Everything</span><span class="zh">改变一切的问题</span></h2>
 
-    <hr class="rule">
+  <p>One afternoon I asked David (my AI assistant) a simple question: <em>"How do I create my second brain?"</em></p>
 
-    <!-- LESSON 3 -->
-    <div class="lesson">
-      <div class="lesson-num">3</div>
-      <h2><span class="en">GitHub & Vercel — Simpler Than I Thought</span><span class="zh">GitHub与Vercel——比我想象的简单</span></h2>
-      <img class="lesson-img"
-        src="https://images.unsplash.com/photo-1618401479427-c8ef9465fbe1?w=900&q=80"
-        alt="GitHub interface on a laptop screen">
-      <p class="img-caption">GitHub is just a filing cabinet in the cloud. Vercel turns it into a live website.</p>
-      <p>I expected these tools to be for programmers only. I was wrong. GitHub is simply a place to store your files online. Vercel is simply a way to publish those files as a live website. That is the whole thing.</p>
-      <ul class="tips">
-        <li><span class="tip-icon">📁</span>GitHub stores my HTML files — it is my filing cabinet in the cloud.</li>
-        <li><span class="tip-icon">🚀</span>Vercel publishes the files — every time I update GitHub, the live site updates automatically.</li>
-        <li><span class="tip-icon">🔗</span>The raw link from GitHub is what I give to AI — so it can read my actual code.</li>
+  <p>He explained the concept — a personal digital system to capture everything you learn, think, and want to remember. Not just a place to publish finished work, but a place where raw ideas can land, grow, and connect. He suggested Notion.</p>
+
+  <p>I had never used Notion before. Twenty minutes later, I had my first five pages: INBOX, PROJECTS, AREAS, RESOURCES, ARCHIVE. David walked me through every step on my phone.</p>
+
+  <blockquote>
+    <p>A second brain is not a library for finished work. It is a garden where half-formed thoughts can grow.</p>
+    <cite>— What I learned that afternoon</cite>
+  </blockquote>
+
+  <div class="divider">· · ·</div>
+
+  <h2><span class="en">Website vs. Notion — An Honest Comparison</span><span class="zh">网站vs.Notion——诚实的比较</span></h2>
+
+  <p>I have used both now. Here is the honest truth:</p>
+
+  <div class="compare">
+    <div class="compare-box old">
+      <h3>🌐 My Website (Before)</h3>
+      <ul>
+        <li>Great for finished, polished articles</li>
+        <li>Requires HTML editing + GitHub push</li>
+        <li>Not suitable for quick ideas</li>
+        <li>No structure for private notes</li>
+        <li>High friction — slows down capture</li>
+        <li>Public only — no private space</li>
       </ul>
     </div>
-
-    <hr class="rule">
-
-    <!-- LESSON 4 -->
-    <div class="lesson">
-      <div class="lesson-num">4</div>
-      <h2><span class="en">My iPhone Is All I Need for Maintenance</span><span class="zh">维护网站，一部iPhone就够了</span></h2>
-      <img class="lesson-img"
-        src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=900&q=80"
-        alt="Hand holding an iPhone — mobile website management">
-      <p class="img-caption">Small updates, anywhere, anytime — just a phone is enough.</p>
-      <p>This surprised me the most. I do not need to sit at a desktop computer to manage my website. With my iPhone, I can open GitHub, edit a file, save it — and the website updates live.</p>
-      <p>For small updates — fixing a typo, adding a new article link, changing a date — my phone is completely sufficient. Technology has become truly mobile.</p>
-      <div class="callout">
-        <strong>Practical tip:</strong> Use the GitHub mobile app. It lets you edit files directly on your phone. Commit the change and Vercel redeploys within seconds.
-      </div>
-    </div>
-
-    <hr class="rule">
-
-    <!-- LESSON 5 -->
-    <div class="lesson">
-      <div class="lesson-num">5</div>
-      <h2>AI Is Just Like a Human — Give It Context</h2>
-      <img class="lesson-img"
-        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&q=80"
-        alt="Two people looking at a screen together — collaboration and context">
-      <p class="img-caption">Show AI the actual file — like showing a knowledgeable friend.</p>
-      <p>When I told a human friend "my counter is broken," they could not help because they could not see the code. AI works the same way. If I say "something is wrong," AI can only guess.</p>
-      <p>But once I provide the raw link — the actual file — AI can see everything. It is exactly like showing the file to a knowledgeable friend and saying "look at this."</p>
-      <ul class="tips">
-        <li><span class="tip-icon">❌</span>Vague: "My page doesn't work, can you fix it?"</li>
-        <li><span class="tip-icon">✅</span>Specific: "Here is the raw link: [link]. The view counter shows 0 instead of the real count."</li>
+    <div class="compare-box new">
+      <h3>🧠 Notion (Now)</h3>
+      <ul>
+        <li>Capture ideas in seconds from phone</li>
+        <li>Tap, type, done — zero friction</li>
+        <li>Organized: Finance, Health, Projects…</li>
+        <li>Private and secure</li>
+        <li>AI can write directly into it for me</li>
+        <li>Syncs across phone and laptop</li>
       </ul>
     </div>
-
-    <hr class="rule">
-
-    <!-- LESSON 6 -->
-    <div class="lesson">
-      <div class="lesson-num">6</div>
-      <h2>Write Your Preferences — Save Hours Every Time</h2>
-      <img class="lesson-img"
-        src="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=900&q=80"
-        alt="Notebook with written notes and a pen — writing down preferences">
-      <p class="img-caption">Write it once in your preferences — AI remembers it forever.</p>
-      <p>Every time I started a new conversation with AI, I had to re-explain everything: my website URL, my rules, my preferences. It was exhausting and repetitive.</p>
-      <p>Then I discovered the User Preferences setting. Now everything I want AI to always remember — my live site URL, my rules about view counters, image handling — is written there once and applies automatically to every conversation.</p>
-      <div class="callout">
-        <strong>The result:</strong> Every new article I ask Claude to build already includes the Home button, view counter, and correct image paths — automatically, without me repeating myself.
-      </div>
-    </div>
-
-    <!-- REFLECTION -->
-    <div class="reflection">
-      <h3>One Week. Six Lessons. Zero Regrets.</h3>
-      <p>At 70, I built a live website with multiple articles, a view counter, and a popular stories ranking — all from my phone and laptop, with no prior coding knowledge. If I can do it, you can too.</p>
-    </div>
-
-  </article>
-
-
-  <!-- NEXT ARTICLE -->
-  <div style="text-align:center;margin:40px 16px 16px;">
-    <a href="AI204.html" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1a1a2e,#0f2060);color:white;text-decoration:none;font-family:'Source Serif 4',serif;font-size:1em;font-weight:600;padding:18px 32px;border-radius:14px;box-shadow:0 6px 24px rgba(74,108,247,0.3);">
-      <span style="font-size:1.3em">🔧</span>
-      <span>
-        <span style="display:block;font-size:0.72em;color:#a5b4fc;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;">Next Article</span>
-        AI5: How Claude Manages My Website →
-      </span>
-    </a>
   </div>
 
-  <div class="view-counter-wrap">
-    👁 Article Views: <span id="vc-count">...</span>
+  <p>The website is still where I publish. But Notion is where I <em>think</em>. They serve completely different purposes — and I needed both all along.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2><span class="en">What I Store in My Second Brain</span><span class="zh">我在第二大脑中存储什么</span></h2>
+
+  <p>In just a few days of using Notion, here is what I have already captured:</p>
+
+  <div class="framework">
+    <h3>My Second Brain Structure</h3>
+    <div class="fw-step">
+      <div class="fw-num">📥</div>
+      <div class="fw-text"><strong>INBOX</strong><span>Quick capture — anything I want to remember goes here first, sorted later</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">🚀</div>
+      <div class="fw-text"><strong>PROJECTS</strong><span>Active goals with deadlines — my Toastmasters speech, Xinjiang trip planning</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">🌿</div>
+      <div class="fw-text"><strong>AREAS</strong><span>Ongoing life areas — Finance (Tiger, IBKR), Health (doctors, medications), Faith</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">📚</div>
+      <div class="fw-text"><strong>RESOURCES</strong><span>What I am learning — AI tools, Claude automation notes, books, articles</span></div>
+    </div>
+    <div class="fw-step">
+      <div class="fw-num">🗄️</div>
+      <div class="fw-text"><strong>ARCHIVE</strong><span>Completed work I want to keep but do not need to act on</span></div>
+    </div>
   </div>
+
+  <p>Within AREAS → Finance, I moved my passwords from a plain text file into a secure Notion page. Within PROJECTS, I saved the full draft of my upcoming Toastmasters speech — complete with a body-part memory guide so I never forget my lines. David wrote all of it directly into Notion through the API. I did not copy and paste a single word.</p>
+
+  <div class="divider">· · ·</div>
+
+  <h2><span class="en">The Biggest Shift: From Publishing to Capturing</span><span class="zh">最大的转变：从发布到捕捉</span></h2>
+
+  <p>My website required me to have a <em>finished thought</em> before I could write anything. Notion accepts <em>unfinished thoughts</em>. That is the real difference.</p>
+
+  <p>Before Notion, ideas that were not ready to publish simply disappeared. I would think of something interesting, have no easy place to put it, and forget it within an hour. Now I tap open Notion on my phone, type three lines, and close it. The idea is safe. I can come back to it later — or ask David to develop it into a full article for the website.</p>
+
+  <p>The two tools now work as a pipeline: <strong>Notion captures → David develops → Website publishes.</strong></p>
+
+  <div class="takeaway">
+    <h3>My Key Insight</h3>
+    <p>A website is a stage. A second brain is a backstage. You need both — but most people only build the stage and wonder why their best ideas never make it there.</p>
+  </div>
+
+  <h2>What I Would Tell Anyone Starting Out</h2>
+
+  <p>You do not need to be technical. You do not need to understand databases or APIs. You just need to start with five pages — INBOX, PROJECTS, AREAS, RESOURCES, ARCHIVE — and begin putting things there.</p>
+
+  <p>The magic does not come from the tool. It comes from the habit of <em>capturing</em>. Once ideas have a home, your mind relaxes. You stop trying to hold everything in your head. You start thinking more clearly.</p>
+
+  <p>I am 70 years old. I set this up on my phone in one afternoon. If I can do it, anyone can.</p>
+
+</article>
+
+<div class="share-bar">
+  <div class="share-label">Share this article</div>
+  <div class="share-buttons">
+    <a class="share-btn whatsapp" href="https://wa.me/?text=From%20My%20Website%20to%20Notion%20%E2%80%94%20How%20I%20Built%20My%20Second%20Brain%20https%3A%2F%2Fpaulsworld.vercel.app%2FAI202.html" target="_blank">💬 WhatsApp</a>
+    <a class="share-btn facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fpaulsworld.vercel.app%2FAI202.html" target="_blank">👍 Facebook</a>
+    <button class="share-btn copy" onclick="navigator.clipboard.writeText(window.location.href);this.textContent='✅ Copied!';this.classList.add('copied')">🔗 Copy Link</button>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:40px">
   <script src="/view-counter.js"></script>
+</div>
 
-  <footer>
-    <p>© 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a> &nbsp;|&nbsp; Built with AI 🚀</p>
-  </footer>
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Part of the AI Journey series — a retired adventurer learning AI at 70.
+</footer>
 
 </body>
 </html>

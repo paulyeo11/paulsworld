@@ -1,507 +1,455 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <script src="/ga4.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI203: How I Used AI to Build My Options Trading Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>AI203: How I Built a Business Dashboard Using Claude AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --ink: #1a1209;
-      --paper: #faf7f2;
-      --gold: #c8922a;
-      --gold-light: #f5c842;
-      --orange: #e05d20;
-      --deep: #2c1a0e;
-      --muted: #7a6a56;
-      --rule: #ddd0bb;
-      --green: #166534;
-      --green-light: #dcfce7;
-      --blue: #1e40af;
-      --blue-light: #dbeafe;
+      --cream: #faf8f3;
+      --ink: #1a1a1a;
+      --mid: #555;
+      --accent: #2d48b5;
+      --rule: #d8d0c4;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+```
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.8;
+}
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--paper);
-      color: var(--ink);
-      font-size: 18px;
-      line-height: 1.8;
-    }
+/* ── HOME NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: rgba(15,15,15,0.90);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f4813f;
+  color: #fff;
+  text-decoration: none;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 20px;
+}
+nav span {
+  color: rgba(255,255,255,0.5);
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+}
 
-    .home-btn {
-      position: fixed;
-      top: 16px; left: 16px; z-index: 1000;
-      background: var(--gold); color: white;
-      text-decoration: none; font-size: 0.85em; font-weight: 600;
-      padding: 8px 16px; border-radius: 20px;
-      box-shadow: 0 3px 12px rgba(200,146,42,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(200,146,42,0.5); }
+/* ── HERO ── */
+.hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  color: white;
+  padding: 100px 24px 60px;
+  text-align: center;
+}
+.hero-kicker {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #a0b4ff;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hero-sub {
+  font-style: italic;
+  font-size: 17px;
+  color: rgba(255,255,255,0.6);
+  max-width: 500px;
+  margin: 0 auto 30px;
+}
+.hero-meta {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.1em;
+}
 
-    /* HERO */
-    .hero {
-      background: linear-gradient(135deg, #0a0e1a 0%, #111827 60%, #1a1f2e 100%);
-      color: white;
-      padding: 100px 24px 60px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%);
-    }
-    .hero-tag {
-      display: inline-block;
-      background: rgba(99,102,241,0.2);
-      border: 1px solid rgba(99,102,241,0.4);
-      color: #818cf8;
-      font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.15em; text-transform: uppercase;
-      padding: 6px 16px; border-radius: 20px;
-      margin-bottom: 20px;
-    }
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 900; line-height: 1.2;
-      margin-bottom: 20px; position: relative;
-    }
-    .hero h1 .accent { color: var(--gold-light); }
-    .hero-sub {
-      font-size: 1.1rem; color: rgba(255,255,255,0.6);
-      max-width: 560px; margin: 0 auto 28px;
-    }
-    .hero-meta {
-      display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
-      font-size: 0.82rem; color: rgba(255,255,255,0.4);
-    }
-    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+/* ── ARTICLE ── */
+.article {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 52px 24px 100px;
+}
 
-    /* ARTICLE */
-    article {
-      max-width: 740px; margin: 0 auto;
-      padding: 60px 24px 40px;
-    }
+.article p { margin-bottom: 24px; color: var(--mid); }
+.article p:first-of-type { font-size: 19px; color: var(--ink); font-weight: 600; }
 
-    h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.6rem; font-weight: 700;
-      color: var(--deep); margin: 48px 0 16px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--rule);
-    }
-    h3 {
-      font-size: 1.15rem; font-weight: 600;
-      color: var(--orange); margin: 28px 0 10px;
-    }
-    p { margin-bottom: 20px; color: #2d2416; }
+.article h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 40px 0 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
 
-    /* PULL QUOTE */
-    .pullquote {
-      border-left: 4px solid var(--gold);
-      background: linear-gradient(135deg, #fffbf0, #fef9ec);
-      padding: 20px 28px; margin: 32px 0;
-      border-radius: 0 12px 12px 0;
-      font-family: 'Playfair Display', serif;
-      font-size: 1.15rem; font-style: italic;
-      color: var(--deep); line-height: 1.6;
-    }
+.article h3 {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 28px 0 10px;
+}
 
-    /* INFO BOX */
-    .infobox {
-      border-radius: 12px; padding: 20px 24px;
-      margin: 28px 0; font-size: 0.92rem;
-    }
-    .infobox.green { background: var(--green-light); border: 1px solid #86efac; color: var(--green); }
-    .infobox.blue  { background: var(--blue-light);  border: 1px solid #93c5fd; color: var(--blue); }
-    .infobox.dark  { background: #0f172a; border: 1px solid #1f2937; color: #e2e8f0; }
-    .infobox h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+/* ── HIGHLIGHT BOX ── */
+.highlight {
+  background: #eef1ff;
+  border-left: 4px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 20px 24px;
+  margin: 32px 0;
+  font-style: italic;
+  color: #2d48b5;
+  font-size: 17px;
+  line-height: 1.7;
+}
 
-    /* STEP BOX */
-    .steps { margin: 28px 0; }
-    .step {
-      display: flex; gap: 16px; align-items: flex-start;
-      margin-bottom: 20px; padding: 18px 20px;
-      background: white; border: 1px solid var(--rule);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    .step-num {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--gold); color: white;
-      font-weight: 800; font-size: 0.9rem;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; margin-top: 2px;
-    }
-    .step-body { flex: 1; }
-    .step-body strong { display: block; margin-bottom: 4px; color: var(--deep); font-size: 1rem; }
-    .step-body span { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+/* ── STAT BOXES ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 32px 0;
+}
+.stat {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
 
-    /* COMPARISON TABLE */
-    .otm-table {
-      width: 100%; border-collapse: collapse;
-      margin: 24px 0; font-size: 0.88rem;
-      border-radius: 12px; overflow: hidden;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    }
-    .otm-table th {
-      background: #1a1a2e; color: #818cf8;
-      padding: 12px 16px; text-align: left;
-      font-size: 0.72rem; text-transform: uppercase;
-      letter-spacing: 0.1em; font-weight: 700;
-    }
-    .otm-table td { padding: 12px 16px; border-top: 1px solid #f0e8dc; }
-    .otm-table tr:nth-child(even) td { background: #fdf8f0; }
-    .otm-table .good { color: #166534; font-weight: 700; }
-    .otm-table .warn { color: #92400e; font-weight: 700; }
-    .otm-table .bad  { color: #991b1b; }
+/* ── STEPS ── */
+.steps { margin: 24px 0; }
+.step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+.step-num {
+  background: var(--accent);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.step-text { font-size: 16px; color: var(--mid); line-height: 1.6; }
+.step-text strong { color: var(--ink); }
 
-    /* CHAT BUBBLE */
-    .chat-wrap { margin: 32px 0; }
-    .chat-bubble {
-      padding: 14px 20px; border-radius: 16px;
-      max-width: 90%; margin-bottom: 10px;
-      font-size: 0.92rem; line-height: 1.6;
-    }
-    .chat-bubble.user {
-      background: #1d4ed8; color: white;
-      border-radius: 16px 16px 4px 16px;
-      margin-left: auto; text-align: right;
-    }
-    .chat-bubble.ai {
-      background: #1f2937; color: #e2e8f0;
-      border-radius: 16px 16px 16px 4px;
-    }
-    .chat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; color: var(--muted); }
-    .chat-label.right { text-align: right; }
+/* ── CHARTS LIST ── */
+.charts {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.chart-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 15px;
+  color: var(--mid);
+}
+.chart-item:last-child { border-bottom: none; }
+.chart-icon { font-size: 22px; }
 
-    /* STOCK CARDS */
-    .stock-row {
-      display: grid; grid-template-columns: repeat(3,1fr);
-      gap: 14px; margin: 24px 0;
-    }
-    .stock-card {
-      background: #0f172a; border-radius: 12px;
-      padding: 16px; text-align: center;
-      border-top: 3px solid;
-    }
-    .stock-card .sym { font-weight: 800; font-size: 1.3rem; margin-bottom: 4px; }
-    .stock-card .co  { font-size: 0.7rem; color: #64748b; margin-bottom: 8px; }
-    .stock-card .pr  { font-size: 1rem; font-weight: 700; color: #f1f5f9; }
+/* ── CTA ── */
+.cta {
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  color: white;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  margin: 40px 0;
+}
+.cta h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  margin-bottom: 12px;
+  color: white;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.cta p { color: rgba(255,255,255,0.7); font-size: 15px; margin-bottom: 20px; }
+.cta a {
+  display: inline-block;
+  background: #f4813f;
+  color: white;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 28px;
+  border-radius: 25px;
+}
 
-    /* TIME SAVED */
-    .time-box {
-      background: linear-gradient(135deg, #0a0e1a, #111827);
-      border: 1px solid #1f2937; border-radius: 16px;
-      padding: 28px; margin: 32px 0;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
-      gap: 20px; text-align: center;
-    }
-    .time-item .num { font-size: 2rem; font-weight: 800; color: #4ade80; }
-    .time-item .lbl { font-size: 0.75rem; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  color: #aaa;
+  text-align: center;
+  padding: 30px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+}
 
-    /* DIVIDER */
-    .divider {
-      text-align: center; margin: 40px 0;
-      color: var(--rule); font-size: 1.5rem;
-      letter-spacing: 12px;
-    }
+@media (max-width: 600px) {
+  .stats { grid-template-columns: repeat(3, 1fr); }
+  .stat-num { font-size: 24px; }
+}
+```
 
-    /* TAGS */
-    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
-    .tag { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; background: #f0e8dc; color: var(--gold); border: 1px solid var(--rule); }
-
-    /* VIEW COUNTER */
-    .view-counter-wrap {
-      text-align: center; padding: 32px 24px;
-      border-top: 1px solid var(--rule); margin-top: 48px;
-    }
-
-    footer {
-      background: var(--deep); color: rgba(255,255,255,0.4);
-      text-align: center; padding: 24px 16px;
-      font-size: 0.82rem; margin-top: 0;
-    }
-    footer a { color: rgba(255,255,255,0.6); text-decoration: none; }
-
-    @media(max-width:600px){
-      .stock-row { grid-template-columns: 1fr; }
-      .time-box  { grid-template-columns: repeat(2,1fr); }
-      article { padding: 40px 18px 30px; }
-    }
-  </style>
+  
+  /* ── HOME NAV BAR ── */
+  #homeBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: #1a1a2e; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+    font-family: Arial, sans-serif;
+  }
+  #homeBar .hb-home {
+    background: #f4813f; color: #fff; text-decoration: none;
+    font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px;
+    box-shadow: 0 2px 8px rgba(244,129,63,0.5);
+  }
+  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
+  body { padding-top: 52px; }
+</style>
 <script src="/bilingual.js"></script>
 </head>
 <body>
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">✈️ Paul's World</span>
+</div>
 
-<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 HOME</a>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-tag"><span class="en">🤖 AI Journey · Article 5</span><span class="zh">🤖 AI之旅 · 第5篇</span></div>
-  <h1>How I Used AI to Build My<br><span class="accent">Options Trading Dashboard</span></h1>
-  <p class="hero-sub"><span class="en">From a simple question to a live Black-Scholes calculator — built entirely through conversation, no coding needed</span><span class="zh">从一个简单的问题，到一个实时Black-Scholes计算器——完全通过对话构建，无需编程</span></p>
-  <div class="hero-meta">
-    <span>✍️ Paul Yeo</span>
-    <span>📅 May 2026</span>
-    <span>⏱ 6 min read</span>
-    <span>📊 Options · AI · Finance</span>
+  <!-- HOME NAV -->
+
+  <nav>
+    <a href="index.html">🏠 Home</a>
+    <span>🤖 My AI Journey</span>
+  </nav>
+
+  <!-- HERO -->
+
+  <div class="hero">
+    <div class="hero-kicker">🤖 <span class="en">AI Journey · Power BI · Data Analytics</span><span class="zh">我的AI之旅 · Power BI · 数据分析</span></div>
+    <h1>AI2: How I Built a Business Dashboard Using Claude AI — No Coding Experience Needed</h1>
+    <p class="hero-sub"><span class="en">A 70-year-old retiree's story of building a professional data dashboard in just one hour using AI.</span><span class="zh">一位70岁退休老人，如何用AI在一小时内搭建出专业数据仪表板。</span></p>
+    <p class="hero-meta"><span class="en">By Paul Yeo &nbsp;·&nbsp; Singapore 🇸🇬 &nbsp;·&nbsp; 2025</span><span class="zh">作者：杨汉忠 &nbsp;·&nbsp; 新加坡 🇸🇬 &nbsp;·&nbsp; 2025</span></p>
+  </div>
+
+  <!-- ARTICLE -->
+
+  <div class="article">
+
+```
+<p>I am 70 years old, retired, and I had never written a single line of code in my life. Yet in just one hour, I built a fully interactive business intelligence dashboard with charts, filters, and real data insights — all using Claude AI.</p>
+
+<p>This is the story of how I did it, and why I believe anyone can do the same.</p>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">1h</div>
+    <div class="stat-label">Time Taken</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">0</div>
+    <div class="stat-label">Lines of Code Written</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">70</div>
+    <div class="stat-label">My Age</div>
   </div>
 </div>
 
-<article>
+<h2>The YouTube Video That Started It All</h2>
+<p>Everything started when I watched a YouTube tutorial on data dashboards. That video inspired me to try building one myself — but using AI instead of traditional tools.</p>
 
-  <p>I am 70 years old, retired since 67, and I own stocks. Not many — just three. But I have been selling covered call options on them to generate extra income every month. The problem? Every time I wanted to figure out the right strike price to sell, I had to manually calculate numbers, look up option chains, and guess whether the premium was worth it.</p>
+<div style="margin: 24px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+  <iframe width="100%" height="315" src="https://www.youtube.com/embed/Rlkkl2wc4pQ" title="Dashboard Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
+</div>
 
-  <p>That all changed when I started using AI — specifically Claude — to build a live dashboard that does all the maths for me. Let me walk you through exactly what I did, and what I learned.</p>
+<p>After watching this video, I thought — <em>"Can I build something like this using Claude AI, without any coding knowledge?"</em> The answer turned out to be yes!</p>
 
-  <div class="divider">· · ·</div>
+<h2>Why I Wanted to Build a Dashboard</h2>
+<p>I had always been curious about data analysis. In my working days, I relied on others to produce reports and charts. After retirement, I decided to learn how to do it myself — but traditional tools like Power BI felt overwhelming for a beginner.</p>
 
-  <h2><span class="en">My 3 Stocks</span><span class="zh">我的3只股票</span></h2>
+<p>Then I discovered Claude AI. I decided to try an experiment — could I describe what I wanted in plain English and have AI build it for me?</p>
 
-  <p>I hold 100 shares each of these three companies, all purchased through Interactive Brokers:</p>
+<div class="highlight">
+  "I told Claude exactly what I wanted — in plain English — and it wrote all the code. No programming knowledge required."
+</div>
 
-  <div class="stock-row">
-    <div class="stock-card" style="border-color:#f59e0b;">
-      <div class="sym" style="color:#f59e0b;">FDS</div>
-      <div class="co">FactSet Research Systems</div>
-      <div class="pr">~$237</div>
-    </div>
-    <div class="stock-card" style="border-color:#06b6d4;">
-      <div class="sym" style="color:#06b6d4;">POOL</div>
-      <div class="co">Pool Corporation</div>
-      <div class="pr">~$178</div>
-    </div>
-    <div class="stock-card" style="border-color:#10b981;">
-      <div class="sym" style="color:#10b981;">ZTS</div>
-      <div class="co">Zoetis Inc</div>
-      <div class="pr">~$79</div>
-    </div>
+<h2>The Data I Used</h2>
+<p>I used the classic SuperStore sample dataset — a fictional retail company's sales data covering years 2018 to 2021 across the United States. It contains nearly 10,000 sales records across categories like Technology, Furniture, and Office Supplies.</p>
+
+<p>This is a well-known dataset used by data professionals to practice analytics. Perfect for a beginner like me to learn with.</p>
+
+<h2>How I Did It — Step by Step</h2>
+<p>The hardest part was not the technology — it was learning how to write good prompts. Here is exactly how I approached it:</p>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-text"><strong>Describe what I wanted.</strong> I told Claude: "Build me a business dashboard for retail sales data. I want to see total revenue, profit, monthly trends, and regional performance."</div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-text"><strong>Review the output.</strong> Claude produced a complete HTML file with all the charts and data embedded. I opened it in my browser and checked if it looked right.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-text"><strong>Refine with more prompts.</strong> If something was not right, I described the problem to Claude and asked it to fix it. No technical knowledge needed — just clear descriptions.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-text"><strong>Add filters and interactivity.</strong> I asked Claude to add dropdown filters for Year, Region, Segment, and Category so users could explore the data themselves.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-text"><strong>Publish online.</strong> I uploaded the final file to GitHub and deployed it on Vercel — both free — and shared the link with friends.</div>
+  </div>
+</div>
+
+<h2>What the Dashboard Contains</h2>
+<p>After one hour of working with Claude, here is what I ended up with:</p>
+
+<div class="charts">
+  <div class="chart-item"><span class="chart-icon">💰</span> Total Revenue — $2.84M across 9,994 line items</div>
+  <div class="chart-item"><span class="chart-icon">📈</span> Monthly Sales & Profit Trend — dual-axis line chart</div>
+  <div class="chart-item"><span class="chart-icon">🗺️</span> Regional Sales Performance — horizontal bar chart</div>
+  <div class="chart-item"><span class="chart-icon">📊</span> Profit Margin by Sub-Category — colour-coded bars</div>
+  <div class="chart-item"><span class="chart-icon">🔥</span> Monthly Orders Heatmap — colour intensity by volume</div>
+  <div class="chart-item"><span class="chart-icon">🧠</span> Automated AI Insights — category leaders and alerts</div>
+  <div class="chart-item"><span class="chart-icon">🎛️</span> Interactive Filters — Year, Region, Segment, Category</div>
+</div>
+
+<h2>The Biggest Challenge — Writing Good Prompts</h2>
+<p>The hardest part of this project was not technical at all. It was learning how to communicate clearly with Claude. I learned that the more specific and detailed my instructions were, the better the results.</p>
+
+<p>For example, instead of saying "make a chart", I learned to say "create a dual-axis line chart showing monthly sales on the left axis and monthly profit on the right axis, with sales as a solid blue line and profit as a dashed green line."</p>
+
+<div class="highlight">
+  "The skill is not coding. The skill is communication. If you can describe what you want clearly, AI can build it for you."
+</div>
+
+<h2>What I Learned From This Experience</h2>
+<p>This project completely changed how I think about technology. At 70 years old, I proved to myself — and hopefully to you — that age is no barrier to learning new skills.</p>
+
+<p>AI tools like Claude have made it possible for anyone, regardless of technical background, to build professional tools that would have required a team of developers just a few years ago.</p>
+
+<p>I am now working on more AI projects — including AI-generated videos, automated scheduling, and more dashboards. The journey has just begun!</p>
+
+<!-- CTA -->
+<div class="cta">
+  <h3>Want to See the Dashboard?</h3>
+  <p>Click below to explore the interactive SuperStore Business Intelligence Dashboard I built using Claude AI.</p>
+  <a href="AI203.html">📊 View the Dashboard →</a>
+</div>
+```
+
   </div>
 
-  <p>All three are down from what I paid. Rather than just sitting and waiting, I decided to sell <strong>covered calls</strong> — a strategy where I sell someone the right to buy my shares at a higher price in exchange for immediate cash (the premium). If the stock doesn't reach that price, I keep the premium as income.</p>
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; Built with curiosity &amp; Claude AI 🤖
+  </footer>
 
-  <div class="pullquote">
-    "I don't need to be a programmer. I just need to know what I want — and AI figures out how to build it."
-  </div>
 
-  <h2><span class="en">The Problem I Was Trying to Solve</span><span class="zh">我试图解决的问题</span></h2>
 
-  <p>Every time I considered selling a covered call, I had the same questions:</p>
-
-  <div class="infobox blue">
-    <h4>❓ My Questions Before Every Trade</h4>
-    <ul style="padding-left:18px;line-height:2;">
-      <li>If I sell a call 10% above today's price, what premium will I earn?</li>
-      <li>What if I go 5% out-of-the-money (OTM) instead? More income but more risk?</li>
-      <li>How does the number of days to expiry (DTE) change the premium?</li>
-      <li>Which combination gives me the best return for the least risk?</li>
-    </ul>
-  </div>
-
-  <p>Before AI, answering these questions meant looking up option chains on my broker's platform, manually comparing rows of numbers, and doing mental arithmetic. It took 20–30 minutes per stock and I was never confident I had the full picture.</p>
-
-  <h2><span class="en">What I Asked Claude to Build</span><span class="zh">我让Claude构建了什么</span></h2>
-
-  <p>I started with a simple message. No technical jargon. Just plain English:</p>
-
-  <div class="chat-wrap">
-    <div class="chat-label right">Me</div>
-    <div class="chat-bubble user">Compute premium amount for DTE 2 weeks and 20% above strike price for my 3 stocks FDS, POOL and ZTS.</div>
-
-    <div style="height:14px"></div>
-
-    <div class="chat-label">Claude (AI)</div>
-    <div class="chat-bubble ai">Here's your 2-Week DTE Options Premium Calculator based on today's stock prices. Using Black-Scholes model with realistic implied volatility for each stock — FDS: 28%, POOL: 35%, ZTS: 30%...<br><br>At 20% OTM with only 14 days, premiums will be very small — essentially lottery tickets. I'd recommend considering 5–10% OTM for meaningful income.</div>
-  </div>
-
-  <p>That single conversation gave me not just the numbers — it also educated me. Claude explained <em>why</em> 20% OTM was impractical for a 2-week expiry, and suggested better alternatives. I then asked for more:</p>
-
-  <div class="chat-wrap">
-    <div class="chat-label right">Me</div>
-    <div class="chat-bubble user">Create a dashboard for me to enter any % OTM and compute the premium dynamically.</div>
-
-    <div style="height:14px"></div>
-
-    <div class="chat-label">Claude (AI)</div>
-    <div class="chat-bubble ai">Here's your Dynamic OTM Premium Dashboard with sliders for OTM % and Days to Expiry, a full position table, and a comparison table showing total income at 5%, 10%, 15%, 20%, 25%, 30% OTM levels...</div>
-  </div>
-
-  <h2><span class="en">How the Dashboard Was Built — Step by Step</span><span class="zh">仪表板是如何一步步构建的</span></h2>
-
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <strong>I described what I wanted in plain English</strong>
-        <span>No coding knowledge required. I told Claude what I needed — a table showing premium income at different OTM percentages for my 3 stocks.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <strong>Claude built the Black-Scholes calculator</strong>
-        <span>The Black-Scholes model is the standard mathematical formula used by professional options traders worldwide. Claude implemented it in code without me understanding a single line of it.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <strong>I spotted a mistake and asked for a fix</strong>
-        <span>The risk label was showing "Moderate" even at settings that were clearly aggressive. I questioned it, Claude explained the bug — the probability was inverted — and fixed it immediately.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-body">
-        <strong>I asked for it to be added to my live website</strong>
-        <span>Claude pushed the entire dashboard directly to my GitHub repository and it appeared on my live website within minutes. I did not touch a single file.</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-body">
-        <strong>I kept refining through conversation</strong>
-        <span>Tab layout, default tab, colour coding, probability labels — every improvement was just one message. Claude remembered the context and updated the right parts each time.</span>
-      </div>
-    </div>
-  </div>
-
-  <h2>What the Dashboard Shows Me Now</h2>
-
-  <p>The final dashboard has two tabs. The first shows my live stock portfolio. The second — the OTM Calculator — is where I spend most of my time:</p>
-
-  <div class="infobox dark">
-    <h4>🎯 OTM Calculator Features</h4>
-    <ul style="padding-left:18px;line-height:2.2;color:#cbd5e1;">
-      <li><strong style="color:#60a5fa;">OTM % slider</strong> — drag from 1% to 50%, or type any value</li>
-      <li><strong style="color:#60a5fa;">DTE slider</strong> — set days to expiry from 1 to 90 days</li>
-      <li><strong style="color:#60a5fa;">Premium per share</strong> — for each of my 3 stocks, instantly</li>
-      <li><strong style="color:#60a5fa;">Total income</strong> — what I would collect across all 3 positions</li>
-      <li><strong style="color:#60a5fa;">Annualised return %</strong> — so I can compare strategies fairly</li>
-      <li><strong style="color:#60a5fa;">Profit probability</strong> — chance the call expires worthless (I keep premium)</li>
-      <li><strong style="color:#60a5fa;">Risk label</strong> — 🟢 Safe / 🟡 Moderate / 🔴 Aggressive, based on real probability</li>
-      <li><strong style="color:#60a5fa;">Comparison table</strong> — shows all OTM levels side by side at one glance</li>
-    </ul>
-  </div>
-
-  <h2>What I Discovered About My Own Strategy</h2>
-
-  <p>Once I had the dashboard, I learned things I never knew before. Here is what the numbers showed me:</p>
-
-  <table class="otm-table">
-    <thead>
-      <tr>
-        <th>OTM %</th>
-        <th>Total Income (14 DTE)</th>
-        <th>Risk Level</th>
-        <th>Verdict</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>5%</strong></td>
-        <td class="good">$253.76</td>
-        <td class="good">🟢 Safe (76% prob)</td>
-        <td class="good">✅ Best balance</td>
-      </tr>
-      <tr>
-        <td><strong>10%</strong></td>
-        <td class="warn">$38.58</td>
-        <td class="warn">🟡 Moderate</td>
-        <td class="warn">⚠️ Low income</td>
-      </tr>
-      <tr>
-        <td><strong>15%</strong></td>
-        <td class="bad">$4.04</td>
-        <td class="bad">🔴 Aggressive</td>
-        <td class="bad">❌ Not worth it</td>
-      </tr>
-      <tr>
-        <td><strong>20%+</strong></td>
-        <td class="bad">$0.32</td>
-        <td class="bad">🔴 Aggressive</td>
-        <td class="bad">❌ Lottery ticket</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>The insight was clear: <strong>5% OTM with 14–21 days to expiry</strong> gives the best income with the highest probability of keeping the premium. Before this dashboard, I might have blindly sold 20% OTM calls thinking I was being "safe" — when in reality I was earning almost nothing.</p>
-
-  <div class="pullquote">
-    "The dashboard did not just save me time. It changed how I think about options trading."
-  </div>
-
-  <h2>How Much Time Did AI Save Me?</h2>
-
-  <div class="time-box">
-    <div class="time-item">
-      <div class="num">0</div>
-      <div class="lbl">Lines of code I wrote</div>
-    </div>
-    <div class="time-item">
-      <div class="num">~3h</div>
-      <div class="lbl">Saved vs manual calculation</div>
-    </div>
-    <div class="time-item">
-      <div class="num">5</div>
-      <div class="lbl">Conversations to build it</div>
-    </div>
-    <div class="time-item">
-      <div class="num">∞</div>
-      <div class="lbl">Times I can reuse it</div>
-    </div>
-  </div>
-
-  <p>What would have taken a programmer several days to build, and required me to understand the Black-Scholes formula, option Greeks, and web development — was done through simple conversations in an afternoon.</p>
-
-  <h2>What I Learned About Using AI</h2>
-
-  <div class="tag-row">
-    <span class="tag">Be specific</span>
-    <span class="tag">Ask follow-up questions</span>
-    <span class="tag">Challenge wrong answers</span>
-    <span class="tag">Iterate step by step</span>
-    <span class="tag">You are the boss</span>
-  </div>
-
-  <p>The biggest lesson: <strong>AI is not magic, and it does make mistakes.</strong> My risk label was wrong at first — it said "Moderate" when the real probability told a different story. But when I questioned it, Claude admitted the bug, explained the correct logic, and fixed it. That back-and-forth is how good work gets done.</p>
-
-  <p>As a 70-year-old retiree with no programming background, I found this empowering. I did not need to learn to code. I needed to learn to <em>think clearly</em> — to describe what I want, recognise when something looks wrong, and ask good questions. That is a skill I already had.</p>
-
-  <h2>Try It Yourself</h2>
-
-  <div class="infobox green">
-    <h4>🚀 Live Dashboard — Free to Use</h4>
-    <p style="margin-bottom:12px;">My OTM Calculator is live on my website. You can see exactly how it works:</p>
-    <a href="https://paulsworld.vercel.app/T02.html"
-       style="display:inline-block;background:#166534;color:white;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:700;font-size:0.9rem;">
-      👉 Open My OTM Calculator
+  <!-- NEXT ARTICLE -->
+  <div style="text-align:center;margin:40px 16px 16px;">
+    <a href="AI204.html" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1a1a2e,#0f2060);color:white;text-decoration:none;font-family:'Source Serif 4',serif;font-size:1em;font-weight:600;padding:18px 32px;border-radius:14px;box-shadow:0 6px 24px rgba(74,108,247,0.3);">
+      <span style="font-size:1.3em">🌐</span>
+      <span>
+        <span style="display:block;font-size:0.72em;color:#a5b4fc;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;">Next Article</span>
+        AI3: How I Built My Own Website at 70 →
+      </span>
     </a>
   </div>
 
-  <p>If you own stocks and are interested in generating extra income through covered calls, I hope this article shows you that the barrier to entry is lower than you think. You do not need a finance degree. You do not need to code. You just need to ask the right questions — and AI will help you build the tools you need.</p>
-
-  <p style="color:var(--muted);font-size:0.9rem;font-style:italic;">— Paul Yeo, May 2026 · Retired at 67 · Learning every day</p>
-
-</article>
-
-<div class="view-counter-wrap">
-  <script src="/view-counter.js"></script>
+<div style="text-align:center;padding:16px 0 8px;font-family:Arial,sans-serif;font-size:13px;color:#aaa;">
+  <span id="vc-display">👁 Loading views...</span>
 </div>
+<script>
+(function(){
+  var key = 'ai2';
+  fetch('https://api.counterapi.dev/v1/paulsworld/'+key+'/up')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var el = document.getElementById('vc-display');
+      if(el) el.textContent = '👁 ' + (d.count||0).toLocaleString() + ' views';
+    }).catch(function(){});
+})();
+</script>
 
-<footer>
-  © 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp; AI Journey Series
-</footer>
 
-<!-- v2 -->
 </body>
 </html>

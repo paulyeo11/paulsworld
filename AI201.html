@@ -2,461 +2,534 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <script src="/ga4.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI201: How I Built My Own Website at 70</title>
+  <title>AI201: My Paulsworld AI Workspace — One Folder That Talks to All AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
   <script defer src="/_vercel/insights/script.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --cream: #faf8f3;
-      --ink: #1a1a1a;
-      --mid: #555;
-      --accent: #2d48b5;
-      --rule: #d8d0c4;
+      --blue: #2d48b5;
+      --blue-light: #4a6cf7;
+      --blue-pale: #e8eeff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --gold: #e8a820;
+      --text: #2c2c3e;
+      --muted: #6b7280;
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: var(--cream);
-      color: var(--ink);
       font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
       font-size: 18px;
       line-height: 1.8;
     }
 
-    nav {
+    /* HOME BUTTON */
+    .home-btn {
       position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-      background: rgba(15,15,15,0.90);
-      padding: 10px 20px;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: var(--blue);
+      color: white;
+      text-decoration: none;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.85em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(45,72,181,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
       display: flex;
       align-items: center;
-      gap: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      gap: 6px;
     }
-    nav a {
-      display: inline-flex;
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(45,72,181,0.4); }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 70vh;
+      display: flex;
       align-items: center;
-      gap: 7px;
-      background: #f4813f;
-      color: #fff;
-      text-decoration: none;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 8px 18px;
-      border-radius: 20px;
-    }
-    nav span {
-      color: rgba(255,255,255,0.5);
-      font-family: Arial, sans-serif;
-      font-size: 13px;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .hero {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
-      color: white;
-      padding: 100px 24px 60px;
-      text-align: center;
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.15) 0%, transparent 60%);
     }
-    .hero-kicker {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.28em;
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(74,108,247,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,108,247,0.08) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(74,108,247,0.25);
+      border: 1px solid rgba(74,108,247,0.5);
+      color: #a5b4fc;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.8em;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      color: #a0b4ff;
+      padding: 6px 16px;
+      border-radius: 20px;
       margin-bottom: 20px;
     }
+
     .hero h1 {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(28px, 5vw, 52px);
+      font-size: clamp(2em, 5vw, 3.2em);
       font-weight: 900;
-      line-height: 1.15;
+      color: white;
+      line-height: 1.2;
       margin-bottom: 20px;
-      max-width: 720px;
-      margin-left: auto;
-      margin-right: auto;
     }
+
+    .hero h1 span {
+      color: var(--gold);
+    }
+
     .hero-sub {
+      color: rgba(255,255,255,0.75);
+      font-size: 1.1em;
       font-style: italic;
-      font-size: 17px;
-      color: rgba(255,255,255,0.6);
       max-width: 500px;
       margin: 0 auto 30px;
     }
+
     .hero-meta {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      letter-spacing: 0.1em;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .hero-meta span {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.85em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    .article {
-      max-width: 680px;
+    /* ARTICLE BODY */
+    .article-wrap {
+      max-width: 720px;
       margin: 0 auto;
-      padding: 52px 24px 100px;
-    }
-    .article p { margin-bottom: 24px; color: var(--mid); }
-    .article p:first-of-type { font-size: 19px; color: var(--ink); font-weight: 600; }
-    .article h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--ink);
-      margin: 40px 0 16px;
-      padding-top: 20px;
-      border-top: 1px solid var(--rule);
+      padding: 0 20px 60px;
     }
 
-    .highlight {
-      background: #eef1ff;
-      border-left: 4px solid var(--accent);
-      border-radius: 0 8px 8px 0;
-      padding: 20px 24px;
-      margin: 32px 0;
+    /* LEAD */
+    .lead {
+      background: white;
+      border-radius: 16px;
+      padding: 36px 40px;
+      margin: -30px auto 40px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      border-left: 5px solid var(--blue-light);
+      font-size: 1.15em;
       font-style: italic;
-      color: #2d48b5;
-      font-size: 17px;
-      line-height: 1.7;
+      color: var(--blue);
+      line-height: 1.9;
     }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+    /* SECTION BLOCKS */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7em;
+      color: var(--ink);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--blue-pale);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section p {
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    /* VIDEO EMBED */
+    .video-box {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
       margin: 32px 0;
     }
-    .stat {
+    .video-label {
+      background: linear-gradient(135deg, var(--blue), var(--blue-light));
+      color: white;
+      padding: 12px 20px;
+      font-family: 'Source Serif 4', serif;
+      font-weight: 600;
+      font-size: 0.95em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .video-box iframe {
+      width: 100%;
+      height: 380px;
+      display: block;
+      border: none;
+    }
+    .video-caption {
+      padding: 14px 20px;
+      font-size: 0.9em;
+      color: var(--muted);
+      font-style: italic;
+      background: #f8f9ff;
+    }
+
+    /* FOLDER DIAGRAM */
+    .folder-diagram {
+      background: #0f1117;
+      border-radius: 14px;
+      padding: 28px 32px;
+      margin: 28px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95em;
+      color: #a5f3fc;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      border: 1px solid #1e3a5f;
+      line-height: 2;
+    }
+    .folder-diagram .folder-name { color: #fbbf24; font-weight: bold; }
+    .folder-diagram .sub-name { color: #86efac; }
+    .folder-diagram .ai-name { color: #f9a8d4; }
+    .folder-diagram .comment { color: #6b7280; }
+
+    /* AI TOOL PILLS */
+    .ai-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .pill {
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-size: 0.9em;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill-claude { background: #dbeafe; color: #1d4ed8; border: 1.5px solid #93c5fd; }
+    .pill-codex  { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; }
+    .pill-manus  { background: #fce7f3; color: #9d174d; border: 1.5px solid #f9a8d4; }
+    .pill-gpt    { background: #f0fdf4; color: #14532d; border: 1.5px solid #86efac; }
+
+    /* KEY INSIGHT BOX */
+    .insight-box {
+      background: linear-gradient(135deg, #e8eeff, #f0f4ff);
+      border: 1.5px solid #c7d2fe;
+      border-radius: 14px;
+      padding: 24px 28px;
+      margin: 28px 0;
+    }
+    .insight-box h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--blue);
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .insight-box p { color: #374151; margin: 0; }
+
+    /* TIP STEPS */
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+    .steps li {
+      counter-increment: step;
+      padding: 14px 18px 14px 56px;
+      position: relative;
+      margin-bottom: 12px;
       background: white;
       border-radius: 12px;
-      padding: 16px 12px;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid var(--blue-light);
     }
-    .stat-num {
-      font-family: 'Playfair Display', serif;
-      font-size: 32px;
-      font-weight: 900;
-      color: var(--accent);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .stat-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .steps { margin: 24px 0; }
-    .step {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 20px;
-      align-items: flex-start;
-    }
-    .step-num {
-      background: var(--accent);
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      background: var(--blue-light);
       color: white;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      width: 32px;
-      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      margin-top: 4px;
-    }
-    .step-text { font-size: 16px; color: var(--mid); line-height: 1.6; }
-    .step-text strong { color: var(--ink); }
-
-    .tools {
-      background: white;
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin: 24px 0;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    }
-    .tool-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: 15px;
-      color: var(--mid);
-    }
-    .tool-item:last-child { border-bottom: none; }
-    .tool-icon { font-size: 22px; }
-
-    .quote-box {
-      background: linear-gradient(135deg, #1a1a2e, #0f3460);
-      color: white;
-      border-radius: 16px;
-      padding: 32px 28px;
-      margin: 40px 0;
-      text-align: center;
-    }
-    .quote-box p {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-style: italic;
-      color: white;
-      line-height: 1.5;
-      margin-bottom: 12px;
-    }
-    .quote-box span {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      letter-spacing: 0.1em;
-    }
-
-    .cta {
-      background: linear-gradient(135deg, #1a1a2e, #0f3460);
-      color: white;
-      border-radius: 16px;
-      padding: 32px 24px;
-      text-align: center;
-      margin: 40px 0;
-    }
-    .cta h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      margin-bottom: 12px;
-      color: white;
-    }
-    .cta p { color: rgba(255,255,255,0.7); font-size: 15px; margin-bottom: 20px; }
-    .cta a {
-      display: inline-block;
-      background: #f4813f;
-      color: white;
-      text-decoration: none;
-      font-family: 'Inter', sans-serif;
-      font-size: 15px;
       font-weight: 700;
-      padding: 12px 28px;
-      border-radius: 25px;
+      font-size: 0.85em;
+      font-family: 'Source Serif 4', serif;
     }
 
-    .view-counter-wrap {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0 24px 40px;
-      text-align: center;
-    }
-    .view-counter-inner {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: #f0f4ff;
-      border: 1px solid #c0ccee;
-      border-radius: 50px;
-      padding: 12px 24px;
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      color: #555;
-    }
-    .view-counter-inner span.icon { font-size: 20px; }
-    #vc-count {
+    /* QUOTE */
+    .pull-quote {
+      border-left: 4px solid var(--gold);
+      padding: 16px 24px;
+      margin: 32px 0;
       font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 900;
-      color: #2d48b5;
+      font-size: 1.3em;
+      font-style: italic;
+      color: var(--ink);
+      background: #fffbf0;
+      border-radius: 0 10px 10px 0;
     }
 
-    footer {
-      background: var(--ink);
-      color: #aaa;
+    /* DIVIDER */
+    .divider {
       text-align: center;
-      padding: 30px 24px;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
+      margin: 40px 0;
+      color: var(--blue-light);
+      font-size: 1.4em;
+      letter-spacing: 12px;
     }
-  
-  /* ── HOME NAV BAR ── */
-  #homeBar {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
-    background: #1a1a2e; padding: 10px 16px;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
-    font-family: Arial, sans-serif;
-  }
-  #homeBar .hb-home {
-    background: #f4813f; color: #fff; text-decoration: none;
-    font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px;
-    box-shadow: 0 2px 8px rgba(244,129,63,0.5);
-  }
-  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
-  body { padding-top: 52px; }
-</style>
+
+    /* CLOSING */
+    .closing {
+      background: linear-gradient(135deg, var(--blue) 0%, #1a1a2e 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 36px 36px;
+      margin-top: 48px;
+      text-align: center;
+    }
+    .closing h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6em;
+      margin-bottom: 12px;
+      color: var(--gold);
+    }
+    .closing p { color: rgba(255,255,255,0.85); line-height: 1.8; }
+
+    /* VIEW COUNTER */
+    .view-counter-wrap {
+      text-align: center;
+      margin: 48px 0 20px;
+      color: var(--muted);
+      font-size: 0.9em;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.85em;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+      .lead { padding: 24px 22px; }
+      .folder-diagram { padding: 20px 18px; font-size: 0.82em; }
+      .video-box iframe { height: 220px; }
+      .home-btn { font-size: 0.78em; padding: 8px 14px; }
+    }
+  </style>
 <script src="/bilingual.js"></script>
 </head>
 <body>
-<div id="homeBar">
-  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
-  <span class="hb-site">✈️ Paul's World</span>
-</div>
 
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
 
-  <nav>
-    <a href="index.html">&#127968; Home</a>
-    <span>&#129302; My AI Journey</span>
-  </nav>
-
-  <div class="hero">
-    <div class="hero-kicker"><span class="en">&#129302; AI Journey &middot; Web Development &middot; iPhone</span><span class="zh">🤖 AI之旅 · 网页开发 · iPhone</span></div>
-    <h1>AI3: How I Built My Own Website at 70 &mdash; Using Only My iPhone and Claude AI</h1>
-    <p class="hero-sub"><span class="en">No laptop. No coding experience. No technical background. Just an iPhone, Claude AI, and a determination to keep learning.</span><span class="zh">没有笔记本，没有编程经验，没有技术背景。只有一部iPhone、Claude AI，以及一股永不停学的劲头。</span></p>
-    <p class="hero-meta"><span class="en">By Paul Yeo &nbsp;&middot;&nbsp; Singapore &#127480;&#127468; &nbsp;&middot;&nbsp; 2025</span><span class="zh">杨汉忠 · 新加坡 🇸🇬 · 2025年</span></p>
-  </div>
-
-  <div class="article">
-
-    <p>Two days. That is all it took for a 70-year-old retiree with no coding experience to build a fully functional, professionally designed website — using nothing but an iPhone and Claude AI.</p>
-
-    <p>This is my story, and I hope it inspires you to start yours.</p>
-
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-num">2</div>
-        <div class="stat-label">Days to Build</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">70</div>
-        <div class="stat-label">My Age</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">&#128242;</div>
-        <div class="stat-label">Only Device Used</div>
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="hero-tag"><span class="en">🤖 My AI Journey · Article 6</span><span class="zh">🤖 我的AI之旅 · 第6篇</span></div>
+      <h1>My <span>Paulsworld</span> AI Workspace</h1>
+      <p class="hero-sub"><span class="en">How one simple folder on my notebook became the nerve centre for all my AI conversations</span><span class="zh">我笔记本上的一个简单文件夹，如何成为我所有AI对话的神经中枢</span></p>
+      <div class="hero-meta">
+        <span>✍️ Paul Yeo</span>
+        <span>📅 May 2026</span>
+        <span>⏱ 4 min read</span>
       </div>
     </div>
+  </header>
 
-    <h2><span class="en">Why I Decided to Build a Website</span><span class="zh">我为什么决定建一个网站</span></h2>
-    <p>After retirement, I had stories to tell. Travel adventures from 38 countries. AI experiments that amazed even me. Lessons learned from a lifetime of curiosity. I wanted a place to share all of this — not just on WhatsApp or Facebook, but a proper website that was truly mine.</p>
+  <div class="article-wrap">
 
-    <p>The problem? I had never built a website before. I did not know HTML, CSS, or JavaScript. I did not even have a laptop available most of the time. All I had was my iPhone — and Claude AI.</p>
-
-    <div class="highlight">
-      "I had no technical background, no laptop, and no coding knowledge. What I had was curiosity, determination, and Claude AI."
+    <!-- LEAD -->
+    <div class="lead">
+      "I used to feel scattered. Every AI conversation started from zero — no context, no memory of who I am. Then I watched a video that changed everything. What if I gave the AI a home to come back to?"
     </div>
 
-    <h2><span class="en">The YouTube Video That Inspired Me</span><span class="zh">激励我的那个YouTube视频</span></h2>
-    <p>Before I started building, I watched a YouTube tutorial that gave me the confidence to try. This video showed me that building a website was possible even for a complete beginner — and that was all I needed to get started.</p>
+    <!-- SECTION 1: THE INSPIRATION -->
+    <div class="section">
+      <h2><span class="en">🎬 The Video That Sparked It All</span><span class="zh">🎬 点燃这一切的视频</span></h2>
+      <p>
+        It started with a YouTube video. I was browsing one evening when I came across a tutorial about setting up a personal AI workspace — the idea that you could create a dedicated folder on your computer that any AI tool could read and understand. It was like giving your AI a briefing document about you, before every conversation.
+      </p>
+      <p>
+        The concept immediately resonated with me. As a 70-year-old learning AI from scratch, I had been frustrated by one thing more than anything else: every time I opened Claude or another AI, I had to re-explain who I am, what I like, what projects I'm working on. It felt exhausting. This video pointed to a better way.
+      </p>
 
-    <div style="margin: 24px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-      <iframe width="100%" height="315" src="https://www.youtube.com/embed/86HM0RUWhCk" title="Website Building Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
-    </div>
-
-    <p>After watching this video, I thought — <em>"If I can understand this, I can build my own website with the help of Claude AI!"</em> And that is exactly what I did.</p>
-
-    <h2><span class="en">The Biggest Challenge — Finding the Right Guidance</span><span class="zh">最大的挑战——找到正确的指引</span></h2>
-    <p>The hardest part of building this website was not the technology — it was finding the right tutorial to understand how everything fit together. I spent time searching for video tutorials that explained concepts clearly for a beginner.</p>
-
-    <p>Once I found the right resources and understood the basic concepts of GitHub and Vercel, everything became much clearer. The key was understanding that GitHub stores your files and Vercel publishes them to the internet — automatically!</p>
-
-    <h2><span class="en">The Tools I Used</span><span class="zh">我使用的工具</span></h2>
-    <div class="tools">
-      <div class="tool-item"><span class="tool-icon">&#128242;</span> <strong>iPhone</strong> — my only device for most of the development</div>
-      <div class="tool-item"><span class="tool-icon">&#129302;</span> <strong>Claude AI</strong> — wrote all the HTML, CSS and JavaScript code</div>
-      <div class="tool-item"><span class="tool-icon">&#128025;</span> <strong>GitHub</strong> — stores all my website files for free</div>
-      <div class="tool-item"><span class="tool-icon">&#9650;</span> <strong>Vercel</strong> — publishes my website to the internet for free</div>
-      <div class="tool-item"><span class="tool-icon">&#128202;</span> <strong>Google Sheets</strong> — powers my live travel record</div>
-    </div>
-
-    <h2>How I Built It — Step by Step</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-text"><strong>Describe what I wanted to Claude.</strong> I told Claude in plain English what kind of website I wanted — a personal site with travel stories, AI articles, and a travel record section.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-text"><strong>Claude wrote all the code.</strong> I did not write a single line of HTML or CSS myself. Claude generated everything — the design, the layout, the colours, and all the functionality.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-text"><strong>Upload to GitHub from iPhone.</strong> I copied the code from Claude and pasted it into GitHub using Safari on my iPhone. This was tricky at first but I learned the steps quickly.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-text"><strong>Vercel deployed automatically.</strong> Every time I updated a file on GitHub, Vercel automatically published the changes to my website within 1-2 minutes. No extra steps needed!</div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-text"><strong>Keep improving.</strong> I kept asking Claude to improve the design, add new features, and fix problems. Each day the website got better and better.</div>
+      <!-- VIDEO EMBED -->
+      <div class="video-box">
+        <div class="video-label">🎬 The Video That Inspired Me</div>
+        <iframe
+          src="https://www.youtube.com/embed/9MXSuCSktCw"
+          title="AI Workspace Setup Video"
+          allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
+        <div class="video-caption">Watch this — it might inspire you to build your own AI workspace too!</div>
       </div>
     </div>
 
-    <h2>What Claude AI Did For Me</h2>
-    <p>Claude AI was not just a tool — it was like having a patient, knowledgeable friend available 24 hours a day. Every time I had a problem, I described it to Claude in plain English and it solved it.</p>
+    <!-- SECTION 2: THE FOLDER -->
+    <div class="section">
+      <h2>📁 Meet "Paulsworld"</h2>
+      <p>
+        I created a single folder on my notebook computer and named it <strong>Paulsworld</strong>. Simple, personal, and unmistakably mine. Inside it, I organised everything about my life and interests that I might want an AI to know.
+      </p>
 
-    <p>Claude helped me with everything — designing the layout, adding my photo, creating the navigation menu, building the AI Journey articles, and even fixing errors when things went wrong. Without Claude, this project would have been impossible for me.</p>
+      <div class="folder-diagram">
+        <div><span class="folder-name">📁 Paulsworld/</span></div>
+        <div>&nbsp;&nbsp;├── <span class="sub-name">📂 My Life/</span> &nbsp;<span class="comment">← Who I am, my background</span></div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── about-paul.txt</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── my-faith.txt</div>
+        <div>&nbsp;&nbsp;├── <span class="sub-name">📂 My Hobby/</span> &nbsp;<span class="comment">← What I love doing</span></div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── travel-interests.txt</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── options-trading.txt</div>
+        <div>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── ai-projects.txt</div>
+        <div>&nbsp;&nbsp;└── <span class="comment">... more to come!</span></div>
+      </div>
 
-    <div class="highlight">
-      "Claude AI was like having a brilliant web developer as my personal assistant — available any time, never impatient, always helpful."
+      <p>
+        The <strong>My Life</strong> subfolder holds the story of who I am — my background, my faith journey, my family. The <strong>My Hobby</strong> subfolder captures what I love: travel, options trading on Interactive Brokers, building websites with AI, and exploring the latest AI tools.
+      </p>
     </div>
 
-    <h2>What the Website Has Today</h2>
-    <p>In just two days, I built a website with three complete sections — My Travel Stories, My AI Journey, and a Live Travel Record connected to Google Sheets. The site has my personal photo, a short introduction, a Facebook link, and articles about my AI experiments.</p>
+    <!-- SECTION 3: WHY IT WORKS -->
+    <div class="section">
+      <h2><span class="en">⚡ Why This Works So Well</span><span class="zh">⚡ 为什么这么有效</span></h2>
 
-    <p>Every time I write a new story, I just create a new HTML file and upload it to GitHub. The website detects it automatically and adds it to the list — no editing of the main page needed!</p>
+      <div class="insight-box">
+        <h3>💡 The Key Insight</h3>
+        <p>AI tools like Claude, Codex, and Manus don't have memory by default — but they <em>can</em> read files you give them. By keeping your personal context in a folder, you become the memory. You supply the context; the AI supplies the intelligence.</p>
+      </div>
 
-    <div class="quote-box">
-      <p>"Keep learning — age is just a number."</p>
-      <span>&mdash; PAUL YEO, 70, SINGAPORE</span>
+      <p>
+        The beauty of this approach is that it works across <em>every</em> AI tool. It doesn't matter whether I'm talking to Claude on my phone, using Codex for code, or experimenting with Manus for agents — the Paulsworld folder is always there, ready to brief any AI instantly.
+      </p>
+
+      <div class="ai-pills">
+        <span class="pill pill-claude">🤖 Claude</span>
+        <span class="pill pill-codex">💻 Codex</span>
+        <span class="pill pill-manus">🕹 Manus</span>
+        <span class="pill pill-gpt">🌐 ChatGPT</span>
+      </div>
+
+      <p>
+        All of these AI tools can access and benefit from my Paulsworld folder. When I start a new conversation, I simply point the AI to the relevant file. Within seconds, it knows I'm a retired 70-year-old who loves travel, trades options, and is passionate about learning AI. No more repeating myself!
+      </p>
     </div>
 
-    <h2>My Message to Other Retirees</h2>
-    <p>If you are reading this and thinking "I could never do that" — I am here to tell you that you are wrong. Two months ago, I thought the same thing. Today I have a live website that I built myself, articles that people are reading, and a new passion for technology that I never expected at 70.</p>
+    <div class="divider">· · ·</div>
 
-    <p>The tools available today — especially AI like Claude — have made it possible for anyone, regardless of age or technical background, to create things that would have required professional developers just a few years ago.</p>
+    <!-- SECTION 4: HOW TO BUILD YOURS -->
+    <div class="section">
+      <h2><span class="en">🛠️ How to Build Your Own</span><span class="zh">🛠️ 如何构建你自己的</span></h2>
+      <p>
+        You don't need to be a tech expert to do this. If I can do it at 70, you certainly can! Here's how I set it up:
+      </p>
 
-    <p>Start small. Ask questions. Make mistakes. Keep learning. Age is just a number — and curiosity has no expiry date.</p>
-
-    <div class="cta">
-      <h3>Visit Paul's World</h3>
-      <p>Explore my travel stories, AI experiments, and live travel record — all built using Claude AI and an iPhone.</p>
-      <a href="index.html">&#127757; Visit the Website &rarr;</a>
+      <ol class="steps">
+        <li>Create a new folder on your computer. Name it something personal — like <em>YourName-world</em>.</li>
+        <li>Inside it, create a subfolder called <strong>My Life</strong>. Write a simple text file: who you are, where you live, your family.</li>
+        <li>Create another subfolder called <strong>My Hobby</strong>. Write what you love doing, what projects you're working on.</li>
+        <li>When you open any AI tool, paste or attach the relevant file — and the AI instantly knows your context.</li>
+        <li>Keep updating your files as your life evolves. Your AI workspace grows with you.</li>
+      </ol>
     </div>
 
-  </div>
-
-  <!-- VIEW COUNTER -->
-  <div class="view-counter-wrap">
-    <div class="view-counter-inner">
-      <span class="icon">&#128065;&#65039;</span>
-      <span>Total Views:</span>
-      <span id="vc-count">&mdash;</span>
+    <!-- PULL QUOTE -->
+    <div class="pull-quote">
+      "A folder is just a folder — until you fill it with your life. Then it becomes your AI's memory."
     </div>
-  </div>
 
+    <!-- SECTION 5: WHAT IT MEANS TO ME -->
+    <div class="section">
+      <h2><span class="en">🙏 What It Means to Me</span><span class="zh">🙏 这对我意味着什么</span></h2>
+      <p>
+        At 70, I am proof that it's never too late to embrace technology. The Paulsworld folder is more than just an organisational tool — it's a declaration. It says: <em>I exist, I have a story, and I want AI to know it.</em>
+      </p>
+      <p>
+        Every morning when I sit down at my notebook, I feel a quiet excitement. I'm not just using AI — I'm collaborating with it. My Paulsworld folder is the bridge between my human experience and the machine intelligence that helps me do more, create more, and learn more every day.
+      </p>
+      <p>
+        My faith, my travels, my adventures, my trading strategies, my website — all of it lives in that one little folder. And thanks to the inspiration from that YouTube video, it now talks to every AI I use.
+      </p>
+    </div>
 
-  <!-- NEXT ARTICLE -->
-  <div style="text-align:center;margin:40px 16px 16px;">
-    <a href="AI203.html" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#1a1a2e,#0f2060);color:white;text-decoration:none;font-family:'Source Serif 4',serif;font-size:1em;font-weight:600;padding:18px 32px;border-radius:14px;box-shadow:0 6px 24px rgba(74,108,247,0.3);">
-      <span style="font-size:1.3em">💡</span>
-      <span>
-        <span style="display:block;font-size:0.72em;color:#a5b4fc;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px;">Next Article</span>
-        AI4: One Week That Changed Everything →
-      </span>
-    </a>
+    <!-- CLOSING BOX -->
+    <div class="closing">
+      <h2>Start Your Own World Today</h2>
+      <p>
+        If you're on your own AI journey — whether you're 25 or 75 — I encourage you to create your own workspace folder. Give your AI a home. Tell it who you are. You'll be amazed at how much better every conversation becomes when the AI already knows your story.
+      </p>
+      <p style="margin-top: 14px; font-style: italic; opacity: 0.8;">
+        — Paul Yeo, May 2026 🌏
+      </p>
+    </div>
+
+    <!-- VIEW COUNTER -->
+    <div class="view-counter-wrap">
+      <script src="/view-counter.js"></script>
+    </div>
+
   </div>
 
   <footer>
-    &copy; 2026 Paul Yeo &nbsp;|&nbsp; Built with curiosity &amp; Claude AI &#129302;
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color: #4a6cf7;">Paul's World</a>
   </footer>
-
-  <script src="/view-counter.js"></script>
-
-
 
 </body>
 </html>
+<!-- deploy trigger -->

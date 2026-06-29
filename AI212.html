@@ -2,515 +2,665 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script src="/ga4.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI212: What is Claude Cowork? The AI That Works FOR You</title>
-<script defer src="/_vercel/insights/script.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<title>AI212: Token Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #1a1a2e;
-    --paper: #faf8f3;
-    --blue: #4a6cf7;
-    --accent: #f4813f;
-    --muted: #6b6b6b;
-    --line: #e0ddd5;
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: 0 0 20px rgba(0, 212, 255, 0.15);
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: 'Source Serif 4', Georgia, serif;
-    font-weight: 300;
-    line-height: 1.8;
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
-  #homeBar {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
-    background: var(--ink); padding: 10px 16px;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
-    font-family: Arial, sans-serif;
-  }
-  #homeBar .hb-home {
-    background: var(--accent); color: #fff; text-decoration: none;
-    font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px;
-  }
-  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
-
-  header {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 80px 40px 40px;
-    text-align: center;
-    border-bottom: 3px double var(--line);
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
   }
 
-  .category-tag {
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--blue);
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
-
-  h1 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    line-height: 1.15;
-    margin-bottom: 20px;
-    color: var(--ink);
-  }
-
-  .subtitle {
-    font-size: 1.15rem;
-    color: var(--muted);
-    font-style: italic;
-    margin-bottom: 30px;
-  }
-
-  .byline {
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    padding: 10px 0;
-    display: inline-block;
-    width: 100%;
-  }
-
-  article {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 50px 40px;
-  }
-
-  p {
-    font-size: 1.05rem;
-    margin-bottom: 1.6em;
-    color: #2a2a2a;
-  }
-
-  .lead {
-    font-size: 1.25rem;
-    font-weight: 400;
-    color: var(--ink);
-    line-height: 1.7;
-    margin-bottom: 2em;
-    padding-left: 20px;
-    border-left: 4px solid var(--blue);
-  }
-
-  h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    margin: 40px 0 20px;
-    color: var(--ink);
-  }
-
-  .divider {
-    text-align: center;
-    margin: 40px 0;
-    color: var(--blue);
-    font-size: 1.2rem;
-    letter-spacing: 0.3em;
-  }
-
-  blockquote {
-    margin: 40px 0;
-    padding: 30px 40px;
-    background: white;
-    border: 1px solid var(--line);
-    border-left: 6px solid var(--blue);
+  .container {
     position: relative;
-  }
-  blockquote::before {
-    content: '\201C';
-    font-family: 'Playfair Display', serif;
-    font-size: 5rem;
-    color: var(--blue);
-    opacity: 0.2;
-    position: absolute;
-    top: -10px; left: 15px;
-    line-height: 1;
-  }
-  blockquote p {
-    font-size: 1.2rem;
-    font-style: italic;
-    font-weight: 400;
-    color: var(--ink);
-    margin: 0;
-  }
-  blockquote cite {
-    display: block;
-    margin-top: 12px;
-    font-size: 0.85rem;
-    color: var(--muted);
-    font-style: normal;
-    letter-spacing: 0.05em;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
   }
 
-  /* VIDEO LINK BOX */
-  .video-box {
-    background: #0f0f0f;
-    border-radius: 14px;
-    padding: 20px 24px;
-    margin: 28px 0;
+  /* Header */
+  header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
-  .video-box:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-  .video-box .yt-icon { font-size: 2.2rem; flex-shrink: 0; }
-  .video-box .vb-text { flex: 1; }
-  .video-box .vb-label { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: #ff4444; font-weight: 700; margin-bottom: 4px; }
-  .video-box .vb-title { font-size: 1rem; font-weight: 600; color: white; line-height: 1.4; }
-  .video-box .vb-meta { font-size: 0.82rem; color: #aaa; margin-top: 3px; }
 
-  /* COMPARE BOX */
-  .compare {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 36px 0;
-  }
-  .compare-box {
-    padding: 24px;
-    border-radius: 12px;
-    border: 2px solid var(--line);
-  }
-  .compare-box.code { border-color: #4a6cf7; background: #f0f3ff; }
-  .compare-box.cowork { border-color: var(--accent); background: #fff7f0; }
-  .compare-box h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-  }
-  .compare-box.code h3 { color: #2d48b5; }
-  .compare-box.cowork h3 { color: #c0622a; }
-  .compare-box p { font-size: 0.92rem; color: #444; margin-bottom: 0; }
-
-  /* FRAMEWORK */
-  .framework {
-    background: var(--ink);
-    color: white;
-    padding: 32px 36px;
-    margin: 40px 0;
-    border-radius: 16px;
-  }
-  .framework h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    color: var(--accent);
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  .fw-step {
+  .logo {
     display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 18px;
+    align-items: center;
+    gap: 0.75rem;
   }
-  .fw-num {
-    flex-shrink: 0;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: var(--blue);
-    color: white;
-    font-weight: 700;
-    font-size: 1rem;
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
   }
-  .fw-text strong { display: block; color: white; font-size: 1rem; margin-bottom: 4px; }
-  .fw-text span { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
 
-  /* USE CASES */
-  .use-cases {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin: 36px 0;
+  .logo h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent);
   }
-  .uc-box {
-    background: white;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 20px;
-  }
-  .uc-icon { font-size: 1.8rem; margin-bottom: 8px; }
-  .uc-box h4 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--ink); margin-bottom: 6px; }
-  .uc-box p { font-size: 0.88rem; color: var(--muted); margin: 0; }
 
-  /* FEATURES */
-  .features {
-    background: #f0f3ff;
-    border: 2px solid var(--blue);
-    border-radius: 14px;
-    padding: 28px 32px;
-    margin: 36px 0;
-  }
-  .features h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: #2d48b5; margin-bottom: 16px; }
-  .feature-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
-  .feature-item .fi-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
-  .feature-item strong { display: block; color: var(--ink); font-size: 0.95rem; }
-  .feature-item span { font-size: 0.88rem; color: var(--muted); }
-
-  /* KEY TAKEAWAY */
-  .takeaway {
-    background: linear-gradient(135deg, #fff7f0, #ffe8d6);
-    border: 2px solid var(--accent);
-    border-radius: 14px;
-    padding: 28px 32px;
-    margin: 36px 0;
-    text-align: center;
-  }
-  .takeaway h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #c0622a; margin-bottom: 12px; }
-  .takeaway p { font-size: 1rem; color: #3a2a1a; margin: 0; }
-
-  /* SHARE BAR */
-  .share-bar { max-width: 680px; margin: 40px auto 8px; padding: 0 40px; text-align: center; }
-  .share-label { font-size: 0.82em; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-weight: 600; }
-  .share-buttons { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-  .share-btn {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 10px 22px; border-radius: 50px;
-    font-size: 0.92em; font-weight: 700; text-decoration: none;
-    color: white; transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15); border: none; cursor: pointer;
-  }
-  .share-btn:hover { transform: translateY(-2px); }
-  .share-btn.whatsapp { background: #25d366; }
-  .share-btn.facebook { background: #1877f2; }
-  .share-btn.copy { background: #6b7280; }
-  .share-btn.copy.copied { background: #10b981; }
-
-  footer {
-    text-align: center;
-    padding: 40px;
-    font-size: 12px;
+  .logo span {
+    display: block;
+    font-size: 0.7rem;
     color: var(--muted);
-    border-top: 3px double var(--line);
-    max-width: 760px;
-    margin: 0 auto;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
+
+  .home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.2s;
+  }
+
+  .home-btn:hover {
+    background: rgba(0,212,255,0.08);
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+  }
+
+  /* Stats strip */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .stat-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-sub {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  /* Section heading */
+  .section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Token cards */
+  .token-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .token-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    animation: fadeUp 0.5s ease both;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .token-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+  }
+
+  .token-card.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--green);
+    border-radius: 3px 0 0 3px;
+  }
+
+  .token-card.warn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--yellow);
+    border-radius: 3px 0 0 3px;
+  }
+
+  .token-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 99px;
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+
+  .badge.active { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge.warn   { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+  .badge.info   { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+
+  .token-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .token-meta span { color: var(--text); }
+
+  .token-preview {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-top: 0.6rem;
+    display: inline-block;
+  }
+
+  .token-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: 'Space Mono', monospace;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+
+  .btn-copy {
+    background: rgba(0,212,255,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.25);
+  }
+
+  .btn-copy:hover {
+    background: rgba(0,212,255,0.2);
+    box-shadow: var(--glow);
+  }
+
+  .btn-copy.copied {
+    background: rgba(16,185,129,0.15);
+    color: var(--green);
+    border-color: rgba(16,185,129,0.3);
+  }
+
+  .btn-test {
+    background: rgba(124,58,237,0.1);
+    color: #a78bfa;
+    border: 1px solid rgba(124,58,237,0.25);
+  }
+
+  .btn-test:hover { background: rgba(124,58,237,0.2); }
+
+  /* Usage table */
+  .usage-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2.5rem;
+    font-size: 0.82rem;
+  }
+
+  .usage-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .usage-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(30,58,95,0.4);
+    vertical-align: middle;
+  }
+
+  .usage-table tr:hover td { background: rgba(0,212,255,0.03); }
+
+  .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.yellow { background: var(--yellow); }
+
+  /* Log */
+  .log-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.73rem;
+    line-height: 1.9;
+    color: var(--muted);
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 2rem;
+  }
+
+  .log-box::-webkit-scrollbar { width: 4px; }
+  .log-box::-webkit-scrollbar-track { background: transparent; }
+  .log-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  .log-line { display: flex; gap: 1rem; }
+  .log-time { color: var(--accent2); flex-shrink: 0; }
+  .log-msg.ok { color: var(--green); }
+  .log-msg.info { color: var(--accent); }
+  .log-msg.warn { color: var(--yellow); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 0.75rem 1.4rem;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    box-shadow: 0 0 20px rgba(16,185,129,0.2);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .token-card:nth-child(1) { animation-delay: 0.05s; }
+  .token-card:nth-child(2) { animation-delay: 0.12s; }
+  .stat-card:nth-child(1) { animation-delay: 0.0s; }
+  .stat-card:nth-child(2) { animation-delay: 0.07s; }
+  .stat-card:nth-child(3) { animation-delay: 0.14s; }
+  .stat-card:nth-child(4) { animation-delay: 0.21s; }
+
+  /* Note box */
+  .note {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px;
+    padding: 0.9rem 1.2rem;
+    font-size: 0.8rem;
+    color: var(--yellow);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .note strong { font-family: 'Space Mono', monospace; }
 
   @media (max-width: 600px) {
-    header, article { padding: 60px 20px 30px; }
-    .compare, .use-cases { grid-template-columns: 1fr; }
-    .framework { padding: 24px 20px; }
-    .share-bar { padding: 0 20px; }
+    .token-card { grid-template-columns: 1fr; }
+    .token-actions { flex-direction: row; align-items: flex-start; }
   }
 </style>
 <script src="/bilingual.js"></script>
 </head>
 <body>
+<div class="container">
 
-<div id="homeBar">
-  <a href="https://paulsworld.vercel.app/" class="hb-home">🏠 Home</a>
-  <span class="hb-site">🤖 Paul's AI Journey</span>
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔑</div>
+      <div>
+        <h1>TOKEN VAULT</h1>
+        <span>Paul's World · Access Management</span>
+      </div>
+    </div>
+    <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-card">
+      <div class="stat-label">Total Tokens</div>
+      <div class="stat-value">2</div>
+      <div class="stat-sub">Registered</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active</div>
+      <div class="stat-value" style="color:var(--green)">1</div>
+      <div class="stat-sub">In use now</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Retired</div>
+      <div class="stat-value" style="color:var(--yellow)">1</div>
+      <div class="stat-sub">Rotate soon</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Last Push</div>
+      <div class="stat-value" style="font-size:1rem; padding-top:0.4rem" id="lastPush">—</div>
+      <div class="stat-sub">GitHub API</div>
+    </div>
+  </div>
+
+  <div class="note">
+    ⚠️ <strong>Security reminder:</strong> Never share token values publicly or in HTML files.
+    This dashboard shows only masked previews. Rotate any token immediately if exposed.
+  </div>
+
+  <!-- Tokens -->
+  <div class="section-title">Registered Tokens</div>
+  <div class="token-grid">
+
+    <!-- Token 1 – Active -->
+    <div class="token-card active">
+      <div>
+        <div class="token-name">
+          GitHub PAT — Primary
+          <span class="badge active">Active</span>
+          <span class="badge info">Main</span>
+        </div>
+        <div class="token-meta">
+          <span>Scope:</span> repo, contents, workflow · 
+          <span>Repo:</span> paulyeo11/Dynamic-Index<br>
+          <span>Added:</span> May 2026 · 
+          <span>Expiry:</span> Check GitHub Settings
+        </div>
+        <div class="token-preview">ghp_1W1TbvMw••••••••••••••••08Iw6K</div>
+      </div>
+      <div class="token-actions">
+        <button class="btn btn-copy" onclick="copyToken('ENTER_TOKEN_HERE', this)">⎘ Copy</button>
+        <button class="btn btn-test" onclick="testToken()">⚡ Test</button>
+      </div>
+    </div>
+
+    <!-- Token 2 – Retired -->
+    <div class="token-card warn">
+      <div>
+        <div class="token-name">
+          GitHub PAT — Previous
+          <span class="badge warn">Retired</span>
+        </div>
+        <div class="token-meta">
+          <span>Scope:</span> repo, contents · 
+          <span>Repo:</span> paulyeo11/Dynamic-Index<br>
+          <span>Added:</span> Early 2026 · 
+          <span>Status:</span> Replace with current token
+        </div>
+        <div class="token-preview">ghp_5TUE6mVg••••••••••••••rsyNz</div>
+      </div>
+      <div class="token-actions">
+        <button class="btn btn-copy" style="opacity:0.4; pointer-events:none;">⎘ Copy</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Usage table -->
+  <div class="section-title">Where Tokens Are Used</div>
+  <table class="usage-table">
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Token</th>
+        <th>Status</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>GitHub API Push</td>
+        <td style="font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--accent)">ghp_1W1T…</td>
+        <td><span class="dot green"></span>Active</td>
+        <td>Auto-push HTML pages to repo</td>
+      </tr>
+      <tr>
+        <td>HWMR Weekly Upload</td>
+        <td style="font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--accent)">ghp_1W1T…</td>
+        <td><span class="dot green"></span>Active</td>
+        <td>Book category file creation</td>
+      </tr>
+      <tr>
+        <td>Claude Artifact Push</td>
+        <td style="font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--accent)">ghp_1W1T…</td>
+        <td><span class="dot green"></span>Active</td>
+        <td>All new pages & updates</td>
+      </tr>
+      <tr>
+        <td>Old Sessions</td>
+        <td style="font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--yellow)">ghp_5TUE…</td>
+        <td><span class="dot yellow"></span>Retired</td>
+        <td>Superseded — do not use</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Activity log -->
+  <div class="section-title">Activity Log</div>
+  <div class="log-box" id="logBox">
+    <div class="log-line"><span class="log-time">[INIT]</span><span class="log-msg info">Dashboard loaded</span></div>
+  </div>
+
+  <!-- GitHub Quick Check -->
+  <div class="section-title">Quick Actions</div>
+  <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem;">
+    <button class="btn btn-copy" style="font-size:0.82rem; padding:0.6rem 1.3rem;" onclick="openGitHub()">🐙 Open GitHub Repo</button>
+    <button class="btn btn-copy" style="font-size:0.82rem; padding:0.6rem 1.3rem;" onclick="openSettings()">⚙️ GitHub Token Settings</button>
+    <button class="btn btn-test" style="font-size:0.82rem; padding:0.6rem 1.3rem;" onclick="testToken()">⚡ Test Active Token</button>
+  </div>
+
+  <!-- Test result -->
+  <div id="testResult" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.2rem 1.4rem; font-family:'Space Mono',monospace; font-size:0.78rem; line-height:1.8; margin-bottom:2rem;"></div>
+
 </div>
 
-<header>
-  <div class="category-tag">AI Journey · Issue 13</div>
-  <h1>What is Claude Cowork?</h1>
-  <p class="subtitle"><span class="en">The AI that doesn’t just answer your questions — it executes the work for you.</span><span class="zh">不只是回答问题的AI——它替你执行工作。</span></p>
-  <div class="byline">By Paul &nbsp;·&nbsp; June 3, 2026 &nbsp;·&nbsp; 6 min read</div>
-</header>
-
-<article>
-
-  <p class="lead">Most people use AI at the surface level — ask a question, get an answer, go back to doing all the real work themselves. Claude Cowork is different. It is an AI agent that actually <em>executes</em> work for you.</p>
-
-  <p>I was watching a video called “Mastering Claude Cowork: Become an AI-Native Professional” and it opened my eyes to something I had been doing wrong. I had been treating Claude like a smart search engine. Ask, read, move on. But Cowork changes that completely.</p>
-
-  <a class="video-box" href="https://youtu.be/PnPsf-hwGtI" target="_blank" rel="noopener">
-    <div class="yt-icon">▶️</div>
-    <div class="vb-text">
-      <div class="vb-label">📺 YouTube · Watch the video</div>
-      <div class="vb-title">Mastering Claude Cowork: Become an AI-Native Professional</div>
-      <div class="vb-meta">Free 1-Hour Deep Dive · tap to watch</div>
-    </div>
-  </a>
-
-  <p>In this article I share what I learned — in plain language, the way I understand it as a 70-year-old retiree learning AI from scratch.</p>
-
-  <div class="divider">· · ·</div>
-
-  <h2>First: What’s the Difference Between Claude Code and Claude Cowork?</h2>
-
-  <p>This confused me at first. I kept hearing both names. Here is how I now understand them:</p>
-
-  <div class="compare">
-    <div class="compare-box code">
-      <h3>💻 Claude Code</h3>
-      <p>A tool you run in a terminal (command line). It reads your files, writes code, fixes bugs, and builds things on your computer. It works with your actual project files.</p>
-    </div>
-    <div class="compare-box cowork">
-      <h3>🤝 Claude Cowork</h3>
-      <p>A tool you use in the browser or app. It works alongside you in your daily tasks — writing, research, presentations, reports, and personal productivity. Think of it as your AI co-worker.</p>
-    </div>
-  </div>
-
-  <p>Simple way to remember: <strong>Claude Code = for building software.</strong> <strong>Claude Cowork = for getting everyday work done.</strong></p>
-
-  <div class="divider">· · ·</div>
-
-  <h2><span class="en">The 3-Step Framework: How to Get Better Results</span><span class="zh">三步框架：如何获得更好的结果</span></h2>
-
-  <p>The video taught a simple framework. Most people give Claude a vague request and get a vague result. If you follow these three steps, the output is much better:</p>
-
-  <div class="framework">
-    <h3>The OCF Framework</h3>
-    <div class="fw-step">
-      <div class="fw-num">1</div>
-      <div class="fw-text">
-        <strong>Outcome</strong>
-        <span>Tell Claude exactly what you want to achieve. Not “write me a report” — but “write a 1-page report summarising my investment performance this month.”</span>
-      </div>
-    </div>
-    <div class="fw-step">
-      <div class="fw-num">2</div>
-      <div class="fw-text">
-        <strong>Context</strong>
-        <span>Give Claude the background it needs. Who is this for? What do you already know? What has been tried before?</span>
-      </div>
-    </div>
-    <div class="fw-step">
-      <div class="fw-num">3</div>
-      <div class="fw-text">
-        <strong>Format</strong>
-        <span>Tell Claude how you want the answer. A bullet list? A table? A short paragraph? An HTML page? The clearer you are, the better the result.</span>
-      </div>
-    </div>
-  </div>
-
-  <p>I tried this myself. Before I used OCF, I would say: “Summarise this article.” After OCF, I say: “Summarise this article in 5 bullet points for a 70-year-old reader who is new to AI, using simple English.” The difference in quality is enormous.</p>
-
-  <div class="divider">· · ·</div>
-
-  <h2><span class="en">4 Practical Use Cases</span><span class="zh">4个实用案例</span></h2>
-
-  <p>The video showed four real examples of what Claude Cowork can do for you:</p>
-
-  <div class="use-cases">
-    <div class="uc-box">
-      <div class="uc-icon">🎨</div>
-      <h4>HTML Visuals</h4>
-      <p>Ask Claude to turn your data or ideas into a beautiful visual HTML page — no coding knowledge needed.</p>
-    </div>
-    <div class="uc-box">
-      <div class="uc-icon">📊</div>
-      <h4>Presentations</h4>
-      <p>Give Claude your notes and ask it to build a presentation outline or slide content in minutes.</p>
-    </div>
-    <div class="uc-box">
-      <div class="uc-icon">📄</div>
-      <h4>Reports</h4>
-      <p>Claude can take raw information — numbers, notes, emails — and produce a clean, well-structured report.</p>
-    </div>
-    <div class="uc-box">
-      <div class="uc-icon">⏰</div>
-      <h4>Personal Productivity</h4>
-      <p>Plan your week, draft emails, summarise long documents, organise your thoughts — Claude acts as your personal assistant.</p>
-    </div>
-  </div>
-
-  <div class="divider">· · ·</div>
-
-  <h2><span class="en">3 Key Features to Know</span><span class="zh">3个必知的关键功能</span></h2>
-
-  <div class="features">
-    <h3>What Makes Cowork Powerful</h3>
-    <div class="feature-item">
-      <div class="fi-icon">🛠️</div>
-      <div>
-        <strong>Skills</strong>
-        <span>Pre-built abilities Claude can use to complete specific tasks — like analysing data, writing in your style, or following a workflow you define.</span>
-      </div>
-    </div>
-    <div class="feature-item">
-      <div class="fi-icon">🔗</div>
-      <div>
-        <strong>Connectors</strong>
-        <span>Claude can connect to your tools — Google Drive, email, calendars, and more — so it can work with your real data, not just hypothetical examples.</span>
-      </div>
-    </div>
-    <div class="feature-item">
-      <div class="fi-icon">🤖</div>
-      <div>
-        <strong>Agent Mode</strong>
-        <span>Instead of just answering, Claude takes a series of actions to complete a task end-to-end. You describe the goal; Claude figures out the steps and executes them.</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="divider">· · ·</div>
-
-  <h2>What This Means for Me</h2>
-
-  <p>When I watch a video like this, I always ask myself: how does this apply to my life right now?</p>
-
-  <p>The answer is clear. I have been using Claude mostly as a chat assistant — asking questions, getting answers. But I can do so much more. I can ask Claude to build pages for my website, draft my stories, analyse my IBKR portfolio data, and plan my travel itineraries — all using the OCF framework to get sharper results.</p>
-
-  <p>The shift from “AI that answers” to “AI that executes” is a big one. It means less work for me and better output. That is exactly what I want.</p>
-
-  <blockquote>
-    <p>Most people are still asking AI to fetch water for them. Cowork means AI builds the pipeline.</p>
-    <cite>— Paul, 70, learning AI one video at a time</cite>
-  </blockquote>
-
-  <div class="takeaway">
-    <h3>💡 My Key Takeaway</h3>
-    <p>Stop treating Claude like a search engine. Use the <strong>OCF framework</strong> (Outcome, Context, Format), connect it to your real work, and let it <em>execute</em> — not just advise. That is what it means to be AI-native.</p>
-  </div>
-
-</article>
-
-<div class="share-bar">
-  <div class="share-label">📤 Share this article</div>
-  <div class="share-buttons">
-    <a class="share-btn whatsapp" id="shareWA" href="#" target="_blank" rel="noopener">💬 WhatsApp</a>
-    <a class="share-btn facebook" id="shareFB" href="#" target="_blank" rel="noopener">📘 Facebook</a>
-    <button class="share-btn copy" id="shareCopy" onclick="copyLink()">🔗 Copy Link</button>
-  </div>
-</div>
-
-<script src="/view-counter.js"></script>
-
-<footer>
-  <p>Paul's World · AI Journey Series · paulsworld.vercel.app</p>
-</footer>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <script>
-  (function() {
-    const url   = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(document.title);
-    const wa = document.getElementById('shareWA');
-    const fb = document.getElementById('shareFB');
-    if (wa) wa.href = 'https://api.whatsapp.com/send?text=' + title + '%20' + url;
-    if (fb) fb.href = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
-  })();
+  // Set last push time
+  document.getElementById('lastPush').textContent = new Date().toLocaleTimeString('en-SG', {hour:'2-digit',minute:'2-digit'});
 
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      const btn = document.getElementById('shareCopy');
-      btn.textContent = '✅ Copied!';
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function addLog(msg, type='info') {
+    const box = document.getElementById('logBox');
+    const now = new Date().toLocaleTimeString('en-SG', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="log-time">[${now}]</span><span class="log-msg ${type}">${msg}</span>`;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function copyToken(token, btn) {
+    navigator.clipboard.writeText(token).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied';
       btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = '🔗 Copy Link';
-        btn.classList.remove('copied');
-      }, 2000);
+      showToast('✓ Token copied to clipboard');
+      addLog('Token copied to clipboard', 'ok');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
     });
   }
-</script>
 
+  async function testToken() {
+    const token = 'ENTER_TOKEN_HERE';
+    const resultEl = document.getElementById('testResult');
+    resultEl.style.display = 'block';
+    resultEl.style.color = 'var(--muted)';
+    resultEl.innerHTML = '⏳ Testing token against GitHub API...';
+    addLog('Testing active token...', 'info');
+
+    try {
+      const res = await fetch('https://api.github.com/repos/paulyeo11/Dynamic-Index', {
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        resultEl.style.color = 'var(--green)';
+        resultEl.innerHTML = `✅ TOKEN VALID<br>
+Repo: ${data.full_name}<br>
+Visibility: ${data.private ? 'Private' : 'Public'}<br>
+Default branch: ${data.default_branch}<br>
+Last pushed: ${new Date(data.pushed_at).toLocaleString('en-SG')}`;
+        addLog('Token test PASSED — GitHub API OK', 'ok');
+        showToast('✅ Token is valid!');
+      } else {
+        resultEl.style.color = 'var(--red)';
+        resultEl.innerHTML = `❌ TOKEN FAILED<br>Status: ${res.status}<br>Message: ${data.message || 'Unknown error'}`;
+        addLog('Token test FAILED — ' + (data.message || res.status), 'warn');
+      }
+    } catch (e) {
+      resultEl.style.color = 'var(--yellow)';
+      resultEl.innerHTML = `⚠️ Network error: ${e.message}`;
+      addLog('Network error during test', 'warn');
+    }
+  }
+
+  function openGitHub() {
+    addLog('Opening GitHub repo...', 'info');
+    window.open('https://github.com/paulyeo11/Dynamic-Index', '_blank');
+  }
+
+  function openSettings() {
+    addLog('Opening GitHub token settings...', 'info');
+    window.open('https://github.com/settings/tokens', '_blank');
+  }
+</script>
 </body>
 </html>
