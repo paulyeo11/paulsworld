@@ -6,129 +6,193 @@
 <title>MT10 Day 1: Departure Day — Singapore → Tokyo · 1 Jul 2026</title>
 <link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
 <link rel="icon" type="image/png" href="/japan-icon.png">
-<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<meta property="og:title" content="MT10 Day 1: Departure Day — Singapore to Tokyo">
+<meta property="og:image" content="https://paulsworld.vercel.app/img_MT10-day1/02-changi-airport.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: #0d1117;
-  color: #e6edf3;
-  line-height: 1.6;
+:root {
+  --gold: #f0a500;
+  --red: #ef4444;
+  --green: #10b981;
+  --bg: #0d1117;
+  --card: #161b22;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --border: rgba(255,255,255,0.08);
 }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+
+/* ── FIXED BUTTONS ── */
 .home-btn {
   position: fixed; bottom: 16px; right: 16px; z-index: 999;
   display: inline-flex; align-items: center; gap: 4px;
-  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.35); text-decoration: none;
-  font-size: 0.75em; font-weight: 400;
-  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4); text-decoration: none;
+  font-size: 0.75rem; padding: 5px 12px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif;
+  backdrop-filter: blur(6px);
 }
-.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.home-btn:hover { color: rgba(255,255,255,0.75); }
 
-.header {
-  padding: 56px 16px 14px;
-  background: linear-gradient(135deg, #0d1117, #1a1208);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+/* ── HERO ── */
+.hero {
+  padding: 60px 22px 44px;
+  background: linear-gradient(160deg, #0d1117 0%, #12100a 60%, #0d1117 100%);
+  border-bottom: 1px solid var(--border);
+  text-align: center; position: relative; overflow: hidden;
 }
-.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
-.header h1 span.red  { color: #ef4444; }
-.header h1 span.gold { color: #f0a500; }
-.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
-.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.back-chip {
-  display: inline-flex; align-items: center; gap: 4px;
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(240,165,0,0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-label {
+  display: inline-block;
   background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
-  color: #f0a500; font-size: 0.78em; font-weight: 700;
-  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+  color: var(--gold); font-family: 'Source Serif 4', serif;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 16px; border-radius: 20px; margin-bottom: 18px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.9rem, 6vw, 2.9rem); font-weight: 700;
+  color: #fff; line-height: 1.2; max-width: 680px; margin: 0 auto 14px;
+}
+.hero h1 em { color: var(--gold); font-style: italic; }
+.hero-meta { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; margin-bottom: 22px; }
+.hero-actions { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: var(--gold); font-size: 0.82rem; font-weight: 700;
+  padding: 7px 16px; border-radius: 20px; text-decoration: none;
+  font-family: 'Source Serif 4', serif;
 }
 .share-btn {
-  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  display: inline-flex; align-items: center; gap: 5px;
   background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
-  color: #fff; font-weight: 700; cursor: pointer;
+  color: #fff; font-size: 0.82rem; font-weight: 700;
+  padding: 7px 16px; border-radius: 20px; cursor: pointer;
+  font-family: 'Source Serif 4', serif;
 }
 .share-toast {
   display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
   background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
-  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.4);
 }
 
-.day-banner {
-  margin: 14px 16px 0; padding: 10px 14px;
-  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
-  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+/* ── STATUS BANNER ── */
+.status-banner {
+  margin: 0; padding: 11px 20px; text-align: center;
+  font-size: 0.86rem; font-family: 'Source Serif 4', serif;
+  background: rgba(16,185,129,0.1); border-bottom: 1px solid rgba(16,185,129,0.2);
+  color: #6ee7b7;
 }
 
-.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+/* ── CONTENT ── */
+.content { max-width: 720px; margin: 0 auto; padding: 0 22px 40px; }
 
+/* ── STORY ── */
+.story-section { padding: 44px 0 10px; }
+.story-section h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.55rem; font-weight: 700; color: #fff;
+  margin-bottom: 20px; line-height: 1.3;
+}
+.story-section h2 span { color: var(--gold); }
+.story-section p { color: #c9d1d9; font-size: 1.02rem; line-height: 1.85; margin-bottom: 1.4em; }
+.story-section p.lead {
+  font-size: 1.14rem; color: var(--text); font-style: italic;
+  border-left: 3px solid var(--gold); padding-left: 18px;
+}
+.story-img {
+  width: 100%; border-radius: 14px; margin: 20px 0 8px;
+  display: block; border: 1px solid var(--border); cursor: pointer;
+}
+.img-caption {
+  text-align: center; font-size: 0.78rem; color: var(--muted);
+  font-style: italic; margin-bottom: 26px; letter-spacing: 0.01em;
+}
+.pdf-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: var(--gold); font-size: 0.82rem; font-weight: 700;
+  padding: 5px 14px; border-radius: 14px; text-decoration: none;
+  font-family: 'Source Serif 4', serif; margin: 4px 0 20px;
+}
+.divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+/* ── SECTION TITLE ── */
 .section-title {
-  font-size: 0.78em; font-weight: 800; color: #f0a500;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  margin: 26px 0 12px;
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.72rem; font-weight: 700; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin: 36px 0 14px;
 }
 
-/* TIMELINE */
-.timeline { display: flex; flex-direction: column; gap: 0; }
-.tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 22px; }
+/* ── TIMELINE ── */
+.timeline { display: flex; flex-direction: column; }
+.tl-item { display: flex; gap: 14px; position: relative; padding-bottom: 24px; }
 .tl-item:last-child { padding-bottom: 0; }
 .tl-dot {
-  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.95em; background: #161b22; border: 2px solid #f0a500;
-  z-index: 1;
+  font-size: 1em; background: var(--card); border: 2px solid var(--gold); z-index: 1;
 }
 .tl-item:not(:last-child)::before {
-  content: ''; position: absolute; left: 14px; top: 30px; bottom: 0;
-  width: 2px; background: rgba(240,165,0,0.25);
+  content: ''; position: absolute; left: 15px; top: 32px; bottom: 0;
+  width: 2px; background: rgba(240,165,0,0.2);
 }
-.tl-time { font-size: 0.78em; color: #8b949e; font-family: monospace; }
-.tl-title { font-size: 0.98em; font-weight: 700; color: #e6edf3; margin-top: 1px; }
-.tl-sub { font-size: 0.85em; color: #8b949e; margin-top: 3px; line-height: 1.55; }
+.tl-time { font-size: 0.75rem; color: var(--muted); font-family: monospace; }
+.tl-title { font-size: 0.98rem; font-weight: 700; color: var(--text); margin-top: 1px; }
+.tl-sub { font-size: 0.84rem; color: var(--muted); margin-top: 3px; line-height: 1.55; }
 .tl-sub strong { color: #c9d1d9; }
 
-/* LOG / EMPTY STATE */
-.log-card {
-  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px; padding: 26px 20px; text-align: center;
-}
-.log-icon { font-size: 2.2em; margin-bottom: 10px; }
-.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
-.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
-
-/* PHOTO JOURNAL (ready for when photos are added) */
-.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
-.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
-.pj-item img { width: 100%; display: block; }
-.pj-body { padding: 14px 16px; }
-.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
-.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
-
-/* MAP */
-.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+/* ── MAP ── */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
 #day1map { width: 100%; height: 240px; }
-.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
-.leaflet-popup-tip { background: #161b22 !important; }
-.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
-.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
-.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
-.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-popup-content-wrapper { background: var(--card) !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: var(--text) !important; }
+.leaflet-popup-tip { background: var(--card) !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 13px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; color: #fff; }
+.popup-desc { margin-top: 3px; color: #c9d1d9; font-size: 0.88em; }
+.leaflet-control-zoom a { background: var(--card) !important; color: var(--text) !important; border-color: var(--border) !important; }
 .leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
 
-/* LIGHTBOX */
+/* ── PHOTO JOURNAL ── */
+.photo-journal { display: flex; flex-direction: column; gap: 28px; margin-top: 14px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; display: block; }
+.pj-body { padding: 16px 18px 18px; }
+.pj-num { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; font-family: monospace; }
+.pj-text { font-size: 0.94rem; color: #c9d1d9; line-height: 1.72; }
+.pj-text a { color: var(--gold); }
+
+/* ── LIGHTBOX ── */
 .lightbox {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.93);
   z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
 }
 .lightbox.active { display: flex; }
-.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
-.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
-.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+.lightbox img { max-width: min(90vw, 820px); max-height: 76vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #aaa; font-size: 0.86rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 18px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2.2rem; cursor: pointer; background: none; border: none; }
+.lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 1.6rem; width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+}
+.lightbox-prev { left: 14px; }
+.lightbox-next { right: 14px; }
 
-.footer-note {
-  text-align: center; padding: 18px 16px; font-size: 0.72em;
-  color: #484f58; font-family: monospace;
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 18px 16px 28px;
+  font-size: 0.72rem; color: #484f58; font-family: monospace;
+  border-top: 1px solid var(--border); margin-top: 36px;
 }
 </style>
 <script src="/bilingual.js"></script>
@@ -137,54 +201,133 @@ body {
 
 <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
 
-<div class="header">
-  <h1>🇯🇵 MT10 · Day 1 <span class="gold">Departure</span></h1>
-  <div class="header-sub"><span class="en">Singapore → Tokyo · Wed, 1 Jul 2026</span><span class="zh">新加坡 → 东京 · 2026年7月1日（周三）</span></div>
-  <div class="header-actions">
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">🇯🇵 <span class="en">Japan 2026 · Day 1</span><span class="zh">日本2026 · 第一天</span></div>
+  <h1><em><span class="en">Departure Day</span><span class="zh">出发日</span></em><br><span class="en">Singapore to Tokyo</span><span class="zh">新加坡飞东京</span></h1>
+  <div class="hero-meta"><span class="en">Wed, 1 Jul 2026 · SQ 632 · 7:40 AM</span><span class="zh">2026年7月1日（周三）· SQ 632 · 早上7:40</span></div>
+  <div class="hero-actions">
     <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
     <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
   </div>
 </div>
-<div class="share-toast" id="shareToast">✅ Link copied!</div>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
 
-<div class="day-banner" id="dayBanner">
-  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
-</div>
+<!-- STATUS -->
+<div class="status-banner" id="dayBanner">…</div>
 
+<!-- ARTICLE -->
 <div class="content">
 
+  <!-- ── STORY ── -->
+  <div class="story-section">
+
+    <p class="lead"><span class="en">28 days in Japan. Paul and Joanne leave Singapore before sunrise on 1 July 2026 — a taxi at 4:50 in the morning, Changi Airport lit up like a dream, and a 7-hour flight standing between them and Tokyo.</span><span class="zh">28天日本之旅。2026年7月1日，Paul和Joanne在日出前离开新加坡——凌晨4:50的出租车，灯火辉煌的樟宜机场，以及将他们与东京隔开的7小时飞行。</span></p>
+
+    <h2><span class="en">4:50 AM. <span>The taxi arrives.</span></span><span class="zh">凌晨4:50。<span>出租车来了。</span></span></h2>
+
+    <p><span class="en">Still dark outside. The city quiet. The alarm goes off at 4:00 AM and even though I have been awake for a while already — the way you are always awake before an early flight — it still feels abrupt. There is a particular kind of morning that only belongs to travellers. This is one of them.</span><span class="zh">外面还是黑的。城市很安静。闹钟在凌晨4点响起，虽然我已经醒了一段时间——就像早班飞机前你总是会提前醒来——但感觉还是很突然。有一种特别的清晨只属于旅行者。今天就是其中之一。</span></p>
+
+    <p><span class="en">The taxi came right on time. A big Toyota — smooth, comfortable, cool blue ambient lighting inside the cabin. I sat in the back with Joanne and looked through the windscreen at Singapore in the dark. The streets were empty. The expressway was clear. The driver said nothing and I said nothing. At that hour, silence is the right thing.</span><span class="zh">出租车准时到来。一辆大型丰田——平稳、舒适，车厢内有蓝色的氛围灯。我和Joanne坐在后座，透过挡风玻璃看着黑暗中的新加坡。街道空无一人，高速公路畅通无阻。司机沉默，我也沉默。在那个时刻，沉默是最合适的。</span></p>
+
+    <img class="story-img" src="img_MT10-day1/01-taxi-airport.jpg" alt="Inside the taxi at 4:51 AM" onclick="openLightbox(0)">
+    <div class="img-caption"><span class="en">Inside the taxi · 4:51 AM · Dashboard clock confirms it</span><span class="zh">出租车内 · 凌晨4:51 · 仪表盘时钟为证</span></div>
+
+    <p><span class="en">I took this photo from the back seat looking at the dashboard. Clock says 4:51 AM. The fare meter reads $9.20. That is the last Singapore dollar I spend before Japan. I remember thinking — the next time I am in a taxi, it will be in Tokyo.</span><span class="zh">我从后座拍下这张照片，看着仪表盘。时钟显示凌晨4:51，计费器显示$9.20。这是我在日本之前花的最后一张新加坡元。我记得当时心想——下一次坐出租车，就会是在东京了。</span></p>
+
+    <hr class="divider">
+
+    <h2><span class="en">Changi Airport at <span>dawn.</span></span><span class="zh">黎明时分的<span>樟宜机场。</span></span></h2>
+
+    <p><span class="en">We arrived at Terminal 2 just before 5:30 AM. Even at this hour, the airport was alive — that particular kind of airport energy that exists nowhere else in the world. People moving with purpose and luggage. The air-conditioning cold and clean.</span><span class="zh">我们在5:30前抵达2号航站楼。即使在这个时间，机场依然充满活力——那种只存在于机场的特殊能量，在世界其他地方找不到。人们带着行李和目的地移动。空调冷而清新。</span></p>
+
+    <p><span class="en">And then I saw it — the blue wall.</span><span class="zh">然后我看到了——那面蓝色的墙。</span></p>
+
+    <img class="story-img" src="img_MT10-day1/02-changi-airport.jpg" alt="Changi T2 blue waterfall display" onclick="openLightbox(1)">
+    <div class="img-caption"><span class="en">Changi Terminal 2 · The iconic blue LED waterfall · Before sunrise</span><span class="zh">樟宜2号航站楼 · 标志性蓝色LED瀑布 · 日出之前</span></div>
+
+    <p><span class="en">The giant LED waterfall installation in Terminal 2 fills the entire hall with deep, moving blue light. Waves of colour rolling across the ceiling and walls — it looks like being underwater, or standing inside the sky just before a storm. I have seen this many times. It never stops being beautiful. At 5:30 in the morning, with almost nobody around, it is something else entirely.</span><span class="zh">2号航站楼巨大的LED瀑布装置将整个大厅充满深邃流动的蓝色光芒。颜色像波浪一样在天花板和墙壁上翻滚——就像置身水下，或是站在暴风雨前的天空中。我已经见过很多次了，但它从未失去美丽。在清晨5:30，几乎没有人的时候，这感觉完全不同。</span></p>
+
+    <p><span class="en">Joanne and I walked through slowly. Neither of us was in a rush. The flight was at 7:40. We had time. Changi deserves to be walked through slowly.</span><span class="zh">Joanne和我缓慢地走过。我们都不急。航班在7:40。我们有时间。樟宜值得慢慢走。</span></p>
+
+    <hr class="divider">
+
+    <h2><span class="en">The smart move: <span>$5.88 eSIM.</span></span><span class="zh">精明之举：<span>$5.88的eSIM。</span></span></h2>
+
+    <p><span class="en">While waiting at the terminal I took care of something practical — the Japan data SIM. I had done some research beforehand and found SparkRoam: Japan eSIM, 10 GB, 30 days, for $5.88. The cheapest option I could find. And it covers the full 28 days of this trip with 2 days to spare.</span><span class="zh">在航站楼等候时，我处理了一件实际的事情——日本数据SIM卡。我之前做了一些研究，找到了SparkRoam：日本eSIM，10GB，30天，只需$5.88。这是我能找到的最便宜的选择，而且它涵盖了这次旅行的全部28天，还多出2天。</span></p>
+
+    <img class="story-img" src="img_MT10-day1/03-esim-purchase.jpg" alt="SparkRoam Japan eSIM $5.88" onclick="openLightbox(2)">
+    <div class="img-caption"><span class="en">SparkRoam Japan eSIM · 10 GB · 30 days · $5.88 total</span><span class="zh">SparkRoam日本eSIM · 10GB · 30天 · 合计$5.88</span></div>
+
+    <p><span class="en">I circled the total in pink on the screen. $5.88. For 28 days of internet in Japan. That is less than the price of a cup of coffee. Data sorted before boarding — so the moment we land at Narita, I can navigate, communicate, and send photos straight away. No hunting for a SIM card at the airport. No roaming charges.</span><span class="zh">我在屏幕上用粉色圈出了总价。$5.88。28天的日本网络。比一杯咖啡还便宜。登机前搞定网络——这样我们一落地成田，就可以立即导航、通讯和发送照片。不用在机场寻找SIM卡，也不用担心漫游费。</span></p>
+
+    <a href="/MT10-day1-esim.pdf" target="_blank" class="pdf-link">📄 <span class="en">View eSIM Receipt (PDF)</span><span class="zh">查看eSIM收据（PDF）</span></a>
+
+    <hr class="divider">
+
+    <h2><span class="en">Japan. <span>Again.</span></span><span class="zh">日本。<span>再次。</span></span></h2>
+
+    <p><span class="en">We visited Japan last year too. So I know what is waiting — the politeness of the people, the precision of the trains, the food that makes you stop mid-bite and look up. The quiet of temples. The noise of Shinjuku. The way everything is exactly where it should be.</span><span class="zh">去年我们也去过日本。所以我知道那里等待着什么——人们的礼貌，火车的精准，让你吃到一半停下来抬头看的食物。寺庙的宁静。新宿的喧嚣。一切都恰到好处的那种感觉。</span></p>
+
+    <p><span class="en">But this time is different. This time it is 28 days. Six days in Tokyo, then Peach Aviation to Sapporo, then three weeks in Niseko. We are not visiting Japan. We are living in it, for a month.</span><span class="zh">但这次不同。这次是28天。东京六天，然后乘Peach航空到札幌，再在二世谷待三周。我们不是在参观日本，而是在其中生活，整整一个月。</span></p>
+
+    <p><span class="en">Flight SQ 632 departs at 7:40 AM. Seven hours and forty-five minutes. Joanne has her seat — 59D. I have mine. By this afternoon, Singapore time, we will be in Tokyo.</span><span class="zh">SQ 632航班在早上7:40起飞。七小时四十五分钟。Joanne坐她的座位59D，我坐我的。按新加坡时间，今天下午，我们就会在东京了。</span></p>
+
+    <p><span class="en">I am 70 years old. Retired at 67. And I am heading to Japan on a Wednesday morning with my wife, 28 days ahead of us, nothing urgent to get back for.</span><span class="zh">我70岁了，67岁退休。这个周三早上，我和妻子正前往日本，前方有28天的时光，没有什么急事需要赶回去。</span></p>
+
+    <p><span class="en">This is exactly what retirement is supposed to feel like.</span><span class="zh">这正是退休本该有的感觉。</span></p>
+
+  </div>
+
+  <!-- ── DAY AT A GLANCE ── -->
   <div class="section-title">📋 <span class="en">Day 1 at a Glance</span><span class="zh">第一天概览</span></div>
   <div class="timeline">
     <div class="tl-item">
+      <div class="tl-dot">🚖</div>
+      <div>
+        <div class="tl-time">04:50 SGT</div>
+        <div class="tl-title"><span class="en">Taxi to Changi Airport</span><span class="zh">出租车前往樟宜机场</span></div>
+        <div class="tl-sub"><span class="en">Still dark. Silent streets. $9.20 fare — last Singapore dollars before Japan.</span><span class="zh">天还黑。街道寂静。车费$9.20——日本之前最后的新加坡元。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
       <div class="tl-dot">✈️</div>
       <div>
+        <div class="tl-time">06:40 SGT · <span class="en">Boarding</span><span class="zh">登机</span></div>
+        <div class="tl-title"><span class="en">SQ 632 — Boarding Group 5</span><span class="zh">SQ 632 — 第5组登机</span></div>
+        <div class="tl-sub"><span class="en">Singapore Changi T2 → Tokyo Narita. <strong>~7h 45m</strong>.</span><span class="zh">新加坡樟宜T2 → 东京成田。约 <strong>7小时45分钟</strong>。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">07:40</div>
+      <div>
         <div class="tl-time">07:40 SGT</div>
-        <div class="tl-title"><span class="en">Depart Singapore — SQ 632</span><span class="zh">新加坡出发 — SQ 632</span></div>
-        <div class="tl-sub"><span class="en">Singapore Changi T2 → Tokyo Narita. <strong>~7h 45m</strong> flight.</span><span class="zh">新加坡樟宜2号航站楼 → 东京成田。飞行时间约 <strong>7小时45分钟</strong>。</span></div>
+        <div class="tl-title"><span class="en">Wheels up — Tokyo bound</span><span class="zh">起飞——飞向东京</span></div>
+        <div class="tl-sub"><span class="en">SQ 632 departs Singapore. 28 days of Japan begins.</span><span class="zh">SQ 632从新加坡出发，28天日本之旅正式开始。</span></div>
       </div>
     </div>
     <div class="tl-item">
       <div class="tl-dot">🛬</div>
       <div>
-        <div class="tl-time">~16:25 JST <span class="en">(est.)</span><span class="zh">（预计）</span></div>
+        <div class="tl-time">~16:25 JST</div>
         <div class="tl-title"><span class="en">Arrive Narita International Airport</span><span class="zh">抵达成田国际机场</span></div>
-        <div class="tl-sub"><span class="en">Clear immigration with the Visit Japan Web QR code, collect bags.</span><span class="zh">使用 Visit Japan Web 二维码通关入境，提取行李。</span></div>
+        <div class="tl-sub"><span class="en">Clear immigration (Visit Japan Web QR), collect bags, take N'EX to Shinagawa.</span><span class="zh">通关入境（Visit Japan Web二维码），取行李，乘N'EX到品川。</span></div>
       </div>
     </div>
     <div class="tl-item">
       <div class="tl-dot">🚆</div>
       <div>
-        <div class="tl-time">~70 <span class="en">min</span><span class="zh">分钟</span></div>
+        <div class="tl-time">~<span class="en">70 min</span><span class="zh">70分钟</span></div>
         <div class="tl-title"><span class="en">N'EX → Shinagawa → Kamata</span><span class="zh">N'EX → 品川 → 蒲田</span></div>
-        <div class="tl-sub"><span class="en">Narita Express to Shinagawa, transfer to JR Keihin-Tohoku Line, 2 stops to Kamata, then ~5–8 min walk to the hotel.</span><span class="zh">乘成田特快到品川，转乘JR京浜东北线，2站到蒲田，步行约5-8分钟到酒店。</span></div>
+        <div class="tl-sub"><span class="en">Transfer at Shinagawa, JR Keihin-Tohoku 2 stops, ~5 min walk to hotel.</span><span class="zh">品川转乘京浜东北线，2站到蒲田，步行约5分钟到酒店。</span></div>
       </div>
     </div>
     <div class="tl-item">
       <div class="tl-dot">🏨</div>
       <div>
-        <div class="tl-time"><span class="en">From 4:00 PM</span><span class="zh">下午4点起</span></div>
+        <div class="tl-time"><span class="en">From 4:00 PM JST</span><span class="zh">JST下午4点起</span></div>
         <div class="tl-title"><span class="en">Check in — BON Tokyo Kamata Parkside</span><span class="zh">入住 — BON东京蒲田Parkside</span></div>
-        <div class="tl-sub"><span class="en">4-26-10 Kamata, Ota-ku, Tokyo. Semi self-service check-in — bring passports for everyone.</span><span class="zh">东京都大田区蒲田4丁目26番10号。半自助入住 — 请携带所有人的护照。</span></div>
+        <div class="tl-sub"><span class="en">4-26-10 Kamata, Ota-ku. 5 nights. Semi self-service — passports required.</span><span class="zh">大田区蒲田4-26-10。住5晚。半自助入住，需要护照。</span></div>
       </div>
     </div>
     <div class="tl-item">
@@ -192,54 +335,56 @@ body {
       <div>
         <div class="tl-time"><span class="en">Evening</span><span class="zh">晚上</span></div>
         <div class="tl-title"><span class="en">First night in Tokyo</span><span class="zh">在东京的第一个晚上</span></div>
-        <div class="tl-sub"><span class="en">Settle in, rest, maybe a simple meal nearby — first proper steps of 28 days in Japan.</span><span class="zh">安顿下来，休息，附近简单用餐 — 28天日本之旅的第一步。</span></div>
+        <div class="tl-sub"><span class="en">Settle in. Rest. Maybe a simple meal nearby. Day 1 done.</span><span class="zh">安顿下来，休息，附近简单用餐。第一天完成。</span></div>
       </div>
     </div>
   </div>
 
+  <!-- ── MAP ── -->
   <div class="section-title">🗺️ <span class="en">Route</span><span class="zh">路线</span></div>
   <div class="map-wrap">
     <div id="day1map"></div>
   </div>
 
-  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
-  <div class="log-card" id="emptyLog">
-    <div class="log-icon">📸</div>
-    <div class="log-title"><span class="en">Day 1 hasn't happened yet!</span><span class="zh">第一天还没开始！</span></div>
-    <div class="log-sub"><span class="en">Paul &amp; Joanne depart Singapore on <strong>1 Jul 2026</strong>. Once they land in Tokyo, this page fills in with the real story — photos, notes, and how the day actually went.</span><span class="zh">Paul 和 Joanne 将于 <strong>2026年7月1日</strong> 从新加坡出发。抵达东京后，这一页将更新真实的故事 — 照片、笔记，以及这一天的真实经历。</span></div>
-  </div>
+  <!-- ── PHOTO JOURNAL ── -->
+  <div class="section-title">📸 <span class="en">Photo Journal — Day 1</span><span class="zh">照片日记——第一天</span></div>
   <div class="photo-journal" id="galleryGrid"></div>
 
 </div>
 
+<!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox">
-  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lbNav(-1)">&#8592;</button>
   <img id="lbImg" src="" alt="">
   <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" onclick="lbNav(1)">&#8594;</button>
 </div>
 
-<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
-<div class="footer-note">MT10 Day 1 · Japan 2026 · paulsworld.vercel.app</div>
+<div style="text-align:center;padding:6px 16px;">
+  <script src="/view-counter.js"></script>
+</div>
+<div class="footer">MT10 Day 1 · Japan 2026 · <a href="https://paulsworld.vercel.app" style="color:#484f58;">paulsworld.vercel.app</a></div>
 
 <script>
-// ── DAY STATUS BANNER ──
+// ── STATUS BANNER ──
 function updateBanner() {
   var depart = new Date('2026-07-01T07:40:00+08:00');
-  var bedtime = new Date('2026-07-02T00:00:00+09:00'); // end of day 1, JST
+  var arrive = new Date('2026-07-01T23:59:00+09:00');
   var now = new Date();
   var banner = document.getElementById('dayBanner');
   if (now < depart) {
     var diff = depart - now;
     var hrs = Math.floor(diff / 3600000);
     var mins = Math.floor((diff % 3600000) / 60000);
-    banner.innerHTML = '🕓 <span class="en">Departing in <strong>' + hrs + 'h ' + mins + 'm</strong> — check back after takeoff!</span><span class="zh">还有 <strong>' + hrs + '小时' + mins + '分钟</strong>出发 — 起飞后再回来看看吧！</span>';
-  } else if (now < bedtime) {
-    banner.style.background = 'rgba(240,165,0,0.12)';
-    banner.style.borderColor = 'rgba(240,165,0,0.35)';
-    banner.style.color = '#f0a500';
-    banner.innerHTML = '✈️ <span class="en">Day 1 is happening right now!</span><span class="zh">第一天正在进行中！</span>';
+    banner.innerHTML = '🕓 <span class="en">SQ 632 departs in <strong>' + hrs + 'h ' + mins + 'm</strong></span><span class="zh">SQ 632 还有 <strong>' + hrs + '小时' + mins + '分钟</strong>起飞</span>';
+    banner.style.cssText = 'padding:11px 20px;text-align:center;font-size:.86rem;font-family:inherit;background:rgba(16,185,129,.1);border-bottom:1px solid rgba(16,185,129,.2);color:#6ee7b7;';
+  } else if (now < arrive) {
+    banner.innerHTML = '✈️ <span class="en"><strong>Day 1 in progress</strong> — Paul &amp; Joanne are on their way to Tokyo!</span><span class="zh"><strong>第一天进行中</strong> — Paul 和 Joanne 正在前往东京的路上！</span>';
+    banner.style.cssText = 'padding:11px 20px;text-align:center;font-size:.86rem;font-family:inherit;background:rgba(240,165,0,.1);border-bottom:1px solid rgba(240,165,0,.2);color:#f0a500;';
   } else {
-    banner.innerHTML = '✅ <span class="en">Day 1 complete — Tokyo, here we are.</span><span class="zh">第一天已完成 — 我们已抵达东京。</span>';
+    banner.innerHTML = '✅ <span class="en"><strong>Day 1 complete.</strong> Tokyo, we are here.</span><span class="zh"><strong>第一天完成。</strong>东京，我们来了。</span>';
+    banner.style.cssText = 'padding:11px 20px;text-align:center;font-size:.86rem;font-family:inherit;background:rgba(16,185,129,.08);border-bottom:1px solid rgba(16,185,129,.15);color:#6ee7b7;';
   }
 }
 updateBanner();
@@ -249,89 +394,83 @@ setInterval(updateBanner, 60000);
 const galleryPhotos = [
   { src: "img_MT10-day1/01-taxi-airport.jpg",
     caption: "Inside the taxi at 4:51 AM — heading to Changi",
-    story: "4:50 in the morning. Still dark outside. The taxi came right on time — a big comfortable Toyota, blue ambient lights inside, the driver calm and quiet. I took this photo from the back seat looking at the dashboard. The clock says 4:51 AM. This is it — the Japan trip has officially started. I am excited. Last year we visited Japan too, and I already know what is waiting for us. 28 days this time." },
+    story: "4:50 in the morning. Still dark outside. The taxi came right on time — a big comfortable Toyota, blue ambient lights inside, the driver calm and quiet. I took this photo from the back seat looking at the dashboard. The clock says 4:51 AM. The fare meter reads $9.20. This is it — the Japan trip has officially started. I am excited. Last year we visited Japan too, and I already know what is waiting for us. 28 days this time." },
 
   { src: "img_MT10-day1/02-changi-airport.jpg",
     caption: "Changi Airport Terminal 2 — the stunning blue waterfall display",
-    story: "Just arrived at Changi Airport. Even at this early hour the place looks magnificent. This is the iconic blue LED waterfall wall in Terminal 2 — it fills the entire hall with deep blue light, like standing inside the ocean. A few other travellers are already moving through. The Changi STAR counter is visible in the foreground. Every time I pass through this terminal I stop and look at this. It never gets old." },
+    story: "Just arrived at Changi Airport. Even at this early hour the place looks magnificent. This is the iconic blue LED waterfall wall in Terminal 2 — it fills the entire hall with deep blue light, like standing inside the ocean. A few other travellers are already moving through. Every time I pass through this terminal I stop and look at this. It never gets old." },
 
   { src: "img_MT10-day1/03-esim-purchase.jpg",
     caption: "Japan eSIM purchased — SparkRoam 10 GB, 30 days, $5.88",
-    story: "While waiting at the airport I sorted out the Japan data SIM. SparkRoam — Japan eSIM, 10 GB, 30 days, for just $5.88. The cheapest option available and it covers the full length of the trip. I circled the total in pink — $5.88. For 28 days in Japan, that is practically free. Good internet connection for the whole trip sorted before we even board the plane. <a href=\"/MT10-day1-esim.pdf\" target=\"_blank\" style=\"display:inline-flex;align-items:center;gap:5px;background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.85em;font-weight:700;padding:4px 12px;border-radius:14px;text-decoration:none;margin-top:10px;\">📄 View PDF</a>" }
+    story: "While waiting at the terminal I sorted out the Japan data SIM. SparkRoam — Japan eSIM, 10 GB, 30 days, for just $5.88. The cheapest option available and it covers the full length of the trip. I circled the total in pink — $5.88. For 28 days in Japan, that is practically free. Good internet connection for the whole trip sorted before we even board the plane. <a href=\"/MT10-day1-esim.pdf\" target=\"_blank\">📄 View Receipt PDF</a>" }
 ];
-function renderGallery() {
-  var grid = document.getElementById('galleryGrid');
-  var emptyLog = document.getElementById('emptyLog');
-  grid.innerHTML = '';
-  if (galleryPhotos.length === 0) {
-    emptyLog.style.display = 'block';
-    return;
-  }
-  emptyLog.style.display = 'none';
-  galleryPhotos.forEach(function(p, i) {
-    var item = document.createElement('div');
-    item.className = 'pj-item';
-    item.innerHTML = '<img src="' + p.src + '" alt="" loading="lazy">' +
-      '<div class="pj-body">' +
-      '<div class="pj-num">Photo ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
-      '<div class="pj-text">' + p.story + '</div>' +
-      '</div>';
-    item.onclick = function () { openLightbox(i); };
-    grid.appendChild(item);
+
+// Build photo journal
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach(function(p, i) {
+  var item = document.createElement('div');
+  item.className = 'pj-item';
+  item.innerHTML = '<img src="' + p.src + '" alt="" loading="lazy">' +
+    '<div class="pj-body">' +
+    '<div class="pj-num">Photo ' + String(i+1).padStart(2,'0') + ' of ' + galleryPhotos.length + '</div>' +
+    '<div class="pj-text">' + p.story + '</div>' +
+    '</div>';
+  item.addEventListener('click', function(e) {
+    if (e.target.tagName !== 'A') openLightbox(i);
   });
-}
-renderGallery();
+  grid.appendChild(item);
+});
 
 // ── LIGHTBOX ──
+var lbIndex = 0;
 function openLightbox(i) {
+  lbIndex = i;
   document.getElementById('lbImg').src = galleryPhotos[i].src;
-  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption || '';
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption;
   document.getElementById('lightbox').classList.add('active');
 }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
-document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+function lbNav(dir) { lbIndex = (lbIndex + dir + galleryPhotos.length) % galleryPhotos.length; openLightbox(lbIndex); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
 
 // ── SHARE ──
 function shareThisPage() {
   var url = window.location.href;
   var title = document.title;
   if (navigator.share) {
-    navigator.share({ title: title, url: url }).catch(function () {});
+    navigator.share({ title: title, url: url }).catch(function(){});
   } else {
-    navigator.clipboard.writeText(url).then(function () {
+    navigator.clipboard.writeText(url).then(function() {
       var t = document.getElementById('shareToast');
       t.style.display = 'block';
-      setTimeout(function () { t.style.display = 'none'; }, 2200);
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
     });
   }
 }
 
 // ── MAP ──
 var day1Map = L.map('day1map', { zoomControl: true, scrollWheelZoom: false }).setView([24, 130], 4);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: '© Esri', maxZoom: 17
-}).addTo(day1Map);
+var tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:18}),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19})
+};
+tileLayers.satellite.addTo(day1Map);
 function mkIcon(color, label) {
-  return L.divIcon({
-    className: '',
-    html: '<div style="width:28px;height:28px;background:' + color + ';border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);">' + label + '</div>',
-    iconSize: [28, 28], iconAnchor: [14, 14]
-  });
+  return L.divIcon({ className: '',
+    html: '<div style="width:28px;height:28px;background:'+color+';border:2px solid rgba(255,255,255,0.65);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.6);">'+label+'</div>',
+    iconSize:[28,28], iconAnchor:[14,14] });
 }
-var day1Stops = [
-  { lat: 1.3521, lng: 103.8198, color: '#ef4444', label: '✈️', name: 'Singapore Changi (SIN)', desc: 'Depart 7:40 AM · SQ 632' },
-  { lat: 35.7647, lng: 140.3862, color: '#f0a500', label: '🛬', name: 'Narita International (NRT)', desc: 'Arrive ~16:25 JST · Take N\'EX to Shinagawa' },
-  { lat: 35.5626, lng: 139.7152, color: '#10b981', label: '🏨', name: 'BON Tokyo Kamata Parkside', desc: '4-26-10 Kamata, Ota-ku · Check-in from 4:00 PM' }
+var stops = [
+  { lat:1.3521, lng:103.8198, color:'#ef4444', label:'✈', name:'Singapore Changi (SIN)', desc:'Depart 7:40 AM · SQ 632 · Terminal 2' },
+  { lat:35.7647, lng:140.3862, color:'#f0a500', label:'🛬', name:'Narita International (NRT)', desc:'Arrive ~16:25 JST · N\'EX to Shinagawa' },
+  { lat:35.5626, lng:139.7152, color:'#10b981', label:'🏨', name:'BON Tokyo Kamata Parkside', desc:'4-26-10 Kamata, Ota-ku · Check-in from 4 PM' }
 ];
-day1Stops.forEach(function (s) {
-  L.marker([s.lat, s.lng], { icon: mkIcon(s.color, s.label) })
-    .addTo(day1Map)
-    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+stops.forEach(function(s) {
+  L.marker([s.lat,s.lng],{icon:mkIcon(s.color,s.label)}).addTo(day1Map)
+    .bindPopup('<div class="popup-name">'+s.name+'</div><div class="popup-desc">'+s.desc+'</div>');
 });
-L.polyline(day1Stops.map(function (s) { return [s.lat, s.lng]; }), {
-  color: '#f0a500', weight: 2, dashArray: '6,6', opacity: 0.8
-}).addTo(day1Map);
-day1Map.fitBounds(L.latLngBounds(day1Stops.map(function (s) { return [s.lat, s.lng]; })), { padding: [24, 24] });
+L.polyline(stops.map(function(s){return[s.lat,s.lng];}),{color:'#f0a500',weight:2,dashArray:'6,6',opacity:0.8}).addTo(day1Map);
+day1Map.fitBounds(L.latLngBounds(stops.map(function(s){return[s.lat,s.lng];})),{padding:[24,24]});
 </script>
 </body>
 </html>
