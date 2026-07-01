@@ -239,7 +239,20 @@ body {
       <a href="https://uri.amap.com/marker?position=139.6996,35.6580&name=%E6%B8%8B%E8%B0%B7Mark%20City%20%E7%BE%8E%E7%99%BB%E5%88%A9%E5%AF%BF%E5%8F%B8" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
     </div>
 
-    <div id="shibuya-route-map" style="height:220px;border-radius:8px;overflow:hidden;margin-top:12px;border:1px solid rgba(255,255,255,0.08);"></div>
+    <button onclick="toggleShibFs()" style="display:block;width:100%;margin-top:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+
+    <div style="position:relative;margin-top:10px;">
+      <div id="shibuya-route-map" style="width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setShibType('satellite')" id="shib-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setShibType('street')" id="shib-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start / End</span><span class="zh">起点/终点</span><br>
+        <span style="color:#f0a500;">●</span> <span class="en">Transfer</span><span class="zh">换乘</span>
+      </div>
+      <button id="shib-close" onclick="toggleShibFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
   </div>
 
   <div class="section-title">🗺️ <span class="en">Base</span><span class="zh">基地</span></div>
@@ -357,24 +370,74 @@ L.marker([35.5626, 139.7152], { icon: mkIcon('#10b981', '🏠') })
   .openPopup();
 
 // ── SHIBUYA LUNCH ROUTE MAP ──
-var shibMap = L.map('shibuya-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.60, 139.71], 11);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: '© Esri', maxZoom: 18
-}).addTo(shibMap);
+var shibMap = L.map('shibuya-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.60, 139.72], 12);
+var shibTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+shibTiles.street.addTo(shibMap);
+var shibCur = 'street';
+window.setShibType = function (type) {
+  if (type === shibCur) return;
+  shibMap.removeLayer(shibTiles[shibCur]);
+  shibTiles[type].addTo(shibMap);
+  shibCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('shib-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('shib-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+// Numbered stop markers
+function shibNumIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:13px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + num + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
 var shibStops = [
-  { lat: 35.5626, lng: 139.7152, color: '#10b981', label: '🏠', name: 'Kamata Hotel', desc: 'Start — walk to Keikyu Kamata Station' },
-  { lat: 35.6284, lng: 139.7387, color: '#f0a500', label: '⇄', name: 'Shinagawa 品川', desc: 'Change to JR Yamanote Line' },
-  { lat: 35.6580, lng: 139.7016, color: '#3b82f6', label: '🍣', name: 'Shibuya Mark City 4F', desc: 'Sushi no Midori — via Hachiko Exit / Mark City walkway' }
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', num: '1', name: '🏠 Kamata Hotel — Start', desc: 'BON Tokyo Kamata Parkside · walk to Keikyu Kamata Station (~5 min)' },
+  { lat: 35.6284, lng: 139.7387, color: '#f0a500', num: '2', name: '⇄ Shinagawa 品川', desc: 'Change from Keikyu Line to JR Yamanote Line' },
+  { lat: 35.6580, lng: 139.7016, color: '#ef4444', num: '3', name: '🍣 Shibuya Mark City 4F — End', desc: 'Sushi no Midori · via Hachiko Exit / Mark City walkway' }
 ];
 shibStops.forEach(function (s) {
-  L.marker([s.lat, s.lng], { icon: mkIcon(s.color, s.label) })
+  L.marker([s.lat, s.lng], { icon: shibNumIcon(s.color, s.num) })
     .addTo(shibMap)
     .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
 });
-L.polyline(shibStops.map(function (s) { return [s.lat, s.lng]; }), {
-  color: '#f0a500', weight: 3, dashArray: '8,5', opacity: 0.9
-}).addTo(shibMap);
-shibMap.fitBounds(L.latLngBounds(shibStops.map(function (s) { return [s.lat, s.lng]; })), { padding: [24, 24] });
+
+// Route path approximating the actual rail alignment (Keikyu Line curving along the bay,
+// then JR Yamanote Line looping west through Osaki/Gotanda/Meguro/Ebisu) — not a straight line.
+var shibRoute = [
+  [35.5626, 139.7152], // Kamata Hotel
+  [35.5641, 139.7189], // Keikyu Kamata Station
+  [35.5751, 139.7259], // Heiwajima
+  [35.5860, 139.7308], // Oomori-Kaigan
+  [35.5975, 139.7345], // Tachiaigawa
+  [35.6090, 139.7370], // Samezu
+  [35.6284, 139.7387], // Shinagawa
+  [35.6197, 139.7284], // Osaki
+  [35.6260, 139.7235], // Gotanda
+  [35.6339, 139.7157], // Meguro
+  [35.6467, 139.7100], // Ebisu
+  [35.6580, 139.7016]  // Shibuya Mark City
+];
+L.polyline(shibRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(shibMap);
+shibMap.fitBounds(L.latLngBounds(shibRoute), { padding: [28, 28] });
+
+// Fullscreen toggle (CSS-based — works on iOS, unlike requestFullscreen)
+var shibFs = false;
+window.toggleShibFs = function () {
+  var el = document.getElementById('shibuya-route-map');
+  var close = document.getElementById('shib-close');
+  shibFs = !shibFs;
+  el.style.cssText = shibFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = shibFs ? 'block' : 'none';
+  setTimeout(function () { shibMap.invalidateSize(); }, 50);
+};
 </script>
 </body>
 </html>
