@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="apple-touch-icon" href="img_xj/xj_icon.jpg">
+<link rel="manifest" href="mt09-manifest.json">
+<meta name="theme-color" content="#0d1117">
 <meta property="og:image" content="https://paulsworld.vercel.app/img_xj/xj_icon.jpg">
 <title>MT09: Xinjiang 2026 — Full 16-Day Self-Drive Route Map · 28 Aug – 14 Sep 2026</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
@@ -316,11 +318,13 @@
     <div style="display:flex;gap:8px;align-items:center;">
       
       <button id="lang-btn" onclick="toggleLang()" style="background:rgba(26,188,156,0.15);border:1px solid rgba(26,188,156,0.4);color:#1abc9c;font-size:0.95em;font-weight:700;padding:6px 14px;border-radius:16px;cursor:pointer;white-space:nowrap;">中文</button>
+      <button id="offline-btn" onclick="saveForOffline()" style="background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.95em;font-weight:700;padding:6px 14px;border-radius:16px;cursor:pointer;white-space:nowrap;">📥 Save Offline</button>
       <button onclick="shareThisPage()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:0.95em;font-weight:700;padding:6px 14px;border-radius:16px;cursor:pointer;white-space:nowrap;">🔗 Share</button>
     </div>
   </div>
 </div>
 <div id="shareToast" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);">✅ Link copied!</div>
+<div id="offlineToast" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);">📥 Saved — this page now works offline</div>
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
@@ -2079,6 +2083,40 @@ function shareThisPage(){
       setTimeout(function(){t.style.display='none';},2200);
     });
   }
+}
+
+// Offline support: service worker caches this page, the map tiles, photos
+// and PDFs seen while online so the whole page still works with no signal.
+var mt09SwReg = null;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/mt09-sw.js').then(function(reg){
+      mt09SwReg = reg;
+    }).catch(function(){});
+  });
+}
+
+function saveForOffline(){
+  var btn = document.getElementById('offline-btn');
+  var t = document.getElementById('offlineToast');
+  function showSaved(){
+    btn.textContent = '✅ Offline Ready';
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 2600);
+  }
+  if (!('serviceWorker' in navigator)) {
+    showSaved();
+    return;
+  }
+  btn.textContent = '⏳ Saving…';
+  navigator.serviceWorker.ready.then(function(){
+    // Touch every image + map tile currently on screen so the SW's fetch
+    // handler pulls them into cache, on top of the core assets it precaches.
+    document.querySelectorAll('img').forEach(function(img){
+      if (img.src) fetch(img.src).catch(function(){});
+    });
+    showSaved();
+  }).catch(showSaved);
 }
 </script>
 <a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
