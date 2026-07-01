@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T09: Astrea PE Bond — Sell Reminder (Long Overdue)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #1e3a8a;
+      --blue-light: #dbe4ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+      --green: #16a34a;
+      --red: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:'Source Serif 4', Georgia, serif; background:var(--warm); color:var(--text); font-size:18px; line-height:1.8; }
+
+    .home-btn { position:fixed; top:16px; left:16px; z-index:100; background:var(--blue-dark); color:white; text-decoration:none; font-size:0.85em; font-weight:600; padding:10px 18px; border-radius:30px; box-shadow:0 4px 14px rgba(30,58,138,0.35); transition:transform 0.2s; display:flex; align-items:center; gap:6px; }
+    .home-btn:hover { transform:translateY(-2px); }
+
+    .lang-toggle { position:fixed; top:16px; right:16px; z-index:100; display:flex; gap:6px; }
+    .lang-btn { background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:#fff; font-size:0.78rem; font-weight:700; padding:7px 14px; border-radius:20px; cursor:pointer; }
+    .lang-btn.active { background:#f4813f; border-color:#f4813f; color:#1a1a2e; }
+
+    .hero { background:linear-gradient(135deg,#1e3a8a 0%,#2746b8 50%,#4a6cf7 100%); min-height:52vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:80px 24px 50px; position:relative; overflow:hidden; }
+    .hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.30) 0%, transparent 60%),radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%); }
+    .hero-inner { position:relative; z-index:2; max-width:720px; }
+    .hero-tag { display:inline-block; background:rgba(244,129,63,0.22); border:1px solid rgba(244,129,63,0.5); color:#fcd9bf; font-size:0.8em; letter-spacing:2px; text-transform:uppercase; padding:6px 16px; border-radius:20px; margin-bottom:20px; }
+    .hero h1 { font-family:'Playfair Display', serif; font-size:clamp(1.7em, 5vw, 2.7em); font-weight:900; color:white; line-height:1.25; margin-bottom:16px; }
+    .hero h1 span { color:var(--accent); }
+    .hero-sub { color:rgba(255,255,255,0.82); font-size:1.02em; font-style:italic; max-width:560px; margin:0 auto 24px; }
+
+    .share-btn { display:inline-block; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; letter-spacing:.04em; padding:10px 24px; border-radius:30px; cursor:pointer; font-size:0.92rem; font-family:'Source Serif 4',Georgia,serif; margin-top:6px; transition:background .2s; }
+    .share-btn:hover { background:rgba(255,255,255,.25); }
+    .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+    .article-wrap { max-width:720px; margin:0 auto; padding:0 20px 60px; }
+
+    /* REMINDER CARD */
+    .reminder-card { background:white; border-radius:16px; padding:26px 28px; margin:-30px auto 34px; box-shadow:0 8px 30px rgba(0,0,0,0.12); border-left:6px solid var(--red); }
+    .reminder-card.done { border-left-color:var(--green); opacity:0.75; }
+    .reminder-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .reminder-title { font-family:'Playfair Display', serif; font-size:1.25em; color:var(--ink); font-weight:700; }
+    .reminder-days { font-weight:800; font-size:0.95em; padding:5px 14px; border-radius:20px; white-space:nowrap; }
+    .reminder-days.overdue { background:#fee2e2; color:#b91c1c; }
+    .reminder-days.ok { background:#dcfce7; color:#15803d; }
+    .reminder-row { display:flex; align-items:center; gap:10px; margin-top:16px; flex-wrap:wrap; }
+    .reminder-row label { font-size:0.85em; color:var(--muted); font-weight:600; }
+    .reminder-row input[type="date"] { font-family:inherit; font-size:0.9em; padding:6px 10px; border:1.5px solid #e5e7eb; border-radius:8px; }
+    .mark-done-btn { background:var(--green); color:white; border:none; padding:9px 18px; border-radius:20px; font-weight:700; font-size:0.85em; cursor:pointer; font-family:inherit; }
+    .mark-done-btn.is-done { background:var(--muted); }
+
+    .section { margin-bottom:40px; }
+    .section h2 { font-family:'Playfair Display', serif; font-size:1.5em; color:var(--ink); margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid var(--blue-light); display:flex; align-items:center; gap:10px; }
+    .section p { margin-bottom:16px; }
+
+    .checklist { list-style:none; padding:0; margin:14px 0 0; counter-reset:step; }
+    .checklist li { counter-increment:step; padding:14px 16px 14px 54px; position:relative; margin-bottom:12px; background:white; border-radius:12px; font-size:0.98em; box-shadow:0 3px 10px rgba(0,0,0,0.06); }
+    .checklist li::before { content:counter(step); position:absolute; left:16px; top:50%; transform:translateY(-50%); width:28px; height:28px; background:var(--blue); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85em; }
+
+    .insight { background:linear-gradient(135deg,#eef2ff,#dbe4ff); border:1.5px solid #a5b4fc; border-radius:14px; padding:22px 26px; margin:28px 0; }
+    .insight h3 { font-family:'Playfair Display', serif; color:var(--blue-dark); font-size:1.1em; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+    .insight p { color:#1e3a8a; margin:0; }
+
+    .warning { background:linear-gradient(135deg,#fff7ed,#ffedd5); border:1.5px solid var(--accent); border-radius:14px; padding:22px 26px; margin:28px 0; }
+    .warning h3 { font-family:'Playfair Display', serif; color:#c2410c; font-size:1.1em; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .warning ul { margin:0 0 0 20px; }
+    .warning li { margin-bottom:8px; color:#7c2d12; }
+
+    .disclaimer { background:#f3f4f6; border:1px dashed #9ca3af; border-radius:12px; padding:20px 24px; margin:36px 0; font-size:0.88em; color:var(--muted); line-height:1.7; }
+    .disclaimer strong { color:#4b5563; }
+
+    footer { text-align:center; padding:24px; color:var(--muted); font-size:0.85em; border-top:1px solid #e5e7eb; }
+
+    .zh, .zh-block { display:none; }
+    body.zh-mode .en { display:none; }
+    body.zh-mode .zh { display:inline; }
+    body.zh-mode .zh-block { display:block; }
+  </style>
+</head>
+<body>
+
+  <a class="home-btn" href="/tools.html">🏠 <span class="en">Home</span><span class="zh">主页</span></a>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">🇬🇧 EN</button>
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">🇨🇳 中</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-tag"><span class="en">Investment Tools · T09</span><span class="zh">投资工具 · T09</span></div>
+      <h1>Astrea PE Bond<br><span>— <span class="en">How to Sell</span><span class="zh">如何卖出</span></span></h1>
+      <p class="hero-sub"><span class="en">My long-overdue reminder to actually deal with this holding — plus the plain-English steps for how to sell it.</span><span class="zh">提醒自己终于处理这笔持仓——以及卖出的简单步骤。</span></p>
+      <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    </div>
+  </header>
+
+  <div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+  <div class="article-wrap">
+
+    <!-- REMINDER CARD -->
+    <div class="reminder-card" id="reminderCard">
+      <div class="reminder-top">
+        <div class="reminder-title">📌 <span class="en">Astrea 8, Class A-1 Bond</span><span class="zh">Astrea 8 A-1级债券</span></div>
+        <div class="reminder-days" id="reminderDays">—</div>
+      </div>
+      <div class="reminder-row">
+        <label class="en" for="reminderDate">Reminder date set for:</label>
+        <label class="zh" for="reminderDate">提醒日期：</label>
+        <input type="date" id="reminderDate">
+        <button class="mark-done-btn" id="markDoneBtn" onclick="toggleDone()">
+          <span class="en">Mark as Sold</span><span class="zh">标记为已卖出</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- WHAT IS IT -->
+    <div class="section">
+      <h2>📖 <span class="en">What Is This, Again?</span><span class="zh">这到底是什么？</span></h2>
+      <p class="en">Astrea bonds (from Astrea IV through Astrea 8) are retail bonds issued out of Singapore, backed by cash flows from a portfolio of private-equity funds rather than by a single company. They're sold in board lots on SGX and pay a fixed coupon, usually with an "optional redemption" (call) date years before the final legal maturity.</p>
+      <p class="zh-block">Astrea系列债券（从Astrea IV到Astrea 8）是新加坡发行的零售债券，由一篮子私募股权基金的现金流作为担保，而非单一公司信用。它们在新加坡交易所以整手交易，支付固定票息，通常在最终到期日之前设有"可选赎回日"（提前赎回日）。</p>
+    </div>
+
+    <!-- HOW TO SELL -->
+    <div class="section">
+      <h2>💰 <span class="en">How to Sell It</span><span class="zh">如何卖出</span></h2>
+      <ol class="checklist">
+        <li><span class="en"><strong>Open your brokerage app</strong> (the one that holds this bond — e.g. Tiger, IBKR, POEMS, DBS Vickers) and find the bond under your portfolio holdings, not the stock list.</span><span class="zh-block"><strong>打开你的券商App</strong>（持有该债券的那个，如老虎证券、IBKR、POEMS、DBS Vickers），在"持仓"里找到该债券，而不是股票列表。</span></li>
+        <li><span class="en">Check the <strong>current bid price</strong> and yield. Astrea bonds can be thinly traded, so the bid may sit below par (100) — compare it to what you paid.</span><span class="zh-block">查看<strong>当前买盘价</strong>和收益率。Astrea债券成交量可能不大，买盘价可能低于面值（100）——与你的买入价比较。</span></li>
+        <li><span class="en">Check the <strong>next optional redemption (call) date</strong>. If it's close, the issuer may redeem the whole tranche at par soon — sometimes it's better to just wait than sell at a discount now.</span><span class="zh-block">查看<strong>下一个可选赎回日</strong>。如果日期临近，发行方可能很快按面值赎回整批债券——有时候等待赎回比现在折价卖出更划算。</span></li>
+        <li><span class="en">If you still want to sell now, place a <strong>limit sell order</strong> (not a market order) at or near the current bid, in board-lot size, through the brokerage app.</span><span class="zh-block">如果仍想现在卖出，通过券商App以整手为单位，按接近当前买盘价下<strong>限价卖单</strong>（不要用市价单）。</span></li>
+        <li><span class="en">Settlement is typically <strong>T+2</strong>. Once it clears, proceeds land in your brokerage cash account — you can then withdraw to your bank as usual.</span><span class="zh-block">结算通常为<strong>T+2</strong>（交易后两个工作日）。到账后，款项会进入你的券商现金账户，之后可照常提款到银行。</span></li>
+        <li><span class="en">If you're unsure which class (A-1, A-2, B, C etc.) or CUSIP/ISIN you hold, call your broker's helpline and quote the bond name shown in your portfolio — they can confirm the exact code before you sell.</span><span class="zh-block">如果不确定持有的是哪一级（A-1、A-2、B、C等）或具体代码，可致电券商客服，报出持仓中显示的债券名称，请他们在卖出前帮你确认。</span></li>
+      </ol>
+    </div>
+
+    <div class="insight">
+      <h3>💡 <span class="en">Sell vs. Hold to Call</span><span class="zh">卖出 vs. 等待赎回</span></h3>
+      <p class="en">Selling now locks in whatever the market bid is today. Holding until the optional redemption date usually gets you par (100) plus accrued interest — often the better outcome if that date isn't far off. Check the date before you rush to sell.</p>
+      <p class="zh-block" style="margin-top:8px;">现在卖出，锁定的是当前市场买盘价。持有到可选赎回日通常能拿回面值（100）加应计利息——如果赎回日不远，往往是更好的选择。卖出前先查一下日期。</p>
+    </div>
+
+    <div class="warning">
+      <h3>⚠️ <span class="en">Before You Act</span><span class="zh">行动前请注意</span></h3>
+      <ul>
+        <li class="en">Bond prices move with interest rates and credit sentiment — the bid today may differ from last time you checked.</li>
+        <li class="zh-block">债券价格会随利率和市场信心波动——今天的买盘价可能与你上次查看时不同。</li>
+        <li class="en">Confirm there are no early-redemption notices already issued for your tranche — check your broker's notifications or the SGX announcement page.</li>
+        <li class="zh-block">确认你持有的分级没有已发出的提前赎回通知——可查看券商通知或新交所公告页面。</li>
+        <li class="en">This is a reminder and general process guide only — not a recommendation to buy, sell, or hold any specific bond.</li>
+        <li class="zh-block">这只是提醒和一般流程指南——并非对任何具体债券买入、卖出或持有的建议。</li>
+      </ul>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> <span class="en">This page is for personal reference only, written in plain language as a reminder to myself. It is not financial advice. Always check current prices, redemption notices, and terms with your own broker or a licensed financial adviser before selling any bond.</span><span class="zh-block">本页仅供个人参考，用简单的语言写给自己作提醒，并非投资建议。卖出任何债券前，请务必向你的券商或持牌财务顾问核实当前价格、赎回通知及条款。</span>
+    </div>
+
+    <!-- VIEW COUNTER -->
+    <div style="text-align:center; margin:40px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+  <a href="/tools.html" title="Back to Investment Tools" style="position:fixed;left:18px;bottom:18px;z-index:99999;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#0e1330,#1a2a6c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.45);border:2px solid #10b981;">&#128200;</a>
+
+  <script>
+    // ---- Language toggle ----
+    function setLang(lang) {
+      document.body.classList.toggle('zh-mode', lang === 'zh');
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+      localStorage.setItem('paulsworld.t09.lang', lang);
+      if (typeof renderReminder === 'function') renderReminder();
+    }
+    // ---- Share ----
+    function shareThisPage(){
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(url).then(function(){
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function(){ t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+
+    // ---- Reminder / overdue tracker (localStorage-backed) ----
+    var LS_DATE = 'paulsworld.t09.reminderDate';
+    var LS_DONE = 'paulsworld.t09.done';
+
+    var dateInput = document.getElementById('reminderDate');
+    var daysEl = document.getElementById('reminderDays');
+    var card = document.getElementById('reminderCard');
+    var doneBtn = document.getElementById('markDoneBtn');
+
+    function todayISO() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    var savedDate = localStorage.getItem(LS_DATE);
+    if (!savedDate) {
+      // Default: 30 days ago, so it starts life already "overdue" until Paul sets his real date.
+      var d = new Date();
+      d.setDate(d.getDate() - 30);
+      savedDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    dateInput.value = savedDate;
+
+    function renderReminder() {
+      var iso = dateInput.value;
+      var parts = iso.split('-').map(Number);
+      var target = new Date(parts[0], parts[1]-1, parts[2]);
+      var now = new Date();
+      var todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      var days = Math.round((todayMid - target) / 86400000);
+
+      var isDone = localStorage.getItem(LS_DONE) === '1';
+      var isZh = document.body.classList.contains('zh-mode');
+
+      if (isDone) {
+        daysEl.textContent = isZh ? '✅ 已卖出' : '✅ Sold';
+        daysEl.className = 'reminder-days ok';
+        card.classList.add('done');
+        doneBtn.classList.add('is-done');
+      } else {
+        card.classList.remove('done');
+        doneBtn.classList.remove('is-done');
+        if (days > 0) {
+          daysEl.textContent = isZh ? ('已逾期 ' + days + ' 天') : (days + ' day' + (days === 1 ? '' : 's') + ' overdue');
+          daysEl.className = 'reminder-days overdue';
+        } else if (days === 0) {
+          daysEl.textContent = isZh ? '今天到期' : 'Due today';
+          daysEl.className = 'reminder-days overdue';
+        } else {
+          daysEl.textContent = isZh ? ('还剩 ' + Math.abs(days) + ' 天') : (Math.abs(days) + ' day' + (Math.abs(days) === 1 ? '' : 's') + ' left');
+          daysEl.className = 'reminder-days ok';
+        }
+      }
+    }
+
+    dateInput.addEventListener('change', function () {
+      localStorage.setItem(LS_DATE, dateInput.value);
+      renderReminder();
+    });
+
+    function toggleDone() {
+      var isDone = localStorage.getItem(LS_DONE) === '1';
+      localStorage.setItem(LS_DONE, isDone ? '0' : '1');
+      renderReminder();
+    }
+
+    renderReminder();
+
+    var savedLang = localStorage.getItem('paulsworld.t09.lang');
+    if (savedLang === 'zh') setLang('zh');
+  </script>
+
+</body>
+</html>
