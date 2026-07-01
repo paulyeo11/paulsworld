@@ -79,7 +79,7 @@
 
     footer { text-align:center; padding:24px; color:var(--muted); font-size:0.85em; border-top:1px solid #e5e7eb; }
 
-    .zh { display:none; }
+    .zh, .zh-block { display:none; }
     body.zh-mode .en { display:none; }
     body.zh-mode .zh { display:inline; }
     body.zh-mode .zh-block { display:block; }
@@ -96,7 +96,7 @@
   <header class="hero">
     <div class="hero-inner">
       <div class="hero-tag"><span class="en">Investment Tools · T09</span><span class="zh">投资工具 · T09</span></div>
-      <h1><span class="en">Astrea PE Bond</span><br><span>— <span class="en">How to Sell</span><span class="zh">如何卖出</span></span></h1>
+      <h1>Astrea PE Bond<br><span>— <span class="en">How to Sell</span><span class="zh">如何卖出</span></span></h1>
       <p class="hero-sub"><span class="en">My long-overdue reminder to actually deal with this holding — plus the plain-English steps for how to sell it.</span><span class="zh">提醒自己终于处理这笔持仓——以及卖出的简单步骤。</span></p>
       <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
     </div>
@@ -184,10 +184,8 @@
       document.getElementById('btn-en').classList.toggle('active', lang === 'en');
       document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
       localStorage.setItem('paulsworld.t09.lang', lang);
+      if (typeof renderReminder === 'function') renderReminder();
     }
-    var savedLang = localStorage.getItem('paulsworld.t09.lang');
-    if (savedLang === 'zh') setLang('zh');
-
     // ---- Share ----
     function shareThisPage(){
       var url = window.location.href;
@@ -235,9 +233,10 @@
       var days = Math.round((todayMid - target) / 86400000);
 
       var isDone = localStorage.getItem(LS_DONE) === '1';
+      var isZh = document.body.classList.contains('zh-mode');
 
       if (isDone) {
-        daysEl.textContent = '✅ Sold';
+        daysEl.textContent = isZh ? '✅ 已卖出' : '✅ Sold';
         daysEl.className = 'reminder-days ok';
         card.classList.add('done');
         doneBtn.classList.add('is-done');
@@ -245,13 +244,13 @@
         card.classList.remove('done');
         doneBtn.classList.remove('is-done');
         if (days > 0) {
-          daysEl.textContent = days + ' day' + (days === 1 ? '' : 's') + ' overdue';
+          daysEl.textContent = isZh ? ('已逾期 ' + days + ' 天') : (days + ' day' + (days === 1 ? '' : 's') + ' overdue');
           daysEl.className = 'reminder-days overdue';
         } else if (days === 0) {
-          daysEl.textContent = 'Due today';
+          daysEl.textContent = isZh ? '今天到期' : 'Due today';
           daysEl.className = 'reminder-days overdue';
         } else {
-          daysEl.textContent = Math.abs(days) + ' day' + (Math.abs(days) === 1 ? '' : 's') + ' left';
+          daysEl.textContent = isZh ? ('还剩 ' + Math.abs(days) + ' 天') : (Math.abs(days) + ' day' + (Math.abs(days) === 1 ? '' : 's') + ' left');
           daysEl.className = 'reminder-days ok';
         }
       }
@@ -269,6 +268,9 @@
     }
 
     renderReminder();
+
+    var savedLang = localStorage.getItem('paulsworld.t09.lang');
+    if (savedLang === 'zh') setLang('zh');
   </script>
 
 </body>
