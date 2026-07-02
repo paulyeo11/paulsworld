@@ -229,6 +229,27 @@ body {
     </div>
   </div>
 
+  <div class="section-title">🗓️ <span class="en">Full Day 2 Walking Route</span><span class="zh">第二天完整步行路线</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">🚶 <span class="en">Hotel → Shibuya → Sushi lunch → Yoyogi Park → back to hotel · tap any pin for the photo</span><span class="zh">酒店 → 涩谷 → 午餐 → 代代木公园 → 返回酒店 · 点击图钉查看照片</span></div>
+
+    <button onclick="toggleFullDayFs()" style="display:block;width:100%;margin-bottom:10px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+
+    <div style="position:relative;">
+      <div id="fullday-map" style="width:100%;height:340px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setFullDayType('satellite')" id="fullday-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setFullDayType('street')" id="fullday-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start / End</span><span class="zh">起点/终点</span><br>
+        <span style="color:#f0a500;">●</span> <span class="en">Transport / crossing</span><span class="zh">交通/路口</span><br>
+        <span style="color:#10b981;">●</span> <span class="en">Park / nature</span><span class="zh">公园/自然</span>
+      </div>
+      <button id="fullday-close" onclick="toggleFullDayFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
+  </div>
+
   <div class="section-title">🍣 <span class="en">Route — Kamata to Sushi no Midori, Shibuya</span><span class="zh">路线 — 蒲田至涩谷美登利寿司</span></div>
   <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
     <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">🚃 <span class="en">Train Route · ~30 min · ~¥330 (~S$2.90)</span><span class="zh">电车路线 · 约30分钟 · 约¥330（约S$2.90）</span></div>
@@ -664,6 +685,89 @@ L.marker([35.5626, 139.7152], { icon: mkIcon('#10b981', '🏠') })
   .addTo(day2Map)
   .bindPopup('<div class="popup-name">BON Tokyo Kamata Parkside</div><div class="popup-desc">4-26-10 Kamata, Ota-ku · Base for Day 2</div>')
   .openPopup();
+
+// ── FULL DAY 2 WALKING ROUTE MAP ──
+function openPhotoLightbox(src, caption) {
+  document.getElementById('lbImg').src = src;
+  document.getElementById('lbCaption').textContent = caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+var fullDayMap = L.map('fullday-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.63, 139.73], 12);
+var fullDayTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+fullDayTiles.street.addTo(fullDayMap);
+var fullDayCur = 'street';
+window.setFullDayType = function (type) {
+  if (type === fullDayCur) return;
+  fullDayMap.removeLayer(fullDayTiles[fullDayCur]);
+  fullDayTiles[type].addTo(fullDayMap);
+  fullDayCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('fullday-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('fullday-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+function fullDayNumIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:13px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + num + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+var dayStops = [
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', num: '1', name: '🏠 Hotel — Start', img: 'img_MT10-day2/04-hotel-exterior.jpg', caption: 'BON Tokyo Kamata Parkside · left at 9:40am' },
+  { lat: 35.5641, lng: 139.7189, color: '#f0a500', num: '2', name: '🚉 Keikyu Kamata Station', img: 'img_MT10-day2/07-kamata-departure-board.jpg', caption: 'Platform 6 · 9:55 Limited Express to Shinagawa' },
+  { lat: 35.6284, lng: 139.7387, color: '#f0a500', num: '3', name: '⇄ Shinagawa — Transfer', img: 'img_MT10-day2/08-shinagawa-yamanote-sign.jpg', caption: 'Changed to the JR Yamanote Line, outer loop toward Shibuya' },
+  { lat: 35.6580, lng: 139.7016, color: '#f0a500', num: '4', name: '🏙️ Shibuya Mark City', img: 'img_MT10-day2/14-shibuya-mark-city-entrance.jpg', caption: 'East Mall entrance, up to the 4th floor for lunch' },
+  { lat: 35.6579, lng: 139.7017, color: '#f0a500', num: '5', name: '🍣 Sushi no Midori', img: 'img_MT10-day2/18-sushi-midori-counter.jpg', caption: 'Lunch with Joanne\'s sister — queue number 5' },
+  { lat: 35.6595, lng: 139.7005, color: '#f0a500', num: '6', name: '🚦 Shibuya Scramble Crossing', img: 'img_MT10-day2/27-shibuya-crossing-street-view.jpg', caption: 'The famous crossing, street level in the rain' },
+  { lat: 35.6605, lng: 139.6987, color: '#f0a500', num: '7', name: '🏢 Shibuya MODI, Koen-dori', img: 'img_MT10-day2/28-shibuya-modi-koendori.jpg', caption: 'Walking up Park Street toward Yoyogi Park' },
+  { lat: 35.6716, lng: 139.6947, color: '#10b981', num: '8', name: '🌳 Yoyogi Park — Harajuku Gate', img: 'img_MT10-day2/29-yoyogi-park-map-board.jpg', caption: 'Entered near NHK Hall' },
+  { lat: 35.6720, lng: 139.6940, color: '#10b981', num: '9', name: '🌸 Flower Land', img: 'img_MT10-day2/30-yoyogi-flowerland-1.jpg', caption: 'Black-eyed Susans, coneflowers and agastache in bloom' },
+  { lat: 35.6710, lng: 139.6930, color: '#10b981', num: '10', name: '🏟️ Yoyogi National Gymnasium view', img: 'img_MT10-day2/37-yoyogi-national-gymnasium.jpg', caption: 'Kenzo Tange\'s 1964 Olympics masterpiece, glimpsed through the trees' },
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', num: '11', name: '🏠 Hotel — End', img: 'img_MT10-day2/04-hotel-exterior.jpg', caption: 'Back to Kamata for dinner & rest' }
+];
+dayStops.forEach(function (s) {
+  var escCaption = s.caption.replace(/'/g, "\\'");
+  L.marker([s.lat, s.lng], { icon: fullDayNumIcon(s.color, s.num) })
+    .addTo(fullDayMap)
+    .bindPopup(
+      '<div class="popup-name">' + s.name + '</div>' +
+      '<img src="' + s.img + '" style="width:100%;max-width:220px;border-radius:8px;margin:6px 0;cursor:pointer;" onclick="openPhotoLightbox(\'' + s.img + '\',\'' + escCaption + '\')">' +
+      '<div class="popup-desc">' + s.caption + '</div>' +
+      '<button onclick="openPhotoLightbox(\'' + s.img + '\',\'' + escCaption + '\')" style="margin-top:6px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.75rem;font-weight:700;padding:5px 12px;border-radius:14px;cursor:pointer;">🔍 View Full Photo</button>'
+    );
+});
+
+// Full-day route line — rail curve out via Shinagawa/Yamanote, walk to Yoyogi Park, then the same corridor back.
+var fullDayRoute = [
+  [35.5626, 139.7152], [35.5641, 139.7189], [35.5751, 139.7259], [35.5860, 139.7308],
+  [35.5975, 139.7345], [35.6090, 139.7370], [35.6284, 139.7387], [35.6197, 139.7284],
+  [35.6260, 139.7235], [35.6339, 139.7157], [35.6467, 139.7100], [35.6580, 139.7016],
+  [35.6595, 139.7005], [35.6605, 139.6987], [35.6654, 139.6968], [35.6716, 139.6947],
+  [35.6720, 139.6940], [35.6710, 139.6930],
+  [35.6716, 139.6947], [35.6605, 139.6987], [35.6580, 139.7016], [35.6467, 139.7100],
+  [35.6339, 139.7157], [35.6260, 139.7235], [35.6197, 139.7284], [35.6284, 139.7387],
+  [35.6090, 139.7370], [35.5975, 139.7345], [35.5860, 139.7308], [35.5751, 139.7259],
+  [35.5641, 139.7189], [35.5626, 139.7152]
+];
+L.polyline(fullDayRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(fullDayMap);
+fullDayMap.fitBounds(L.latLngBounds(fullDayRoute), { padding: [28, 28] });
+
+var fullDayFs = false;
+window.toggleFullDayFs = function () {
+  var el = document.getElementById('fullday-map');
+  var close = document.getElementById('fullday-close');
+  fullDayFs = !fullDayFs;
+  el.style.cssText = fullDayFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:340px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = fullDayFs ? 'block' : 'none';
+  setTimeout(function () { fullDayMap.invalidateSize(); }, 50);
+};
 
 // ── SHIBUYA LUNCH ROUTE MAP ──
 var shibMap = L.map('shibuya-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.60, 139.72], 12);
