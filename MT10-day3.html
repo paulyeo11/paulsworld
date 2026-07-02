@@ -160,6 +160,15 @@ body {
 
 <div class="content">
 
+  <div class="section-title">🌤️ <span class="en">Weather Forecast — Asakusa</span><span class="zh">天气预报 — 浅草</span></div>
+  <div id="weatherCard" style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;">
+    <div id="wxIcon" style="font-size:2.4em;line-height:1;">⏳</div>
+    <div style="flex:1;">
+      <div id="wxMain" style="font-size:0.98em;font-weight:700;color:#e6edf3;"><span class="en">Loading forecast…</span><span class="zh">加载天气中…</span></div>
+      <div id="wxSub" style="font-size:0.82em;color:#8b949e;margin-top:3px;"></div>
+    </div>
+  </div>
+
   <div class="section-title">📋 <span class="en">Day 3 Plan</span><span class="zh">第三天计划</span></div>
   <div class="timeline">
     <div class="tl-item">
@@ -381,6 +390,42 @@ function updateBanner() {
 }
 updateBanner();
 setInterval(updateBanner, 60000);
+
+// ── WEATHER FORECAST (Asakusa, 3 Jul 2026) ──
+function loadWeather() {
+  var iconEl = document.getElementById('wxIcon');
+  var mainEl = document.getElementById('wxMain');
+  var subEl = document.getElementById('wxSub');
+  var wmoMap = {
+    0: ['☀️', 'Clear sky', '晴朗'],
+    1: ['🌤️', 'Mainly clear', '大致晴朗'],
+    2: ['⛅', 'Partly cloudy', '局部多云'],
+    3: ['☁️', 'Overcast', '阴天'],
+    45: ['🌫️', 'Fog', '有雾'], 48: ['🌫️', 'Fog', '有雾'],
+    51: ['🌦️', 'Light drizzle', '小毛毛雨'], 53: ['🌦️', 'Drizzle', '毛毛雨'], 55: ['🌦️', 'Dense drizzle', '密集毛毛雨'],
+    61: ['🌧️', 'Light rain', '小雨'], 63: ['🌧️', 'Rain', '中雨'], 65: ['🌧️', 'Heavy rain', '大雨'],
+    80: ['🌦️', 'Rain showers', '阵雨'], 81: ['🌧️', 'Rain showers', '阵雨'], 82: ['⛈️', 'Violent showers', '强阵雨'],
+    95: ['⛈️', 'Thunderstorm', '雷雨']
+  };
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=35.7108&longitude=139.7967&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&start_date=2026-07-03&end_date=2026-07-03')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var code = d.daily.weathercode[0];
+      var hi = Math.round(d.daily.temperature_2m_max[0]);
+      var lo = Math.round(d.daily.temperature_2m_min[0]);
+      var pop = d.daily.precipitation_probability_max[0];
+      var w = wmoMap[code] || ['🌡️', 'Forecast', '天气预报'];
+      iconEl.textContent = w[0];
+      mainEl.innerHTML = '<span class="en">' + w[1] + ' · ' + hi + '°C / ' + lo + '°C</span><span class="zh">' + w[2] + ' · ' + hi + '°C / ' + lo + '°C</span>';
+      subEl.innerHTML = '<span class="en">Rain chance ' + pop + '% · Fri, 3 Jul · Asakusa</span><span class="zh">降雨概率 ' + pop + '% · 7月3日周五 · 浅草</span>';
+    })
+    .catch(function () {
+      iconEl.textContent = '🌦️';
+      mainEl.innerHTML = '<span class="en">~27°C / 23°C, humid</span><span class="zh">约27°C / 23°C，湿度较高</span>';
+      subEl.innerHTML = '<span class="en">Early rainy season — pack an umbrella (live forecast unavailable)</span><span class="zh">梅雨季节 — 请带雨伞（无法获取实时预报）</span>';
+    });
+}
+loadWeather();
 
 // ── PHOTO JOURNAL DATA (empty until Day 3 happens) ──
 const galleryPhotos = [];
