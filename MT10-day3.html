@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Day 3: Asakusa — 3 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.red  { color: #ef4444; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 22px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95em; background: #161b22; border: 2px solid #f0a500;
+  z-index: 1;
+}
+.tl-item:not(:last-child)::before {
+  content: ''; position: absolute; left: 14px; top: 30px; bottom: 0;
+  width: 2px; background: rgba(240,165,0,0.25);
+}
+.tl-time { font-size: 0.78em; color: #8b949e; font-family: monospace; }
+.tl-title { font-size: 0.98em; font-weight: 700; color: #e6edf3; margin-top: 1px; }
+.tl-sub { font-size: 0.85em; color: #8b949e; margin-top: 3px; line-height: 1.55; }
+.tl-sub strong { color: #c9d1d9; }
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL (ready for when photos are added) */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; display: block; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* MAP */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#day3map { width: 100%; height: 240px; }
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · Day 3 <span class="gold">Asakusa</span></h1>
+  <div class="header-sub"><span class="en">Old Tokyo walk — Senso-ji &amp; Nakamise · Fri, 3 Jul 2026</span><span class="zh">老东京漫步 — 浅草寺与仲见世通 · 2026年7月3日（周五）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
+    <a href="MT10-day2.html" class="day-chip">📔 <span class="en">Day 2</span><span class="zh">第二天</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">📋 <span class="en">Day 3 Plan</span><span class="zh">第三天计划</span></div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot">☀️</div>
+      <div>
+        <div class="tl-time"><span class="en">Morning</span><span class="zh">早上</span></div>
+        <div class="tl-title"><span class="en">Wake up in Kamata</span><span class="zh">在蒲田醒来</span></div>
+        <div class="tl-sub"><span class="en">Third morning based at BON Tokyo Kamata Parkside — breakfast, then head out for old Tokyo.</span><span class="zh">在BON东京蒲田Parkside的第三个早晨 — 用过早餐后出发前往老东京。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚃</div>
+      <div>
+        <div class="tl-time"><span class="en">Late morning</span><span class="zh">上午晚些时候</span></div>
+        <div class="tl-title"><span class="en">Train to Asakusa</span><span class="zh">乘车前往浅草</span></div>
+        <div class="tl-sub"><span class="en">Keikyu Line → Sengakuji, transfer to the Toei Asakusa Line straight through to Asakusa Station. No changes at busy Shinagawa/Shibuya-style hubs — a calmer ride than Day 2.</span><span class="zh">京急线 → 泉岳寺，转乘都营浅草线直达浅草站。不需要在品川/涩谷那样繁忙的枢纽换乘 — 比第二天更轻松。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">⛩️</div>
+      <div>
+        <div class="tl-time"><span class="en">Arrive</span><span class="zh">抵达</span></div>
+        <div class="tl-title"><span class="en">Kaminarimon Gate</span><span class="zh">雷门</span></div>
+        <div class="tl-sub"><span class="en">The giant red lantern marking the entrance to Senso-ji — Tokyo's oldest temple, founded 645 AD.</span><span class="zh">巨大的红灯笼标志着浅草寺的入口 — 东京最古老的寺庙，始建于公元645年。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🛍️</div>
+      <div>
+        <div class="tl-time"><span class="en">Late morning</span><span class="zh">上午晚些时候</span></div>
+        <div class="tl-title"><span class="en">Walk Nakamise-dori</span><span class="zh">漫步仲见世通</span></div>
+        <div class="tl-sub"><span class="en">Slow stroll down the ~250 m shopping street to the temple — senbei, souvenirs, yukata, ningyo-yaki stalls the whole way. Flat, easy pace, lots of benches nearby.</span><span class="zh">沿约250米的仲见世商店街慢慢走到寺庙 — 一路都是仙贝、纪念品、浴衣、人形烧摊位。路面平坦，节奏轻松，附近长椅很多。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🍜</div>
+      <div>
+        <div class="tl-time"><span class="en">Lunch</span><span class="zh">午餐</span></div>
+        <div class="tl-title"><span class="en">Lunch near Senso-ji</span><span class="zh">浅草寺附近用午餐</span></div>
+        <div class="tl-sub"><span class="en">Plenty of small tempura and unagi restaurants tucked around the temple grounds and side streets.</span><span class="zh">寺庙周边和小巷里有不少天妇罗和鳗鱼小店。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🌉</div>
+      <div>
+        <div class="tl-time"><span class="en">Afternoon</span><span class="zh">下午</span></div>
+        <div class="tl-title"><span class="en">Sumida River &amp; Skytree view</span><span class="zh">隅田川与晴空塔景观</span></div>
+        <div class="tl-sub"><span class="en">Short walk to the riverbank near Azumabashi Bridge for a clear view of Tokyo Skytree and the golden Asahi Beer flame sculpture across the water.</span><span class="zh">步行至吾妻桥附近的河岸，可清楚看到东京晴空塔和河对岸金色的朝日啤酒火焰雕塑。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🌃</div>
+      <div>
+        <div class="tl-time"><span class="en">Evening</span><span class="zh">晚上</span></div>
+        <div class="tl-title"><span class="en">Back to Kamata</span><span class="zh">返回蒲田</span></div>
+        <div class="tl-sub"><span class="en">Retrace the route via Sengakuji back to the hotel. Rest up for Day 4.</span><span class="zh">经泉岳寺原路返回酒店，为第四天休息。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">🚃 <span class="en">Route — Kamata to Asakusa</span><span class="zh">路线 — 蒲田至浅草</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">🚃 <span class="en">Train Route · ~35 min · ~¥430 (~S$3.80)</span><span class="zh">电车路线 · 约35分钟 · 约¥430（约S$3.80）</span></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#ef4444;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Walk to Keikyu Kamata Station</span><span class="zh">步行至京急蒲田站</span></strong><br>
+        <span style="color:#8b949e;"><span class="en">~5 min</span><span class="zh">约5分钟</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#f0a500;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Keikyu Line → Sengakuji</span><span class="zh">京急线 → 泉岳寺</span></strong><br>
+        <span style="color:#8b949e;"><span class="en">~20 min</span><span class="zh">约20分钟</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#3b82f6;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Same train continues onto Toei Asakusa Line → Asakusa</span><span class="zh">同一班列车直通都营浅草线 → 浅草</span></strong><br>
+        <span class="en">Most Keikyu trains through-run directly onto the Asakusa Line — no need to change platforms at Sengakuji. <strong style="color:#e6edf3;">~15 min</strong> more.</span>
+        <span class="zh">大多数京急列车会直通都营浅草线 — 在泉岳寺无需换乘台。再<strong style="color:#e6edf3;">约15分钟</strong>。</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <div style="background:#10b981;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">4</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Asakusa Station → Kaminarimon Gate</span><span class="zh">浅草站 → 雷门</span></strong><br>
+        <span class="en">Take <strong style="color:#e6edf3;">Exit A4</strong> — the gate and Nakamise-dori are right there, ~2 min walk.</span>
+        <span class="zh">走<strong style="color:#e6edf3;">A4出口</strong> — 雷门和仲见世通就在眼前，步行约2分钟。</span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+      <a href="https://maps.google.com/?q=35.7108,139.7967&label=Senso-ji+Asakusa" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+      <a href="https://map.baidu.com/search/%E6%B5%85%E8%8D%89%E5%AF%BA" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+      <a href="https://uri.amap.com/marker?position=139.7967,35.7108&name=%E6%B5%85%E8%8D%89%E5%AF%BA" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+    </div>
+
+    <button onclick="toggleAsakusaFs()" style="display:block;width:100%;margin-top:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+
+    <div style="position:relative;margin-top:10px;">
+      <div id="asakusa-route-map" style="width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setAsakusaType('satellite')" id="asak-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setAsakusaType('street')" id="asak-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start / End</span><span class="zh">起点/终点</span><br>
+        <span style="color:#f0a500;">●</span> <span class="en">Transfer</span><span class="zh">换乘</span><br>
+        <span style="color:#10b981;">●</span> <span class="en">Senso-ji</span><span class="zh">浅草寺</span>
+      </div>
+      <button id="asak-close" onclick="toggleAsakusaFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
+  </div>
+
+  <div class="section-title">🚶 <span class="en">Walk — Kaminarimon to Sumida River</span><span class="zh">步行 — 雷门至隅田川</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">🚶 <span class="en">On foot · ~25–30 min · ~1.2 km · flat &amp; easy</span><span class="zh">步行 · 约25-30分钟 · 约1.2公里 · 平坦轻松</span></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#ef4444;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Kaminarimon Gate → Nakamise-dori</span><span class="zh">雷门 → 仲见世通</span></strong><br>
+        <span class="en">Pass under the giant red lantern, then straight down the shopping street toward the temple.</span>
+        <span class="zh">穿过巨大的红灯笼，沿商店街直行前往寺庙。</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#f0a500;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Senso-ji Main Hall &amp; five-storied pagoda</span><span class="zh">浅草寺本堂与五重塔</span></strong><br>
+        <span class="en">Through Hozomon Gate to the main hall — incense burner out front, pagoda just to the west.</span>
+        <span class="zh">穿过宝藏门到本堂 — 前方有香炉，五重塔在西侧不远处。</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <div style="background:#10b981;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Azumabashi Bridge → Sumida River view</span><span class="zh">吾妻桥 → 隅田川景观</span></strong><br>
+        <span class="en">East along Kaminarimon-dori to the river — Tokyo Skytree and the golden Asahi Beer flame sculpture across the water.</span>
+        <span class="zh">沿雷门通向东走到河边 — 河对岸可见东京晴空塔和金色的朝日啤酒火焰雕塑。</span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+      <a href="https://maps.google.com/?q=35.7101,139.8014&label=Azumabashi+Bridge" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+      <a href="https://map.baidu.com/search/%E5%90%BE%E5%A6%BB%E6%A9%8B" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+      <a href="https://uri.amap.com/marker?position=139.8014,35.7101&name=%E5%90%BE%E5%A6%BB%E6%A9%8B" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+    </div>
+
+    <button onclick="toggleWalkFs()" style="display:block;width:100%;margin-top:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+
+    <div style="position:relative;margin-top:10px;">
+      <div id="walk-route-map" style="width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setWalkType('satellite')" id="walk-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setWalkType('street')" id="walk-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start</span><span class="zh">起点</span><br>
+        <span style="color:#10b981;">●</span> <span class="en">End</span><span class="zh">终点</span>
+      </div>
+      <button id="walk-close" onclick="toggleWalkFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Base</span><span class="zh">基地</span></div>
+  <div class="map-wrap">
+    <div id="day3map"></div>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
+  <div class="log-card" id="emptyLog">
+    <div class="log-icon">📸</div>
+    <div class="log-title"><span class="en">Day 3 hasn't happened yet!</span><span class="zh">第三天还没开始！</span></div>
+    <div class="log-sub"><span class="en">Paul &amp; Joanne's third day in Tokyo is <strong>3 Jul 2026</strong> — a planned walk through Asakusa. Once the day happens, this page fills in with the real story — photos, notes, and how it actually went.</span><span class="zh">Paul 和 Joanne 在东京的第三天是 <strong>2026年7月3日</strong> — 计划漫步浅草。这一天真正发生后，这一页将更新真实的故事 — 照片、笔记，以及这一天的真实经历。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Day 3 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script>
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-03T00:00:00+09:00');
+  var end = new Date('2026-07-04T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var diff = start - now;
+    var hrs = Math.floor(diff / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    banner.innerHTML = '🕓 <span class="en">Day 3 begins in <strong>' + hrs + 'h ' + mins + 'm</strong> — check back once it happens!</span><span class="zh">距离第三天开始还有 <strong>' + hrs + '小时' + mins + '分钟</strong> — 到时候再回来看看吧！</span>';
+  } else if (now < end) {
+    banner.style.background = 'rgba(240,165,0,0.12)';
+    banner.style.borderColor = 'rgba(240,165,0,0.35)';
+    banner.style.color = '#f0a500';
+    banner.innerHTML = '⛩️ <span class="en">Day 3 is happening right now!</span><span class="zh">第三天正在进行中！</span>';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Day 3 complete — one more day in Tokyo done.</span><span class="zh">第三天已完成 — 又度过了在东京的一天。</span>';
+  }
+}
+updateBanner();
+setInterval(updateBanner, 60000);
+
+// ── PHOTO JOURNAL DATA (empty until Day 3 happens) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    item.innerHTML = '<img src="' + p.src + '" alt="" loading="lazy">' +
+      '<div class="pj-body">' +
+      '<div class="pj-num">Photo ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX ──
+function openLightbox(i) {
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function () {});
+  } else {
+    navigator.clipboard.writeText(url).then(function () {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function () { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// ── MAP ──
+var day3Map = L.map('day3map', { zoomControl: true, scrollWheelZoom: false }).setView([35.5626, 139.7152], 13);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '© Esri', maxZoom: 18
+}).addTo(day3Map);
+function mkIcon(color, label) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:28px;height:28px;background:' + color + ';border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);">' + label + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+L.marker([35.5626, 139.7152], { icon: mkIcon('#10b981', '🏠') })
+  .addTo(day3Map)
+  .bindPopup('<div class="popup-name">BON Tokyo Kamata Parkside</div><div class="popup-desc">4-26-10 Kamata, Ota-ku · Base for Day 3</div>')
+  .openPopup();
+
+// ── ASAKUSA TRAIN ROUTE MAP ──
+var asakMap = L.map('asakusa-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.63, 139.76], 12);
+var asakTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+asakTiles.street.addTo(asakMap);
+var asakCur = 'street';
+window.setAsakusaType = function (type) {
+  if (type === asakCur) return;
+  asakMap.removeLayer(asakTiles[asakCur]);
+  asakTiles[type].addTo(asakMap);
+  asakCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('asak-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('asak-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+function asakNumIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:13px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + num + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+var asakStops = [
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', num: '1', name: '🏠 Kamata Hotel — Start', desc: 'BON Tokyo Kamata Parkside · walk to Keikyu Kamata Station (~5 min)' },
+  { lat: 35.6360, lng: 139.7398, color: '#f0a500', num: '2', name: '⇄ Sengakuji 泉岳寺', desc: 'Keikyu Line through-runs onto the Toei Asakusa Line here' },
+  { lat: 35.7108, lng: 139.7967, color: '#10b981', num: '3', name: '⛩️ Senso-ji, Asakusa — End', desc: 'Exit A4 · Kaminarimon Gate ~2 min walk' }
+];
+asakStops.forEach(function (s) {
+  L.marker([s.lat, s.lng], { icon: asakNumIcon(s.color, s.num) })
+    .addTo(asakMap)
+    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+});
+
+// Route path approximating the actual rail alignment (Keikyu Line north to Sengakuji,
+// then Toei Asakusa Line through central Tokyo to Asakusa) — not a straight line.
+var asakRoute = [
+  [35.5626, 139.7152], // Kamata Hotel
+  [35.5641, 139.7189], // Keikyu Kamata Station
+  [35.5751, 139.7259], // Heiwajima
+  [35.5975, 139.7345], // Tachiaigawa
+  [35.6197, 139.7284], // Shinbanba area
+  [35.6284, 139.7387], // Shinagawa
+  [35.6360, 139.7398], // Sengakuji
+  [35.6580, 139.7530], // Mita
+  [35.6660, 139.7628], // Higashi-Ginza
+  [35.6812, 139.7803], // Asakusabashi area
+  [35.6963, 139.7906], // Kuramae
+  [35.7108, 139.7967]  // Asakusa
+];
+L.polyline(asakRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(asakMap);
+asakMap.fitBounds(L.latLngBounds(asakRoute), { padding: [28, 28] });
+
+var asakFs = false;
+window.toggleAsakusaFs = function () {
+  var el = document.getElementById('asakusa-route-map');
+  var close = document.getElementById('asak-close');
+  asakFs = !asakFs;
+  el.style.cssText = asakFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = asakFs ? 'block' : 'none';
+  setTimeout(function () { asakMap.invalidateSize(); }, 50);
+};
+
+// ── WALK: KAMINARIMON TO SUMIDA RIVER MAP ──
+var walkMap = L.map('walk-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.7105, 139.798], 16);
+var walkTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+walkTiles.street.addTo(walkMap);
+var walkCur = 'street';
+window.setWalkType = function (type) {
+  if (type === walkCur) return;
+  walkMap.removeLayer(walkTiles[walkCur]);
+  walkTiles[type].addTo(walkMap);
+  walkCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('walk-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('walk-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+function walkNumIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:13px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + num + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+var walkStops = [
+  { lat: 35.7108, lng: 139.7967, color: '#ef4444', num: '1', name: '⛩️ Kaminarimon Gate — Start', desc: 'Down Nakamise-dori toward Senso-ji' },
+  { lat: 35.7148, lng: 139.7967, color: '#f0a500', num: '2', name: '🛕 Senso-ji Main Hall', desc: 'Hozomon Gate, main hall, five-storied pagoda' },
+  { lat: 35.7101, lng: 139.8014, color: '#10b981', num: '3', name: '🌉 Azumabashi Bridge — End', desc: 'Sumida River · Tokyo Skytree &amp; Asahi Beer flame view' }
+];
+walkStops.forEach(function (s) {
+  L.marker([s.lat, s.lng], { icon: walkNumIcon(s.color, s.num) })
+    .addTo(walkMap)
+    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+});
+var walkRoute = [
+  [35.7108, 139.7967],
+  [35.7135, 139.7967],
+  [35.7148, 139.7967],
+  [35.7128, 139.7995],
+  [35.7101, 139.8014]
+];
+L.polyline(walkRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(walkMap);
+walkMap.fitBounds(L.latLngBounds(walkRoute), { padding: [28, 28] });
+
+var walkFs = false;
+window.toggleWalkFs = function () {
+  var el = document.getElementById('walk-route-map');
+  var close = document.getElementById('walk-close');
+  walkFs = !walkFs;
+  el.style.cssText = walkFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = walkFs ? 'block' : 'none';
+  setTimeout(function () { walkMap.invalidateSize(); }, 50);
+};
+</script>
+</body>
+</html>
