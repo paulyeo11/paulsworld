@@ -133,6 +133,9 @@ Button style pattern:
 <a href="AMAP_URL" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
 ```
 
+## Currency Conversion Rule (Standing Default — added 2026-07-02)
+Whenever a foreign currency amount (¥ JPY, etc.) appears anywhere on a trip page — timelines, receipts, cost breakdowns, transport fares — always show the approximate **SGD** conversion alongside it, e.g. `¥4,345 (~S$38.10)`. Use a consistent approximate rate (~¥114 = S$1 unless Paul provides a more current rate) and label it as approximate (`~S$`), not exact. Applies to both English and Chinese spans. Do this automatically going forward — no need to ask each time.
+
 ## After Every Deployment — MANDATORY
 1. Wait ~2 minutes for Vercel to deploy.
 2. Use **WebFetch** to check the live URL and confirm the change is visible yourself.
