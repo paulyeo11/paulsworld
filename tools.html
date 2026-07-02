@@ -32,6 +32,8 @@
     .arr{color:#4f46e5;font-size:1.3rem;font-weight:700;}
     .foot{text-align:center;margin-top:24px;}
     .foot a{color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:none;}
+    .share-btn{display:block;margin:0 auto 4px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.35);color:#fff;font-weight:700;padding:9px 22px;border-radius:24px;cursor:pointer;font-size:.85rem;}
+    .share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
   </style>
 </head>
 <body>
@@ -40,17 +42,42 @@
     <h1>My Investment Tools</h1>
     <p>Stocks &amp; Trading · 🔒 = password required</p>
   </div>
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
   <div class="wrap">
     <a class="tool" href="T20-IBKR-TIGER.html"><div class="tnum">20</div><div class="tbody"><div class="ttitle">📊 T20: Combined Portfolio</div><div class="tdesc">IBKR + Tiger + CPF/SGX · All positions in SGD</div></div><div class="arr">→</div></a>
+    <a class="tool" href="invest.html"><div class="tnum">P</div><div class="tbody"><div class="ttitle">💼 Paul's Investment Portfolio</div><div class="tdesc">Overview of all holdings</div></div><div class="arr">→</div></a>
+    <a class="tool" href="options.html"><div class="tnum">O</div><div class="tbody"><div class="ttitle">📈 Option Paul — Investment &amp; Options Trading</div><div class="tdesc">Options trading hub</div></div><div class="arr">→</div></a>
     <a class="tool" href="T01.html"><div class="tnum">1</div><div class="tbody"><div class="ttitle">📊 Sales Opportunity Tracker</div><div class="tdesc">Monitor sales staff performance</div></div><div class="arr">→</div></a>
     <a class="tool" href="T02.html"><div class="tnum lock">2</div><div class="tbody"><div class="ttitle">📈 Stock Portfolio Dashboard 🔒</div><div class="tdesc">Live FDS, POOL &amp; ZTS tracker</div></div><div class="arr">→</div></a>
     <a class="tool" href="T03/"><div class="tnum lock">3</div><div class="tbody"><div class="ttitle">🐯 Tiger Brokers Dashboard 🔒</div><div class="tdesc">Private</div></div><div class="arr">→</div></a>
     <a class="tool" href="T04.html"><div class="tnum">4</div><div class="tbody"><div class="ttitle">📈 Swing Trading the Singapore Market</div><div class="tdesc">A strategy I'm learning</div></div><div class="arr">→</div></a>
     <a class="tool" href="T05.html"><div class="tnum">5</div><div class="tbody"><div class="ttitle">🔴 Live Share Price</div><div class="tdesc">Real-time quote for any ticker</div></div><div class="arr">→</div></a>
     <a class="tool" href="T06.html"><div class="tnum lock">6</div><div class="tbody"><div class="ttitle">📊 My Shares 🔒</div><div class="tdesc">Live prices of my holdings (FDS, POOL, ZTS)</div></div><div class="arr">→</div></a>
-    <a class="tool" href="T07.html"><div class="tnum">7</div><div class="tbody"><div class="ttitle">🐯 Tiger Live Portfolio</div><div class="tdesc">Live HK · SG · US prices for my Tiger holdings</div></div><div class="arr">→</div></a>
-    <a class="tool" href="T09-ASTREA.html"><div class="tnum">9</div><div class="tbody"><div class="ttitle">📌 Astrea PE Bond — Sell Reminder</div><div class="tdesc">Long-overdue reminder + how to sell it</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T07-IBKR.html"><div class="tnum">7</div><div class="tbody"><div class="ttitle">🇺🇸 T07: IBKR Portfolio Viewer</div><div class="tdesc">Interactive Brokers holdings</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T08-TIGER.html"><div class="tnum">8</div><div class="tbody"><div class="ttitle">🐯 T08: Tiger Brokers Portfolio</div><div class="tdesc">Live HK · SG · US prices for my Tiger holdings</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T09-ASTREA.html"><div class="tnum">9</div><div class="tbody"><div class="ttitle">📌 T09: Astrea PE Bond — Sell Reminder</div><div class="tdesc">Long-overdue reminder + how to sell it</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T10_singtel_share.html"><div class="tnum">10</div><div class="tbody"><div class="ttitle">📞 T10: Singtel Shares Tracker</div><div class="tdesc">Singtel position tracker</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T11 Astrea8A1.html"><div class="tnum">11</div><div class="tbody"><div class="ttitle">📌 T11: Astrea8A1 — Class A-1 Bond (Z1AB)</div><div class="tdesc">Bond tracker</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T12-Top7-Portfolio.html"><div class="tnum">12</div><div class="tbody"><div class="ttitle">🏆 T12: Top 7 Portfolio</div><div class="tdesc">Top 7 holdings tracker</div></div><div class="arr">→</div></a>
+    <a class="tool" href="T12-netprofit.html"><div class="tnum">12</div><div class="tbody"><div class="ttitle">💰 T12: Net Profit — 5 Year History</div><div class="tdesc">Historical net profit tracker</div></div><div class="arr">→</div></a>
     <div class="foot"><a href="https://paulsworld.vercel.app/">← Paul's World home</a></div>
   </div>
+  <script>
+  function shareThisPage(){
+    var url=window.location.href;
+    var title=document.title;
+    if(navigator.share){
+      navigator.share({title:title,url:url}).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url).then(function(){
+        var t=document.getElementById('shareToast');
+        t.style.display='block';
+        setTimeout(function(){t.style.display='none';},2200);
+      });
+    }
+  }
+  </script>
+  <script src="/view-counter.js"></script>
 </body>
 </html>
