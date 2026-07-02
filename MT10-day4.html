@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Day 4: Tokyo DisneySea — 4 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.red  { color: #ef4444; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.plan-note {
+  margin: 12px 16px 0; padding: 12px 14px;
+  background: rgba(240,165,0,0.08); border: 1px solid rgba(240,165,0,0.3);
+  border-radius: 10px; font-size: 0.82em; color: #f0a500; line-height: 1.6;
+}
+.plan-note strong { color: #ffd479; }
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 22px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95em; background: #161b22; border: 2px solid #f0a500;
+  z-index: 1;
+}
+.tl-item:not(:last-child)::before {
+  content: ''; position: absolute; left: 14px; top: 30px; bottom: 0;
+  width: 2px; background: rgba(240,165,0,0.25);
+}
+.tl-time { font-size: 0.78em; color: #8b949e; font-family: monospace; }
+.tl-title { font-size: 0.98em; font-weight: 700; color: #e6edf3; margin-top: 1px; }
+.tl-sub { font-size: 0.85em; color: #8b949e; margin-top: 3px; line-height: 1.55; }
+.tl-sub strong { color: #c9d1d9; }
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL (ready for when photos are added) */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img { width: 100%; display: block; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* MAP */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#day4map { width: 100%; height: 240px; }
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · Day 4 <span class="gold">Tokyo DisneySea</span></h1>
+  <div class="header-sub"><span class="en">Theme park day — Mediterranean Harbor &amp; Fantasy Springs · Sat, 4 Jul 2026</span><span class="zh">主题公园之旅 — 地中海港湾与幻想泉乡 · 2026年7月4日（周六）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
+    <a href="MT10-day3.html" class="day-chip">📔 <span class="en">Day 3</span><span class="zh">第三天</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
+</div>
+
+<div class="plan-note">
+  🌧️ <span class="en"><strong>Why Day 4, not Day 3:</strong> Day 3's rain risk was too high for a mostly-outdoor theme park with long open-air queues. Asakusa (Day 3) is more rain-friendly — Nakamise-dori is a covered arcade and Senso-ji's main hall is indoor. DisneySea got pushed to Day 4 to give the weather a better chance to clear.</span><span class="zh"><strong>为什么改到第四天：</strong>第三天下雨风险较高，不适合大部分露天、排队区多为户外的主题公园。浅草（第三天）更适合雨天 — 仲见世通是有顶棚的商店街，浅草寺本堂也在室内。因此把海洋迪士尼改到第四天，给天气多一天转晴的机会。</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">🎫 <span class="en">Before You Go</span><span class="zh">出发前须知</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;font-size:0.85em;color:#c9d1d9;line-height:1.7;">
+    <span class="en">Tokyo Disney Resort tickets are <strong style="color:#e6edf3;">date-specific and sell out</strong> — book online in advance via the official Tokyo Disney Resort app or site, not at the gate. Double-check the day's operating hours the night before, since they vary by date and sometimes include special evening events.</span>
+    <span class="zh"><strong style="color:#e6edf3;">东京迪士尼门票是指定日期的，且可能售罄</strong> — 请提前通过官方东京迪士尼度假区App或官网预订，不要到现场购票。出发前一晚请再次确认当天的开园时间，因为不同日期会有变化，有时还包含特别夜间活动。</span>
+  </div>
+
+  <div class="section-title">📋 <span class="en">Day 4 Plan</span><span class="zh">第四天计划</span></div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot">☀️</div>
+      <div>
+        <div class="tl-time"><span class="en">Early morning</span><span class="zh">清晨</span></div>
+        <div class="tl-title"><span class="en">Early start from Kamata</span><span class="zh">从蒲田早早出发</span></div>
+        <div class="tl-sub"><span class="en">Fourth morning at BON Tokyo Kamata Parkside. Aim to leave the hotel by 7:30 AM — DisneySea rewards an early arrival with shorter lines before the park fills up.</span><span class="zh">在BON东京蒲田Parkside的第四个早晨。争取早上7:30前离开酒店 — 早到可以在人潮涌入前避开长队。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚃</div>
+      <div>
+        <div class="tl-time"><span class="en">Morning</span><span class="zh">上午</span></div>
+        <div class="tl-title"><span class="en">Train to Maihama</span><span class="zh">乘车前往舞滨</span></div>
+        <div class="tl-sub"><span class="en">JR Keihin-Tohoku Line from Kamata → Tokyo Station, transfer to the JR Keiyo Line → Maihama Station, then the Disney Resort Line monorail one stop to Tokyo DisneySea Station.</span><span class="zh">从蒲田乘京滨东北线 → 东京站，转乘京叶线 → 舞滨站，再搭迪士尼度假区线单轨电车一站到东京迪士尼海洋站。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">⛲</div>
+      <div>
+        <div class="tl-time"><span class="en">Arrive</span><span class="zh">抵达</span></div>
+        <div class="tl-title"><span class="en">Mediterranean Harbor entrance</span><span class="zh">地中海港湾入口</span></div>
+        <div class="tl-sub"><span class="en">Through the gates into the harbor-front plaza — the park's signature view, with the giant globe fountain and Italian-style waterfront.</span><span class="zh">穿过闸门进入港湾广场 — 公园的标志性景观，有巨大的地球喷泉和意大利风格海滨建筑。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🎢</div>
+      <div>
+        <div class="tl-time"><span class="en">Daytime</span><span class="zh">白天</span></div>
+        <div class="tl-title"><span class="en">Rides &amp; Fantasy Springs</span><span class="zh">游乐设施与幻想泉乡</span></div>
+        <div class="tl-sub"><span class="en">Priority picks: Journey to the Center of the Earth, Soaring: Fantastic Flight, Toy Story Mania, and the newer Fantasy Springs area (Frozen, Tangled, Peter Pan). Use the Disney app for standby wait times and paid priority passes.</span><span class="zh">优先项目：地心探险之旅、飞越梦幻奇境、玩具总动员疯狂游戏屋，以及较新的幻想泉乡区域（冰雪奇缘、魔发奇缘、彼得潘）。用迪士尼App查看排队时间和付费优先通行证。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🍽️</div>
+      <div>
+        <div class="tl-time"><span class="en">Lunch &amp; dinner</span><span class="zh">午餐与晚餐</span></div>
+        <div class="tl-title"><span class="en">Eat in the park</span><span class="zh">在园内用餐</span></div>
+        <div class="tl-sub"><span class="en">Mobile-order in advance where possible to save queue time — table-service spots near American Waterfront and Mediterranean Harbor are popular.</span><span class="zh">尽量提前手机点餐以节省排队时间 — 美国海滨和地中海港湾附近的正餐餐厅很受欢迎。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🌃</div>
+      <div>
+        <div class="tl-time"><span class="en">Evening</span><span class="zh">晚上</span></div>
+        <div class="tl-title"><span class="en">Back to Kamata</span><span class="zh">返回蒲田</span></div>
+        <div class="tl-sub"><span class="en">Retrace the route via Maihama and Tokyo Station back to the hotel. Long day on foot — rest up.</span><span class="zh">经舞滨和东京站原路返回酒店。步行一整天，好好休息。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">🚃 <span class="en">Route — Kamata to Tokyo DisneySea</span><span class="zh">路线 — 蒲田至东京迪士尼海洋</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">🚃 <span class="en">Train Route · ~55–60 min · ~¥790 (~S$6.90)</span><span class="zh">电车路线 · 约55-60分钟 · 约¥790（约S$6.90）</span></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#ef4444;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Walk to JR Kamata Station</span><span class="zh">步行至JR蒲田站</span></strong><br>
+        <span style="color:#8b949e;"><span class="en">~5 min</span><span class="zh">约5分钟</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#f0a500;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">JR Keihin-Tohoku Line → Tokyo Station</span><span class="zh">京滨东北线 → 东京站</span></strong><br>
+        <span style="color:#8b949e;"><span class="en">~30 min</span><span class="zh">约30分钟</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#3b82f6;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Transfer to JR Keiyo Line → Maihama Station</span><span class="zh">转乘京叶线 → 舞滨站</span></strong><br>
+        <span class="en">Keiyo Line platforms are a longer walk within Tokyo Station — allow extra time for the transfer. <strong style="color:#e6edf3;">~15 min</strong> ride.</span>
+        <span class="zh">京叶线站台在东京站内步行距离较远 — 请预留充足换乘时间。乘车约<strong style="color:#e6edf3;">15分钟</strong>。</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <div style="background:#10b981;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">4</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Disney Resort Line monorail → Tokyo DisneySea Station</span><span class="zh">迪士尼度假区线单轨电车 → 东京迪士尼海洋站</span></strong><br>
+        <span class="en">One stop from Maihama, right to the park gates. <strong style="color:#e6edf3;">~5 min</strong>.</span>
+        <span class="zh">从舞滨站乘一站直达乐园门口。约<strong style="color:#e6edf3;">5分钟</strong>。</span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+      <a href="https://maps.google.com/?q=35.6267,139.8850&label=Tokyo+DisneySea" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+      <a href="https://map.baidu.com/search/%E4%B8%9C%E4%BA%AC%E8%BF%AA%E5%A3%AB%E5%B0%BC%E6%B5%B7%E6%B4%8B" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+      <a href="https://uri.amap.com/marker?position=139.8850,35.6267&name=%E4%B8%9C%E4%BA%AC%E8%BF%AA%E5%A3%AB%E5%B0%BC%E6%B5%B7%E6%B4%8B" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+    </div>
+
+    <button onclick="toggleDisneyFs()" style="display:block;width:100%;margin-top:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+
+    <div style="position:relative;margin-top:10px;">
+      <div id="disney-route-map" style="width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setDisneyType('satellite')" id="disney-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setDisneyType('street')" id="disney-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start</span><span class="zh">起点</span><br>
+        <span style="color:#f0a500;">●</span> <span class="en">Transfer</span><span class="zh">换乘</span><br>
+        <span style="color:#10b981;">●</span> <span class="en">DisneySea</span><span class="zh">迪士尼海洋</span>
+      </div>
+      <button id="disney-close" onclick="toggleDisneyFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Base</span><span class="zh">基地</span></div>
+  <div class="map-wrap">
+    <div id="day4map"></div>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
+  <div class="log-card" id="emptyLog">
+    <div class="log-icon">📸</div>
+    <div class="log-title"><span class="en">Day 4 hasn't happened yet!</span><span class="zh">第四天还没开始！</span></div>
+    <div class="log-sub"><span class="en">Paul &amp; Joanne's fourth day in Tokyo is <strong>4 Jul 2026</strong> — a planned day at Tokyo DisneySea. Once the day happens, this page fills in with the real story — photos, notes, and how it actually went.</span><span class="zh">Paul 和 Joanne 在东京的第四天是 <strong>2026年7月4日</strong> — 计划前往东京迪士尼海洋。这一天真正发生后，这一页将更新真实的故事 — 照片、笔记，以及这一天的真实经历。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Day 4 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script>
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-04T00:00:00+09:00');
+  var end = new Date('2026-07-05T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var diff = start - now;
+    var hrs = Math.floor(diff / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    banner.innerHTML = '🕓 <span class="en">Day 4 begins in <strong>' + hrs + 'h ' + mins + 'm</strong> — check back once it happens!</span><span class="zh">距离第四天开始还有 <strong>' + hrs + '小时' + mins + '分钟</strong> — 到时候再回来看看吧！</span>';
+  } else if (now < end) {
+    banner.style.background = 'rgba(240,165,0,0.12)';
+    banner.style.borderColor = 'rgba(240,165,0,0.35)';
+    banner.style.color = '#f0a500';
+    banner.innerHTML = '⛲ <span class="en">Day 4 is happening right now!</span><span class="zh">第四天正在进行中！</span>';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Day 4 complete — one more day in Tokyo done.</span><span class="zh">第四天已完成 — 又度过了在东京的一天。</span>';
+  }
+}
+updateBanner();
+setInterval(updateBanner, 60000);
+
+// ── PHOTO JOURNAL DATA (empty until Day 4 happens) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    item.innerHTML = '<img src="' + p.src + '" alt="" loading="lazy">' +
+      '<div class="pj-body">' +
+      '<div class="pj-num">Photo ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX ──
+function openLightbox(i) {
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function () {});
+  } else {
+    navigator.clipboard.writeText(url).then(function () {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function () { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// ── MAP ──
+var day4Map = L.map('day4map', { zoomControl: true, scrollWheelZoom: false }).setView([35.5626, 139.7152], 13);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '© Esri', maxZoom: 18
+}).addTo(day4Map);
+function mkIcon(color, label) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:28px;height:28px;background:' + color + ';border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);">' + label + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+L.marker([35.5626, 139.7152], { icon: mkIcon('#10b981', '🏠') })
+  .addTo(day4Map)
+  .bindPopup('<div class="popup-name">BON Tokyo Kamata Parkside</div><div class="popup-desc">4-26-10 Kamata, Ota-ku · Base for Day 4</div>')
+  .openPopup();
+
+// ── KAMATA TO DISNEYSEA ROUTE MAP ──
+var disneyMap = L.map('disney-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.63, 139.82], 11);
+var disneyTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+disneyTiles.street.addTo(disneyMap);
+var disneyCur = 'street';
+window.setDisneyType = function (type) {
+  if (type === disneyCur) return;
+  disneyMap.removeLayer(disneyTiles[disneyCur]);
+  disneyTiles[type].addTo(disneyMap);
+  disneyCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('disney-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('disney-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+function disneyNumIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:13px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + num + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+var disneyStops = [
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', num: '1', name: '🏠 Kamata Hotel — Start', desc: 'BON Tokyo Kamata Parkside · walk to JR Kamata Station (~5 min)' },
+  { lat: 35.6812, lng: 139.7671, color: '#f0a500', num: '2', name: '⇄ Tokyo Station 東京駅', desc: 'JR Keihin-Tohoku Line → transfer to JR Keiyo Line' },
+  { lat: 35.6469, lng: 139.8853, color: '#f0a500', num: '3', name: '⇄ Maihama Station 舞浜駅', desc: 'Transfer to the Disney Resort Line monorail' },
+  { lat: 35.6267, lng: 139.8850, color: '#10b981', num: '4', name: '⛲ Tokyo DisneySea — End', desc: 'Mediterranean Harbor entrance' }
+];
+disneyStops.forEach(function (s) {
+  L.marker([s.lat, s.lng], { icon: disneyNumIcon(s.color, s.num) })
+    .addTo(disneyMap)
+    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+});
+
+// Route path approximating the actual rail alignment (JR Keihin-Tohoku north to Tokyo Station,
+// then JR Keiyo Line east to Maihama, then Disney Resort Line monorail) — not a straight line.
+var disneyRoute = [
+  [35.5626, 139.7152], // Kamata Hotel
+  [35.5865, 139.7285], // Omori
+  [35.6197, 139.7455], // Hamamatsucho area
+  [35.6555, 139.7500], // Shimbashi
+  [35.6812, 139.7671], // Tokyo Station
+  [35.6690, 139.7962], // Kiyosumi-Shirakawa area (Keiyo Line east)
+  [35.6560, 139.8340], // Shin-Kiba
+  [35.6469, 139.8853], // Maihama Station
+  [35.6267, 139.8850]  // Tokyo DisneySea
+];
+L.polyline(disneyRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(disneyMap);
+disneyMap.fitBounds(L.latLngBounds(disneyRoute), { padding: [28, 28] });
+
+var disneyFs = false;
+window.toggleDisneyFs = function () {
+  var el = document.getElementById('disney-route-map');
+  var close = document.getElementById('disney-close');
+  disneyFs = !disneyFs;
+  el.style.cssText = disneyFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = disneyFs ? 'block' : 'none';
+  setTimeout(function () { disneyMap.invalidateSize(); }, 50);
+};
+</script>
+</body>
+</html>
