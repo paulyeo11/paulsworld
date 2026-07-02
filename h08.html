@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>H08: My Pain Point Tracker – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #fdf8f2;
+      --warm-white: #fff9f4;
+      --ink: #2c2218;
+      --mid: #6b5a4e;
+      --accent: #10b981;
+      --accent-dark: #065f46;
+      --accent-soft: #d1fae5;
+      --border: #e8ddd5;
+      --orange: #f4813f;
+      --red: #ef4444;
+      --red-soft: #fee2e2;
+      --amber: #f59e0b;
+      --amber-soft: #fef3c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: #059669; }
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      color: #fff;
+      text-align: center;
+      padding: 90px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.25) 0%, transparent 70%);
+    }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .hero h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(1.9rem, 5vw, 3.2rem);
+      font-weight: 600;
+      line-height: 1.25;
+      max-width: 720px;
+      margin: 0 auto 16px;
+      color: #ecfdf5;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.05em;
+    }
+    .hero-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 11px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Lora', Georgia, serif;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    /* Language toggle */
+    .lang-bar {
+      text-align: center;
+      padding: 12px 0 4px;
+      position: relative; z-index: 1;
+    }
+    .lang-btn {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.7);
+      padding: 5px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-family: 'Source Sans 3', sans-serif;
+      margin: 0 4px;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.8);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 24px 24px;
+    }
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 1.45rem;
+      color: var(--accent-dark);
+      margin: 40px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+    .section-note {
+      font-size: 0.85rem;
+      color: var(--mid);
+      margin-bottom: 18px;
+    }
+
+    /* Symptom overview cards */
+    .symptom-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: -30px;
+      position: relative;
+      z-index: 2;
+    }
+    .symptom-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    .symptom-icon { font-size: 1.6rem; }
+    .symptom-name {
+      font-family: 'Lora', serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--ink);
+      margin: 6px 0 8px;
+    }
+    .severity-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: var(--border);
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .severity-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .severity-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--mid);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Log form */
+    .log-form {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .form-row { margin-bottom: 14px; }
+    .form-row label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .form-row select, .form-row input[type=range], .form-row textarea {
+      width: 100%;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.95rem;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--warm-white);
+      color: var(--ink);
+    }
+    .form-row textarea { resize: vertical; min-height: 60px; }
+    .range-wrap { display: flex; align-items: center; gap: 10px; }
+    .range-wrap input[type=range] { flex: 1; padding: 0; }
+    .range-val {
+      min-width: 30px;
+      text-align: center;
+      font-family: 'Lora', serif;
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 11px 26px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #059669; }
+
+    /* Log entries */
+    .entry-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+    .entry-card.sev-mild { border-left-color: var(--accent); }
+    .entry-card.sev-moderate { border-left-color: var(--amber); }
+    .entry-card.sev-severe { border-left-color: var(--red); }
+    .entry-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+    .entry-icon { font-size: 1.3rem; }
+    .entry-title {
+      font-family: 'Lora', serif;
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--ink);
+    }
+    .entry-date { font-size: 0.78rem; color: var(--mid); white-space: nowrap; }
+    .entry-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 10px;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .tag-mild { background: var(--accent-soft); color: var(--accent-dark); }
+    .tag-moderate { background: var(--amber-soft); color: #92400e; }
+    .tag-severe { background: var(--red-soft); color: #991b1b; }
+    .entry-note { font-size: 0.88rem; color: var(--mid); margin-top: 8px; }
+    .entry-del {
+      background: none;
+      border: none;
+      color: var(--mid);
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 8px;
+      padding: 0;
+    }
+    .empty-state {
+      text-align: center;
+      color: var(--mid);
+      font-size: 0.9rem;
+      padding: 24px;
+      font-style: italic;
+    }
+
+    .doctor-box {
+      background: linear-gradient(135deg, #064e3b, #047857);
+      color: #fff;
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin: 32px 0;
+    }
+    .doctor-box h3 {
+      font-family: 'Lora', serif;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    .doctor-box p { font-size: 0.88rem; opacity: 0.9; }
+
+    .view-counter-wrap {
+      text-align: center;
+      padding: 28px 0 8px;
+      font-size: 0.88rem;
+      color: var(--mid);
+    }
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      background: #064e3b;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.82rem;
+      margin-top: 40px;
+    }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+    @media (max-width: 540px) {
+      .symptom-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="hero">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')" id="btn-zh">🇨🇳 中文</button>
+  </div>
+  <div class="hero-tag"><span class="en">Health · Symptom Tracker</span><span class="zh" style="display:none;">健康 · 症状追踪</span></div>
+  <h1><span class="en">H08: My Pain Point Tracker</span><span class="zh" style="display:none;">H08：我的不适追踪记录</span></h1>
+  <div class="hero-sub">
+    <span class="en">Skin issues, low energy, poor appetite, needing more rest — logged honestly.</span>
+    <span class="zh" style="display:none;">皮肤问题、精力下降、食欲不振、需要更多休息 — 如实记录。</span>
+  </div>
+  <div class="hero-actions">
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Overview cards -->
+  <div class="symptom-grid" id="symptomGrid"></div>
+
+  <!-- Add entry -->
+  <h2 class="section-title"><span class="en">Log How You're Feeling</span><span class="zh" style="display:none;">记录你的感受</span></h2>
+  <p class="section-note">
+    <span class="en">Takes 20 seconds. Saved privately on this device only.</span>
+    <span class="zh" style="display:none;">只需20秒。仅保存在此设备上，属于私人记录。</span>
+  </p>
+  <div class="log-form">
+    <div class="form-row">
+      <label><span class="en">Pain Point</span><span class="zh" style="display:none;">不适类型</span></label>
+      <select id="inputType" onchange="void(0)">
+        <option value="skin">🧴 Skin Issue</option>
+        <option value="energy">🔋 Low Energy</option>
+        <option value="appetite">🍽️ Poor Appetite</option>
+        <option value="rest">😴 Need More Rest</option>
+        <option value="other">📝 Other</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label><span class="en">Severity</span><span class="zh" style="display:none;">严重程度</span></label>
+      <div class="range-wrap">
+        <input type="range" id="inputSeverity" min="1" max="5" value="3" oninput="document.getElementById('sevVal').textContent=this.value">
+        <span class="range-val" id="sevVal">3</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <label><span class="en">Notes (optional)</span><span class="zh" style="display:none;">备注（可选）</span></label>
+      <textarea id="inputNote" placeholder="e.g. dry patch on left arm, felt tired after lunch..."></textarea>
+    </div>
+    <button class="btn-primary" onclick="addEntry()"><span class="en">＋ Add Entry</span><span class="zh" style="display:none;">＋ 添加记录</span></button>
+  </div>
+
+  <!-- Log entries -->
+  <h2 class="section-title"><span class="en">Recent Log</span><span class="zh" style="display:none;">最近记录</span></h2>
+  <div id="entryList"></div>
+
+  <div class="doctor-box">
+    <h3><span class="en">When to See a Doctor</span><span class="zh" style="display:none;">何时应就医</span></h3>
+    <p>
+      <span class="en">If any symptom stays "severe" for more than a few days, or several pain points show up together (e.g. low energy + poor appetite + more rest needed), that combination is worth mentioning to a doctor — don't wait it out alone.</span>
+      <span class="zh" style="display:none;">如果任何症状持续"严重"超过几天，或多个不适同时出现（例如精力下降+食欲不振+需要更多休息），这种组合值得告诉医生 — 不要一个人硬扛。</span>
+    </p>
+  </div>
+
+  <div class="view-counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+</div>
+
+<footer>
+  <p>H08: My Pain Point Tracker &nbsp;·&nbsp; Paul Yeo &nbsp;·&nbsp; Updated 2 July 2026</p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></p>
+</footer>
+
+<script>
+var STORAGE_KEY = 'h08_pain_points';
+var TYPE_META = {
+  skin:     { icon: '🧴', en: 'Skin Issue',        zh: '皮肤问题' },
+  energy:   { icon: '🔋', en: 'Low Energy',        zh: '精力下降' },
+  appetite: { icon: '🍽️', en: 'Poor Appetite',      zh: '食欲不振' },
+  rest:     { icon: '😴', en: 'Need More Rest',    zh: '需要更多休息' },
+  other:    { icon: '📝', en: 'Other',             zh: '其他' }
+};
+
+function loadEntries() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch(e) { return []; }
+}
+function saveEntries(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function severityInfo(sev) {
+  if (sev <= 2) return { tier: 'mild', en: 'Mild', zh: '轻微', color: 'var(--accent)' };
+  if (sev <= 3) return { tier: 'moderate', en: 'Moderate', zh: '中等', color: 'var(--amber)' };
+  return { tier: 'severe', en: 'Severe', zh: '严重', color: 'var(--red)' };
+}
+
+function addEntry() {
+  var type = document.getElementById('inputType').value;
+  var severity = parseInt(document.getElementById('inputSeverity').value, 10);
+  var note = document.getElementById('inputNote').value.trim();
+  var entries = loadEntries();
+  entries.unshift({
+    type: type,
+    severity: severity,
+    note: note,
+    date: new Date().toISOString()
+  });
+  saveEntries(entries);
+  document.getElementById('inputNote').value = '';
+  render();
+}
+
+function deleteEntry(idx) {
+  var entries = loadEntries();
+  entries.splice(idx, 1);
+  saveEntries(entries);
+  render();
+}
+
+function formatDate(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderOverview(entries) {
+  var grid = document.getElementById('symptomGrid');
+  grid.innerHTML = '';
+  Object.keys(TYPE_META).forEach(function(type) {
+    if (type === 'other') return;
+    var meta = TYPE_META[type];
+    var latest = entries.find(function(e){ return e.type === type; });
+    var sev = latest ? latest.severity : 0;
+    var pct = (sev / 5) * 100;
+    var info = severityInfo(sev || 1);
+    var card = document.createElement('div');
+    card.className = 'symptom-card';
+    card.innerHTML =
+      '<div class="symptom-icon">' + meta.icon + '</div>' +
+      '<div class="symptom-name"><span class="en">' + meta.en + '</span><span class="zh" style="display:none;">' + meta.zh + '</span></div>' +
+      '<div class="severity-bar"><div class="severity-fill" style="width:' + pct + '%;background:' + (latest ? info.color : 'var(--border)') + ';"></div></div>' +
+      '<div class="severity-label"><span>' +
+        (latest ? ('<span class="en">' + info.en + '</span><span class="zh" style="display:none;">' + info.zh + '</span>') : '<span class="en">No data</span><span class="zh" style="display:none;">暂无数据</span>') +
+      '</span><span>' + (latest ? formatDate(latest.date).split(' · ')[0] : '—') + '</span></div>';
+    grid.appendChild(card);
+  });
+  applyLang();
+}
+
+function renderEntries(entries) {
+  var list = document.getElementById('entryList');
+  list.innerHTML = '';
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="en">No entries yet — log your first one above.</span><span class="zh" style="display:none;">还没有记录 — 请在上方添加第一条。</span></div>';
+    return;
+  }
+  entries.forEach(function(entry, idx) {
+    var meta = TYPE_META[entry.type];
+    var info = severityInfo(entry.severity);
+    var card = document.createElement('div');
+    card.className = 'entry-card sev-' + info.tier;
+    card.innerHTML =
+      '<div class="entry-top">' +
+        '<div class="entry-icon">' + meta.icon + '</div>' +
+        '<div class="entry-title"><span class="en">' + meta.en + '</span><span class="zh" style="display:none;">' + meta.zh + '</span></div>' +
+        '<div class="entry-date">' + formatDate(entry.date) + '</div>' +
+      '</div>' +
+      '<span class="entry-tag tag-' + info.tier + '"><span class="en">' + info.en + ' (' + entry.severity + '/5)</span><span class="zh" style="display:none;">' + info.zh + ' (' + entry.severity + '/5)</span></span>' +
+      (entry.note ? '<div class="entry-note">' + escapeHtml(entry.note) + '</div>' : '') +
+      '<button class="entry-del" onclick="deleteEntry(' + idx + ')"><span class="en">Delete</span><span class="zh" style="display:none;">删除</span></button>';
+    list.appendChild(card);
+  });
+  applyLang();
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function render() {
+  var entries = loadEntries();
+  renderOverview(entries);
+  renderEntries(entries);
+}
+
+function applyLang() {
+  var lang = document.getElementById('btn-zh').classList.contains('active') ? 'zh' : 'en';
+  setLang(lang, true);
+}
+
+var TYPE_OPTION_TEXT = {
+  skin:     { icon: '🧴', en: 'Skin Issue',     zh: '皮肤问题' },
+  energy:   { icon: '🔋', en: 'Low Energy',     zh: '精力下降' },
+  appetite: { icon: '🍽️', en: 'Poor Appetite',  zh: '食欲不振' },
+  rest:     { icon: '😴', en: 'Need More Rest', zh: '需要更多休息' },
+  other:    { icon: '📝', en: 'Other',          zh: '其他' }
+};
+
+function setLang(lang, skipToggle) {
+  var enEls = document.querySelectorAll('.en');
+  var zhEls = document.querySelectorAll('.zh');
+  if (lang === 'zh') {
+    enEls.forEach(function(el){ el.style.display = 'none'; });
+    zhEls.forEach(function(el){ el.style.display = ''; });
+    document.getElementById('btn-en').classList.remove('active');
+    document.getElementById('btn-zh').classList.add('active');
+  } else {
+    enEls.forEach(function(el){ el.style.display = ''; });
+    zhEls.forEach(function(el){ el.style.display = 'none'; });
+    document.getElementById('btn-en').classList.add('active');
+    document.getElementById('btn-zh').classList.remove('active');
+  }
+  var select = document.getElementById('inputType');
+  if (select) {
+    Array.prototype.forEach.call(select.options, function(opt) {
+      var t = TYPE_OPTION_TEXT[opt.value];
+      if (t) opt.textContent = t.icon + ' ' + (lang === 'zh' ? t.zh : t.en);
+    });
+  }
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title: title, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+render();
+</script>
+</body>
+</html>
