@@ -88,6 +88,21 @@ Whenever Paul sends a photo during an active trip (e.g. MT09, MT10), automatical
   This prevents the "remote contains work you do not have" rejection that happens when
   another session or commit has already advanced `main`. Never skip this step.
 
+### ⚠️ Feature/session branches MUST land on `main` the same turn (learned 2026-07-03)
+Vercel **only deploys from `main`**. On Claude Code web/remote sessions, the harness may assign
+a separate working branch (e.g. `claude/day-3-my83ms`) instead of `main`. If work is committed
+and pushed only to that branch, it is invisible on the live site — Paul will see "photo not
+appear" even though the push "succeeded." To prevent this:
+- After pushing to a session/feature branch, **immediately also merge that branch into `main`
+  and push `main`** in the same turn (`git checkout main && git pull && git merge --no-edit
+  <branch> && git push origin main`), so every change goes live right away.
+- Do this for every commit in the session, not just at the end — don't let changes pile up
+  unmerged on a side branch.
+- If a session's branch instructions ever conflict with "changes must appear live," resolve
+  it by keeping `main` in sync after every push, since a live, working site takes priority.
+- Always verify the live URL afterward (per "After Every Deployment" rule below) — that catches
+  this class of bug immediately instead of Paul discovering it later.
+
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
 
