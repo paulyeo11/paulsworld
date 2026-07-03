@@ -60,6 +60,13 @@ David (the orchestrator) delegates work to these specialists. NOTE: the real spe
 - **MT09.html** has an **✈️ Air Ticket** tab with full booking details + PDF download (`MT09_flight_SIN_XIY.pdf`)
 - **Share button** added to MT09 header (top right, next to 中文 toggle)
 
+## Trip Photo → Daily Log Rule (Standing Default — added 2026-07-03)
+Whenever Paul sends a photo during an active trip (e.g. MT09, MT10), automatically add it to that trip's **current day's log page** (e.g. `MT10-day3.html`) — no need to ask which page or wait to be told "add this photo."
+- Resize/reduce resolution before embedding, fix orientation, save into that day's `img_<PAGE-NAME>` folder (e.g. `img_MT10-day3`).
+- Add it to the page's photo journal (`galleryPhotos` array or equivalent) with a bilingual `en`/`zh` caption + short story paragraph, per the Photo Journal Rule.
+- Commit and push immediately.
+- If it's genuinely unclear which day/trip a photo belongs to, ask once — otherwise default to "today's" day page for the currently active trip.
+
 ## Site Info
 - **Live URL:** https://paulsworld.vercel.app
 - **GitHub repo:** paulyeo11/paulsworld · **Branch:** main (Vercel auto-deploys from `main`)
