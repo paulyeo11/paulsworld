@@ -307,8 +307,8 @@ When generating an eBook, download all images and **embed** them — no external
 links. Every eBook must be fully self-contained.
 
 ### 🔢 File Naming & Title Rule
-New article/page filename AND title must start with the category prefix + number.
-Format: `[PREFIX][NUMBER]: [Article Title]`
+New article/page filename, `<title>` tag, AND the visible on-page `<h1>` heading must ALL start with the category prefix + number — not just the `<title>` tag.
+Format: `[PREFIX][NUMBER]: [Article Title]` (apply to both `<h1 class="en">` and `<h1 class="zh">`, e.g. `AI218: Why I Now...` / `AI218：为什么我现在...`).
 
 ### New Page Workflow
 When creating a new page (e.g. `new-app`): create it, auto-update `index.html` to insert
