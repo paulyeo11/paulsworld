@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>H11: My Weight Control Tracker – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #fdf8f2;
+      --warm-white: #fff9f4;
+      --ink: #2c2218;
+      --mid: #6b5a4e;
+      --accent: #10b981;
+      --accent-dark: #065f46;
+      --accent-soft: #d1fae5;
+      --border: #e8ddd5;
+      --orange: #f4813f;
+      --red: #ef4444;
+      --red-soft: #fee2e2;
+      --amber: #f59e0b;
+      --amber-soft: #fef3c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: #059669; }
+    .plan-btn {
+      position: fixed;
+      top: 16px; left: 118px;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.4);
+      color: #fff; text-decoration: none; font-size: 0.75em;
+      padding: 7px 14px; border-radius: 20px; white-space: nowrap;
+      backdrop-filter: blur(6px); z-index: 999;
+    }
+    .plan-btn:hover { background: rgba(0,0,0,0.5); }
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      color: #fff;
+      text-align: center;
+      padding: 90px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.25) 0%, transparent 70%);
+    }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .hero h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(1.9rem, 5vw, 3.2rem);
+      font-weight: 600;
+      line-height: 1.25;
+      max-width: 720px;
+      margin: 0 auto 16px;
+      color: #ecfdf5;
+    }
+    .hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); letter-spacing: 0.05em; }
+    .hero-actions { margin-top: 24px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .share-btn {
+      display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px;
+      cursor: pointer; font-size: 1rem; font-family: 'Lora', Georgia, serif; transition: background .2s;
+      text-decoration: none;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem;
+      z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+    .lang-bar { text-align: center; padding: 12px 0 4px; position: relative; z-index: 1; }
+    .lang-btn {
+      background: transparent; border: 1.5px solid rgba(255,255,255,0.4); color: rgba(255,255,255,0.7);
+      padding: 5px 16px; border-radius: 20px; cursor: pointer; font-size: 0.82rem;
+      font-family: 'Source Sans 3', sans-serif; margin: 0 4px; transition: all 0.2s;
+    }
+    .lang-btn.active { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.8); color: #fff; font-weight: 600; }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 24px; }
+    .section-title {
+      font-family: 'Lora', serif; font-size: 1.45rem; color: var(--accent-dark);
+      margin: 40px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent-soft);
+    }
+    .section-note { font-size: 0.85rem; color: var(--mid); margin-bottom: 18px; }
+
+    .goal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: -30px; position: relative; z-index: 2; }
+    .goal-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); text-align: center; }
+    .goal-card-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mid); margin-bottom: 4px; }
+    .goal-card-value { font-family: 'Lora', serif; font-weight: 600; font-size: 1.3rem; color: var(--accent-dark); }
+
+    .progress-wrap { margin-top: 24px; }
+    .progress-bar { height: 16px; border-radius: 8px; background: var(--border); overflow: hidden; position: relative; }
+    .progress-fill { height: 100%; border-radius: 8px; background: var(--accent); transition: width 0.3s; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--mid); margin-top: 6px; }
+
+    .status-banner { border-radius: 12px; padding: 18px 20px; margin: 20px 0; }
+    .status-banner.behind { background: var(--red-soft); border: 1px solid #fca5a5; }
+    .status-banner.ontrack { background: var(--accent-soft); border: 1px solid #6ee7b7; }
+    .status-banner.done { background: linear-gradient(135deg, #064e3b, #047857); border: none; color: #fff; }
+    .status-banner.neutral { background: var(--amber-soft); border: 1px solid #fcd34d; }
+    .status-banner h3 { font-family: 'Lora', serif; font-size: 1.05rem; margin-bottom: 6px; }
+    .status-banner.behind h3 { color: #991b1b; }
+    .status-banner.ontrack h3 { color: var(--accent-dark); }
+    .status-banner.neutral h3 { color: #92400e; }
+    .status-banner p { font-size: 0.9rem; }
+    .status-banner.behind p { color: #7f1d1d; }
+    .status-banner.ontrack p { color: #065f46; }
+    .status-banner.neutral p { color: #78350f; }
+
+    .goal-setter { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+    .goal-setter .form-row { flex: 1; min-width: 140px; margin-bottom: 0; }
+
+    .log-form { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .form-row input[type=date], .form-row input[type=number], .form-row textarea {
+      width: 100%; font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem;
+      padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--warm-white); color: var(--ink);
+    }
+    .form-row textarea { resize: vertical; min-height: 50px; }
+    .btn-primary { background: var(--accent); color: #fff; border: none; padding: 11px 26px; border-radius: 24px; font-size: 0.9rem; font-weight: 600; cursor: pointer; letter-spacing: 0.03em; transition: background 0.2s; }
+    .btn-primary:hover { background: #059669; }
+
+    .entry-card { background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+    .entry-card.moving-away { border-left-color: var(--red); }
+    .entry-card.flat { border-left-color: var(--amber); }
+    .entry-top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+    .entry-icon { font-size: 1.2rem; }
+    .entry-title { font-family: 'Lora', serif; font-weight: 600; font-size: 1rem; color: var(--ink); }
+    .entry-date { font-size: 0.78rem; color: var(--mid); white-space: nowrap; }
+    .entry-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 10px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .tag-hit { background: var(--accent-soft); color: var(--accent-dark); }
+    .tag-pace { background: var(--amber-soft); color: #92400e; }
+    .tag-behind { background: var(--red-soft); color: #991b1b; }
+    .entry-note { font-size: 0.85rem; color: var(--mid); margin-top: 6px; }
+    .entry-del { background: none; border: none; color: var(--mid); font-size: 0.75rem; cursor: pointer; text-decoration: underline; margin-top: 8px; padding: 0; }
+    .empty-state { text-align: center; color: var(--mid); font-size: 0.9rem; padding: 24px; font-style: italic; }
+
+    .doctor-box { background: linear-gradient(135deg, #064e3b, #047857); color: #fff; border-radius: 12px; padding: 22px 24px; margin: 32px 0; }
+    .doctor-box h3 { font-family: 'Lora', serif; font-size: 1.1rem; margin-bottom: 8px; }
+    .doctor-box p { font-size: 0.88rem; opacity: 0.9; }
+
+    .view-counter-wrap { text-align: center; padding: 28px 0 8px; font-size: 0.88rem; color: var(--mid); }
+    footer { text-align: center; padding: 28px 24px; background: #064e3b; color: rgba(255,255,255,0.55); font-size: 0.82rem; margin-top: 40px; }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+    @media (max-width: 540px) { .goal-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .plan-btn { top: 58px; left: 16px; } }
+  </style>
+</head>
+<body>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<a href="SP06.html" class="plan-btn">📅 <span class="en">20-Year Plan</span><span class="zh" style="display:none;">20年规划</span></a>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="hero">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')" id="btn-zh">🇨🇳 中文</button>
+  </div>
+  <div class="hero-tag"><span class="en">Health · Weight Control</span><span class="zh" style="display:none;">健康 · 体重管理</span></div>
+  <h1><span class="en">H11: My Weight Control Tracker</span><span class="zh" style="display:none;">H11：我的体重管理追踪</span></h1>
+  <div class="hero-sub">
+    <span class="en">Set a goal, log honestly, keep a steady healthy pace.</span>
+    <span class="zh" style="display:none;">设定目标，如实记录，保持稳定健康的节奏。</span>
+  </div>
+  <div class="hero-actions">
+    <a href="SP06.html" class="share-btn">📋 <span class="en">20-Year Life Plan</span><span class="zh" style="display:none;">20年人生规划</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Overview -->
+  <div class="goal-grid" id="goalGrid"></div>
+
+  <div class="progress-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label">
+      <span id="progressLabel"></span>
+      <span id="progressPct"></span>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="statusBanner"></div>
+
+  <!-- Goal setter -->
+  <h2 class="section-title"><span class="en">My Goal Weight</span><span class="zh" style="display:none;">我的目标体重</span></h2>
+  <div class="goal-setter">
+    <div class="form-row">
+      <label><span class="en">Goal Weight (kg)</span><span class="zh" style="display:none;">目标体重（公斤）</span></label>
+      <input type="number" id="inputGoal" min="0" step="0.1" placeholder="e.g. 70">
+    </div>
+    <button class="btn-primary" onclick="saveGoal()"><span class="en">Save Goal</span><span class="zh" style="display:none;">保存目标</span></button>
+  </div>
+
+  <!-- Add entry -->
+  <h2 class="section-title"><span class="en">Log Today's Weight</span><span class="zh" style="display:none;">记录今日体重</span></h2>
+  <p class="section-note">
+    <span class="en">Saved privately on this device only. Same-day re-logging updates it. Best measured at the same time each day (e.g. after waking).</span>
+    <span class="zh" style="display:none;">仅保存在此设备上，属于私人记录。重复记录同一天会自动更新。建议每天同一时间测量（例如起床后）。</span>
+  </p>
+  <div class="log-form">
+    <div class="form-row">
+      <label><span class="en">Date</span><span class="zh" style="display:none;">日期</span></label>
+      <input type="date" id="inputDate">
+    </div>
+    <div class="form-row">
+      <label><span class="en">Weight (kg)</span><span class="zh" style="display:none;">体重（公斤）</span></label>
+      <input type="number" id="inputWeight" min="0" step="0.1" placeholder="e.g. 75.4">
+    </div>
+    <div class="form-row">
+      <label><span class="en">Notes (optional)</span><span class="zh" style="display:none;">备注（可选）</span></label>
+      <textarea id="inputNote" placeholder="e.g. after breakfast, felt bloated..."></textarea>
+    </div>
+    <button class="btn-primary" onclick="addEntry()"><span class="en">＋ Add / Update Entry</span><span class="zh" style="display:none;">＋ 添加／更新记录</span></button>
+  </div>
+
+  <!-- Log entries -->
+  <h2 class="section-title"><span class="en">Weight Log</span><span class="zh" style="display:none;">体重记录</span></h2>
+  <div id="entryList"></div>
+
+  <div class="doctor-box">
+    <h3><span class="en">A Healthy Pace</span><span class="zh" style="display:none;">健康的节奏</span></h3>
+    <p>
+      <span class="en">A sustainable, healthy pace of change is roughly 0.25&ndash;0.5 kg per week. Faster swings are often water weight, not real progress &mdash; don't chase the daily number, watch the trend over several weeks. If weight moves sharply without trying, or stalls for months despite consistent effort, that's worth mentioning to a doctor.</span>
+      <span class="zh" style="display:none;">可持续且健康的变化节奏大约是每周0.25至0.5公斤。变化过快通常只是水分波动，并非真正的进展 &mdash; 不必纠结每天的数字，应观察几周的整体趋势。若体重在没有刻意努力下大幅变动，或持续努力数月仍毫无变化，这值得告诉医生。</span>
+    </p>
+  </div>
+
+  <div class="view-counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+</div>
+
+<footer>
+  <p>H11: My Weight Control Tracker &nbsp;·&nbsp; Paul Yeo &nbsp;·&nbsp; Started 4 July 2026</p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></p>
+</footer>
+
+<script>
+var STORAGE_KEY = 'h11_weight_entries';
+var GOAL_KEY = 'h11_weight_goal';
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+}
+function saveEntries(entries) { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+function loadGoal() {
+  try { var g = localStorage.getItem(GOAL_KEY); return g ? parseFloat(g) : null; } catch(e) { return null; }
+}
+function saveGoal() {
+  var v = parseFloat(document.getElementById('inputGoal').value);
+  if (!v || v <= 0) return;
+  localStorage.setItem(GOAL_KEY, String(v));
+  render();
+}
+
+function todayISO() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function addEntry() {
+  var date = document.getElementById('inputDate').value || todayISO();
+  var weight = parseFloat(document.getElementById('inputWeight').value);
+  var note = document.getElementById('inputNote').value.trim();
+  if (!weight || weight <= 0) return;
+  var entries = loadEntries();
+  var existing = entries.find(function(e){ return e.date === date; });
+  if (existing) { existing.weight = weight; existing.note = note; }
+  else { entries.push({ date: date, weight: weight, note: note }); }
+  entries.sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  saveEntries(entries);
+  document.getElementById('inputWeight').value = '';
+  document.getElementById('inputNote').value = '';
+  render();
+}
+
+function deleteEntry(idx) {
+  var entries = loadEntries();
+  entries.splice(idx, 1);
+  saveEntries(entries);
+  render();
+}
+
+function fmt1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+
+function renderGoalGrid(entries, goal) {
+  var grid = document.getElementById('goalGrid');
+  var sorted = entries.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  var start = sorted.length ? sorted[0].weight : null;
+  var current = sorted.length ? sorted[sorted.length - 1].weight : null;
+  var change = (start !== null && current !== null) ? current - start : null;
+  var toGoal = (current !== null && goal !== null) ? current - goal : null;
+
+  var cards = [
+    { label_en:'Starting Weight', label_zh:'起始体重', val: start !== null ? fmt1(start) + ' kg' : '—' },
+    { label_en:'Current Weight', label_zh:'目前体重', val: current !== null ? fmt1(current) + ' kg' : '—' },
+    { label_en:'Change So Far', label_zh:'目前变化', val: change !== null ? (change > 0 ? '+' : '') + fmt1(change) + ' kg' : '—' },
+    { label_en:'Goal Weight', label_zh:'目标体重', val: goal !== null ? fmt1(goal) + ' kg' : '—' }
+  ];
+  grid.innerHTML = cards.map(function(c) {
+    return '<div class="goal-card"><div class="goal-card-label"><span class="en">' + c.label_en + '</span><span class="zh" style="display:none;">' + c.label_zh + '</span></div><div class="goal-card-value">' + c.val + '</div></div>';
+  }).join('');
+
+  var wrap = document.getElementById('progressWrap');
+  if (start !== null && current !== null && goal !== null && start !== goal) {
+    wrap.style.display = 'block';
+    var totalDist = Math.abs(start - goal);
+    var doneDist = Math.abs(start - current);
+    var pct = Math.max(0, Math.min(100, (doneDist / totalDist) * 100));
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = fmt1(current) + ' kg (' + (toGoal > 0 ? '+' : '') + fmt1(toGoal) + ' kg ' + (document.getElementById('btn-zh').classList.contains('active') ? '距目标' : 'to goal') + ')';
+    document.getElementById('progressPct').textContent = Math.round(pct) + '%';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+function renderStatus(entries, goal) {
+  var el = document.getElementById('statusBanner');
+  var sorted = entries.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  if (sorted.length === 0 || goal === null) {
+    el.className = 'status-banner neutral';
+    el.innerHTML = '<h3><span class="en">👋 Get Started</span><span class="zh" style="display:none;">👋 开始使用</span></h3>' +
+      '<p><span class="en">Set your goal weight and log your first entry to see your progress here.</span><span class="zh" style="display:none;">设定你的目标体重并记录第一笔数据，即可在此查看进度。</span></p>';
+    return;
+  }
+  var current = sorted[sorted.length - 1].weight;
+  var start = sorted[0].weight;
+  var diffToGoal = current - goal;
+  if (Math.abs(diffToGoal) < 0.3) {
+    el.className = 'status-banner done';
+    el.innerHTML = '<h3><span class="en">🎉 Goal Reached!</span><span class="zh" style="display:none;">🎉 目标已达成！</span></h3>' +
+      '<p><span class="en">You\'re at your goal weight. Focus now on holding steady.</span><span class="zh" style="display:none;">你已达到目标体重，现在的重点是保持稳定。</span></p>';
+    return;
+  }
+  var direction = goal < start ? -1 : (goal > start ? 1 : 0); // -1 = trying to lose, 1 = trying to gain
+  var movingToward = direction !== 0 && ((current - start) * direction >= 0);
+  if (movingToward || sorted.length < 2) {
+    el.className = 'status-banner ontrack';
+    el.innerHTML = '<h3><span class="en">✅ Moving in the Right Direction</span><span class="zh" style="display:none;">✅ 方向正确</span></h3>' +
+      '<p><span class="en">' + fmt1(Math.abs(diffToGoal)) + ' kg to go. Keep the pace steady &mdash; about 0.25&ndash;0.5 kg/week is healthy.</span><span class="zh" style="display:none;">距目标还差' + fmt1(Math.abs(diffToGoal)) + '公斤。保持稳定节奏 &mdash; 每周约0.25至0.5公斤是健康的。</span></p>';
+  } else {
+    el.className = 'status-banner behind';
+    el.innerHTML = '<h3><span class="en">⚠️ Trending Away from Goal</span><span class="zh" style="display:none;">⚠️ 偏离目标</span></h3>' +
+      '<p><span class="en">Your recent trend is moving away from your goal. No need to panic over one day &mdash; look at the pattern over the next week and adjust.</span><span class="zh" style="display:none;">你最近的趋势正偏离目标。不必因单日数据而焦虑 &mdash; 请观察接下来一周的整体趋势并做出调整。</span></p>';
+  }
+}
+
+function renderEntries(entries, goal) {
+  var list = document.getElementById('entryList');
+  list.innerHTML = '';
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="en">No entries yet — log today\'s weight above.</span><span class="zh" style="display:none;">还没有记录 — 请在上方记录今日体重。</span></div>';
+    return;
+  }
+  var chronological = entries.slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  entries.forEach(function(entry, idx) {
+    var pos = chronological.findIndex(function(e){ return e.date === entry.date; });
+    var prev = pos > 0 ? chronological[pos - 1] : null;
+    var delta = prev ? entry.weight - prev.weight : null;
+    var tier = '', tagClass = 'tag-hit', tagEn = 'First Entry', tagZh = '首次记录';
+    if (delta !== null && goal !== null) {
+      var direction = goal < chronological[0].weight ? -1 : 1;
+      var goodMove = (delta * direction) <= 0.05;
+      if (Math.abs(delta) < 0.05) { tier = 'flat'; tagClass = 'tag-pace'; tagEn = 'Steady'; tagZh = '持平'; }
+      else if (goodMove) { tagClass = 'tag-hit'; tagEn = 'On Track'; tagZh = '进展良好'; }
+      else { tier = 'moving-away'; tagClass = 'tag-behind'; tagEn = 'Away from Goal'; tagZh = '偏离目标'; }
+    }
+    var card = document.createElement('div');
+    card.className = 'entry-card' + (tier ? ' ' + tier : '');
+    card.innerHTML =
+      '<div class="entry-top">' +
+        '<div class="entry-icon">⚖️</div>' +
+        '<div class="entry-title">' + fmt1(entry.weight) + ' kg' + (delta !== null ? ' <span style="color:var(--mid);font-size:0.85rem;">(' + (delta > 0 ? '+' : '') + fmt1(delta) + ')</span>' : '') + '</div>' +
+        '<div class="entry-date">' + entry.date + '</div>' +
+      '</div>' +
+      '<span class="entry-tag ' + tagClass + '"><span class="en">' + tagEn + '</span><span class="zh" style="display:none;">' + tagZh + '</span></span>' +
+      (entry.note ? '<div class="entry-note">' + escapeHtml(entry.note) + '</div>' : '') +
+      '<button class="entry-del" onclick="deleteEntry(' + idx + ')"><span class="en">Delete</span><span class="zh" style="display:none;">删除</span></button>';
+    list.appendChild(card);
+  });
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function render() {
+  var entries = loadEntries();
+  var goal = loadGoal();
+  if (goal !== null) document.getElementById('inputGoal').value = goal;
+  renderGoalGrid(entries, goal);
+  renderStatus(entries, goal);
+  renderEntries(entries, goal);
+  applyLang();
+}
+
+function applyLang() {
+  var lang = document.getElementById('btn-zh').classList.contains('active') ? 'zh' : 'en';
+  setLang(lang);
+}
+
+function setLang(lang) {
+  var enEls = document.querySelectorAll('.en');
+  var zhEls = document.querySelectorAll('.zh');
+  if (lang === 'zh') {
+    enEls.forEach(function(el){ el.style.display = 'none'; });
+    zhEls.forEach(function(el){ el.style.display = ''; });
+    document.getElementById('btn-en').classList.remove('active');
+    document.getElementById('btn-zh').classList.add('active');
+  } else {
+    enEls.forEach(function(el){ el.style.display = ''; });
+    zhEls.forEach(function(el){ el.style.display = 'none'; });
+    document.getElementById('btn-en').classList.add('active');
+    document.getElementById('btn-zh').classList.remove('active');
+  }
+  renderGoalGrid(loadEntries(), loadGoal());
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title: title, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+document.getElementById('inputDate').value = todayISO();
+render();
+</script>
+</body>
+</html>
