@@ -196,6 +196,9 @@ body {
 .lang-bar { display:flex; gap:8px; padding:9px 16px; background:#161b22; border-bottom:1px solid rgba(255,255,255,0.06); flex-shrink:0; }
 .lang-btn { padding:5px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.18); background:transparent; color:#8b949e; font-size:0.88em; font-weight:700; cursor:pointer; transition:all 0.2s; }
 .lang-btn.active { background:rgba(240,165,0,0.15); border-color:rgba(240,165,0,0.5); color:#f0a500; }
+.share-btn { flex-shrink:0; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; letter-spacing:.02em; padding:7px 16px; border-radius:30px; cursor:pointer; font-size:0.85em; transition:background .2s; }
+.share-btn:hover { background:rgba(255,255,255,.25); }
+.share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
 @keyframes dashFlow { to { stroke-dashoffset: -100; } }
 </style>
 </head>
@@ -207,8 +210,10 @@ body {
       <h1>🧊 MT12: <span class="ice">Finland</span> &amp; <span class="gold">Baltic States</span> — Ice, History &amp; Hidden Gems</h1>
       <div class="header-sub">Helsinki · Rovaniemi · Icebreaker Cruise · Vilnius · Riga · Tallinn · ~30 Days · Jan–Feb (best for thick ice)</div>
     </div>
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
   </div>
 </div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('map')">🗺️ Map</button>
@@ -1257,6 +1262,20 @@ function toggleMapFullscreen() {
 
 // Fix tab active state on load
 document.querySelector('.tab-btn').classList.add('active');
+
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
 </script>
 </body>
 </html>
