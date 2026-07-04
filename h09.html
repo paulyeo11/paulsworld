@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>H09: My 15K Steps Challenge – Paul's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream: #fdf8f2;
+      --warm-white: #fff9f4;
+      --ink: #2c2218;
+      --mid: #6b5a4e;
+      --accent: #10b981;
+      --accent-dark: #065f46;
+      --accent-soft: #d1fae5;
+      --border: #e8ddd5;
+      --orange: #f4813f;
+      --red: #ef4444;
+      --red-soft: #fee2e2;
+      --amber: #f59e0b;
+      --amber-soft: #fef3c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Source Sans 3', sans-serif;
+      font-weight: 300;
+      line-height: 1.8;
+    }
+    .home-btn {
+      position: fixed;
+      top: 16px; left: 16px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .home-btn:hover { background: #059669; }
+    .hero {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+      color: #fff;
+      text-align: center;
+      padding: 90px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.25) 0%, transparent 70%);
+    }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .hero h1 {
+      font-family: 'Lora', serif;
+      font-size: clamp(1.9rem, 5vw, 3.2rem);
+      font-weight: 600;
+      line-height: 1.25;
+      max-width: 720px;
+      margin: 0 auto 16px;
+      color: #ecfdf5;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      letter-spacing: 0.05em;
+    }
+    .hero-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 11px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Lora', Georgia, serif;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+    .lang-bar { text-align: center; padding: 12px 0 4px; position: relative; z-index: 1; }
+    .lang-btn {
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.7);
+      padding: 5px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-family: 'Source Sans 3', sans-serif;
+      margin: 0 4px;
+      transition: all 0.2s;
+    }
+    .lang-btn.active { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.8); color: #fff; font-weight: 600; }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 24px; }
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: 1.45rem;
+      color: var(--accent-dark);
+      margin: 40px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+    .section-note { font-size: 0.85rem; color: var(--mid); margin-bottom: 18px; }
+
+    /* Goal overview */
+    .goal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: -30px;
+      position: relative;
+      z-index: 2;
+    }
+    .goal-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); text-align: center; }
+    .goal-card-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mid); margin-bottom: 4px; }
+    .goal-card-value { font-family: 'Lora', serif; font-weight: 600; font-size: 1.3rem; color: var(--accent-dark); }
+
+    .progress-wrap { margin-top: 24px; }
+    .progress-bar { height: 16px; border-radius: 8px; background: var(--border); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 8px; background: var(--accent); transition: width 0.3s; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--mid); margin-top: 6px; }
+
+    .status-banner { border-radius: 12px; padding: 18px 20px; margin: 20px 0; }
+    .status-banner.behind { background: var(--red-soft); border: 1px solid #fca5a5; }
+    .status-banner.ontrack { background: var(--accent-soft); border: 1px solid #6ee7b7; }
+    .status-banner.done { background: linear-gradient(135deg, #064e3b, #047857); border: none; color: #fff; }
+    .status-banner h3 { font-family: 'Lora', serif; font-size: 1.05rem; margin-bottom: 6px; }
+    .status-banner.behind h3 { color: #991b1b; }
+    .status-banner.ontrack h3 { color: var(--accent-dark); }
+    .status-banner p { font-size: 0.9rem; }
+    .status-banner.behind p { color: #7f1d1d; }
+    .status-banner.ontrack p { color: #065f46; }
+
+    .log-form { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .form-row { margin-bottom: 14px; }
+    .form-row label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .form-row input[type=date], .form-row input[type=number] {
+      width: 100%; font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem;
+      padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--warm-white); color: var(--ink);
+    }
+    .btn-primary { background: var(--accent); color: #fff; border: none; padding: 11px 26px; border-radius: 24px; font-size: 0.9rem; font-weight: 600; cursor: pointer; letter-spacing: 0.03em; transition: background 0.2s; }
+    .btn-primary:hover { background: #059669; }
+
+    .entry-card { background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+    .entry-card.below-pace { border-left-color: var(--red); }
+    .entry-card.below-target { border-left-color: var(--amber); }
+    .entry-top { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+    .entry-icon { font-size: 1.2rem; }
+    .entry-title { font-family: 'Lora', serif; font-weight: 600; font-size: 1rem; color: var(--ink); }
+    .entry-date { font-size: 0.78rem; color: var(--mid); white-space: nowrap; }
+    .entry-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 10px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .tag-hit { background: var(--accent-soft); color: var(--accent-dark); }
+    .tag-pace { background: var(--amber-soft); color: #92400e; }
+    .tag-behind { background: var(--red-soft); color: #991b1b; }
+    .entry-del { background: none; border: none; color: var(--mid); font-size: 0.75rem; cursor: pointer; text-decoration: underline; margin-top: 8px; padding: 0; }
+    .empty-state { text-align: center; color: var(--mid); font-size: 0.9rem; padding: 24px; font-style: italic; }
+
+    .doctor-box { background: linear-gradient(135deg, #064e3b, #047857); color: #fff; border-radius: 12px; padding: 22px 24px; margin: 32px 0; }
+    .doctor-box h3 { font-family: 'Lora', serif; font-size: 1.1rem; margin-bottom: 8px; }
+    .doctor-box p { font-size: 0.88rem; opacity: 0.9; }
+
+    .view-counter-wrap { text-align: center; padding: 28px 0 8px; font-size: 0.88rem; color: var(--mid); }
+    footer { text-align: center; padding: 28px 24px; background: #064e3b; color: rgba(255,255,255,0.55); font-size: 0.82rem; margin-top: 40px; }
+    footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+    @media (max-width: 540px) { .goal-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+  </style>
+</head>
+<body>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="hero">
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')" id="btn-en">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')" id="btn-zh">🇨🇳 中文</button>
+  </div>
+  <div class="hero-tag"><span class="en">Health · 30-Day Challenge</span><span class="zh" style="display:none;">健康 · 30天挑战</span></div>
+  <h1><span class="en">H09: My 15K Steps Challenge</span><span class="zh" style="display:none;">H09：我的15K步挑战</span></h1>
+  <div class="hero-sub">
+    <span class="en">Target: 15,000 steps/day average &middot; 4 Jul &ndash; 2 Aug 2026 &middot; Goal: 360,000 steps total (15K &times; 24)</span>
+    <span class="zh" style="display:none;">目标：每日平均15,000步 &middot; 2026年7月4日至8月2日 &middot; 总目标：360,000步（15K &times; 24）</span>
+  </div>
+  <div class="hero-actions">
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Goal overview -->
+  <div class="goal-grid" id="goalGrid"></div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label">
+      <span id="progressLabel">0 / 360,000 steps</span>
+      <span id="progressPct">0%</span>
+    </div>
+  </div>
+
+  <!-- Status banner -->
+  <div id="statusBanner"></div>
+
+  <!-- Add entry -->
+  <h2 class="section-title"><span class="en">Log Today's Steps</span><span class="zh" style="display:none;">记录今日步数</span></h2>
+  <p class="section-note">
+    <span class="en">Saved privately on this device only. Re-logging the same date updates it.</span>
+    <span class="zh" style="display:none;">仅保存在此设备上，属于私人记录。重复记录同一天会自动更新。</span>
+  </p>
+  <div class="log-form">
+    <div class="form-row">
+      <label><span class="en">Date</span><span class="zh" style="display:none;">日期</span></label>
+      <input type="date" id="inputDate">
+    </div>
+    <div class="form-row">
+      <label><span class="en">Steps</span><span class="zh" style="display:none;">步数</span></label>
+      <input type="number" id="inputSteps" min="0" step="100" placeholder="e.g. 14500">
+    </div>
+    <button class="btn-primary" onclick="addEntry()"><span class="en">＋ Add / Update Entry</span><span class="zh" style="display:none;">＋ 添加／更新记录</span></button>
+  </div>
+
+  <!-- Log entries -->
+  <h2 class="section-title"><span class="en">Daily Log</span><span class="zh" style="display:none;">每日记录</span></h2>
+  <div id="entryList"></div>
+
+  <div class="doctor-box">
+    <h3><span class="en">How Catch-Up Works</span><span class="zh" style="display:none;">追赶机制说明</span></h3>
+    <p>
+      <span class="en">The 30-day total goal is 360,000 steps (15,000 &times; 24) &mdash; a built-in buffer of about 6 lighter days. As long as the running total stays on pace for 12,000/day, you're fine even if some days fall short of 15,000. Fall behind that pace and this page will flag it with exactly how many extra steps/day you need for the rest of the challenge.</span>
+      <span class="zh" style="display:none;">30天的总目标是360,000步（15,000 &times; 24）&mdash; 内建约6天较轻松日子的缓冲。只要总步数保持在每日12,000步的进度上，即使某几天没达到15,000步也没关系。一旦落后于这个进度，本页会明确提示你在剩余天数中每天还需要多走多少步。</span>
+    </p>
+  </div>
+
+  <div class="view-counter-wrap">
+    <script src="/view-counter.js"></script>
+  </div>
+</div>
+
+<footer>
+  <p>H09: My 15K Steps Challenge &nbsp;·&nbsp; Paul Yeo &nbsp;·&nbsp; Started 4 July 2026</p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></p>
+</footer>
+
+<script>
+var STORAGE_KEY = 'h09_steps_challenge';
+var CHALLENGE_START = new Date('2026-07-04T00:00:00');
+var CHALLENGE_DAYS = 30;
+var CHALLENGE_TOTAL_GOAL = 360000;   // 15,000 x 24
+var DAILY_TARGET = 15000;
+var PACE_PER_DAY = CHALLENGE_TOTAL_GOAL / CHALLENGE_DAYS; // 12,000/day required pace
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+}
+function saveEntries(entries) { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+
+function todayISO() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function daysElapsed() {
+  var now = new Date();
+  var diff = Math.floor((now - CHALLENGE_START) / 86400000) + 1;
+  return Math.max(0, Math.min(CHALLENGE_DAYS, diff));
+}
+
+function addEntry() {
+  var date = document.getElementById('inputDate').value || todayISO();
+  var steps = parseInt(document.getElementById('inputSteps').value, 10);
+  if (!steps || steps < 0) return;
+  var entries = loadEntries();
+  var existing = entries.find(function(e){ return e.date === date; });
+  if (existing) { existing.steps = steps; }
+  else { entries.push({ date: date, steps: steps }); }
+  entries.sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  saveEntries(entries);
+  document.getElementById('inputSteps').value = '';
+  render();
+}
+
+function deleteEntry(idx) {
+  var entries = loadEntries();
+  entries.splice(idx, 1);
+  saveEntries(entries);
+  render();
+}
+
+function fmt(n) { return Math.round(n).toLocaleString(); }
+
+function renderGoalGrid(totalLogged, elapsed) {
+  var grid = document.getElementById('goalGrid');
+  var avgSoFar = elapsed > 0 ? totalLogged / elapsed : 0;
+  var remaining = CHALLENGE_DAYS - elapsed;
+  var remainingGoal = Math.max(0, CHALLENGE_TOTAL_GOAL - totalLogged);
+  var reqAvgRemaining = remaining > 0 ? Math.ceil(remainingGoal / remaining) : 0;
+  var cards = [
+    { label_en:'Days Elapsed', label_zh:'已过天数', val: elapsed + ' / ' + CHALLENGE_DAYS },
+    { label_en:'Total Logged', label_zh:'已记录总步数', val: fmt(totalLogged) },
+    { label_en:'Avg / Day So Far', label_zh:'目前平均/天', val: fmt(avgSoFar) },
+    { label_en:'Needed / Day (Remaining)', label_zh:'剩余天数所需/天', val: remaining > 0 ? fmt(reqAvgRemaining) : '—' }
+  ];
+  grid.innerHTML = cards.map(function(c) {
+    return '<div class="goal-card"><div class="goal-card-label"><span class="en">' + c.label_en + '</span><span class="zh" style="display:none;">' + c.label_zh + '</span></div><div class="goal-card-value">' + c.val + '</div></div>';
+  }).join('');
+}
+
+function renderProgress(totalLogged) {
+  var pct = Math.min(100, (totalLogged / CHALLENGE_TOTAL_GOAL) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = fmt(totalLogged) + ' / ' + fmt(CHALLENGE_TOTAL_GOAL) + ' steps';
+  document.getElementById('progressPct').textContent = Math.round(pct) + '%';
+}
+
+function renderStatus(totalLogged, elapsed) {
+  var el = document.getElementById('statusBanner');
+  var requiredSoFar = PACE_PER_DAY * elapsed;
+  var deficit = requiredSoFar - totalLogged;
+  var remaining = CHALLENGE_DAYS - elapsed;
+  var remainingGoal = Math.max(0, CHALLENGE_TOTAL_GOAL - totalLogged);
+
+  if (totalLogged >= CHALLENGE_TOTAL_GOAL) {
+    el.className = 'status-banner done';
+    el.innerHTML = '<h3><span class="en">🎉 Goal Reached!</span><span class="zh" style="display:none;">🎉 目标已达成！</span></h3>' +
+      '<p><span class="en">You\'ve hit 360,000 steps. Anything from here is a bonus.</span><span class="zh" style="display:none;">你已达到360,000步。之后的每一步都是额外的成果。</span></p>';
+  } else if (deficit > 0) {
+    el.className = 'status-banner behind';
+    el.innerHTML = '<h3><span class="en">⚠️ Catch-Up Needed</span><span class="zh" style="display:none;">⚠️ 需要追赶</span></h3>' +
+      '<p><span class="en">You\'re ' + fmt(deficit) + ' steps behind the 12,000/day pace needed to hit 360,000. Walk about <strong>' + (remaining > 0 ? fmt(Math.ceil(remainingGoal/remaining)) : '0') + ' steps/day</strong> for the remaining ' + remaining + ' day(s) to catch up.</span>' +
+      '<span class="zh" style="display:none;">你落后于每日12,000步的进度约' + fmt(deficit) + '步（该进度用于达成360,000步的总目标）。剩余' + remaining + '天，建议每天走约<strong>' + (remaining > 0 ? fmt(Math.ceil(remainingGoal/remaining)) : '0') + '步</strong>以追回进度。</span></p>';
+  } else {
+    el.className = 'status-banner ontrack';
+    el.innerHTML = '<h3><span class="en">✅ On Track</span><span class="zh" style="display:none;">✅ 进度良好</span></h3>' +
+      '<p><span class="en">You\'re ahead of pace by ' + fmt(-deficit) + ' steps. Keep it up!</span><span class="zh" style="display:none;">你领先进度约' + fmt(-deficit) + '步，继续保持！</span></p>';
+  }
+}
+
+function renderEntries(entries) {
+  var list = document.getElementById('entryList');
+  list.innerHTML = '';
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="en">No entries yet — log today\'s steps above.</span><span class="zh" style="display:none;">还没有记录 — 请在上方记录今日步数。</span></div>';
+    return;
+  }
+  entries.forEach(function(entry, idx) {
+    var tier, tagClass, tagLabelEn, tagLabelZh;
+    if (entry.steps >= DAILY_TARGET) { tier = ''; tagClass = 'tag-hit'; tagLabelEn = 'Hit 15K Target'; tagLabelZh = '达到15K目标'; }
+    else if (entry.steps >= PACE_PER_DAY) { tier = 'below-target'; tagClass = 'tag-pace'; tagLabelEn = 'On Pace'; tagLabelZh = '符合进度'; }
+    else { tier = 'below-pace'; tagClass = 'tag-behind'; tagLabelEn = 'Below Pace'; tagLabelZh = '落后进度'; }
+    var card = document.createElement('div');
+    card.className = 'entry-card' + (tier ? ' ' + tier : '');
+    card.innerHTML =
+      '<div class="entry-top">' +
+        '<div class="entry-icon">🚶</div>' +
+        '<div class="entry-title">' + fmt(entry.steps) + ' <span class="en">steps</span><span class="zh" style="display:none;">步</span></div>' +
+        '<div class="entry-date">' + entry.date + '</div>' +
+      '</div>' +
+      '<span class="entry-tag ' + tagClass + '"><span class="en">' + tagLabelEn + '</span><span class="zh" style="display:none;">' + tagLabelZh + '</span></span>' +
+      '<button class="entry-del" onclick="deleteEntry(' + idx + ')"><span class="en">Delete</span><span class="zh" style="display:none;">删除</span></button>';
+    list.appendChild(card);
+  });
+}
+
+function render() {
+  var entries = loadEntries();
+  var totalLogged = entries.reduce(function(a,e){ return a + e.steps; }, 0);
+  var elapsed = daysElapsed();
+  renderGoalGrid(totalLogged, elapsed);
+  renderProgress(totalLogged);
+  renderStatus(totalLogged, elapsed);
+  renderEntries(entries);
+  applyLang();
+}
+
+function applyLang() {
+  var lang = document.getElementById('btn-zh').classList.contains('active') ? 'zh' : 'en';
+  setLang(lang);
+}
+
+function setLang(lang) {
+  var enEls = document.querySelectorAll('.en');
+  var zhEls = document.querySelectorAll('.zh');
+  if (lang === 'zh') {
+    enEls.forEach(function(el){ el.style.display = 'none'; });
+    zhEls.forEach(function(el){ el.style.display = ''; });
+    document.getElementById('btn-en').classList.remove('active');
+    document.getElementById('btn-zh').classList.add('active');
+  } else {
+    enEls.forEach(function(el){ el.style.display = ''; });
+    zhEls.forEach(function(el){ el.style.display = 'none'; });
+    document.getElementById('btn-en').classList.add('active');
+    document.getElementById('btn-zh').classList.remove('active');
+  }
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title: title, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+document.getElementById('inputDate').value = todayISO();
+render();
+</script>
+</body>
+</html>
