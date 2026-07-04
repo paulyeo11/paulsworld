@@ -82,6 +82,25 @@ body.lang-zh .en-block { display: none; }
 .next12-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--blue); text-decoration: none; font-weight: 600; }
 @media (max-width: 480px) { .next12-item { grid-template-columns: 68px 1fr; padding: 14px 14px; } }
 
+/* TODAY'S SNAPSHOT */
+.snapshot-wrap { max-width: 740px; margin: 32px auto 0; padding: 0 22px; }
+.snapshot-wrap h2 { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--text); font-weight: 700; margin-bottom: 4px; text-align: center; }
+.snapshot-sub { color: var(--muted); font-size: 0.82rem; text-align: center; margin-bottom: 16px; }
+.snapshot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .snapshot-grid { grid-template-columns: 1fr; } }
+.snapshot-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+.snapshot-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.snapshot-title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.snapshot-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.snapshot-badge.ok { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.4); color: var(--green); }
+.snapshot-badge.warn { background: rgba(244,129,63,0.15); border: 1px solid rgba(244,129,63,0.4); color: var(--accent); }
+.snapshot-badge.empty { background: rgba(139,143,168,0.15); border: 1px solid rgba(139,143,168,0.35); color: var(--muted); }
+.snapshot-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.snapshot-stat-label { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.snapshot-stat-value { font-size: 1rem; font-weight: 700; color: var(--text); }
+.snapshot-empty { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.snapshot-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; color: var(--blue); text-decoration: none; font-weight: 600; }
+
 /* NEXT 3 MONTHS */
 .q3-section { max-width: 900px; margin: 0 auto; padding: 10px 22px 10px; }
 .q3-section h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--text); font-weight: 700; margin-bottom: 6px; text-align: center; }
@@ -153,8 +172,6 @@ footer a { color: var(--blue); text-decoration: none; }
     <span class="zh">一份让我在接下来的20年里，每一年都过得快乐、健康、充实的路线图 — 有意为之，与Joanne相伴同行。</span>
   </div>
   <div class="hero-btns">
-    <a href="h10.html" class="hero-btn">&#128099;&nbsp;<span class="en">15K Steps Challenge</span><span class="zh">15K步挑战</span></a>
-    <a href="h11.html" class="hero-btn">&#9878;&#65039;&nbsp;<span class="en">Weight Control</span><span class="zh">体重管理</span></a>
     <a href="#next-3-months" class="hero-btn">&#128198;&nbsp;<span class="en">Next 3 Months</span><span class="zh">未来3个月</span></a>
     <a href="#next-12" class="hero-btn">&#128197;&nbsp;<span class="en">Next 12 Months</span><span class="zh">未来12个月</span></a>
     <a href="#short-term" class="hero-btn">&#128204;&nbsp;<span class="en">Next 5 Years</span><span class="zh">未来5年</span></a>
@@ -178,6 +195,26 @@ footer a { color: var(--blue); text-decoration: none; }
     <div class="age-marker-label" style="left:75%">2041</div>
     <div class="age-marker" style="left:100%">90</div>
     <div class="age-marker-label" style="left:100%">2046</div>
+  </div>
+</div>
+
+<!-- TODAY'S SNAPSHOT -->
+<div class="snapshot-wrap">
+  <h2>&#128202; <span class="en">Today's Snapshot</span><span class="zh">今日快照</span></h2>
+  <p class="snapshot-sub"><span class="en">Live from my trackers on this device.</span><span class="zh">来自本设备上追踪记录的实时数据。</span></p>
+  <div class="snapshot-grid" id="snapshotGrid">
+    <div class="snapshot-card">
+      <div class="snapshot-card-head">
+        <div class="snapshot-title">&#128099; <span class="en">Steps Challenge</span><span class="zh">步数挑战</span></div>
+      </div>
+      <div class="snapshot-empty"><span class="en">Loading&hellip;</span><span class="zh">加载中&hellip;</span></div>
+    </div>
+    <div class="snapshot-card">
+      <div class="snapshot-card-head">
+        <div class="snapshot-title">&#9878;&#65039; <span class="en">Weight Control</span><span class="zh">体重管理</span></div>
+      </div>
+      <div class="snapshot-empty"><span class="en">Loading&hellip;</span><span class="zh">加载中&hellip;</span></div>
+    </div>
   </div>
 </div>
 
@@ -554,6 +591,81 @@ function shareThisPage() {
     });
   }
 }
+
+// ── TODAY'S SNAPSHOT (reads H10/H11 localStorage on this device) ─────────────
+function bi(en, zh) { return '<span class="en">' + en + '</span><span class="zh">' + zh + '</span>'; }
+
+function renderStepsSnapshot() {
+  var cards = document.querySelectorAll('#snapshotGrid .snapshot-card');
+  var card = cards[0];
+  var entries = [];
+  try { entries = JSON.parse(localStorage.getItem('h10_steps_challenge')) || []; } catch(e) {}
+
+  if (entries.length === 0) {
+    card.innerHTML =
+      '<div class="snapshot-card-head"><div class="snapshot-title">&#128099; ' + bi('Steps Challenge', '步数挑战') + '</div>' +
+        '<span class="snapshot-badge empty">' + bi('Not Started', '尚未开始') + '</span></div>' +
+      '<div class="snapshot-empty">' + bi("No steps logged yet on this device.", '本设备尚无步数记录。') + '</div>' +
+      '<a href="h10.html" class="snapshot-link">&#8594; ' + bi('Start Logging', '开始记录') + '</a>';
+    return;
+  }
+
+  var CHALLENGE_START = new Date('2026-07-04T00:00:00');
+  var CHALLENGE_DAYS = 30;
+  var CHALLENGE_TOTAL_GOAL = 360000;
+  var PACE_PER_DAY = CHALLENGE_TOTAL_GOAL / CHALLENGE_DAYS;
+  var totalLogged = entries.reduce(function(a, e) { return a + e.steps; }, 0);
+  var elapsed = Math.max(0, Math.min(CHALLENGE_DAYS, Math.floor((new Date() - CHALLENGE_START) / 86400000) + 1));
+  var deficit = (PACE_PER_DAY * elapsed) - totalLogged;
+  var badge = totalLogged >= CHALLENGE_TOTAL_GOAL
+    ? '<span class="snapshot-badge ok">' + bi('Goal Reached', '目标达成') + '</span>'
+    : (deficit > 0
+      ? '<span class="snapshot-badge warn">' + bi('Catch-Up Needed', '需要追赶') + '</span>'
+      : '<span class="snapshot-badge ok">' + bi('On Track', '进度良好') + '</span>');
+
+  card.innerHTML =
+    '<div class="snapshot-card-head"><div class="snapshot-title">&#128099; ' + bi('Steps Challenge', '步数挑战') + '</div>' + badge + '</div>' +
+    '<div class="snapshot-stats">' +
+      '<div><div class="snapshot-stat-label">' + bi('Total Logged', '已记录总步数') + '</div><div class="snapshot-stat-value">' + Math.round(totalLogged).toLocaleString() + '</div></div>' +
+      '<div><div class="snapshot-stat-label">' + bi('Days', '天数') + '</div><div class="snapshot-stat-value">' + elapsed + ' / ' + CHALLENGE_DAYS + '</div></div>' +
+    '</div>' +
+    '<a href="h10.html" class="snapshot-link">&#8594; ' + bi('Open Tracker', '打开追踪器') + '</a>';
+}
+
+function renderWeightSnapshot() {
+  var cards = document.querySelectorAll('#snapshotGrid .snapshot-card');
+  var card = cards[1];
+  var entries = [], goal = null;
+  try { entries = JSON.parse(localStorage.getItem('h11_weight_entries')) || []; } catch(e) {}
+  try { var g = localStorage.getItem('h11_weight_goal'); goal = g ? parseFloat(g) : null; } catch(e) {}
+
+  if (entries.length === 0) {
+    card.innerHTML =
+      '<div class="snapshot-card-head"><div class="snapshot-title">&#9878;&#65039; ' + bi('Weight Control', '体重管理') + '</div>' +
+        '<span class="snapshot-badge empty">' + bi('Not Started', '尚未开始') + '</span></div>' +
+      '<div class="snapshot-empty">' + bi('No weight logged yet on this device.', '本设备尚无体重记录。') + '</div>' +
+      '<a href="h11.html" class="snapshot-link">&#8594; ' + bi('Start Logging', '开始记录') + '</a>';
+    return;
+  }
+
+  var sorted = entries.slice().sort(function(a, b) { return a.date < b.date ? -1 : 1; });
+  var current = sorted[sorted.length - 1].weight;
+  var start = sorted[0].weight;
+  var change = current - start;
+  var badge = (goal !== null && Math.abs(current - goal) < 0.3)
+    ? '<span class="snapshot-badge ok">' + bi('Goal Reached', '目标达成') + '</span>'
+    : '<span class="snapshot-badge warn">' + bi('In Progress', '进行中') + '</span>';
+
+  card.innerHTML =
+    '<div class="snapshot-card-head"><div class="snapshot-title">&#9878;&#65039; ' + bi('Weight Control', '体重管理') + '</div>' + badge + '</div>' +
+    '<div class="snapshot-stats">' +
+      '<div><div class="snapshot-stat-label">' + bi('Current', '目前') + '</div><div class="snapshot-stat-value">' + current.toFixed(1) + ' kg</div></div>' +
+      '<div><div class="snapshot-stat-label">' + bi('Change', '变化') + '</div><div class="snapshot-stat-value">' + (change > 0 ? '+' : '') + change.toFixed(1) + ' kg</div></div>' +
+    '</div>' +
+    '<a href="h11.html" class="snapshot-link">&#8594; ' + bi('Open Tracker', '打开追踪器') + '</a>';
+}
+
+try { renderStepsSnapshot(); renderWeightSnapshot(); } catch(e) {}
 </script>
 </body>
 </html>
