@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT16: Raja Ampat — Paul's Solo Dive Trip · 2–11 Nov 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .zh { display: none; }
+  body.lang-zh .zh { display: inline; }
+  body.lang-zh .en { display: none; }
+  .zh-block { display: none; }
+  body.lang-zh .zh-block { display: block; }
+  body.lang-zh .en-block { display: none; }
+  .header {
+    padding: 12px 16px 10px;
+    background: linear-gradient(135deg, #0d1117, #161b22);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .header-top {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  }
+  .header h1 { font-size: 1.25em; font-weight: 800; color: #fff; }
+  .header h1 span.gold { color: #f0a500; }
+  .header h1 span.teal { color: #1abc9c; }
+  .header-sub { font-size: 0.88em; color: #8b949e; margin-top: 3px; }
+  .own-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(244,129,63,0.15); border: 1px solid rgba(244,129,63,0.4); color: #f4813f; font-size: 0.72em; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 9px; border-radius: 12px; margin-top: 6px; }
+  .share-btn2 { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 0.8em; padding: 6px 14px; border-radius: 16px; cursor: pointer; }
+  .home-btn {
+    position: fixed; bottom: 16px; right: 16px; z-index: 999;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em; font-weight: 400;
+    padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+  .tab-bar {
+    display: flex; background: #161b22;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; padding: 10px 16px;
+    background: transparent; border: none; cursor: pointer;
+    font-size: 0.92em; font-weight: 700; color: #8b949e;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .tab-btn.active { color: #06b6d4; border-bottom-color: #06b6d4; }
+  .legend-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 7px 16px; background: #0d1117;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-wrap: wrap; font-size: 0.85em; color: #8b949e;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;
+  }
+  .legend-total { margin-left: auto; color: #06b6d4; font-weight: 700; }
+  #map { width: 100%; flex: 1; min-height: 52vh; }
+  #map.map-fullscreen {
+    position: fixed !important; top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw !important; height: 100vh !important; min-height: 100vh !important;
+    z-index: 10000; border-radius: 0 !important;
+  }
+  .map-fullscreen-btn {
+    position: absolute; top: 8px; right: 8px; z-index: 1000;
+    background: rgba(13,17,23,0.85); color: #fff;
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+    width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer;
+  }
+  .map-fullscreen-close {
+    display: none; position: fixed; top: 12px; right: 12px; z-index: 10001;
+    background: rgba(255,255,255,0.18); color: #fff; border: none;
+    border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer;
+  }
+  .map-fullscreen-close.active { display: block; }
+  .map-type-toggle { position: absolute; top: 8px; right: 52px; z-index: 1000; display: flex; gap: 4px; }
+  .map-type-btn { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+  .map-type-btn.active { background: #06b6d4; color: #0d1117; border-color: #06b6d4; }
+  .panel { display: none; }
+  .panel.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .stops-panel { background: #0d1117; overflow-y: auto; max-height: 34vh; }
+  .panel-header {
+    padding: 9px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title { font-size: 1.0em; font-weight: 700; color: #e6edf3; }
+  .panel-km { margin-left: auto; font-size: 0.9em; color: #06b6d4; font-weight: 700; }
+  .stop-list { padding: 4px 0; }
+  .stop-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 9px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .stop-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85em; font-weight: 800; flex-shrink: 0; margin-top: 1px;
+    border: 2px solid rgba(255,255,255,0.45); cursor: pointer;
+  }
+  .stop-info { flex: 1; min-width: 0; cursor: pointer; }
+  .stop-name {
+    font-size: 1.02em; font-weight: 700; color: #e6edf3;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .stop-desc { font-size: 0.88em; color: #8b949e; margin-top: 2px; line-height: 1.4; }
+  .stop-tag {
+    display: inline-block; font-size: 0.8em;
+    padding: 2px 7px; border-radius: 8px; font-weight: 700;
+  }
+  .tag-start   { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+  .tag-city    { background:rgba(240,165,0,0.2);   color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
+  .tag-diving  { background:rgba(6,182,212,0.2);   color:#67e8f9; border:1px solid rgba(6,182,212,0.3); }
+  .tag-nature  { background:rgba(16,185,129,0.2);  color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+  .tag-village { background:rgba(168,85,247,0.2);  color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); }
+  .stop-maplinks { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  .stop-maplinks a { font-size: 0.68rem; padding: 3px 8px; border-radius: 7px; text-decoration: none; white-space: nowrap; }
+  .itin-panel { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+  .day-card {
+    border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 16px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .day-card:hover { background: rgba(255,255,255,0.03); }
+  .day-header { display: flex; align-items: flex-start; gap: 10px; }
+  .day-badge {
+    background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.35);
+    color: #06b6d4; font-size: 0.82em; font-weight: 800; padding: 3px 9px;
+    border-radius: 10px; white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+  }
+  .day-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; line-height: 1.35; }
+  .day-meta { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+  .day-body { font-size: 0.92em; color: #c9d1d9; margin-top: 8px; line-height: 1.6; display: none; }
+  .day-body.open { display: block; }
+  .day-chevron { margin-left: auto; color: #06b6d4; font-size: 1.0em; flex-shrink: 0; transition: transform 0.2s; }
+  .day-card.open .day-chevron { transform: rotate(180deg); }
+  .tips-panel { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+  .tip-section { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 13px 16px; }
+  .tip-header { display: flex; align-items: center; gap: 8px; cursor: pointer; touch-action: manipulation; }
+  .tip-icon { font-size: 1.3em; }
+  .tip-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+  .tip-chevron { margin-left: auto; color: #06b6d4; font-size: 1.0em; transition: transform 0.2s; }
+  .tip-section.open .tip-chevron { transform: rotate(180deg); }
+  .tip-body { font-size: 0.92em; color: #8b949e; margin-top: 9px; line-height: 1.65; display: none; }
+  .tip-section.open .tip-body { display: block; }
+  .tip-body ul { padding-left: 16px; }
+  .tip-body li { margin-bottom: 5px; }
+  .tip-body strong { color: #e6edf3; }
+  .leaflet-popup-content-wrapper {
+    background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    color: #e6edf3 !important;
+  }
+  .leaflet-popup-tip { background: #161b22 !important; }
+  .leaflet-popup-content { margin: 10px 14px !important; font-size: 15px !important; line-height: 1.5; }
+  .popup-name { font-weight: 800; font-size: 1.15em; color: #fff; }
+  .popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.92em; }
+  .popup-links { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .popup-links a { font-size: 0.7rem; padding: 3px 8px; border-radius: 7px; text-decoration: none; }
+  .leaflet-control-zoom a {
+    background: #161b22 !important; color: #e6edf3 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .leaflet-control-attribution {
+    background: rgba(13,17,23,0.8) !important; color: #484f58 !important;
+  }
+  .vc-wrap { text-align: center; padding: 14px 16px; background: #0d1117; border-top: 1px solid rgba(255,255,255,0.06); }
+  @media (max-width: 500px) {
+    .header h1 { font-size: 1.05em; }
+    #map { min-height: 46vh; }
+    .stops-panel { max-height: 38vh; }
+  }
+  .budget-panel { background: #0d1117; overflow-y: auto; flex: 1; min-height: 0; padding: 0; }
+  .budget-summary {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .budget-stat { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 8px; text-align: center; }
+  .budget-stat-label { font-size: 0.72em; color: #8b949e; margin-bottom: 2px; }
+  .budget-stat-value { font-size: 0.95em; font-weight: 800; color: #06b6d4; }
+  .budget-table { width: 100%; border-collapse: collapse; }
+  .budget-table th {
+    font-size: 0.84em; font-weight: 700; color: #8b949e; text-align: left;
+    padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .budget-table td {
+    font-size: 0.92em; color: #c9d1d9; padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .budget-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .budget-cat {
+    display: inline-block; font-size: 0.75em; padding: 1px 5px;
+    border-radius: 8px; font-weight: 700;
+  }
+  .cat-hotel  { background:rgba(59,130,246,0.2);  color:#93c5fd; border:1px solid rgba(59,130,246,0.3); }
+  .cat-entry  { background:rgba(240,165,0,0.2);   color:#fcd34d; border:1px solid rgba(240,165,0,0.3); }
+  .cat-misc   { background:rgba(156,163,175,0.2); color:#d1d5db; border:1px solid rgba(156,163,175,0.3); }
+  .cat-flight { background:rgba(239,68,68,0.2);   color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+  .cat-trans  { background:rgba(168,85,247,0.2);  color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); }
+  .tasks-panel { background:#0d1117; overflow-y:auto; flex:1; padding:0 0 80px; }
+  .mustsee-panel { background:#0d1117; overflow-y:auto; flex:1; min-height:0; padding:0 0 80px; }
+  .ms-intro { padding:12px 16px 6px; font-size:0.92em; color:#8b949e; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .ms-intro strong { color:#06b6d4; }
+  .ms-place { border-bottom:1px solid rgba(255,255,255,0.06); }
+  .ms-place-header { display:flex; align-items:center; gap:10px; padding:13px 16px; cursor:pointer; touch-action:manipulation; }
+  .ms-place-num {
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:0.9em; font-weight:800; color:#fff; flex-shrink:0;
+  }
+  .ms-place-info { flex:1; }
+  .ms-place-name { font-size:1.05em; font-weight:800; color:#fff; }
+  .ms-chevron { color:#06b6d4; font-size:1.0em; transition:transform 0.2s; }
+  .ms-place.open .ms-chevron { transform:rotate(180deg); }
+  .ms-body { display:none; padding:0 16px 14px; }
+  .ms-place.open .ms-body { display:block; }
+  .ms-attractions { display:flex; flex-direction:column; gap:12px; margin-top:4px; }
+  .ms-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; overflow:hidden; }
+  .ms-card-body { padding:10px 13px 12px; }
+  .ms-card-title { font-size:1.0em; font-weight:800; color:#fff; }
+  .ms-card-desc  { font-size:0.9em; color:#c9d1d9; margin-top:6px; line-height:1.55; }
+  .ms-card-tip   { font-size:0.86em; color:#6ee7b7; margin-top:6px; }
+  .ms-card-tip::before { content:'💡 '; }
+  .task-category { padding:10px 16px 6px; font-size:0.78em; font-weight:800; color:#06b6d4; letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid rgba(6,182,212,0.15); margin-top:4px; }
+  .task-item { display:flex; align-items:flex-start; gap:12px; padding:11px 16px; border-bottom:1px solid rgba(255,255,255,0.04); cursor:pointer; transition:background 0.15s; }
+  .task-item:hover { background:rgba(255,255,255,0.03); }
+  .task-item.completed .task-text { text-decoration:line-through; color:#4b5563; }
+  .task-check {
+    width:22px; height:22px; border-radius:50%; border:2px solid #06b6d4; color:#06b6d4;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;
+    font-size:0.8em; font-weight:900; transition:all 0.2s;
+  }
+  .tck-checked { background:#22c55e!important; border-color:#22c55e!important; color:#fff!important; }
+  .task-body { flex:1; min-width:0; }
+  .task-text { font-size:0.92em; color:#e6edf3; line-height:1.4; }
+  .task-meta { margin-top:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .task-due { font-size:0.75em; color:#6b7280; }
+  .task-deadline { font-size:0.75em; color:#f87171; font-weight:700; }
+  .seg-header {
+    padding:8px 16px 6px; font-size:0.8em; font-weight:800; letter-spacing:1px;
+    text-transform:uppercase; color:#06b6d4; border-bottom:1px solid rgba(6,182,212,0.15);
+    background:#0d1117; position:sticky; top:0; z-index:5;
+  }
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top" id="homeBar">
+    <div>
+      <h1>🤿 MT16: <span class="teal">Raja Ampat</span> — <span class="gold">Paul's Solo Dive Trip</span></h1>
+      <div class="header-sub">
+        <span class="en">Sorong · Waisai · Cape Kri · Piaynemo · Wayag · Arborek · 2–11 Nov 2026 · 10 days</span>
+        <span class="zh">索龙 · 瓦伊萨 · 凯利角 · 皮亚涅莫 · 瓦雅格 · 阿波瑞克 · 2026年11月2至11日 · 10天</span>
+      </div>
+      <div class="own-badge">🎒 <span class="en">My Own Trip — while Joanne's in Hong Kong</span><span class="zh">我自己的行程 — Joanne在香港期间</span></div>
+    </div>
+    <button class="share-btn2" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('map')">🗺️ <span class="en">Map</span><span class="zh">地图</span></button>
+  <button class="tab-btn" onclick="switchTab('itin')">📅 <span class="en">Itinerary</span><span class="zh">行程</span></button>
+  <button class="tab-btn" onclick="switchTab('mustsee')">🌟 <span class="en">Must See</span><span class="zh">必看</span></button>
+  <button class="tab-btn" onclick="switchTab('tips')">💡 <span class="en">Tips</span><span class="zh">贴士</span></button>
+  <button class="tab-btn" onclick="switchTab('budget')">💰 <span class="en">Budget</span><span class="zh">预算</span></button>
+  <button class="tab-btn" onclick="switchTab('tasks')">✅ <span class="en">Tasks</span><span class="zh">待办</span></button>
+</div>
+
+<div class="legend-bar" id="legend-bar">
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div> <span class="en">Start/End</span><span class="zh">起点/终点</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0a500;"></div> <span class="en">Gateway</span><span class="zh">门户</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div> <span class="en">Diving</span><span class="zh">潜水</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> <span class="en">Viewpoint</span><span class="zh">观景台</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a855f7;"></div> <span class="en">Village</span><span class="zh">村落</span></div>
+  <div class="legend-total">10 <span class="en">Days · 8 Stops</span><span class="zh">天 · 8站</span></div>
+</div>
+
+<div id="panel-map" class="panel active">
+  <div style="position:relative;">
+    <div id="map"></div>
+    <div class="map-type-toggle">
+      <button class="map-type-btn" id="btn-satellite" onclick="setMapType('satellite')">🛰</button>
+      <button class="map-type-btn active" id="btn-street" onclick="setMapType('street')">🗺</button>
+    </div>
+    <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Expand">⛶</button>
+    <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
+  </div>
+  <div class="stops-panel">
+    <div class="panel-header">
+      <span class="panel-title">📍 <span class="en">Route Stops — Tap to zoom</span><span class="zh">行程站点 — 点击缩放</span></span>
+      <span class="panel-km"><span class="en">8 stops · 2–11 Nov 2026</span><span class="zh">8站 · 11月2至11日</span></span>
+    </div>
+    <div class="stop-list" id="stop-list"></div>
+  </div>
+</div>
+
+<div id="panel-itin" class="panel">
+  <div class="itin-panel" id="itin-panel"></div>
+</div>
+
+<div id="panel-mustsee" class="panel">
+  <div class="mustsee-panel" id="mustsee-panel">
+    <div class="ms-intro">
+      <strong class="en">Top Attractions</strong><strong class="zh">主要景点</strong>
+      <span class="en"> — the highlights not to miss. Tap a category to expand.</span>
+      <span class="zh"> — 不容错过的重点。点击分类展开。</span>
+    </div>
+  </div>
+</div>
+
+<div id="panel-tips" class="panel">
+  <div class="tips-panel" id="tips-panel"></div>
+</div>
+
+<div id="panel-budget" class="panel">
+  <div class="budget-panel" id="budget-panel"></div>
+</div>
+
+<div id="panel-tasks" class="panel">
+  <div class="tasks-panel" id="tasks-panel"></div>
+</div>
+
+<div class="vc-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+
+<script>
+// ── STOP DATA ────────────────────────────────────────────────────────────────
+var STOPS = [
+  { n:1, name:'Sorong', nameZh:'索龙', emoji:'✈️', lat:-0.8762, lng:131.2557, color:'#ef4444', tag:'start', tagLabel_en:'Start/End', tagLabel_zh:'起点/终点',
+    day_en:'Day 1 &amp; 10', day_zh:'第1天与第10天',
+    desc_en:'Mainland gateway to Raja Ampat — Sorong (DEO) airport, then ferry onward to Waisai.', desc_zh:'通往拉贾安帕特的门户——索龙（DEO）机场，再搭渡轮前往瓦伊萨。' },
+  { n:2, name:'Waisai', nameZh:'瓦伊萨', emoji:'🏝️', lat:-0.4230, lng:130.8218, color:'#f0a500', tag:'city', tagLabel_en:'Gateway', tagLabel_zh:'门户',
+    day_en:'Day 2 &amp; 9', day_zh:'第2天与第9天',
+    desc_en:'Capital of Raja Ampat on Waigeo Island. Marine Park permit (SIP) issued here.', desc_zh:'位于瓦盖岛的拉贾安帕特首府。海洋公园许可证（SIP）在此办理。' },
+  { n:3, name:'Cape Kri', nameZh:'凯利角', emoji:'🐠', lat:-0.5461, lng:130.6767, color:'#06b6d4', tag:'diving', tagLabel_en:'Diving', tagLabel_zh:'潜水',
+    day_en:'Day 3', day_zh:'第3天',
+    desc_en:'Record-holding reef for fish species diversity in a single dive.', desc_zh:'单次潜水鱼种数量曾创世界纪录的礁区。' },
+  { n:4, name:'Blue Magic', nameZh:'蓝魔', emoji:'🐋', lat:-0.5395, lng:130.6528, color:'#06b6d4', tag:'diving', tagLabel_en:'Diving', tagLabel_zh:'潜水',
+    day_en:'Day 4', day_zh:'第4天',
+    desc_en:'Manta cleaning station in the Dampier Strait, plus dense fish schools.', desc_zh:'丹皮尔海峡的蝠鲼清洁站，鱼群也十分密集。' },
+  { n:5, name:'Piaynemo', nameZh:'皮亚涅莫', emoji:'🏔️', lat:-0.6273, lng:130.4715, color:'#10b981', tag:'nature', tagLabel_en:'Viewpoint', tagLabel_zh:'观景台',
+    day_en:'Day 5', day_zh:'第5天',
+    desc_en:'Wooden stairway up to the iconic karst lagoon viewpoint.', desc_zh:'木梯通往著名的石灰岩潟湖观景台。' },
+  { n:6, name:'Wayag', nameZh:'瓦雅格', emoji:'🗻', lat:-0.2149, lng:130.0446, color:'#10b981', tag:'nature', tagLabel_en:'Viewpoint', tagLabel_zh:'观景台',
+    day_en:'Day 6', day_zh:'第6天',
+    desc_en:'The postcard image of Raja Ampat — karst islets and a turquoise lagoon.', desc_zh:'拉贾安帕特的经典明信片景观——石灰岩群岛与碧绿潟湖。' },
+  { n:7, name:'Arborek', nameZh:'阿波瑞克', emoji:'🐟', lat:-0.5892, lng:130.6427, color:'#a855f7', tag:'village', tagLabel_en:'Village', tagLabel_zh:'村落',
+    day_en:'Day 7', day_zh:'第7天',
+    desc_en:'Stilt-house conservation village next to Manta Sandy dive site.', desc_zh:'木桩渔村，紧邻曼塔桑迪潜点，积极参与海洋保育。' },
+  { n:8, name:"Friwen Wall", nameZh:'弗里温壁', emoji:'🪸', lat:-0.5602, lng:130.6944, color:'#06b6d4', tag:'diving', tagLabel_en:'Diving', tagLabel_zh:'潜水',
+    day_en:'Day 8', day_zh:'第8天',
+    desc_en:'Soft-coral wall dive, calmer pace before heading back to Waisai.', desc_zh:'软珊瑚壁潜点，节奏较缓，之后返回瓦伊萨。' }
+];
+
+function mapLinks(s) {
+  return '<div class="stop-maplinks">' +
+    '<a href="https://maps.google.com/?q=' + s.lat + ',' + s.lng + '&label=' + encodeURIComponent(s.name) + '" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;">🗺️ Google</a>' +
+    '<a href="https://map.baidu.com/search/' + encodeURIComponent(s.name) + '/@' + s.lng + ',' + s.lat + ',12z" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;">百度</a>' +
+    '<a href="https://uri.amap.com/marker?position=' + s.lng + ',' + s.lat + '&name=' + encodeURIComponent(s.name) + '" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;">高德</a>' +
+  '</div>';
+}
+
+// ── MAP ─────────────────────────────────────────────────────────────────────
+var map, markers = [], tileLayers, currentTile = 'street';
+
+function makeMarker(stop) {
+  var sz = 28;
+  var svg = '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">' +
+    '<circle cx="14" cy="14" r="12" fill="' + stop.color + '" stroke="white" stroke-width="2.5"/>' +
+    '<text x="14" y="18.5" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">' + stop.n + '</text>' +
+    '</svg>';
+  return L.divIcon({ html: svg, iconSize: [sz, sz], iconAnchor: [sz/2, sz/2], popupAnchor: [0, -sz/2], className: '' });
+}
+
+function initMap() {
+  map = L.map('map', { scrollWheelZoom: false }).setView([-0.5, 130.6], 8);
+  tileLayers = {
+    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap contributors' }),
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: '© Esri' })
+  };
+  tileLayers.street.addTo(map);
+
+  var isZh = document.body.classList.contains('lang-zh');
+  var latlngs = [];
+  STOPS.forEach(function(s, i) {
+    var m = L.marker([s.lat, s.lng], { icon: makeMarker(s) }).addTo(map);
+    var name = isZh ? s.nameZh : s.name;
+    var desc = isZh ? s.desc_zh : s.desc_en;
+    var popup = '<div class="popup-name">' + s.emoji + ' ' + name + '</div>' +
+      '<div class="popup-desc">' + desc + '</div>' +
+      '<div class="popup-links">' +
+        '<a href="https://maps.google.com/?q=' + s.lat + ',' + s.lng + '&label=' + encodeURIComponent(s.name) + '" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;">🗺️ Google</a>' +
+        '<a href="https://uri.amap.com/marker?position=' + s.lng + ',' + s.lat + '&name=' + encodeURIComponent(s.name) + '" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;">高德</a>' +
+      '</div>';
+    m.bindPopup(popup, { maxWidth: 260 });
+    markers.push(m);
+    latlngs.push([s.lat, s.lng]);
+  });
+
+  L.polyline(latlngs, { color: '#f4813f', weight: 3, dashArray: '8,6', opacity: 0.8 }).addTo(map);
+  renderStopList();
+}
+
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').classList.toggle('active', type === 'satellite');
+  document.getElementById('btn-street').classList.toggle('active', type === 'street');
+}
+
+function renderStopList() {
+  var isZh = document.body.classList.contains('lang-zh');
+  var html = '';
+  STOPS.forEach(function(s, i) {
+    var name = isZh ? s.nameZh : s.name;
+    var tag = isZh ? s.tagLabel_zh : s.tagLabel_en;
+    var day = isZh ? s.day_zh : s.day_en;
+    var desc = isZh ? s.desc_zh : s.desc_en;
+    html += '<div class="stop-item">' +
+      '<div class="stop-num" onclick="flyTo(' + i + ')" style="background:' + s.color + '20;color:' + s.color + ';border-color:' + s.color + '60">' + s.n + '</div>' +
+      '<div class="stop-info" onclick="flyTo(' + i + ')">' +
+        '<div class="stop-name">' + s.emoji + ' ' + name +
+          ' <span class="stop-tag tag-' + s.tag + '">' + tag + '</span></div>' +
+        '<div class="stop-desc">' + day + ' · ' + desc + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  var listEl = document.getElementById('stop-list');
+  listEl.innerHTML = html;
+  STOPS.forEach(function(s, i) {
+    var item = listEl.children[i];
+    var linksDiv = document.createElement('div');
+    linksDiv.innerHTML = mapLinks(s);
+    item.querySelector('.stop-info').appendChild(linksDiv.firstChild);
+  });
+}
+
+function flyTo(i) {
+  var s = STOPS[i];
+  map.flyTo([s.lat, s.lng], 11, { duration: 1 });
+  setTimeout(function() { markers[i].openPopup(); }, 1100);
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('panel-' + name).classList.add('active');
+  var names = ['map', 'itin', 'mustsee', 'tips', 'budget', 'tasks'];
+  var idx = names.indexOf(name);
+  var btns = document.querySelectorAll('.tab-btn');
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
+  var lb = document.getElementById('legend-bar');
+  if (lb) lb.style.display = name === 'map' ? 'flex' : 'none';
+  if (name === 'map') setTimeout(function() { map.invalidateSize(); }, 50);
+}
+
+// ── FULLSCREEN MAP ────────────────────────────────────────────────────────────
+var mapFS = false;
+function toggleMapFullscreen() {
+  mapFS = !mapFS;
+  var mapEl = document.getElementById('map');
+  var closeBtn = document.getElementById('mapFullscreenClose');
+  if (mapFS) { mapEl.classList.add('map-fullscreen'); closeBtn.classList.add('active'); }
+  else { mapEl.classList.remove('map-fullscreen'); closeBtn.classList.remove('active'); }
+  setTimeout(function() { map.invalidateSize(); }, 100);
+}
+
+// ── ITINERARY DATA ────────────────────────────────────────────────────────────
+var ITIN = [
+  { seg_en:'SORONG — GATEWAY', seg_zh:'索龙 — 门户', badge:'Mon 2 Nov', title_en:'🛫 Singapore → Jakarta → Sorong', title_zh:'🛫 新加坡 → 雅加达 → 索龙',
+    text_en:'Fly Singapore → Jakarta, then connect onward to Sorong (DEO), the mainland gateway to Raja Ampat. Overnight in Sorong before the ferry crossing.',
+    text_zh:'从新加坡飞往雅加达，再转机前往索龙（DEO）——通往拉贾安帕特的门户。在索龙过夜，翌日搭渡轮前往。' },
+  { seg_en:'WAISAI &amp; PERMIT', seg_zh:'瓦伊萨与许可证', badge:'Tue 3 Nov', title_en:'⛴️ Sorong → Waisai', title_zh:'⛴️ 索龙 → 瓦伊萨',
+    text_en:'Morning ferry (~2 hrs) from Sorong to Waisai, capital of Raja Ampat on Waigeo Island. Register and pay for the Marine Park Entry Permit (SIP card), then transfer to the resort/liveaboard and get the dive briefing.',
+    text_zh:'上午搭乘渡轮（约2小时）由索龙前往拉贾安帕特首府——瓦伊萨（位于瓦盖岛）。办理并缴付海洋公园入园许可证（SIP卡），再转往度假村/潜水船，进行潜水简报。' },
+  { seg_en:'DAMPIER STRAIT DIVING', seg_zh:'丹皮尔海峡潜水', badge:'Wed 4 Nov', title_en:'🐠 Cape Kri &amp; Chicken Reef', title_zh:'🐠 凯利角与鸡礁',
+    text_en:'Two dives at Cape Kri — the reef that once held the world record for most fish species counted in a single dive — and nearby Chicken Reef. Big schools, reef sharks, dense coral cover.',
+    text_zh:'在凯利角进行两次潜水——这片礁区曾创下单次潜水记录最多鱼种的世界纪录——以及邻近的鸡礁。鱼群壮观，礁鲨与珊瑚覆盖率极高。' },
+  { seg_en:'DAMPIER STRAIT DIVING', seg_zh:'丹皮尔海峡潜水', badge:'Thu 5 Nov', title_en:'🐋 Blue Magic &amp; Sardine Reef', title_zh:'🐋 蓝魔与沙丁鱼礁',
+    text_en:'Dive Blue Magic and Sardine Reef in the Dampier Strait — famous cleaning stations where manta rays circle close, plus dense schools of sardines and fusiliers.',
+    text_zh:'在丹皮尔海峡潜水蓝魔与沙丁鱼礁——著名的清洁站，蝠鲼常在近处盘旋，还有密集的沙丁鱼与梅鲷鱼群。' },
+  { seg_en:'PIAYNEMO &amp; WAYAG', seg_zh:'皮亚涅莫与瓦雅格', badge:'Fri 6 Nov', title_en:'🏝️ Piaynemo Viewpoint', title_zh:'🏝️ 皮亚涅莫观景台',
+    text_en:'Boat to Piaynemo. Climb the wooden stairway to the famous viewpoint over the karst lagoon — one of the most photographed views in Indonesia. Snorkel around the limestone islets afterward.',
+    text_zh:'乘船前往皮亚涅莫。攀登木梯至著名的观景台，俯瞰石灰岩潟湖——印尼最具代表性的景观之一。之后在石灰岩小岛周围浮潜。' },
+  { seg_en:'PIAYNEMO &amp; WAYAG', seg_zh:'皮亚涅莫与瓦雅格', badge:'Sat 7 Nov', title_en:'🗻 Wayag Islands', title_zh:'🗻 瓦雅格群岛',
+    text_en:'Full-day trip north to Wayag. Climb to the iconic viewpoint over the scattered karst islands, then snorkel the turquoise lagoon below — the postcard image of Raja Ampat.',
+    text_zh:'全天北上前往瓦雅格。攀登至著名观景台，俯瞰散落的石灰岩群岛，再到下方碧绿的潟湖浮潜——这正是拉贾安帕特的经典明信片景色。' },
+  { seg_en:'ARBOREK &amp; FRIWEN', seg_zh:'阿波瑞克与弗里温', badge:'Sun 8 Nov', title_en:'🐟 Arborek Village &amp; Manta Sandy', title_zh:'🐟 阿波瑞克村与曼塔桑迪',
+    text_en:'Visit Arborek, a small stilt-house village that doubles as a marine conservation site. Dive or snorkel Manta Sandy and the jetty, then walk through the village and meet the locals.',
+    text_zh:'参观阿波瑞克——一个建在木桩上的小渔村，同时也是海洋保育示范点。在曼塔桑迪与码头潜水或浮潜，再走访村庄，与当地居民交流。' },
+  { seg_en:'ARBOREK &amp; FRIWEN', seg_zh:'阿波瑞克与弗里温', badge:'Mon 9 Nov', title_en:'🪸 Friwen Wall &amp; Melissa\'s Garden', title_zh:'🪸 弗里温壁与梅丽莎花园',
+    text_en:'Dive Friwen Wall and Melissa\'s Garden — soft-coral walls thick with fish life. Slower-paced afternoon back at the resort to rest and edit photos.',
+    text_zh:'潜水弗里温壁与梅丽莎花园——软珊瑚壁上满布鱼群。下午回度假村放松，整理照片。' },
+  { seg_en:'DEPARTURE', seg_zh:'返程', badge:'Tue 10 Nov', title_en:'🧳 Buffer Day &amp; Transfer to Sorong', title_zh:'🧳 缓冲日与转往索龙',
+    text_en:'Free morning — extra dive, snorkel, or just relax. Pack up and take the afternoon ferry back from Waisai to Sorong. Overnight near the airport.',
+    text_zh:'上午自由活动——可加潜一次、浮潜，或纯粹休息。整理行李，下午搭渡轮从瓦伊萨返回索龙，在机场附近过夜。' },
+  { seg_en:'DEPARTURE', seg_zh:'返程', badge:'Wed 11 Nov', title_en:'🛫 Sorong → Jakarta → Singapore', title_zh:'🛫 索龙 → 雅加达 → 新加坡',
+    text_en:'Fly Sorong → Jakarta → Singapore, arriving home the same day Joanne returns from Hong Kong.',
+    text_zh:'搭机由索龙经雅加达返回新加坡，与Joanne从香港返家同一天抵达。' }
+];
+
+function renderItin() {
+  var html = '';
+  var lastSeg = '';
+  ITIN.forEach(function(d, i) {
+    if (d.seg_en !== lastSeg) {
+      html += '<div class="seg-header">— <span class="en">' + d.seg_en + '</span><span class="zh">' + d.seg_zh + '</span> —</div>';
+      lastSeg = d.seg_en;
+    }
+    html += '<div class="day-card" id="day-' + i + '" onclick="toggleDay(' + i + ')">' +
+      '<div class="day-header">' +
+        '<div class="day-badge">' + d.badge + '</div>' +
+        '<div style="flex:1;">' +
+          '<div class="day-title"><span class="en">' + d.title_en + '</span><span class="zh">' + d.title_zh + '</span></div>' +
+        '</div>' +
+        '<div class="day-chevron">▼</div>' +
+      '</div>' +
+      '<div class="day-body" id="dbody-' + i + '">' +
+        '<span class="en">' + d.text_en + '</span><span class="zh">' + d.text_zh + '</span>' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('itin-panel').innerHTML = html;
+}
+
+function toggleDay(i) {
+  document.getElementById('day-' + i).classList.toggle('open');
+  document.getElementById('dbody-' + i).classList.toggle('open');
+}
+
+// ── MUST SEE ──────────────────────────────────────────────────────────────────
+var MUSTSEE = [
+  { place_en:'World-Class Diving', place_zh:'世界级潜水', color:'#06b6d4',
+    items:[
+      { title_en:'Cape Kri', title_zh:'凯利角', desc_en:'Record-holding reef for fish species diversity — dense schools, reef sharks, big biodiversity in a small area.', desc_zh:'创下鱼种多样性世界纪录的礁区——鱼群密集、礁鲨常见，小范围内生物多样性极高。', tip_en:'Suits all levels — current is usually mild here.', tip_zh:'适合各级潜水员——这里的洋流通常温和。' },
+      { title_en:'Blue Magic', title_zh:'蓝魔', desc_en:'A cleaning station where reef mantas glide in close.', desc_zh:'礁蝠鲼常来的清洁站，会近距离滑过。', tip_en:'Current can be strong — an Advanced certification is recommended.', tip_zh:'洋流可能较强，建议持进阶潜水证照。' },
+      { title_en:"Melissa's Garden", title_zh:'梅丽莎花园', desc_en:'A soft-coral garden considered one of the most beautiful reefscapes in Raja Ampat.', desc_zh:'软珊瑚花园，被认为是拉贾安帕特最美的礁景之一。', tip_en:'Great for photography — go slow and look close.', tip_zh:'非常适合拍照——放慢速度，仔细观察。' }
+    ]},
+  { place_en:'Iconic Viewpoints', place_zh:'著名观景台', color:'#10b981',
+    items:[
+      { title_en:'Piaynemo', title_zh:'皮亚涅莫', desc_en:'Wooden stairway up to a view over a karst lagoon — the single most photographed spot in Raja Ampat.', desc_zh:'木梯通往观景台，俯瞰石灰岩潟湖——拉贾安帕特最常被拍摄的景点。', tip_en:'Go early morning for the best light and fewer boats.', tip_zh:'建议清晨前往，光线最佳且船只较少。' },
+      { title_en:'Wayag', title_zh:'瓦雅格', desc_en:'A cluster of karst islets and a turquoise lagoon — the postcard image of Raja Ampat.', desc_zh:'石灰岩小岛群与碧绿潟湖——拉贾安帕特的经典明信片景观。', tip_en:'Bring a dry bag — the climb and landing can get wet.', tip_zh:'建议携带防水袋——攀登与上岸过程可能会弄湿装备。' }
+    ]},
+  { place_en:'Marine Life Encounters', place_zh:'海洋生物邂逅', color:'#3b82f6',
+    items:[
+      { title_en:'Manta Sandy (Arborek)', title_zh:'曼塔桑迪（阿波瑞克）', desc_en:'A sandy cleaning station where reef manta rays gather — one of the most reliable manta encounters in the region.', desc_zh:'沙质清洁站，礁蝠鲼常聚集于此——是该区域最稳定能遇见蝠鲼的地点之一。', tip_en:'Best in the morning before the current picks up.', tip_zh:'建议在洋流变强前的上午前往。' },
+      { title_en:'Pygmy Seahorses &amp; Wobbegongs', title_zh:'豆丁海马与须鲨', desc_en:'Muck and reef dives around Waigeo turn up pygmy seahorses, wobbegong sharks and other macro life for patient eyes.', desc_zh:'瓦盖岛周边的礁区与泥地潜点，只要耐心寻找，能发现豆丁海马、须鲨等微距生物。', tip_en:'Ask your dive guide — they know the exact perches.', tip_zh:'向潜水向导询问——他们知道确切的栖息位置。' }
+    ]},
+  { place_en:'Village &amp; Culture', place_zh:'村落与文化', color:'#a855f7',
+    items:[
+      { title_en:'Arborek Village', title_zh:'阿波瑞克村', desc_en:'A stilt-house village on its own tiny island, active in marine conservation. Walk the boardwalk and meet the community.', desc_zh:'建在小岛上的木桩渔村，积极参与海洋保育。可沿木栈道漫步，与当地居民交流。', tip_en:'Buy a handmade souvenir — it supports the village directly.', tip_zh:'购买手工纪念品——能直接支持村庄发展。' },
+      { title_en:'Waisai Market', title_zh:'瓦伊萨市场', desc_en:'The main town of Raja Ampat — a good stop for last-minute supplies, SIM cards, and a feel for local life.', desc_zh:'拉贾安帕特的主要市镇——适合采购补给品、办理SIM卡，感受当地生活氛围。', tip_en:'Stock up here — nothing much is available past this point.', tip_zh:'建议在此补给——之后的行程很少有商店。' }
+    ]}
+];
+
+function renderMustSee() {
+  var html = '';
+  MUSTSEE.forEach(function(p, pi) {
+    html += '<div class="ms-place" id="msp-' + pi + '">' +
+      '<div class="ms-place-header" onclick="toggleMsPlace(' + pi + ')">' +
+        '<div class="ms-place-num" style="background:' + p.color + ';border:2px solid ' + p.color + '80;box-shadow:0 0 8px ' + p.color + '50;">' + (pi + 1) + '</div>' +
+        '<div class="ms-place-info">' +
+          '<div class="ms-place-name"><span class="en">' + p.place_en + '</span><span class="zh">' + p.place_zh + '</span></div>' +
+        '</div>' +
+        '<div class="ms-chevron">▼</div>' +
+      '</div>' +
+      '<div class="ms-body" id="msb-' + pi + '">' +
+        '<div class="ms-attractions">';
+    p.items.forEach(function(it) {
+      html += '<div class="ms-card">' +
+        '<div class="ms-card-body">' +
+          '<div class="ms-card-title"><span class="en">' + it.title_en + '</span><span class="zh">' + it.title_zh + '</span></div>' +
+          '<div class="ms-card-desc"><span class="en">' + it.desc_en + '</span><span class="zh">' + it.desc_zh + '</span></div>' +
+          '<div class="ms-card-tip"><span class="en">' + it.tip_en + '</span><span class="zh">' + it.tip_zh + '</span></div>' +
+        '</div>' +
+      '</div>';
+    });
+    html += '</div></div></div>';
+  });
+  document.getElementById('mustsee-panel').innerHTML += html;
+}
+
+function toggleMsPlace(i) {
+  var el = document.getElementById('msp-' + i);
+  var body = document.getElementById('msb-' + i);
+  el.classList.toggle('open');
+  body.style.display = el.classList.contains('open') ? 'block' : 'none';
+}
+
+// ── TIPS ──────────────────────────────────────────────────────────────────────
+var TIPS = [
+  { icon:'✈️', title_en:'Getting There &amp; Permits', title_zh:'交通与许可证',
+    body_en:'<ul><li><strong>Route:</strong> SIN → Jakarta (CGK) → Sorong (DEO), then a ~2hr public ferry to Waisai. Book connecting flights carefully — schedules to Sorong are limited.</li><li><strong>Marine Park Entry Permit (SIP):</strong> Every visitor needs one — buy on arrival at Waisai or Sorong, or pre-register online. Bring a passport photo.</li><li><strong>Liveaboard vs resort:</strong> A liveaboard covers more dive sites; a Waisai-based resort is simpler logistically and still reaches Wayag/Piaynemo by day trip.</li></ul>',
+    body_zh:'<ul><li><strong>路线：</strong>新加坡 → 雅加达（CGK） → 索龙（DEO），再搭约2小时的公共渡轮前往瓦伊萨。请仔细安排转机时间——飞往索龙的班次有限。</li><li><strong>海洋公园入园许可证（SIP）：</strong>每位游客都需要办理——可在瓦伊萨或索龙抵达时购买，或提前在线登记。请携带护照照片。</li><li><strong>潜水船 vs 度假村：</strong>潜水船能覆盖更多潜点；以瓦伊萨为基地的度假村后勤更简便，仍可当日往返瓦雅格/皮亚涅莫。</li></ul>' },
+  { icon:'💰', title_en:'Money &amp; Currency (IDR)', title_zh:'货币与货币兑换（印尼盾）',
+    body_en:'<ul><li><strong>Currency:</strong> Indonesian Rupiah (IDR). Approx 1 SGD ≈ 11,500 IDR (2026 estimate).</li><li><strong>Marine Park Permit fee:</strong> IDR 1,000,000 (~S$88) for foreign visitors, valid 1 year.</li><li><strong>Cash only:</strong> No ATMs in Raja Ampat itself — withdraw enough IDR cash in Sorong before the ferry crossing.</li></ul>',
+    body_zh:'<ul><li><strong>货币：</strong>印尼盾（IDR）。约1新元≈11,500印尼盾（2026年估算）。</li><li><strong>海洋公园许可证费用：</strong>外国游客为印尼盾1,000,000（约S$88），有效期一年。</li><li><strong>只能用现金：</strong>拉贾安帕特当地没有ATM——请在索龙搭渡轮前先取够印尼盾现金。</li></ul>' },
+  { icon:'📱', title_en:'Connectivity', title_zh:'网络连接',
+    body_en:'<ul><li>Signal is very limited past Sorong — mostly no data in Waisai and none at the dive sites/viewpoints.</li><li>Download offline maps and let Joanne know the plan before losing signal.</li><li>Some resorts have basic Wi-Fi in the evening — don\'t count on it.</li></ul>',
+    body_zh:'<ul><li>过了索龙之后信号非常有限——瓦伊萨大部分地区无网络，潜点与观景台完全没有信号。</li><li>出发前先下载离线地图，并把行程告知Joanne。</li><li>部分度假村晚间有基本Wi-Fi，但不要太依赖它。</li></ul>' },
+  { icon:'🌤️', title_en:'November Weather &amp; Sea', title_zh:'11月天气与海况',
+    body_en:'<ul><li>November sits in the transition toward the wet season — generally calm seas with occasional short showers.</li><li>Visibility at the dive sites is usually excellent (15–25m).</li><li>Water temperature: around 28–29°C — a 3mm wetsuit or rash guard is enough.</li></ul>',
+    body_zh:'<ul><li>11月正处于向雨季过渡的时期——海面通常平静，偶有短暂降雨。</li><li>潜点的水下能见度通常极佳（15至25米）。</li><li>水温约28至29°C——穿3毫米潜水衣或防晒衣即可。</li></ul>' },
+  { icon:'🏥', title_en:'Health &amp; Safety', title_zh:'健康与安全',
+    body_en:'<ul><li><strong>Malaria:</strong> Raja Ampat is a malaria risk area — see a doctor about prophylaxis before the trip.</li><li><strong>Dive insurance:</strong> Get cover that includes hyperbaric/decompression evacuation — the nearest chamber is in Bali or further.</li><li><strong>Certification:</strong> Advanced Open Water (or equivalent experience) recommended — several sites have strong current.</li><li><strong>Reef-safe sunscreen only</strong> — the reefs here are some of the healthiest on Earth.</li></ul>',
+    body_zh:'<ul><li><strong>疟疾：</strong>拉贾安帕特属疟疾风险区——出发前请咨询医生是否需要预防药物。</li><li><strong>潜水保险：</strong>需包含高压氧舱/减压后送保障——最近的高压氧舱在巴厘岛或更远处。</li><li><strong>证照要求：</strong>建议持有进阶潜水证照（或相当经验）——部分潜点洋流较强。</li><li><strong>只使用珊瑚礁友善防晒乳</strong>——这里的珊瑚礁是地球上最健康的礁区之一。</li></ul>' },
+  { icon:'📋', title_en:'What to Book in Advance', title_zh:'需提前预订事项',
+    body_en:'<ul><li><strong>Liveaboard or resort dive package</strong> — book 3–6 months ahead; good operators fill up.</li><li><strong>Flights SIN → Jakarta → Sorong</strong> — limited daily flights to Sorong, book early.</li><li><strong>Marine Park Permit</strong> — can be pre-registered online (fewer queues on arrival).</li><li><strong>Travel + dive insurance</strong> — arrange before departure, not on arrival.</li></ul>',
+    body_zh:'<ul><li><strong>潜水船或度假村潜水套餐</strong>——建议提前3至6个月预订，热门营运商很快满位。</li><li><strong>新加坡→雅加达→索龙机票</strong>——每日往索龙的航班有限，请提早订票。</li><li><strong>海洋公园许可证</strong>——可提前在线登记，减少抵达时排队。</li><li><strong>旅游及潜水保险</strong>——请在出发前安排好，别等抵达当地才办理。</li></ul>' }
+];
+
+function renderTips() {
+  var html = '';
+  TIPS.forEach(function(t, i) {
+    html += '<div class="tip-section" id="tip-' + i + '">' +
+      '<div class="tip-header" onclick="toggleTip(' + i + ')">' +
+        '<span class="tip-icon">' + t.icon + '</span>' +
+        '<span class="tip-title"><span class="en">' + t.title_en + '</span><span class="zh">' + t.title_zh + '</span></span>' +
+        '<span class="tip-chevron">▼</span>' +
+      '</div>' +
+      '<div class="tip-body"><div class="en-block">' + t.body_en + '</div><div class="zh-block">' + t.body_zh + '</div></div>' +
+    '</div>';
+  });
+  document.getElementById('tips-panel').innerHTML = html;
+}
+
+function toggleTip(i) {
+  document.getElementById('tip-' + i).classList.toggle('open');
+}
+
+// ── BUDGET ────────────────────────────────────────────────────────────────────
+var BUDGET = [
+  { item_en:'Flights SIN ↔ Jakarta ↔ Sorong (return)', item_zh:'新加坡↔雅加达↔索龙往返机票', cat:'flight', sgd:750, note_en:'Book 2–3 months ahead', note_zh:'建议提前2至3个月订票' },
+  { item_en:'Liveaboard / resort dive package, 7 nights', item_zh:'潜水船／度假村套餐，7晚', cat:'hotel', sgd:2800, note_en:'Covers Cape Kri, Blue Magic, Piaynemo, Wayag, Arborek', note_zh:'涵盖凯利角、蓝魔、皮亚涅莫、瓦雅格、阿波瑞克' },
+  { item_en:'Marine Park Entry Permit (SIP)', item_zh:'海洋公园入园许可证（SIP）', cat:'entry', sgd:88, note_en:'IDR 1,000,000, valid 1 year', note_zh:'印尼盾1,000,000，有效期一年' },
+  { item_en:'Dive &amp; travel insurance', item_zh:'潜水及旅游保险', cat:'misc', sgd:60, note_en:'Include hyperbaric evacuation cover', note_zh:'需包含高压氧舱后送保障' },
+  { item_en:'Sorong transfer &amp; 1-night hotel', item_zh:'索龙接送及1晚住宿', cat:'trans', sgd:90, note_en:'Near airport, before/after ferry', note_zh:'机场附近，渡轮前后过夜' },
+  { item_en:'Local transport, tips &amp; shopping', item_zh:'当地交通、小费与购物', cat:'misc', sgd:150, note_en:'Cash only — no ATMs in Raja Ampat', note_zh:'只能用现金——拉贾安帕特没有ATM' }
+];
+
+function renderBudget() {
+  var isZh = document.body.classList.contains('lang-zh');
+  var total    = BUDGET.reduce(function(a, b) { return a + b.sgd; }, 0);
+  var pkg      = BUDGET.filter(function(b) { return b.cat === 'hotel'; }).reduce(function(a, b) { return a + b.sgd; }, 0);
+  var flights  = BUDGET.filter(function(b) { return b.cat === 'flight' || b.cat === 'trans'; }).reduce(function(a, b) { return a + b.sgd; }, 0);
+  var other    = total - pkg - flights;
+  var catMap   = { hotel:'cat-hotel', entry:'cat-entry', misc:'cat-misc', flight:'cat-flight', trans:'cat-trans' };
+  var catLabel_en = { hotel:'Package', entry:'Permit', misc:'Misc', flight:'Flight', trans:'Transport' };
+  var catLabel_zh = { hotel:'套餐', entry:'许可证', misc:'其他', flight:'机票', trans:'交通' };
+  var rows = BUDGET.map(function(b) {
+    var item = isZh ? b.item_zh : b.item_en;
+    var note = isZh ? b.note_zh : b.note_en;
+    var catLabel = isZh ? catLabel_zh[b.cat] : catLabel_en[b.cat];
+    return '<tr><td>' + item + '</td><td><span class="budget-cat ' + catMap[b.cat] + '">' + catLabel + '</span></td>' +
+      '<td style="text-align:right;color:#06b6d4;font-weight:700;">S$' + b.sgd + '</td>' +
+      '<td style="color:#6b7280;font-size:0.82em;">' + note + '</td></tr>';
+  }).join('');
+  var html =
+    '<div class="budget-summary">' +
+      '<div class="budget-stat"><div class="budget-stat-label"><span class="en">Dive Package</span><span class="zh">潜水套餐</span></div><div class="budget-stat-value">S$' + pkg + '</div></div>' +
+      '<div class="budget-stat"><div class="budget-stat-label"><span class="en">Flights/Trans</span><span class="zh">机票/交通</span></div><div class="budget-stat-value">S$' + flights + '</div></div>' +
+      '<div class="budget-stat"><div class="budget-stat-label"><span class="en">Permit/Other</span><span class="zh">许可证/其他</span></div><div class="budget-stat-value">S$' + other + '</div></div>' +
+    '</div>' +
+    '<div style="padding:10px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06);">' +
+      '<div style="font-size:0.85em;color:#8b949e;"><span class="en">Estimated Total · Solo traveller · 10 days</span><span class="zh">预估总额 · 单人 · 10天</span></div>' +
+      '<div style="font-size:1.45em;font-weight:800;color:#06b6d4;margin-top:2px;">S$' + total + '</div>' +
+    '</div>' +
+    '<table class="budget-table">' +
+      '<thead><tr><th><span class="en">Item</span><span class="zh">项目</span></th><th><span class="en">Type</span><span class="zh">类型</span></th><th style="text-align:right;">SGD</th><th><span class="en">Notes</span><span class="zh">备注</span></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>';
+  document.getElementById('budget-panel').innerHTML = html;
+}
+
+// ── TASKS ─────────────────────────────────────────────────────────────────────
+var TASKS = [
+  { cat_en:'FLIGHTS — Book Now', cat_zh:'机票 — 请立即预订', items:[
+    { text_en:'Book SIN → Jakarta → Sorong return flights (2 &amp; 11 Nov)', text_zh:'预订新加坡→雅加达→索龙往返机票（11月2日与11日）', deadline_en:'ASAP', deadline_zh:'请尽快' },
+    { text_en:'Confirm connection timing allows the Sorong–Waisai ferry same day', text_zh:'确认转机时间能同日搭上索龙至瓦伊萨的渡轮', deadline_en:'ASAP', deadline_zh:'请尽快' }
+  ]},
+  { cat_en:'LIVEABOARD / RESORT', cat_zh:'潜水船／度假村', items:[
+    { text_en:'Research &amp; book a liveaboard or Waisai-based resort dive package', text_zh:'研究并预订潜水船或以瓦伊萨为基地的度假村潜水套餐', deadline_en:'Urgent', deadline_zh:'紧急' },
+    { text_en:'Confirm the package includes Piaynemo &amp; Wayag day trips (not all do)', text_zh:'确认套餐包含皮亚涅莫与瓦雅格的一日游（并非所有套餐都有）', due_en:'Before booking', due_zh:'预订前确认' }
+  ]},
+  { cat_en:'DOCUMENTS &amp; HEALTH', cat_zh:'证件与健康', items:[
+    { text_en:'Pre-register / budget for Marine Park Entry Permit (SIP)', text_zh:'提前登记／预留海洋公园入园许可证（SIP）费用', due_en:'Before trip', due_zh:'出发前' },
+    { text_en:'Confirm Advanced Open Water certification &amp; recent dive log', text_zh:'确认进阶潜水证照与近期潜水日志', due_en:'Before trip', due_zh:'出发前' },
+    { text_en:'See a doctor about malaria prophylaxis', text_zh:'咨询医生是否需要疟疾预防药物', due_en:'4–6 weeks before', due_zh:'出发前4至6周' },
+    { text_en:'Get dive + travel insurance with hyperbaric evacuation cover', text_zh:'购买含高压氧舱后送保障的潜水及旅游保险', due_en:'Before trip', due_zh:'出发前' },
+    { text_en:'Check passport validity (&gt;6 months from 11 Nov 2026)', text_zh:'检查护照有效期（须距2026年11月11日超过6个月）', due_en:'Now', due_zh:'现在' }
+  ]},
+  { cat_en:'PACKING', cat_zh:'打包清单', items:[
+    { text_en:'Reef-safe sunscreen &amp; rash guard', text_zh:'珊瑚礁友善防晒乳与防晒衣', due_en:'Pack', due_zh:'打包' },
+    { text_en:'Dive computer, mask &amp; fins (own gear preferred)', text_zh:'潜水电脑、面镜与蛙鞋（建议自备装备）', due_en:'Pack', due_zh:'打包' },
+    { text_en:'Dry bag for boat trips to Piaynemo/Wayag', text_zh:'防水袋，用于皮亚涅莫／瓦雅格的船程', due_en:'Pack', due_zh:'打包' },
+    { text_en:'Enough IDR cash — no ATMs on the islands', text_zh:'足够的印尼盾现金——岛上没有ATM', due_en:'Before ferry', due_zh:'搭渡轮前' },
+    { text_en:'Waterproof camera housing / GoPro', text_zh:'防水相机壳／GoPro', due_en:'Pack', due_zh:'打包' }
+  ]}
+];
+
+var taskState = {};
+function renderTasks() {
+  var isZh = document.body.classList.contains('lang-zh');
+  var html = '';
+  TASKS.forEach(function(cat, ci) {
+    html += '<div class="task-category">' + (isZh ? cat.cat_zh : cat.cat_en) + '</div>';
+    cat.items.forEach(function(t, ti) {
+      var key = ci + '-' + ti;
+      var done = taskState[key];
+      var text = isZh ? t.text_zh : t.text_en;
+      var deadline = isZh ? t.deadline_zh : t.deadline_en;
+      var due = isZh ? t.due_zh : t.due_en;
+      html += '<div class="task-item' + (done ? ' completed' : '') + '" id="task-' + key + '" onclick="toggleTask(\'' + key + '\')">' +
+        '<div class="task-check' + (done ? ' tck-checked' : '') + '">' + (done ? '✓' : '') + '</div>' +
+        '<div class="task-body">' +
+          '<div class="task-text">' + text + '</div>' +
+          '<div class="task-meta">' +
+            (deadline ? '<span class="task-deadline">⚠️ ' + deadline + '</span>' : '') +
+            (due ? '<span class="task-due">📅 ' + due + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  });
+  document.getElementById('tasks-panel').innerHTML = html;
+}
+
+function toggleTask(key) {
+  taskState[key] = !taskState[key];
+  try { localStorage.setItem('ra2026_mt16_tasks', JSON.stringify(taskState)); } catch(e) {}
+  renderTasks();
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {});
+  }
+}
+
+// ── RE-RENDER ON LANGUAGE CHANGE ──────────────────────────────────────────────
+var _origSetLang = window.setLang;
+window.setLang = function(lang) {
+  if (_origSetLang) _origSetLang(lang);
+  renderStopList();
+  renderBudget();
+  renderTasks();
+  markers.forEach(function(m, i) {
+    var s = STOPS[i];
+    var isZh = lang === 'zh';
+    var name = isZh ? s.nameZh : s.name;
+    var desc = isZh ? s.desc_zh : s.desc_en;
+    m.setPopupContent('<div class="popup-name">' + s.emoji + ' ' + name + '</div>' +
+      '<div class="popup-desc">' + desc + '</div>' +
+      '<div class="popup-links">' +
+        '<a href="https://maps.google.com/?q=' + s.lat + ',' + s.lng + '&label=' + encodeURIComponent(s.name) + '" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;">🗺️ Google</a>' +
+        '<a href="https://uri.amap.com/marker?position=' + s.lng + ',' + s.lat + '&name=' + encodeURIComponent(s.name) + '" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;">高德</a>' +
+      '</div>');
+  });
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  try { var s = localStorage.getItem('ra2026_mt16_tasks'); if (s) taskState = JSON.parse(s); } catch(e) {}
+  initMap();
+  renderItin();
+  renderMustSee();
+  renderTips();
+  renderBudget();
+  renderTasks();
+});
+</script>
+</body>
+</html>
