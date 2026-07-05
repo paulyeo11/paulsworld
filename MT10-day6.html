@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Day 6: Tokyo → Sapporo — 6 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.red  { color: #ef4444; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 22px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95em; background: #161b22; border: 2px solid #f0a500;
+  z-index: 1;
+}
+.tl-item:not(:last-child)::before {
+  content: ''; position: absolute; left: 14px; top: 30px; bottom: 0;
+  width: 2px; background: rgba(240,165,0,0.25);
+}
+.tl-time { font-size: 0.78em; color: #8b949e; font-family: monospace; }
+.tl-title { font-size: 0.98em; font-weight: 700; color: #e6edf3; margin-top: 1px; }
+.tl-sub { font-size: 0.85em; color: #8b949e; margin-top: 3px; line-height: 1.55; }
+.tl-sub strong { color: #c9d1d9; }
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL (ready for when photos are added) */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* MAP */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#day6map { width: 100%; height: 240px; }
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · Day 6 <span class="gold">Tokyo → Sapporo</span></h1>
+  <div class="header-sub"><span class="en">Travel day — Narita → New Chitose · Mon, 6 Jul 2026</span><span class="zh">交通日 — 成田 → 新千岁 · 2026年7月6日（周一）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
+    <a href="MT10-day5.html" class="day-chip">📔 <span class="en">Day 5</span><span class="zh">第五天</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">📋 <span class="en">Day 6 Plan</span><span class="zh">第六天计划</span></div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot">🧳</div>
+      <div>
+        <div class="tl-time"><span class="en">Morning</span><span class="zh">早上</span></div>
+        <div class="tl-title"><span class="en">Checkout — BON Tokyo Kamata Parkside</span><span class="zh">退房 — BON东京蒲田Parkside</span></div>
+        <div class="tl-sub"><span class="en">Last morning in Kamata. Pack the night before if possible. Checkout by <strong>10:00 AM</strong>.</span><span class="zh">在蒲田的最后一个早晨。尽量前一晚收拾好行李。<strong>上午10点前</strong>退房。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚆</div>
+      <div>
+        <div class="tl-time"><span class="en">~10:15 AM</span><span class="zh">约上午10:15</span></div>
+        <div class="tl-title"><span class="en">Leave hotel for Narita Airport</span><span class="zh">从酒店出发前往成田机场</span></div>
+        <div class="tl-sub"><span class="en">JR Keihin-Tohoku Line, Kamata → Shinagawa (~8 min), then N'EX Narita Express, Shinagawa → Narita Airport T1 (~55 min). Total travel + buffer: ~1h20–1h30.</span><span class="zh">京滨东北线，蒲田 → 品川（约8分钟），再转乘成田特快，品川 → 成田机场T1（约55分钟）。总车程+缓冲时间：约1小时20-30分钟。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">✈️</div>
+      <div>
+        <div class="tl-time"><span class="en">13:40</span><span class="zh">13:40</span></div>
+        <div class="tl-title"><span class="en">Peach MM571 · Narita T1 → New Chitose</span><span class="zh">Peach MM571 · 成田T1 → 新千岁</span></div>
+        <div class="tl-sub"><span class="en">Booking ref <strong>BBZ5DU</strong>. Arrives New Chitose Airport ~15:30. Peach uses Narita <strong>Terminal 1</strong> — not T2 or T3.</span><span class="zh">订单号 <strong>BBZ5DU</strong>。约15:30抵达新千岁机场。Peach航空使用成田<strong>1号航站楼</strong> — 非T2或T3。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚗</div>
+      <div>
+        <div class="tl-time"><span class="en">Afternoon</span><span class="zh">下午</span></div>
+        <div class="tl-title"><span class="en">New Chitose → Niseko/Kutchan</span><span class="zh">新千岁 → 二世谷/倶知安</span></div>
+        <div class="tl-sub"><span class="en">Onward transfer to the Niseko accommodation — check the Car Rental / Drive tabs on the MT10 Trip Hub for the route.</span><span class="zh">前往二世谷住宿的后续交通 — 请查看MT10行程主页的租车/驾车标签页了解路线。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Narita Airport</span><span class="zh">成田机场</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.85em;color:#c9d1d9;margin-bottom:10px;">✈️ <span class="en">Narita International Airport, Terminal 1</span><span class="zh">成田国际机场 1号航站楼</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      <a href="https://www.google.com/maps/search/?api=1&query=Narita+International+Airport+Terminal+1" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+      <a href="https://map.baidu.com/search/%E6%88%90%E7%94%B0%E6%9C%BA%E5%9C%BA%E7%AC%AC%E4%B8%80%E8%88%AA%E7%AB%99%E6%A5%BC" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+      <a href="https://uri.amap.com/marker?position=140.3862,35.7647&name=%E6%88%90%E7%94%B0%E6%9C%BA%E5%9C%BA" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+    </div>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Route</span><span class="zh">路线</span></div>
+  <div class="map-wrap">
+    <div id="day6map"></div>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
+  <div class="log-card" id="emptyLog">
+    <div class="log-icon">🧳</div>
+    <div class="log-title"><span class="en">Day 6 hasn't happened yet!</span><span class="zh">第六天还没开始！</span></div>
+    <div class="log-sub"><span class="en">Travel day to Sapporo is <strong>6 Jul 2026</strong>. Once it happens, this page fills in with the real story — photos, notes, and how it actually went.</span><span class="zh">前往札幌的交通日是 <strong>2026年7月6日</strong>。这一天真正发生后，这一页将更新真实的故事 — 照片、笔记，以及这一天的真实经历。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Day 6 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script>
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-06T00:00:00+09:00');
+  var end = new Date('2026-07-07T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var diff = start - now;
+    var hrs = Math.floor(diff / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    banner.innerHTML = '🕓 <span class="en">Day 6 begins in <strong>' + hrs + 'h ' + mins + 'm</strong> — check back once it happens!</span><span class="zh">距离第六天开始还有 <strong>' + hrs + '小时' + mins + '分钟</strong> — 到时候再回来看看吧！</span>';
+  } else if (now < end) {
+    banner.style.background = 'rgba(240,165,0,0.12)';
+    banner.style.borderColor = 'rgba(240,165,0,0.35)';
+    banner.style.color = '#f0a500';
+    banner.innerHTML = '✈️ <span class="en">Day 6 is happening right now!</span><span class="zh">第六天正在进行中！</span>';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Day 6 complete — Tokyo done, on to Hokkaido.</span><span class="zh">第六天已完成 — 东京之旅结束，前往北海道。</span>';
+  }
+}
+updateBanner();
+setInterval(updateBanner, 60000);
+
+// ── PHOTO JOURNAL DATA (empty until Day 6 happens) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" muted playsinline preload="metadata"></video>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = p.caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function () {});
+  } else {
+    navigator.clipboard.writeText(url).then(function () {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function () { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// ── MAP ──
+var day6Map = L.map('day6map', { zoomControl: true, scrollWheelZoom: false }).setView([35.66, 139.9], 9);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '© Esri', maxZoom: 18
+}).addTo(day6Map);
+function mkIcon(color, label) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:28px;height:28px;background:' + color + ';border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);">' + label + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+var day6Stops = [
+  { lat: 35.5626, lng: 139.7152, color: '#10b981', label: '🏠', name: 'BON Tokyo Kamata Parkside', desc: 'Checkout ~10:00 AM' },
+  { lat: 35.7647, lng: 140.3862, color: '#ef4444', label: '✈', name: 'Narita Airport Terminal 1', desc: 'Peach MM571 · 13:40 → New Chitose' }
+];
+day6Stops.forEach(function (s) {
+  L.marker([s.lat, s.lng], { icon: mkIcon(s.color, s.label) })
+    .addTo(day6Map)
+    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+});
+L.polyline(day6Stops.map(function(s){return [s.lat,s.lng];}), { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(day6Map);
+day6Map.fitBounds(L.latLngBounds(day6Stops.map(function(s){return [s.lat,s.lng];})), { padding: [28, 28] });
+</script>
+</body>
+</html>
