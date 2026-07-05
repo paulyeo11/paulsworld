@@ -340,6 +340,28 @@ body {
     <div id="day5map"></div>
   </div>
 
+  <div class="section-title">🎬 <span class="en">Today's Actual Route — Animated</span><span class="zh">今日实际路线 — 动画</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">📍 <span class="en">Kamata → Aprico Hall (dead end) → Ueno → Kappabashi — the route the day actually took</span><span class="zh">蒲田 → Aprico Hall（扑空）→ 上野 → 合羽桥 — 今天实际走的路线</span></div>
+
+    <button onclick="playAnimatedRoute()" id="anim-play-btn" style="display:block;width:100%;margin-bottom:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.9rem;font-weight:800;padding:10px 16px;border-radius:20px;cursor:pointer;">▶️ <span class="en">Play Route Animation</span><span class="zh">播放路线动画</span></button>
+
+    <div style="position:relative;">
+      <div id="animated-route-map" style="width:100%;height:300px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setAnimType('satellite')" id="anim-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setAnimType('street')" id="anim-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+        <button onclick="toggleAnimFs()" style="background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:30px;height:30px;font-size:0.95rem;cursor:pointer;">⛶</button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start / dead end</span><span class="zh">起点/扑空处</span><br>
+        <span style="color:#f0a500;">●</span> <span class="en">Transit</span><span class="zh">中转</span><br>
+        <span style="color:#10b981;">●</span> <span class="en">Kappabashi — end</span><span class="zh">合羽桥 — 终点</span>
+      </div>
+      <button id="anim-close" onclick="toggleAnimFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
+  </div>
+
   <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
 
   <div class="log-card">
@@ -578,6 +600,100 @@ window.toggleShibuyaFs = function () {
     : 'width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
   close.style.display = shibuyaFs ? 'block' : 'none';
   setTimeout(function () { shibuyaMap.invalidateSize(); }, 50);
+};
+
+// ── TODAY'S ACTUAL ROUTE — ANIMATED MAP ──
+var animMap = L.map('animated-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.63, 139.75], 10);
+var animTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+animTiles.street.addTo(animMap);
+var animCur = 'street';
+window.setAnimType = function (type) {
+  if (type === animCur) return;
+  animMap.removeLayer(animTiles[animCur]);
+  animTiles[type].addTo(animMap);
+  animCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('anim-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('anim-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+function animNumIcon(color, emoji) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:14px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + emoji + '</div>',
+    iconSize: [30, 30], iconAnchor: [15, 15]
+  });
+}
+var animStops = [
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', emoji: '🏠', name: '🏠 BON Tokyo Kamata Parkside', desc: 'Start — hunting for a free youth performance nearby' },
+  { lat: 35.5619, lng: 139.7163, color: '#f0a500', emoji: '🚉', name: '⇄ Keikyu-Kamata Station', desc: 'Walked over toward JR Kamata, checking event listings along the way' },
+  { lat: 35.5636, lng: 139.7176, color: '#ef4444', emoji: '🎭', name: '🎭 Ota City Aprico Hall', desc: 'Dead end — nothing on the board today after all' },
+  { lat: 35.5626, lng: 139.7159, color: '#f0a500', emoji: '🚃', name: '⇄ JR Kamata Station', desc: 'JR Keihin-Tohoku Line direct to Ueno — no transfer, ~30 min' },
+  { lat: 35.7141, lng: 139.7774, color: '#f0a500', emoji: '🚉', name: '⇄ Ueno Station', desc: 'Arrived — 5 min walk south to Kappabashi' },
+  { lat: 35.7129, lng: 139.7887, color: '#10b981', emoji: '🏮', name: '🏮 Kappabashi Kitchen Supply Town', desc: 'End — Shitamachi Tanabata Festival (下町七夕まつり), Awa Odori dancers in the street' }
+];
+animStops.forEach(function (s) {
+  L.marker([s.lat, s.lng], { icon: animNumIcon(s.color, s.emoji) })
+    .addTo(animMap)
+    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+});
+var animWaypoints = animStops.map(function (s) { return [s.lat, s.lng]; });
+animMap.fitBounds(L.latLngBounds(animWaypoints), { padding: [30, 30] });
+
+function buildAnimPath(waypoints, stepsPerSegment) {
+  var path = [];
+  for (var i = 0; i < waypoints.length - 1; i++) {
+    var a = waypoints[i], b = waypoints[i + 1];
+    for (var s = 0; s < stepsPerSegment; s++) {
+      var t = s / stepsPerSegment;
+      path.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    }
+  }
+  path.push(waypoints[waypoints.length - 1]);
+  return path;
+}
+var animPath = buildAnimPath(animWaypoints, 40);
+var animTrail = L.polyline([], { color: '#f0a500', weight: 4, opacity: 0.9 }).addTo(animMap);
+var animMarker = L.marker(animPath[0], {
+  icon: L.divIcon({ className: '', html: '<div style="font-size:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.8));">🚶</div>', iconSize: [24, 24], iconAnchor: [12, 12] })
+});
+var animTimer = null;
+var animIdx = 0;
+window.playAnimatedRoute = function () {
+  var btn = document.getElementById('anim-play-btn');
+  if (animTimer) { clearInterval(animTimer); animTimer = null; }
+  animIdx = 0;
+  animTrail.setLatLngs([]);
+  animMarker.setLatLng(animPath[0]);
+  animMarker.addTo(animMap);
+  btn.innerHTML = '⏸ <span class="en">Playing…</span><span class="zh">播放中…</span>';
+  animTimer = setInterval(function () {
+    animIdx++;
+    if (animIdx >= animPath.length) {
+      clearInterval(animTimer);
+      animTimer = null;
+      btn.innerHTML = '🔁 <span class="en">Replay Animation</span><span class="zh">重新播放动画</span>';
+      return;
+    }
+    animMarker.setLatLng(animPath[animIdx]);
+    animTrail.setLatLngs(animPath.slice(0, animIdx + 1));
+  }, 25);
+};
+
+var animFs = false;
+window.toggleAnimFs = function () {
+  var el = document.getElementById('animated-route-map');
+  var close = document.getElementById('anim-close');
+  animFs = !animFs;
+  el.style.cssText = animFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:300px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = animFs ? 'block' : 'none';
+  setTimeout(function () { animMap.invalidateSize(); }, 50);
 };
 </script>
 </body>
