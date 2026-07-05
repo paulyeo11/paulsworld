@@ -142,6 +142,8 @@ Whenever Paul's article/story includes a hiking route, travel route, or any sequ
 
 Reference implementation: `S23.html` (The Secret BKE Trail, 18 June 2026)
 
+**Applies to simple trip maps too (added 2026-07-05):** Even a simple point-to-point map (e.g. a day-log travel map showing hotel → airport → airport → next hotel, with no photos on the markers) should still get the CSS-based fullscreen toggle — "⛶ Open Full Screen Map" button above the map + "✕ Close Map" button. Reference: `MT10-day6.html`. The satellite/street toggle, numbered markers, and legend are optional for these simpler maps if the route only has a couple of stops — but fullscreen is not optional.
+
 ## Map Links Rule
 Whenever Paul asks to "add map link", "add google location", or similar — always add **all three** map buttons together:
 1. **Google Maps** — `https://maps.google.com/?q=LAT,LNG&label=Name`
