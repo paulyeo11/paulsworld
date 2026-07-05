@@ -347,14 +347,37 @@ function mkIcon(color, label) {
 }
 var day6Stops = [
   { lat: 35.5626, lng: 139.7152, color: '#10b981', label: '🏠', name: 'BON Tokyo Kamata Parkside', desc: 'Checkout ~10:00 AM' },
-  { lat: 35.7647, lng: 140.3862, color: '#ef4444', label: '✈', name: 'Narita Airport Terminal 1', desc: 'Peach MM571 · 13:40 → New Chitose' }
+  { lat: 35.7647, lng: 140.3862, color: '#ef4444', label: '✈', name: 'Narita Airport Terminal 1 (Dep)', desc: 'Peach MM571 · Departs 13:40' },
+  { lat: 42.7752, lng: 141.6923, color: '#3b82f6', label: '✈', name: 'New Chitose Airport (Arr)', desc: 'Peach MM571 · Arrives ~15:30' }
 ];
 day6Stops.forEach(function (s) {
   L.marker([s.lat, s.lng], { icon: mkIcon(s.color, s.label) })
     .addTo(day6Map)
     .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
 });
-L.polyline(day6Stops.map(function(s){return [s.lat,s.lng];}), { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(day6Map);
+// Ground leg: hotel → Narita (departure airport)
+L.polyline([[day6Stops[0].lat, day6Stops[0].lng], [day6Stops[1].lat, day6Stops[1].lng]], { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(day6Map);
+// Flight leg: Narita (dep) → New Chitose (arr) — curved great-circle-style arc
+(function () {
+  var from = day6Stops[1], to = day6Stops[2];
+  var latlngs = [];
+  var steps = 60;
+  var midLat = (from.lat + to.lat) / 2;
+  var midLng = (from.lng + to.lng) / 2;
+  var dist = Math.sqrt(Math.pow(to.lat - from.lat, 2) + Math.pow(to.lng - from.lng, 2));
+  var bulge = dist * 0.12;
+  var offsetLat = midLat + bulge;
+  for (var i = 0; i <= steps; i++) {
+    var t = i / steps;
+    var lat = (1 - t) * (1 - t) * from.lat + 2 * (1 - t) * t * offsetLat + t * t * to.lat;
+    var lng = (1 - t) * (1 - t) * from.lng + 2 * (1 - t) * t * midLng + t * t * to.lng;
+    latlngs.push([lat, lng]);
+  }
+  L.polyline(latlngs, { color: '#3b82f6', weight: 3, dashArray: '2,10', opacity: 0.9 }).addTo(day6Map);
+  L.marker([offsetLat, midLng], { icon: L.divIcon({ className: '', html: '<div style="font-size:18px;transform:rotate(60deg);">✈️</div>', iconSize: [20, 20], iconAnchor: [10, 10] }) })
+    .addTo(day6Map)
+    .bindPopup('<div class="popup-name">Peach MM571</div><div class="popup-desc">Narita → New Chitose · 13:40–15:30</div>');
+})();
 day6Map.fitBounds(L.latLngBounds(day6Stops.map(function(s){return [s.lat,s.lng];})), { padding: [28, 28] });
 </script>
 </body>
