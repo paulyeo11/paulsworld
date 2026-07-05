@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Day 5: Kamata &amp; Ota City — 5 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.red  { color: #ef4444; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL (ready for when photos are added) */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* MAP */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#day5map { width: 100%; height: 240px; }
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · Day 5 <span class="gold">Kamata &amp; Ota City</span></h1>
+  <div class="header-sub"><span class="en">Last full day in Tokyo — hunting for a free youth performance · Sun, 5 Jul 2026</span><span class="zh">在东京的最后一个完整日子 — 寻找一场免费的青年表演 · 2026年7月5日（周日）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
+    <a href="MT10-day4.html" class="day-chip">📔 <span class="en">Day 4</span><span class="zh">第四天</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
+
+  <div class="log-card">
+    <div class="log-icon">🔍</div>
+    <div class="log-title"><span class="en">Hunting for a free youth performance</span><span class="zh">寻找一场免费的青年表演</span></div>
+    <div class="log-sub"><span class="en">Started the morning with an idea — go find a free performance by young people, the kind of local energy worth catching on a Sunday. The nearest sure things turned out to be weeks away: <strong>Haneda Matsuri</strong> (24–26 Jul, taiko and mikoshi near Ōtorii Station) and Kamata's own <strong>大蒲田祭</strong> street festival, usually early August. Nothing pinned down for today itself — so the search became its own small adventure.</span><span class="zh">早上带着一个念头出发 — 找一场年轻人的免费表演，周日里值得一看的那种本地活力。结果发现最确定的两个都还要再等几周：<strong>羽田祭</strong>（7月24-26日，在大鳥居站附近有太鼓和神轿）和蒲田本地的<strong>大蒲田祭</strong>街头庆典，通常在8月初举行。今天本身没有确定的活动 — 于是这场寻找本身变成了一次小小的冒险。</span></div>
+  </div>
+
+  <div class="log-card" style="margin-top:14px;">
+    <div class="log-icon">🚶</div>
+    <div class="log-title"><span class="en">From Keikyu-Kamata to JR Kamata, then on to Aprico Hall</span><span class="zh">从京急蒲田到JR蒲田，再走向Aprico Hall</span></div>
+    <div class="log-sub"><span class="en">Walked over from Keikyu-Kamata Station to JR Kamata Station, checking event listings the whole way. <strong>Ota City Aprico Hall</strong> — just a couple of minutes from the JR station's east exit — had something on its calendar for today, though the online listing didn't say what. Decided the fastest way to find out was to just walk over and check the board in person. Currently on the way there.</span><span class="zh">从京急蒲田站走到JR蒲田站，一路查看活动信息。<strong>大田区民ホール・アプリコ</strong>——离JR站东口只有几分钟路程——日历上显示今天有安排，但网上没说是什么。决定最快的办法就是直接走过去，现场看公告板。目前正在前往的路上。</span></div>
+  </div>
+
+  <div class="section-title">📸 <span class="en">Photo Journal</span><span class="zh">照片日记</span></div>
+  <div class="log-card" id="emptyLog">
+    <div class="log-icon">📷</div>
+    <div class="log-title"><span class="en">Photos coming soon</span><span class="zh">照片即将上传</span></div>
+    <div class="log-sub"><span class="en">No photos uploaded yet for Day 5 — check back once they're added.</span><span class="zh">第五天的照片还未上传 — 添加后请回来查看。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+  <div class="section-title">🗺️ <span class="en">Area</span><span class="zh">区域</span></div>
+  <div class="map-wrap">
+    <div id="day5map"></div>
+  </div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Day 5 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script>
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-05T00:00:00+09:00');
+  var end = new Date('2026-07-06T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var diff = start - now;
+    var hrs = Math.floor(diff / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    banner.innerHTML = '🕓 <span class="en">Day 5 begins in <strong>' + hrs + 'h ' + mins + 'm</strong> — check back once it happens!</span><span class="zh">距离第五天开始还有 <strong>' + hrs + '小时' + mins + '分钟</strong> — 到时候再回来看看吧！</span>';
+  } else if (now < end) {
+    banner.style.background = 'rgba(240,165,0,0.12)';
+    banner.style.borderColor = 'rgba(240,165,0,0.35)';
+    banner.style.color = '#f0a500';
+    banner.innerHTML = '🚶 <span class="en">Day 5 is happening right now!</span><span class="zh">第五天正在进行中！</span>';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Day 5 complete — last full day in Tokyo, done.</span><span class="zh">第五天已完成 — 在东京的最后一个完整日子结束了。</span>';
+  }
+}
+updateBanner();
+setInterval(updateBanner, 60000);
+
+// ── PHOTO JOURNAL DATA (empty until Day 5 photos are uploaded) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" muted playsinline preload="metadata"></video>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = p.caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function () {});
+  } else {
+    navigator.clipboard.writeText(url).then(function () {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function () { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// ── MAP ──
+var day5Map = L.map('day5map', { zoomControl: true, scrollWheelZoom: false }).setView([35.5618, 139.7160], 15);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '© Esri', maxZoom: 18
+}).addTo(day5Map);
+function mkIcon(color, label) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:28px;height:28px;background:' + color + ';border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);">' + label + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+L.marker([35.5626, 139.7152], { icon: mkIcon('#10b981', '🏠') })
+  .addTo(day5Map)
+  .bindPopup('<div class="popup-name">BON Tokyo Kamata Parkside</div><div class="popup-desc">4-26-10 Kamata, Ota-ku · Base for Day 5</div>');
+L.marker([35.5613, 139.7161], { icon: mkIcon('#f0a500', '🎭') })
+  .addTo(day5Map)
+  .bindPopup('<div class="popup-name">Ota City Aprico Hall 大田区民ホール・アプリコ</div><div class="popup-desc">2 min walk from JR Kamata East Exit · checking today\'s show board</div>')
+  .openPopup();
+</script>
+</body>
+</html>
