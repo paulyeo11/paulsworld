@@ -86,6 +86,9 @@
   .map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
   .map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
   .map-fullscreen-close.active { display: block; }
+  .route-animated { animation: routeDash 1.2s linear infinite; }
+  @keyframes routeDash { to { stroke-dashoffset: -24; } }
+  .plane-marker { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transform-origin: center; }
   .stat-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 16px 8px; }
   .stat-chip { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 8px 14px; text-align: center; flex: 1; min-width: 60px; }
   .stat-num { font-size: 1.25em; font-weight: 800; color: #f0a500; line-height: 1; }
@@ -1674,8 +1677,43 @@ stops.forEach(function(s) {
 });
 
 L.polyline(stops.map(function(s){ return [s.lat, s.lng]; }), {
-  color: '#f0a500', weight: 2, dashArray: '6,6', opacity: 0.7
+  color: '#f0a500', weight: 2, dashArray: '6,6', opacity: 0.7, className: 'route-animated'
 }).addTo(map);
+
+// ANIMATED PLANE — travels the route on a continuous loop
+var planeIcon = L.divIcon({ className: '', html: '<div class="plane-marker">✈️</div>', iconSize: [24,24], iconAnchor: [12,12] });
+var planeMarker = L.marker([stops[0].lat, stops[0].lng], { icon: planeIcon, interactive: false }).addTo(map);
+
+function bearing(a, b) {
+  var lat1 = a.lat * Math.PI/180, lat2 = b.lat * Math.PI/180;
+  var dLng = (b.lng - a.lng) * Math.PI/180;
+  var y = Math.sin(dLng) * Math.cos(lat2);
+  var x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLng);
+  return (Math.atan2(y, x) * 180/Math.PI + 360) % 360;
+}
+
+var planeLegDuration = 3500; // ms per leg
+var planeLegIdx = 0;
+var planeLegStart = null;
+
+function animatePlane(ts) {
+  if (!planeLegStart) planeLegStart = ts;
+  var from = stops[planeLegIdx];
+  var to = stops[(planeLegIdx + 1) % stops.length];
+  var t = Math.min((ts - planeLegStart) / planeLegDuration, 1);
+  var lat = from.lat + (to.lat - from.lat) * t;
+  var lng = from.lng + (to.lng - from.lng) * t;
+  planeMarker.setLatLng([lat, lng]);
+  var deg = bearing(from, to) - 90;
+  var el = planeMarker.getElement();
+  if (el) { var inner = el.querySelector('.plane-marker'); if (inner) inner.style.transform = 'rotate(' + deg + 'deg)'; }
+  if (t >= 1) {
+    planeLegIdx = (planeLegIdx + 1) % stops.length;
+    planeLegStart = ts;
+  }
+  requestAnimationFrame(animatePlane);
+}
+requestAnimationFrame(animatePlane);
 
 // MAP FULLSCREEN
 function toggleMapFs() {
