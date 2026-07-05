@@ -122,7 +122,7 @@ body {
 /* PHOTO JOURNAL (ready for when photos are added) */
 .photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
 .pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
-.pj-item img { width: 100%; display: block; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
 .pj-body { padding: 14px 16px; }
 .pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
 .pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
@@ -144,7 +144,7 @@ body {
   z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
 }
 .lightbox.active { display: flex; }
-.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox img, .lightbox video { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
 .lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
 .lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
 
@@ -328,6 +328,7 @@ body {
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
   <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
   <div class="lightbox-caption" id="lbCaption"></div>
 </div>
 
@@ -368,7 +369,12 @@ const galleryPhotos = [
   { src: 'img_MT10-day4/07-nemo-laboratory-props.jpg', caption: "Captain Nemo's laboratory, deep in the queue", story: '<span class="en">Further along the queue, the path winds through what looks like Captain Nemo\'s own study — a brass microscope, glass apparatus, and an open notebook sketched with strange fungus specimens. Every corner of this queue is its own little museum.</span><span class="zh">队伍继续蜿蜒，穿过一处仿佛是尼莫船长书房的场景——黄铜显微镜、玻璃仪器，还有一本画满奇特菌类标本的笔记本摊开在桌上。这条队伍的每个角落都像一座小小的博物馆。</span>' },
   { src: 'img_MT10-day4/08-submarine-corridor-queue.jpg', caption: 'Riveted submarine corridor, closing in on 2 hours', story: '<span class="en">Into the riveted metal corridor now, numbered hatches lining the walls like a submarine\'s belly. Two hours in, legs tired, but the end of the queue was finally in sight.</span><span class="zh">进入铆钉金属走廊，编号舱门沿墙排列，宛如潜水艇内部。已经排了两个小时，双腿发酸，但队伍的尽头终于出现在眼前。</span>' },
   { src: 'img_MT10-day4/09-elevator-descent.jpg', caption: 'The descent begins — elevator down to the ride', story: '<span class="en">Packed into the elevator, red warning lights and old pressure gauges glowing overhead as it rattles downward — the ride\'s way of telling you you\'re about to descend into the earth itself.</span><span class="zh">挤进电梯，头顶的红色警示灯和老式压力表在下降时发出微光——这是游乐设施在提醒你，即将真正潜入地心。</span>' },
-  { src: 'img_MT10-day4/10-boarding-the-ride.jpg', caption: 'Finally — boarding after more than 2 hours', story: '<span class="en">More than two hours after joining the queue, finally at the loading platform, climbing into the mining-cart vehicle. Every minute of the wait forgotten the moment the cart pulled away.</span><span class="zh">排队超过两个小时后，终于抵达登乘平台，坐进矿车造型的乘坐载具。车子一启动，之前所有的等待瞬间都值得了。</span>' }
+  { src: 'img_MT10-day4/10-boarding-the-ride.jpg', caption: 'Finally — boarding after more than 2 hours', story: '<span class="en">More than two hours after joining the queue, finally at the loading platform, climbing into the mining-cart vehicle. Every minute of the wait forgotten the moment the cart pulled away.</span><span class="zh">排队超过两个小时后，终于抵达登乘平台，坐进矿车造型的乘坐载具。车子一启动，之前所有的等待瞬间都值得了。</span>' },
+  { src: 'img_MT10-day4/11-street-performer.mp4', type: 'video', caption: 'Street greeting performer, American Waterfront', story: '<span class="en">A burst of colour and rhythm on the waterfront — a costumed street performer greeting the crowd, everyone reaching in for a high-five. These unplanned street moments are half the fun of DisneySea.</span><span class="zh">海滨大道上一阵色彩与节奏的惊喜——一位身着华丽服饰的街头表演者与人群互动，大家纷纷伸手击掌。这些计划外的街头时刻，正是东京迪士尼海洋乐趣的一半。</span>' },
+  { src: 'img_MT10-day4/12-stage-door-crowd.jpg', caption: 'Waiting outside the Stage Door', story: '<span class="en">A small crowd gathers by a "Stage Door" — phones ready — hoping to catch a cast member or character stepping out between performances.</span><span class="zh">一小群人聚集在"Stage Door"（后台门）外，纷纷举起手机——希望能捕捉到演职人员或角色在演出间隙走出来的瞬间。</span>' },
+  { src: 'img_MT10-day4/13-stage-door-greeting.mp4', type: 'video', caption: 'The Stage Door moment, caught on video', story: '<span class="en">The moment itself, caught on video — a cast member stepping out through the Stage Door as the waiting crowd lights up with phones and cheers.</span><span class="zh">这一刻被完整拍下——一位工作人员从后台门走出，等候的人群瞬间举起手机、欢呼起来。</span>' },
+  { src: 'img_MT10-day4/14-harbor-crowd-waiting-show.jpg', caption: 'Claiming a spot for the evening harbor show', story: '<span class="en">As dusk approached, crowds settled in along the Mediterranean Harbor railings, blankets and mats spread out, waiting for the evening water show to begin.</span><span class="zh">傍晚临近，人群沿着地中海港湾的栏杆坐了下来，铺开野餐垫，等待夜间水上表演开场。</span>' },
+  { src: 'img_MT10-day4/15-globe-fountain-dusk.jpg', caption: 'The globe fountain at dusk', story: '<span class="en">The giant globe fountain again, this time at dusk — the same landmark from the morning, transformed under a moody evening sky as the fountains kept churning.</span><span class="zh">再次见到巨大的地球喷泉，这次是在黄昏时分——早晨见过的同一个地标，在阴沉的暮色下呈现出截然不同的氛围，喷泉水花依旧翻涌。</span>' }
 ];
 function renderGallery() {
   var grid = document.getElementById('galleryGrid');
@@ -382,9 +388,12 @@ function renderGallery() {
   galleryPhotos.forEach(function(p, i) {
     var item = document.createElement('div');
     item.className = 'pj-item';
-    item.innerHTML = '<img src="' + p.src + '" alt="" loading="lazy">' +
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" muted playsinline preload="metadata"></video>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    item.innerHTML = media +
       '<div class="pj-body">' +
-      '<div class="pj-num">Photo ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
       '<div class="pj-text">' + p.story + '</div>' +
       '</div>';
     item.onclick = function () { openLightbox(i); };
@@ -395,11 +404,27 @@ renderGallery();
 
 // ── LIGHTBOX ──
 function openLightbox(i) {
-  document.getElementById('lbImg').src = galleryPhotos[i].src;
-  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption || '';
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = p.caption || '';
   document.getElementById('lightbox').classList.add('active');
 }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
 document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
 
 // ── SHARE ──
