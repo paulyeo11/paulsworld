@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Day 5: Shibuya &amp; Shinjuku — 5 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.red  { color: #ef4444; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.plan-note {
+  margin: 12px 16px 0; padding: 12px 14px;
+  background: rgba(240,165,0,0.08); border: 1px solid rgba(240,165,0,0.3);
+  border-radius: 10px; font-size: 0.82em; color: #f0a500; line-height: 1.6;
+}
+.plan-note strong { color: #ffd479; }
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 22px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95em; background: #161b22; border: 2px solid #f0a500;
+  z-index: 1;
+}
+.tl-item:not(:last-child)::before {
+  content: ''; position: absolute; left: 14px; top: 30px; bottom: 0;
+  width: 2px; background: rgba(240,165,0,0.25);
+}
+.tl-time { font-size: 0.78em; color: #8b949e; font-family: monospace; }
+.tl-title { font-size: 0.98em; font-weight: 700; color: #e6edf3; margin-top: 1px; }
+.tl-sub { font-size: 0.85em; color: #8b949e; margin-top: 3px; line-height: 1.55; }
+.tl-sub strong { color: #c9d1d9; }
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL (ready for when photos are added) */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* MAP */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#day5map { width: 100%; height: 240px; }
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · Day 5 <span class="gold">Shibuya &amp; Shinjuku</span></h1>
+  <div class="header-sub"><span class="en">Modern Tokyo finale — crossing, skyline &amp; neon · Sun, 5 Jul 2026</span><span class="zh">现代东京收尾 — 十字路口、天际线与霓虹 · 2026年7月5日（周日）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
+    <a href="MT10-day4.html" class="day-chip">📔 <span class="en">Day 4</span><span class="zh">第四天</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
+</div>
+
+<div class="plan-note">
+  🗼 <span class="en"><strong>Last full day in Tokyo:</strong> Asakusa (Day 3) and DisneySea (Day 4) are done — Day 5 is the chance to see modern Tokyo before packing up for the 13:40 Peach flight to Sapporo on Day 6. Shibuya Crossing and Shinjuku's neon streets round out the old-meets-new picture of the city.</span><span class="zh"><strong>在东京的最后一整天：</strong>浅草（第三天）和迪士尼海洋（第四天）都已完成 — 第五天是体验现代东京的机会，之后就要收拾行李，准备第六天下午13:40搭乘Peach航班前往札幌。涩谷十字路口和新宿的霓虹街道，为这座城市"古今交融"的印象画上句号。</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">📋 <span class="en">Day 5 Plan</span><span class="zh">第五天计划</span></div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot">☀️</div>
+      <div>
+        <div class="tl-time"><span class="en">Morning</span><span class="zh">早上</span></div>
+        <div class="tl-title"><span class="en">Last full morning in Kamata</span><span class="zh">在蒲田的最后一个完整早晨</span></div>
+        <div class="tl-sub"><span class="en">Fifth morning at BON Tokyo Kamata Parkside. Start sorting luggage for tomorrow's flight before heading out — no rush today, just Shibuya and Shinjuku.</span><span class="zh">在BON东京蒲田Parkside的第五个早晨。出门前先开始整理明天航班要用的行李 — 今天不赶时间，就是涩谷和新宿。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚃</div>
+      <div>
+        <div class="tl-time"><span class="en">Late morning</span><span class="zh">上午晚些时候</span></div>
+        <div class="tl-title"><span class="en">Train to Shibuya</span><span class="zh">乘车前往涩谷</span></div>
+        <div class="tl-sub"><span class="en">JR Keihin-Tohoku Line from Kamata → Shinagawa, transfer to the JR Yamanote Line → Shibuya Station.</span><span class="zh">从蒲田乘京滨东北线 → 品川，转乘山手线 → 涩谷站。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚦</div>
+      <div>
+        <div class="tl-time"><span class="en">Arrive</span><span class="zh">抵达</span></div>
+        <div class="tl-title"><span class="en">Shibuya Crossing &amp; Hachiko</span><span class="zh">涩谷十字路口与忠犬八公像</span></div>
+        <div class="tl-sub"><span class="en">The world's busiest pedestrian crossing, right outside Hachiko Exit — a quick photo by the famous loyal-dog statue first.</span><span class="zh">全世界最繁忙的行人十字路口，就在八公口出站不远处 — 先在著名的忠犬八公像前拍张照。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🌇</div>
+      <div>
+        <div class="tl-time"><span class="en">Midday</span><span class="zh">中午</span></div>
+        <div class="tl-title"><span class="en">SHIBUYA SKY observation deck</span><span class="zh">SHIBUYA SKY展望台</span></div>
+        <div class="tl-sub"><span class="en">Open-air rooftop deck atop Shibuya Scramble Square — a full 360° view over the crossing and the whole city, weather permitting.</span><span class="zh">涩谷Scramble Square顶楼的露天观景台 — 天气好的话可以360°俯瞰十字路口和整座城市。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🍜</div>
+      <div>
+        <div class="tl-time"><span class="en">Lunch</span><span class="zh">午餐</span></div>
+        <div class="tl-title"><span class="en">Lunch &amp; shopping around Shibuya</span><span class="zh">涩谷周边午餐与购物</span></div>
+        <div class="tl-sub"><span class="en">Plenty of choice around Center Gai and Shibuya 109 — casual ramen or izakaya lunch, then a browse through the shopping streets.</span><span class="zh">Center街和涩谷109附近选择很多 — 轻松吃碗拉面或居酒屋午餐，之后逛逛购物街。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🚉</div>
+      <div>
+        <div class="tl-time"><span class="en">Afternoon</span><span class="zh">下午</span></div>
+        <div class="tl-title"><span class="en">Train to Shinjuku</span><span class="zh">乘车前往新宿</span></div>
+        <div class="tl-sub"><span class="en">JR Yamanote Line, Shibuya → Shinjuku Station — one of the world's busiest train stations.</span><span class="zh">乘山手线，涩谷 → 新宿站 — 全世界最繁忙的火车站之一。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🏙️</div>
+      <div>
+        <div class="tl-time"><span class="en">Afternoon</span><span class="zh">下午</span></div>
+        <div class="tl-title"><span class="en">Tokyo Metropolitan Government Building</span><span class="zh">东京都厅</span></div>
+        <div class="tl-sub"><span class="en">Free observation deck on the 45th floor — a skyline view over Tokyo without paying for SHIBUYA SKY twice in one day.</span><span class="zh">45楼免费展望台 — 可俯瞰东京天际线，不用一天内为同类观景台重复付费。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🥢</div>
+      <div>
+        <div class="tl-time"><span class="en">Evening</span><span class="zh">傍晚</span></div>
+        <div class="tl-title"><span class="en">Omoide Yokocho &amp; Golden Gai</span><span class="zh">思い出横丁与黄金街</span></div>
+        <div class="tl-sub"><span class="en">Narrow lantern-lit alleys of tiny yakitori bars near Shinjuku Station's West Exit, then a wander through Golden Gai's maze of miniature bars before dinner.</span><span class="zh">新宿站西口附近灯笼照亮的狭窄小巷，满是烤鸡串小店，晚餐前再逛逛黄金街迷宫般的迷你酒吧街。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🌃</div>
+      <div>
+        <div class="tl-time"><span class="en">Night</span><span class="zh">晚上</span></div>
+        <div class="tl-title"><span class="en">Back to Kamata &amp; pack</span><span class="zh">返回蒲田并收拾行李</span></div>
+        <div class="tl-sub"><span class="en">Retrace via Shinagawa back to the hotel. Finish packing — checkout is by 10:00 AM tomorrow, ahead of the 13:40 Peach flight to Sapporo.</span><span class="zh">经品川原路返回酒店。收拾好行李 — 明天上午10点前退房，之后搭乘13:40的Peach航班前往札幌。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">🚃 <span class="en">Route — Kamata to Shibuya to Shinjuku</span><span class="zh">路线 — 蒲田至涩谷至新宿</span></div>
+  <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;">
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:10px;">🚃 <span class="en">Train Route · ~50 min total · ~¥620 (~S$5.40)</span><span class="zh">电车路线 · 全程约50分钟 · 约¥620（约S$5.40）</span></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#ef4444;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Walk to JR Kamata Station</span><span class="zh">步行至JR蒲田站</span></strong><br>
+        <span style="color:#8b949e;"><span class="en">~5 min</span><span class="zh">约5分钟</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#f0a500;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">JR Keihin-Tohoku Line → Shinagawa</span><span class="zh">京滨东北线 → 品川</span></strong><br>
+        <span style="color:#8b949e;"><span class="en">~15 min</span><span class="zh">约15分钟</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+      <div style="background:#3b82f6;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Transfer to JR Yamanote Line → Shibuya</span><span class="zh">转乘山手线 → 涩谷</span></strong><br>
+        <span class="en">Loop line around central Tokyo — trains every few minutes. <strong style="color:#e6edf3;">~25 min</strong> ride.</span>
+        <span class="zh">环绕东京市中心的环状线 — 每隔几分钟一班。乘车约<strong style="color:#e6edf3;">25分钟</strong>。</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <div style="background:#10b981;color:#fff;font-weight:800;font-size:0.68em;min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">4</div>
+      <div style="font-size:0.81em;line-height:1.6;color:#c9d1d9;">
+        <strong style="color:#e6edf3;"><span class="en">Same Yamanote Line → Shinjuku (later in the day)</span><span class="zh">同一条山手线 → 新宿（当天稍晚）</span></strong><br>
+        <span class="en">No transfer needed — stay on the loop line from Shibuya. <strong style="color:#e6edf3;">~7 min</strong>.</span>
+        <span class="zh">无需换乘 — 从涩谷继续搭乘环状线即可。约<strong style="color:#e6edf3;">7分钟</strong>。</span>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+      <a href="https://maps.google.com/?q=35.6595,139.7005&label=Shibuya+Crossing" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+      <a href="https://map.baidu.com/search/%E6%B8%8B%E8%B0%B7%E5%8D%81%E5%AD%97%E8%B7%AF%E5%8F%A3" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+      <a href="https://uri.amap.com/marker?position=139.7005,35.6595&name=%E6%B8%8B%E8%B0%B7%E5%8D%81%E5%AD%97%E8%B7%AF%E5%8F%A3" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+    </div>
+
+    <button onclick="toggleShibuyaFs()" style="display:block;width:100%;margin-top:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+
+    <div style="position:relative;margin-top:10px;">
+      <div id="shibuya-route-map" style="width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
+      <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
+        <button onclick="setShibuyaType('satellite')" id="shib-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setShibuyaType('street')" id="shib-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+      </div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
+        <span style="color:#ef4444;">●</span> <span class="en">Start</span><span class="zh">起点</span><br>
+        <span style="color:#f0a500;">●</span> <span class="en">Shibuya</span><span class="zh">涩谷</span><br>
+        <span style="color:#10b981;">●</span> <span class="en">Shinjuku</span><span class="zh">新宿</span>
+      </div>
+      <button id="shib-close" onclick="toggleShibuyaFs()" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:99999;background:#ef4444;color:#fff;border:none;border-radius:30px;padding:12px 32px;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.5);">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    </div>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Base</span><span class="zh">基地</span></div>
+  <div class="map-wrap">
+    <div id="day5map"></div>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
+  <div class="log-card" id="emptyLog">
+    <div class="log-icon">📸</div>
+    <div class="log-title"><span class="en">Day 5 hasn't happened yet!</span><span class="zh">第五天还没开始！</span></div>
+    <div class="log-sub"><span class="en">Paul &amp; Joanne's fifth day in Tokyo is <strong>5 Jul 2026</strong> — a planned wander through Shibuya and Shinjuku. Once the day happens, this page fills in with the real story — photos, notes, and how it actually went.</span><span class="zh">Paul 和 Joanne 在东京的第五天是 <strong>2026年7月5日</strong> — 计划漫游涩谷与新宿。这一天真正发生后，这一页将更新真实的故事 — 照片、笔记，以及这一天的真实经历。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Day 5 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script>
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-05T00:00:00+09:00');
+  var end = new Date('2026-07-06T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var diff = start - now;
+    var hrs = Math.floor(diff / 3600000);
+    var mins = Math.floor((diff % 3600000) / 60000);
+    banner.innerHTML = '🕓 <span class="en">Day 5 begins in <strong>' + hrs + 'h ' + mins + 'm</strong> — check back once it happens!</span><span class="zh">距离第五天开始还有 <strong>' + hrs + '小时' + mins + '分钟</strong> — 到时候再回来看看吧！</span>';
+  } else if (now < end) {
+    banner.style.background = 'rgba(240,165,0,0.12)';
+    banner.style.borderColor = 'rgba(240,165,0,0.35)';
+    banner.style.color = '#f0a500';
+    banner.innerHTML = '🚦 <span class="en">Day 5 is happening right now!</span><span class="zh">第五天正在进行中！</span>';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Day 5 complete — Tokyo done, on to Hokkaido next.</span><span class="zh">第五天已完成 — 东京之旅结束，接下来前往北海道。</span>';
+  }
+}
+updateBanner();
+setInterval(updateBanner, 60000);
+
+// ── PHOTO JOURNAL DATA (empty until Day 5 happens) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" muted playsinline preload="metadata"></video>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = p.caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function () {});
+  } else {
+    navigator.clipboard.writeText(url).then(function () {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function () { t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// ── MAP ──
+var day5Map = L.map('day5map', { zoomControl: true, scrollWheelZoom: false }).setView([35.5626, 139.7152], 13);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '© Esri', maxZoom: 18
+}).addTo(day5Map);
+function mkIcon(color, label) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="width:28px;height:28px;background:' + color + ';border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.6);">' + label + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+L.marker([35.5626, 139.7152], { icon: mkIcon('#10b981', '🏠') })
+  .addTo(day5Map)
+  .bindPopup('<div class="popup-name">BON Tokyo Kamata Parkside</div><div class="popup-desc">4-26-10 Kamata, Ota-ku · Base for Day 5</div>')
+  .openPopup();
+
+// ── KAMATA → SHIBUYA → SHINJUKU ROUTE MAP ──
+var shibuyaMap = L.map('shibuya-route-map', { zoomControl: true, scrollWheelZoom: false }).setView([35.63, 139.73], 12);
+var shibuyaTiles = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+shibuyaTiles.street.addTo(shibuyaMap);
+var shibuyaCur = 'street';
+window.setShibuyaType = function (type) {
+  if (type === shibuyaCur) return;
+  shibuyaMap.removeLayer(shibuyaTiles[shibuyaCur]);
+  shibuyaTiles[type].addTo(shibuyaMap);
+  shibuyaCur = type;
+  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  document.getElementById('shib-sat').style.cssText = type === 'satellite' ? active : inactive;
+  document.getElementById('shib-str').style.cssText = type === 'street' ? active : inactive;
+};
+
+function shibuyaNumIcon(color, num) {
+  return L.divIcon({
+    className: '',
+    html: '<div style="background:' + color + ';color:#fff;font-weight:800;font-size:13px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.7);">' + num + '</div>',
+    iconSize: [28, 28], iconAnchor: [14, 14]
+  });
+}
+var shibuyaStops = [
+  { lat: 35.5626, lng: 139.7152, color: '#ef4444', num: '1', name: '🏠 Kamata Hotel — Start', desc: 'BON Tokyo Kamata Parkside · walk to JR Kamata Station (~5 min)' },
+  { lat: 35.6284, lng: 139.7387, color: '#f0a500', num: '2', name: '⇄ Shinagawa Station 品川駅', desc: 'JR Keihin-Tohoku Line → transfer to JR Yamanote Line' },
+  { lat: 35.6595, lng: 139.7005, color: '#f0a500', num: '3', name: '🚦 Shibuya Crossing', desc: 'Hachiko statue, SHIBUYA SKY, lunch & shopping' },
+  { lat: 35.6896, lng: 139.7006, color: '#10b981', num: '4', name: '🏙️ Shinjuku — End', desc: 'Tokyo Metropolitan Govt Building, Omoide Yokocho, Golden Gai' }
+];
+shibuyaStops.forEach(function (s) {
+  L.marker([s.lat, s.lng], { icon: shibuyaNumIcon(s.color, s.num) })
+    .addTo(shibuyaMap)
+    .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
+});
+
+// Route path approximating the actual rail alignment (JR Keihin-Tohoku north to Shinagawa,
+// then JR Yamanote Line loop through Shibuya to Shinjuku) — not a straight line.
+var shibuyaRoute = [
+  [35.5626, 139.7152], // Kamata Hotel
+  [35.5865, 139.7285], // Omori
+  [35.6284, 139.7387], // Shinagawa
+  [35.6465, 139.7100], // Ebisu area (Yamanote Line)
+  [35.6595, 139.7005], // Shibuya
+  [35.6710, 139.7027], // Harajuku area
+  [35.6896, 139.7006]  // Shinjuku
+];
+L.polyline(shibuyaRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(shibuyaMap);
+shibuyaMap.fitBounds(L.latLngBounds(shibuyaRoute), { padding: [28, 28] });
+
+var shibuyaFs = false;
+window.toggleShibuyaFs = function () {
+  var el = document.getElementById('shibuya-route-map');
+  var close = document.getElementById('shib-close');
+  shibuyaFs = !shibuyaFs;
+  el.style.cssText = shibuyaFs
+    ? 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99998;border-radius:0;'
+    : 'width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);';
+  close.style.display = shibuyaFs ? 'block' : 'none';
+  setTimeout(function () { shibuyaMap.invalidateSize(); }, 50);
+};
+</script>
+</body>
+</html>
