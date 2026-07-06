@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI219: How AI Built My Animated Transfer Map</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #2740b8;
+      --blue-deep: #1b2a78;
+      --blue-light: #e0e7ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: var(--blue-dark);
+      color: white;
+      text-decoration: none;
+      font-size: 0.85em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(39,64,184,0.35);
+      transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    .lang-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      display: flex;
+      gap: 6px;
+    }
+    .lang-btn {
+      padding: 8px 16px;
+      border-radius: 30px;
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(27,42,120,0.6);
+      color: rgba(255,255,255,0.75);
+      font-size: 0.8em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(6px);
+    }
+    .lang-btn.active {
+      background: #f4c430;
+      border-color: #f4c430;
+      color: #1a1a2e;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 50%, #4a6cf7 100%);
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 90px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%);
+    }
+    .hero-dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(74,108,247,0.3);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: #c7d2fe;
+      font-size: 0.8em;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .occasion-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(244,129,63,0.25);
+      border: 1px solid rgba(244,129,63,0.6);
+      color: #fbbf6e;
+      font-size: 0.85em;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 30px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8em, 5vw, 3em);
+      font-weight: 900;
+      color: white;
+      line-height: 1.25;
+      margin-bottom: 20px;
+    }
+    .hero h1 span { color: #fbbf6e; }
+    .hero-sub {
+      color: rgba(255,255,255,0.85);
+      font-size: 1.05em;
+      font-style: italic;
+      max-width: 540px;
+      margin: 0 auto 28px;
+    }
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .hero-meta span { color: rgba(255,255,255,0.75); font-size: 0.85em; }
+
+    .share-btn {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 11px 28px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Source Serif 4', Georgia, serif;
+      transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none;
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1c1c1e;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-size: .9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    .article-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    .lead {
+      background: white;
+      border-radius: 16px;
+      padding: 32px 36px;
+      margin: -30px auto 40px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+      border-left: 5px solid var(--blue);
+      font-size: 1.1em;
+      font-style: italic;
+      color: var(--blue-deep);
+      line-height: 1.9;
+    }
+
+    .section { margin-bottom: 44px; }
+    .section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6em;
+      color: var(--ink);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--blue-light);
+    }
+    .section p { margin-bottom: 16px; }
+
+    .pull-quote {
+      border-left: 4px solid var(--accent);
+      padding: 16px 24px;
+      margin: 32px 0;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2em;
+      font-style: italic;
+      color: var(--ink);
+      background: #fff7f0;
+      border-radius: 0 10px 10px 0;
+    }
+
+    .session-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+      counter-reset: session;
+    }
+    .session-list li {
+      counter-increment: session;
+      padding: 16px 18px 16px 58px;
+      position: relative;
+      margin-bottom: 12px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid var(--blue);
+    }
+    .session-list li::before {
+      content: counter(session);
+      position: absolute;
+      left: 14px;
+      top: 18px;
+      width: 30px;
+      height: 30px;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85em;
+    }
+    .session-list li strong { color: var(--blue-dark); }
+    .session-list li .tag {
+      display: inline-block;
+      font-size: 0.72em;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+    .checklist li {
+      padding: 12px 16px 12px 44px;
+      position: relative;
+      margin-bottom: 10px;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 10px;
+      font-size: 0.95em;
+      color: #14532d;
+    }
+    .checklist li::before {
+      content: '\2713';
+      position: absolute;
+      left: 16px;
+      top: 11px;
+      color: #16a34a;
+      font-weight: 700;
+    }
+
+    .map-frame {
+      width: 100%;
+      height: 340px;
+      border: none;
+      border-radius: 14px;
+      margin: 20px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    .map-caption {
+      text-align: center;
+      font-size: 0.85em;
+      color: var(--muted);
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+
+    .pages-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .page-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--blue);
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: block;
+    }
+    .page-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .page-card .icon { font-size: 1.4em; margin-bottom: 6px; }
+    .page-card strong { display: block; color: var(--blue-dark); font-size: 0.95em; margin-bottom: 4px; }
+    .page-card span { font-size: 0.8em; color: var(--muted); }
+
+    .closing {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 36px;
+      margin-top: 48px;
+      text-align: center;
+    }
+    .closing h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5em;
+      margin-bottom: 14px;
+      color: #fbbf6e;
+    }
+    .closing p { color: rgba(255,255,255,0.88); line-height: 1.8; margin-bottom: 10px; }
+    .closing p:last-child { margin: 0; }
+
+    .divider {
+      text-align: center;
+      margin: 36px 0;
+      color: var(--blue);
+      font-size: 1.4em;
+      letter-spacing: 12px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.85em;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .en { display: block; }
+    .zh { display: none; }
+    span.en { display: inline; }
+    span.zh { display: none; }
+    body.lang-zh .en { display: none; }
+    body.lang-zh .zh { display: block; }
+    body.lang-zh span.en { display: none; }
+    body.lang-zh span.zh { display: inline; }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .pages-row { grid-template-columns: 1fr; }
+      .hero-meta { gap: 12px; }
+      .map-frame { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="home-btn" href="https://paulsworld.vercel.app/">&#127968; Home</a>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">&#127468;&#127463; English</button>
+    <button class="lang-btn" onclick="setLang('zh')">&#127464;&#127475; &#20013;&#25991;</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">&#129302; My AI Journey &middot; Article 22</div>
+      <div class="occasion-badge">&#128205; MT10 Day 6 Transfer Map &nbsp;&middot;&nbsp; 6 July 2026</div>
+      <h1 class="en">AI219: How AI Built My Animated <span>Transfer Map</span></h1>
+      <h1 class="zh">AI219&#65306;AI&#22914;&#20309;&#20026;&#25105;&#25171;&#36896;&#20102;&#36825;&#24352;<span>&#21160;&#30011;&#36335;&#32447;&#22320;&#22270;</span></h1>
+      <p class="hero-sub en">I just wanted a simple map showing my hotel-to-airport train transfer. I got a little train icon that actually moves along the real route, on the real schedule — and I didn't write a line of code myself.</p>
+      <p class="hero-sub zh">&#25105;&#21482;&#26159;&#24819;&#35201;&#19968;&#24352;&#31616;&#21333;&#30340;&#22270;&#65292;&#26174;&#31034;&#25105;&#20174;&#37202;&#24215;&#21040;&#26426;&#22330;&#30340;&#28779;&#36710;&#36716;&#20056;&#12290;&#32467;&#26524;&#25105;&#24471;&#21040;&#20102;&#19968;&#20010;&#30495;&#27491;&#27839;&#30528;&#30495;&#23454;&#36335;&#32447;&#12289;&#25353;&#30495;&#23454;&#26102;&#21051;&#34920;&#31227;&#21160;&#30340;&#23567;&#28779;&#36710;&#22270;&#26631;&mdash;&mdash;&#32780;&#25105;&#33258;&#24049;&#19968;&#34892;&#20195;&#30721;&#37117;&#27809;&#20889;&#12290;</p>
+      <div class="hero-meta">
+        <span>&#9999;&#65039; Paul Yeo</span>
+        <span>&#128197; 6 July 2026</span>
+        <span>&#128205; Tokyo &#8594; Narita</span>
+        <span>&#9200; 5 min read</span>
+      </div>
+      <button class="share-btn" onclick="shareThisPage()">&#128279; Share</button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">&#9989; Link copied!</div>
+
+  <div class="article-wrap">
+
+    <div class="lead">
+      <span class="en">&ldquo;I described the transfer in plain words &mdash; hotel, three train changes, airport, arrival time. AI turned that into a live map where you can watch the little train icon travel the actual route, then loop back and do it again.&rdquo;</span>
+      <span class="zh">&#8220;&#25105;&#29992;&#26222;&#36890;&#30340;&#35805;&#25551;&#36848;&#20102;&#36716;&#20056;&#34892;&#31243;&mdash;&mdash;&#37202;&#24215;&#12289;&#19977;&#27425;&#25442;&#36710;&#12289;&#26426;&#22330;&#12289;&#25269;&#36798;&#26102;&#38388;&#12290;AI&#25226;&#23427;&#21464;&#25104;&#20102;&#19968;&#24352;&#27963;&#30340;&#22320;&#22270;&mdash;&mdash;&#20320;&#21487;&#20197;&#30475;&#30528;&#37027;&#20010;&#23567;&#28779;&#36710;&#22270;&#26631;&#27839;&#30528;&#30495;&#23454;&#36335;&#32447;&#36208;&#65292;&#36208;&#23436;&#20877;&#33258;&#21160;&#37325;&#26032;&#24320;&#22987;&#12290;&#8221;</span>
+    </div>
+
+    <div class="section">
+      <h2><span class="en">&#128161; What I Actually Asked For</span><span class="zh">&#128161; &#25105;&#21040;&#24213;&#35831;&#27714;&#20102;&#20160;&#20040;</span></h2>
+      <p class="en">On Day 6 of the Tokyo trip, I needed to get from the hotel near Kamata all the way to Narita Airport &mdash; Keikyū Main Line, then a change at Shinagawa, another at Sengakuji, then Oshiage near the SKYTREE, before the long final leg out to the airport. I didn't want to just write the stops as a list. I wanted to see it: a map where you could watch the whole journey happen.</p>
+      <p class="zh">&#22312;&#19996;&#20140;&#34892;&#31243;&#30340;&#31532;&#20845;&#22825;&#65292;&#25105;&#38656;&#35201;&#20174;&#34588;&#30000;&#38468;&#36817;&#30340;&#37202;&#24215;&#19968;&#36335;&#36208;&#21040;&#25104;&#30000;&#26426;&#22330;&mdash;&mdash;&#20808;&#22352;&#20140;&#24613;&#20027;&#32447;&#65292;&#22312;&#21697;&#24029;&#25442;&#36710;&#65292;&#20877;&#22312;&#27849;&#23782;&#23546;&#25442;&#19968;&#27425;&#65292;&#28982;&#21518;&#21040;&#25605;&#26007;&#38468;&#36817;&#30340;&#25276;&#21152;&#20303;&#65292;&#26368;&#21518;&#25165;&#26159;&#26411;&#27573;&#38271;&#36884;&#25269;&#36798;&#26426;&#22330;&#12290;&#25105;&#19981;&#24819;&#21482;&#25226;&#31449;&#28857;&#20889;&#25104;&#19968;&#20301;&#26126;&#32454;&mdash;&mdash;&#25105;&#24819;&#30475;&#21040;&#23427;&#65292;&#19968;&#24352;&#33021;&#35753;&#25105;&#30475;&#30528;&#25972;&#27573;&#26053;&#31243;&#21457;&#29983;&#30340;&#22320;&#22270;&#12290;</p>
+      <p class="en">So I just described it in plain words: the stations, roughly what time I'd be at each one, and that I wanted it to look like the animated route maps already on my other trip pages. That was the whole brief.</p>
+      <p class="zh">&#25152;&#20197;&#25105;&#21482;&#26159;&#29992;&#26222;&#36890;&#30340;&#35805;&#25551;&#36848;&#65306;&#31449;&#21517;&#12289;&#22823;&#33268;&#21040;&#36798;&#27599;&#20301;&#30340;&#26102;&#38388;&#65292;&#20197;&#21450;&#25105;&#24076;&#26395;&#23427;&#30475;&#36215;&#26469;&#20687;&#25105;&#20854;&#20182;&#26053;&#34892;&#39029;&#38754;&#19978;&#24050;&#32463;&#26377;&#30340;&#21160;&#30011;&#36335;&#32447;&#22270;&#37027;&#26679;&#12290;&#36825;&#23601;&#26159;&#25105;&#30340;&#20840;&#37096;&#35201;&#27714;&#12290;</p>
+      <div class="pull-quote">
+        <span class="en">I never once opened an editor. I described the trip; AI decided how to draw it, animate it, and make it loop.</span>
+        <span class="zh">&#25105;&#20174;&#26410;&#25171;&#24320;&#36807;&#20195;&#30721;&#32534;&#36753;&#22120;&#12290;&#25105;&#25551;&#36848;&#34892;&#31243;&#65292;AI&#20915;&#23450;&#22914;&#20309;&#32472;&#21046;&#12289;&#22914;&#20309;&#21160;&#30011;&#12289;&#22914;&#20309;&#24490;&#29615;&#25773;&#25918;&#12290;</span>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128736;&#65039; See the Map It Built</span><span class="zh">&#128736;&#65039; &#30475;&#30475;&#23427;&#20570;&#20986;&#26469;&#30340;&#22320;&#22270;</span></h2>
+      <p class="en">This is the actual map from MT10 Day 6, sitting live on my site right now. Watch the little train travel from the hotel, through the transfer stations, and out to the airport &mdash; then it quietly resets and does the whole trip again.</p>
+      <p class="zh">&#36825;&#26159;MT10&#31532;&#20845;&#22825;&#30340;&#30495;&#23454;&#22320;&#22270;&#65292;&#29616;&#22312;&#23601;&#22312;&#25105;&#30340;&#32593;&#31449;&#19978;&#23454;&#26102;&#36816;&#34892;&#12290;&#30475;&#30528;&#23567;&#28779;&#36710;&#20174;&#37202;&#24215;&#20986;&#21457;&#65292;&#32463;&#36807;&#25442;&#36710;&#31449;&#65292;&#19968;&#30452;&#24320;&#21040;&#26426;&#22320;&mdash;&mdash;&#28982;&#21518;&#23427;&#20250;&#24773;&#39568;&#22320;&#37325;&#32622;&#65292;&#20877;&#36208;&#19968;&#36941;&#25972;&#27573;&#26053;&#31243;&#12290;</p>
+      <iframe class="map-frame" src="MT10-day6-map.html" title="Hotel to Airport animated transfer map"></iframe>
+      <div class="map-caption"><span class="en">Live embed of MT10-day6-map.html</span><span class="zh">MT10-day6-map.html &#30340;&#23454;&#26102;&#24051;&#20837;</span></div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Four Things AI Figured Out For Me</span><span class="zh">&#9989; AI&#20026;&#25105;&#25214;&#20986;&#30340;&#22235;&#20214;&#20107;</span></h2>
+      <p class="en">I never had to think about any of this &mdash; it just appeared, working correctly the first time.</p>
+      <p class="zh">&#36825;&#20123;&#25105;&#20174;&#26410;&#24819;&#36807;&mdash;&mdash;&#23427;&#20204;&#21482;&#26159;&#30452;&#25509;&#20986;&#29616;&#65292;&#31532;&#19968;&#27425;&#23601;&#27491;&#30830;&#36816;&#34892;&#12290;</p>
+      <ul class="session-list">
+        <li>
+          <div class="tag"><span class="en">Thing 1</span><span class="zh">&#31532;&#19968;&#20214;</span></div>
+          <span class="en"><strong>Turned Station Names Into a Real Map.</strong> I never gave any coordinates &mdash; just station names. AI looked up where Kamata, Shinagawa, Sengakuji, Oshiage and Narita Airport Terminal 1 actually sit, and placed a coloured dot for each one on a real, scrollable OpenStreetMap.</span>
+          <span class="zh"><strong>&#25226;&#31449;&#21517;&#21464;&#25104;&#30495;&#23454;&#22320;&#22270;&#12290;</strong>&#25105;&#20174;&#26410;&#32473;&#36807;&#20219;&#20309;&#22278;&#30721;&mdash;&#20197;&#21482;&#26159;&#31449;&#21517;&#32780;&#24050;&#12290;AI&#26597;&#20986;&#20102;&#34588;&#30000;&#12289;&#21697;&#24029;&#12289;&#27849;&#23782;&#23546;&#12289;&#25605;&#26007;&#20197;&#21450;&#25605;&#22303;&#26426;&#22330;&#31532;1&#32943;&#33351;&#22823;&#27004;&#30340;&#30495;&#23454;&#20301;&#32622;&#65292;&#24182;&#22312;&#30495;&#23454;&#12289;&#21487;&#28291;&#21160;&#30340;OpenStreetMap&#19978;&#20026;&#27599;&#19968;&#31449;&#25918;&#19978;&#19968;&#20010;&#24425;&#33394;&#22270;&#26631;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 2</span><span class="zh">&#31532;&#20108;&#20214;</span></div>
+          <span class="en"><strong>Colour-Coded the Route by Meaning.</strong> The Keikyū Main Line leg is blue, and the final stretch out to the airport is orange &mdash; so at a glance you can tell "still on the train" from "last leg to the airport," without reading a single label.</span>
+          <span class="zh"><strong>&#25353;&#24847;&#20041;&#32473;&#36335;&#32447;&#19978;&#33394;&#12290;</strong>&#20140;&#24613;&#20027;&#32447;&#27573;&#26159;&#34013;&#33394;&#65292;&#26368;&#21518;&#39069;&#24448;&#26426;&#22330;&#30340;&#33410;&#27573;&#26159;&#27225;&#33394;&mdash;&mdash;&#19968;&#30475;&#23601;&#30693;&#36947;&#37027;&#26159;&#8220;&#36824;&#22312;&#28779;&#36710;&#19978;&#8221;&#36824;&#26159;&#8220;&#26368;&#21518;&#19968;&#27573;&#21435;&#26426;&#22330;&#8221;&#65292;&#26080;&#38656;&#38405;&#35835;&#20219;&#20309;&#25991;&#23383;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 3</span><span class="zh">&#31532;&#19977;&#20214;</span></div>
+          <span class="en"><strong>Moved the Train By Real Time, Not Guesswork.</strong> AI took the actual timetable &mdash; 09:25 leaving the hotel, 10:00 at Shinagawa, 11:19 arriving Narita &mdash; and wrote the maths that slides the &#128646; icon smoothly between two stations based on exactly how far through that time gap the animation currently is. It's not a random crawl; it's the real schedule, played back.</span>
+          <span class="zh"><strong>&#25353;&#30495;&#23454;&#26102;&#38388;&#31227;&#21160;&#28779;&#36710;&#65292;&#32780;&#38750;&#38543;&#24847;&#12290;</strong>AI&#20351;&#29992;&#30495;&#23454;&#26102;&#21051;&#34920;&mdash;&mdash;09:25&#31163;&#24320;&#37202;&#24215;&#65292;10:00&#21040;&#36798;&#21697;&#24029;&#65292;11:19&#25269;&#36798;&#25605;&#22303;&mdash;&mdash;&#24182;&#20889;&#20986;&#20102;&#35745;&#31639;&#20844;&#24335;&#65292;&#35753;&#128646;&#22270;&#26631;&#26681;&#25454;&#24403;&#21069;&#22788;&#20110;&#37027;&#27573;&#26102;&#38388;&#38388;&#38548;&#30340;&#20960;&#20998;&#20960;&#31186;&#65292;&#22312;&#20004;&#20010;&#31449;&#28857;&#20043;&#38388;&#24179;&#28369;&#31227;&#21160;&#12290;&#36825;&#19981;&#26159;&#38543;&#24847;&#29260;&#21160;&#65292;&#32780;&#26159;&#30495;&#23454;&#26102;&#21051;&#34920;&#30340;&#37325;&#29616;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 4</span><span class="zh">&#31532;&#22235;&#20214;</span></div>
+          <span class="en"><strong>Made It Loop On Its Own, Forever.</strong> When the train reaches Narita, the status line says "Arrived", pauses for a moment, then quietly resets and starts the whole journey over &mdash; so anyone visiting the page later always sees it moving, without me needing to press play.</span>
+          <span class="zh"><strong>&#35753;&#23427;&#33258;&#24049;&#19968;&#30452;&#24490;&#29615;&#12290;</strong>&#24403;&#28779;&#36710;&#25269;&#36798;&#25605;&#22303;&#26102;&#65292;&#29366;&#24577;&#26639;&#20250;&#26174;&#31034;&#8220;&#24050;&#25269;&#36798;&#8221;&#65292;&#31245;&#20505;&#29157;&#21518;&#65292;&#20851;&#38236;&#22320;&#37325;&#32622;&#24182;&#37325;&#26032;&#24320;&#22987;&#25972;&#27573;&#26053;&#31243;&mdash;&mdash;&#25152;&#20197;&#20219;&#20309;&#20154;&#20219;&#20309;&#26102;&#20505;&#25171;&#24320;&#36825;&#20010;&#39029;&#38754;&#65292;&#37117;&#33021;&#30475;&#21040;&#23427;&#22312;&#21160;&#65292;&#32780;&#25105;&#26080;&#38656;&#25353;&#20219;&#20309;&#25773;&#25918;&#38190;&#12290;</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9888;&#65039; What I Still Checked Myself</span><span class="zh">&#9888;&#65039; &#25105;&#20173;&#33258;&#24049;&#26597;&#26680;&#30340;&#20107;</span></h2>
+      <p class="en">AI drew the map, but the transfer schedule is mine to get right. I double-checked the transfer stations and rough times against my actual Keikyū ticket before trusting the map, and I still keep the printed itinerary as backup in case the phone battery or signal fails on the day.</p>
+      <p class="zh">AI&#30011;&#22909;&#20102;&#22320;&#22270;&#65292;&#20294;&#36716;&#20056;&#26102;&#38669;&#26159;&#25105;&#33258;&#24049;&#35201;&#30830;&#35748;&#30340;&#12290;&#22312;&#20449;&#20219;&#36825;&#24352;&#22320;&#22270;&#20043;&#21069;&#65292;&#25105;&#23545;&#29031;&#25105;&#30495;&#23454;&#30340;&#20140;&#24613;&#36710;&#31080;&#26597;&#23545;&#20102;&#25442;&#20056;&#31449;&#21644;&#22823;&#33268;&#26102;&#38388;&#65292;&#25152;&#20197;&#25105;&#20173;&#28982;&#20445;&#30041;&#20102;&#32440;&#36136;&#34892;&#31243;&#34920;&#20316;&#20026;&#22791;&#29992;&#65292;&#20197;&#38450;&#24403;&#22825;&#25163;&#26426;&#27809;&#30005;&#25110;&#27809;&#20449;&#21495;&#12290;</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Next Steps</span><span class="zh">&#9989; &#19979;&#19968;&#27493;</span></h2>
+      <ul class="checklist">
+        <li class="en">Add the same satellite/street toggle used on the bigger route maps</li>
+        <li class="zh">&#20026;&#36825;&#24352;&#22320;&#22270;&#28155;&#21152;&#20854;&#20182;&#22823;&#22411;&#36335;&#32447;&#22270;&#20351;&#29992;&#30340;&#21355;&#26143;&#47;&#34903;&#36947;&#20999;&#25442;&#25353;&#38062;</li>
+        <li class="en">Reuse this same time-based animation trick for future transfer days</li>
+        <li class="zh">&#26410;&#26469;&#20854;&#20182;&#36716;&#20056;&#26085;&#32487;&#32493;&#27599;&#29992;&#36825;&#31820;&#22522;&#20110;&#26102;&#38388;&#30340;&#21160;&#30011;&#25216;&#24039;</li>
+        <li class="en">Watch it live on the day of the actual transfer, 28 Aug 2026</li>
+        <li class="zh">&#22312;2026&#24180;8&#26376;28&#26085;&#30495;&#23454;&#36716;&#20056;&#37027;&#22825;&#23454;&#22320;&#30475;&#23427;&#36816;&#34892;</li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128218; Built on These</span><span class="zh">&#128218; &#22522;&#20110;&#36825;&#20123;&#25991;&#31456;</span></h2>
+      <div class="pages-row">
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10-day6-map.html">
+          <div class="icon">&#128739;</div>
+          <strong><span class="en">MT10 Day 6 Transfer Map</span><span class="zh">MT10 &#31532;&#20845;&#22825;&#36716;&#20056;&#22320;&#22270;</span></strong>
+          <span class="en">The actual animated map this article is about</span>
+          <span class="zh">&#26412;&#25991;&#25152;&#35762;&#30340;&#37027;&#24352;&#21160;&#30011;&#22320;&#22270;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10-day6.html">
+          <div class="icon">&#9992;&#65039;</div>
+          <strong><span class="en">MT10 Day 6 Log</span><span class="zh">MT10 &#31532;&#20845;&#22825;&#26085;&#24535;</span></strong>
+          <span class="en">The full Tokyo &rarr; Sapporo travel day</span>
+          <span class="zh">&#20174;&#19996;&#20140;&#21040;&#26429;&#24040;&#30340;&#25972;&#22825;&#34892;&#31243;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10.html">
+          <div class="icon">&#127749;</div>
+          <strong><span class="en">MT10: Family Trip to Tokyo</span><span class="zh">MT10&#65306;&#19996;&#20140;&#23478;&#24237;&#26053;&#34892;</span></strong>
+          <span class="en">Where this overview map first got animated</span>
+          <span class="zh">&#36825;&#36335;&#25972;&#20307;&#22320;&#22270;&#39318;&#27425;&#34987;&#21160;&#30011;&#21270;&#30340;&#22320;&#26041;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI210.html">
+          <div class="icon">&#127919;</div>
+          <strong><span class="en">AI210: Use Claude Better</span><span class="zh">AI210&#65306;&#26356;&#22909;&#22320;&#20351;&#29992;Claude</span></strong>
+          <span class="en">The plain-language prompting habit behind this</span>
+          <span class="zh">&#36825;&#27425;&#32972;&#21518;&#30340;&#26222;&#36890;&#35805;&#25552;&#38382;&#20064;&#24815;</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="closing">
+      <h2><span class="en">A Map That Actually Moves</span><span class="zh">&#19968;&#24352;&#30495;&#27491;&#20250;&#21160;&#30340;&#22320;&#22270;</span></h2>
+      <p class="en">I've made plenty of static travel maps before. This is the first time I described a schedule in plain words and got back something that plays the whole journey out on its own, on a loop, forever.</p>
+      <p class="zh">&#25105;&#20197;&#21069;&#20570;&#36807;&#19981;&#23569;&#38745;&#24577;&#30340;&#26053;&#34892;&#22320;&#22270;&#12290;&#36825;&#26159;&#25105;&#31532;&#19968;&#27425;&#29992;&#26222;&#36890;&#30340;&#35805;&#25551;&#36848;&#26102;&#21051;&#34920;&#65292;&#23601;&#24471;&#21040;&#20102;&#19968;&#20010;&#33021;&#33258;&#24049;&#19968;&#36913;&#19968;&#36913;&#25773;&#25918;&#25972;&#27573;&#26053;&#31243;&#12289;&#24490;&#29615;&#19981;&#27490;&#30340;&#25104;&#26524;&#12290;</p>
+      <p class="en">If a 70-year-old retiree can describe a train transfer in a sentence and get a moving map back, that's a good sign of how far this technology has come.</p>
+      <p class="zh">&#22914;&#26524;&#19968;&#20301;70&#23681;&#30340;&#36864;&#20241;&#32773;&#21482;&#38656;&#19968;&#21477;&#35805;&#23433;&#25551;&#36848;&#28779;&#36710;&#36716;&#20056;&#65292;&#23601;&#33021;&#24471;&#21040;&#19968;&#24352;&#20250;&#21160;&#30340;&#22320;&#22270;&#65292;&#37027;&#35828;&#26126;&#36825;&#39033;&#25216;&#26415;&#24050;&#32463;&#36827;&#27493;&#21040;&#20160;&#20040;&#31243;&#24230;&#12290;</p>
+      <p style="margin-top:16px; font-style:italic; opacity:0.8;">&mdash; Paul Yeo, July 2026 &#127775;</p>
+    </div>
+
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+  <script>
+    function setLang(lang) {
+      document.body.className = lang === 'zh' ? 'lang-zh' : '';
+      document.querySelectorAll('.lang-btn').forEach(function(btn, i) {
+        btn.classList.toggle('active', (lang === 'en' && i === 0) || (lang === 'zh' && i === 1));
+      });
+    }
+    function shareThisPage() {
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function() { t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>
