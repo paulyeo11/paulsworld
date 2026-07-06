@@ -416,8 +416,51 @@ day6Stops.forEach(function (s) {
     .addTo(day6Map)
     .bindPopup('<div class="popup-name">' + s.name + '</div><div class="popup-desc">' + s.desc + '</div>');
 });
-// Ground leg: hotel → Narita (departure airport)
-L.polyline([[day6Stops[0].lat, day6Stops[0].lng], [day6Stops[1].lat, day6Stops[1].lng]], { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(day6Map);
+// Ground leg: hotel → Narita (departure airport) — via actual Keikyu Main Line transfer stops
+var groundWaypoints = [
+  { lat: 35.5626, lng: 139.7152, time: '09:25' },
+  { lat: 35.6284, lng: 139.7387, time: '10:00' },
+  { lat: 35.6355, lng: 139.7405, time: '10:03' },
+  { lat: 35.7101, lng: 139.8107, time: '10:27' },
+  { lat: 35.7647, lng: 140.3862, time: '11:19' }
+];
+L.polyline(groundWaypoints.map(function(w){ return [w.lat, w.lng]; }), { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(day6Map);
+
+// Animated train marker along the ground leg (auto-loops)
+(function () {
+  var trainIcon = L.divIcon({ className: '', html: '<div style="font-size:18px;">🚆</div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+  var trainMarker = L.marker([groundWaypoints[0].lat, groundWaypoints[0].lng], { icon: trainIcon }).addTo(day6Map);
+  function toMin(t) { var p = t.split(':').map(Number); return p[0] * 60 + p[1]; }
+  var startMin = toMin(groundWaypoints[0].time);
+  var endMin = toMin(groundWaypoints[groundWaypoints.length - 1].time);
+  var totalMin = endMin - startMin;
+  var progress = 0;
+  function interpolate(p) {
+    var targetMin = startMin + p * totalMin;
+    for (var i = 0; i < groundWaypoints.length - 1; i++) {
+      var t0 = toMin(groundWaypoints[i].time), t1 = toMin(groundWaypoints[i+1].time);
+      if (targetMin >= t0 && targetMin <= t1) {
+        var segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+        return {
+          lat: groundWaypoints[i].lat + (groundWaypoints[i+1].lat - groundWaypoints[i].lat) * segP,
+          lng: groundWaypoints[i].lng + (groundWaypoints[i+1].lng - groundWaypoints[i].lng) * segP
+        };
+      }
+    }
+    return { lat: groundWaypoints[groundWaypoints.length-1].lat, lng: groundWaypoints[groundWaypoints.length-1].lng };
+  }
+  function trainStep() {
+    progress += 0.0025;
+    if (progress >= 1) {
+      setTimeout(function () { progress = 0; requestAnimationFrame(trainStep); }, 1200);
+      return;
+    }
+    var pos = interpolate(progress);
+    trainMarker.setLatLng([pos.lat, pos.lng]);
+    requestAnimationFrame(trainStep);
+  }
+  trainStep();
+})();
 // Flight leg: Narita (dep) → New Chitose (arr) — curved great-circle-style arc
 (function () {
   var from = day6Stops[1], to = day6Stops[2];
