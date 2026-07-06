@@ -315,6 +315,10 @@
       border-top: 1px solid #e5e7eb;
     }
 
+    .share-btn{display:inline-block;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;font-weight:700;letter-spacing:.04em;padding:11px 28px;border-radius:30px;cursor:pointer;font-size:1rem;font-family:'Source Serif 4',Georgia,serif;margin-top:24px;transition:background .2s;}
+    .share-btn:hover{background:rgba(255,255,255,.25);}
+    .share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+
     /* Bilingual toggle */
     .en { display: block; }
     .zh { display: none; }
@@ -356,8 +360,13 @@
         <span>&#127908; Toastmasters</span>
         <span>&#9200; 6 min read</span>
       </div>
+      <div>
+        <button class="share-btn" onclick="shareThisPage()">&#128279; <span class="en">Share</span><span class="zh">&#20998;&#20139;</span></button>
+      </div>
     </div>
   </header>
+
+  <div class="share-toast" id="shareToast">&#9989; Link copied!</div>
 
   <div class="article-wrap">
 
@@ -505,6 +514,20 @@
       document.querySelectorAll('.lang-btn').forEach(function(btn, i) {
         btn.classList.toggle('active', (lang === 'en' && i === 0) || (lang === 'zh' && i === 1));
       });
+    }
+
+    function shareThisPage(){
+      var url=window.location.href;
+      var title=document.title;
+      if(navigator.share){
+        navigator.share({title:title,url:url}).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(url).then(function(){
+          var t=document.getElementById('shareToast');
+          t.style.display='block';
+          setTimeout(function(){t.style.display='none';},2200);
+        });
+      }
     }
   </script>
 
