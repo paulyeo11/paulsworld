@@ -344,6 +344,7 @@ Base: `https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/[f
 | Books | **B** | B01.html, B02.html, B11.html (max 10 shown) | from title "B01:" … |
 | Investment Tools | **T** | T01.html → T06.html (T03 = `T03/` folder = Tiger) | T01–T06 via CSS counter (leading-zero) |
 | **Health** | **h** | h01.html → h05.html (max 10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
+| **Dream Journal** | **D** | D01.html → (max 10). Midnight indigo `#4f46e5`, placed **right after Health & Wellness**. Real dreams Paul had, written up bilingual, not travel stories — kept out of the AC02 travel eBook. | from title "D01:" … |
 | Travel | travel | | |
 | Special | **SP** | SP01=Dream Destinations, SP02=Adventure List, SP03=Why Retire at 65, SP04=Dashboard | (hardcoded cards in index.html; custom card titles, no auto-number) |
 
