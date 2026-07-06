@@ -144,6 +144,8 @@ Reference implementation: `S23.html` (The Secret BKE Trail, 18 June 2026)
 
 **Applies to simple trip maps too (added 2026-07-05):** Even a simple point-to-point map (e.g. a day-log travel map showing hotel → airport → airport → next hotel, with no photos on the markers) should still get the CSS-based fullscreen toggle — "⛶ Open Full Screen Map" button above the map + "✕ Close Map" button. Reference: `MT10-day6.html`. The satellite/street toggle, numbered markers, and legend are optional for these simpler maps if the route only has a couple of stops — but fullscreen is not optional.
 
+**Also applies to standalone single-map pages (added 2026-07-06):** `MT10-day6-map.html` (a standalone animated transfer map, not embedded in a day-log page) shipped without the fullscreen toggle — this rule was missed because the page had no other content around the map. Any page whose whole purpose *is* a map — animated or not — still needs the same "⛶ Open Full Screen Map" / "✕ Close Map" buttons as above. Don't assume a dedicated map page is exempt just because it's simple.
+
 ## Map Links Rule
 Whenever Paul asks to "add map link", "add google location", or similar — always add **all three** map buttons together:
 1. **Google Maps** — `https://maps.google.com/?q=LAT,LNG&label=Name`

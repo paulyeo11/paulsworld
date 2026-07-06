@@ -16,7 +16,26 @@
   }
   .header h1 { font-size: 1.15em; margin: 0 0 4px; }
   .header p { font-size: 0.85em; color: #8b949e; margin: 0; }
+  .map-wrap { position: relative; }
   #map { width: 100%; height: 62vh; }
+  #map.map-fullscreen {
+    position: fixed !important; top: 0; left: 0;
+    width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+    z-index: 9999; border-radius: 0 !important;
+  }
+  .map-fullscreen-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+    color: #f0a500; font-size: 0.78em; font-weight: 700;
+    padding: 6px 14px; border-radius: 18px; cursor: pointer;
+    margin: 0 16px 10px;
+  }
+  #mapCloseBtn {
+    display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+    background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+    cursor: pointer; align-items: center; gap: 6px;
+  }
   .controls {
     display: flex; align-items: center; gap: 10px;
     padding: 12px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08);
@@ -44,7 +63,11 @@
   <p>Keikyū Main Line · via Shinagawa → Sengakuji → Oshiage (SKYTREE) · 1 hr 54 min</p>
 </div>
 
-<div id="map"></div>
+<button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; Open Full Screen Map</button>
+<div class="map-wrap">
+  <div id="map"></div>
+</div>
+<button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; Close Map</button>
 
 <div class="controls">
   <div id="status">En route — <span id="timeLabel">09:25</span></div>
@@ -73,6 +96,19 @@ const stops = [
   { name: "Oshiage Sta. (SKYTREE)", lat: 35.7101, lng: 139.8107, time: "10:27", note: "Remain on board" },
   { name: "Narita Airport Terminal 1", lat: 35.7647, lng: 140.3864, time: "11:19", note: "Arrive" }
 ];
+
+function openMapFullscreen() {
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
 
 const map = L.map('map', { zoomControl: true }).setView([35.68, 139.95], 9);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
