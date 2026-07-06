@@ -93,6 +93,15 @@
     border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer;
   }
   .map-fullscreen-close.active { display: block; }
+  .speed-control { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08); }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+  .speed-control #tripSpeedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  .speed-control.fs-overlay {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10002;
+    background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
   .panel { display: none; }
   .panel.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
   .stops-panel { background: #0d1117; overflow-y: auto; max-height: 34vh; }
@@ -306,6 +315,11 @@
     <div id="map"></div>
     <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Expand">⛶</button>
     <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
+  </div>
+  <div class="speed-control" id="tripSpeedControl">
+    <label for="tripSpeedSlider">🐢 Speed</label>
+    <input type="range" id="tripSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="tripSpeedVal">1&times;</span>
   </div>
   <div class="stops-panel">
     <div class="panel-header">
@@ -904,6 +918,37 @@ function initMap() {
 
   L.polyline(latlngs, { color: '#f0a500', weight: 2, dashArray: '6,5', opacity: 0.65 }).addTo(map);
   renderStopList();
+  startTripAnimation(latlngs);
+}
+
+// ── ANIMATED TRIP MARKER — loops the island-hopping route ────────────────────
+var tripMarker = null, tripProgress = 0, tripSpeedMultiplier = 1, tripWaypoints = [];
+function startTripAnimation(latlngs) {
+  tripWaypoints = latlngs;
+  var tripIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">✈️</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+  tripMarker = L.marker(tripWaypoints[0], { icon: tripIcon, zIndexOffset: 1000 }).addTo(map);
+  var slider = document.getElementById('tripSpeedSlider');
+  var val = document.getElementById('tripSpeedVal');
+  slider.addEventListener('input', function () {
+    tripSpeedMultiplier = parseFloat(slider.value);
+    val.textContent = tripSpeedMultiplier + '×';
+  });
+  tripStep();
+}
+function tripInterpolate(p) {
+  var segCount = tripWaypoints.length - 1;
+  var segFloat = p * segCount;
+  var segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+  var localFrac = segFloat - segIdx;
+  var a = tripWaypoints[segIdx], b = tripWaypoints[segIdx + 1];
+  return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+}
+function tripStep() {
+  if (!tripMarker) return;
+  tripProgress += 0.0003 * tripSpeedMultiplier;
+  if (tripProgress >= 1) tripProgress = 0;
+  tripMarker.setLatLng(tripInterpolate(tripProgress));
+  requestAnimationFrame(tripStep);
 }
 
 function renderStopList() {
@@ -948,8 +993,9 @@ function toggleMapFullscreen() {
   mapFS = !mapFS;
   var mapEl = document.getElementById('map');
   var closeBtn = document.getElementById('mapFullscreenClose');
-  if (mapFS) { mapEl.classList.add('map-fullscreen'); closeBtn.classList.add('active'); }
-  else { mapEl.classList.remove('map-fullscreen'); closeBtn.classList.remove('active'); }
+  var speedControl = document.getElementById('tripSpeedControl');
+  if (mapFS) { mapEl.classList.add('map-fullscreen'); closeBtn.classList.add('active'); speedControl.classList.add('fs-overlay'); }
+  else { mapEl.classList.remove('map-fullscreen'); closeBtn.classList.remove('active'); speedControl.classList.remove('fs-overlay'); }
   setTimeout(function() { map.invalidateSize(); }, 100);
 }
 

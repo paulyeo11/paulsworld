@@ -109,6 +109,12 @@
 
 <div id="map"></div>
 
+<div class="speed-control" id="carSpeedControl" style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#161b22;border-top:1px solid rgba(255,255,255,0.08);">
+  <label for="carSpeedSlider" style="font-size:0.8em;color:#8b949e;white-space:nowrap;">🐢 Speed</label>
+  <input type="range" id="carSpeedSlider" min="0.25" max="4" step="0.25" value="1" style="flex:1;accent-color:#f0a500;">
+  <span id="carSpeedVal" style="font-size:0.8em;color:#58a6ff;font-weight:700;width:34px;text-align:right;">1&times;</span>
+</div>
+
 <div class="stops-panel">
   <div class="route-section active" id="sec-0">
     <div class="section-head">
@@ -318,6 +324,32 @@ let currentLayer = layerAll;
 // Fit all stops
 const allCoords = [...northCoords, ...connectorCoords, ...dukuCoords, ...returnCoords];
 map.fitBounds(allCoords, { padding: [25, 25] });
+
+// ── ANIMATED CAR MARKER — loops the full circuit ──
+const carIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🚗</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+const carMarker = L.marker(allCoords[0], { icon: carIcon, zIndexOffset: 1000 }).addTo(map);
+let carProgress = 0, carSpeedMultiplier = 1;
+const carSpeedSlider = document.getElementById('carSpeedSlider');
+const carSpeedVal = document.getElementById('carSpeedVal');
+carSpeedSlider.addEventListener('input', () => {
+  carSpeedMultiplier = parseFloat(carSpeedSlider.value);
+  carSpeedVal.textContent = carSpeedMultiplier + '×';
+});
+function carInterpolate(p) {
+  const segCount = allCoords.length - 1;
+  const segFloat = p * segCount;
+  const segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+  const localFrac = segFloat - segIdx;
+  const a = allCoords[segIdx], b = allCoords[segIdx + 1];
+  return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+}
+function carStep() {
+  carProgress += 0.00025 * carSpeedMultiplier;
+  if (carProgress >= 1) carProgress = 0;
+  carMarker.setLatLng(carInterpolate(carProgress));
+  requestAnimationFrame(carStep);
+}
+carStep();
 
 // ── BUILD STOP LISTS ──
 function buildList(stops, containerId) {

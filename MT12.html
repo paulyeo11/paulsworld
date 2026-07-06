@@ -68,6 +68,15 @@ body {
 .map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
 .map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
 .map-fullscreen-close.active { display: block; }
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08); }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #tripSpeedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10002;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+}
 .panel { display: none; }
 .panel.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .stops-panel { background: #0d1117; overflow-y: auto; max-height: 34vh; }
@@ -250,6 +259,11 @@ body {
     <div id="map"></div>
     <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Full screen">⛶</button>
     <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
+  </div>
+  <div class="speed-control" id="tripSpeedControl">
+    <label for="tripSpeedSlider">🐢 Speed</label>
+    <input type="range" id="tripSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="tripSpeedVal">1&times;</span>
   </div>
   <div class="stops-panel">
     <div class="panel-header">
@@ -1030,6 +1044,32 @@ L.marker([60.1699, 24.9384], { icon: startIcon, zIndexOffset: 1000 })
 // Route line — animated dashed
 const routeCoords = stops.map(s => [s.lat, s.lon]);
 const routeLine = L.polyline(routeCoords, { color: '#f0a500', weight: 3, dashArray: '12,8', opacity: 0.9 }).addTo(map);
+
+// ── ANIMATED TRIP MARKER — loops the full journey ──
+const tripIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🧳</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+const tripMarker = L.marker(routeCoords[0], { icon: tripIcon, zIndexOffset: 1000 }).addTo(map);
+let tripProgress = 0, tripSpeedMultiplier = 1;
+const tripSpeedSlider = document.getElementById('tripSpeedSlider');
+const tripSpeedVal = document.getElementById('tripSpeedVal');
+tripSpeedSlider.addEventListener('input', () => {
+  tripSpeedMultiplier = parseFloat(tripSpeedSlider.value);
+  tripSpeedVal.textContent = tripSpeedMultiplier + '×';
+});
+function tripInterpolate(p) {
+  const segCount = routeCoords.length - 1;
+  const segFloat = p * segCount;
+  const segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+  const localFrac = segFloat - segIdx;
+  const a = routeCoords[segIdx], b = routeCoords[segIdx + 1];
+  return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+}
+function tripStep() {
+  tripProgress += 0.0003 * tripSpeedMultiplier;
+  if (tripProgress >= 1) tripProgress = 0;
+  tripMarker.setLatLng(tripInterpolate(tripProgress));
+  requestAnimationFrame(tripStep);
+}
+tripStep();
 setTimeout(() => {
   const el = routeLine.getElement();
   if (el) { el.style.animation = 'dashFlow 3s linear infinite'; el.style.strokeDashoffset = '0'; }
@@ -1265,8 +1305,9 @@ function switchCity(id, btn) {
 function toggleMapFullscreen() {
   const m = document.getElementById('map');
   const c = document.getElementById('mapFullscreenClose');
-  m.classList.toggle('map-fullscreen');
+  const isFs = m.classList.toggle('map-fullscreen');
   c.classList.toggle('active');
+  document.getElementById('tripSpeedControl').classList.toggle('fs-overlay', isFs);
   setTimeout(() => map.invalidateSize(), 100);
 }
 
