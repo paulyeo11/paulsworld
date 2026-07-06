@@ -190,6 +190,22 @@
     color: #f0a500; font-size: 0.88em; padding: 4px 12px; border-radius: 12px;
     z-index: 1000; pointer-events: none; display: none;
   }
+  .car-status-bar {
+    padding: 10px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.85em; color: #c9d1d9;
+  }
+  .car-status-bar b { color: #f0a500; }
+  .speed-control {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 16px 12px; background: #161b22;
+  }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+  .speed-control #carSpeedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  #carControls.fs-overlay {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10002;
+    background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  }
   .vc-wrap { text-align: center; padding: 14px 16px; background: #0d1117; border-top: 1px solid rgba(255,255,255,0.06); }
   @media (max-width: 500px) {
     .header h1 { font-size: 1.15em; }
@@ -363,6 +379,14 @@
     <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Expand full screen">⛶</button>
     <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
     <div class="route-status" id="route-status">Loading road routes…</div>
+  </div>
+  <div id="carControls">
+    <div class="car-status-bar" id="carStatus">🚗 Loading the road trip…</div>
+    <div class="speed-control">
+      <label for="carSpeedSlider">🐢 Speed</label>
+      <input type="range" id="carSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+      <span id="carSpeedVal">1&times;</span>
+    </div>
   </div>
   <div class="stops-panel">
     <div class="panel-header">
@@ -1117,8 +1141,10 @@ const stopsData = [
 function toggleMapFullscreen() {
   const mapEl = document.getElementById('map');
   const closeBtn = document.getElementById('mapFullscreenClose');
+  const carControls = document.getElementById('carControls');
   const isFullscreen = mapEl.classList.toggle('map-fullscreen');
   closeBtn.classList.toggle('active', isFullscreen);
+  if (carControls) carControls.classList.toggle('fs-overlay', isFullscreen);
   document.body.style.overflow = isFullscreen ? 'hidden' : '';
   setTimeout(() => map.invalidateSize(), 60);
 }
@@ -1148,6 +1174,7 @@ function setMapType(type) {
 // Each segment fetched from OSRM public API; falls back to straight line if unavailable
 const routeStyle = { color: '#f0a500', weight: 2.8, opacity: 0.82, dashArray: '8,4' };
 const routeLayers = [];
+const segmentCoords = [];
 let completedSegs = 0;
 
 async function fetchSegment(fromStop, toStop, idx) {
@@ -1191,6 +1218,7 @@ async function buildRoads() {
     else loaded++;
     const layer = L.polyline(coords, routeStyle).addTo(map);
     routeLayers.push(layer);
+    segmentCoords.push({ coords, fromIdx: i, toIdx: i + 1 });
     completedSegs++;
   }
 
@@ -1206,8 +1234,84 @@ async function buildRoads() {
   setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
 }
 
-buildRoads();
+buildRoads().then(startCarAnimation);
 
+// ── ANIMATED CAR MARKER (follows the real drive routes) ──────────
+let carMover = null;
+let carSpeedMultiplier = 1;
+let carProgress = 0;
+let segMeta = [];
+
+function pathCumulativeDistances(points) {
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i - 1][0];
+    const dy = points[i][1] - points[i - 1][1];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  return cum;
+}
+
+function pointAtFraction(points, cum, frac) {
+  const total = cum[cum.length - 1];
+  if (total === 0) return points[0];
+  const target = frac * total;
+  for (let i = 1; i < cum.length; i++) {
+    if (target <= cum[i] || i === cum.length - 1) {
+      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+      return [
+        points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac,
+        points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac
+      ];
+    }
+  }
+  return points[points.length - 1];
+}
+
+function updateCarStatus(fromIdx, toIdx) {
+  const lang = currentLang;
+  const g = v => (v && typeof v === 'object') ? v[lang] : v;
+  const from = stopsData[fromIdx], to = stopsData[toIdx];
+  const el = document.getElementById('carStatus');
+  if (el) el.innerHTML = `🚗 <b>${g(from.day)} &rarr; ${g(to.day)}</b> — ${g(from.name)} &rarr; ${g(to.name)}`;
+}
+
+function startCarAnimation() {
+  if (segmentCoords.length === 0) return;
+  segMeta = segmentCoords.map(s => ({
+    points: s.coords, cum: pathCumulativeDistances(s.coords), fromIdx: s.fromIdx, toIdx: s.toIdx
+  }));
+  const carIcon = L.divIcon({
+    className: '',
+    html: '<div style="font-size:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🚗</div>',
+    iconSize: [26, 26], iconAnchor: [13, 13]
+  });
+  carMover = L.marker(segMeta[0].points[0], { icon: carIcon, zIndexOffset: 1000 }).addTo(map);
+  const speedSlider = document.getElementById('carSpeedSlider');
+  const speedVal = document.getElementById('carSpeedVal');
+  if (speedSlider) {
+    speedSlider.addEventListener('input', () => {
+      carSpeedMultiplier = parseFloat(speedSlider.value);
+      speedVal.textContent = carSpeedMultiplier + '×';
+    });
+  }
+  carStep();
+}
+
+function carStep() {
+  if (!carMover || segMeta.length === 0) return;
+  carProgress += 0.00035 * carSpeedMultiplier;
+  if (carProgress >= 1) carProgress = 0;
+  const segCount = segMeta.length;
+  const segFloat = carProgress * segCount;
+  let segIdx = Math.floor(segFloat);
+  if (segIdx >= segCount) segIdx = segCount - 1;
+  const localFrac = segFloat - segIdx;
+  const seg = segMeta[segIdx];
+  carMover.setLatLng(pointAtFraction(seg.points, seg.cum, localFrac));
+  updateCarStatus(seg.fromIdx, seg.toIdx);
+  requestAnimationFrame(carStep);
+}
 
 // ── MARKERS (bilingual, rebuilt on lang switch) ──────────────────
 const markers = [];
@@ -1472,6 +1576,10 @@ function toggleLang() {
   renderQuickRef();
   renderBudget();
   renderTasks();
+  if (segMeta.length) {
+    const segIdx = Math.min(Math.floor(carProgress * segMeta.length), segMeta.length - 1);
+    updateCarStatus(segMeta[segIdx].fromIdx, segMeta[segIdx].toIdx);
+  }
 }
 
 const itinData = [
