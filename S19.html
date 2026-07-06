@@ -416,6 +416,11 @@
       <button id="hikAnimReplayBtn" onclick="replayHikeAnim()" style="background:#f0a500;color:#111;border:none;padding:10px 24px;border-radius:24px;font-size:0.93rem;font-weight:700;cursor:pointer;letter-spacing:.03em;">▶ <span class="en">Replay Animation</span><span class="zh">重播动画</span></button>
       <button onclick="toggleHikeAnimFullscreen()" style="background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.3);padding:10px 20px;border-radius:24px;font-size:0.93rem;font-weight:600;cursor:pointer;">⛶ <span class="en">Full Screen</span><span class="zh">全屏</span></button>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;max-width:340px;">
+      <label for="hikeAnimSpeed" style="font-size:0.82rem;color:rgba(255,255,255,0.7);white-space:nowrap;">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+      <input type="range" id="hikeAnimSpeed" min="0.25" max="4" step="0.25" value="1" style="flex:1;accent-color:#f0a500;">
+      <span id="hikeAnimSpeedVal" style="font-size:0.82rem;color:#f0a500;font-weight:700;width:34px;text-align:right;">1&times;</span>
+    </div>
     <div id="hike-anim-status" style="display:none;font-size:0.82rem;padding:7px 14px;border-radius:8px;margin-bottom:12px;border:1px solid rgba(240,165,0,0.4);background:rgba(240,165,0,0.1);color:#f0a500;"></div>
   </div>
   <div id="hike-anim-map" style="height:480px;width:100%;position:relative;"></div>
@@ -587,8 +592,18 @@
           addMarker(stopIdx);
         }
       });
-      idx++;
+      idx += Math.max(1, Math.round(hikeAnimSpeedMultiplier));
     }, msPerStep);
+  }
+
+  var hikeAnimSpeedMultiplier = 1;
+  var hikeAnimSpeedSlider = document.getElementById('hikeAnimSpeed');
+  var hikeAnimSpeedVal = document.getElementById('hikeAnimSpeedVal');
+  if (hikeAnimSpeedSlider) {
+    hikeAnimSpeedSlider.addEventListener('input', function () {
+      hikeAnimSpeedMultiplier = parseFloat(hikeAnimSpeedSlider.value);
+      hikeAnimSpeedVal.textContent = hikeAnimSpeedMultiplier + '×';
+    });
   }
 
   window.replayHikeAnim = function() {
