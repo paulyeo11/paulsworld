@@ -290,11 +290,17 @@ body {
 
     <button onclick="toggleDisneyFs()" style="display:block;width:100%;margin-top:12px;background:rgba(240,165,0,0.18);border:1px solid rgba(240,165,0,0.45);color:#f0a500;font-size:0.85rem;font-weight:700;padding:9px 16px;border-radius:20px;cursor:pointer;">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
 
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+      <label for="disney-speed" style="font-size:0.8em;color:#8b949e;white-space:nowrap;">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+      <input type="range" id="disney-speed" min="0.25" max="4" step="0.25" value="1" style="flex:1;accent-color:#f0a500;">
+      <span id="disney-speed-val" style="font-size:0.8em;color:#58a6ff;font-weight:700;width:34px;text-align:right;">1&times;</span>
+    </div>
+
     <div style="position:relative;margin-top:10px;">
       <div id="disney-route-map" style="width:100%;height:280px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);"></div>
       <div style="position:absolute;top:8px;right:8px;z-index:1000;display:flex;gap:4px;">
-        <button onclick="setDisneyType('satellite')" id="disney-sat" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
-        <button onclick="setDisneyType('street')" id="disney-str" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
+        <button onclick="setDisneyType('satellite')" id="disney-sat" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🛰 <span class="en">Satellite</span><span class="zh">卫星</span></button>
+        <button onclick="setDisneyType('street')" id="disney-str" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;">🗺 <span class="en">Street</span><span class="zh">街道</span></button>
       </div>
       <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(13,17,23,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:7px 11px;font-size:0.68rem;color:#e6edf3;line-height:1.7;">
         <span style="color:#ef4444;">●</span> <span class="en">Start</span><span class="zh">起点</span><br>
@@ -472,8 +478,8 @@ window.setDisneyType = function (type) {
   disneyMap.removeLayer(disneyTiles[disneyCur]);
   disneyTiles[type].addTo(disneyMap);
   disneyCur = type;
-  var active = 'background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
-  var inactive = 'background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var active = '-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
+  var inactive = '-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;';
   document.getElementById('disney-sat').style.cssText = type === 'satellite' ? active : inactive;
   document.getElementById('disney-str').style.cssText = type === 'street' ? active : inactive;
 };
@@ -512,6 +518,32 @@ var disneyRoute = [
 ];
 L.polyline(disneyRoute, { color: '#f0a500', weight: 4, dashArray: '9,6', opacity: 0.9 }).addTo(disneyMap);
 disneyMap.fitBounds(L.latLngBounds(disneyRoute), { padding: [28, 28] });
+
+// ── ANIMATED WALKER — loops the DisneySea day route ──
+var disneyMoverIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🚶</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+var disneyMover = L.marker(disneyRoute[0], { icon: disneyMoverIcon, zIndexOffset: 1000 }).addTo(disneyMap);
+var disneyProgress = 0, disneySpeedMultiplier = 1;
+var disneySpeedSlider = document.getElementById('disney-speed');
+var disneySpeedVal = document.getElementById('disney-speed-val');
+disneySpeedSlider.addEventListener('input', function () {
+  disneySpeedMultiplier = parseFloat(disneySpeedSlider.value);
+  disneySpeedVal.textContent = disneySpeedMultiplier + '×';
+});
+function disneyInterpolate(p) {
+  var segCount = disneyRoute.length - 1;
+  var segFloat = p * segCount;
+  var segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+  var localFrac = segFloat - segIdx;
+  var a = disneyRoute[segIdx], b = disneyRoute[segIdx + 1];
+  return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+}
+function disneyStep() {
+  disneyProgress += 0.0004 * disneySpeedMultiplier;
+  if (disneyProgress >= 1) disneyProgress = 0;
+  disneyMover.setLatLng(disneyInterpolate(disneyProgress));
+  requestAnimationFrame(disneyStep);
+}
+disneyStep();
 
 var disneyFs = false;
 window.toggleDisneyFs = function () {
