@@ -46,6 +46,13 @@
     padding: 10px 16px 18px; font-size: 0.8em; color: #8b949e; line-height: 1.7;
   }
   .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+  .speed-control {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 16px 14px;
+  }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+  .speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
   .home-btn {
     display: inline-flex; align-items: center; gap: 6px;
     background: #21262d; color: #c9d1d9; text-decoration: none;
@@ -71,6 +78,12 @@
 
 <div class="controls">
   <div id="status">En route — <span id="timeLabel">09:25</span></div>
+</div>
+
+<div class="speed-control">
+  <label for="speedSlider">🐢 Speed</label>
+  <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+  <span id="speedVal">1&times;</span>
 </div>
 
 <div class="legend">
@@ -143,6 +156,14 @@ const startMin = toMinutes(stops[0].time);
 const endMin = toMinutes(stops[stops.length-1].time);
 const totalMin = endMin - startMin;
 let progress = 0;
+let speedMultiplier = 1;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
 
 function interpolate(p) {
   const targetMin = startMin + p * totalMin;
@@ -165,7 +186,7 @@ const statusEl = document.getElementById('status');
 const timeLabel = document.getElementById('timeLabel');
 
 function step() {
-  progress += 0.0025;
+  progress += 0.0025 * speedMultiplier;
   if (progress >= 1) {
     const pos = interpolate(1);
     mover.setLatLng([pos.lat, pos.lng]);
