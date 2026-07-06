@@ -101,6 +101,15 @@
     border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer;
   }
   .map-fullscreen-close.active { display: block; }
+  .speed-control { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08); }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #06b6d4; }
+  .speed-control #boatSpeedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  .speed-control.fs-overlay {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10002;
+    background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
   .map-type-toggle { position: absolute; top: 8px; right: 52px; z-index: 1000; display: flex; gap: 4px; }
   .map-type-btn { -webkit-appearance: none; appearance: none; background: rgba(0,0,0,0.55); color: #fff; border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
   .map-type-btn.active { background: #06b6d4; color: #0d1117; border-color: #06b6d4; }
@@ -314,6 +323,11 @@
     <button class="map-fullscreen-btn" onclick="toggleMapFullscreen()" title="Expand">⛶</button>
     <button class="map-fullscreen-close" id="mapFullscreenClose" onclick="toggleMapFullscreen()">✕</button>
   </div>
+  <div class="speed-control" id="boatSpeedControl">
+    <label for="boatSpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+    <input type="range" id="boatSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="boatSpeedVal">1&times;</span>
+  </div>
   <div class="stops-panel">
     <div class="panel-header">
       <span class="panel-title">📍 <span class="en">Route Stops — Tap to zoom</span><span class="zh">行程站点 — 点击缩放</span></span>
@@ -432,6 +446,37 @@ function initMap() {
 
   L.polyline(latlngs, { color: '#f4813f', weight: 3, dashArray: '8,6', opacity: 0.8 }).addTo(map);
   renderStopList();
+  startBoatAnimation(latlngs);
+}
+
+// ── ANIMATED BOAT MARKER — loops the island-hopping route ───────────────────
+var boatMarker = null, boatProgress = 0, boatSpeedMultiplier = 1, boatWaypoints = [];
+function startBoatAnimation(latlngs) {
+  boatWaypoints = latlngs;
+  var boatIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🚤</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+  boatMarker = L.marker(boatWaypoints[0], { icon: boatIcon, zIndexOffset: 1000 }).addTo(map);
+  var slider = document.getElementById('boatSpeedSlider');
+  var val = document.getElementById('boatSpeedVal');
+  slider.addEventListener('input', function () {
+    boatSpeedMultiplier = parseFloat(slider.value);
+    val.textContent = boatSpeedMultiplier + '×';
+  });
+  boatStep();
+}
+function boatInterpolate(p) {
+  var segCount = boatWaypoints.length - 1;
+  var segFloat = p * segCount;
+  var segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+  var localFrac = segFloat - segIdx;
+  var a = boatWaypoints[segIdx], b = boatWaypoints[segIdx + 1];
+  return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+}
+function boatStep() {
+  if (!boatMarker) return;
+  boatProgress += 0.0004 * boatSpeedMultiplier;
+  if (boatProgress >= 1) boatProgress = 0;
+  boatMarker.setLatLng(boatInterpolate(boatProgress));
+  requestAnimationFrame(boatStep);
 }
 
 function setMapType(type) {
@@ -496,8 +541,9 @@ function toggleMapFullscreen() {
   mapFS = !mapFS;
   var mapEl = document.getElementById('map');
   var closeBtn = document.getElementById('mapFullscreenClose');
-  if (mapFS) { mapEl.classList.add('map-fullscreen'); closeBtn.classList.add('active'); }
-  else { mapEl.classList.remove('map-fullscreen'); closeBtn.classList.remove('active'); }
+  var speedControl = document.getElementById('boatSpeedControl');
+  if (mapFS) { mapEl.classList.add('map-fullscreen'); closeBtn.classList.add('active'); speedControl.classList.add('fs-overlay'); }
+  else { mapEl.classList.remove('map-fullscreen'); closeBtn.classList.remove('active'); speedControl.classList.remove('fs-overlay'); }
   setTimeout(function() { map.invalidateSize(); }, 100);
 }
 

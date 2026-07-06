@@ -41,6 +41,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1117;color:#e6edf3;he
 .map-fullscreen-btn{position:absolute;top:8px;right:8px;z-index:1000;background:rgba(13,17,23,0.85);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;width:36px;height:36px;font-size:1.1rem;cursor:pointer;}
 .map-fullscreen-close{display:none;position:fixed;top:12px;right:12px;z-index:10001;background:rgba(255,255,255,0.18);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:1.3rem;cursor:pointer;}
 .map-fullscreen-close.active{display:block;}
+.speed-control{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#161b22;border-top:1px solid rgba(255,255,255,0.08);}
+.speed-control label{font-size:0.8em;color:#8b949e;white-space:nowrap;}
+.speed-control input[type=range]{flex:1;accent-color:#f0a500;}
+.speed-control #carSpeedVal{font-size:0.8em;color:#58a6ff;font-weight:700;width:34px;text-align:right;}
+.speed-control.fs-overlay{position:fixed;left:0;right:0;bottom:0;z-index:10002;background:rgba(13,17,23,0.92);backdrop-filter:blur(6px);padding:12px 16px calc(12px + env(safe-area-inset-bottom));}
 .panel{display:none;}
 .panel.active{display:flex;flex-direction:column;flex:1;min-height:0;}
 .stops-panel{background:#0d1117;overflow-y:auto;max-height:36vh;}
@@ -199,6 +204,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1117;color:#e6edf3;he
       <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
       <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
     </div>
+  </div>
+  <div class="speed-control" id="carSpeedControl">
+    <label for="carSpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+    <input type="range" id="carSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="carSpeedVal">1&times;</span>
   </div>
   <div class="stops-panel">
     <div class="panel-header">
@@ -865,6 +875,33 @@ stops.forEach(function(s) {
 var latlngs = stops.map(function(s){return [s.lat,s.lng];});
 L.polyline(latlngs, {color:'#f97316', weight:2.5, opacity:0.7, dashArray:'8,5'}).addTo(map);
 
+// Animated car marker — loops the drive route
+var carIcon = L.divIcon({ className:'', html:'<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🚗</div>', iconSize:[24,24], iconAnchor:[12,12] });
+var carMarker = L.marker(latlngs[0], { icon: carIcon, zIndexOffset: 1000 }).addTo(map);
+var carProgress = 0;
+var carSpeedMultiplier = 1;
+var carSpeedSlider = document.getElementById('carSpeedSlider');
+var carSpeedVal = document.getElementById('carSpeedVal');
+carSpeedSlider.addEventListener('input', function () {
+  carSpeedMultiplier = parseFloat(carSpeedSlider.value);
+  carSpeedVal.textContent = carSpeedMultiplier + '×';
+});
+function carInterpolate(p) {
+  var segCount = latlngs.length - 1;
+  var segFloat = p * segCount;
+  var segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+  var localFrac = segFloat - segIdx;
+  var a = latlngs[segIdx], b = latlngs[segIdx + 1];
+  return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+}
+function carStep() {
+  carProgress += 0.0004 * carSpeedMultiplier;
+  if (carProgress >= 1) carProgress = 0;
+  carMarker.setLatLng(carInterpolate(carProgress));
+  requestAnimationFrame(carStep);
+}
+carStep();
+
 // Stop list render
 var stopList = document.getElementById('stop-list');
 stops.forEach(function(s, i) {
@@ -978,8 +1015,9 @@ function setLang(lang) {
 function toggleMapFullscreen() {
   var m = document.getElementById('map');
   var btn = document.getElementById('mapFullscreenClose');
-  m.classList.toggle('map-fullscreen');
+  var isFs = m.classList.toggle('map-fullscreen');
   btn.classList.toggle('active');
+  document.getElementById('carSpeedControl').classList.toggle('fs-overlay', isFs);
   setTimeout(function(){map.invalidateSize();},100);
 }
 
