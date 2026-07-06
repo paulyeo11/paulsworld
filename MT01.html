@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="/ga4.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT01. View All My Trips — Live Google Sheet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    padding-top: 54px;
+  }
+  #homeBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: #161b22; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  #homeBar .hb-home {
+    background: #f4813f; color: #fff; text-decoration: none;
+    font-size: 14px; font-weight: 700; padding: 7px 18px; border-radius: 20px;
+  }
+  #homeBar .hb-site { color: rgba(255,255,255,0.5); font-size: 13px; }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 28px 18px 60px; }
+
+  header { margin-bottom: 22px; }
+  .eyebrow { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #f0a500; margin-bottom: 10px; }
+  h1 { font-size: clamp(24px, 5vw, 34px); font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 10px; }
+  .sub { color: #8b949e; font-size: 15px; line-height: 1.6; max-width: 640px; }
+  .sync-note { margin-top: 12px; font-size: 12px; color: #1abc9c; display: flex; align-items: center; gap: 6px; }
+  .sync-note .dot { width: 6px; height: 6px; border-radius: 50%; background: #1abc9c; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 24px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #e6edf3; text-decoration: none; font-size: 13px; font-weight: 600;
+    padding: 9px 16px; border-radius: 20px; cursor: pointer; transition: background .2s;
+  }
+  .btn:hover { background: rgba(255,255,255,0.16); }
+  .btn.gold { background: rgba(240,165,0,0.18); border-color: rgba(240,165,0,0.5); color: #f0a500; }
+  .btn.gold:hover { background: rgba(240,165,0,0.3); }
+
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-bottom: 26px; }
+  .stat { background: #161b22; padding: 16px; text-align: center; }
+  .stat-num { font-size: 26px; font-weight: 800; color: #f0a500; }
+  .stat-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #8b949e; margin-top: 4px; }
+
+  .trip-card {
+    display: grid; grid-template-columns: auto 1fr; gap: 14px;
+    background: #161b22; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 12px; align-items: start;
+  }
+  .trip-num {
+    background: rgba(240,165,0,0.15); color: #f0a500; font-weight: 800; font-size: 14px;
+    width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .trip-body { min-width: 0; }
+  .trip-when { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #1abc9c; margin-bottom: 4px; }
+  .trip-title { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.35; }
+  .trip-who { font-size: 13px; color: #8b949e; margin-top: 4px; font-style: italic; }
+  .trip-memory { font-size: 13.5px; color: #c9d1d9; margin-top: 8px; line-height: 1.55; }
+  .trip-why { font-size: 13px; color: #8b949e; margin-top: 6px; line-height: 1.5; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; }
+  .trip-why b { color: #f0a500; }
+
+  .year-divider {
+    margin: 26px 0 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #f0a500;
+  }
+
+  .state-msg { text-align: center; padding: 60px 20px; color: #8b949e; font-size: 14px; }
+  .state-msg.error { color: #ff6b6b; }
+  .state-msg a { color: #f0a500; }
+
+  .sheet-box {
+    margin-top: 36px; padding: 20px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px;
+    background: rgba(26,188,156,0.06); text-align: center;
+  }
+  .sheet-box h3 { font-size: 16px; color: #fff; margin-bottom: 6px; }
+  .sheet-box p { font-size: 13px; color: #8b949e; margin-bottom: 12px; }
+
+  .share-toast {
+    display: none; position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: #1c1c1e; color: #fff; padding: 10px 22px; border-radius: 22px;
+    font-size: 13px; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+
+  footer { text-align: center; padding: 30px 0 10px; color: #565d66; font-size: 12px; }
+  footer a { color: #f0a500; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">✈️ Paul's World</span>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span class="en">My Travel Record</span><span class="zh">我的旅行记录</span></div>
+    <h1><span class="en">MT01. View All My Trips</span><span class="zh">MT01. 查看我所有旅行</span></h1>
+    <p class="sub">
+      <span class="en">Every trip since 2022 — pulled live from Paul's travel log. When, where, who came along, and why it mattered.</span>
+      <span class="zh">2022年以来的每一次旅行——实时同步自Paul的旅行记录。时间、地点、同行人，以及它为何重要。</span>
+    </p>
+    <div class="sync-note"><span class="dot"></span><span class="en">Live from Google Sheets</span><span class="zh">实时同步自Google表格</span></div>
+  </header>
+
+  <div class="actions">
+    <button class="btn gold" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <a class="btn" href="https://docs.google.com/spreadsheets/d/1I0cHIZ4GNO5HtiuusXrJWwxh5hrWzmco5WUW3Y0qGF0/edit" target="_blank" rel="noopener">✏️ <span class="en">Edit Sheet</span><span class="zh">编辑表格</span></a>
+  </div>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-num" id="totalCount">—</div><div class="stat-label"><span class="en">Trips</span><span class="zh">次旅行</span></div></div>
+    <div class="stat"><div class="stat-num" id="yearsCount">—</div><div class="stat-label"><span class="en">Years</span><span class="zh">年份</span></div></div>
+    <div class="stat"><div class="stat-num" id="countriesCount">—</div><div class="stat-label"><span class="en">Trip Entries 2026</span><span class="zh">2026年行程</span></div></div>
+  </section>
+
+  <div id="tripList">
+    <div class="state-msg"><span class="en">Loading trips…</span><span class="zh">正在加载旅行记录…</span></div>
+  </div>
+
+  <div class="sheet-box">
+    <h3><span class="en">Want to add or edit a trip?</span><span class="zh">想添加或编辑旅行记录？</span></h3>
+    <p><span class="en">Update the Google Sheet directly — changes appear here on refresh.</span><span class="zh">直接更新Google表格——刷新后即可看到变化。</span></p>
+    <a class="btn gold" href="https://docs.google.com/spreadsheets/d/1I0cHIZ4GNO5HtiuusXrJWwxh5hrWzmco5WUW3Y0qGF0/edit" target="_blank" rel="noopener">✏️ <span class="en">Open Sheet</span><span class="zh">打开表格</span></a>
+  </div>
+
+  <footer>
+    <a href="https://paulsworld.vercel.app/">🏠 Home</a>
+    <div style="margin-top:14px"><span id="vc-display">👁 Loading views...</span></div>
+  </footer>
+</div>
+
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<script src="/bilingual.js"></script>
+<script>
+const SHEET_ID = '1I0cHIZ4GNO5HtiuusXrJWwxh5hrWzmco5WUW3Y0qGF0';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1`;
+
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if(navigator.share){
+    navigator.share({title:title, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+function yearOf(when){
+  const m = (when||'').match(/(20\d{2})/g);
+  return m ? m[m.length-1] : null;
+}
+
+async function loadTrips(){
+  const listEl = document.getElementById('tripList');
+  try{
+    const res = await fetch(SHEET_URL);
+    const text = await res.text();
+    const s = text.indexOf('{'), e = text.lastIndexOf('}');
+    const data = JSON.parse(text.substring(s, e+1));
+    const g = (r,i) => { if(!r.c||!r.c[i]) return ''; const v = r.c[i].v; return v==null ? '' : v.toString().trim(); };
+
+    const rows = (data.table.rows||[])
+      .map(r => ({
+        num: g(r,0), when: g(r,1), title: g(r,2), who: g(r,3), memory: g(r,4), why: g(r,5)
+      }))
+      .filter(row => row.when || row.title);
+
+    if(!rows.length){
+      listEl.innerHTML = '<div class="state-msg error"><span class="en">No trips found in the sheet yet.</span><span class="zh">表格中还没有旅行记录。</span></div>';
+      return;
+    }
+
+    const years = new Set();
+    let trips2026 = 0;
+    rows.forEach(r => { const y = yearOf(r.when); if(y){ years.add(y); if(y==='2026') trips2026++; } });
+
+    document.getElementById('totalCount').textContent = rows.length;
+    document.getElementById('yearsCount').textContent = years.size;
+    document.getElementById('countriesCount').textContent = trips2026;
+
+    let lastYear = null;
+    let html = '';
+    rows.forEach(row => {
+      const y = yearOf(row.when);
+      if(y && y !== lastYear){
+        html += `<div class="year-divider">${y}</div>`;
+        lastYear = y;
+      }
+      html += `
+        <div class="trip-card">
+          <div class="trip-num">${row.num || '•'}</div>
+          <div class="trip-body">
+            <div class="trip-when">${row.when}</div>
+            <div class="trip-title">${row.title}</div>
+            ${row.who ? `<div class="trip-who">✈️ ${row.who}</div>` : ''}
+            ${row.memory ? `<div class="trip-memory">${row.memory}</div>` : ''}
+            ${row.why ? `<div class="trip-why"><b><span class="en">Why it mattered:</span><span class="zh">为何重要：</span></b> ${row.why}</div>` : ''}
+          </div>
+        </div>`;
+    });
+    listEl.innerHTML = html;
+  }catch(err){
+    console.error(err);
+    listEl.innerHTML = `<div class="state-msg error">
+        <span class="en">Could not load the live sheet right now.</span><span class="zh">暂时无法加载实时表格。</span><br><br>
+        <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank" rel="noopener">
+          <span class="en">Open the Google Sheet directly →</span><span class="zh">直接打开Google表格 →</span>
+        </a>
+      </div>`;
+  }
+}
+loadTrips();
+</script>
+
+<script src="/view-counter.js"></script>
+
+</body>
+</html>
