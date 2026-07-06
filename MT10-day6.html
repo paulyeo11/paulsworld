@@ -141,6 +141,15 @@ body {
   color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
   cursor: pointer; align-items: center; gap: 6px;
 }
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 10px 4px 4px; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #day6SpeedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+}
 .leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
 .leaflet-popup-tip { background: #161b22 !important; }
 .leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
@@ -262,6 +271,11 @@ body {
     <div id="day6map"></div>
   </div>
   <button id="mapCloseBtn" onclick="closeMapFullscreen()">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+  <div class="speed-control" id="day6SpeedControl">
+    <label for="day6SpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+    <input type="range" id="day6SpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="day6SpeedVal">1&times;</span>
+  </div>
 
   <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
   <div class="log-card" id="emptyLog">
@@ -382,6 +396,7 @@ function openMapFullscreen() {
   var el = document.getElementById('day6map');
   el.classList.add('map-fullscreen');
   document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('day6SpeedControl').classList.add('fs-overlay');
   document.body.style.overflow = 'hidden';
   setTimeout(function () { day6Map.invalidateSize(); }, 100);
 }
@@ -389,6 +404,7 @@ function closeMapFullscreen() {
   var el = document.getElementById('day6map');
   el.classList.remove('map-fullscreen');
   document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('day6SpeedControl').classList.remove('fs-overlay');
   document.body.style.overflow = '';
   setTimeout(function () { day6Map.invalidateSize(); }, 100);
 }
@@ -435,6 +451,13 @@ L.polyline(groundWaypoints.map(function(w){ return [w.lat, w.lng]; }), { color: 
   var endMin = toMin(groundWaypoints[groundWaypoints.length - 1].time);
   var totalMin = endMin - startMin;
   var progress = 0;
+  var speedMultiplier = 1;
+  var speedSlider = document.getElementById('day6SpeedSlider');
+  var speedVal = document.getElementById('day6SpeedVal');
+  speedSlider.addEventListener('input', function () {
+    speedMultiplier = parseFloat(speedSlider.value);
+    speedVal.textContent = speedMultiplier + '×';
+  });
   function interpolate(p) {
     var targetMin = startMin + p * totalMin;
     for (var i = 0; i < groundWaypoints.length - 1; i++) {
@@ -450,7 +473,7 @@ L.polyline(groundWaypoints.map(function(w){ return [w.lat, w.lng]; }), { color: 
     return { lat: groundWaypoints[groundWaypoints.length-1].lat, lng: groundWaypoints[groundWaypoints.length-1].lng };
   }
   function trainStep() {
-    progress += 0.0025;
+    progress += 0.0025 * speedMultiplier;
     if (progress >= 1) {
       setTimeout(function () { progress = 0; requestAnimationFrame(trainStep); }, 1200);
       return;

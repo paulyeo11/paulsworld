@@ -86,6 +86,15 @@
   .map-fullscreen-btn { position: absolute; top: 8px; right: 8px; z-index: 1000; background: rgba(13,17,23,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; }
   .map-fullscreen-close { display: none; position: fixed; top: 12px; right: 12px; z-index: 10001; background: rgba(255,255,255,0.18); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.3rem; cursor: pointer; }
   .map-fullscreen-close.active { display: block; }
+  .speed-control { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08); }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+  .speed-control #planeSpeedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  .speed-control.fs-overlay {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10002;
+    background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
   .route-animated { animation: routeDash 1.2s linear infinite; }
   @keyframes routeDash { to { stroke-dashoffset: -24; } }
   .plane-marker { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7)); transform-origin: center; }
@@ -269,6 +278,11 @@
       <div id="map"></div>
       <button class="map-fullscreen-btn" onclick="toggleMapFs()" title="Expand">⛶</button>
       <button class="map-fullscreen-close" id="mapFsClose" onclick="toggleMapFs()">✕</button>
+    </div>
+    <div class="speed-control" id="planeSpeedControl">
+      <label for="planeSpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+      <input type="range" id="planeSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+      <span id="planeSpeedVal">1&times;</span>
     </div>
     <div class="panel-scroll">
       <div class="stat-row">
@@ -1217,6 +1231,11 @@
       <button class="map-fullscreen-btn" onclick="toggleDriveMapFs()" title="Expand">⛶</button>
       <button class="map-fullscreen-close" id="driveFsClose" onclick="toggleDriveMapFs()">✕</button>
     </div>
+    <div class="speed-control" id="driveSpeedControl">
+      <label for="driveSpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+      <input type="range" id="driveSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+      <span id="driveSpeedVal">1&times;</span>
+    </div>
     <div class="panel-scroll">
       <div class="stat-row">
         <div class="stat-chip"><div class="stat-num">~100</div><div class="stat-lbl">km</div></div>
@@ -1610,12 +1629,41 @@ function initDriveMap() {
     color: '#f0a500', weight: 3, dashArray: '8,6', opacity: 0.85
   }).addTo(driveMap);
   setTimeout(function(){ driveMap.invalidateSize(); }, 200);
+
+  // Animated car marker — loops the drive route
+  var driveIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">🚗</div>', iconSize: [24,24], iconAnchor: [12,12] });
+  var driveWaypoints = driveStops.map(function(s){ return [s.lat, s.lng]; });
+  var driveMarker = L.marker(driveWaypoints[0], { icon: driveIcon, zIndexOffset: 1000 }).addTo(driveMap);
+  var driveProgress = 0;
+  var driveSpeedMultiplier = 1;
+  var driveSpeedSlider = document.getElementById('driveSpeedSlider');
+  var driveSpeedVal = document.getElementById('driveSpeedVal');
+  driveSpeedSlider.addEventListener('input', function () {
+    driveSpeedMultiplier = parseFloat(driveSpeedSlider.value);
+    driveSpeedVal.textContent = driveSpeedMultiplier + '×';
+  });
+  function driveInterpolate(p) {
+    var segCount = driveWaypoints.length - 1;
+    var segFloat = p * segCount;
+    var segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+    var localFrac = segFloat - segIdx;
+    var a = driveWaypoints[segIdx], b = driveWaypoints[segIdx + 1];
+    return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+  }
+  function driveStep() {
+    driveProgress += 0.0006 * driveSpeedMultiplier;
+    if (driveProgress >= 1) driveProgress = 0;
+    driveMarker.setLatLng(driveInterpolate(driveProgress));
+    requestAnimationFrame(driveStep);
+  }
+  driveStep();
 }
 function toggleDriveMapFs() {
   var m = document.getElementById('drivemap');
   var c = document.getElementById('driveFsClose');
-  m.classList.toggle('map-fullscreen');
+  var isFs = m.classList.toggle('map-fullscreen');
   c.classList.toggle('active');
+  document.getElementById('driveSpeedControl').classList.toggle('fs-overlay', isFs);
   setTimeout(function(){ if(driveMap) driveMap.invalidateSize(); }, 100);
 }
 
@@ -1706,12 +1754,22 @@ function bearing(a, b) {
 var planeLegDuration = 3500; // ms per leg
 var planeLegIdx = 0;
 var planeLegStart = null;
+var planeElapsed = 0;
+var planeSpeedMultiplier = 1;
+var planeSpeedSlider = document.getElementById('planeSpeedSlider');
+var planeSpeedVal = document.getElementById('planeSpeedVal');
+planeSpeedSlider.addEventListener('input', function () {
+  planeSpeedMultiplier = parseFloat(planeSpeedSlider.value);
+  planeSpeedVal.textContent = planeSpeedMultiplier + '×';
+});
 
 function animatePlane(ts) {
   if (!planeLegStart) planeLegStart = ts;
   var from = stops[planeLegIdx];
   var to = stops[(planeLegIdx + 1) % stops.length];
-  var t = Math.min((ts - planeLegStart) / planeLegDuration, 1);
+  planeElapsed += (ts - planeLegStart) * planeSpeedMultiplier;
+  planeLegStart = ts;
+  var t = Math.min(planeElapsed / planeLegDuration, 1);
   var lat = from.lat + (to.lat - from.lat) * t;
   var lng = from.lng + (to.lng - from.lng) * t;
   planeMarker.setLatLng([lat, lng]);
@@ -1720,7 +1778,7 @@ function animatePlane(ts) {
   if (el) { var inner = el.querySelector('.plane-marker'); if (inner) inner.style.transform = 'rotate(' + deg + 'deg)'; }
   if (t >= 1) {
     planeLegIdx = (planeLegIdx + 1) % stops.length;
-    planeLegStart = ts;
+    planeElapsed = 0;
   }
   requestAnimationFrame(animatePlane);
 }
@@ -1730,8 +1788,9 @@ requestAnimationFrame(animatePlane);
 function toggleMapFs() {
   var m = document.getElementById('map');
   var c = document.getElementById('mapFsClose');
-  m.classList.toggle('map-fullscreen');
+  var isFs = m.classList.toggle('map-fullscreen');
   c.classList.toggle('active');
+  document.getElementById('planeSpeedControl').classList.toggle('fs-overlay', isFs);
   setTimeout(function(){ map.invalidateSize(); }, 100);
 }
 
