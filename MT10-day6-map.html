@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel to Airport</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, system-ui, sans-serif;
+    background: #0d1117; color: #e6edf3;
+  }
+  .header {
+    padding: 16px 18px 10px; text-align: center;
+  }
+  .header h1 { font-size: 1.15em; margin: 0 0 4px; }
+  .header p { font-size: 0.85em; color: #8b949e; margin: 0; }
+  #map { width: 100%; height: 62vh; }
+  .controls {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: #161b22; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  #status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+  #timeLabel { font-weight: 700; color: #58a6ff; }
+  .legend {
+    padding: 10px 16px 18px; font-size: 0.8em; color: #8b949e; line-height: 1.7;
+  }
+  .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+  .home-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #21262d; color: #c9d1d9; text-decoration: none;
+    padding: 10px 16px; border-radius: 8px; font-size: 0.95em; font-weight: 600;
+    margin: 16px auto 0; width: fit-content;
+  }
+  .home-wrap { display: flex; justify-content: center; padding-bottom: 18px; }
+  .view-counter-wrap { text-align: center; padding: 10px 0 20px; font-size: 0.8em; color: #8b949e; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🚉 Hotel to Airport</h1>
+  <p>Keikyū Main Line · via Shinagawa → Sengakuji → Oshiage (SKYTREE) · 1 hr 54 min</p>
+</div>
+
+<div id="map"></div>
+
+<div class="controls">
+  <div id="status">En route — <span id="timeLabel">09:25</span></div>
+</div>
+
+<div class="legend">
+  <span class="dot" style="background:#58a6ff;"></span>Keikyū Main Line&nbsp;&nbsp;
+  <span class="dot" style="background:#f85149;"></span>Transfer stops&nbsp;&nbsp;
+  <span class="dot" style="background:#f0883e;"></span>Final leg to airport
+</div>
+
+<div class="home-wrap">
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+</div>
+
+<div class="view-counter-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const stops = [
+  { name: "Hotel (Kamata area)", lat: 35.5623, lng: 139.7160, time: "09:25", note: "Depart hotel" },
+  { name: "Shinagawa Station",   lat: 35.6284, lng: 139.7387, time: "10:00", note: "Remain on board" },
+  { name: "Sengakuji Station",   lat: 35.6355, lng: 139.7405, time: "10:03", note: "Remain on board" },
+  { name: "Oshiage Sta. (SKYTREE)", lat: 35.7101, lng: 139.8107, time: "10:27", note: "Remain on board" },
+  { name: "Narita Airport Terminal 1", lat: 35.7647, lng: 140.3864, time: "11:19", note: "Arrive" }
+];
+
+const map = L.map('map', { zoomControl: true }).setView([35.68, 139.95], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(map);
+
+const segColors = ['#58a6ff', '#58a6ff', '#58a6ff', '#f0883e'];
+const fullLine = stops.map(s => [s.lat, s.lng]);
+
+for (let i = 0; i < stops.length - 1; i++) {
+  L.polyline([fullLine[i], fullLine[i+1]], { color: segColors[i], weight: 4, opacity: 0.85 }).addTo(map);
+}
+
+stops.forEach((s, i) => {
+  const color = i === 0 ? '#3fb950' : (i === stops.length - 1 ? '#f85149' : '#f0883e');
+  L.circleMarker([s.lat, s.lng], {
+    radius: 7, color: '#0d1117', weight: 2, fillColor: color, fillOpacity: 1
+  }).addTo(map).bindPopup(`<b>${s.name}</b><br>${s.time} — ${s.note}`);
+});
+
+map.fitBounds(fullLine, { padding: [30, 30] });
+
+const trainIcon = L.divIcon({ html: '🚆', className: '', iconSize: [26,26], iconAnchor: [13,13] });
+const mover = L.marker(fullLine[0], { icon: trainIcon }).addTo(map);
+
+function toMinutes(t) {
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length-1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i+1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const lat = stops[i].lat + (stops[i+1].lat - stops[i].lat) * segP;
+      const lng = stops[i].lng + (stops[i+1].lng - stops[i].lng) * segP;
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin/60)).padStart(2,'0');
+      const mm = String(curMin%60).padStart(2,'0');
+      return { lat, lng, timeStr: `${hh}:${mm}` };
+    }
+  }
+  return { lat: stops[stops.length-1].lat, lng: stops[stops.length-1].lng, timeStr: stops[stops.length-1].time };
+}
+
+const statusEl = document.getElementById('status');
+const timeLabel = document.getElementById('timeLabel');
+
+function step() {
+  progress += 0.0025;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    timeLabel.textContent = pos.timeStr;
+    statusEl.innerHTML = `Arrived — <span id="timeLabel">${stops[stops.length-1].time}</span> · replaying...`;
+    setTimeout(() => {
+      progress = 0;
+      statusEl.textContent = 'En route — ';
+      statusEl.appendChild(timeLabel);
+      requestAnimationFrame(step);
+    }, 1200);
+    return;
+  }
+  const pos = interpolate(progress);
+  mover.setLatLng([pos.lat, pos.lng]);
+  timeLabel.textContent = pos.timeStr;
+  requestAnimationFrame(step);
+}
+
+statusEl.textContent = 'En route — ';
+statusEl.appendChild(timeLabel);
+step();
+</script>
+
+</body>
+</html>
