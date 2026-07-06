@@ -53,6 +53,11 @@
   .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
   .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
   .speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  .speed-control.fs-overlay {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+    background: rgba(13,17,23,0.9); backdrop-filter: blur(6px);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
   .home-btn {
     display: inline-flex; align-items: center; gap: 6px;
     background: #21262d; color: #c9d1d9; text-decoration: none;
@@ -73,6 +78,10 @@
 <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; Open Full Screen Map</button>
 <div class="map-wrap">
   <div id="map"></div>
+  <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+    <button onclick="setMapType('satellite')" id="btn-satellite" style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+    <button onclick="setMapType('street')" id="btn-street" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+  </div>
 </div>
 <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; Close Map</button>
 
@@ -80,7 +89,7 @@
   <div id="status">En route — <span id="timeLabel">09:25</span></div>
 </div>
 
-<div class="speed-control">
+<div class="speed-control" id="speedControl">
   <label for="speedSlider">🐢 Speed</label>
   <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
   <span id="speedVal">1&times;</span>
@@ -113,21 +122,36 @@ const stops = [
 function openMapFullscreen() {
   document.getElementById('map').classList.add('map-fullscreen');
   document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
   document.body.style.overflow = 'hidden';
   setTimeout(function () { map.invalidateSize(); }, 100);
 }
 function closeMapFullscreen() {
   document.getElementById('map').classList.remove('map-fullscreen');
   document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
   document.body.style.overflow = '';
   setTimeout(function () { map.invalidateSize(); }, 100);
 }
 
 const map = L.map('map', { zoomControl: true }).setView([35.68, 139.95], 9);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors',
-  maxZoom: 18
-}).addTo(map);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(255,255,255,0.18)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(255,255,255,0.18)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
 
 const segColors = ['#58a6ff', '#58a6ff', '#58a6ff', '#f0883e'];
 const fullLine = stops.map(s => [s.lat, s.lng]);
