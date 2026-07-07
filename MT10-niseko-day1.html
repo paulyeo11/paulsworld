@@ -123,6 +123,24 @@ body {
 /* MAP */
 .map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
 #day7map { width: 100%; height: 220px; }
+#day7map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border-radius: 0 !important;
+}
+.map-fullscreen-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 6px 14px; border-radius: 18px; cursor: pointer;
+  margin-bottom: 10px;
+}
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
+}
 .leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
 .leaflet-popup-tip { background: #161b22 !important; }
 .leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
@@ -389,9 +407,11 @@ body {
   </div>
 
   <div class="section-title">🗺️ <span class="en">Location</span><span class="zh">位置</span></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">⛶ <span class="en">Open Full Screen Map</span><span class="zh">全屏查看地图</span></button>
   <div class="map-wrap">
     <div id="day7map"></div>
   </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
 
   <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
   <div class="log-card" id="emptyLog">
@@ -454,6 +474,22 @@ function shareThisPage() {
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
   document.getElementById('lbVideo').pause();
+}
+
+// ── FULLSCREEN MAP BUTTON ──
+function openMapFullscreen() {
+  var el = document.getElementById('day7map');
+  el.classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { day7Map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  var el = document.getElementById('day7map');
+  el.classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(function () { day7Map.invalidateSize(); }, 100);
 }
 
 // ── LOCATION MAP ──
