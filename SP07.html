@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SP07: Places I've Visited — My Animated World Map — Paul's World</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --pink: #ec4899;
+  --gold: #f0a500;
+  --teal: #14b8a6;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+/* HERO */
+.hero { background: linear-gradient(135deg, #0a1830 0%, #14101f 50%, #0f1117 100%); border-bottom: 1px solid var(--border); padding: 64px 20px 40px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at center, rgba(74,108,247,0.10) 0%, transparent 60%); pointer-events: none; }
+.home-btn { position: absolute; top: 18px; left: 18px; background: rgba(74,108,247,0.15); border: 1px solid rgba(74,108,247,0.35); color: var(--blue); text-decoration: none; font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; font-family: 'Source Serif 4', serif; transition: background 0.2s; }
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(240,165,0,0.15); border-color: rgba(240,165,0,0.5); color: #f0a500; }
+.label { display: inline-block; background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.3); color: var(--green); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 20px; }
+.hero h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700; color: #fff; line-height: 1.25; max-width: 760px; margin: 0 auto 16px; }
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.9rem; letter-spacing: 0.02em; max-width: 640px; margin: 0 auto; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.share-btn { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.3); color: #fff; font-weight: 700; letter-spacing: .04em; padding: 9px 22px; border-radius: 24px; cursor: pointer; font-size: .9rem; font-family: 'Source Serif 4',Georgia,serif; transition: background .2s; }
+.share-btn:hover { background: rgba(255,255,255,.22); }
+.share-toast { display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+
+/* STATS */
+.stats-wrap { max-width: 780px; margin: -30px auto 0; padding: 0 20px; position: relative; z-index: 2; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 620px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 12px; text-align: center; }
+.stat-num { font-family: 'Playfair Display', serif; font-size: 1.7rem; font-weight: 700; color: var(--gold); }
+.stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+/* MAP SECTION */
+.map-section { max-width: 1000px; margin: 34px auto 0; padding: 0 20px; }
+.map-fullscreen-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4); color: var(--gold); font-size: 0.82rem; font-weight: 700; padding: 8px 18px; border-radius: 20px; cursor: pointer; margin-bottom: 14px; }
+.map-wrap { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+#map { width: 100%; height: 62vh; min-height: 380px; background: #0d1117; }
+#map.map-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; height: 100dvh !important; z-index: 9999; border-radius: 0 !important; }
+#mapCloseBtn { display: none; position: fixed; top: 14px; right: 14px; z-index: 10000; background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px; cursor: pointer; align-items: center; gap: 6px; }
+.map-type-toggle { position: absolute; top: 10px; right: 48px; z-index: 1000; display: flex; gap: 4px; }
+.map-type-toggle button { -webkit-appearance: none; appearance: none; border-radius: 20px; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.5); }
+
+.controls-bar { background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 16px 16px; padding: 14px 18px; margin-top: -1px; }
+.controls-bar.fs-overlay { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000; border-radius: 0; background: rgba(13,17,23,0.94); backdrop-filter: blur(6px); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+.status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.play-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: #0d1117; border: none; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#statusText { font-size: 0.88rem; color: var(--text); flex: 1; }
+#statusText b { color: var(--gold); }
+.speed-control { display: flex; align-items: center; gap: 10px; }
+.speed-control label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: var(--gold); }
+.speed-control span { font-size: 0.78rem; color: var(--blue); font-weight: 700; width: 34px; text-align: right; }
+
+.legend-wrap { max-width: 1000px; margin: 16px auto 0; padding: 0 20px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.8rem; color: var(--muted); }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+/* PLACE LIST */
+.places-section { max-width: 900px; margin: 40px auto 0; padding: 0 22px; }
+.places-section h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--text); font-weight: 700; margin-bottom: 6px; text-align: center; }
+.places-sub { color: var(--muted); font-size: 0.88rem; text-align: center; margin-bottom: 24px; }
+.region-group { margin-bottom: 26px; }
+.region-head { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.region-head .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.place-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (max-width: 560px) { .place-grid { grid-template-columns: 1fr; } }
+.place-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.place-item a { color: var(--blue); text-decoration: none; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.place-item span.name { color: var(--text); }
+
+.closing { max-width: 700px; margin: 40px auto 0; padding: 0 22px; text-align: center; color: var(--muted); font-style: italic; font-size: 0.95rem; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; margin-top: 40px; }
+footer a { color: var(--blue); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <a href="https://paulsworld.vercel.app/" class="home-btn">&#8592; Home</a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 EN</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+  <div class="label"><span class="en">Places Visited · SP07</span><span class="zh">走过的地方 · SP07</span></div>
+  <h1 class="en-block">SP07: Places I've Visited — <span>My Animated World Map</span></h1>
+  <h1 class="zh-block">SP07：我走过的地方 — <span>我的动态世界地图</span></h1>
+  <div class="meta">
+    <span class="en">Press play and watch my journey unfold — 28 places, 14 countries, 5 continents, one retired adventurer.</span>
+    <span class="zh">按下播放键，看我的旅程徐徐展开 — 28个地方，14个国家，5大洲，一个退休的冒险者。</span>
+  </div>
+  <div class="hero-btns">
+    <button class="share-btn" onclick="shareThisPage()">&#128279;&nbsp;<span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">&#x2705; Link copied!</div>
+
+<!-- STATS -->
+<div class="stats-wrap">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num">28</div><div class="stat-label"><span class="en">Places</span><span class="zh">地点</span></div></div>
+    <div class="stat-card"><div class="stat-num">14</div><div class="stat-label"><span class="en">Countries</span><span class="zh">国家</span></div></div>
+    <div class="stat-card"><div class="stat-num">5</div><div class="stat-label"><span class="en">Continents</span><span class="zh">大洲</span></div></div>
+    <div class="stat-card"><div class="stat-num">70</div><div class="stat-label"><span class="en">Years Young</span><span class="zh">岁数</span></div></div>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="map-section">
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096;&nbsp;<span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-type-toggle">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="background:rgba(0,0,0,0.55);color:#fff;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="background:#f0a500;color:#0d1117;">🗺 Street</button>
+    </div>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; Close Map</button>
+  <div class="controls-bar" id="controlsBar">
+    <div class="status-row">
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+      <div id="statusText"><span class="en">Press play to start the journey</span><span class="zh">按播放开始旅程</span></div>
+    </div>
+    <div class="speed-control">
+      <label>🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+      <input type="range" id="speedSlider" min="0.5" max="4" step="0.5" value="1">
+      <span id="speedVal">1&times;</span>
+    </div>
+  </div>
+</div>
+
+<div class="legend-wrap">
+  <div class="legend" id="legend"></div>
+</div>
+
+<!-- PLACE LIST -->
+<div class="places-section">
+  <h2><span class="en">Every Stop, By Region</span><span class="zh">按地区列出的每一站</span></h2>
+  <div class="places-sub"><span class="en">Tap a story to read about it</span><span class="zh">点击可阅读相关故事</span></div>
+  <div id="regionLists"></div>
+</div>
+
+<div class="closing">
+  <p class="en-block">"I have learned, in whatsoever state I am, therewith to be content." Every one of these places taught me something — but the road always led me home.</p>
+  <p class="zh-block">"我无论在什么景况都可以知足，这是我已经学会了。"这些地方的每一处都教会了我一些东西 — 但这条路，最终总是带我回家。</p>
+</div>
+
+<!-- VIEW COUNTER -->
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p><span class="en">SP07: Places I've Visited &nbsp;&middot;&nbsp; My Animated World Map &nbsp;&middot;&nbsp; Paul's World</span><span class="zh">SP07：我走过的地方 &nbsp;&middot;&nbsp; 我的动态世界地图 &nbsp;&middot;&nbsp; 保罗的世界</span></p>
+  <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/">&#8592; <span class="en">Back to Paul's World</span><span class="zh">返回保罗的世界</span></a></p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+function setLang(lang) {
+  document.body.classList.toggle('lang-zh', lang === 'zh');
+  document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('.lang-btn[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+}
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+/* ---------- DATA: places visited, in tour order ---------- */
+const regions = {
+  home:   { en: 'Home Base', zh: '家', color: '#f0a500' },
+  sea:    { en: 'Southeast Asia', zh: '东南亚', color: '#14b8a6' },
+  sasia:  { en: 'South Asia', zh: '南亚', color: '#a855f7' },
+  china:  { en: 'China', zh: '中国', color: '#ef4444' },
+  japan:  { en: 'Japan', zh: '日本', color: '#ec4899' },
+  europe: { en: 'Europe', zh: '欧洲', color: '#4a6cf7' },
+  samerica:{ en: 'South America', zh: '南美洲', color: '#2ecc71' },
+  namerica:{ en: 'North America', zh: '北美洲', color: '#f4813f' },
+  africa: { en: 'Africa', zh: '非洲', color: '#a16207' }
+};
+
+const places = [
+  { en:'Singapore', zh:'新加坡', lat:1.3521, lng:103.8198, region:'home', zoom:11, story:'S01.html', emoji:'🏠' },
+  { en:'Manila, Philippines', zh:'马尼拉，菲律宾', lat:14.5995, lng:120.9842, region:'sea', zoom:9, story:'S12.html', emoji:'🇵🇭' },
+  { en:'Cebu, Philippines', zh:'宿务，菲律宾', lat:10.3157, lng:123.8854, region:'sea', zoom:9, story:'S12.html', emoji:'🇵🇭' },
+  { en:'Boracay, Philippines', zh:'长滩岛，菲律宾', lat:11.9674, lng:121.9248, region:'sea', zoom:10, story:'S12.html', emoji:'🏝️' },
+  { en:'El Nido, Palawan', zh:'艾尔尼多，巴拉望', lat:11.1949, lng:119.4058, region:'sea', zoom:10, story:'S12.html', emoji:'🏝️' },
+  { en:'Bohol, Philippines', zh:'保和岛，菲律宾', lat:9.8500, lng:124.1435, region:'sea', zoom:9, story:'MT13.html', emoji:'🇵🇭' },
+  { en:'Jakarta, Indonesia', zh:'雅加达，印度尼西亚', lat:-6.2088, lng:106.8456, region:'sea', zoom:10, story:'S33.html', emoji:'🇮🇩' },
+  { en:'Annapurna Base Camp, Nepal', zh:'安纳普尔纳大本营，尼泊尔', lat:28.5308, lng:83.8767, region:'sasia', zoom:8, story:'S03.html', emoji:'🏔️' },
+  { en:'Harbin, China', zh:'哈尔滨，中国', lat:45.8038, lng:126.5350, region:'china', zoom:8, story:'S25.html', emoji:'❄️' },
+  { en:'Jiuzhaigou, China', zh:'九寨沟，中国', lat:33.2223, lng:103.9199, region:'china', zoom:8, story:'S25.html', emoji:'🏞️' },
+  { en:'Chengdu, China', zh:'成都，中国', lat:30.5728, lng:104.0668, region:'china', zoom:8, story:'S25.html', emoji:'🐼' },
+  { en:'Fukuoka, Kyushu', zh:'福冈，九州', lat:33.5904, lng:130.4017, region:'japan', zoom:9, story:'S24.html', emoji:'🇯🇵' },
+  { en:'Beppu, Kyushu', zh:'别府，九州', lat:33.2846, lng:131.4914, region:'japan', zoom:9, story:'S24.html', emoji:'♨️' },
+  { en:'Kumamoto, Kyushu', zh:'熊本，九州', lat:32.8032, lng:130.7079, region:'japan', zoom:9, story:'S24.html', emoji:'🏯' },
+  { en:'Tokyo, Japan', zh:'东京，日本', lat:35.6762, lng:139.6503, region:'japan', zoom:9, story:'MT10.html', emoji:'🗼' },
+  { en:'Niseko, Japan', zh:'二世谷，日本', lat:42.8048, lng:140.6874, region:'japan', zoom:8, story:'MT10-niseko-day1.html', emoji:'⛰️' },
+  { en:'Algarve, Portugal', zh:'阿尔加威，葡萄牙', lat:37.0179, lng:-7.9308, region:'europe', zoom:9, story:'S02.html', emoji:'🇵🇹' },
+  { en:'Reykjavik, Iceland', zh:'雷克雅未克，冰岛', lat:64.1466, lng:-21.9426, region:'europe', zoom:8, story:'S04.html', emoji:'🇮🇸' },
+  { en:'Vik, Iceland', zh:'维克，冰岛', lat:63.4181, lng:-19.0060, region:'europe', zoom:9, story:'S04.html', emoji:'🌋' },
+  { en:'Torres del Paine, Chile', zh:'百内国家公园，智利', lat:-50.9423, lng:-73.4068, region:'samerica', zoom:7, story:'S11.html', emoji:'🏔️' },
+  { en:'Ushuaia, Argentina', zh:'乌斯怀亚，阿根廷', lat:-54.8019, lng:-68.3030, region:'samerica', zoom:7, story:'S11.html', emoji:'🧊' },
+  { en:'Playa del Carmen, Mexico', zh:'卡门海滩，墨西哥', lat:20.6296, lng:-87.0739, region:'namerica', zoom:9, story:'S13.html', emoji:'🇲🇽' },
+  { en:'Fairbanks, Alaska', zh:'费尔班克斯，阿拉斯加', lat:64.8378, lng:-147.7164, region:'namerica', zoom:7, story:'S16.html', emoji:'🇺🇸' },
+  { en:'Denali, Alaska', zh:'德纳里，阿拉斯加', lat:63.1148, lng:-151.1926, region:'namerica', zoom:7, story:'S16.html', emoji:'🏔️' },
+  { en:'Prudhoe Bay, Alaska', zh:'普拉德霍湾，阿拉斯加', lat:70.2551, lng:-148.3181, region:'namerica', zoom:6, story:'S16.html', emoji:'🧊' },
+  { en:'Anchorage, Alaska', zh:'安克雷奇，阿拉斯加', lat:61.2181, lng:-149.9003, region:'namerica', zoom:7, story:'S16.html', emoji:'🇺🇸' },
+  { en:'Nairobi, Kenya', zh:'内罗毕，肯尼亚', lat:-1.2921, lng:36.8219, region:'africa', zoom:8, story:'S15.html', emoji:'🦁' },
+  { en:'Zanzibar, Tanzania', zh:'桑给巴尔，坦桑尼亚', lat:-6.1659, lng:39.1996, region:'africa', zoom:9, story:'S15.html', emoji:'🏝️' }
+];
+
+/* ---------- FULLSCREEN ---------- */
+function openMapFullscreen() {
+  if (window.self !== window.top) { window.top.location.href = window.location.href; return; }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('controlsBar').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('controlsBar').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+/* ---------- MAP SETUP ---------- */
+const map = L.map('map', { zoomControl: true, worldCopyJump: true }).setView([20, 40], 2);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f0a500' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f0a500' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+const fullLine = places.map(p => [p.lat, p.lng]);
+
+/* static faint route (whole planned path) */
+L.polyline(fullLine, { color: '#8b8fa8', weight: 1.5, opacity: 0.35, dashArray: '4,6' }).addTo(map);
+
+/* markers */
+places.forEach((p, i) => {
+  const color = regions[p.region].color;
+  const marker = L.circleMarker([p.lat, p.lng], { radius: 7, color: '#0d1117', weight: 2, fillColor: color, fillOpacity: 1 }).addTo(map);
+  const link = p.story ? `<br><a href="${p.story}" style="color:#4a6cf7;font-weight:600;">Read the story &rarr;</a>` : '';
+  marker.bindPopup(`<b>${p.emoji} ${p.en}</b>${link}`);
+  p.marker = marker;
+});
+
+map.fitBounds(fullLine, { padding: [30, 30] });
+
+/* legend */
+const legendEl = document.getElementById('legend');
+Object.keys(regions).forEach(key => {
+  const r = regions[key];
+  const item = document.createElement('span');
+  item.innerHTML = `<span class="dot" style="background:${r.color}"></span><span class="en">${r.en}</span><span class="zh">${r.zh}</span>`;
+  legendEl.appendChild(item);
+});
+
+/* region place list */
+const regionListsEl = document.getElementById('regionLists');
+Object.keys(regions).forEach(key => {
+  const r = regions[key];
+  const items = places.filter(p => p.region === key);
+  if (!items.length) return;
+  const group = document.createElement('div');
+  group.className = 'region-group';
+  group.innerHTML = `<div class="region-head" style="color:${r.color}"><span class="dot" style="background:${r.color}"></span><span class="en">${r.en}</span><span class="zh">${r.zh}</span></div>
+    <div class="place-grid">${items.map(p => `<div class="place-item"><span class="name">${p.emoji} <span class="en">${p.en}</span><span class="zh">${p.zh}</span></span>${p.story ? `<a href="${p.story}">Read →</a>` : ''}</div>`).join('')}</div>`;
+  regionListsEl.appendChild(group);
+});
+
+/* ---------- ANIMATED PLANE ---------- */
+const planeIcon = L.divIcon({ html: '✈️', className: '', iconSize: [26,26], iconAnchor: [13,13] });
+const mover = L.marker(fullLine[0], { icon: planeIcon }).addTo(map);
+const travelledLine = L.polyline([], { color: '#f0a500', weight: 3, opacity: 0.9 }).addTo(map);
+
+let segIndex = 0;
+let segProgress = 0;
+let playing = false;
+let speedMultiplier = 1;
+const DWELL_FRAMES = 40;
+let dwellCounter = 0;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+const playBtn = document.getElementById('playBtn');
+const statusText = document.getElementById('statusText');
+
+function setStatus(i) {
+  const p = places[i];
+  statusText.innerHTML = `<span class="en">Stop ${i+1} of ${places.length}: <b>${p.emoji} ${p.en}</b></span><span class="zh">第 ${i+1} / ${places.length} 站：<b>${p.emoji} ${p.zh}</b></span>`;
+}
+
+function togglePlay() {
+  playing = !playing;
+  playBtn.textContent = playing ? '⏸' : '▶';
+  if (playing) requestAnimationFrame(step);
+}
+
+function step() {
+  if (!playing) return;
+
+  if (segIndex >= places.length - 1) {
+    setStatus(places.length - 1);
+    playing = false;
+    playBtn.textContent = '▶';
+    return;
+  }
+
+  const from = places[segIndex];
+  const to = places[segIndex + 1];
+
+  if (dwellCounter < DWELL_FRAMES) {
+    dwellCounter += speedMultiplier;
+    setStatus(segIndex);
+    requestAnimationFrame(step);
+    return;
+  }
+
+  segProgress += 0.01 * speedMultiplier;
+  if (segProgress >= 1) {
+    segProgress = 0;
+    dwellCounter = 0;
+    segIndex++;
+    mover.setLatLng([to.lat, to.lng]);
+    travelledLine.addLatLng([to.lat, to.lng]);
+    map.flyTo([to.lat, to.lng], to.zoom, { duration: 1.1 });
+    setStatus(segIndex);
+    requestAnimationFrame(step);
+    return;
+  }
+
+  const lat = from.lat + (to.lat - from.lat) * segProgress;
+  const lng = from.lng + (to.lng - from.lng) * segProgress;
+  mover.setLatLng([lat, lng]);
+  requestAnimationFrame(step);
+}
+
+travelledLine.addLatLng([places[0].lat, places[0].lng]);
+setStatus(0);
+</script>
+
+</body>
+</html>
