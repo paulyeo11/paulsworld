@@ -307,7 +307,55 @@ function shareThisPage() {
   }
 }
 
+// ── PHOTO JOURNAL DATA ──
+const galleryPhotos = [
+  { src: 'img_MT10-niseko-day1/01-tsubara-tsubara-curry.jpg', caption: 'Soup curry at Tsubara Tsubara, Hirafu', story: '<span class="en">The bowl that made the drive from Kutchan worth it — a deep, dark soup curry loaded with shiitake, purple sweet potato, carrot, bamboo shoot, greens and a soft-boiled egg, topped with a mountain of shredded daikon. Rich, savoury broth with real depth from that long simmer. Exactly the kind of Hokkaido meal worth planning a whole morning around.</span><span class="zh">从倶知安开车过来，就是为了这一碗 — 浓郁深色的汤咖喱，里面满满的香菇、紫薯、胡萝卜、笋和青菜，还有一颗溏心蛋，上面堆着一大把萝卜丝。汤头浓厚鲜美，长时间慢炖的功力尽显。值得专门安排一个早上去吃的北海道美味。</span>' }
+];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" muted playsinline preload="metadata"></video>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
 // ── LIGHTBOX ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = p.caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
   document.getElementById('lbVideo').pause();
