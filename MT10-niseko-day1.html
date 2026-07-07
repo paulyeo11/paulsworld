@@ -490,7 +490,8 @@ updateBanner();
 
 // ── PHOTO JOURNAL DATA ──
 const galleryPhotos = [
-  { src: 'img_MT10-niseko-day1/01-cherry-tree-leaves.jpg', caption: 'The cherry tree at the 2023 Airbnb, now full of leaves', story: '<span class="en">Walked back to the Airbnb we called home for a whole month in 2023, at 825-15 Soga. The old cherry tree standing over the cornfield is bare no more — full of green leaves now, with Mt Yotei quietly watching in the background. Last time we were here, this same tree had no leaves at all. A small, quiet marker of how much time has passed.</span><span class="zh">走回2023年住了整整一个月的Airbnb，地址是曾我825-15。玉米田边那棵老樱树不再光秃秃的 — 现在长满了绿叶，羊蹄山静静地在远处守望。上次来的时候，这棵树还一片叶子都没有。时间悄悄流逝的一个小小印记。</span>' }
+  { src: 'img_MT10-niseko-day1/01-cherry-tree-leaves.jpg', caption: 'The cherry tree at the 2023 Airbnb, now full of leaves', story: '<span class="en">Walked back to the Airbnb we called home for a whole month in 2023, at 825-15 Soga. The old cherry tree standing over the cornfield is bare no more — full of green leaves now, with Mt Yotei quietly watching in the background. Last time we were here, this same tree had no leaves at all. A small, quiet marker of how much time has passed.</span><span class="zh">走回2023年住了整整一个月的Airbnb，地址是曾我825-15。玉米田边那棵老樱树不再光秃秃的 — 现在长满了绿叶，羊蹄山静静地在远处守望。上次来的时候，这棵树还一片叶子都没有。时间悄悄流逝的一个小小印记。</span>' },
+  { src: 'img_MT10-niseko-day1/01-tsubara-tsubara-curry.jpg', caption: 'Soup curry at Tsubara Tsubara, Hirafu', story: '<span class="en">The bowl that made the drive from Kutchan worth it — a deep, dark soup curry loaded with shiitake, purple sweet potato, carrot, bamboo shoot, greens and a soft-boiled egg, topped with a mountain of shredded daikon. Rich, savoury broth with real depth from that long simmer. Exactly the kind of Hokkaido meal worth planning a whole morning around.</span><span class="zh">从倶知安开车过来，就是为了这一碗 — 浓郁深色的汤咖喱，里面满满的香菇、紫薯、胡萝卜、笋和青菜，还有一颗溏心蛋，上面堆着一大把萝卜丝。汤头浓厚鲜美，长时间慢炖的功力尽显。值得专门安排一个早上去吃的北海道美味。</span>' }
 ];
 function renderGallery() {
   var grid = document.getElementById('galleryGrid');
@@ -537,6 +538,10 @@ function openLightbox(i) {
   document.getElementById('lbCaption').textContent = p.caption || '';
   document.getElementById('lightbox').classList.add('active');
 }
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
 document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
 
 // ── SHARE ──
@@ -552,60 +557,6 @@ function shareThisPage() {
       setTimeout(function(){ t.style.display = 'none'; }, 2200);
     });
   }
-}
-
-// ── PHOTO JOURNAL DATA ──
-const galleryPhotos = [
-  { src: 'img_MT10-niseko-day1/01-tsubara-tsubara-curry.jpg', caption: 'Soup curry at Tsubara Tsubara, Hirafu', story: '<span class="en">The bowl that made the drive from Kutchan worth it — a deep, dark soup curry loaded with shiitake, purple sweet potato, carrot, bamboo shoot, greens and a soft-boiled egg, topped with a mountain of shredded daikon. Rich, savoury broth with real depth from that long simmer. Exactly the kind of Hokkaido meal worth planning a whole morning around.</span><span class="zh">从倶知安开车过来，就是为了这一碗 — 浓郁深色的汤咖喱，里面满满的香菇、紫薯、胡萝卜、笋和青菜，还有一颗溏心蛋，上面堆着一大把萝卜丝。汤头浓厚鲜美，长时间慢炖的功力尽显。值得专门安排一个早上去吃的北海道美味。</span>' }
-];
-function renderGallery() {
-  var grid = document.getElementById('galleryGrid');
-  var emptyLog = document.getElementById('emptyLog');
-  grid.innerHTML = '';
-  if (galleryPhotos.length === 0) {
-    emptyLog.style.display = 'block';
-    return;
-  }
-  emptyLog.style.display = 'none';
-  galleryPhotos.forEach(function(p, i) {
-    var item = document.createElement('div');
-    item.className = 'pj-item';
-    var media = p.type === 'video'
-      ? '<video src="' + p.src + '" muted playsinline preload="metadata"></video>'
-      : '<img src="' + p.src + '" alt="" loading="lazy">';
-    item.innerHTML = media +
-      '<div class="pj-body">' +
-      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
-      '<div class="pj-text">' + p.story + '</div>' +
-      '</div>';
-    item.onclick = function () { openLightbox(i); };
-    grid.appendChild(item);
-  });
-}
-renderGallery();
-
-// ── LIGHTBOX ──
-function openLightbox(i) {
-  var p = galleryPhotos[i];
-  var img = document.getElementById('lbImg');
-  var video = document.getElementById('lbVideo');
-  if (p.type === 'video') {
-    img.style.display = 'none';
-    video.style.display = 'block';
-    video.src = p.src;
-    video.play().catch(function () {});
-  } else {
-    video.pause();
-    video.style.display = 'none';
-    img.style.display = 'block';
-    img.src = p.src;
-  }
-  document.getElementById('lbCaption').textContent = p.caption || '';
-  document.getElementById('lightbox').classList.add('active');
-}
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('active');
-  document.getElementById('lbVideo').pause();
 }
 
 // ── FULLSCREEN MAP BUTTON ──
