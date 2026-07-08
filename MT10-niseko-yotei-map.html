@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hotel to Mt Yotei West Entrance</title>
+<title>Hotel to Mt Yotei West Entrance to Toya Campsite</title>
 <link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
 <link rel="icon" type="image/png" href="/japan-icon.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
@@ -73,8 +73,8 @@
 <body>
 
 <div class="header">
-  <h1>🥾 Hotel → Mt Yotei West Entrance</h1>
-  <p>Torifito Hotel &amp; Pod Niseko → Hangetsuko (半月湖) Trailhead · ~15 min drive</p>
+  <h1>🥾 Hotel → Mt Yotei → 🏕️ Toya Campsite</h1>
+  <p>Torifito Hotel &amp; Pod Niseko → Hangetsuko (半月湖) Trailhead → Toya Mizube no Sato TAKARADA Campsite</p>
 </div>
 
 <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; Open Full Screen Map</button>
@@ -100,7 +100,8 @@
 <div class="legend">
   <span class="dot" style="background:#3fb950;"></span>Hotel (start)&nbsp;&nbsp;
   <span class="dot" style="background:#f0883e;"></span>Drive route&nbsp;&nbsp;
-  <span class="dot" style="background:#f85149;"></span>Hangetsuko west entrance (trailhead)
+  <span class="dot" style="background:#58a6ff;"></span>Hangetsuko west entrance (trailhead — hike all day)&nbsp;&nbsp;
+  <span class="dot" style="background:#f85149;"></span>Toya Mizube no Sato TAKARADA Campsite (camp for the night)
 </div>
 
 <div class="home-wrap">
@@ -116,7 +117,10 @@
 const stops = [
   { name: "Torifito Hotel & Pod Niseko", lat: 42.9007, lng: 140.7537, time: "06:00", note: "Depart hotel" },
   { name: "Kutchan, Route 58 southbound", lat: 42.8780, lng: 140.7580, time: "06:07", note: "En route south toward Kyogoku" },
-  { name: "Hangetsuko West Entrance", lat: 42.8469, lng: 140.7520, time: "06:15", note: "Arrive — park & start the hike" }
+  { name: "Hangetsuko West Entrance", lat: 42.8469, lng: 140.7520, time: "06:15", note: "Arrive — park & start the hike" },
+  { name: "Hangetsuko West Entrance", lat: 42.8469, lng: 140.7520, time: "16:15", note: "Finish hike (10 hr round trip) — depart for the campsite" },
+  { name: "Route 232 toward Lake Toya", lat: 42.7300, lng: 140.7950, time: "16:35", note: "En route southeast toward Toya-ko" },
+  { name: "Toya Mizube no Sato TAKARADA Campsite", lat: 42.641229, lng: 140.8544, time: "16:55", note: "Arrive — camp for the night by the lake" }
 ];
 
 function openMapFullscreen() {
@@ -157,18 +161,25 @@ function setMapType(type) {
   document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
 }
 
-const segColors = ['#f0883e', '#f0883e'];
 const fullLine = stops.map(s => [s.lat, s.lng]);
 
 for (let i = 0; i < stops.length - 1; i++) {
-  L.polyline([fullLine[i], fullLine[i+1]], { color: segColors[i], weight: 4, opacity: 0.85, dashArray: '6,8' }).addTo(map);
+  L.polyline([fullLine[i], fullLine[i+1]], { color: '#f0883e', weight: 4, opacity: 0.85, dashArray: '6,8' }).addTo(map);
 }
 
 stops.forEach((s, i) => {
-  const color = i === 0 ? '#3fb950' : (i === stops.length - 1 ? '#f85149' : '#f0883e');
+  const isSameAsPrev = i > 0 && s.lat === stops[i-1].lat && s.lng === stops[i-1].lng;
+  if (isSameAsPrev) return;
+  const color = i === 0 ? '#3fb950' : (i === stops.length - 1 ? '#f85149' : (s.name.indexOf('Hangetsuko') !== -1 ? '#58a6ff' : '#f0883e'));
+  const popupLines = [`${s.time} — ${s.note}`];
+  let j = i + 1;
+  while (j < stops.length && stops[j].lat === s.lat && stops[j].lng === s.lng) {
+    popupLines.push(`${stops[j].time} — ${stops[j].note}`);
+    j++;
+  }
   L.circleMarker([s.lat, s.lng], {
     radius: 7, color: '#0d1117', weight: 2, fillColor: color, fillOpacity: 1
-  }).addTo(map).bindPopup(`<b>${s.name}</b><br>${s.time} — ${s.note}`);
+  }).addTo(map).bindPopup(`<b>${s.name}</b><br>${popupLines.join('<br>')}`);
 });
 
 map.fitBounds(fullLine, { padding: [30, 30] });
