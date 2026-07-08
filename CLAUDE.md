@@ -147,6 +147,11 @@ Reference implementation: `S23.html` (The Secret BKE Trail, 18 June 2026)
 **Also applies to standalone single-map pages (added 2026-07-06):** `MT10-day6-map.html` (a standalone animated transfer map, not embedded in a day-log page) shipped without the fullscreen toggle — this rule was missed because the page had no other content around the map. Any page whose whole purpose *is* a map — animated or not — still needs the same "⛶ Open Full Screen Map" / "✕ Close Map" buttons as above. Don't assume a dedicated map page is exempt just because it's simple.
 
 ## Map Links Rule
+**Photo with GPS EXIF data (added 2026-07-08):** Whenever Paul sends a photo, always check its EXIF metadata for GPS coordinates first.
+- If GPS is present: automatically create all three map links (Google/Baidu/Amap) from those exact coordinates and place them directly below the photo — no need to ask, no address required from Paul.
+- If GPS is missing (common when photos are stripped of metadata by messaging apps): tell Paul explicitly that there's no GPS data, and ask him for the address instead of guessing the location.
+- Never guess a location from photo content alone (e.g. assuming a flower photo was taken at a specific shop) — only use it if GPS coordinates are actually embedded, or Paul confirms the location.
+
 Whenever Paul asks to "add map link", "add google location", or similar — always add **all three** map buttons together:
 1. **Google Maps** — `https://maps.google.com/?q=LAT,LNG&label=Name`
 2. **百度地图** — `https://map.baidu.com/search/URL_ENCODED_CHINESE_NAME`
