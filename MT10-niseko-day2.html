@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Niseko Day 2 — 8 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.red  { color: #ef4444; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* TIMELINE */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; position: relative; padding-bottom: 22px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95em; background: #161b22; border: 2px solid #f0a500;
+  z-index: 1;
+}
+.tl-item:not(:last-child)::before {
+  content: ''; position: absolute; left: 14px; top: 30px; bottom: 0;
+  width: 2px; background: rgba(240,165,0,0.25);
+}
+.tl-time { font-size: 0.78em; color: #8b949e; font-family: monospace; }
+.tl-title { font-size: 0.98em; font-weight: 700; color: #e6edf3; margin-top: 1px; }
+.tl-sub { font-size: 0.85em; color: #8b949e; margin-top: 3px; line-height: 1.55; }
+.tl-sub strong { color: #c9d1d9; }
+
+/* STAT ROW */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat-card { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 10px; text-align: center; }
+.stat-num { font-size: 1.3em; font-weight: 800; color: #f0a500; }
+.stat-label { font-size: 0.68em; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* MAP */
+.map-wrap { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#hikeMap { width: 100%; height: 260px; }
+#hikeMap.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border-radius: 0 !important;
+}
+.map-fullscreen-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 6px 14px; border-radius: 18px; cursor: pointer;
+  margin-bottom: 10px;
+}
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
+}
+.leaflet-popup-content-wrapper { background: #161b22 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 10px !important; color: #e6edf3 !important; }
+.leaflet-popup-tip { background: #161b22 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 14px !important; line-height: 1.5; }
+.popup-name { font-weight: 800; font-size: 1.05em; color: #fff; }
+.popup-desc { margin-top: 4px; color: #c9d1d9; font-size: 0.9em; }
+.leaflet-control-zoom a { background: #161b22 !important; color: #e6edf3 !important; border-color: rgba(255,255,255,0.12) !important; }
+.leaflet-control-attribution { background: rgba(13,17,23,0.8) !important; color: #484f58 !important; }
+.map-type-toggle { position:absolute; top:10px; right:48px; z-index:1000; display:flex; gap:4px; }
+.map-type-btn-sat { background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); border-radius:20px; padding:5px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; }
+.map-type-btn-street { background:#f59e0b; color:#0d1117; border:none; border-radius:20px; padding:5px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · <span class="gold">Niseko Day 2</span> — 🥾 Mt Yotei Hike</h1>
+  <div class="header-sub"><span class="en">Climbing Ezo Fuji from the west entrance · Wed, 8 Jul 2026</span><span class="zh">从西入口攀登虾夷富士 · 2026年7月8日（周三）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span></a>
+    <a href="MT10-niseko-day1.html" class="day-chip">📔 <span class="en">Niseko Day 1</span><span class="zh">二世谷第一天</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">🏔️ <span class="en">Mt Yotei — Hike Summary</span><span class="zh">羊蹄山 — 徒步概要</span></div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num">10h</div>
+      <div class="stat-label"><span class="en">Total Time</span><span class="zh">总时长</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">5h</div>
+      <div class="stat-label"><span class="en">Ascent</span><span class="zh">上山</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">5h</div>
+      <div class="stat-label"><span class="en">Descent</span><span class="zh">下山</span></div>
+    </div>
+  </div>
+
+  <div style="background:#161b22;border:1px solid rgba(16,185,129,0.3);border-radius:14px;padding:16px 18px;margin-top:14px;">
+    <div style="font-size:0.9em;color:#c9d1d9;line-height:1.75;">
+      <span class="en">Starting from the <strong style="color:#6ee7b7;">west entrance</strong> — the Hangetsuko (半月湖) parking lot trailhead, where the car was left for the day. Ezo Fuji (蝦夷富士), a.k.a. Mt Yotei, is a near-perfect volcanic cone standing <strong style="color:#e6edf3;">1,898 m</strong> — a full day out and back, roughly <strong style="color:#f0a500;">5 hours up, 5 hours down</strong>.</span>
+      <span class="zh">从<strong style="color:#6ee7b7;">西入口</strong>出发 — 半月湖停车场登山口，把车停在这里一整天。虾夷富士（蝦夷富士），也就是羊蹄山，是一座近乎完美的火山锥，海拔<strong style="color:#e6edf3;">1,898米</strong> — 一整天的往返行程，大约<strong style="color:#f0a500;">上山5小时，下山5小时</strong>。</span>
+    </div>
+  </div>
+
+  <div class="section-title">📋 <span class="en">Today's Plan</span><span class="zh">今日计划</span></div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot">🚗</div>
+      <div>
+        <div class="tl-time"><span class="en">Early morning</span><span class="zh">清晨</span></div>
+        <div class="tl-title"><span class="en">Drive to Hangetsuko (半月湖) west entrance</span><span class="zh">开车前往半月湖西入口</span></div>
+        <div class="tl-sub"><span class="en">Park at the Hangetsuko parking lot — the west entrance trailhead into Shikotsu-Toya National Park.</span><span class="zh">停车于半月湖停车场 — 支笏洞爺国立公园的西入口登山口。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">🥾</div>
+      <div>
+        <div class="tl-time"><span class="en">~5 hours</span><span class="zh">约5小时</span></div>
+        <div class="tl-title"><span class="en">Ascent to the summit</span><span class="zh">上山至山顶</span></div>
+        <div class="tl-sub"><span class="en">Climbing through the special protection zone of Shikotsu-Toya National Park — no picking plants or animals, no leaving the trail.</span><span class="zh">穿越支笏洞爺国立公园的特别保护地区 — 不采摘动植物，不离开步道。</span></div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot">⬇️</div>
+      <div>
+        <div class="tl-time"><span class="en">~5 hours</span><span class="zh">约5小时</span></div>
+        <div class="tl-title"><span class="en">Descent back to the west entrance</span><span class="zh">下山返回西入口</span></div>
+        <div class="tl-sub"><span class="en">Back down the same way to the Hangetsuko parking lot — 10 hours total for the round trip.</span><span class="zh">原路下山返回半月湖停车场 — 全程往返共10小时。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Trailhead Location</span><span class="zh">登山口位置</span></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">⛶ <span class="en">Open Full Screen Map</span><span class="zh">全屏查看地图</span></button>
+  <div class="map-wrap">
+    <div class="map-type-toggle">
+      <button onclick="setMapType('satellite')" id="btn-satellite" class="map-type-btn-sat">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" class="map-type-btn-street">🗺 Street</button>
+    </div>
+    <div id="hikeMap"></div>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+    <a href="https://maps.google.com/?q=42.8469,140.7520&label=Hangetsuko+West+Entrance" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%8D%8A%E6%9C%88%E6%B9%96%E9%A7%90%E8%BB%8A%E5%A0%B4" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=140.7520,42.8469&name=%E5%8D%8A%E6%9C%88%E6%B9%96%E8%A5%BF%E5%85%A5%E5%8F%A3" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span></div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Niseko Day 2 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script>
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-08T00:00:00+09:00');
+  var end = new Date('2026-07-09T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var days = Math.ceil((start - now) / 86400000);
+    banner.innerHTML = '🕓 <span class="en">Niseko Day 2 is in <strong>' + days + ' day' + (days === 1 ? '' : 's') + '</strong>.</span><span class="zh">距离二世谷第二天还有 <strong>' + days + '</strong> 天。</span>';
+  } else if (now >= start && now < end) {
+    banner.innerHTML = '🟢 <span class="en"><strong>Niseko Day 2 is today!</strong> On the trail up Mt Yotei.</span><span class="zh"><strong>今天就是二世谷第二天！</strong>正在羊蹄山步道上。</span>';
+    banner.style.background = 'rgba(16,185,129,0.15)';
+    banner.style.borderColor = 'rgba(16,185,129,0.4)';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Niseko Day 2 is complete — see the log below.</span><span class="zh">二世谷第二天已结束 — 请看下方日记。</span>';
+    banner.style.background = 'rgba(240,165,0,0.1)';
+    banner.style.borderColor = 'rgba(240,165,0,0.3)';
+  }
+}
+updateBanner();
+
+// ── PHOTO JOURNAL DATA ──
+const galleryPhotos = [
+  { src: 'img_MT10-niseko-day2/01-yotei-nishiguchi-trailhead-sign.jpg', caption: 'Shikotsu-Toya National Park sign, Hangetsuko west entrance', story: '<span class="en">Standing at the <strong>Shikotsu-Toya National Park (支笏洞爺国立公園)</strong> information board right at the west entrance trailhead by Hangetsuko (半月湖) — 現在地 ("current location") marked with a red arrow at the bottom of the map, Mt Yotei\'s special protection zone traced in orange up top. The rules are simple: don\'t damage plants or animals in the protected zone, don\'t take anything, don\'t bring anything in. From here it\'s the start of a full 10-hour round trip — about 5 hours climbing up, 5 hours coming back down.</span><span class="zh">站在半月湖西入口登山口的<strong>支笏洞爺国立公园（支笏洞爺国立公園）</strong>告示牌前 — 地图底部用红色箭头标出"現在地"（当前位置），上方橙色轮廓圈出的是羊蹄山的特别保护地区。规则很简单：保护区内不可伤害动植物，不可带走任何东西，也不可带入任何东西。从这里开始，是一整天10小时的往返行程 — 大约上山5小时，下山5小时。</span>' }
+];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  if (!galleryPhotos.length) return;
+  var html = '';
+  galleryPhotos.forEach(function(p, i) {
+    html += '<div class="pj-item" onclick="openLightbox(' + i + ')">' +
+      '<img src="' + p.src + '" alt="' + p.caption + '" loading="lazy">' +
+      '<div class="pj-body">' +
+        '<div class="pj-num"><span class="en">Photo ' + (i+1) + ' of ' + galleryPhotos.length + '</span><span class="zh">照片 ' + (i+1) + ' / ' + galleryPhotos.length + '</span></div>' +
+        '<div class="pj-text">' + p.story + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  grid.innerHTML = html;
+}
+renderGallery();
+
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  document.getElementById('lbImg').src = p.src;
+  document.getElementById('lbImg').style.display = 'block';
+  document.getElementById('lbVideo').style.display = 'none';
+  document.getElementById('lbCaption').textContent = p.caption;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+
+// ── MAP ──
+var tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri',maxZoom:18}),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19})
+};
+var hikeMap = L.map('hikeMap', { fullscreenControl: true }).setView([42.8469, 140.7520], 13);
+tileLayers.street.addTo(hikeMap);
+var currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  hikeMap.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(hikeMap);
+  currentTile = type;
+  document.getElementById('btn-satellite').className = type === 'satellite' ? 'map-type-btn-street' : 'map-type-btn-sat';
+  document.getElementById('btn-street').className = type === 'street' ? 'map-type-btn-street' : 'map-type-btn-sat';
+}
+var trailheadIcon = L.divIcon({
+  html: '<div style="background:#ef4444;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9em;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4);">🥾</div>',
+  className: '', iconSize: [28,28], iconAnchor: [14,14]
+});
+L.marker([42.8469, 140.7520], { icon: trailheadIcon }).addTo(hikeMap)
+  .bindPopup('<div class="popup-name">Hangetsuko West Entrance (半月湖西入口)</div><div class="popup-desc">Mt Yotei trailhead — 10 hr round trip, 5 hr up / 5 hr down</div>');
+var yoteiIcon = L.divIcon({
+  html: '<div style="background:#f0a500;color:#0d1117;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85em;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4);">⛰️</div>',
+  className: '', iconSize: [26,26], iconAnchor: [13,13]
+});
+L.marker([42.8317, 140.8103], { icon: yoteiIcon }).addTo(hikeMap)
+  .bindPopup('<div class="popup-name">Mt Yotei Summit (羊蹄山山頂)</div><div class="popup-desc">1,898 m — Ezo Fuji</div>');
+L.polyline([[42.8469,140.7520],[42.8317,140.8103]], { color:'#f0a500', weight:3, dashArray:'6,8' }).addTo(hikeMap);
+
+function openMapFullscreen() {
+  document.getElementById('hikeMap').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  setTimeout(function(){ hikeMap.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('hikeMap').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  setTimeout(function(){ hikeMap.invalidateSize(); }, 100);
+}
+
+// ── SHARE ──
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+</body>
+</html>
