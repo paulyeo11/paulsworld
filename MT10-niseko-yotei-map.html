@@ -161,12 +161,6 @@ function setMapType(type) {
   document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
 }
 
-const fullLine = stops.map(s => [s.lat, s.lng]);
-
-for (let i = 0; i < stops.length - 1; i++) {
-  L.polyline([fullLine[i], fullLine[i+1]], { color: '#f0883e', weight: 4, opacity: 0.85, dashArray: '6,8' }).addTo(map);
-}
-
 stops.forEach((s, i) => {
   const isSameAsPrev = i > 0 && s.lat === stops[i-1].lat && s.lng === stops[i-1].lng;
   if (isSameAsPrev) return;
@@ -182,10 +176,8 @@ stops.forEach((s, i) => {
   }).addTo(map).bindPopup(`<b>${s.name}</b><br>${popupLines.join('<br>')}`);
 });
 
-map.fitBounds(fullLine, { padding: [30, 30] });
-
 const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [26,26], iconAnchor: [13,13] });
-const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+const mover = L.marker([stops[0].lat, stops[0].lng], { icon: carIcon }).addTo(map);
 
 function toMinutes(t) {
   const [h,m] = t.split(':').map(Number);
@@ -204,25 +196,69 @@ speedSlider.addEventListener('input', () => {
   speedVal.textContent = speedMultiplier + '×';
 });
 
-function interpolate(p) {
-  const targetMin = startMin + p * totalMin;
-  for (let i = 0; i < stops.length - 1; i++) {
-    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i+1].time);
-    if (targetMin >= t0 && targetMin <= t1) {
-      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
-      const lat = stops[i].lat + (stops[i+1].lat - stops[i].lat) * segP;
-      const lng = stops[i].lng + (stops[i+1].lng - stops[i].lng) * segP;
-      const curMin = Math.round(targetMin);
-      const hh = String(Math.floor(curMin/60)).padStart(2,'0');
-      const mm = String(curMin%60).padStart(2,'0');
-      return { lat, lng, timeStr: `${hh}:${mm}` };
-    }
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function cumulativeFractions(coords) {
+  const dist = [0];
+  for (let i = 1; i < coords.length; i++) {
+    dist.push(dist[i-1] + haversine(coords[i-1][0], coords[i-1][1], coords[i][0], coords[i][1]));
   }
-  return { lat: stops[stops.length-1].lat, lng: stops[stops.length-1].lng, timeStr: stops[stops.length-1].time };
+  const total = dist[dist.length - 1] || 1;
+  return dist.map(d => d / total);
+}
+
+// Fetch real driving-road geometry from OSRM so the route follows actual roads
+// instead of a straight line between stops.
+async function fetchDrivingRoute(a, b) {
+  if (a.lat === b.lat && a.lng === b.lng) {
+    return [[a.lat, a.lng], [b.lat, b.lng]];
+  }
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data.routes && data.routes[0]) {
+      return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+    }
+  } catch (e) { /* fall through to straight line below */ }
+  return [[a.lat, a.lng], [b.lat, b.lng]];
 }
 
 const statusEl = document.getElementById('status');
 const timeLabel = document.getElementById('timeLabel');
+statusEl.textContent = 'Loading driving route… ';
+
+let legs = [];
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (const leg of legs) {
+    if (targetMin >= leg.startMin && targetMin <= leg.endMin) {
+      const legP = leg.endMin > leg.startMin ? (targetMin - leg.startMin) / (leg.endMin - leg.startMin) : 0;
+      const coords = leg.coords, cf = leg.cumFrac;
+      for (let k = 0; k < coords.length - 1; k++) {
+        if (legP >= cf[k] && legP <= cf[k+1]) {
+          const segP = cf[k+1] > cf[k] ? (legP - cf[k]) / (cf[k+1] - cf[k]) : 0;
+          const lat = coords[k][0] + (coords[k+1][0] - coords[k][0]) * segP;
+          const lng = coords[k][1] + (coords[k+1][1] - coords[k][1]) * segP;
+          const curMin = Math.round(targetMin);
+          const hh = String(Math.floor(curMin/60)).padStart(2,'0');
+          const mm = String(curMin%60).padStart(2,'0');
+          return { lat, lng, timeStr: `${hh}:${mm}` };
+        }
+      }
+      const last = coords[coords.length - 1];
+      return { lat: last[0], lng: last[1], timeStr: stops[stops.length-1].time };
+    }
+  }
+  return { lat: stops[stops.length-1].lat, lng: stops[stops.length-1].lng, timeStr: stops[stops.length-1].time };
+}
 
 function step() {
   progress += 0.0025 * speedMultiplier;
@@ -245,9 +281,25 @@ function step() {
   requestAnimationFrame(step);
 }
 
-statusEl.textContent = 'En route — ';
-statusEl.appendChild(timeLabel);
-step();
+(async function init() {
+  let allCoords = [];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const coords = await fetchDrivingRoute(stops[i], stops[i+1]);
+    L.polyline(coords, { color: '#f0883e', weight: 4, opacity: 0.85, dashArray: '6,8' }).addTo(map);
+    legs.push({
+      startMin: toMinutes(stops[i].time),
+      endMin: toMinutes(stops[i+1].time),
+      coords,
+      cumFrac: cumulativeFractions(coords)
+    });
+    allCoords = allCoords.concat(coords);
+  }
+  map.fitBounds(allCoords, { padding: [30, 30] });
+  mover.setLatLng(legs[0].coords[0]);
+  statusEl.textContent = 'En route — ';
+  statusEl.appendChild(timeLabel);
+  step();
+})();
 </script>
 
 </body>
