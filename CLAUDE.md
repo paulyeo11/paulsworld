@@ -274,6 +274,7 @@ Every article/story that contains photos **must** include a **Photo Journal** se
 - Photo displayed full-width (or near full-width)
 - Below it: "Photo XX of YY" label + a paragraph describing what is shown, what was happening, and what Paul was thinking or feeling
 - Tap photo to open lightbox
+- **Date stamp (added 2026-07-08):** every photo must show the date it was taken as a small badge overlaid at the **bottom-right corner of the photo itself** (not just in the surrounding text). Use the photo's EXIF date if available, otherwise the day-log's known date. Bilingual: `<span class="en">7 Jul 2026</span><span class="zh">2026年7月7日</span>` inside a `.pj-date` badge (`position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,.6);color:#f4c869;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:6px;`), with the photo wrapper set to `position:relative`. Also append the date to the lightbox caption. Reference implementation: `MT10-niseko-day1.html`.
 - Reference implementation: `S23.html` photo journal section
 
 ### 🔗 Share Button Rule (Standing Default — added 2026-06-20)
