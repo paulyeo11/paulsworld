@@ -67,6 +67,9 @@ Whenever Paul sends a photo during an active trip (e.g. MT09, MT10), automatical
 - Commit and push immediately.
 - If it's genuinely unclear which day/trip a photo belongs to, ask once — otherwise default to "today's" day page for the currently active trip.
 
+### 🎬 Video Poster Frame Rule (Standing Default — added 2026-07-08)
+Whenever a video is added to a photo journal (`galleryPhotos` array or equivalent), always extract the thumbnail/poster image from **frame at 0:02** (not frame 0) — `ffmpeg -y -ss 2 -i input.mp4 -vframes 1 poster.jpg` or equivalent. Frame 0 is often still mid-transition/blank; 0:02 is a safer default for a clean poster. Set it via the `poster` attribute on the `<video>` element (both the grid thumbnail and the lightbox) so it displays that frame instead of a black box before playback. Only deviate if Paul specifies a different timestamp.
+
 ## Site Info
 - **Live URL:** https://paulsworld.vercel.app
 - **GitHub repo:** paulyeo11/paulsworld · **Branch:** main (Vercel auto-deploys from `main`)
