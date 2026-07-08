@@ -213,26 +213,8 @@ function cumulativeFractions(coords) {
   return dist.map(d => d / total);
 }
 
-// Fetch real driving-road geometry from OSRM so the route follows actual roads
-// instead of a straight line between stops.
-async function fetchDrivingRoute(a, b) {
-  if (a.lat === b.lat && a.lng === b.lng) {
-    return [[a.lat, a.lng], [b.lat, b.lng]];
-  }
-  try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data && data.routes && data.routes[0]) {
-      return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-    }
-  } catch (e) { /* fall through to straight line below */ }
-  return [[a.lat, a.lng], [b.lat, b.lng]];
-}
-
 const statusEl = document.getElementById('status');
 const timeLabel = document.getElementById('timeLabel');
-statusEl.textContent = 'Loading driving route… ';
 
 let legs = [];
 
@@ -281,10 +263,10 @@ function step() {
   requestAnimationFrame(step);
 }
 
-(async function init() {
+(function init() {
   let allCoords = [];
   for (let i = 0; i < stops.length - 1; i++) {
-    const coords = await fetchDrivingRoute(stops[i], stops[i+1]);
+    const coords = [[stops[i].lat, stops[i].lng], [stops[i+1].lat, stops[i+1].lng]];
     L.polyline(coords, { color: '#f0883e', weight: 4, opacity: 0.85, dashArray: '6,8' }).addTo(map);
     legs.push({
       startMin: toMinutes(stops[i].time),
