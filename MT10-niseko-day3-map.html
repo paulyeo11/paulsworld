@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Niseko Day 3 — Animated Route Map</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, system-ui, sans-serif;
+    background: #0d1117; color: #e6edf3;
+  }
+  .home-btn {
+    position: fixed; bottom: 16px; right: 16px; z-index: 999;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.55); text-decoration: none;
+    font-size: 0.78em; font-weight: 600;
+    padding: 6px 12px; border-radius: 20px; white-space: nowrap;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .home-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+  .header { padding: 20px 18px 10px; text-align: center; }
+  .header h1 { font-size: 1.2em; margin: 0 0 4px; font-weight: 800; }
+  .header h1 .gold { color: #f0a500; }
+  .header p { font-size: 0.85em; color: #8b949e; margin: 0; }
+  .header-actions { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .back-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+    color: #f0a500; font-size: 0.78em; font-weight: 700;
+    padding: 5px 12px; border-radius: 14px; text-decoration: none;
+  }
+  .share-btn {
+    font-size: 0.78em; padding: 6px 14px; border-radius: 14px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+    color: #fff; font-weight: 700; cursor: pointer;
+  }
+  .share-toast {
+    display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+    background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+    font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
+
+  .map-fullscreen-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+    color: #f0a500; font-size: 0.82em; font-weight: 700;
+    padding: 9px 16px; border-radius: 18px; cursor: pointer;
+    margin: 16px 16px 10px; width: calc(100% - 32px);
+  }
+  .map-wrap { position: relative; margin: 0 16px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+  #map { width: 100%; height: 58vh; }
+  #map.map-fullscreen {
+    position: fixed !important; top: 0; left: 0;
+    width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+    z-index: 9999; border-radius: 0 !important;
+  }
+  .map-wrap.map-fullscreen-wrap { margin: 0; border-radius: 0; border: none; }
+  #mapCloseBtn {
+    display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+    background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+    cursor: pointer; align-items: center; gap: 6px;
+  }
+
+  .controls {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: #161b22; margin: 0 16px; border-radius: 0 0 14px 14px;
+    border: 1px solid rgba(255,255,255,0.08); border-top: none;
+  }
+  #status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+  #timeLabel { font-weight: 700; color: #58a6ff; }
+  .play-btn {
+    background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+    color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
+    border-radius: 14px; cursor: pointer; white-space: nowrap;
+  }
+  .speed-control {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; margin: 8px 16px 0;
+  }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+  .speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  .speed-control.fs-overlay {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+    background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
+  }
+
+  .legend {
+    margin: 14px 16px 0; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+    background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  }
+  .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+
+  .popup-card { font-family: -apple-system, system-ui, sans-serif; }
+  .popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+  .popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+  .popup-card .pmeta { font-size: 0.72em; color: #57606a; }
+
+  .footer-note {
+    text-align: center; padding: 18px 16px 30px; font-size: 0.72em;
+    color: #484f58; font-family: monospace;
+  }
+</style>
+<script src="/bilingual.js"></script>
+<style>
+.ja{display:none!important}
+body.lang-ja .ja{display:inline!important}
+body.lang-ja .zh{display:none!important}
+body.lang-ja .en{display:none!important}
+.ja-block{display:none!important}
+body.lang-ja .ja-block{display:block!important}
+body.lang-ja .en-block{display:none!important}
+</style>
+<script>
+(function(){
+  function setLang3(lang){
+    document.body.classList.remove('lang-zh','lang-ja');
+    if(lang==='zh') document.body.classList.add('lang-zh');
+    if(lang==='ja') document.body.classList.add('lang-ja');
+    document.querySelectorAll('.pw-lang-btn').forEach(function(btn,i){
+      btn.classList.toggle('active',(lang==='en'&&i===0)||(lang==='zh'&&i===1)||(lang==='ja'&&i===2));
+    });
+    try{ localStorage.setItem('pw-lang', lang); }catch(e){}
+  }
+  window.setLang = setLang3;
+  function addJaButton(){
+    var wrap = document.querySelector('.pw-lang-toggle');
+    if(!wrap || wrap.querySelector('.pw-lang-ja-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'pw-lang-btn pw-lang-ja-btn';
+    btn.innerHTML = '&#x1F1EF;&#x1F1F5; 日本語';
+    btn.onclick = function(){ setLang3('ja'); };
+    wrap.appendChild(btn);
+    var saved;
+    try{ saved = localStorage.getItem('pw-lang'); }catch(e){}
+    if(saved === 'ja') setLang3('ja');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', addJaButton);
+  } else {
+    addJaButton();
+  }
+})();
+</script>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🗾 MT10 · Niseko Day 3 — <span class="gold"><span class="en">Animated Route Map</span><span class="zh">动态路线地图</span><span class="ja">アニメーション経路マップ</span></span></h1>
+  <p><span class="en">Every place visited today, 9 Jul 2026 · Lake Toya loop drive</span><span class="zh">今天（2026年7月9日）去过的每一个地方 · 洞爺湖环湖自驾</span><span class="ja">今日（2026年7月9日）訪れた場所すべて · 洞爺湖周遊ドライブ</span></p>
+  <div class="header-actions">
+    <a href="MT10-niseko-day3.html" class="back-chip">📔 <span class="en">Back to Day 3 Log</span><span class="zh">返回第三天日记</span><span class="ja">3日目の日記へ戻る</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span><span class="ja">シェア</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
+<div class="map-wrap" id="mapWrap">
+  <div id="map"></div>
+  <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+    <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+    <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+  </div>
+</div>
+<button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+
+<div class="controls">
+  <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
+  <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">08:00</span></div>
+</div>
+
+<div class="speed-control" id="speedControl">
+  <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+  <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+  <span id="speedVal">1&times;</span>
+</div>
+
+<div class="legend">
+  <span class="dot" style="background:#f85149;"></span><span class="en">Start / End</span><span class="zh">起点/终点</span><span class="ja">出発/終着</span>&nbsp;&nbsp;
+  <span class="dot" style="background:#f0883e;"></span><span class="en">Road / transport stop</span><span class="zh">交通/道路站点</span><span class="ja">交通・道路の立ち寄り</span>&nbsp;&nbsp;
+  <span class="dot" style="background:#3fb950;"></span><span class="en">Nature / volcano</span><span class="zh">自然/火山</span><span class="ja">自然・火山</span>&nbsp;&nbsp;
+  <span class="dot" style="background:#58a6ff;"></span><span class="en">Water / lake</span><span class="zh">湖泊/水域</span><span class="ja">湖・水辺</span>
+</div>
+
+<div style="text-align:center;padding:10px 16px 0;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Niseko Day 3 · Animated Route Map · Japan 2026 · paulsworld.vercel.app</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+const stops = [
+  { name: "Niseko Lodge — Blossom Bridge Walk", lat: 42.8680, lng: 140.7420, time: "08:00", type: "start",
+    img: "img_MT10-niseko-day3/01-blossom-bridge.jpg",
+    note: "Morning walk near the lodge — a footbridge draped in white blossoms." },
+  { name: "Lake Toya — Lakeside Arrival", lat: 42.5765, lng: 140.8395, time: "09:00", type: "water",
+    img: "img_MT10-niseko-day3/02-lake-toya-arrival-poster.jpg",
+    note: "First time back in 3 years — quiet lakeside grass and bronze sculpture." },
+  { name: "Mt Usu Ropeway Station", lat: 42.5390, lng: 140.8603, time: "10:30", type: "road",
+    img: "img_MT10-niseko-day3/03-usu-ropeway.jpg",
+    note: "Drizzly stop at the ropeway base station on the loop." },
+  { name: "Funkatei 噴火亭 — Lunch", lat: 42.538972, lng: 140.860250, time: "12:00", type: "road",
+    img: "", icon: "🍽️",
+    note: "\"Eruption hall\" restaurant right at the ropeway base — warm bowl after a damp morning." },
+  { name: "Cable Car Tour Group", lat: 42.5392, lng: 140.8605, time: "12:30", type: "road",
+    img: "img_MT10-niseko-day3/04-cable-car-tourists.jpg",
+    note: "Watched a big tour group heading for the cable car — self-drive still wins." },
+  { name: "Nakatoya Campsite 仲洞爺", lat: 42.5560, lng: 140.8650, time: "14:00", type: "water",
+    img: "img_MT10-niseko-day3/05-nakatoya-instructor.jpg",
+    note: "Quiet lakeside campsite on the south shore — an instructor teaching a student." },
+  { name: "Showa-Shinzan 昭和新山", lat: 42.5426, lng: 140.8642, time: "15:00", type: "nature",
+    img: "img_MT10-niseko-day3/06-showa-shinzan.jpg",
+    note: "The volcano born in WWII, still steaming — 398m dome that didn't exist before 1943." },
+  { name: "Kaiten Zushi Choise, Date — Dinner", lat: 42.4890, lng: 140.8470, time: "18:30", type: "end",
+    img: "", icon: "🍣",
+    note: "Conveyor-belt sushi in Date city, capping a long loop-drive day." }
+];
+
+function openMapFullscreen() {
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+const map = L.map('map', { zoomControl: true }).setView([42.65, 140.80], 10);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+
+L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + (i + 1) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + s.icon + '</div>';
+  marker.bindPopup(
+    '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + (i + 1) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    '<a href="MT10-niseko-day3.html" style="display:inline-block;margin-top:6px;font-size:0.75em;font-weight:700;color:#f0a500;text-decoration:none;">View Full Story →</a>' +
+    '</div>'
+  );
+});
+
+map.fitBounds(fullLine, { padding: [30, 30] });
+
+const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+let speedMultiplier = 1;
+let playing = true;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    requestAnimationFrame(step);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+  }
+}
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const lat = stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP;
+      const lng = stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP;
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      return { lat, lng, timeStr: `${hh}:${mm}` };
+    }
+  }
+  return { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng, timeStr: stops[stops.length - 1].time };
+}
+
+const statusEl = document.getElementById('status');
+const timeLabel = document.getElementById('timeLabel');
+
+function step() {
+  if (!playing) return;
+  progress += 0.0018 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    timeLabel.textContent = pos.timeStr;
+    statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
+    setTimeout(() => {
+      progress = 0;
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      requestAnimationFrame(step);
+    }, 1400);
+    return;
+  }
+  const pos = interpolate(progress);
+  mover.setLatLng([pos.lat, pos.lng]);
+  document.getElementById('timeLabel').textContent = pos.timeStr;
+  requestAnimationFrame(step);
+}
+step();
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+
+</body>
+</html>
