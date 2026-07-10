@@ -106,6 +106,15 @@
   }
   .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
 
+  #mapStage { display: none; }
+  body.show-map #mapStage { display: block; }
+  body.show-map .arrival-card { display: none; }
+  .map-hint {
+    display: none; text-align: center; font-size: 0.78em; color: #8b949e;
+    padding: 8px 16px 0;
+  }
+  body:not(.show-map) .map-hint { display: block; }
+
   .arrival-card { margin: 14px 0 0; }
   .arrival-photo {
     position: relative; width: 100%; height: 100vh; height: 100dvh;
@@ -208,15 +217,19 @@ body.lang-ja .en-block{display:none!important}
   🏠 <span class="en"><strong>Arrived back at the hotel</strong> — here's everywhere today's drive went, from this morning to tonight.</span><span class="zh"><strong>已返回酒店</strong> — 这是今天从早到晚自驾去过的每一个地方。</span><span class="ja"><strong>ホテルに到着</strong> — 今朝から今夜までのドライブで訪れた場所はこちら。</span>
 </div>
 
-<button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
-<div class="map-wrap" id="mapWrap">
-  <div id="map"></div>
-  <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
-    <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
-    <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+<div id="mapStage">
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
   </div>
 </div>
 <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+
+<div class="arrival-card" id="arrivalCard"></div>
 
 <div class="controls">
   <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
@@ -229,7 +242,7 @@ body.lang-ja .en-block{display:none!important}
   <span id="speedVal">1&times;</span>
 </div>
 
-<div class="arrival-card" id="arrivalCard"></div>
+<div class="map-hint" id="mapHint">⏸ <span class="en">Pause to see the map</span><span class="zh">暂停以查看地图</span><span class="ja">一時停止すると地図が見えます</span></div>
 
 <div class="legend">
   <span class="dot" style="background:#f85149;"></span><span class="en">Hotel — Start / End</span><span class="zh">酒店 — 起点/终点</span><span class="ja">ホテル — 出発/終着</span>&nbsp;&nbsp;
@@ -280,6 +293,7 @@ function openMapFullscreen() {
     window.top.location.href = window.location.href;
     return;
   }
+  document.body.classList.add('show-map');
   document.getElementById('map').classList.add('map-fullscreen');
   document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
   document.getElementById('mapCloseBtn').style.display = 'flex';
@@ -379,9 +393,16 @@ function togglePlay() {
   const btn = document.getElementById('playBtn');
   if (playing) {
     btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    if (document.getElementById('map').classList.contains('map-fullscreen')) closeMapFullscreen();
+    document.body.classList.remove('show-map');
     requestAnimationFrame(step);
   } else {
     btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+    document.body.classList.add('show-map');
+    setTimeout(function () {
+      map.invalidateSize();
+      map.fitBounds(fullLine, { padding: [30, 30] });
+    }, 60);
   }
 }
 
@@ -409,7 +430,7 @@ let arrivedIndex = -1;
 function showArrival(i) {
   const s = stops[i];
   markerRefs.forEach(m => m.closePopup());
-  if (markerRefs[i]) markerRefs[i].openPopup();
+  if (markerRefs[i] && document.body.classList.contains('show-map')) markerRefs[i].openPopup();
   const card = document.getElementById('arrivalCard');
   if (!card) return;
   const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
