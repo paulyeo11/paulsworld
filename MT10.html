@@ -285,6 +285,7 @@
   <button class="tab-btn" onclick="switchTab('highlights')">🌟 <span class="en">Highlights</span><span class="zh">亮点</span></button>
   <button class="tab-btn" onclick="switchTab('mustsee')">🗼 <span class="en">Must See</span><span class="zh">必去景点</span></button>
   <button class="tab-btn" onclick="switchTab('restaurants')">🍜 <span class="en">Restaurants</span><span class="zh">餐厅</span></button>
+  <button class="tab-btn" onclick="switchTab('poi')">📍 <span class="en">POI</span><span class="zh">已访景点</span></button>
   <button class="tab-btn" onclick="switchTab('tips')">💡 <span class="en">Tips</span><span class="zh">贴士</span></button>
 </div>
 
@@ -1796,6 +1797,16 @@
     </div>
   </div>
 
+  <!-- POI PANEL (places actually visited) -->
+  <div id="panel-poi" class="panel">
+    <div class="panel-scroll">
+      <div style="padding:12px 16px 4px;font-size:0.85em;color:#8b949e;line-height:1.6;">
+        <span class="en">Every place Paul &amp; Joanne actually stopped at, day by day — pulled from the photo &amp; day-log entries.</span><span class="zh">Paul 和 Joanne 实际到访过的每一个地方，按天排列 — 摘自照片与每日日记。</span>
+      </div>
+      <div id="poiList"></div>
+    </div>
+  </div>
+
   <!-- TIPS PANEL -->
   <div id="panel-tips" class="panel">
     <div class="panel-scroll">
@@ -1867,6 +1878,120 @@ function switchTab(name) {
   });
   if (name === 'drive') { setTimeout(initDriveMap, 50); }
 }
+
+// POI — places actually visited (from photo & day-log entries)
+var poiData = [
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'✈️', nameEn:'Singapore Changi Airport T2', nameZh:'樟宜机场2号航站楼', lat:1.3521, lng:103.8198, descEn:'Departure airport — iconic blue LED waterfall installation.', descZh:'出发机场 — 标志性蓝色LED瀑布装置。' },
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'✈️', nameEn:'Haneda Airport', nameZh:'羽田机场', lat:35.5494, lng:139.7798, descEn:'Actual arrival airport in Tokyo.', descZh:'实际抵达东京的机场。' },
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'🚉', nameEn:'Keikyu Kamata Station', nameZh:'京急蒲田站', lat:35.5613, lng:139.7163, descEn:'First train station after landing, transfer point to hotel.', descZh:'落地后第一个车站，转乘前往酒店。' },
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'🏨', nameEn:'BON Tokyo Kamata Parkside', nameZh:'BON东京蒲田Parkside', lat:35.5626, lng:139.7152, descEn:'Serviced-apartment hotel — base for Tokyo days 1–5.', descZh:'服务式公寓酒店 — 东京行程第1–5天落脚点。' },
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'🛍️', nameEn:'Kamata Shopping Arcade', nameZh:'蒲田商店街', lat:35.5624, lng:139.7148, descEn:'Covered local shopping &amp; dining arcade near the hotel.', descZh:'酒店附近有顶盖的购物餐饮商店街。' },
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'🍝', nameEn:'Popolamama, Kamata', nameZh:'波波拉马马（蒲田店）', lat:35.5620, lng:139.7150, descEn:'Japanese-Italian wafu-pasta restaurant — Day 1 dinner.', descZh:'和风意面日式意大利餐厅 — 第一天晚餐。' },
+  { day:'Day 1', date:'1 Jul 2026', file:'MT10-day1.html', icon:'🛒', nameEn:'TRIAL × SEIYU Supermarket, Kamata', nameZh:'TRIAL×SEIYU超市（蒲田）', lat:35.5615, lng:139.7140, descEn:'Fully self-checkout supermarket with a tax-free counter.', descZh:'全自助结账超市，设有免税柜台。' },
+
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🏢', nameEn:'Shibuya Mark City', nameZh:'涩谷Mark City', lat:35.6580, lng:139.7016, descEn:'Complex above Shibuya Station, East Mall entrance.', descZh:'涩谷站上方的综合体，East Mall入口。' },
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🍣', nameEn:'Sushi no Midori, Mark City', nameZh:'美登利寿司（Mark City店）', lat:35.6579, lng:139.7017, descEn:"Famous sushi chain since 1977 — lunch with Joanne's sister.", descZh:'创立于1977年的知名寿司连锁店 — 与Joanne姐姐共进午餐。' },
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🚦', nameEn:'Shibuya Scramble Crossing', nameZh:'涩谷十字路口', lat:35.6595, lng:139.7005, descEn:'World-famous pedestrian crossing — viewed from above &amp; street level.', descZh:'世界著名的行人十字路口，从高处及街面观赏。' },
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🏬', nameEn:'Shibuya MODI, Koen-dori', nameZh:'涩谷MODI（公园通）', lat:35.6605, lng:139.6987, descEn:'Round building with a digital billboard on Park Street.', descZh:'公园通上的圆形建筑，外墙为数字广告牌。' },
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🌳', nameEn:'Yoyogi Park, Harajuku Gate', nameZh:'代代木公园（原宿门）', lat:35.6716, lng:139.6947, descEn:'Large park entered near NHK Hall, borders Meiji Jingu.', descZh:'大型公园，从NHK Hall附近的原宿门进入，紧邻明治神宫。' },
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🌼', nameEn:'Flower Land, Yoyogi Park', nameZh:'代代木公园花园', lat:35.6720, lng:139.6940, descEn:'Flower garden within the park — black-eyed Susans, cannas, echinops.', descZh:'公园内的花园，黑心菊、美人蕉、蓝刺头盛开。' },
+  { day:'Day 2', date:'2 Jul 2026', file:'MT10-day2.html', icon:'🏟️', nameEn:'Yoyogi National Gymnasium', nameZh:'代代木国立竞技场', lat:35.6710, lng:139.6930, descEn:"Kenzo Tange's 1964 Olympics suspension-roof landmark.", descZh:'丹下健三设计的1964年奥运会悬索屋顶地标建筑。' },
+
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'⛩️', nameEn:'Kamata Hachiman Shrine', nameZh:'蒲田八幡神社', lat:35.5610, lng:139.7130, descEn:'Small shrine near the hotel — red torii against a modern tower.', descZh:'酒店附近小神社，红色鸟居与现代高楼同框。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🕰️', nameEn:'Ginza 4-chome Crossing / Wako Building', nameZh:'银座四丁目路口／和光大楼', lat:35.6717, lng:139.7650, descEn:'Famous corner with the Seiko clock tower.', descZh:'著名街角，精工报时钟楼。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🛍️', nameEn:'GU Ginza', nameZh:'GU 银座店', lat:35.6720, lng:139.7645, descEn:'Fashion retailer — browsed before lunch.', descZh:'服饰品牌门店，午餐前逛店。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🍲', nameEn:'Shabusen, Ginza', nameZh:'しゃぶせん（银座）', lat:35.6710, lng:139.7660, descEn:'Shabu-shabu restaurant — A5 Waou vs A3 Kumamoto wagyu tasting set.', descZh:'涮涮锅餐厅 — A5和王牛与A3熊本牛食比套餐。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🎎', nameEn:'BUNZABURO Kyoto (in-store display)', nameZh:'文三郎 京都（书店内展位）', lat:35.6715, lng:139.7655, descEn:'Kyoto tsumami-zaiku silk craft display inside a Ginza bookstore.', descZh:'银座书店内的京都つまみ细工丝绸工艺展。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🏬', nameEn:'GINZA SIX', nameZh:'GINZA SIX', lat:35.6698, lng:139.7638, descEn:'Shopping complex — atrium and rooftop garden en route.', descZh:'购物中心，中庭及屋顶花园。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🐟', nameEn:'Maguro Soma Suisan Ginza', nameZh:'まぐろ相马水产 银座店', lat:35.6705, lng:139.7670, descEn:'Toyosu-wholesaler tuna specialty shop with charcoal grill.', descZh:'丰洲批发商直营金枪鱼专门店，炭火烤炉。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🎭', nameEn:'Tokyo Takarazuka Theatre', nameZh:'东京宝塚剧场', lat:35.6748, lng:139.7614, descEn:'Passed the de-machi fan crowd waiting for performers.', descZh:'路过等候演员的"出待ち"粉丝人群。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🌳', nameEn:'Hibiya Park', nameZh:'日比谷公园', lat:35.6739, lng:139.7595, descEn:"Tokyo's oldest Western-style park — pond, koi, roses, statue.", descZh:'东京最古老的西式公园；池塘、锦鲤、玫瑰园、雕像。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🏯', nameEn:'Imperial Palace Moat / Otemon Gate', nameZh:'皇居护城河／大手门', lat:35.6852, lng:139.7528, descEn:'Walked the moat road, through Otemon masugata gate.', descZh:'沿护城河步行，穿过大手门枡形城门。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'⛩️', nameEn:'Senso-ji Temple, Asakusa', nameZh:'浅草寺', lat:35.7108, lng:139.7967, descEn:'Drew omikuji (No.75, Good Fortune) — Hozomon Gate, main hall, pagoda.', descZh:'抽签第75号吉签；宝藏门、正殿、五重塔。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🥩', nameEn:'WAGYU KATANA, Asakusa', nameZh:'神户牛 和牛の刀（浅草）', lat:35.7106, lng:139.7960, descEn:'Certified Kobe beef teppanyaki — A5 200g dinner.', descZh:'认证神户牛铁板烧餐厅，A5等级200克晚餐。' },
+  { day:'Day 3', date:'3 Jul 2026', file:'MT10-day3.html', icon:'🌉', nameEn:'Azumabashi Bridge, Sumida River', nameZh:'吾妻桥（隅田川）', lat:35.7101, lng:139.8014, descEn:'River view of Tokyo Skytree &amp; the Asahi Beer flame sculpture.', descZh:'观赏东京晴空塔与朝日啤酒"火焰"雕塑的观景桥。' },
+
+  { day:'Day 4', date:'4 Jul 2026', file:'MT10-day4.html', icon:'🏰', nameEn:'Tokyo DisneySea', nameZh:'东京迪士尼海洋', lat:35.6267, lng:139.8850, descEn:'Full-day visit — globe fountain, Journey to the Center of the Earth, evening harbor show.', descZh:'全天乐园游玩；地球喷泉、地心探险之旅、傍晚港湾水上表演。' },
+
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🍜', nameEn:'Ramen Shop, Shibuya', nameZh:'涩谷拉面店', lat:null, lng:null, descEn:'Lunch — chashu pork ramen, piled vegetables (name not logged).', descZh:'午餐——叉烧拉面，蔬菜堆得很高（店名未记录）。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🎪', nameEn:'Ota City Aprico Hall', nameZh:'大田区Aprico Hall', lat:35.5636, lng:139.7176, descEn:'Checked the event board for a free youth performance.', descZh:'查看演出公告栏找免费青少年表演。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🚉', nameEn:'Ueno Station', nameZh:'上野站', lat:35.7141, lng:139.7774, descEn:'Boarded Toei Bus 上23 toward Kappabashi.', descZh:'搭乘都营巴士上23路前往合羽桥。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🚏', nameEn:'Kikuyabashi Bus Stop', nameZh:'菊屋桥', lat:35.7133, lng:139.7885, descEn:'Arrived 5:30pm near Kappabashi.', descZh:'下午5:30抵达，靠近合羽桥。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🍴', nameEn:'Kappabashi Kitchen Supply Town', nameZh:'合羽桥道具街', lat:35.7129, lng:139.7887, descEn:'Kitchenware street with the giant chef-hat landmark.', descZh:'厨具用品街；巨型厨师帽地标。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🚉', nameEn:'Tawaramachi Station', nameZh:'田原町站', lat:35.7108, lng:139.7908, descEn:'South end of Kappabashi-dori, Ginza Line.', descZh:'合羽桥本通南端，银座线车站。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'⛩️', nameEn:'Kaminarimon Gate', nameZh:'雷门', lat:35.7108, lng:139.7966, descEn:'Passed by (crowded) — headed to the river instead.', descZh:'路过（人群拥挤），前往河边。' },
+  { day:'Day 5', date:'5 Jul 2026', file:'MT10-day5.html', icon:'🌊', nameEn:'Sumida River / Sumida Park', nameZh:'隅田川／隅田公园', lat:35.7101, lng:139.8021, descEn:'Quiet riverside moment, then an impromptu handpan street performance.', descZh:'河边宁静时刻，随后偶遇手碟街头表演。' },
+
+  { day:'Day 6', date:'6 Jul 2026', file:'MT10-day6.html', icon:'⛩️', nameEn:'Myoan-ji Temple', nameZh:'妙安寺', lat:null, lng:null, descEn:'Small Nichiren temple — quiet stop before the travel day.', descZh:'日莲宗小寺庙，出发前的宁静一站。' },
+  { day:'Day 6', date:'6 Jul 2026', file:'MT10-day6.html', icon:'🚗', nameEn:'Toyota Rent A Car Suzuran, New Chitose', nameZh:'丰田租车「铃兰」（新千岁机场）', lat:null, lng:null, address:'758-134 Bibi, Chitose-shi, Hokkaido 066-0012', descEn:'Airport rental counter — shuttle bus to the actual office, car pickup.', descZh:'机场租车受理柜台（需搭班车至营业所），取车。' },
+  { day:'Day 6', date:'6 Jul 2026', file:'MT10-day6.html', icon:'✈️', nameEn:'New Chitose Airport', nameZh:'新千岁机场', lat:42.7752, lng:141.6923, descEn:'Arrival airport for the Hokkaido leg (Peach MM571).', descZh:'北海道段抵达机场（Peach MM571航班）。' },
+  { day:'Day 6', date:'6 Jul 2026', file:'MT10-day6.html', icon:'🏨', nameEn:'Torifito Hotel &amp; Pod Niseko, Kutchan', nameZh:'Torifito Hotel &amp; Pod Niseko（俱知安）', lat:42.9007, lng:140.7537, descEn:'First Hokkaido hotel check-in.', descZh:'北海道行程第一晚酒店入住。' },
+
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🏡', nameEn:'2023 Airbnb, 825-15 Soga', nameZh:'2023年Airbnb民宿，曾我825-15', lat:42.8050, lng:140.6850, descEn:'Revisited the old month-long rental — the cherry tree now fully leafed out.', descZh:'重访2023年住了一个月的民宿；樱树已长满绿叶。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🍛', nameEn:'Tsubara Tsubara Soup Curry, Hirafu', nameZh:'Tsubara Tsubara汤咖喱（比罗夫）', lat:42.8615, lng:140.6900, descEn:'Soup curry lunch — shiitake, purple sweet potato, soft-boiled egg.', descZh:'汤咖喱午餐——香菇、紫薯、溏心蛋。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🥐', nameEn:'HARU Stone-Oven Bakery (closed)', nameZh:'HARU 石窯パンマルシェ（面包店）', lat:null, lng:null, descEn:'Stone-oven bakery — now permanently closed.', descZh:'石窑面包店，现已永久关闭。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'💧', nameEn:'Wakimizu no Sato, Makkari Tofu Kobo', nameZh:'湧水の里 名水とうふ（真狩豆腐工坊）', lat:42.7660, lng:140.7350, descEn:'Tofu workshop built around Mt Yotei spring water — free water taps.', descZh:'依托羊蹄山泉水而建的豆腐工坊；免费取水龙头。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🗿', nameEn:'Roadside Jizo Statues', nameZh:'路边地藏石像', lat:42.7660, lng:140.7350, descEn:'Pair of Jizo statues with red bibs, water-bottle offerings.', descZh:'一对披红围兜的地藏石像，供品为瓶装水。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🌉', nameEn:'Fukidashi Park', nameZh:'吹出公园', lat:42.8425, lng:140.8858, descEn:'Top-100 Japan water source — suspension bridge, mossy stream, selfie spot.', descZh:'日本名水百选之一；吊桥、苔藓溪流、合影地点。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🪞', nameEn:'Sugatami Pond, Fujimi', nameZh:'姿见之池（富士见）', lat:null, lng:null, address:'463-1 Fujimi, Kutchan, Abuta District, Hokkaido 044-0075', descEn:"Mirror pond fed by Mt Yotei's Aoki Stream.", descZh:'由羊蹄山青木沢供水的镜面池。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🥾', nameEn:'Ezo Fuji Kyogoku Course Trailhead', nameZh:'虾夷富士 京极路线登山口', lat:42.8425, lng:140.8858, descEn:'Mt Yotei trailhead sign, Shikotsu-Toya National Park.', descZh:'羊蹄山登山口告示牌，支笏洞爺国立公园。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🏔️', nameEn:'Hangetsuko West Entrance', nameZh:'半月湖西入口（羊蹄山登山口）', lat:42.8469, lng:140.7520, descEn:'Start of the full Mt Yotei climb (10hr round trip).', descZh:'羊蹄山全程登山起点（往返约10小时）。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🍜', nameEn:'Cafe 寶月, Hirafu', nameZh:'Cafe 寶月（比罗夫）', lat:42.8600, lng:140.6910, descEn:'Beef udon &amp; tempura lunch.', descZh:'牛肉乌冬面配天妇罗午餐。' },
+  { day:'Niseko Day 1', date:'7 Jul 2026', file:'MT10-niseko-day1.html', icon:'🍉', nameEn:'Niseko Resort Tourist Association', nameZh:'二世谷观光协会', lat:42.799428, lng:140.701582, descEn:'Bought watermelon — bread store nearby.', descZh:'购买西瓜；附近有面包店。' },
+
+  { day:'Niseko Day 2', date:'8 Jul 2026', file:'MT10-niseko-day2.html', icon:'🏞️', nameEn:'Lake Toya / Toyako Onsen', nameZh:'洞爺湖／洞爺湖温泉', lat:42.5765, lng:140.8395, descEn:'Photo stop at the big "TOYA" letters on the lakeside promenade, misty morning.', descZh:'湖畔步道"TOYA"大字牌前拍照，晨雾弥漫。' },
+
+  { day:'Niseko Day 3', date:'9 Jul 2026', file:'MT10-niseko-day3.html', icon:'🚡', nameEn:'Mt Usu Ropeway Station', nameZh:'有珠山缆车站', lat:null, lng:null, address:'184-5 Showashinzan, Sobetsu, Usu District, Hokkaido 052-0102', descEn:'Ropeway base station, rain, en route to the crater rim.', descZh:'缆车山麓站，细雨中前往火山口。' },
+  { day:'Niseko Day 3', date:'9 Jul 2026', file:'MT10-niseko-day3.html', icon:'🏞️', nameEn:'Lake Toya (return visit)', nameZh:'洞爺湖（回访）', lat:42.5765, lng:140.8395, descEn:'First return in 3 years — bronze sculpture, misty lakeside, 9am.', descZh:'三年来首次回访；铜像、雾中湖畔。' },
+  { day:'Niseko Day 3', date:'9 Jul 2026', file:'MT10-niseko-day3.html', icon:'🍱', nameEn:'Funkatei', nameZh:'噴火亭', lat:42.538972, lng:140.860250, descEn:'Lunch restaurant at Usu Ropeway\'s base ("eruption hall").', descZh:'有珠山缆车山麓站内餐厅，午餐。' },
+  { day:'Niseko Day 3', date:'9 Jul 2026', file:'MT10-niseko-day3.html', icon:'⛺', nameEn:'Nakatoya Campsite', nameZh:'仲洞爺露营场', lat:null, lng:null, address:'Nakatoya Campsite, Toyako, Abuta District, Hokkaido', descEn:'Southern Lake Toya shore campsite — checked price board (¥20,000/cabin/night).', descZh:'洞爺湖南岸露营场；查看价目表（小木屋每晚¥20,000）。' },
+  { day:'Niseko Day 3', date:'9 Jul 2026', file:'MT10-niseko-day3.html', icon:'🌋', nameEn:'Showa-Shinzan', nameZh:'昭和新山', lat:null, lng:null, address:'184-5 Showashinzan, Sobetsu, Usu District, Hokkaido 052-0102', descEn:'Volcanic dome formed 1943–45 — still steaming.', descZh:'1943–45年间形成的火山穹丘，至今仍在冒烟。' },
+  { day:'Niseko Day 3', date:'9 Jul 2026', file:'MT10-niseko-day3.html', icon:'🍣', nameEn:'Kaiten Zushi Choise, Date', nameZh:'回転寿司ちょいす（伊达店）', lat:null, lng:null, address:'198-4 Funaokacho, Date, Hokkaido 052-0014', descEn:'Conveyor-belt sushi dinner.', descZh:'回转寿司晚餐。' }
+];
+
+function renderPOI() {
+  var wrap = document.getElementById('poiList');
+  if (!wrap) return;
+  var linkStyle = 'text-decoration:none;font-size:0.72rem;padding:5px 9px;border-radius:8px;white-space:nowrap;';
+  var html = '';
+  var lastDay = null;
+  poiData.forEach(function(p) {
+    if (p.day !== lastDay) {
+      html += '<div class="task-category" style="' + (lastDay ? 'margin-top:8px;' : '') + '">' + p.day + ' · ' + p.date + '</div>';
+      lastDay = p.day;
+    }
+    var maps;
+    if (p.lat && p.lng) {
+      var gLink = 'https://maps.google.com/?q=' + p.lat + ',' + p.lng + '&label=' + encodeURIComponent(p.nameEn);
+      var bLink = 'https://map.baidu.com/search/' + encodeURIComponent(p.nameZh);
+      var aLink = 'https://uri.amap.com/marker?position=' + p.lng + ',' + p.lat + '&name=' + encodeURIComponent(p.nameEn);
+      maps = '<div class="ms-maps">'
+        + '<a href="' + gLink + '" target="_blank" style="' + linkStyle + 'background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;">🗺️ Google</a>'
+        + '<a href="' + bLink + '" target="_blank" style="' + linkStyle + 'background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;">百度地图</a>'
+        + '<a href="' + aLink + '" target="_blank" style="' + linkStyle + 'background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;">高德地图</a>'
+        + '</div>';
+    } else if (p.address) {
+      var gAddr = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(p.address);
+      var bAddr = 'https://map.baidu.com/search/' + encodeURIComponent(p.nameZh);
+      maps = '<div class="ms-maps">'
+        + '<a href="' + gAddr + '" target="_blank" style="' + linkStyle + 'background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;">🗺️ Google</a>'
+        + '<a href="' + bAddr + '" target="_blank" style="' + linkStyle + 'background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;">百度地图</a>'
+        + '</div>';
+    } else {
+      maps = '<div style="font-size:0.72rem;color:#6b7280;margin-top:6px;">📍 <span class="en">exact location not logged</span><span class="zh">未记录确切位置</span></div>';
+    }
+    html += '<div class="hl-item">'
+      + '<div class="hl-icon">' + p.icon + '</div>'
+      + '<div>'
+      + '<div class="hl-title"><span class="en">' + p.nameEn + '</span><span class="zh">' + p.nameZh + '</span></div>'
+      + '<div class="hl-sub"><span class="en">' + p.descEn + '</span><span class="zh">' + p.descZh + '</span></div>'
+      + maps
+      + '<a href="' + p.file + '" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#6ee7b7;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:12px;text-decoration:none;">📔 <span class="en">View Day Log</span><span class="zh">查看日记</span></a>'
+      + '</div></div>';
+  });
+  wrap.innerHTML = html;
+}
+renderPOI();
 
 // DRIVE MAP
 var driveMap = null;
