@@ -7,6 +7,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
 <link rel="icon" type="image/png" href="/japan-icon.png">
 <meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -122,6 +124,75 @@ body {
   text-align: center; padding: 18px 16px; font-size: 0.72em;
   color: #484f58; font-family: monospace;
 }
+
+/* EMBEDDED ANIMATED MAP */
+.map-fullscreen-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.82em; font-weight: 700;
+  padding: 9px 16px; border-radius: 18px; cursor: pointer;
+  margin: 14px 0 10px; width: 100%;
+}
+.map-wrap { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#map { width: 100%; height: 58vh; }
+#map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border-radius: 0 !important;
+}
+.map-wrap.map-fullscreen-wrap { margin: 0; border-radius: 0; border: none; }
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
+}
+.controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-top: none;
+}
+#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+#timeLabel { font-weight: 700; color: #58a6ff; }
+.play-btn {
+  background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+  color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap;
+}
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-top: 8px; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
+}
+.legend {
+  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+.arrival-card {
+  margin-top: 14px; background: #161b22; border: 1px solid rgba(240,165,0,0.3);
+  border-radius: 14px; overflow: hidden;
+}
+.arrival-media img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+.arrival-icon {
+  font-size: 2.4em; text-align: center; padding: 30px 0;
+  background: linear-gradient(135deg, #1a1208, #241a0d);
+}
+.arrival-body { padding: 14px 16px; }
+.arrival-tag {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
+  color: #6ee7b7; margin-bottom: 6px;
+}
+.arrival-name { font-size: 1rem; font-weight: 800; color: #e6edf3; margin-bottom: 6px; }
+.arrival-note { font-size: 0.85rem; color: #c9d1d9; line-height: 1.6; }
+.popup-card { font-family: -apple-system, system-ui, sans-serif; }
+.popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
 </style>
 <script src="/bilingual.js"></script>
 <style>
@@ -187,10 +258,31 @@ body.lang-ja .en-block{display:none!important}
 
 <div class="content">
 
-  <div style="margin-top:14px;">
-    <a href="MT10-niseko-day4-map.html" style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.88em;font-weight:700;padding:12px 16px;border-radius:14px;text-decoration:none;">
-      🗺️▶️ <span class="en">Animated Route Map — Every Place Visited Today</span><span class="zh">动态路线地图 — 今天去过的每个地方</span><span class="ja">アニメーション経路マップ — 今日訪れた全ての場所</span>
-    </a>
+  <div class="section-title">🗺️ <span class="en">Animated Route Map — Every Place Visited Today</span><span class="zh">动态路线地图 — 今天去过的每个地方</span><span class="ja">アニメーション経路マップ — 今日訪れた全ての場所</span></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+  <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
+    <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">08:00</span></div>
+  </div>
+  <div class="speed-control" id="speedControl">
+    <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+    <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="speedVal">1&times;</span>
+  </div>
+  <div class="arrival-card" id="arrivalCard"></div>
+  <div class="legend">
+    <span class="dot" style="background:#f85149;"></span><span class="en">Hotel — Start / End</span><span class="zh">酒店 — 起点/终点</span><span class="ja">ホテル — 出発/終着</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#f0883e;"></span><span class="en">Food / shopping stop</span><span class="zh">餐饮/购物站点</span><span class="ja">飲食・買い物の立ち寄り</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#3fb950;"></span><span class="en">Rest stop / observatory</span><span class="zh">休息/展望台</span><span class="ja">休憩・展望台</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#58a6ff;"></span><span class="en">Water / dam</span><span class="zh">水坝/水域</span><span class="ja">ダム・水辺</span>
   </div>
 
   <div class="section-title">🍗 <span class="en">Today's Plan: Otaru — J_food Chicken</span><span class="zh">今日计划：小樽 — J_food 炸鸡</span><span class="ja">今日の予定：小樽 — J_food チキン</span></div>
@@ -247,7 +339,223 @@ body.lang-ja .en-block{display:none!important}
 <div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
 <div class="footer-note">MT10 Niseko Day 4 · Japan 2026 · paulsworld.vercel.app</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
 <script>
+// ── ANIMATED ROUTE MAP ──
+const stops = [
+  { name: "Torifito Hotel & Pod Niseko", lat: 42.9007, lng: 140.7537, time: "08:00", type: "start",
+    img: "img_MT10-niseko-day4/01-hotel-view-arrival.jpg",
+    note: "Set off from the hotel this morning for a drive out toward Otaru." },
+  { name: "Kinoko Kingdom Niki きのこ王国 仁木店", lat: 43.2075, lng: 140.7639, time: "09:30", type: "road",
+    img: "img_MT10-niseko-day4/02-kinoko-kingdom-fruit-shop.jpg",
+    address: "1 Chome-930 Oe, Niki, Yoichi District, Hokkaido 048-2402, Japan",
+    mapUrl: "https://maps.google.com/?q=1+Chome-930+Oe%2C+Niki%2C+Yoichi+District%2C+Hokkaido+048-2402%2C+Japan&label=Kinoko+Kingdom+Niki",
+    baiduUrl: "https://map.baidu.com/search/%E4%BB%81%E6%9C%A8%E7%94%BA%20%E5%A4%A7%E6%B1%9F%20930",
+    amapUrl: "https://uri.amap.com/marker?address=1%20Chome-930%20Oe%2C%20Niki%2C%20Yoichi%20District%2C%20Hokkaido%20048-2402%2C%20Japan&name=Kinoko%20Kingdom%20Niki",
+    note: "Open-air farm market — picked up fresh cherries and melons on the way." },
+  { name: "Kakizaki Shōten 柿崎商店, Yoichi", lat: 43.1990, lng: 140.7800, time: "12:00", type: "road",
+    img: "", icon: "🐟",
+    note: "Seafood restaurant and fish market in Yoichi — bought fresh fish for later." },
+  { name: "J_food Chicken, Otaru — Lunch", lat: 43.1950, lng: 141.0010, time: "14:00", type: "road",
+    img: "", icon: "🍗",
+    note: "Lunch stop in Otaru's Inaho district, right by the Times Car Rental branch." },
+  { name: "Anti-Slip Sand Box, Roadside", lat: 43.1650, lng: 140.9700, time: "15:00", type: "nature",
+    img: "img_MT10-niseko-day4/03-antislip-sand-box.jpg",
+    note: "A small roadside sand box for icy roads — a common sight along the mountain drive." },
+  { name: "Kenashiyama Observatory 毛無山展望所", lat: 43.154681, lng: 141.010634, time: "15:30", type: "nature",
+    img: "img_MT10-niseko-day4/04-kenashiyama-observatory.jpg",
+    note: "470m up with a hazy coastline view — a quiet break with a stone survey marker." },
+  { name: "Ochiai Dam 落合ダム, Akaigawa", lat: 43.097222, lng: 140.908333, time: "16:30", type: "water",
+    img: "img_MT10-niseko-day4/05-ochiai-dam-signboard.jpg",
+    note: "Unplanned lakeside stop — green fields rolling down to the reservoir. So beautiful." },
+  { name: "Torifito Hotel & Pod Niseko — Arrived", lat: 42.9007, lng: 140.7537, time: "18:00", type: "end",
+    img: "", icon: "🏠",
+    note: "Back at the hotel after a full day on the road — Niseko Day 4 complete." }
+];
+
+function openMapFullscreen() {
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+const map = L.map('map', { zoomControl: true }).setView([43.05, 140.90], 10);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+
+L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + (i + 1) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + s.icon + '</div>';
+  marker.bindPopup(
+    '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + (i + 1) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>'
+  );
+  markerRefs.push(marker);
+});
+
+map.fitBounds(fullLine, { padding: [30, 30] });
+
+const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+let speedMultiplier = 1;
+let playing = true;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    requestAnimationFrame(step);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+  }
+}
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const lat = stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP;
+      const lng = stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP;
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      return { lat, lng, timeStr: `${hh}:${mm}` };
+    }
+  }
+  return { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng, timeStr: stops[stops.length - 1].time };
+}
+
+const statusEl = document.getElementById('status');
+const timeLabel = document.getElementById('timeLabel');
+
+let arrivedIndex = -1;
+function showArrival(i) {
+  const s = stops[i];
+  markerRefs.forEach(m => m.closePopup());
+  if (markerRefs[i]) markerRefs[i].openPopup();
+  const card = document.getElementById('arrivalCard');
+  if (!card) return;
+  const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
+  card.innerHTML =
+    '<div class="arrival-media">' + media + '</div>' +
+    '<div class="arrival-body">' +
+    '<div class="arrival-tag">📍 <span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — ' + s.time + '</div>' +
+    '<div class="arrival-name">' + (i + 1) + '. ' + s.name + '</div>' +
+    '<div class="arrival-note">' + s.note + '</div>' +
+    (s.address ? '<div class="arrival-note" style="margin-top:6px;color:#8b949e;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>';
+}
+function checkArrival(targetMin) {
+  let idx = 0;
+  for (let i = 0; i < stops.length; i++) {
+    if (targetMin >= toMinutes(stops[i].time)) idx = i;
+  }
+  if (idx !== arrivedIndex) {
+    arrivedIndex = idx;
+    showArrival(idx);
+  }
+}
+
+function step() {
+  if (!playing) return;
+  progress += 0.0018 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    timeLabel.textContent = pos.timeStr;
+    checkArrival(endMin);
+    statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
+    setTimeout(() => {
+      progress = 0;
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      requestAnimationFrame(step);
+    }, 1400);
+    return;
+  }
+  const pos = interpolate(progress);
+  mover.setLatLng([pos.lat, pos.lng]);
+  document.getElementById('timeLabel').textContent = pos.timeStr;
+  checkArrival(startMin + progress * totalMin);
+  requestAnimationFrame(step);
+}
+step();
+
 // ── DAY STATUS BANNER ──
 function updateBanner() {
   var start = new Date('2026-07-10T00:00:00+09:00');
