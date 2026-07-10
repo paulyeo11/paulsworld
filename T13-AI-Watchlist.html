@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T13: AI Stock Watchlist</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.5rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:520px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:680px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .cat { margin-bottom:26px; }
+  .cat-title { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px; padding-left:2px; }
+  .cat-sub { font-size:.78rem; color:rgba(255,255,255,.5); margin:-6px 0 12px; padding-left:2px; }
+
+  a.stock { display:flex; align-items:center; gap:14px; background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:14px 16px; margin-bottom:10px; text-decoration:none; color:#fff; box-shadow:0 3px 12px rgba(0,0,0,.25); transition:transform .15s,border-color .15s; }
+  a.stock:active { transform:scale(.99); }
+  a.stock:hover { border-color:#10b981; }
+  .ticker-badge { flex-shrink:0; min-width:58px; text-align:center; background:#10b981; color:#0e1330; font-weight:800; font-size:.85rem; padding:8px 6px; border-radius:10px; }
+  .sbody { flex:1; min-width:0; }
+  .sname { font-weight:700; font-size:.95rem; line-height:1.3; }
+  .snote { color:rgba(255,255,255,.55); font-size:.78rem; margin-top:2px; }
+  .sarr { color:#4f46e5; font-size:1.2rem; font-weight:700; flex-shrink:0; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">🤖📈</div>
+  <h1><span class="en">T13: AI Stock Watchlist</span><span class="zh">T13：人工智能股票观察清单</span></h1>
+  <p><span class="en">Companies most tied to the AI growth theme — for research only. Tap any ticker to check its live price on Yahoo Finance.</span><span class="zh">与人工智能增长主题关系最密切的公司，仅供研究参考。点击任意股票代码可在雅虎财经查看实时价格。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is an informational watchlist, not a recommendation to buy. Past growth doesn't guarantee future returns — many of these stocks already rose sharply in 2023–2025. Do your own research or speak to a licensed advisor before investing.</span><span class="zh"><b>非投资建议。</b>本页仅为资讯性观察清单，并非买入建议。过去的增长不代表未来回报——其中许多股票在2023至2025年间已大幅上涨。投资前请自行研究或咨询持牌顾问。</span>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Semiconductors — AI Chips</span><span class="zh">半导体 — AI芯片</span></div>
+    <div class="cat-sub"><span class="en">The "picks and shovels" of the AI boom</span><span class="zh">AI热潮中的"卖铲人"</span></div>
+
+    <a class="stock" href="https://finance.yahoo.com/quote/NVDA" target="_blank" rel="noopener">
+      <div class="ticker-badge">NVDA</div>
+      <div class="sbody"><div class="sname">Nvidia</div><div class="snote"><span class="en">Dominant AI GPU maker — core AI infrastructure bet</span><span class="zh">领先AI图形处理器制造商 — AI基础设施核心标的</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/TSM" target="_blank" rel="noopener">
+      <div class="ticker-badge">TSM</div>
+      <div class="sbody"><div class="sname">TSMC</div><div class="snote"><span class="en">Manufactures chips for Nvidia, Apple, AMD</span><span class="zh">为英伟达、苹果、AMD代工芯片</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/AVGO" target="_blank" rel="noopener">
+      <div class="ticker-badge">AVGO</div>
+      <div class="sbody"><div class="sname">Broadcom</div><div class="snote"><span class="en">Custom AI chips for Google &amp; Meta, networking gear</span><span class="zh">为谷歌、Meta定制AI芯片，网络设备</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/AMD" target="_blank" rel="noopener">
+      <div class="ticker-badge">AMD</div>
+      <div class="sbody"><div class="sname">AMD</div><div class="snote"><span class="en">No. 2 in AI GPUs, gaining market share</span><span class="zh">AI图形处理器市场第二，份额持续提升</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Hyperscalers — AI + Cash Flow</span><span class="zh">超大规模云厂商 — AI+现金流</span></div>
+    <div class="cat-sub"><span class="en">Diversified, lower-risk way to hold the AI theme</span><span class="zh">持有AI主题风险较低的多元化方式</span></div>
+
+    <a class="stock" href="https://finance.yahoo.com/quote/MSFT" target="_blank" rel="noopener">
+      <div class="ticker-badge">MSFT</div>
+      <div class="sbody"><div class="sname">Microsoft</div><div class="snote"><span class="en">OpenAI partner, Copilot, Azure AI</span><span class="zh">OpenAI合作伙伴，Copilot，Azure AI</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/GOOGL" target="_blank" rel="noopener">
+      <div class="ticker-badge">GOOGL</div>
+      <div class="sbody"><div class="sname">Alphabet (Google)</div><div class="snote"><span class="en">Gemini models, custom TPU chips, DeepMind</span><span class="zh">Gemini模型，自研TPU芯片，DeepMind</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/AMZN" target="_blank" rel="noopener">
+      <div class="ticker-badge">AMZN</div>
+      <div class="sbody"><div class="sname">Amazon</div><div class="snote"><span class="en">AWS AI infrastructure, Trainium chips</span><span class="zh">AWS人工智能基础设施，Trainium芯片</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/META" target="_blank" rel="noopener">
+      <div class="ticker-badge">META</div>
+      <div class="sbody"><div class="sname">Meta</div><div class="snote"><span class="en">Heavy AI capex, Llama models, ad-targeting AI</span><span class="zh">大额AI资本支出，Llama模型，AI广告投放</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">AI Software &amp; Applications</span><span class="zh">AI软件与应用</span></div>
+    <div class="cat-sub"><span class="en">Higher risk, higher potential upside</span><span class="zh">风险较高，潜在上涨空间也更大</span></div>
+
+    <a class="stock" href="https://finance.yahoo.com/quote/PLTR" target="_blank" rel="noopener">
+      <div class="ticker-badge">PLTR</div>
+      <div class="sbody"><div class="sname">Palantir</div><div class="snote"><span class="en">Government &amp; enterprise AI data platforms</span><span class="zh">政府与企业AI数据平台</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/NOW" target="_blank" rel="noopener">
+      <div class="ticker-badge">NOW</div>
+      <div class="sbody"><div class="sname">ServiceNow</div><div class="snote"><span class="en">AI-driven enterprise workflow automation</span><span class="zh">AI驱动的企业工作流自动化</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/CRWD" target="_blank" rel="noopener">
+      <div class="ticker-badge">CRWD</div>
+      <div class="sbody"><div class="sname">CrowdStrike</div><div class="snote"><span class="en">AI-driven cybersecurity threat detection</span><span class="zh">AI驱动的网络安全威胁检测</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Power &amp; Data Center Infrastructure</span><span class="zh">电力与数据中心基础设施</span></div>
+    <div class="cat-sub"><span class="en">AI data centers need cooling, power &amp; networking</span><span class="zh">AI数据中心需要散热、电力与网络支持</span></div>
+
+    <a class="stock" href="https://finance.yahoo.com/quote/VRT" target="_blank" rel="noopener">
+      <div class="ticker-badge">VRT</div>
+      <div class="sbody"><div class="sname">Vertiv</div><div class="snote"><span class="en">Data center cooling &amp; power systems</span><span class="zh">数据中心散热与电力系统</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/ANET" target="_blank" rel="noopener">
+      <div class="ticker-badge">ANET</div>
+      <div class="sbody"><div class="sname">Arista Networks</div><div class="snote"><span class="en">High-speed AI data center networking</span><span class="zh">高速AI数据中心网络设备</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Diversified — AI ETFs</span><span class="zh">分散投资 — AI主题ETF</span></div>
+    <div class="cat-sub"><span class="en">Spread the bet across many companies instead of picking single names</span><span class="zh">分散投资多家公司，而非押注单一个股</span></div>
+
+    <a class="stock" href="https://finance.yahoo.com/quote/QQQ" target="_blank" rel="noopener">
+      <div class="ticker-badge">QQQ</div>
+      <div class="sbody"><div class="sname">Invesco QQQ Trust</div><div class="snote"><span class="en">Nasdaq-100 — broad tech &amp; AI exposure</span><span class="zh">纳斯达克100指数 — 广泛的科技与AI敞口</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/BOTZ" target="_blank" rel="noopener">
+      <div class="ticker-badge">BOTZ</div>
+      <div class="sbody"><div class="sname">Global X Robotics &amp; AI ETF</div><div class="snote"><span class="en">Basket of robotics &amp; AI companies worldwide</span><span class="zh">全球机器人与AI公司组合</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="https://finance.yahoo.com/quote/AIQ" target="_blank" rel="noopener">
+      <div class="ticker-badge">AIQ</div>
+      <div class="sbody"><div class="sname">Global X AI &amp; Technology ETF</div><div class="snote"><span class="en">Basket of ~80 AI-focused companies</span><span class="zh">约80家AI相关公司组合</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="foot">
+    <span class="en">Prices via Yahoo Finance (opens in new tab) · Last reviewed 10 Jul 2026</span><span class="zh">价格来自雅虎财经（新标签页打开）· 最后更新于2026年7月10日</span><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+</body>
+</html>
