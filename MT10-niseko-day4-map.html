@@ -106,6 +106,23 @@
   }
   .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
 
+  .arrival-card {
+    margin: 14px 16px 0; background: #161b22; border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 14px; overflow: hidden;
+  }
+  .arrival-media img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+  .arrival-icon {
+    font-size: 2.4em; text-align: center; padding: 30px 0;
+    background: linear-gradient(135deg, #1a1208, #241a0d);
+  }
+  .arrival-body { padding: 14px 16px; }
+  .arrival-tag {
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
+    color: #6ee7b7; margin-bottom: 6px;
+  }
+  .arrival-name { font-size: 1rem; font-weight: 800; color: #e6edf3; margin-bottom: 6px; }
+  .arrival-note { font-size: 0.85rem; color: #c9d1d9; line-height: 1.6; }
+
   .popup-card { font-family: -apple-system, system-ui, sans-serif; }
   .popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
   .popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
@@ -197,6 +214,8 @@ body.lang-ja .en-block{display:none!important}
   <span id="speedVal">1&times;</span>
 </div>
 
+<div class="arrival-card" id="arrivalCard"></div>
+
 <div class="legend">
   <span class="dot" style="background:#f85149;"></span><span class="en">Hotel — Start / End</span><span class="zh">酒店 — 起点/终点</span><span class="ja">ホテル — 出発/終着</span>&nbsp;&nbsp;
   <span class="dot" style="background:#f0883e;"></span><span class="en">Food / shopping stop</span><span class="zh">餐饮/购物站点</span><span class="ja">飲食・買い物の立ち寄り</span>&nbsp;&nbsp;
@@ -216,6 +235,10 @@ const stops = [
     note: "Set off from the hotel this morning for a drive out toward Otaru." },
   { name: "Kinoko Kingdom Niki きのこ王国 仁木店", lat: 43.2075, lng: 140.7639, time: "09:30", type: "road",
     img: "img_MT10-niseko-day4/02-kinoko-kingdom-fruit-shop.jpg",
+    address: "1 Chome-930 Oe, Niki, Yoichi District, Hokkaido 048-2402, Japan",
+    mapUrl: "https://maps.google.com/?q=1+Chome-930+Oe%2C+Niki%2C+Yoichi+District%2C+Hokkaido+048-2402%2C+Japan&label=Kinoko+Kingdom+Niki",
+    baiduUrl: "https://map.baidu.com/search/%E4%BB%81%E6%9C%A8%E7%94%BA%20%E5%A4%A7%E6%B1%9F%20930",
+    amapUrl: "https://uri.amap.com/marker?address=1%20Chome-930%20Oe%2C%20Niki%2C%20Yoichi%20District%2C%20Hokkaido%20048-2402%2C%20Japan&name=Kinoko%20Kingdom%20Niki",
     note: "Open-air farm market — picked up fresh cherries and melons on the way." },
   { name: "Kakizaki Shōten 柿崎商店, Yoichi", lat: 43.1990, lng: 140.7800, time: "12:00", type: "road",
     img: "", icon: "🐟",
@@ -282,6 +305,16 @@ const fullLine = stops.map(s => [s.lat, s.lng]);
 
 L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
 
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+const markerRefs = [];
 stops.forEach((s, i) => {
   const color = colorFor[s.type];
   const marker = L.marker([s.lat, s.lng], {
@@ -295,9 +328,12 @@ stops.forEach((s, i) => {
     '<div class="popup-card">' + imgHtml +
     '<div class="pt">' + (i + 1) + '. ' + s.name + '</div>' +
     '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
     '<a href="MT10-niseko-day4.html" style="display:inline-block;margin-top:6px;font-size:0.75em;font-weight:700;color:#f0a500;text-decoration:none;">View Full Story →</a>' +
     '</div>'
   );
+  markerRefs.push(marker);
 });
 
 map.fitBounds(fullLine, { padding: [30, 30] });
@@ -354,6 +390,35 @@ function interpolate(p) {
 const statusEl = document.getElementById('status');
 const timeLabel = document.getElementById('timeLabel');
 
+let arrivedIndex = -1;
+function showArrival(i) {
+  const s = stops[i];
+  markerRefs.forEach(m => m.closePopup());
+  if (markerRefs[i]) markerRefs[i].openPopup();
+  const card = document.getElementById('arrivalCard');
+  if (!card) return;
+  const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
+  card.innerHTML =
+    '<div class="arrival-media">' + media + '</div>' +
+    '<div class="arrival-body">' +
+    '<div class="arrival-tag">📍 <span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — ' + s.time + '</div>' +
+    '<div class="arrival-name">' + (i + 1) + '. ' + s.name + '</div>' +
+    '<div class="arrival-note">' + s.note + '</div>' +
+    (s.address ? '<div class="arrival-note" style="margin-top:6px;color:#8b949e;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>';
+}
+function checkArrival(targetMin) {
+  let idx = 0;
+  for (let i = 0; i < stops.length; i++) {
+    if (targetMin >= toMinutes(stops[i].time)) idx = i;
+  }
+  if (idx !== arrivedIndex) {
+    arrivedIndex = idx;
+    showArrival(idx);
+  }
+}
+
 function step() {
   if (!playing) return;
   progress += 0.0018 * speedMultiplier;
@@ -361,6 +426,7 @@ function step() {
     const pos = interpolate(1);
     mover.setLatLng([pos.lat, pos.lng]);
     timeLabel.textContent = pos.timeStr;
+    checkArrival(endMin);
     statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
     setTimeout(() => {
       progress = 0;
@@ -372,6 +438,7 @@ function step() {
   const pos = interpolate(progress);
   mover.setLatLng([pos.lat, pos.lng]);
   document.getElementById('timeLabel').textContent = pos.timeStr;
+  checkArrival(startMin + progress * totalMin);
   requestAnimationFrame(step);
 }
 step();
