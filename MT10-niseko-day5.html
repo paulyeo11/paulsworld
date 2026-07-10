@@ -7,6 +7,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
 <link rel="icon" type="image/png" href="/japan-icon.png">
 <meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -122,6 +124,92 @@ body {
   text-align: center; padding: 18px 16px; font-size: 0.72em;
   color: #484f58; font-family: monospace;
 }
+
+/* EMBEDDED ANIMATED MAP — small by default, both map and photo go full-page while playing */
+.map-wrap {
+  position: relative; height: 58vh; border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+#map { width: 100%; height: 100%; }
+.map-wrap.map-fullscreen-wrap {
+  position: fixed !important; inset: 0 !important; z-index: 9999;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  border-radius: 0 !important; border: none; margin: 0 !important;
+}
+.leg-tag {
+  display: none; position: fixed; top: 60px; left: 0; right: 0; z-index: 10001;
+  text-align: center; font-size: 0.8rem; font-weight: 700; color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none;
+}
+body.leg-active .leg-tag { display: block; }
+.controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-top: none;
+}
+#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+#timeLabel { font-weight: 700; color: #58a6ff; }
+.play-btn {
+  background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+  color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap;
+}
+.back-btn-inline {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.8em; font-weight: 700; padding: 6px 12px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap; text-decoration: none;
+}
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-top: 8px; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.bottom-bar-wrap { margin-top: 14px; }
+body.slideshow-active .bottom-bar-wrap {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500; margin: 0;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+body.slideshow-active .controls { background: none; border: none; border-radius: 0; padding: 0; }
+body.slideshow-active .speed-control { padding: 0; }
+.legend {
+  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+.arrival-card {
+  display: none; background: #161b22; border: 1px solid rgba(240,165,0,0.3);
+  border-radius: 14px; overflow: hidden; margin-top: 14px;
+}
+body.slideshow-active:not(.leg-active) .arrival-card {
+  display: block; position: fixed; inset: 0; z-index: 9000; margin: 0; border-radius: 0; border: none; background: #000;
+}
+.arrival-photo { position: relative; width: 100%; height: 220px; overflow: hidden; background: #000; }
+body.slideshow-active:not(.leg-active) .arrival-photo { height: 100%; }
+.arrival-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.arrival-icon {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 2.4em; background: linear-gradient(135deg, #1a1208, #241a0d);
+}
+body.slideshow-active:not(.leg-active) .arrival-icon { font-size: 5em; }
+.arrival-overlay {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0) 100%);
+  padding: 14px 16px;
+}
+body.slideshow-active:not(.leg-active) .arrival-overlay { padding: 90px 20px 30px; }
+.arrival-tag {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
+  color: #6ee7b7; margin-bottom: 6px; text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+}
+.arrival-name { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 4px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+body.slideshow-active:not(.leg-active) .arrival-name { font-size: 1.4rem; }
+.arrival-place { font-size: 0.85rem; color: rgba(255,255,255,0.9); text-shadow: 0 1px 6px rgba(0,0,0,0.8); }
+.popup-card { font-family: -apple-system, system-ui, sans-serif; }
+.popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
 </style>
 <script src="/bilingual.js"></script>
 <style>
@@ -187,10 +275,32 @@ body.lang-ja .en-block{display:none!important}
 
 <div class="content">
 
-  <div style="margin-top:14px;">
-    <a href="MT10-niseko-day5-map.html" style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.88em;font-weight:700;padding:12px 16px;border-radius:14px;text-decoration:none;">
-      🗺️ <span class="en">Animated Route Map — Every Place Visited Today</span><span class="zh">动态路线地图 — 今天去过的每个地方</span><span class="ja">アニメーション経路マップ — 今日訪れた全ての場所</span>
-    </a>
+  <div class="section-title">🗺️ <span class="en">Animated Route Map — Every Place Visited Today</span><span class="zh">动态路线地图 — 今天去过的每个地方</span><span class="ja">アニメーション経路マップ — 今日訪れた全ての場所</span></div>
+  <div class="leg-tag" id="legTag"></div>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
+  </div>
+  <div class="arrival-card" id="arrivalCard"></div>
+  <div class="bottom-bar-wrap">
+    <div class="controls">
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span></button>
+      <div id="status"><span class="en">Tap Play — full-page car &amp; photos</span><span class="zh">点击播放 — 全屏车辆与照片</span><span class="ja">再生をタップ — 全画面の車と写真</span></div>
+      <button class="back-btn-inline" onclick="if(playing) togglePlay();">⬅ <span class="en">Back</span><span class="zh">返回</span><span class="ja">戻る</span></button>
+    </div>
+    <div class="speed-control" id="speedControl">
+      <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+      <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+      <span id="speedVal">1&times;</span>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="dot" style="background:#f85149;"></span><span class="en">Campsite — Start</span><span class="zh">露营地 — 起点</span><span class="ja">キャンプ場 — 出発</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#58a6ff;"></span><span class="en">Hot spring / crater pond</span><span class="zh">温泉/火山口池</span><span class="ja">温泉・クレーター池</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#3fb950;"></span><span class="en">Marsh / nature trail</span><span class="zh">沼泽/自然步道</span><span class="ja">沼・自然歩道</span>
   </div>
 
   <div class="section-title">♨️ <span class="en">Today's Visit: J_POI AUG Crater (Niseko Oyunuma Sulfur Hot Spring Pond)</span><span class="zh">今日到访：J_POI AUG 火山口（二世谷大汤沼硫磺温泉池）</span><span class="ja">今日訪れた場所：J_POI AUGクレーター（ニセコ大湯沼）</span></div>
@@ -249,7 +359,233 @@ body.lang-ja .en-block{display:none!important}
 <div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
 <div class="footer-note">MT10 Niseko Day 5 · Japan 2026 · paulsworld.vercel.app</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
 <script>
+// ── ANIMATED ROUTE MAP ──
+const stops = [
+  { name: "J_POI Camp Site (Niseko Sahina Campsite)", lat: 42.827097, lng: 140.621933, time: "07:30", type: "start",
+    img: "img_MT10-niseko-day5/03-jpoi-campsite-deck.jpg",
+    address: "224-19 Yunosato, Rankoshi, Isoya District, Hokkaido 048-1321, Japan",
+    mapUrl: "https://maps.google.com/?q=42.827097,140.621933&label=J_POI+Camp+Site+Niseko+Sahina",
+    baiduUrl: "https://map.baidu.com/search/J_POI%20Camp%20Site%20Rankoshi%20Hokkaido",
+    amapUrl: "https://uri.amap.com/marker?position=140.621933,42.827097&name=J_POI%20Camp%20Site%20Niseko%20Sahina",
+    note: "Quiet farmhouse-style glamping deck looking out over open fields — a calm start to the day." },
+  { name: "J_POI AUG Crater (Niseko Oyunuma Sulfur Hot Spring Pond)", lat: 42.8704688, lng: 140.5992432, time: "08:30", type: "water",
+    img: "img_MT10-niseko-day5/04-oyunuma-crater-pond.jpg",
+    address: "680-2 Yunosato, Rankoshi, Isoya District, Hokkaido 048-1321, Japan",
+    mapUrl: "https://maps.google.com/?q=42.8704688,140.5992432&label=Niseko+Oyunuma+Sulfur+Hot+Spring+Pond",
+    baiduUrl: "https://map.baidu.com/search/%E4%BA%8C%E4%B8%96%E8%B0%B7%E5%A4%A7%E6%B1%A4%E6%B2%BC",
+    amapUrl: "https://uri.amap.com/marker?position=140.5992432,42.8704688&name=%E4%BA%8C%E4%B8%96%E8%B0%B7%E5%A4%A7%E6%B1%A4%E6%B2%BC",
+    note: "Milky-blue sulfur pond steaming right by Niseko Yumoto Onsen — a boardwalk runs right up to the steam." },
+  { name: "Shinsen-numa Marsh 神仙沼自然休養林", lat: 42.904084, lng: 140.592697, time: "10:30", type: "nature",
+    img: "img_MT10-niseko-day5/01-shinsen-numa-trail-signboard.jpg",
+    mapUrl: "https://maps.google.com/?q=42.904084,140.592697&label=Shinsen-numa+Marsh",
+    baiduUrl: "https://map.baidu.com/search/%E7%A5%9E%E4%BB%99%E6%B2%BC",
+    amapUrl: "https://uri.amap.com/marker?position=140.592697,42.904084&name=%E7%A5%9E%E4%BB%99%E6%B2%BC",
+    note: "High-moor wetland at 765m up the Niseko Panorama Line — said to be the most beautiful marsh in the range." }
+];
+
+const map = L.map('map', { zoomControl: true }).setView([42.867, 140.605], 12);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+
+L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + (i + 1) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  marker.bindPopup(
+    '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + (i + 1) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>'
+  );
+  markerRefs.push(marker);
+});
+
+map.fitBounds(fullLine, { padding: [30, 30] });
+
+const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let speedMultiplier = 1;
+let playing = false;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+const statusEl = document.getElementById('status');
+const legTag = document.getElementById('legTag');
+
+// ── SEQUENCE STATE MACHINE: photo(stop) → map(leg to next stop) → photo(next stop) → … , full-page while playing ──
+const PHOTO_DWELL_SECONDS = 3;
+const TOTAL_LEG_SECONDS = 26;
+const FPS = 60;
+
+let seqState = 'photo';
+let seqIndex = 0;
+let phaseProgress = 0;
+let legFrom = 0, legTo = 0, legFrames = 90;
+
+function legFramesFor(from, to) {
+  const gapMin = toMinutes(stops[to].time) - toMinutes(stops[from].time);
+  const share = Math.max(gapMin, 1) / totalMin;
+  const seconds = Math.max(1.4, share * TOTAL_LEG_SECONDS);
+  return seconds * FPS;
+}
+
+function renderPhotoStage(i) {
+  const s = stops[i];
+  const card = document.getElementById('arrivalCard');
+  const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
+  card.innerHTML =
+    '<div class="arrival-photo">' + media +
+    '<div class="arrival-overlay">' +
+    '<div class="arrival-tag">📍 <span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — ' + s.time + '</div>' +
+    '<div class="arrival-name">' + (i + 1) + '. ' + s.name + '</div>' +
+    (s.address ? '<div class="arrival-place">' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>' +
+    '</div>';
+  statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + s.time + '</span>';
+  // Force-hide the map and force-show the photo — never both at once, regardless of CSS state.
+  document.getElementById('mapWrap').style.display = 'none';
+  card.style.display = 'block';
+}
+
+function enterLegStage(from, to) {
+  legFrom = from; legTo = to;
+  legFrames = legFramesFor(from, to);
+  document.body.classList.add('leg-active');
+  const wrap = document.getElementById('mapWrap');
+  wrap.classList.add('map-fullscreen-wrap');
+  // Force-show the map and force-hide the photo — never both at once, regardless of CSS state.
+  wrap.style.display = 'block';
+  document.getElementById('arrivalCard').style.display = 'none';
+  setTimeout(function () {
+    map.invalidateSize();
+    map.fitBounds([[stops[from].lat, stops[from].lng], [stops[to].lat, stops[to].lng]], { padding: [50, 90] });
+  }, 60);
+  legTag.innerHTML = '📍 <span class="route">' + stops[from].name + ' → ' + stops[to].name + '</span>';
+  statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[from].time + '</span>';
+}
+
+function exitLegStage() {
+  document.body.classList.remove('leg-active');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+}
+
+function tick() {
+  if (!playing) return;
+  try {
+    if (seqState === 'photo') {
+      phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
+      if (phaseProgress >= 1) {
+        if (seqIndex >= stops.length - 1) {
+          seqIndex = 0;
+          phaseProgress = 0;
+          renderPhotoStage(seqIndex);
+        } else {
+          seqState = 'leg';
+          phaseProgress = 0;
+          enterLegStage(seqIndex, seqIndex + 1);
+        }
+      }
+    } else {
+      phaseProgress += (1 / legFrames) * speedMultiplier;
+      const p = Math.min(phaseProgress, 1);
+      const lat = stops[legFrom].lat + (stops[legTo].lat - stops[legFrom].lat) * p;
+      const lng = stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * p;
+      mover.setLatLng([lat, lng]);
+      const t0 = toMinutes(stops[legFrom].time), t1 = toMinutes(stops[legTo].time);
+      const curMin = Math.round(t0 + (t1 - t0) * p);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      const timeLabelEl = document.getElementById('timeLabel');
+      if (timeLabelEl) timeLabelEl.textContent = `${hh}:${mm}`;
+      if (phaseProgress >= 1) {
+        exitLegStage();
+        seqIndex = legTo;
+        seqState = 'photo';
+        phaseProgress = 0;
+        renderPhotoStage(seqIndex);
+      }
+    }
+  } catch (err) {
+    console.error('Animated map tick() error — recovering:', err);
+  }
+  requestAnimationFrame(tick);
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    document.body.classList.add('slideshow-active');
+    renderPhotoStage(seqIndex);
+    requestAnimationFrame(tick);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+    document.body.classList.remove('slideshow-active');
+    exitLegStage();
+    document.getElementById('mapWrap').style.display = '';
+    document.getElementById('arrivalCard').style.display = '';
+    setTimeout(function () {
+      map.invalidateSize();
+      map.fitBounds(fullLine, { padding: [30, 30] });
+    }, 60);
+  }
+}
+
 // ── DAY STATUS BANNER ──
 function updateBanner() {
   var start = new Date('2026-07-11T00:00:00+09:00');
