@@ -292,8 +292,63 @@ function setMapType(type) {
 
 const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff' };
 const fullLine = stops.map(s => [s.lat, s.lng]);
+let fullRoadPoints = fullLine;
 
-L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+let routeLine = L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+
+// ── REAL-ROAD ROUTING via OSRM ── the straight dashed line above is a placeholder;
+// mountain roads here (e.g. Niseko Panorama Line) loop out west before reaching a stop
+// that's mostly north, so we fetch the actual driving path and swap it in.
+const roadSegs = [];
+function pathCumulativeDistances(points) {
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i - 1][0];
+    const dy = points[i][1] - points[i - 1][1];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  return cum;
+}
+function pointAtFraction(seg, frac) {
+  const { points, cum } = seg;
+  const total = cum[cum.length - 1];
+  if (total === 0) return points[0];
+  const target = frac * total;
+  for (let i = 1; i < cum.length; i++) {
+    if (target <= cum[i] || i === cum.length - 1) {
+      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+      return [
+        points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac,
+        points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac
+      ];
+    }
+  }
+  return points[points.length - 1];
+}
+async function fetchRoadSegment(a, b) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok') return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  } catch (e) {}
+  return [[a.lat, a.lng], [b.lat, b.lng]];
+}
+async function buildRoads() {
+  const allPoints = [];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const pts = await fetchRoadSegment(stops[i], stops[i + 1]);
+    roadSegs[i] = { points: pts, cum: pathCumulativeDistances(pts) };
+    allPoints.push(...pts);
+  }
+  if (allPoints.length) {
+    map.removeLayer(routeLine);
+    routeLine = L.polyline(allPoints, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+    fullRoadPoints = allPoints;
+    if (!playing) map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+  }
+}
+buildRoads();
 
 function buildMapButtons(s) {
   if (!s.mapUrl) return '';
@@ -325,7 +380,7 @@ stops.forEach((s, i) => {
   markerRefs.push(marker);
 });
 
-map.fitBounds(fullLine, { padding: [30, 30] });
+map.fitBounds(fullRoadPoints, { padding: [30, 30] });
 
 const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
 const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
@@ -397,7 +452,9 @@ function enterLegStage(from, to) {
   document.getElementById('arrivalCard').style.display = 'none';
   setTimeout(function () {
     map.invalidateSize();
-    map.fitBounds([[stops[from].lat, stops[from].lng], [stops[to].lat, stops[to].lng]], { padding: [50, 90] });
+    const seg = roadSegs[from];
+    const bounds = seg ? seg.points : [[stops[from].lat, stops[from].lng], [stops[to].lat, stops[to].lng]];
+    map.fitBounds(bounds, { padding: [50, 90] });
   }, 60);
   legTag.innerHTML = '📍 <span class="route">' + stops[from].name + ' → ' + stops[to].name + '</span>';
   statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[from].time + '</span>';
@@ -427,9 +484,12 @@ function tick() {
     } else {
       phaseProgress += (1 / legFrames) * speedMultiplier;
       const p = Math.min(phaseProgress, 1);
-      const lat = stops[legFrom].lat + (stops[legTo].lat - stops[legFrom].lat) * p;
-      const lng = stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * p;
-      mover.setLatLng([lat, lng]);
+      const seg = roadSegs[legFrom];
+      const latlng = seg ? pointAtFraction(seg, p) : [
+        stops[legFrom].lat + (stops[legTo].lat - stops[legFrom].lat) * p,
+        stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * p
+      ];
+      mover.setLatLng(latlng);
       const t0 = toMinutes(stops[legFrom].time), t1 = toMinutes(stops[legTo].time);
       const curMin = Math.round(t0 + (t1 - t0) * p);
       const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
@@ -466,7 +526,7 @@ function togglePlay() {
     document.getElementById('arrivalCard').style.display = '';
     setTimeout(function () {
       map.invalidateSize();
-      map.fitBounds(fullLine, { padding: [30, 30] });
+      map.fitBounds(fullRoadPoints, { padding: [30, 30] });
     }, 60);
   }
 }
