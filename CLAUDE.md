@@ -150,6 +150,16 @@ Reference implementation: `S23.html` (The Secret BKE Trail, 18 June 2026)
 
 **Also applies to standalone single-map pages (added 2026-07-06):** `MT10-day6-map.html` (a standalone animated transfer map, not embedded in a day-log page) shipped without the fullscreen toggle — this rule was missed because the page had no other content around the map. Any page whose whole purpose *is* a map — animated or not — still needs the same "⛶ Open Full Screen Map" / "✕ Close Map" buttons as above. Don't assume a dedicated map page is exempt just because it's simple.
 
+### "Make animated map" default style (added 2026-07-10)
+When Paul just says **"make animated map"** for a trip day — with no further description needed — build the **full-page alternating slideshow** style, not the simpler pinned/dashed-line map above. Behavior:
+- The car drives **full-page** (fullscreen Leaflet map) from one stop to the next.
+- On arrival, the page switches to a **full-page photo** of that stop (name + address overlaid at the bottom in a gradient band), holds a few seconds, then switches back to the full-page map for the next leg — repeating automatically through all stops and looping.
+- Play/Pause + Speed controls float in a persistent bottom bar (always reachable, above both full-page layers).
+- Pull stops, order, photos, and addresses straight from that day's existing log page (`img_<PAGE-NAME>` folder + gallery captions) — only ask Paul for info that isn't already there (e.g. a missing address, or ambiguous stop order).
+- Filename pattern: `<DAY-LOG-NAME>-map.html` (e.g. `MT10-niseko-day5-map.html` for `MT10-niseko-day5.html`).
+- Reference implementation: `MT10-niseko-day4-map.html`.
+- If Paul instead asks for a simple point-to-point map or explicitly says "simple," fall back to the standard pinned/dashed-line style above.
+
 ## Map Links Rule
 **Photo with GPS EXIF data (added 2026-07-08):** Whenever Paul sends a photo, always check its EXIF metadata for GPS coordinates first.
 - If GPS is present: automatically create all three map links (Google/Baidu/Amap) from those exact coordinates and place them directly below the photo — no need to ask, no address required from Paul.
