@@ -498,13 +498,20 @@ function renderPhotoStage(i) {
     '</div>';
   timeLabel.textContent = s.time;
   statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + s.time + '</span>';
+  // Force-hide the map and force-show the photo — never both at once, regardless of CSS state.
+  document.getElementById('mapWrap').style.display = 'none';
+  card.style.display = 'block';
 }
 
 function enterLegStage(from, to) {
   legFrom = from; legTo = to;
   legFrames = legFramesFor(from, to);
   document.body.classList.add('leg-active');
-  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  const wrap = document.getElementById('mapWrap');
+  wrap.classList.add('map-fullscreen-wrap');
+  // Force-show the map and force-hide the photo — never both at once, regardless of CSS state.
+  wrap.style.display = 'block';
+  document.getElementById('arrivalCard').style.display = 'none';
   setTimeout(function () {
     map.invalidateSize();
     map.fitBounds([[stops[from].lat, stops[from].lng], [stops[to].lat, stops[to].lng]], { padding: [50, 90] });
@@ -567,6 +574,8 @@ function togglePlay() {
     btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
     document.body.classList.remove('slideshow-active');
     exitLegStage();
+    document.getElementById('mapWrap').style.display = '';
+    document.getElementById('arrivalCard').style.display = '';
     setTimeout(function () {
       map.invalidateSize();
       map.fitBounds(fullLine, { padding: [30, 30] });
