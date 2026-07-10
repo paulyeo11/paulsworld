@@ -527,37 +527,41 @@ function exitLegStage() {
 
 function tick() {
   if (!playing) return;
-  if (seqState === 'photo') {
-    phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
-    if (phaseProgress >= 1) {
-      if (seqIndex >= stops.length - 1) {
-        seqIndex = 0;
+  try {
+    if (seqState === 'photo') {
+      phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
+      if (phaseProgress >= 1) {
+        if (seqIndex >= stops.length - 1) {
+          seqIndex = 0;
+          phaseProgress = 0;
+          renderPhotoStage(seqIndex);
+        } else {
+          seqState = 'leg';
+          phaseProgress = 0;
+          enterLegStage(seqIndex, seqIndex + 1);
+        }
+      }
+    } else {
+      phaseProgress += (1 / legFrames) * speedMultiplier;
+      const p = Math.min(phaseProgress, 1);
+      const lat = stops[legFrom].lat + (stops[legTo].lat - stops[legFrom].lat) * p;
+      const lng = stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * p;
+      mover.setLatLng([lat, lng]);
+      const t0 = toMinutes(stops[legFrom].time), t1 = toMinutes(stops[legTo].time);
+      const curMin = Math.round(t0 + (t1 - t0) * p);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      timeLabel.textContent = `${hh}:${mm}`;
+      if (phaseProgress >= 1) {
+        exitLegStage();
+        seqIndex = legTo;
+        seqState = 'photo';
         phaseProgress = 0;
         renderPhotoStage(seqIndex);
-      } else {
-        seqState = 'leg';
-        phaseProgress = 0;
-        enterLegStage(seqIndex, seqIndex + 1);
       }
     }
-  } else {
-    phaseProgress += (1 / legFrames) * speedMultiplier;
-    const p = Math.min(phaseProgress, 1);
-    const lat = stops[legFrom].lat + (stops[legTo].lat - stops[legFrom].lat) * p;
-    const lng = stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * p;
-    mover.setLatLng([lat, lng]);
-    const t0 = toMinutes(stops[legFrom].time), t1 = toMinutes(stops[legTo].time);
-    const curMin = Math.round(t0 + (t1 - t0) * p);
-    const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
-    const mm = String(curMin % 60).padStart(2, '0');
-    timeLabel.textContent = `${hh}:${mm}`;
-    if (phaseProgress >= 1) {
-      exitLegStage();
-      seqIndex = legTo;
-      seqState = 'photo';
-      phaseProgress = 0;
-      renderPhotoStage(seqIndex);
-    }
+  } catch (err) {
+    console.error('Animated map tick() error — recovering:', err);
   }
   requestAnimationFrame(tick);
 }
