@@ -106,14 +106,28 @@
   }
   .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
 
-  #mapStage { display: none; }
-  body.show-map #mapStage { display: block; }
   body.show-map .arrival-card { display: none; }
-  .map-hint {
-    display: none; text-align: center; font-size: 0.78em; color: #8b949e;
-    padding: 8px 16px 0;
+
+  /* Picture-in-picture mini map while the photo is showing (playing) */
+  body:not(.show-map) #mapStage {
+    position: fixed; top: 84px; right: 14px; z-index: 3500;
+    width: 118px; cursor: pointer;
   }
-  body:not(.show-map) .map-hint { display: block; }
+  body:not(.show-map) .map-wrap {
+    margin: 0; border-radius: 12px; border: 2px solid rgba(240,165,0,0.7);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.55);
+  }
+  body:not(.show-map) #map { height: 118px !important; }
+  body:not(.show-map) .map-fullscreen-btn,
+  body:not(.show-map) .map-type-toggle,
+  body:not(.show-map) .leaflet-control-zoom,
+  body:not(.show-map) .leaflet-control-attribution { display: none !important; }
+  .mini-map-tag {
+    display: none; position: absolute; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); color: #f0a500; font-size: 0.6rem; font-weight: 800;
+    text-align: center; padding: 2px 0; letter-spacing: 0.04em;
+  }
+  body:not(.show-map) .mini-map-tag { display: block; }
 
   .arrival-card { margin: 14px 0 0; }
   .arrival-photo {
@@ -217,14 +231,15 @@ body.lang-ja .en-block{display:none!important}
   🏠 <span class="en"><strong>Arrived back at the hotel</strong> — here's everywhere today's drive went, from this morning to tonight.</span><span class="zh"><strong>已返回酒店</strong> — 这是今天从早到晚自驾去过的每一个地方。</span><span class="ja"><strong>ホテルに到着</strong> — 今朝から今夜までのドライブで訪れた場所はこちら。</span>
 </div>
 
-<div id="mapStage">
+<div id="mapStage" onclick="expandMapIfMini()">
   <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
   <div class="map-wrap" id="mapWrap">
     <div id="map"></div>
-    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+    <div class="map-type-toggle" style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
       <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
       <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
     </div>
+    <div class="mini-map-tag">🚗 <span class="en">Tap to expand</span><span class="zh">点击展开</span><span class="ja">タップして拡大</span></div>
   </div>
 </div>
 <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
@@ -241,8 +256,6 @@ body.lang-ja .en-block{display:none!important}
   <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
   <span id="speedVal">1&times;</span>
 </div>
-
-<div class="map-hint" id="mapHint">⏸ <span class="en">Pause to see the map</span><span class="zh">暂停以查看地图</span><span class="ja">一時停止すると地図が見えます</span></div>
 
 <div class="legend">
   <span class="dot" style="background:#f85149;"></span><span class="en">Hotel — Start / End</span><span class="zh">酒店 — 起点/终点</span><span class="ja">ホテル — 出発/終着</span>&nbsp;&nbsp;
@@ -395,6 +408,10 @@ function togglePlay() {
     btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
     if (document.getElementById('map').classList.contains('map-fullscreen')) closeMapFullscreen();
     document.body.classList.remove('show-map');
+    setTimeout(function () {
+      map.invalidateSize();
+      map.fitBounds(fullLine, { padding: [10, 10] });
+    }, 60);
     requestAnimationFrame(step);
   } else {
     btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
@@ -404,6 +421,10 @@ function togglePlay() {
       map.fitBounds(fullLine, { padding: [30, 30] });
     }, 60);
   }
+}
+
+function expandMapIfMini() {
+  if (playing) togglePlay();
 }
 
 function interpolate(p) {
