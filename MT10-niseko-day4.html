@@ -463,7 +463,6 @@ speedSlider.addEventListener('input', () => {
 });
 
 const statusEl = document.getElementById('status');
-const timeLabel = document.getElementById('timeLabel');
 const legTag = document.getElementById('legTag');
 
 // ── SEQUENCE STATE MACHINE: photo(stop) → map(leg to next stop) → photo(next stop) → … , full-page while playing ──
@@ -496,7 +495,6 @@ function renderPhotoStage(i) {
     buildMapButtons(s) +
     '</div>' +
     '</div>';
-  timeLabel.textContent = s.time;
   statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + s.time + '</span>';
   // Force-hide the map and force-show the photo — never both at once, regardless of CSS state.
   document.getElementById('mapWrap').style.display = 'none';
@@ -551,7 +549,8 @@ function tick() {
       const curMin = Math.round(t0 + (t1 - t0) * p);
       const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
       const mm = String(curMin % 60).padStart(2, '0');
-      timeLabel.textContent = `${hh}:${mm}`;
+      const timeLabelEl = document.getElementById('timeLabel');
+      if (timeLabelEl) timeLabelEl.textContent = `${hh}:${mm}`;
       if (phaseProgress >= 1) {
         exitLegStage();
         seqIndex = legTo;
