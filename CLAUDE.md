@@ -109,7 +109,9 @@ appear" even though the push "succeeded." To prevent this:
   this class of bug immediately instead of Paul discovering it later.
 
 ### Number-First Place Titles (Standing Default — added 2026-07-11)
-Whenever a place/stop appears in a numbered itinerary or route (day-log section headers, "Today's Visit"/"Today's Plan" titles, map marker names/popups, photo captions tied to a stop) — the **number always goes in front of the place name**, as the very first thing in the title: `3. Camp Site (Niseko Sahina Campsite)`, not `Camp Site (Niseko Sahina Campsite) 3` or `Camp Site — Stop 3`. Applies to English, Chinese, and Japanese versions alike. If the map already auto-numbers markers/popups via code (`(i+1) + '. ' + name`), don't also bake a number into the `name` field there — only add the explicit number to static text (section headers, body copy) that isn't auto-numbered, so it doesn't double up.
+Whenever a place/stop appears in a numbered itinerary or route (day-log section headers, "Today's Visit"/"Today's Plan" titles, map marker names/popups, photo captions tied to a stop) — the **label always goes in front of the place name**, as the very first thing in the title: `D. Camp Site (Niseko Sahina Campsite)`, not `Camp Site (Niseko Sahina Campsite) D` or `Camp Site — Stop D`. Applies to English, Chinese, and Japanese versions alike. If the map already auto-labels markers/popups via code, don't also bake a label into the `name` field there — only add the explicit label to static text (section headers, body copy) that isn't auto-labelled, so it doesn't double up.
+
+**Letters, not numbers (Standing Default — added 2026-07-11):** Use **A, B, C…** for this sequence, not 1, 2, 3. This applies everywhere the sequence appears — map markers/popups, arrival-card labels, day-log section titles, body text — for ALL trip maps and day logs going forward, not just one page. Auto-generate the letter from array position (e.g. `String.fromCharCode(65 + i)`) rather than hardcoding. No need to ask each time — this is now the default; only revert if Paul explicitly asks for numbers again.
 
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
@@ -138,7 +140,7 @@ Whenever Paul's article/story includes a hiking route, travel route, or any sequ
   </div>
   ```
 - **Tiles:** Street (OSM) is the default. Satellite = ESRI (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`)
-- **Markers:** Numbered coloured circle markers — 🔴 red = Start/End, 🟠 orange = road/transport section, 🟢 green = forest/nature section, 🔵 blue = water/reservoir section
+- **Markers:** Lettered (A, B, C…) coloured circle markers — 🔴 red = Start/End, 🟠 orange = road/transport section, 🟢 green = forest/nature section, 🔵 blue = water/reservoir section. (Changed from numbers 1,2,3 to letters A,B,C — standing default since 2026-07-11.)
 - **Route line:** Orange dashed polyline connecting all stops in order
 - **Photo popup:** Tapping any marker shows a popup with the photo + caption + "View Full Photo" button (opens lightbox)
 - **Fullscreen button:** CSS-based (NOT browser requestFullscreen API — doesn't work on iOS). Use `position:fixed; top:0; left:0; width:100vw; height:100vh` on the map div with a visible "✕ Close Map" button top-right
