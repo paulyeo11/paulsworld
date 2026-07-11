@@ -218,6 +218,13 @@ fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(
 
 **Also:** When pushing large files (>50KB) via `mcp__github__push_files`, always verify the `content` parameter is non-empty before calling — an accidental empty string wipes the file on GitHub.
 
+### Wikipedia Photo on Map Markers (Standing Default — added 2026-07-11)
+Whenever a route/day-log map stop doesn't have one of Paul's own photos, **always try to fetch a Wikipedia photo for it and show it on the map marker popup / arrival card** — don't leave it as a bare emoji icon if a real photo is available.
+- Give each stop a `wikiTitle` field with its best-match Wikipedia article title (only set it when there's a genuine, specific match — e.g. a mountain, marsh, national park, famous landmark; don't set it for small private businesses/shops/local churches that have no dedicated article, and never point it at a generic town/region article and pass it off as a photo of the specific place).
+- On page load, for every stop with `wikiTitle` and no `img`, fetch the thumbnail client-side via the REST summary API (same CORS-enabled pattern as the rule above) and set `s.img` once it resolves, then refresh the marker popup content.
+- If no thumbnail comes back (or `wikiTitle` isn't set), leave the icon fallback as-is — don't fabricate or substitute an unrelated photo.
+- Reference implementation: `MT10-niseko-day6.html` (`fetchWikiThumb()` + the `buildPopupHtml()` refactor).
+
 ## 🌐 Bilingual Rule (English + Chinese) — Standing Default
 Every page and article on Paul's World must include an **English / 中文 language toggle**. This applies to ALL pages, including travel itineraries, stories, AI articles, health pages, tools, etc.
 

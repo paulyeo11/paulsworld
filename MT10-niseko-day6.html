@@ -423,6 +423,16 @@ function buildMapButtons(s) {
     '</div>';
 }
 
+function buildPopupHtml(s, i) {
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  return '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>';
+}
+
 const markerRefs = [];
 stops.forEach((s, i) => {
   const color = colorFor[s.type];
@@ -432,16 +442,26 @@ stops.forEach((s, i) => {
       className: '', iconSize: [26, 26], iconAnchor: [13, 13]
     })
   }).addTo(map);
-  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
-  marker.bindPopup(
-    '<div class="popup-card">' + imgHtml +
-    '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
-    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
-    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
-    buildMapButtons(s) +
-    '</div>'
-  );
+  marker.bindPopup(buildPopupHtml(s, i));
   markerRefs.push(marker);
+});
+
+// ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
+// Uses the CORS-enabled REST summary API (never hardcode upload.wikimedia.org thumb URLs — see CLAUDE.md).
+function fetchWikiThumb(wikiTitle) {
+  return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
+    .catch(function () { return null; });
+}
+stops.forEach(function (s, i) {
+  if (s.img || !s.wikiTitle) return;
+  fetchWikiThumb(s.wikiTitle).then(function (src) {
+    if (!src) return;
+    s.img = src;
+    s.imgCredit = 'Wikipedia';
+    markerRefs[i].setPopupContent(buildPopupHtml(s, i));
+  });
 });
 
 if (stops.length > 1) {
