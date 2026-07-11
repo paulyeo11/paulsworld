@@ -7,6 +7,7 @@
 - Baptised **29 April 2026**.
 - Worked at **ECO for 9 years**.
 - **Index Page Rule:** the homepage must always display **"Retired at 67"** — never 70.
+- **Favourite singers/music:** Susan Wong, Julienne Taylor.
 
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
