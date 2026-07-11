@@ -469,8 +469,22 @@ function closeMapFullscreen() {
   setTimeout(function () { map.invalidateSize(); }, 100);
 }
 
-const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const carIcon = L.divIcon({ html: '<span id="carEmoji" style="display:inline-block;transition:transform .2s linear;">🚗</span>', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
 const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+// 🚗 emoji faces left (~270°/west) by default on most platforms, so rotate
+// by (bearing + 90) to align the car's nose with its actual direction of travel.
+function bearingDeg(lat1, lng1, lat2, lng2) {
+  const rad = Math.PI / 180;
+  const y = Math.sin((lng2 - lng1) * rad) * Math.cos(lat2 * rad);
+  const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos((lng2 - lng1) * rad);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function setCarHeading(bearing) {
+  const el = document.getElementById('carEmoji');
+  if (el) el.style.transform = 'rotate(' + ((bearing + 90) % 360) + 'deg)';
+}
+if (stops.length > 1) setCarHeading(bearingDeg(stops[0].lat, stops[0].lng, stops[1].lat, stops[1].lng));
 
 function toMinutes(t) {
   const [h, m] = t.split(':').map(Number);
@@ -525,10 +539,13 @@ function interpolate(p) {
       const curMin = Math.round(targetMin);
       const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
       const mm = String(curMin % 60).padStart(2, '0');
-      return { lat, lng, timeStr: `${hh}:${mm}` };
+      const bearing = bearingDeg(stops[i].lat, stops[i].lng, stops[i + 1].lat, stops[i + 1].lng);
+      return { lat, lng, timeStr: `${hh}:${mm}`, bearing };
     }
   }
-  return { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng, timeStr: stops[stops.length - 1].time };
+  const last = stops.length - 1;
+  const bearing = bearingDeg(stops[last - 1].lat, stops[last - 1].lng, stops[last].lat, stops[last].lng);
+  return { lat: stops[last].lat, lng: stops[last].lng, timeStr: stops[last].time, bearing };
 }
 
 function step() {
@@ -537,6 +554,7 @@ function step() {
   if (progress >= 1) {
     const pos = interpolate(1);
     mover.setLatLng([pos.lat, pos.lng]);
+    setCarHeading(pos.bearing);
     timeLabel.textContent = pos.timeStr;
     checkArrival(endMin);
     statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
@@ -551,6 +569,7 @@ function step() {
   }
   const pos = interpolate(progress);
   mover.setLatLng([pos.lat, pos.lng]);
+  setCarHeading(pos.bearing);
   document.getElementById('timeLabel').textContent = pos.timeStr;
   checkArrival(startMin + progress * totalMin);
   requestAnimationFrame(step);
