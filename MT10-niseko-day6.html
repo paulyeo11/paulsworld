@@ -340,12 +340,14 @@ const stops = [
     amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
     note: "Starting Niseko Day 6 at the hotel — central Kutchan, on-site parking, right on Rt5/Rt393." },
   { name: "Kutchan Catholic Church カトリック倶知安教会", lat: 42.9093, lng: 140.7461, time: "10:10", type: "church", icon: "⛪",
+    wikiTitle: ["Kutchan Catholic Church", "Kutchan"],
     address: "1-chōme-1-6 Kita 5 Jōnishi, Kutchan, Abuta District, Hokkaido 044-0055, Japan",
     mapUrl: "https://maps.google.com/?q=42.9093,140.7461&label=Kutchan+Catholic+Church",
     baiduUrl: "https://map.baidu.com/search/%E3%82%AB%E3%83%88%E3%83%AA%E3%83%83%E3%82%AF%E5%80%B6%E7%9F%A5%E5%AE%89%E6%95%99%E4%BC%9A",
     amapUrl: "https://uri.amap.com/marker?position=140.7461,42.9093&name=%E3%82%AB%E3%83%88%E3%83%AA%E3%83%83%E3%82%AF%E5%80%B6%E7%9F%A5%E5%AE%89%E6%95%99%E4%BC%9A",
     note: "Small church founded 1911, right on Route 5 in Kutchan town — about 10 min drive from the hotel. Tel: +81 136-22-1099." },
   { name: "Niseko Takahashi Dairy Farm (MILK KOBO) 高橋牧場 ニセコミルク工房", lat: 42.8347, lng: 140.6773, time: "11:00", type: "food",
+    wikiTitle: ["Niseko Takahashi Dairy Farm", "Niseko"],
     address: "888-1 Soga, Niseko-cho, Abuta District, Hokkaido 048-1522, Japan",
     mapUrl: "https://maps.google.com/?q=Niseko+Takahashi+Dairy+Farm+Milk+Kobo,+888-1+Soga,+Niseko-cho,+Hokkaido+048-1522",
     baiduUrl: "https://map.baidu.com/search/%E9%AB%98%E6%A9%8B%E7%89%A7%E5%A0%B4%20%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%9F%E3%83%AB%E3%82%AF%E5%B7%A5%E6%88%BF",
@@ -418,9 +420,16 @@ function fetchWikiThumb(wikiTitle) {
     .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
     .catch(function () { return null; });
 }
+// wikiTitle may be a single title or an array of fallback candidates, tried in order
+function fetchWikiThumbChain(titles) {
+  const list = Array.isArray(titles) ? titles : [titles];
+  return list.reduce(function (chain, title) {
+    return chain.then(function (src) { return src || fetchWikiThumb(title); });
+  }, Promise.resolve(null));
+}
 stops.forEach(function (s, i) {
   if (s.img || !s.wikiTitle) return;
-  fetchWikiThumb(s.wikiTitle).then(function (src) {
+  fetchWikiThumbChain(s.wikiTitle).then(function (src) {
     if (!src) return;
     s.img = src;
     s.imgCredit = 'Wikipedia';
