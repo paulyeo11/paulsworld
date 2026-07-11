@@ -108,6 +108,9 @@ appear" even though the push "succeeded." To prevent this:
 - Always verify the live URL afterward (per "After Every Deployment" rule below) — that catches
   this class of bug immediately instead of Paul discovering it later.
 
+### Number-First Place Titles (Standing Default — added 2026-07-11)
+Whenever a place/stop appears in a numbered itinerary or route (day-log section headers, "Today's Visit"/"Today's Plan" titles, map marker names/popups, photo captions tied to a stop) — the **number always goes in front of the place name**, as the very first thing in the title: `3. Camp Site (Niseko Sahina Campsite)`, not `Camp Site (Niseko Sahina Campsite) 3` or `Camp Site — Stop 3`. Applies to English, Chinese, and Japanese versions alike. If the map already auto-numbers markers/popups via code (`(i+1) + '. ' + name`), don't also bake a number into the `name` field there — only add the explicit number to static text (section headers, body copy) that isn't auto-numbered, so it doesn't double up.
+
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
 
