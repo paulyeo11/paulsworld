@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Niseko Day 6 — 12 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-media { position: relative; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-media-note { background: linear-gradient(135deg, #1a1208, #241a0d); display: flex; align-items: center; justify-content: center; padding: 30px 0; cursor: default; }
+.pj-note-icon { font-size: 2.6em; }
+.pj-date { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.6); color: #f4c869; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 6px; }
+.pj-play-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,0.15); pointer-events: none; }
+.pj-play-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+.pj-play-text { background: rgba(0,0,0,0.6); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 12px; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* NO GPS NOTE */
+.gps-note { font-size: 0.78em; color: #8b949e; margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #f0a500; line-height: 1.6; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 10000; align-items: center; justify-content: center; flex-direction: column;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; padding: 0 16px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+
+/* EMBEDDED ANIMATED MAP — small by default, both map and photo go full-page while playing */
+.map-wrap {
+  position: relative; height: 58vh; border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+#map { width: 100%; height: 100%; }
+.map-wrap.map-fullscreen-wrap {
+  position: fixed !important; inset: 0 !important; z-index: 9999;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  border-radius: 0 !important; border: none; margin: 0 !important;
+}
+.leg-tag {
+  display: none; position: fixed; top: 60px; left: 0; right: 0; z-index: 10001;
+  text-align: center; font-size: 0.8rem; font-weight: 700; color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none;
+}
+body.leg-active .leg-tag { display: block; }
+.controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-top: none;
+}
+#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+#timeLabel { font-weight: 700; color: #58a6ff; }
+.play-btn {
+  background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+  color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap;
+}
+.back-btn-inline {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.8em; font-weight: 700; padding: 6px 12px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap; text-decoration: none;
+}
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-top: 8px; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.bottom-bar-wrap { margin-top: 14px; }
+body.slideshow-active .bottom-bar-wrap {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500; margin: 0;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+body.slideshow-active .controls { background: none; border: none; border-radius: 0; padding: 0; }
+body.slideshow-active .speed-control { padding: 0; }
+.legend {
+  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+.arrival-card {
+  display: none; background: #161b22; border: 1px solid rgba(240,165,0,0.3);
+  border-radius: 14px; overflow: hidden; margin-top: 14px;
+}
+body.slideshow-active:not(.leg-active) .arrival-card {
+  display: block; position: fixed; inset: 0; z-index: 9000; margin: 0; border-radius: 0; border: none; background: #000;
+}
+.arrival-photo { position: relative; width: 100%; height: 220px; overflow: hidden; background: #000; }
+body.slideshow-active:not(.leg-active) .arrival-photo { height: 100%; }
+.arrival-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.arrival-icon {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 2.4em; background: linear-gradient(135deg, #1a1208, #241a0d);
+}
+body.slideshow-active:not(.leg-active) .arrival-icon { font-size: 5em; }
+.arrival-overlay {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0) 100%);
+  padding: 14px 16px;
+}
+body.slideshow-active:not(.leg-active) .arrival-overlay { padding: 90px 20px calc(120px + env(safe-area-inset-bottom)); }
+.arrival-tag {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
+  color: #6ee7b7; margin-bottom: 6px; text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+}
+.arrival-name { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 4px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+body.slideshow-active:not(.leg-active) .arrival-name { font-size: 1.4rem; }
+.arrival-place { font-size: 0.85rem; color: rgba(255,255,255,0.9); text-shadow: 0 1px 6px rgba(0,0,0,0.8); }
+.popup-card { font-family: -apple-system, system-ui, sans-serif; }
+.popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
+</style>
+<script src="/bilingual.js"></script>
+<style>
+.ja{display:none!important}
+body.lang-ja .ja{display:inline!important}
+body.lang-ja .zh{display:none!important}
+body.lang-ja .en{display:none!important}
+.ja-block{display:none!important}
+body.lang-ja .ja-block{display:block!important}
+body.lang-ja .en-block{display:none!important}
+</style>
+<script>
+(function(){
+  function setLang3(lang){
+    document.body.classList.remove('lang-zh','lang-ja');
+    if(lang==='zh') document.body.classList.add('lang-zh');
+    if(lang==='ja') document.body.classList.add('lang-ja');
+    document.querySelectorAll('.pw-lang-btn').forEach(function(btn,i){
+      btn.classList.toggle('active',(lang==='en'&&i===0)||(lang==='zh'&&i===1)||(lang==='ja'&&i===2));
+    });
+    try{ localStorage.setItem('pw-lang', lang); }catch(e){}
+  }
+  window.setLang = setLang3;
+  function addJaButton(){
+    var wrap = document.querySelector('.pw-lang-toggle');
+    if(!wrap || wrap.querySelector('.pw-lang-ja-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'pw-lang-btn pw-lang-ja-btn';
+    btn.innerHTML = '&#x1F1EF;&#x1F1F5; 日本語';
+    btn.onclick = function(){ setLang3('ja'); };
+    wrap.appendChild(btn);
+    var saved;
+    try{ saved = localStorage.getItem('pw-lang'); }catch(e){}
+    if(saved === 'ja') setLang3('ja');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', addJaButton);
+  } else {
+    addJaButton();
+  }
+})();
+</script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · <span class="gold">Niseko Day 6</span></h1>
+  <div class="header-sub"><span class="en">Sixth full day in Niseko · Sun, 12 Jul 2026</span><span class="zh">在二世谷的第六个整天 · 2026年7月12日（周日）</span><span class="ja">ニセコでの6日目 · 2026年7月12日（日）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span><span class="ja">MT10 旅行ハブ</span></a>
+    <a href="MT10-niseko-day5.html" class="day-chip">📔 <span class="en">Niseko Day 5</span><span class="zh">二世谷第五天</span><span class="ja">ニセコ5日目</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span><span class="ja">シェア</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span><span class="ja">計算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">🗺️ <span class="en">Animated Route Map — Every Place Visited Today</span><span class="zh">动态路线地图 — 今天去过的每个地方</span><span class="ja">アニメーション経路マップ — 今日訪れた全ての場所</span></div>
+  <div class="leg-tag" id="legTag"></div>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
+    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
+  </div>
+  <div class="arrival-card" id="arrivalCard"></div>
+  <div class="bottom-bar-wrap">
+    <div class="controls">
+      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span></button>
+      <div id="status"><span class="en">Tap Play — full-page photo</span><span class="zh">点击播放 — 全屏照片</span><span class="ja">再生をタップ — 全画面写真</span></div>
+      <button class="back-btn-inline" onclick="if(playing) togglePlay();">⬅ <span class="en">Back</span><span class="zh">返回</span><span class="ja">戻る</span></button>
+    </div>
+    <div class="speed-control" id="speedControl">
+      <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+      <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+      <span id="speedVal">1&times;</span>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="dot" style="background:#f0a500;"></span><span class="en">Farm / food stop</span><span class="zh">牧场/美食点</span><span class="ja">牧場・食事処</span>
+  </div>
+
+  <div class="section-title">🥛 <span class="en">Today's Visit: A. Niseko Takahashi Dairy Farm (MILK KOBO)</span><span class="zh">今日到访：A. 高桥牧场 二世谷牛奶工房</span><span class="ja">今日訪れた場所：A. ニセコミルク工房（高橋牧場）</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Visited <strong>A. Niseko Takahashi Dairy Farm (MILK KOBO) 高橋牧場 ニセコミルク工房</strong> today — 888-1 Soga, Niseko-cho, Abuta District, Hokkaido 048-1522, Japan. A working dairy farm with a shop and cafe selling sweets made from their own fresh milk — soft serve, cream puffs, cheese, and pudding.</span>
+    <span class="zh">今天到访了 <strong>A. 高桥牧场 二世谷牛奶工房（高橋牧場 ニセコミルク工房）</strong> — 地址：日本北海道虻田郡二世谷町字曽我888-1，邮编048-1522。这是一家经营中的牧场，附设商店与咖啡厅，售卖用自家新鲜牛奶制作的甜点 — 软雪糕、泡芙、芝士与布丁。</span>
+    <span class="ja">今日は<strong>A. ニセコミルク工房（高橋牧場）</strong>を訪れた — 〒048-1522 北海道虻田郡ニセコ町字曽我888-1。自家産の新鮮な牛乳を使ったスイーツ — ソフトクリーム、シュークリーム、チーズ、プリンなどを販売する売店・カフェを併設した現役の牧場。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://maps.google.com/?q=Niseko+Takahashi+Dairy+Farm+Milk+Kobo,+888-1+Soga,+Niseko-cho,+Hokkaido+048-1522" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E9%AB%98%E6%A9%8B%E7%89%A7%E5%A0%B4%20%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%9F%E3%83%AB%E3%82%AF%E5%B7%A5%E6%88%BF" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E9%AB%98%E6%A9%8B%E7%89%A7%E5%A0%B4%20%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%9F%E3%83%AB%E3%82%AF%E5%B7%A5%E6%88%BF" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+  <div class="gps-note">📍 <span class="en">Exact GPS wasn't available from web sources when this page was built — the marker above is placed near the farm's Soga address as a best estimate. Send a screenshot of the Google Maps pin and it'll be corrected.</span><span class="zh">建立此页面时未能从网络获取精确GPS坐标 — 上方标记是根据牧场曽我的地址做的最佳估计位置。发送Google地图定位截图即可修正。</span><span class="ja">このページ作成時、正確なGPS座標をウェブ上で確認できませんでした — 上のマーカーは曽我の住所に基づく推定位置です。Googleマップのピンのスクリーンショットを送っていただければ修正します。</span></div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span><span class="ja">今日の日記</span></div>
+  <div class="log-card" id="emptyLog" style="display:none;">
+    <div class="log-icon">🥛</div>
+    <div class="log-title"><span class="en">Nothing logged yet today</span><span class="zh">今天还没有日记内容</span><span class="ja">今日はまだ記録がありません</span></div>
+    <div class="log-sub"><span class="en">Niseko Day 6 is <strong>12 Jul 2026</strong> — check back later today as photos and notes come in.</span><span class="zh">二世谷第六天是 <strong>2026年7月12日</strong> — 今天稍后会有照片和笔记更新，请随时查看。</span><span class="ja">ニセコ6日目は<strong>2026年7月12日</strong> — 今日中に写真やメモが追加される予定です。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Niseko Day 6 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── ANIMATED ROUTE MAP ──
+const stops = [
+  { name: "Niseko Takahashi Dairy Farm (MILK KOBO) 高橋牧場 ニセコミルク工房", lat: 42.8347, lng: 140.6773, time: "12:00", type: "food",
+    address: "888-1 Soga, Niseko-cho, Abuta District, Hokkaido 048-1522, Japan",
+    mapUrl: "https://maps.google.com/?q=Niseko+Takahashi+Dairy+Farm+Milk+Kobo,+888-1+Soga,+Niseko-cho,+Hokkaido+048-1522",
+    baiduUrl: "https://map.baidu.com/search/%E9%AB%98%E6%A9%8B%E7%89%A7%E5%A0%B4%20%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%9F%E3%83%AB%E3%82%AF%E5%B7%A5%E6%88%BF",
+    amapUrl: "https://uri.amap.com/search?keyword=%E9%AB%98%E6%A9%8B%E7%89%A7%E5%A0%B4%20%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%9F%E3%83%AB%E3%82%AF%E5%B7%A5%E6%88%BF",
+    note: "Working dairy farm shop & cafe in Soga — soft serve, cream puffs, cheese and pudding made from their own fresh milk." }
+];
+
+const map = L.map('map', { zoomControl: true }).setView([42.8347, 140.6773], 14);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+function stopLabel(i) { return String.fromCharCode(65 + i); }
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff', food: '#f0a500', camp: '#06b6d4' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+let fullRoadPoints = fullLine;
+
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + s.lat + ',' + s.lng + '&travelmode=driving" target="_blank" onclick="event.stopPropagation()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🧭 Directions</a>' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + stopLabel(i) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  marker.bindPopup(
+    '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>'
+  );
+  markerRefs.push(marker);
+});
+
+const lastStop = stops[stops.length - 1];
+const waypointStops = stops.slice(0, -1);
+document.getElementById('btn-directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + lastStop.lat + ',' + lastStop.lng +
+  (waypointStops.length ? '&waypoints=' + waypointStops.map(s => s.lat + ',' + s.lng).join('|') : '') +
+  '&travelmode=driving';
+
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+let speedMultiplier = 1;
+let playing = false;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+const statusEl = document.getElementById('status');
+
+const PHOTO_DWELL_SECONDS = 3;
+const FPS = 60;
+let seqIndex = 0;
+let phaseProgress = 0;
+
+function renderPhotoStage(i) {
+  const s = stops[i];
+  const card = document.getElementById('arrivalCard');
+  const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
+  card.innerHTML =
+    '<div class="arrival-photo">' + media +
+    '<div class="arrival-overlay">' +
+    '<div class="arrival-tag">📍 <span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — ' + s.time + '</div>' +
+    '<div class="arrival-name">' + stopLabel(i) + '. ' + s.name + '</div>' +
+    (s.address ? '<div class="arrival-place">' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>' +
+    '</div>';
+  statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + s.time + '</span>';
+  document.getElementById('mapWrap').style.display = 'none';
+  card.style.display = 'block';
+}
+
+function tick() {
+  if (!playing) return;
+  try {
+    phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
+    if (phaseProgress >= 1) {
+      phaseProgress = 0;
+      renderPhotoStage(seqIndex);
+    }
+  } catch (err) {
+    console.error('Animated map tick() error — recovering:', err);
+  }
+  requestAnimationFrame(tick);
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    document.body.classList.add('slideshow-active');
+    renderPhotoStage(seqIndex);
+    requestAnimationFrame(tick);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+    document.body.classList.remove('slideshow-active');
+    document.getElementById('mapWrap').style.display = '';
+    document.getElementById('arrivalCard').style.display = '';
+    setTimeout(function () {
+      map.invalidateSize();
+      map.setView([stops[0].lat, stops[0].lng], 14);
+    }, 60);
+  }
+}
+
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-12T00:00:00+09:00');
+  var end = new Date('2026-07-13T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var days = Math.ceil((start - now) / 86400000);
+    banner.innerHTML = '🕓 <span class="en">Niseko Day 6 is in <strong>' + days + ' day' + (days === 1 ? '' : 's') + '</strong>.</span><span class="zh">距离二世谷第六天还有 <strong>' + days + '</strong> 天。</span><span class="ja">ニセコ6日目まであと<strong>' + days + '日</strong>。</span>';
+  } else if (now >= start && now < end) {
+    banner.innerHTML = '🟢 <span class="en"><strong>Niseko Day 6 is today!</strong> Live in Niseko.</span><span class="zh"><strong>今天就是二世谷第六天！</strong>正在二世谷。</span><span class="ja"><strong>今日がニセコ6日目！</strong>ニセコより。</span>';
+    banner.style.background = 'rgba(16,185,129,0.15)';
+    banner.style.borderColor = 'rgba(16,185,129,0.4)';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Niseko Day 6 is complete — see the log below.</span><span class="zh">二世谷第六天已结束 — 请看下方日记。</span><span class="ja">ニセコ6日目は終了 — 下記の日記をご覧ください。</span>';
+    banner.style.background = 'rgba(240,165,0,0.1)';
+    banner.style.borderColor = 'rgba(240,165,0,0.3)';
+  }
+}
+updateBanner();
+
+// ── PHOTO JOURNAL DATA (empty until a photo is sent) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" poster="' + (p.poster || '') + '" muted playsinline preload="metadata"></video>'
+      : p.type === 'note'
+      ? '<div class="pj-note-icon">' + (p.icon || '📝') + '</div>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    var dateBadge = p.date ? '<div class="pj-date"><span class="en">' + p.date + '</span><span class="zh">' + (p.dateZh || p.date) + '</span><span class="ja">' + (p.dateJa || p.date) + '</span></div>' : '';
+    var playHint = p.type === 'video' ? '<div class="pj-play-hint"><div class="pj-play-icon">▶</div><div class="pj-play-text"><span class="en">Tap ▶ to play video</span><span class="zh">点击▶播放视频</span><span class="ja">▶をタップして再生</span></div></div>' : '';
+    media = '<div class="pj-media' + (p.type === 'note' ? ' pj-media-note' : '') + '">' + media + dateBadge + playHint + '</div>';
+    var mapBtn = '';
+    if (p.mapUrl) {
+      mapBtn = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">' +
+        '<a href="' + p.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+        (p.baiduUrl ? '<a href="' + p.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+        (p.amapUrl ? '<a href="' + p.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+        '</div>';
+    }
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : p.type === 'note' ? 'Note' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      mapBtn +
+      '</div>';
+    if (p.type !== 'note') item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX (gallery) ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.poster = p.poster || '';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = (p.caption || '') + (p.date ? '  ·  ' + p.date : '');
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+
+</body>
+</html>
