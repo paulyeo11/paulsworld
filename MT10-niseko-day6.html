@@ -493,6 +493,16 @@ speedSlider.addEventListener('input', () => {
 const statusEl = document.getElementById('status');
 const timeLabel = document.getElementById('timeLabel');
 
+let lastArrivedIndex = -1;
+function checkArrival(targetMin) {
+  for (let i = 0; i < stops.length; i++) {
+    if (targetMin >= toMinutes(stops[i].time) && i > lastArrivedIndex) {
+      lastArrivedIndex = i;
+      markerRefs[i].openPopup();
+    }
+  }
+}
+
 function togglePlay() {
   playing = !playing;
   const btn = document.getElementById('playBtn');
@@ -528,9 +538,12 @@ function step() {
     const pos = interpolate(1);
     mover.setLatLng([pos.lat, pos.lng]);
     timeLabel.textContent = pos.timeStr;
+    checkArrival(endMin);
     statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
     setTimeout(() => {
       progress = 0;
+      lastArrivedIndex = -1;
+      map.closePopup();
       statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
       requestAnimationFrame(step);
     }, 1400);
@@ -539,6 +552,7 @@ function step() {
   const pos = interpolate(progress);
   mover.setLatLng([pos.lat, pos.lng]);
   document.getElementById('timeLabel').textContent = pos.timeStr;
+  checkArrival(startMin + progress * totalMin);
   requestAnimationFrame(step);
 }
 
