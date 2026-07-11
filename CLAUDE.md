@@ -116,6 +116,14 @@ Whenever a place/stop appears in a numbered itinerary or route (day-log section 
 ### Day Log Starting Point Rule (Standing Default — added 2026-07-11)
 Every day-log route/map (the `stops` array, section list, and any "Today's Visit" sequence) **always starts with Paul's hotel for that night as Stop A** — the first stop in the sequence, before any food/sightseeing stops. This applies automatically to every trip day log going forward, not just when Paul explicitly says "starting at my hotel." Pull the hotel name/address/coordinates from that trip's existing hotel data (already used on other day pages for the same stay, e.g. the `type: "start"` stop) rather than asking Paul. If the day already has other stops logged (created before the hotel was added), insert the hotel as the new Stop A and re-letter the rest (B, C, D…) — don't ask, just do it and confirm after.
 
+### Nearest-Next Stop Ordering Rule (Standing Default — added 2026-07-11)
+After Stop A (the hotel, per the rule above), **auto-arrange the remaining stops by proximity — always route to the nearest not-yet-visited location next**, rather than keeping whatever order photos/notes happened to arrive in. Do this automatically for every day-log route/map, without being asked:
+- Starting from Stop A, repeatedly pick the closest remaining stop (straight-line distance from lat/lng is fine — no need for a full driving-time API) to build the sequence: A → nearest → next-nearest-from-there → … This is a simple nearest-neighbor route, not the shortest overall route — good enough for a day log.
+- Re-letter stops (A, B, C…) to match the new nearest-first order.
+- Update section titles, map markers/popups, and the `stops` array together so everything stays in sync — don't leave the array in one order and the section headers in another.
+- If Paul gives an explicit fixed order or a stop has a fixed time commitment (e.g. a booked lunch reservation, a scheduled tour), respect that override instead of re-sorting by distance — only auto-arrange when order isn't otherwise specified.
+- Applies to all trip day logs and route maps going forward, not just one page.
+
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
 
