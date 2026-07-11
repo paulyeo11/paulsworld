@@ -219,6 +219,7 @@ body.lang-ja .en-block{display:none!important}
     <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
     <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
   </div>
+  <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:rgba(16,185,129,0.9);color:#fff;border:2px solid rgba(255,255,255,0.5);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.4);">🧭</a>
 </div>
 
 <div class="arrival-card" id="arrivalCard"></div>
@@ -382,6 +383,12 @@ stops.forEach((s, i) => {
 });
 
 map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+
+const lastStop = stops[stops.length - 1];
+const waypointStops = stops.slice(0, -1);
+document.getElementById('btn-directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + lastStop.lat + ',' + lastStop.lng +
+  (waypointStops.length ? '&waypoints=' + waypointStops.map(s => s.lat + ',' + s.lng).join('|') : '') +
+  '&travelmode=driving';
 
 const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
 const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
