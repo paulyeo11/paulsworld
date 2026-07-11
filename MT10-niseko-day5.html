@@ -283,7 +283,7 @@ body.lang-ja .en-block{display:none!important}
       <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
       <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
     </div>
-    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg width="22" height="22" viewBox="0 0 24 24"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
+    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
   </div>
   <div class="arrival-card" id="arrivalCard"></div>
   <div class="bottom-bar-wrap">
@@ -514,6 +514,20 @@ document.getElementById('btn-directions').href = 'https://www.google.com/maps/di
 const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
 const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
 
+// The needle rotates to match the real driving bearing of the current leg —
+// it must never sit fixed pointing "up", or it silently lies about direction
+// (e.g. showing north while the actual road heads west).
+function bearingDeg(lat1, lng1, lat2, lng2) {
+  const toRad = d => d * Math.PI / 180, toDeg = r => r * 180 / Math.PI;
+  const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+const compassNeedle = document.getElementById('compassNeedle');
+function setCompassHeading(deg) {
+  if (compassNeedle) compassNeedle.style.transform = 'rotate(' + deg + 'deg)';
+}
+
 function toMinutes(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
@@ -568,6 +582,9 @@ function renderPhotoStage(i) {
   // Force-hide the map and force-show the photo — never both at once, regardless of CSS state.
   document.getElementById('mapWrap').style.display = 'none';
   card.style.display = 'block';
+  if (i < stops.length - 1) {
+    setCompassHeading(bearingDeg(s.lat, s.lng, stops[i + 1].lat, stops[i + 1].lng));
+  }
 }
 
 function enterLegStage(from, to) {
@@ -617,6 +634,14 @@ function tick() {
         stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * p
       ];
       mover.setLatLng([lat, lng]);
+      const aheadP = Math.min(p + 0.04, 1);
+      const [aheadLat, aheadLng] = seg ? pointAtFraction(seg, aheadP) : [
+        stops[legFrom].lat + (stops[legTo].lat - stops[legFrom].lat) * aheadP,
+        stops[legFrom].lng + (stops[legTo].lng - stops[legFrom].lng) * aheadP
+      ];
+      if (aheadLat !== lat || aheadLng !== lng) {
+        setCompassHeading(bearingDeg(lat, lng, aheadLat, aheadLng));
+      }
       const t0 = toMinutes(stops[legFrom].time), t1 = toMinutes(stops[legTo].time);
       const curMin = Math.round(t0 + (t1 - t0) * p);
       const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
