@@ -173,6 +173,12 @@ When Paul just says **"make animated map"** for a trip day, build the **standard
 - Pull stops, order, photos, and addresses straight from that day's existing log page (`img_<PAGE-NAME>` folder + gallery captions) — only ask Paul for info that isn't already there (e.g. a missing address, or ambiguous stop order).
 - Filename pattern: `<DAY-LOG-NAME>-map.html` (e.g. `MT10-niseko-day5-map.html` for `MT10-niseko-day5.html`).
 
+### 🐛 Bug learned from MT10-niseko-day6 "car not moving" (fixed 2026-07-11)
+Despite the rule above, `MT10-niseko-day6.html` shipped with the reverted full-page slideshow style and — worse — never actually added a car marker at all, so the "Animated Route Map" had nothing moving on it. The revert instruction existed in this file but wasn't checked against before building.
+- **Self-check before shipping any "Animated Route Map" page:** it must contain an actual moving marker (`carIcon` + `mover`, the 🚗 emoji driving along the route) — not just a map with static pins. If you wrote "Animated Route Map" in a title/section and there's no `carIcon` in the script, it's broken.
+- **Pre-push hook now enforces this automatically** (`.githooks/pre-push`, `check_animated_map`) — blocks any push of an HTML file containing "Animated Route Map" that (a) has no `carIcon`/🚗 marker, or (b) resurrects the reverted `slideshow-active` + `arrival-card` pattern.
+- **Lesson:** a standing instruction written in this file is not self-enforcing — when a rule exists specifically to prevent a repeat mistake, back it with an automated check (like the bilingual pre-push check above) rather than relying on remembering to re-read CLAUDE.md every time.
+
 ## Map Links Rule
 **Photo with GPS EXIF data (added 2026-07-08):** Whenever Paul sends a photo, always check its EXIF metadata for GPS coordinates first.
 - If GPS is present: automatically create all three map links (Google/Baidu/Amap) from those exact coordinates and place them directly below the photo — no need to ask, no address required from Paul.

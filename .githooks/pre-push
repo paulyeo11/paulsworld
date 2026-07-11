@@ -1,8 +1,28 @@
 #!/bin/bash
 # Pre-push hook: block any push where an HTML file includes bilingual.js
 # but has zero class="zh" elements (meaning Chinese toggle is broken).
+# Also blocks "animated route map" pages that ship without a moving car
+# marker, or that resurrect the full-page slideshow style Paul rejected
+# on 2026-07-10 (see MT10-niseko-day6 "car not moving" bug, fixed 2026-07-11).
 
 FAILED=0
+
+check_animated_map() {
+  local file="$1"
+  grep -qi 'Animated Route Map' "$file" || return 0
+  if grep -q 'slideshow-active' "$file" && grep -q 'arrival-card' "$file"; then
+    echo "❌ ANIMATED MAP CHECK FAILED: $file"
+    echo "   Uses the reverted full-page slideshow style (slideshow-active + arrival-card)."
+    echo "   Paul rejected this style on 2026-07-10 — use the standard style instead"
+    echo "   (see MT10-niseko-day3-map.html: car icon drives continuously on an always-visible map)."
+    FAILED=1
+  fi
+  if ! grep -qE "carIcon|🚗" "$file"; then
+    echo "❌ ANIMATED MAP CHECK FAILED: $file"
+    echo "   Labeled 'Animated Route Map' but has no car marker (carIcon / 🚗) — nothing will move."
+    FAILED=1
+  fi
+}
 
 while IFS= read -r -d '' file; do
   if grep -q 'bilingual\.js' "$file" && ! grep -q 'class="zh"' "$file"; then
@@ -11,6 +31,7 @@ while IFS= read -r -d '' file; do
     echo "   Add <span class=\"en\">...</span><span class=\"zh\">...</span> to all visible text."
     FAILED=1
   fi
+  check_animated_map "$file"
 done < <(git diff --cached --name-only --diff-filter=ACM -z | grep '\.html$')
 
 # Also check unstaged files being pushed (compare with remote)
@@ -33,6 +54,7 @@ while IFS= read -r line; do
       echo "   Add <span class=\"en\">...</span><span class=\"zh\">...</span> to all visible text."
       FAILED=1
     fi
+    check_animated_map "$file"
   done < <(git diff --name-only "${range}" -z 2>/dev/null | grep '\.html$' || true)
 done
 
