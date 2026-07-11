@@ -113,6 +113,9 @@ Whenever a place/stop appears in a numbered itinerary or route (day-log section 
 
 **Letters, not numbers (Standing Default — added 2026-07-11):** Use **A, B, C…** for this sequence, not 1, 2, 3. This applies everywhere the sequence appears — map markers/popups, arrival-card labels, day-log section titles, body text — for ALL trip maps and day logs going forward, not just one page. Auto-generate the letter from array position (e.g. `String.fromCharCode(65 + i)`) rather than hardcoding. No need to ask each time — this is now the default; only revert if Paul explicitly asks for numbers again.
 
+### Day Log Starting Point Rule (Standing Default — added 2026-07-11)
+Every day-log route/map (the `stops` array, section list, and any "Today's Visit" sequence) **always starts with Paul's hotel for that night as Stop A** — the first stop in the sequence, before any food/sightseeing stops. This applies automatically to every trip day log going forward, not just when Paul explicitly says "starting at my hotel." Pull the hotel name/address/coordinates from that trip's existing hotel data (already used on other day pages for the same stay, e.g. the `type: "start"` stop) rather than asking Paul. If the day already has other stops logged (created before the hotel was added), insert the hotel as the new Stop A and re-letter the rest (B, C, D…) — don't ask, just do it and confirm after.
+
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
 
