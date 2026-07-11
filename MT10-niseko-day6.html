@@ -125,23 +125,28 @@ body {
   color: #484f58; font-family: monospace;
 }
 
-/* EMBEDDED ANIMATED MAP — small by default, both map and photo go full-page while playing */
-.map-wrap {
-  position: relative; height: 58vh; border-radius: 14px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
+/* EMBEDDED ANIMATED MAP — normal-sized, car drives continuously along the route */
+.map-fullscreen-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.82em; font-weight: 700;
+  padding: 9px 16px; border-radius: 18px; cursor: pointer;
+  margin: 0 0 10px; width: 100%;
 }
-#map { width: 100%; height: 100%; }
-.map-wrap.map-fullscreen-wrap {
-  position: fixed !important; inset: 0 !important; z-index: 9999;
+.map-wrap { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#map { width: 100%; height: 58vh; }
+#map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
   width: 100vw !important; height: 100vh !important; height: 100dvh !important;
-  border-radius: 0 !important; border: none; margin: 0 !important;
+  z-index: 9999; border-radius: 0 !important;
 }
-.leg-tag {
-  display: none; position: fixed; top: 60px; left: 0; right: 0; z-index: 10001;
-  text-align: center; font-size: 0.8rem; font-weight: 700; color: #fff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8); pointer-events: none;
+.map-wrap.map-fullscreen-wrap { border-radius: 0; border: none; }
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
 }
-body.leg-active .leg-tag { display: block; }
 .controls {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
@@ -154,58 +159,20 @@ body.leg-active .leg-tag { display: block; }
   color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
   border-radius: 14px; cursor: pointer; white-space: nowrap;
 }
-.back-btn-inline {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
-  color: #f0a500; font-size: 0.8em; font-weight: 700; padding: 6px 12px;
-  border-radius: 14px; cursor: pointer; white-space: nowrap; text-decoration: none;
-}
 .speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-top: 8px; }
 .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
 .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
 .speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
-.bottom-bar-wrap { margin-top: 14px; }
-body.slideshow-active .bottom-bar-wrap {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10500; margin: 0;
-  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid rgba(255,255,255,0.1);
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
 }
-body.slideshow-active .controls { background: none; border: none; border-radius: 0; padding: 0; }
-body.slideshow-active .speed-control { padding: 0; }
 .legend {
   margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
   background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
 }
 .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
-.arrival-card {
-  display: none; background: #161b22; border: 1px solid rgba(240,165,0,0.3);
-  border-radius: 14px; overflow: hidden; margin-top: 14px;
-}
-body.slideshow-active:not(.leg-active) .arrival-card {
-  display: block; position: fixed; inset: 0; z-index: 9000; margin: 0; border-radius: 0; border: none; background: #000;
-}
-.arrival-photo { position: relative; width: 100%; height: 220px; overflow: hidden; background: #000; }
-body.slideshow-active:not(.leg-active) .arrival-photo { height: 100%; }
-.arrival-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.arrival-icon {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 2.4em; background: linear-gradient(135deg, #1a1208, #241a0d);
-}
-body.slideshow-active:not(.leg-active) .arrival-icon { font-size: 5em; }
-.arrival-overlay {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0) 100%);
-  padding: 14px 16px;
-}
-body.slideshow-active:not(.leg-active) .arrival-overlay { padding: 90px 20px calc(120px + env(safe-area-inset-bottom)); }
-.arrival-tag {
-  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
-  color: #6ee7b7; margin-bottom: 6px; text-shadow: 0 1px 6px rgba(0,0,0,0.7);
-}
-.arrival-name { font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 4px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-body.slideshow-active:not(.leg-active) .arrival-name { font-size: 1.4rem; }
-.arrival-place { font-size: 0.85rem; color: rgba(255,255,255,0.9); text-shadow: 0 1px 6px rgba(0,0,0,0.8); }
 .popup-card { font-family: -apple-system, system-ui, sans-serif; }
 .popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
 .popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
@@ -276,7 +243,7 @@ body.lang-ja .en-block{display:none!important}
 <div class="content">
 
   <div class="section-title">🗺️ <span class="en">Animated Route Map — Every Place Visited Today</span><span class="zh">动态路线地图 — 今天去过的每个地方</span><span class="ja">アニメーション経路マップ — 今日訪れた全ての場所</span></div>
-  <div class="leg-tag" id="legTag"></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
   <div class="map-wrap" id="mapWrap">
     <div id="map"></div>
     <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
@@ -285,18 +252,16 @@ body.lang-ja .en-block{display:none!important}
     </div>
     <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
   </div>
-  <div class="arrival-card" id="arrivalCard"></div>
-  <div class="bottom-bar-wrap">
-    <div class="controls">
-      <button class="play-btn" id="playBtn" onclick="togglePlay()">▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span></button>
-      <div id="status"><span class="en">Tap Play — full-page photo</span><span class="zh">点击播放 — 全屏照片</span><span class="ja">再生をタップ — 全画面写真</span></div>
-      <button class="back-btn-inline" onclick="if(playing) togglePlay();">⬅ <span class="en">Back</span><span class="zh">返回</span><span class="ja">戻る</span></button>
-    </div>
-    <div class="speed-control" id="speedControl">
-      <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
-      <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
-      <span id="speedVal">1&times;</span>
-    </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+
+  <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
+    <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">08:00</span></div>
+  </div>
+  <div class="speed-control" id="speedControl">
+    <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+    <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="speedVal">1&times;</span>
   </div>
   <div class="legend">
     <span class="dot" style="background:#f85149;"></span><span class="en">Hotel / start</span><span class="zh">酒店/出发点</span><span class="ja">ホテル・出発地点</span>&nbsp;&nbsp;
@@ -411,7 +376,6 @@ function stopLabel(i) { return String.fromCharCode(65 + i); }
 
 const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff', food: '#f0a500', camp: '#06b6d4', church: '#a78bfa' };
 const fullLine = stops.map(s => [s.lat, s.lng]);
-let fullRoadPoints = fullLine;
 
 function buildMapButtons(s) {
   if (!s.mapUrl) return '';
@@ -475,10 +439,38 @@ document.getElementById('btn-directions').href = 'https://www.google.com/maps/di
   (waypointStops.length ? '&waypoints=' + waypointStops.map(s => s.lat + ',' + s.lng).join('|') : '') +
   '&travelmode=driving';
 
+function openMapFullscreen() {
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
 function toMinutes(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 }
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
 let speedMultiplier = 1;
 let playing = false;
 
@@ -490,63 +482,55 @@ speedSlider.addEventListener('input', () => {
 });
 
 const statusEl = document.getElementById('status');
-
-const PHOTO_DWELL_SECONDS = 3;
-const FPS = 60;
-let seqIndex = 0;
-let phaseProgress = 0;
-
-function renderPhotoStage(i) {
-  const s = stops[i];
-  const card = document.getElementById('arrivalCard');
-  const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
-  card.innerHTML =
-    '<div class="arrival-photo">' + media +
-    '<div class="arrival-overlay">' +
-    '<div class="arrival-tag">📍 <span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — ' + s.time + '</div>' +
-    '<div class="arrival-name">' + stopLabel(i) + '. ' + s.name + '</div>' +
-    (s.address ? '<div class="arrival-place">' + s.address + '</div>' : '') +
-    buildMapButtons(s) +
-    '</div>' +
-    '</div>';
-  statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + s.time + '</span>';
-  document.getElementById('mapWrap').style.display = 'none';
-  card.style.display = 'block';
-}
-
-function tick() {
-  if (!playing) return;
-  try {
-    phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
-    if (phaseProgress >= 1) {
-      phaseProgress = 0;
-      seqIndex = (seqIndex + 1) % stops.length;
-      renderPhotoStage(seqIndex);
-    }
-  } catch (err) {
-    console.error('Animated map tick() error — recovering:', err);
-  }
-  requestAnimationFrame(tick);
-}
+const timeLabel = document.getElementById('timeLabel');
 
 function togglePlay() {
   playing = !playing;
   const btn = document.getElementById('playBtn');
   if (playing) {
     btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
-    document.body.classList.add('slideshow-active');
-    renderPhotoStage(seqIndex);
-    requestAnimationFrame(tick);
+    requestAnimationFrame(step);
   } else {
     btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
-    document.body.classList.remove('slideshow-active');
-    document.getElementById('mapWrap').style.display = '';
-    document.getElementById('arrivalCard').style.display = '';
-    setTimeout(function () {
-      map.invalidateSize();
-      map.fitBounds(fullLine, { padding: [40, 40] });
-    }, 60);
   }
+}
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const lat = stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP;
+      const lng = stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP;
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      return { lat, lng, timeStr: `${hh}:${mm}` };
+    }
+  }
+  return { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng, timeStr: stops[stops.length - 1].time };
+}
+
+function step() {
+  if (!playing) return;
+  progress += 0.0018 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    timeLabel.textContent = pos.timeStr;
+    statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
+    setTimeout(() => {
+      progress = 0;
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      requestAnimationFrame(step);
+    }, 1400);
+    return;
+  }
+  const pos = interpolate(progress);
+  mover.setLatLng([pos.lat, pos.lng]);
+  document.getElementById('timeLabel').textContent = pos.timeStr;
+  requestAnimationFrame(step);
 }
 
 // ── DAY STATUS BANNER ──
