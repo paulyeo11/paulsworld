@@ -390,8 +390,12 @@ function buildMapButtons(s) {
     '</div>';
 }
 
+function escapeAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
 function buildPopupHtml(s, i) {
-  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  const caption = s.name + (s.imgCredit ? ' (' + s.imgCredit + ')' : '');
+  const imgHtml = s.img ? '<img class="popup-photo" src="' + s.img + '" style="cursor:pointer;" data-src="' + escapeAttr(s.img) + '" data-caption="' + escapeAttr(caption) + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
   return '<div class="popup-card">' + imgHtml +
     '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
     '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
@@ -411,6 +415,12 @@ stops.forEach((s, i) => {
   }).addTo(map);
   marker.bindPopup(buildPopupHtml(s, i));
   markerRefs.push(marker);
+});
+
+// Tapping a popup photo opens it full-page in the lightbox
+map.on('popupopen', function (e) {
+  const photo = e.popup.getElement().querySelector('.popup-photo');
+  if (photo) photo.onclick = function () { openLightboxSrc(photo.getAttribute('data-src'), photo.getAttribute('data-caption')); };
 });
 
 // ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
@@ -671,6 +681,17 @@ function openLightbox(i) {
     img.src = p.src;
   }
   document.getElementById('lbCaption').textContent = (p.caption || '') + (p.date ? '  ·  ' + p.date : '');
+  document.getElementById('lightbox').classList.add('active');
+}
+// Opens any photo (e.g. a map-marker photo) full-page in the same lightbox, by src/caption rather than a galleryPhotos index
+function openLightboxSrc(src, caption) {
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  video.pause();
+  video.style.display = 'none';
+  img.style.display = 'block';
+  img.src = src;
+  document.getElementById('lbCaption').textContent = caption || '';
   document.getElementById('lightbox').classList.add('active');
 }
 function closeLightbox() {
