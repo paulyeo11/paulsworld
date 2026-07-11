@@ -138,14 +138,14 @@ function toggleLang() {
 
 // ── STOPS ──
 const stops = [
-  { id:'n0',  num:'①', lat:43.82, lng:87.62, name:'Urumqi',            cn:'乌鲁木齐',      desc:'Start & Return · Airport · Capital of Xinjiang',                          km:'Day 1 Start / Final Return',           color:'#ef4444', type:'start',   icon:'✈️' },
-  { id:'n1',  num:'②', lat:47.20, lng:87.48, name:'Wulungu Lake',      cn:'乌伦古湖',      desc:'Large freshwater lake · Fishing culture · Gateway to North Loop',         km:'~480 km from Urumqi',                  color:'#3b82f6', type:'lake',    icon:'🎣' },
-  { id:'n3',  num:'④', lat:47.85, lng:88.13, name:'Altay',             cn:'阿勒泰',        desc:'City base · Resupply stop · Direct from Wulungu (skips Burqin)',          km:'~120 km from Wulungu Lake',            color:'#f0a500', type:'city',    icon:'🏙️' },
-  { id:'n4',  num:'⑤', lat:48.54, lng:86.90, name:'Hemu Village',      cn:'禾木村 ⭐',     desc:'Most beautiful village · Morning mist · Tuvan minority · Horses',         km:'~180 km from Altay',                   color:'#10b981', type:'village', icon:'🛖' },
-  { id:'d0',  num:'A', lat:44.33, lng:84.89, name:'Dushanzi',          cn:'独山子',        desc:'North entry of G217 Duku Highway · Fuel up · Start of mountain road',     km:'~600 km from Hemu via 吉木乃 transit', color:'#f0a500', type:'city',    icon:'🚗' },
-  { id:'d4',  num:'E', lat:43.05, lng:84.10, name:'Nalati Grasslands', cn:'那拉提草原 ⭐', desc:'Sky grassland · Kazakh nomads · Yurts · Panoramic mountain views',        km:'~230 km from Dushanzi via Duku Hwy',   color:'#10b981', type:'grass',   icon:'🌿' },
-  { id:'d11', num:'L', lat:41.72, lng:82.96, name:'Kuqa',              cn:'库车',          desc:'Ancient Silk Road city · Kizil Caves · Via Bayanbulak & Kuqa corridor',   km:'~185 km from Nalati (via Bayanbulak)', color:'#f0a500', type:'city',    icon:'🏛️' },
-  { id:'d12', num:'M', lat:41.77, lng:86.07, name:'Korla',             cn:'库尔勒市',      desc:'City of Pears (库尔勒香梨) · Tarim River · Drive north to complete circuit',km:'~300 km from Kuqa via G314',           color:'#f0a500', type:'city',    icon:'🍐' },
+  { id:'n0',  num:'①', lat:43.82, lng:87.62, name:'Urumqi',            cn:'乌鲁木齐',      desc:'Start & Return · Airport · Capital of Xinjiang',                          km:'Day 1 Start / Final Return',           color:'#ef4444', type:'start',   icon:'✈️', wikiTitle:'Ürümqi' },
+  { id:'n1',  num:'②', lat:47.20, lng:87.48, name:'Wulungu Lake',      cn:'乌伦古湖',      desc:'Large freshwater lake · Fishing culture · Gateway to North Loop',         km:'~480 km from Urumqi',                  color:'#3b82f6', type:'lake',    icon:'🎣', wikiTitle:'Ulungur Lake' },
+  { id:'n3',  num:'④', lat:47.85, lng:88.13, name:'Altay',             cn:'阿勒泰',        desc:'City base · Resupply stop · Direct from Wulungu (skips Burqin)',          km:'~120 km from Wulungu Lake',            color:'#f0a500', type:'city',    icon:'🏙️', wikiTitle:'Altay City' },
+  { id:'n4',  num:'⑤', lat:48.54, lng:86.90, name:'Hemu Village',      cn:'禾木村 ⭐',     desc:'Most beautiful village · Morning mist · Tuvan minority · Horses',         km:'~180 km from Altay',                   color:'#10b981', type:'village', icon:'🛖', wikiTitle:'Hemu, Xinjiang' },
+  { id:'d0',  num:'A', lat:44.33, lng:84.89, name:'Dushanzi',          cn:'独山子',        desc:'North entry of G217 Duku Highway · Fuel up · Start of mountain road',     km:'~600 km from Hemu via 吉木乃 transit', color:'#f0a500', type:'city',    icon:'🚗', wikiTitle:'Dushanzi District' },
+  { id:'d4',  num:'E', lat:43.05, lng:84.10, name:'Nalati Grasslands', cn:'那拉提草原 ⭐', desc:'Sky grassland · Kazakh nomads · Yurts · Panoramic mountain views',        km:'~230 km from Dushanzi via Duku Hwy',   color:'#10b981', type:'grass',   icon:'🌿', wikiTitle:'Nalati Grassland' },
+  { id:'d11', num:'L', lat:41.72, lng:82.96, name:'Kuqa',              cn:'库车',          desc:'Ancient Silk Road city · Kizil Caves · Via Bayanbulak & Kuqa corridor',   km:'~185 km from Nalati (via Bayanbulak)', color:'#f0a500', type:'city',    icon:'🏛️', wikiTitle:'Kuqa City' },
+  { id:'d12', num:'M', lat:41.77, lng:86.07, name:'Korla',             cn:'库尔勒市',      desc:'City of Pears (库尔勒香梨) · Tarim River · Drive north to complete circuit',km:'~300 km from Kuqa via G314',           color:'#f0a500', type:'city',    icon:'🍐', wikiTitle:'Korla' },
 ];
 
 // ── MAP ──
@@ -183,10 +183,19 @@ const allMarkers = {};
 function popupHTML(s) {
   const primary   = (lang === 'en') ? s.name : s.cn;
   const secondary = (lang === 'en') ? s.cn   : s.name;
-  return `<div class="pname">${s.icon} ${primary}</div>
+  const imgHtml   = s.img ? `<img src="${s.img}" style="width:100%;border-radius:6px;margin-bottom:6px;max-height:120px;object-fit:cover;">` : '';
+  return `${imgHtml}<div class="pname">${s.icon} ${primary}</div>
     <div class="pcn">${secondary}</div>
     <div class="pdesc">${s.desc}</div>
     <div class="pkm">📍 ${s.km}</div>`;
+}
+
+// ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
+function fetchWikiThumb(wikiTitle) {
+  return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
+    .then(r => r.ok ? r.json() : null)
+    .then(d => (d && d.thumbnail) ? d.thumbnail.source : null)
+    .catch(() => null);
 }
 
 function makeMarker(s) {
@@ -202,6 +211,15 @@ function makeMarker(s) {
 }
 
 stops.forEach(makeMarker);
+
+stops.forEach(function (s) {
+  if (s.img || !s.wikiTitle) return;
+  fetchWikiThumb(s.wikiTitle).then(function (src) {
+    if (!src) return;
+    s.img = src;
+    allMarkers[s.id].setPopupContent(popupHTML(s));
+  });
+});
 
 function updatePopups() {
   stops.forEach(s => allMarkers[s.id].setPopupContent(popupHTML(s)));

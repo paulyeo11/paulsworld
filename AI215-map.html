@@ -113,19 +113,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const stops = [
-  { name: "Urumqi",           lat: 43.8200, lng: 87.6200, day: 1,  type: "start" },
-  { name: "Wulungu Lake",     lat: 47.1100, lng: 87.4800, day: 2,  type: "lake" },
-  { name: "Altay City",       lat: 47.8500, lng: 88.1300, day: 3,  type: "city" },
-  { name: "Hemu Village",     lat: 48.3500, lng: 86.5500, day: 4,  type: "village" },
-  { name: "Kanas Lake",       lat: 48.6800, lng: 87.0000, day: 5,  type: "lake" },
-  { name: "Burqin",           lat: 47.7100, lng: 86.8700, day: 6,  type: "city" },
-  { name: "Kuytun City",      lat: 46.0800, lng: 84.6800, day: 7,  type: "city" },
-  { name: "Sayram Lake",      lat: 44.6100, lng: 81.1700, day: 8,  type: "lake" },
-  { name: "Dushanzi District", lat: 44.3200, lng: 84.8800, day: 9,  type: "city" },
-  { name: "Nalati Grassland", lat: 43.3500, lng: 83.7000, day: 10, type: "village" },
-  { name: "Kuqa City",        lat: 41.7100, lng: 82.9600, day: 12, type: "city" },
-  { name: "Korla City",       lat: 41.7600, lng: 86.1400, day: 14, type: "city" },
-  { name: "Urumqi (Return)",  lat: 43.8200, lng: 87.6200, day: 15, type: "end" }
+  { name: "Urumqi",           lat: 43.8200, lng: 87.6200, day: 1,  type: "start", wikiTitle: "Ürümqi" },
+  { name: "Wulungu Lake",     lat: 47.1100, lng: 87.4800, day: 2,  type: "lake", wikiTitle: "Ulungur Lake" },
+  { name: "Altay City",       lat: 47.8500, lng: 88.1300, day: 3,  type: "city", wikiTitle: "Altay City" },
+  { name: "Hemu Village",     lat: 48.3500, lng: 86.5500, day: 4,  type: "village", wikiTitle: "Hemu, Xinjiang" },
+  { name: "Kanas Lake",       lat: 48.6800, lng: 87.0000, day: 5,  type: "lake", wikiTitle: "Kanas Lake" },
+  { name: "Burqin",           lat: 47.7100, lng: 86.8700, day: 6,  type: "city", wikiTitle: "Burqin County" },
+  { name: "Kuytun City",      lat: 46.0800, lng: 84.6800, day: 7,  type: "city", wikiTitle: "Kuytun" },
+  { name: "Sayram Lake",      lat: 44.6100, lng: 81.1700, day: 8,  type: "lake", wikiTitle: "Sayram Lake" },
+  { name: "Dushanzi District", lat: 44.3200, lng: 84.8800, day: 9,  type: "city", wikiTitle: "Dushanzi District" },
+  { name: "Nalati Grassland", lat: 43.3500, lng: 83.7000, day: 10, type: "village", wikiTitle: "Nalati Grassland" },
+  { name: "Kuqa City",        lat: 41.7100, lng: 82.9600, day: 12, type: "city", wikiTitle: "Kuqa City" },
+  { name: "Korla City",       lat: 41.7600, lng: 86.1400, day: 14, type: "city", wikiTitle: "Korla" },
+  { name: "Urumqi (Return)",  lat: 43.8200, lng: 87.6200, day: 15, type: "end", wikiTitle: "Ürümqi" }
 ];
 
 const typeColor = { start: '#ef4444', end: '#ef4444', lake: '#3b82f6', city: '#f0a500', village: '#10b981' };
@@ -174,10 +174,33 @@ for (let i = 0; i < stops.length - 1; i++) {
   L.polyline([fullLine[i], fullLine[i+1]], { color: '#f0a500', weight: 3, opacity: 0.8, dashArray: '6,8' }).addTo(map);
 }
 
-stops.forEach((s) => {
-  L.circleMarker([s.lat, s.lng], {
+function popupHtml(s) {
+  const imgHtml = s.img ? `<img src="${s.img}" style="width:100%;border-radius:6px 6px 0 0;display:block;margin-bottom:6px;max-height:120px;object-fit:cover;">` : '';
+  return `<div>${imgHtml}<b>Day ${s.day} — ${s.name}</b></div>`;
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const marker = L.circleMarker([s.lat, s.lng], {
     radius: 7, color: '#0d1117', weight: 2, fillColor: typeColor[s.type], fillOpacity: 1
-  }).addTo(map).bindPopup(`<b>Day ${s.day} — ${s.name}</b>`);
+  }).addTo(map).bindPopup(popupHtml(s));
+  markerRefs.push(marker);
+});
+
+// ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
+function fetchWikiThumb(wikiTitle) {
+  return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
+    .catch(function () { return null; });
+}
+stops.forEach(function (s, i) {
+  if (s.img || !s.wikiTitle) return;
+  fetchWikiThumb(s.wikiTitle).then(function (src) {
+    if (!src) return;
+    s.img = src;
+    markerRefs[i].setPopupContent(popupHtml(s));
+  });
 });
 
 map.fitBounds(fullLine, { padding: [30, 30] });

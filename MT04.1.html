@@ -538,18 +538,18 @@
 const stops = [
   // Day 1
   { lat: 43.83, lng: 87.62, day: 1, num: 'S', name: 'Urumqi Train Station 乌鲁木齐火车站', desc: 'Z41 arrives 08:43 · Car pickup point', color: '#3b82f6' },
-  { lat: 43.80, lng: 87.58, day: 1, num: '2', name: 'Grand Bazaar 大巴扎', desc: '⭐ Uyghur market · crafts · food', color: '#3b82f6' },
-  { lat: 44.30, lng: 86.03, day: 1, num: '3', name: 'Shihezi 石河子', desc: 'Day 1 Overnight', color: '#8b5cf6' },
+  { lat: 43.80, lng: 87.58, day: 1, num: '2', name: 'Grand Bazaar 大巴扎', desc: '⭐ Uyghur market · crafts · food', color: '#3b82f6', wikiTitle: 'Xinjiang International Grand Bazaar' },
+  { lat: 44.30, lng: 86.03, day: 1, num: '3', name: 'Shihezi 石河子', desc: 'Day 1 Overnight', color: '#8b5cf6', wikiTitle: 'Shihezi' },
   // Day 2
-  { lat: 44.43, lng: 85.66, day: 2, num: '1', name: 'Kuitun 奎屯', desc: 'Fuel + breakfast stop', color: '#f97316' },
-  { lat: 44.60, lng: 81.21, day: 2, num: '3', name: 'Sayram Lake 赛里木湖', desc: '⭐ Cobalt-blue alpine lake · 2,073m · snow peaks', color: '#f97316' },
-  { lat: 47.85, lng: 88.13, day: 2, num: '4', name: 'Altay City 阿勒泰市', desc: 'Day 2 Overnight', color: '#8b5cf6' },
+  { lat: 44.43, lng: 85.66, day: 2, num: '1', name: 'Kuitun 奎屯', desc: 'Fuel + breakfast stop', color: '#f97316', wikiTitle: 'Kuytun' },
+  { lat: 44.60, lng: 81.21, day: 2, num: '3', name: 'Sayram Lake 赛里木湖', desc: '⭐ Cobalt-blue alpine lake · 2,073m · snow peaks', color: '#f97316', wikiTitle: 'Sayram Lake' },
+  { lat: 47.85, lng: 88.13, day: 2, num: '4', name: 'Altay City 阿勒泰市', desc: 'Day 2 Overnight', color: '#8b5cf6', wikiTitle: 'Altay City' },
   // Day 3
-  { lat: 47.71, lng: 86.87, day: 3, num: '1', name: 'Burqin 布尔津', desc: 'Lunch · Irtysh river town', color: '#a855f7' },
+  { lat: 47.71, lng: 86.87, day: 3, num: '1', name: 'Burqin 布尔津', desc: 'Lunch · Irtysh river town', color: '#a855f7', wikiTitle: 'Burqin County' },
   { lat: 48.37, lng: 87.53, day: 3, num: '2', name: 'Kanas Gate 喀纳斯入口', desc: 'Park ticket gate', color: '#a855f7' },
-  { lat: 48.68, lng: 87.03, day: 3, num: '3', name: 'Hemu Village 禾木村', desc: '⭐ Tuvan village · birch forest', color: '#a855f7' },
-  { lat: 48.75, lng: 87.00, day: 3, num: '4', name: 'Kanas Viewpoint 观鱼台', desc: '⭐ Panoramic lake view', color: '#a855f7' },
-  { lat: 48.99, lng: 87.08, day: 3, num: 'E', name: 'Kanas Lake Village 喀纳斯村', desc: 'Day 3 Overnight · Tuvan homestay', color: '#ef4444' },
+  { lat: 48.68, lng: 87.03, day: 3, num: '3', name: 'Hemu Village 禾木村', desc: '⭐ Tuvan village · birch forest', color: '#a855f7', wikiTitle: 'Hemu, Xinjiang' },
+  { lat: 48.75, lng: 87.00, day: 3, num: '4', name: 'Kanas Viewpoint 观鱼台', desc: '⭐ Panoramic lake view', color: '#a855f7', wikiTitle: 'Kanas Lake' },
+  { lat: 48.99, lng: 87.08, day: 3, num: 'E', name: 'Kanas Lake Village 喀纳斯村', desc: 'Day 3 Overnight · Tuvan homestay', color: '#ef4444', wikiTitle: 'Kanas Lake' },
 ];
 
 const dayColors = { 1: '#3b82f6', 2: '#f97316', 3: '#a855f7' };
@@ -569,6 +569,16 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // ── MARKERS ──
 const markers = [];
 const layerGroups = { 0: L.layerGroup(), 1: L.layerGroup(), 2: L.layerGroup(), 3: L.layerGroup() };
+
+function popupHtml(stop) {
+  const imgHtml = stop.img ? `<img src="${stop.img}" style="width:100%;border-radius:6px;margin-bottom:6px;max-height:120px;object-fit:cover;">` : '';
+  return `
+    ${imgHtml}
+    <div class="popup-name">${stop.name}</div>
+    <div class="popup-cn">Day ${stop.day}</div>
+    <div class="popup-desc">${stop.desc}</div>
+  `;
+}
 
 stops.forEach((stop, i) => {
   const size = (stop.num === 'S' || stop.num === 'E') ? 32 : 28;
@@ -590,15 +600,23 @@ stops.forEach((stop, i) => {
   });
 
   const marker = L.marker([stop.lat, stop.lng], { icon })
-    .bindPopup(`
-      <div class="popup-name">${stop.name}</div>
-      <div class="popup-cn">Day ${stop.day}</div>
-      <div class="popup-desc">${stop.desc}</div>
-    `);
+    .bindPopup(popupHtml(stop));
 
   markers.push(marker);
   layerGroups[0].addLayer(marker);
   layerGroups[stop.day].addLayer(marker);
+
+  if (!stop.img && stop.wikiTitle) {
+    fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(stop.wikiTitle))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d && d.thumbnail) {
+          stop.img = d.thumbnail.source;
+          marker.setPopupContent(popupHtml(stop));
+        }
+      })
+      .catch(() => {});
+  }
 });
 
 // ── ROUTE LINES ──
