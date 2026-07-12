@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T21: Iron Condor Stock Screener</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.5rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:560px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:680px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .checklist { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:26px; }
+  .checklist h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; margin-bottom:10px; }
+  .checklist ul { list-style:none; }
+  .checklist li { font-size:.85rem; color:rgba(255,255,255,.8); padding:6px 0; line-height:1.5; border-bottom:1px solid rgba(255,255,255,.06); }
+  .checklist li:last-child { border-bottom:none; }
+  .checklist li b { color:#f4c869; }
+
+  .cat { margin-bottom:26px; }
+  .cat-title { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px; padding-left:2px; }
+  .cat-sub { font-size:.78rem; color:rgba(255,255,255,.5); margin:-6px 0 12px; padding-left:2px; }
+
+  a.stock { display:flex; align-items:center; gap:14px; background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:14px 16px; margin-bottom:10px; text-decoration:none; color:#fff; box-shadow:0 3px 12px rgba(0,0,0,.25); transition:transform .15s,border-color .15s; }
+  a.stock:active { transform:scale(.99); }
+  a.stock:hover { border-color:#10b981; }
+  .ticker-badge { flex-shrink:0; min-width:58px; text-align:center; background:#10b981; color:#0e1330; font-weight:800; font-size:.85rem; padding:8px 6px; border-radius:10px; }
+  .ticker-badge.warn { background:#f59e0b; }
+  .sbody { flex:1; min-width:0; }
+  .sname { font-weight:700; font-size:.95rem; line-height:1.3; }
+  .snote { color:rgba(255,255,255,.55); font-size:.78rem; margin-top:2px; }
+  .sarr { color:#4f46e5; font-size:1.2rem; font-weight:700; flex-shrink:0; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">🦅📊</div>
+  <h1><span class="en">T21: Iron Condor Stock Screener</span><span class="zh">T21：铁鹰策略选股清单</span></h1>
+  <p><span class="en">Stocks &amp; ETFs that tend to fit an Iron Condor well — high liquidity, decent premium, range-bound behaviour. Tap any ticker to jump to the Support &amp; Resistance Band Calculator (T22).</span><span class="zh">较适合铁鹰策略的股票与ETF——高流动性、不错的权利金、走势较为区间震荡。点击任意股票代码可跳转至支撑与阻力区间计算器（T22）。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is an educational screening list, not a live recommendation. IV rank, liquidity and trend can change fast — always check the current option chain, IV rank and earnings calendar yourself before opening a trade.</span><span class="zh"><b>非投资建议。</b>本页仅为教育性筛选清单，并非实时投资建议。隐含波动率排名、流动性与趋势会随时变化——开仓前请务必自行查看当前期权链、IV排名与财报日期。</span>
+  </div>
+
+  <div class="checklist">
+    <h2><span class="en">✅ What Makes a Good Iron Condor Candidate</span><span class="zh">✅ 铁鹰策略优质标的的条件</span></h2>
+    <ul>
+      <li><b><span class="en">High options liquidity</span><span class="zh">期权流动性高</span></b> — <span class="en">tight bid/ask spread, high open interest &amp; volume on the strikes you want</span><span class="zh">买卖价差窄，目标行使价的未平仓量与成交量高</span></li>
+      <li><b><span class="en">Range-bound / no strong trend</span><span class="zh">区间震荡，无明显趋势</span></b> — <span class="en">a stock grinding sideways is far safer than one trending hard in one direction</span><span class="zh">横向震荡的股票远比单边强势趋势的股票安全</span></li>
+      <li><b><span class="en">Moderate-to-high IV Rank</span><span class="zh">中至高隐含波动率排名（IV Rank）</span></b> — <span class="en">roughly 30–70%+, so the premium collected is worth the risk</span><span class="zh">大致30%–70%以上，让收取的权利金值得承担的风险</span></li>
+      <li><b><span class="en">No earnings/major event before expiry</span><span class="zh">到期前无财报或重大事件</span></b> — <span class="en">avoid earnings week unless you're deliberately trading the earnings move</span><span class="zh">除非刻意针对财报行情交易，否则应避开财报周</span></li>
+      <li><b><span class="en">30–45 DTE sweet spot</span><span class="zh">30–45天到期为佳</span></b> — <span class="en">enough premium and theta decay without excessive gamma risk near expiry</span><span class="zh">权利金与时间价值衰减适中，同时避免临近到期的伽玛风险</span></li>
+      <li><b><span class="en">Avoid low-priced / meme-prone names</span><span class="zh">避免低价股或炒作性个股</span></b> — <span class="en">erratic, news-driven stocks can blow through both wings quickly</span><span class="zh">受消息面驱动、走势不稳的股票可能迅速突破两侧翼</span></li>
+    </ul>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Broad Market ETFs — Best for Beginners</span><span class="zh">广泛市场ETF — 最适合新手</span></div>
+    <div class="cat-sub"><span class="en">Highest liquidity, tightest spreads, lowest single-stock surprise risk</span><span class="zh">流动性最高，价差最窄，单一个股意外风险最低</span></div>
+
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=SPY">
+      <div class="ticker-badge">SPY</div>
+      <div class="sbody"><div class="sname">SPDR S&amp;P 500 ETF</div><div class="snote"><span class="en">Deepest options market on Earth — the classic Iron Condor underlying</span><span class="zh">全球最深的期权市场 — 经典的铁鹰标的</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=QQQ">
+      <div class="ticker-badge">QQQ</div>
+      <div class="sbody"><div class="sname">Invesco QQQ Trust</div><div class="snote"><span class="en">Nasdaq-100 — very liquid, a bit more tech-driven volatility</span><span class="zh">纳斯达克100 — 流动性极高，科技股波动稍大</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=IWM">
+      <div class="ticker-badge">IWM</div>
+      <div class="sbody"><div class="sname">iShares Russell 2000 ETF</div><div class="snote"><span class="en">Small-caps — higher IV than SPY/QQQ, still very liquid</span><span class="zh">小盘股 — IV高于SPY/QQQ，但流动性仍很好</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=DIA">
+      <div class="ticker-badge">DIA</div>
+      <div class="sbody"><div class="sname">SPDR Dow Jones ETF</div><div class="snote"><span class="en">Blue-chip index, tends to be calmer / narrower range</span><span class="zh">蓝筹股指数，走势通常较平稳、区间较窄</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Large-Cap Mega-Tech</span><span class="zh">大型科技龙头股</span></div>
+    <div class="cat-sub"><span class="en">Very liquid options, decent premium — watch earnings dates closely</span><span class="zh">期权流动性很高，权利金不错 — 需密切留意财报日期</span></div>
+
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=MSFT">
+      <div class="ticker-badge">MSFT</div>
+      <div class="sbody"><div class="sname">Microsoft</div><div class="snote"><span class="en">Steady mega-cap, usually range-bound between earnings</span><span class="zh">稳健大型股，财报之间通常区间震荡</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=AAPL">
+      <div class="ticker-badge">AAPL</div>
+      <div class="sbody"><div class="sname">Apple</div><div class="snote"><span class="en">Extremely liquid chain, tight spreads even far OTM</span><span class="zh">期权链极为活跃，即便深度虚值价差仍窄</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=AMZN">
+      <div class="ticker-badge">AMZN</div>
+      <div class="sbody"><div class="sname">Amazon</div><div class="snote"><span class="en">High liquidity; wider daily swings than AAPL/MSFT</span><span class="zh">流动性高；日内波动幅度比AAPL/MSFT稍大</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=GOOGL">
+      <div class="ticker-badge">GOOGL</div>
+      <div class="sbody"><div class="sname">Alphabet (Google)</div><div class="snote"><span class="en">Very liquid, generally orderly price action</span><span class="zh">流动性很高，价格走势通常较有序</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">Sector ETFs — Extra Diversification</span><span class="zh">行业ETF — 额外分散风险</span></div>
+    <div class="cat-sub"><span class="en">Smoother range than single stocks; still solid liquidity</span><span class="zh">走势比个股更平滑，流动性仍佳</span></div>
+
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=XLE">
+      <div class="ticker-badge">XLE</div>
+      <div class="sbody"><div class="sname">Energy Select Sector ETF</div><div class="snote"><span class="en">Good premium, moves with oil but diversified across names</span><span class="zh">权利金不错，走势与油价相关但已分散于多家公司</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=XLF">
+      <div class="ticker-badge">XLF</div>
+      <div class="sbody"><div class="sname">Financial Select Sector ETF</div><div class="snote"><span class="en">Usually calmer range, decent liquidity</span><span class="zh">走势通常较平稳，流动性尚可</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=XLU">
+      <div class="ticker-badge">XLU</div>
+      <div class="sbody"><div class="sname">Utilities Select Sector ETF</div><div class="snote"><span class="en">Low volatility, narrow range — smaller premium but safer</span><span class="zh">波动率低，区间窄 — 权利金较少但更安全</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="cat">
+    <div class="cat-title"><span class="en">⚠️ High IV but Trend-Prone — Size Down / Widen Wings</span><span class="zh">⚠️ 高IV但易出现单边趋势 — 请缩小仓位/加宽翼距</span></div>
+    <div class="cat-sub"><span class="en">Bigger premium, but far more prone to breaking out of the band hard</span><span class="zh">权利金更高，但更容易强势突破区间</span></div>
+
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=NVDA">
+      <div class="ticker-badge warn">NVDA</div>
+      <div class="sbody"><div class="sname">Nvidia</div><div class="snote"><span class="en">Huge premium, but has trended hard for years — use wider wings</span><span class="zh">权利金丰厚，但多年持续单边趋势 — 请使用更宽的翼距</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=TSLA">
+      <div class="ticker-badge warn">TSLA</div>
+      <div class="sbody"><div class="sname">Tesla</div><div class="snote"><span class="en">Very high IV, news-driven — condors need a lot of room</span><span class="zh">IV极高，消息面驱动明显 — 铁鹰需要很大的空间</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+    <a class="stock" href="T22-IronCondor-Bands.html?symbol=META">
+      <div class="ticker-badge warn">META</div>
+      <div class="sbody"><div class="sname">Meta</div><div class="snote"><span class="en">Good liquidity, but capable of very sharp earnings gaps</span><span class="zh">流动性好，但财报后可能出现大幅跳空</span></div></div>
+      <div class="sarr">→</div>
+    </a>
+  </div>
+
+  <div class="foot">
+    <span class="en">Educational screening list · Last reviewed 12 Jul 2026</span><span class="zh">教育性筛选清单 · 最后更新于2026年7月12日</span><br>
+    <a href="T22-IronCondor-Bands.html">📐 <span class="en">Support &amp; Resistance Band Calculator</span><span class="zh">支撑与阻力区间计算器</span></a><br>
+    <a href="options.html">🦅 <span class="en">Iron Condor Knowledge Base</span><span class="zh">铁鹰策略知识库</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+</body>
+</html>
