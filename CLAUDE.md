@@ -210,6 +210,16 @@ Button style pattern:
 <a href="AMAP_URL" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
 ```
 
+### 🚫 No-Guessed-Coordinates Rule (Standing Default — added 2026-07-12)
+**Learned the hard way:** a hand-estimated lat/lng for Kutchan Catholic Church (guessed from nearby block numbers, no real geocode) was used as the actual map pin and Directions destination. Paul tapped Directions, was routed to the wrong spot, and missed his appointment. Never let that happen again:
+
+- **Never invent a lat/lng and treat it as real.** If a real geocode isn't available (Nominatim/Photon/etc. blocked, no EXIF GPS, no confirmation from Paul), do NOT fabricate coordinates from nearby streets/block numbers and use them as the actual pin/destination — a wrong-looking pin someone might sanity-check is far safer than a wrong pin fed straight into "Directions."
+- **Every stop object gets an explicit `verifiedGps` flag:** `true` only if the coordinate came from a photo's GPS EXIF, Paul's own confirmation/screenshot, or a geocoding API call that actually returned a result — never from estimation/guessing. Default/absent = not verified.
+- **Directions and the primary Google Maps button must be address-based, not coordinate-based, whenever `verifiedGps` is not `true`.** Build the URL from the literal address/name text (`https://www.google.com/maps/dir/?api=1&destination=` + encoded "Name, Address", and `https://www.google.com/maps/search/?api=1&query=` + encoded "Name, Address") so Google's own geocoding resolves it correctly — this makes an imprecise guess harmless because the button never routes off the guess. Only use `lat,lng` directly in these links once `verifiedGps: true`.
+- **A guessed pin still shown on the embedded map must carry a visible, on-page warning** (not a muted footnote) telling Paul not to trust the pin and to use the address-based button instead — until it's corrected. Reference: `MT10-niseko-day6.html`.
+- **To actually verify and close this out:** ask Paul to send a screenshot of the correct Google Maps pin (or the GPS-tagged photo) — then set real `lat`/`lng`, flip `verifiedGps: true`, switch the buttons back to coordinate-based, and remove the warning banner.
+- Applies to every stop added to any day-log/route map going forward — not just this one page.
+
 ## Currency Conversion Rule (Standing Default — added 2026-07-02)
 Whenever a foreign currency amount (¥ JPY, etc.) appears anywhere on a trip page — timelines, receipts, cost breakdowns, transport fares — always show the approximate **SGD** conversion alongside it, e.g. `¥4,345 (~S$38.10)`. Use a consistent approximate rate (~¥114 = S$1 unless Paul provides a more current rate) and label it as approximate (`~S$`), not exact. Applies to both English and Chinese spans. Do this automatically going forward — no need to ask each time.
 
