@@ -554,6 +554,22 @@ function setMoverMode(mode) {
   mover.setIcon(mode === 'walk' ? walkIcon : carIcon);
 }
 
+// The walk from A to B (~1km) is tiny next to the ~10km drive to C, so at the
+// full-route zoom the walking leg barely moves on screen. Fly the camera in
+// close on a walking leg, then back out to the full route for the drive.
+let lastFocusedLeg = -1;
+function focusLeg(legIndex) {
+  if (legIndex === lastFocusedLeg) return;
+  lastFocusedLeg = legIndex;
+  const mode = moverModeForLeg(legIndex);
+  if (mode === 'walk') {
+    const a = stops[legIndex], b = stops[legIndex + 1];
+    map.flyToBounds([[a.lat, a.lng], [b.lat, b.lng]], { paddingTopLeft: [40, 60], paddingBottomRight: [40, 40], maxZoom: 17, duration: 0.7 });
+  } else {
+    map.flyToBounds(fullRoadPoints, { padding: [40, 40], duration: 0.7 });
+  }
+}
+
 // 🚗 emoji faces left (~270°/west) by default on most platforms, so rotate
 // by (bearing + 90) to align the car's nose with its actual direction of travel.
 // (The 🚶 walker icon is left unrotated — a walking figure doesn't read as "facing" a direction the way a car does.)
@@ -659,7 +675,9 @@ function step() {
     setTimeout(() => {
       progress = 0;
       lastArrivedIndex = -1;
+      lastFocusedLeg = -1;
       map.closePopup();
+      map.flyToBounds(fullRoadPoints, { padding: [40, 40], duration: 0.7 });
       statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
       requestAnimationFrame(step);
     }, 1400);
@@ -667,6 +685,7 @@ function step() {
   }
   const pos = interpolate(progress);
   setMoverMode(moverModeForLeg(pos.legIndex));
+  focusLeg(pos.legIndex);
   mover.setLatLng([pos.lat, pos.lng]);
   setCarHeading(pos.bearing);
   document.getElementById('timeLabel').textContent = pos.timeStr;
