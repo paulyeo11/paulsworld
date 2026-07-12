@@ -556,13 +556,16 @@ const legTag = document.getElementById('legTag');
 
 // ── SEQUENCE STATE MACHINE: photo(stop) → map(leg to next stop) → photo(next stop) → … , full-page while playing ──
 const PHOTO_DWELL_SECONDS = 3;
-const TOTAL_LEG_SECONDS = 26;
+// Day 7 has just one leg (A → B), so it gets the whole TOTAL_LEG_SECONDS budget —
+// keep this short so Stop B's photo isn't stuck behind a long single drive animation.
+const TOTAL_LEG_SECONDS = 10;
 const FPS = 60;
 
 let seqState = 'photo';
 let seqIndex = 0;
 let phaseProgress = 0;
 let legFrom = 0, legTo = 0, legFrames = 90;
+let finished = false;
 
 function legFramesFor(from, to) {
   const gapMin = toMinutes(stops[to].time) - toMinutes(stops[from].time);
@@ -622,9 +625,12 @@ function tick() {
       phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
       if (phaseProgress >= 1) {
         if (seqIndex >= stops.length - 1) {
-          seqIndex = 0;
-          phaseProgress = 0;
-          renderPhotoStage(seqIndex);
+          // Reached the final stop — freeze here (don't loop straight back to
+          // Stop A) so its photo stays on screen instead of flashing by.
+          finished = true;
+          playing = false;
+          document.getElementById('playBtn').innerHTML = '↻ <span class="en">Replay</span><span class="zh">重播</span><span class="ja">再生</span>';
+          return;
         } else {
           seqState = 'leg';
           phaseProgress = 0;
@@ -672,6 +678,7 @@ function togglePlay() {
   playing = !playing;
   const btn = document.getElementById('playBtn');
   if (playing) {
+    if (finished) { finished = false; seqIndex = 0; phaseProgress = 0; }
     btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
     document.body.classList.add('slideshow-active');
     renderPhotoStage(seqIndex);
