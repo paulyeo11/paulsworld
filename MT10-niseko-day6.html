@@ -481,11 +481,16 @@ stops.forEach((s, i) => {
   markerRefs.push(marker);
 });
 
-// Tapping a popup photo opens it full-page in the lightbox
-map.on('popupopen', function (e) {
-  const photo = e.popup.getElement().querySelector('.popup-photo');
+// Tapping a popup photo opens it full-page in the lightbox.
+// Leaflet popups stop click propagation to the map (so map panning isn't triggered),
+// so the handler must bind directly on the <img> — both when the popup opens AND again
+// whenever a Wikipedia-fetched photo arrives later via setPopupContent (see below), since
+// that replaces the img without re-firing 'popupopen'.
+function bindPopupPhotoClick(popupEl) {
+  const photo = popupEl && popupEl.querySelector('.popup-photo');
   if (photo) photo.onclick = function () { openLightboxSrc(photo.getAttribute('data-src'), photo.getAttribute('data-caption')); };
-});
+}
+map.on('popupopen', function (e) { bindPopupPhotoClick(e.popup.getElement()); });
 
 // ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
 // Uses the CORS-enabled REST summary API (never hardcode upload.wikimedia.org thumb URLs — see CLAUDE.md).
@@ -509,6 +514,7 @@ stops.forEach(function (s, i) {
     s.img = src;
     s.imgCredit = 'Wikipedia';
     markerRefs[i].setPopupContent(buildPopupHtml(s, i));
+    if (markerRefs[i].isPopupOpen()) bindPopupPhotoClick(markerRefs[i].getPopup().getElement());
   });
 });
 
