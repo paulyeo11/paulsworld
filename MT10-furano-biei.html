@@ -415,19 +415,25 @@ const stops = [
     baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
     amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
     note: "Depart early for the ~3 hr drive to Furano." },
-  { name: "Farm Tomita 富田農場", lat: 43.4184, lng: 142.4261, time: "11:00", day: "Day 1", type: "flower", icon: "🌸", verifiedGps: true, wikiTitle: "Farm Tomita",
+  { name: "Farm Tomita 富田農場", lat: 43.4184, lng: 142.4261, time: "11:00", day: "Day 1", type: "flower", icon: "🌸", verifiedGps: true,
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lavender_fields,_Furano_(48254611081).jpg?width=500",
+    imgCredit: "Wikimedia Commons",
     address: "15 Kisenkita, Nakafurano, Sorachi District, Hokkaido 071-0704, Japan",
     mapUrl: "https://maps.google.com/?q=43.4184,142.4261&label=Farm+Tomita",
     baiduUrl: "https://map.baidu.com/search/%E5%AF%8C%E7%94%B0%E5%86%9C%E5%9C%BA",
     amapUrl: "https://uri.amap.com/marker?position=142.4261,43.4184&name=%E5%AF%8C%E7%94%B0%E5%86%9C%E5%9C%BA",
     note: "Japan's most famous lavender farm — free entry, peak bloom mid-late July." },
-  { name: "Furano town — stay 2 nights", lat: 43.3423, lng: 142.3834, time: "11:20", day: "Day 1 · Stay 2 nights", type: "stay", icon: "🏙️", verifiedGps: true, wikiTitle: ["Furano, Hokkaido", "Furano"],
+  { name: "Furano town — stay 2 nights", lat: 43.3423, lng: 142.3834, time: "11:20", day: "Day 1 · Stay 2 nights", type: "stay", icon: "🏙️", verifiedGps: true,
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Furano_Station.JPG?width=500",
+    imgCredit: "Wikimedia Commons",
     address: "Furano-shi, Hokkaido, Japan",
     mapUrl: "https://maps.google.com/?q=43.3423,142.3834&label=Furano",
     baiduUrl: "https://map.baidu.com/search/%E5%AF%8C%E8%89%AF%E9%87%8E%E5%B8%82",
     amapUrl: "https://uri.amap.com/marker?position=142.3834,43.3423&name=%E5%AF%8C%E8%89%AF%E9%87%8E%E5%B8%82",
     note: "Central base for both the Nakafurano and Biei flower areas — check in here." },
-  { name: "Shikisai no Oka 四季彩之丘", lat: 43.5283, lng: 142.4654, time: "12:00", day: "Day 2 (day trip)", type: "flower", icon: "🌼", verifiedGps: true, wikiTitle: "Shikisai-no-oka",
+  { name: "Shikisai no Oka 四季彩之丘", lat: 43.5283, lng: 142.4654, time: "12:00", day: "Day 2 (day trip)", type: "flower", icon: "🌼", verifiedGps: true,
+    img: "https://commons.wikimedia.org/wiki/Special:FilePath/%E5%9B%9B%E5%AD%A3%E5%BD%A9%E3%81%AE%E4%B8%98-01.JPG?width=500",
+    imgCredit: "Wikimedia Commons",
     address: "Dai 3 Shinsei, Biei-cho, Kamikawa-gun, Hokkaido 071-0473, Japan",
     mapUrl: "https://maps.google.com/?q=43.5283,142.4654&label=Shikisai+no+Oka",
     baiduUrl: "https://map.baidu.com/search/%E5%9B%9B%E5%AD%A3%E5%BD%A9%E4%B9%8B%E4%B8%98",
@@ -547,30 +553,6 @@ stops.forEach((s, i) => {
   }).addTo(map);
   marker.bindPopup(buildPopupHtml(s, i));
   markerRefs.push(marker);
-});
-
-// ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
-// Uses the CORS-enabled REST summary API (never hardcode upload.wikimedia.org thumb URLs — see CLAUDE.md).
-function fetchWikiThumb(wikiTitle) {
-  return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
-    .catch(function () { return null; });
-}
-function fetchWikiThumbChain(titles) {
-  const list = Array.isArray(titles) ? titles : [titles];
-  return list.reduce(function (chain, title) {
-    return chain.then(function (src) { return src || fetchWikiThumb(title); });
-  }, Promise.resolve(null));
-}
-stops.forEach(function (s, i) {
-  if (s.img || !s.wikiTitle) return;
-  fetchWikiThumbChain(s.wikiTitle).then(function (src) {
-    if (!src) return;
-    s.img = src;
-    s.imgCredit = 'Wikipedia';
-    markerRefs[i].setPopupContent(buildPopupHtml(s, i));
-  });
 });
 
 map.fitBounds(fullLine, { padding: [30, 30] });
