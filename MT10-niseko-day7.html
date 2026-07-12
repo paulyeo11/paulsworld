@@ -592,7 +592,6 @@ let seqState = 'photo';
 let seqIndex = 0;
 let phaseProgress = 0;
 let legFrom = 0, legTo = 0, legFrames = 90;
-let finished = false;
 
 function legFramesFor(from, to) {
   const gapMin = toMinutes(stops[to].time) - toMinutes(stops[from].time);
@@ -652,12 +651,10 @@ function tick() {
       phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
       if (phaseProgress >= 1) {
         if (seqIndex >= stops.length - 1) {
-          // Reached the final stop — freeze here (don't loop straight back to
-          // Stop A) so its photo stays on screen instead of flashing by.
-          finished = true;
-          playing = false;
-          document.getElementById('playBtn').innerHTML = '↻ <span class="en">Replay</span><span class="zh">重播</span><span class="ja">再生</span>';
-          return;
+          // Reached the final stop — loop back to Stop A and keep playing.
+          seqIndex = 0;
+          phaseProgress = 0;
+          renderPhotoStage(seqIndex);
         } else {
           seqState = 'leg';
           phaseProgress = 0;
@@ -705,7 +702,6 @@ function togglePlay() {
   playing = !playing;
   const btn = document.getElementById('playBtn');
   if (playing) {
-    if (finished) { finished = false; seqIndex = 0; phaseProgress = 0; }
     btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
     document.body.classList.add('slideshow-active');
     renderPhotoStage(seqIndex);
