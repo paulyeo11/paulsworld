@@ -52,6 +52,10 @@
   .mid-highlight .lbl { font-size:.75rem; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.04em; }
   .mid-highlight .val { font-size:1.8rem; font-weight:800; color:#c4b5fd; margin-top:2px; }
 
+  select#bbMultSelect { width:100%; font-size:1rem; font-weight:700; padding:10px 12px; border:2px solid #2a3158; border-radius:10px; background:#0e1330; color:#fff; outline:none; }
+  .bb-fill-btn { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; background:rgba(124,58,237,.18); border:1.5px solid rgba(124,58,237,.5); color:#c4b5fd; font-weight:700; padding:11px 18px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .bb-fill-btn:hover { background:rgba(124,58,237,.3); }
+
   table.strikes { width:100%; border-collapse:collapse; margin-top:6px; }
   table.strikes th, table.strikes td { padding:9px 8px; font-size:.82rem; text-align:right; border-bottom:1px solid rgba(255,255,255,.08); }
   table.strikes th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.68rem; letter-spacing:.03em; }
@@ -102,7 +106,37 @@
   </div>
 
   <div class="card">
-    <h2><span class="en">2. Current Price, Support &amp; Resistance</span><span class="zh">2. 现价、支撑位与阻力位</span></h2>
+    <h2><span class="en">2. Alternative: Bollinger Band Strikes</span><span class="zh">2. 替代方案：布林带行使价</span></h2>
+    <p class="hint" style="margin-bottom:12px"><span class="en">Instead of eyeballing support/resistance on a chart, use a Bollinger Band: the middle band (20-period SMA) becomes the center of your range, and the upper/lower bands become your short-strike guide. A <b>wider band (2σ)</b> gives the stock more room to move before your shorts get tested — safer, but collects less premium than a tighter 1σ band.</span><span class="zh">与其在图表上凭肉眼估计支撑/阻力位，不如使用布林带：中轨（20期简单移动平均线）作为区间中心，上下轨则作为短腿行使价的参考。<b>更宽的波段（2σ）</b>能让股价有更多移动空间才会测试到短腿——更安全，但收取的权利金比更窄的1σ波段少。</span></p>
+    <div class="field row3">
+      <div>
+        <label><span class="en">Middle Band (SMA)</span><span class="zh">中轨（SMA）</span></label>
+        <input type="number" id="bbSmaInput" step="0.01" placeholder="420">
+      </div>
+      <div>
+        <label><span class="en">Std Dev (σ)</span><span class="zh">标准差（σ）</span></label>
+        <input type="number" id="bbSdInput" step="0.01" placeholder="10">
+      </div>
+      <div>
+        <label><span class="en">Band Width</span><span class="zh">波段宽度</span></label>
+        <select id="bbMultSelect">
+          <option value="1">1σ</option>
+          <option value="1.5">1.5σ</option>
+          <option value="2" selected>2σ</option>
+          <option value="2.5">2.5σ</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint"><span class="en">SMA and σ come from your broker's/charting app's Bollinger Band indicator (usually 20-period, 2σ by default) — this tool doesn't calculate them live.</span><span class="zh">SMA与σ来自你券商或图表软件上的布林带指标（通常默认为20期、2σ）——本工具不会实时计算这两个数值。</span></div>
+    <div class="mid-highlight" style="margin-top:10px">
+      <div class="lbl"><span class="en">Computed Band</span><span class="zh">计算所得波段</span></div>
+      <div class="val" id="bbBandValue" style="font-size:1.1rem">-- / --</div>
+    </div>
+    <button id="bbFillBtn" class="bb-fill-btn">⬇️ <span class="en">Fill Support/Resistance Below from this Band</span><span class="zh">用此波段填入下方的支撑/阻力位</span></button>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">3. Current Price, Support &amp; Resistance</span><span class="zh">3. 现价、支撑位与阻力位</span></h2>
     <div class="field row3">
       <div>
         <label><span class="en">Current Price</span><span class="zh">现价</span></label>
@@ -131,7 +165,7 @@
   </div>
 
   <div class="card">
-    <h2><span class="en">3. Iron Condor Strike Suggestions</span><span class="zh">3. 铁鹰策略行使价建议</span></h2>
+    <h2><span class="en">4. Iron Condor Strike Suggestions</span><span class="zh">4. 铁鹰策略行使价建议</span></h2>
 
     <div class="field">
       <label><span class="en">Buffer Outside the Band</span><span class="zh">区间外缓冲幅度</span></label>
@@ -182,6 +216,11 @@
     price: document.getElementById("priceInput"),
     support: document.getElementById("supportInput"),
     resistance: document.getElementById("resistanceInput"),
+    bbSma: document.getElementById("bbSmaInput"),
+    bbSd: document.getElementById("bbSdInput"),
+    bbMult: document.getElementById("bbMultSelect"),
+    bbBandValue: document.getElementById("bbBandValue"),
+    bbFillBtn: document.getElementById("bbFillBtn"),
     marker: document.getElementById("gaugeMarker"),
     lblSupport: document.getElementById("lblSupport"),
     lblResistance: document.getElementById("lblResistance"),
@@ -305,6 +344,34 @@
       });
   }
 
+  function bbBand(){
+    var sma = parseFloat(els.bbSma.value);
+    var sd = parseFloat(els.bbSd.value);
+    var mult = parseFloat(els.bbMult.value) || 2;
+    if (isNaN(sma) || isNaN(sd) || sd <= 0) return null;
+    return { lower: sma - mult * sd, upper: sma + mult * sd, mult: mult };
+  }
+
+  function recalcBB(){
+    var band = bbBand();
+    if (!band) { els.bbBandValue.textContent = "-- / --"; return; }
+    els.bbBandValue.textContent = fmtMoney(band.lower) + " / " + fmtMoney(band.upper) + " (" + band.mult + "σ)";
+  }
+
+  els.bbFillBtn.onclick = function(){
+    var band = bbBand();
+    if (!band) { els.autofillMsg.textContent = "Enter Middle Band (SMA) and Std Dev first."; return; }
+    els.support.value = band.lower.toFixed(2);
+    els.resistance.value = band.upper.toFixed(2);
+    if (!parseFloat(els.price.value)) els.price.value = parseFloat(els.bbSma.value).toFixed(2);
+    recalc();
+  };
+
+  [els.bbSma, els.bbSd, els.bbMult].forEach(function(el){
+    el.addEventListener("input", recalcBB);
+    el.addEventListener("change", recalcBB);
+  });
+
   function lookup(){
     var sym = (els.ticker.value || "").trim().toUpperCase();
     if (!sym) return;
@@ -330,6 +397,7 @@
   els.ticker.value = initSym;
   updateQuickLinks(initSym);
   recalc();
+  recalcBB();
 })();
 </script>
 
