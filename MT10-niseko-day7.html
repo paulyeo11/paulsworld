@@ -419,6 +419,7 @@ const stops = [
     note: "Today's stay — heading out toward Niseko-cho for a late-morning pizza stop." },
   { name: "J_food Pizza (Pi-kan Rollpizza) ピーカン ロールピザ", lat: 42.806, lng: 140.687, time: "11:00", type: "food", verifiedGps: false,
     img: "img_MT10-niseko-day7/02-pikan-rollpizza-deck.jpg",
+    imgs: ["img_MT10-niseko-day7/02-pikan-rollpizza-deck.jpg", "img_MT10-niseko-day7/04-pikan-rollpizza-shrimp-roll.jpg"],
     address: "260-1 Kondo, Niseko, Abuta District, Hokkaido 048-1542, Japan",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Pi-kan+Rollpizza%2C+260-1+Kondo%2C+Niseko%2C+Abuta+District%2C+Hokkaido+048-1542%2C+Japan",
     baiduUrl: "https://map.baidu.com/search/Pi-kan%20Rollpizza%20Niseko",
@@ -543,7 +544,9 @@ stops.forEach((s, i) => {
       className: '', iconSize: [26, 26], iconAnchor: [13, 13]
     })
   }).addTo(map);
-  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  const imgHtml = (s.imgs && s.imgs.length > 1)
+    ? '<div style="display:flex;gap:4px;overflow-x:auto;margin-bottom:6px;">' + s.imgs.map(function(im){ return '<img src="' + im + '" style="width:120px;flex:0 0 auto;">'; }).join('') + '</div>'
+    : s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
   marker.bindPopup(
     '<div class="popup-card">' + imgHtml +
     '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
@@ -616,6 +619,7 @@ let seqState = 'photo';
 let seqIndex = 0;
 let phaseProgress = 0;
 let legFrom = 0, legTo = 0, legFrames = 90;
+let photoSubIdx = 0;
 
 function legFramesFor(from, to) {
   const gapMin = toMinutes(stops[to].time) - toMinutes(stops[from].time);
@@ -624,10 +628,12 @@ function legFramesFor(from, to) {
   return seconds * FPS;
 }
 
-function renderPhotoStage(i) {
+function renderPhotoStage(i, subIdx) {
   const s = stops[i];
   const card = document.getElementById('arrivalCard');
-  const media = s.img ? '<img src="' + s.img + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
+  const imgs = s.imgs || (s.img ? [s.img] : []);
+  const curImg = imgs.length ? imgs[Math.min(subIdx || 0, imgs.length - 1)] : null;
+  const media = curImg ? '<img src="' + curImg + '" alt="">' : '<div class="arrival-icon">' + (s.icon || '📍') + '</div>';
   card.innerHTML =
     '<div class="arrival-photo">' + media +
     '<div class="arrival-overlay">' +
@@ -677,13 +683,23 @@ function tick() {
   if (!playing) return;
   try {
     if (seqState === 'photo') {
-      phaseProgress += (1 / (PHOTO_DWELL_SECONDS * FPS)) * speedMultiplier;
+      const curImgs = stops[seqIndex].imgs || (stops[seqIndex].img ? [stops[seqIndex].img] : []);
+      const dwellSeconds = PHOTO_DWELL_SECONDS * Math.max(curImgs.length, 1);
+      phaseProgress += (1 / (dwellSeconds * FPS)) * speedMultiplier;
+      if (curImgs.length > 1) {
+        const subIdx = Math.min(curImgs.length - 1, Math.floor(phaseProgress * curImgs.length));
+        if (subIdx !== photoSubIdx) {
+          photoSubIdx = subIdx;
+          renderPhotoStage(seqIndex, photoSubIdx);
+        }
+      }
       if (phaseProgress >= 1) {
         if (seqIndex >= stops.length - 1) {
           // Reached the final stop — loop back to Stop A and keep playing.
           seqIndex = 0;
           phaseProgress = 0;
-          renderPhotoStage(seqIndex);
+          photoSubIdx = 0;
+          renderPhotoStage(seqIndex, 0);
         } else {
           seqState = 'leg';
           phaseProgress = 0;
@@ -718,7 +734,8 @@ function tick() {
         seqIndex = legTo;
         seqState = 'photo';
         phaseProgress = 0;
-        renderPhotoStage(seqIndex);
+        photoSubIdx = 0;
+        renderPhotoStage(seqIndex, 0);
       }
     }
   } catch (err) {
@@ -733,7 +750,8 @@ function togglePlay() {
   if (playing) {
     btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
     document.body.classList.add('slideshow-active');
-    renderPhotoStage(seqIndex);
+    photoSubIdx = 0;
+    renderPhotoStage(seqIndex, 0);
     requestAnimationFrame(tick);
   } else {
     btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
