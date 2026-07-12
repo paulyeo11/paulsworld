@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI220: How AI Plans My Daily Driving Route</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #2740b8;
+      --blue-deep: #1b2a78;
+      --blue-light: #e0e7ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .home-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 100;
+      background: var(--blue-dark); color: white; text-decoration: none;
+      font-size: 0.85em; font-weight: 600; padding: 10px 18px; border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(39,64,184,0.35); transition: transform 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    .lang-toggle { position: fixed; top: 16px; right: 16px; z-index: 100; display: flex; gap: 6px; }
+    .lang-btn {
+      padding: 8px 16px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(27,42,120,0.6); color: rgba(255,255,255,0.75); font-size: 0.8em;
+      font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(6px);
+    }
+    .lang-btn.active { background: #f4c430; border-color: #f4c430; color: #1a1a2e; }
+
+    .hero {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 50%, #4a6cf7 100%);
+      min-height: 60vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 90px 24px 60px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%);
+    }
+    .hero-dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 30px 30px; }
+    .hero-inner { position: relative; z-index: 2; max-width: 720px; }
+    .hero-tag {
+      display: inline-block; background: rgba(74,108,247,0.3); border: 1px solid rgba(255,255,255,0.4);
+      color: #c7d2fe; font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 16px;
+    }
+    .occasion-badge {
+      display: inline-flex; align-items: center; gap: 8px; background: rgba(244,129,63,0.25);
+      border: 1px solid rgba(244,129,63,0.6); color: #fbbf6e; font-size: 0.85em; font-weight: 600;
+      padding: 8px 18px; border-radius: 30px; margin-bottom: 20px;
+    }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8em, 5vw, 3em); font-weight: 900; color: white; line-height: 1.25; margin-bottom: 20px; }
+    .hero h1 span { color: #fbbf6e; }
+    .hero-sub { color: rgba(255,255,255,0.85); font-size: 1.05em; font-style: italic; max-width: 560px; margin: 0 auto 28px; }
+    .hero-meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .hero-meta span { color: rgba(255,255,255,0.75); font-size: 0.85em; }
+
+    .share-btn {
+      display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px;
+      cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem;
+      z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    .article-wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .lead {
+      background: white; border-radius: 16px; padding: 32px 36px; margin: -30px auto 40px;
+      position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.10); border-left: 5px solid var(--blue);
+      font-size: 1.1em; font-style: italic; color: var(--blue-deep); line-height: 1.9;
+    }
+
+    .section { margin-bottom: 44px; }
+    .section h2 {
+      font-family: 'Playfair Display', serif; font-size: 1.6em; color: var(--ink);
+      margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--blue-light);
+    }
+    .section p { margin-bottom: 16px; }
+
+    .pull-quote {
+      border-left: 4px solid var(--accent); padding: 16px 24px; margin: 32px 0;
+      font-family: 'Playfair Display', serif; font-size: 1.2em; font-style: italic;
+      color: var(--ink); background: #fff7f0; border-radius: 0 10px 10px 0;
+    }
+
+    .session-list { list-style: none; padding: 0; margin: 20px 0; counter-reset: session; }
+    .session-list li {
+      counter-increment: session; padding: 16px 18px 16px 58px; position: relative; margin-bottom: 12px;
+      background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--blue);
+    }
+    .session-list li::before {
+      content: counter(session); position: absolute; left: 14px; top: 18px; width: 30px; height: 30px;
+      background: var(--blue); color: white; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 0.85em;
+    }
+    .session-list li strong { color: var(--blue-dark); }
+    .session-list li .tag {
+      display: inline-block; font-size: 0.72em; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+    }
+
+    .checklist { list-style: none; padding: 0; margin: 20px 0; }
+    .checklist li {
+      padding: 12px 16px 12px 44px; position: relative; margin-bottom: 10px; background: #f0fdf4;
+      border: 1.5px solid #86efac; border-radius: 10px; font-size: 0.95em; color: #14532d;
+    }
+    .checklist li::before { content: '\2713'; position: absolute; left: 16px; top: 11px; color: #16a34a; font-weight: 700; }
+
+    .map-frame { width: 100%; height: 560px; border: none; border-radius: 14px; margin: 20px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .map-caption { text-align: center; font-size: 0.85em; color: var(--muted); margin-top: -10px; margin-bottom: 20px; }
+    .map-caption a { color: var(--blue); font-weight: 600; text-decoration: none; }
+
+    .pages-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .page-card {
+      background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--blue); text-decoration: none; color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s; display: block;
+    }
+    .page-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .page-card .icon { font-size: 1.4em; margin-bottom: 6px; }
+    .page-card strong { display: block; color: var(--blue-dark); font-size: 0.95em; margin-bottom: 4px; }
+    .page-card span { font-size: 0.8em; color: var(--muted); }
+
+    .photo-empty {
+      background: white; border: 2px dashed #c7d2fe; border-radius: 14px; padding: 34px 24px;
+      text-align: center; margin: 20px 0;
+    }
+    .photo-empty .icon { font-size: 2em; margin-bottom: 10px; }
+    .photo-empty p { color: var(--muted); font-size: 0.95em; margin: 0; }
+
+    .closing {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 100%); color: white; border-radius: 16px;
+      padding: 36px; margin-top: 48px; text-align: center;
+    }
+    .closing h2 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-bottom: 14px; color: #fbbf6e; }
+    .closing p { color: rgba(255,255,255,0.88); line-height: 1.8; margin-bottom: 10px; }
+    .closing p:last-child { margin: 0; }
+
+    .divider { text-align: center; margin: 36px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 12px; }
+
+    footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.85em; border-top: 1px solid #e5e7eb; }
+
+    .en { display: block; }
+    .zh { display: none; }
+    span.en { display: inline; }
+    span.zh { display: none; }
+    body.lang-zh .en { display: none; }
+    body.lang-zh .zh { display: block; }
+    body.lang-zh span.en { display: none; }
+    body.lang-zh span.zh { display: inline; }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .pages-row { grid-template-columns: 1fr; }
+      .hero-meta { gap: 12px; }
+      .map-frame { height: 620px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="home-btn" href="https://paulsworld.vercel.app/">&#127968; Home</a>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">&#127468;&#127463; English</button>
+    <button class="lang-btn" onclick="setLang('zh')">&#127464;&#127475; &#20013;&#25991;</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">&#129302; My AI Journey &middot; Article 23</div>
+      <div class="occasion-badge">&#128663; Niseko Day 7 Route &nbsp;&middot;&nbsp; 13 Jul 2026</div>
+      <h1 class="en">AI220: How AI Plans My <span>Daily Driving Route</span></h1>
+      <h1 class="zh">AI220&#65306;AI&#22914;&#20309;&#20026;&#25105;&#35268;&#21010;<span>&#27599;&#26085;&#30340;&#39569;&#36710;&#36335;&#32447;</span></h1>
+      <p class="hero-sub en">I told it where I was staying and where I wanted to eat. It came back with a real driving route, a walking leg when a car didn't make sense, and a little icon that moves along the actual roads.</p>
+      <p class="hero-sub zh">&#25105;&#21482;&#26159;&#21578;&#35785;&#23427;&#25105;&#20303;&#22312;&#21738;&#37324;&#12289;&#24819;&#21435;&#21738;&#37324;&#21507;&#39277;&#12290;&#23427;&#36824;&#25105;&#19968;&#26465;&#30495;&#23454;&#30340;&#39569;&#36710;&#36335;&#32447;&mdash;&mdash;&#24403;&#24320;&#36710;&#27809;&#24847;&#20041;&#26102;&#36824;&#24102;&#19978;&#20102;&#19968;&#27573;&#27493;&#34892;&#36335;&#31243;&#65292;&#24182;&#38598;&#22909;&#20852;&#26465;&#22270;&#26631;&#27839;&#30528;&#30495;&#23454;&#36947;&#36335;&#31227;&#21160;&#12290;</p>
+      <div class="hero-meta">
+        <span>&#9999;&#65039; Paul Yeo</span>
+        <span>&#128197; 12 Jul 2026</span>
+        <span>&#128205; Niseko, Hokkaido</span>
+        <span>&#9200; 4 min read</span>
+      </div>
+      <button class="share-btn" onclick="shareThisPage()">&#128279; Share</button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">&#9989; Link copied!</div>
+
+  <div class="article-wrap">
+
+    <div class="lead">
+      <span class="en">&ldquo;I never opened a maps app. I just described my day — hotel, pizza, dairy farm, back to the hotel — and told it one leg should be a walk, not a drive. It handled the geocoding, the real roads, and even swapped the moving icon from a car to a person on foot.&rdquo;</span>
+      <span class="zh">&#8220;&#25105;&#20174;&#26410;&#25171;&#24320;&#36807;&#22320;&#22270;&#24212;&#29992;&#12290;&#25105;&#21482;&#26159;&#25551;&#36848;&#20102;&#25105;&#30340;&#19968;&#22825;&mdash;&mdash;&#37202;&#24215;&#12289;&#25269;&#36529;&#24215;&#12289;&#29275;&#22902;&#22330;&#12289;&#20877;&#36820;&#22238;&#37202;&#24215;&mdash;&mdash;&#24182;&#21578;&#35785;&#23427;&#20854;&#20013;&#19968;&#27573;&#35201;&#27493;&#34892;&#65292;&#19981;&#35201;&#24320;&#36710;&#12290;&#23427;&#33258;&#24049;&#25214;&#22320;&#22336;&#12289;&#26597;&#30495;&#23454;&#36947;&#36335;&#65292;&#29978;&#33267;&#25226;&#31227;&#21160;&#22270;&#26631;&#20174;&#27773;&#36710;&#25442;&#25104;&#20102;&#27493;&#34892;&#32773;&#12290;&#8221;</span>
+    </div>
+
+    <div class="section">
+      <h2><span class="en">&#128161; What I Actually Asked For</span><span class="zh">&#128161; &#25105;&#21040;&#24213;&#35831;&#27714;&#20102;&#20160;&#20040;</span></h2>
+      <p class="en">Planning Niseko Day 7, I had three places in plain English: the Torifito Hotel where I was staying, a rolled-pizza place called Pi-kan Rollpizza, and a dairy farm called Milk Kobo for soft serve afterwards. I just described the day and let AI work out the rest — where each place actually sits on a map, what order made sense, and how to get between them.</p>
+      <p class="zh">&#22312;&#35745;&#21010;&#20108;&#19990;&#35895;&#31532;&#19971;&#22825;&#26102;&#65292;&#25105;&#20165;&#29992;&#26222;&#36890;&#35805;&#25551;&#36848;&#20102;&#19977;&#20010;&#22320;&#26041;&#65306;&#25105;&#20303;&#30340;&#25176;&#37324;&#33778;&#25176;&#37202;&#24215;&#12289;&#21483;Pi-kan&#21367;&#39292;&#25269;&#36529;&#30340;&#24215;&#65292;&#20197;&#21450;&#20043;&#21518;&#21435;&#21507;&#36719;&#38634;&#31958;&#30340;&#39640;&#27101;&#29275;&#22902;&#22330;&#12290;&#25105;&#21482;&#26159;&#25551;&#36848;&#20102;&#36825;&#19968;&#22825;&#65292;&#20854;&#20313;&#30340;&#20132;&#32473;AI&#21435;&#26597;&mdash;&mdash;&#27599;&#20010;&#22320;&#26041;&#31934;&#30830;&#22312;&#22320;&#22270;&#19978;&#30340;&#20301;&#32622;&#12289;&#21738;&#20010;&#39034;&#24207;&#26356;&#21512;&#29702;&#12289;&#20197;&#21450;&#24590;&#20040;&#22312;&#23427;&#20204;&#20043;&#38388;&#31227;&#21160;&#12290;</p>
+      <p class="en">Then, once the first version was built, I sent one short line: <em>"Pt B to Pt C — not by driving car, by walking."</em> That was it. No new coordinates, no re-explaining the trip — just a correction in plain language.</p>
+      <p class="zh">&#31532;&#19968;&#29256;&#26463;&#22909;&#21518;&#65292;&#25105;&#21482;&#21457;&#20102;&#19968;&#21477;&#35805;&#65306;<em>&#8220;B&#28857;&#21040;C&#28857;&mdash;&mdash;&#19981;&#35201;&#24320;&#36710;&#65292;&#25913;&#25104;&#27493;&#34892;&#12290;&#8221;</em>&#23601;&#36825;&#26679;&#12290;&#27809;&#26377;&#37325;&#26032;&#32473;&#22352;&#26631;&#65292;&#20063;&#27809;&#26377;&#37325;&#26032;&#35299;&#37322;&#19968;&#36941;&#34892;&#31243;&mdash;&mdash;&#21482;&#26159;&#29992;&#26222;&#36890;&#35805;&#25913;&#20102;&#19968;&#21477;&#12290;</p>
+      <div class="pull-quote">
+        <span class="en">I never gave a single latitude or longitude. I gave place names and one sentence about how I'd get between two of them.</span>
+        <span class="zh">&#25105;&#20174;&#26410;&#32473;&#36807;&#20219;&#20309;&#32463;&#32020;&#24230;&#22352;&#26631;&#12290;&#25105;&#32473;&#30340;&#26159;&#22320;&#28857;&#21517;&#31216;&#65292;&#20197;&#21450;&#20851;&#20110;&#22914;&#20309;&#22312;&#20004;&#20301;&#20043;&#38388;&#31227;&#21160;&#30340;&#19968;&#21477;&#35805;&#12290;</span>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128736;&#65039; See the Map It Built</span><span class="zh">&#128736;&#65039; &#30475;&#30475;&#23427;&#20570;&#20986;&#26469;&#30340;&#22320;&#22270;</span></h2>
+      <p class="en">This is a live copy of the exact route from my Niseko Day 7 log. Press play and watch it drive from the hotel to the pizza place, switch to a walking icon for the leg over to the dairy farm, then drive back to the hotel — on repeat.</p>
+      <p class="zh">&#36825;&#26159;&#20108;&#19990;&#35895;&#31532;&#19971;&#22825;&#26085;&#24535;&#20013;&#37027;&#26465;&#30495;&#23454;&#36335;&#32447;&#30340;&#23454;&#26102;&#24051;&#20837;&#12290;&#28857;&#20987;&#25773;&#25918;&#65292;&#30475;&#23427;&#20174;&#37202;&#24215;&#24320;&#21040;&#25269;&#36529;&#24215;&#65292;&#20877;&#22312;&#21435;&#29275;&#22902;&#22330;&#37027;&#19968;&#27573;&#25442;&#25104;&#27493;&#34892;&#22270;&#26631;&#65292;&#26368;&#21518;&#39069;&#36710;&#36820;&#22238;&#37202;&#24215;&mdash;&mdash;&#24490;&#29615;&#25773;&#25918;&#12290;</p>
+      <iframe class="map-frame" src="AI220-map.html" title="AI-planned daily driving and walking route"></iframe>
+      <div class="map-caption"><span class="en">Live embed of AI220-map.html &mdash; <a href="https://paulsworld.vercel.app/AI220-map.html" target="_blank">open full page &rarr;</a></span><span class="zh">AI220-map.html &#30340;&#23454;&#26102;&#24051;&#20837;&mdash;<a href="https://paulsworld.vercel.app/AI220-map.html" target="_blank">&#25171;&#24320;&#23436;&#25972;&#39029;&#38754; &rarr;</a></span></div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; What AI Figured Out For Me</span><span class="zh">&#9989; AI&#20026;&#25105;&#25214;&#20986;&#30340;&#20107;</span></h2>
+      <ul class="session-list">
+        <li>
+          <div class="tag"><span class="en">Thing 1</span><span class="zh">&#31532;&#19968;&#20214;</span></div>
+          <span class="en"><strong>Real Roads, Not Straight Lines.</strong> Every leg of the route is fetched from an actual road-routing service, so the line on the map bends through real turns instead of cutting a straight path through fields and rooftops.</span>
+          <span class="zh"><strong>&#30495;&#23454;&#36947;&#36335;&#65292;&#32780;&#38750;&#30452;&#32447;&#12290;</strong>&#36335;&#32447;&#30340;&#27599;&#19968;&#27573;&#37117;&#26159;&#20174;&#30495;&#23454;&#30340;&#36947;&#36335;&#23548;&#33322;&#26381;&#21153;&#33719;&#21462;&#30340;&#65292;&#22320;&#22270;&#19978;&#30340;&#32447;&#26465;&#20250;&#38543;&#30528;&#30495;&#23454;&#36716;&#24616;&#25391;&#65292;&#32780;&#19981;&#26159;&#31215;&#30452;&#31359;&#36807;&#20892;&#30000;&#25110;&#23627;&#39030;&#30340;&#30452;&#32447;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 2</span><span class="zh">&#31532;&#20108;&#20214;</span></div>
+          <span class="en"><strong>Switched Modes When I Said So.</strong> One sentence — "not by driving car, by walking" — was enough. AI re-routed that leg using a walking-specific road network, changed the moving icon to a person on foot, and recalculated the time using a walking pace instead of a driving speed.</span>
+          <span class="zh"><strong>&#25353;&#25105;&#30340;&#35805;&#20999;&#25442;&#20986;&#34892;&#26041;&#24335;&#12290;</strong>&#21482;&#38656;&#19968;&#21477;&#8220;&#19981;&#35201;&#24320;&#36710;&#65292;&#25913;&#25104;&#27493;&#34892;&#8221;&#12290;AI&#23601;&#29992;&#27493;&#34892;&#19987;&#29992;&#30340;&#36947;&#36335;&#32593;&#37325;&#26032;&#35745;&#31639;&#37027;&#19968;&#27573;&#65292;&#25226;&#31227;&#21160;&#22270;&#26631;&#25442;&#25104;&#20102;&#27493;&#34892;&#32773;&#65292;&#24182;&#25353;&#27493;&#34892;&#36895;&#24230;&#32780;&#38750;&#39569;&#36710;&#36895;&#24230;&#37325;&#26032;&#31639;&#20102;&#26102;&#38388;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 3</span><span class="zh">&#31532;&#19977;&#20214;</span></div>
+          <span class="en"><strong>Added the Return Trip When I Asked.</strong> "Show from Pt C drive to Pt A" added a whole new stop and leg — the drive back to the hotel — without me touching a single coordinate already on the page.</span>
+          <span class="zh"><strong>&#25353;&#25105;&#30340;&#35201;&#27714;&#21152;&#19978;&#36820;&#31243;&#12290;</strong>&#19968;&#21477;&#8220;&#26174;&#31034;C&#28857;&#39569;&#36710;&#36820;&#22238;A&#28857;&#8221;&#65292;&#23601;&#22686;&#21152;&#20102;&#19968;&#20010;&#20840;&#26032;&#30340;&#31449;&#28857;&#21644;&#36335;&#31243;&mdash;&mdash;&#39569;&#36710;&#36820;&#22238;&#37202;&#24215;&mdash;&mdash;&#32780;&#25105;&#26080;&#38656;&#25302;&#21160;&#39029;&#38754;&#19978;&#24050;&#26377;&#30340;&#20219;&#20309;&#22352;&#26631;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 4</span><span class="zh">&#31532;&#22235;&#20214;</span></div>
+          <span class="en"><strong>Fixed What I Couldn't See.</strong> When I said the Play button was too small and hidden below the fold on my phone, AI made it a bold gold pill and shrank the map so the button fits on screen without scrolling — no design brief needed beyond "make it more visible."</span>
+          <span class="zh"><strong>&#20462;&#22909;&#20102;&#25105;&#30475;&#19981;&#21040;&#30340;&#38382;&#39064;&#12290;</strong>&#24403;&#25105;&#35828;&#25773;&#25918;&#25353;&#38062;&#22826;&#23567;&#65292;&#22312;&#25163;&#26426;&#19978;&#38656;&#35201;&#28369;&#21160;&#25165;&#33021;&#30475;&#21040;&#26102;&#65292;AI&#25226;&#23427;&#25913;&#25104;&#20102;&#37325;&#31895;&#37329;&#33394;&#33235;&#22336;&#65292;&#24182;&#32553;&#23567;&#20102;&#22320;&#22270;&#65292;&#35753;&#25353;&#38062;&#19981;&#28369;&#21160;&#23601;&#33021;&#30475;&#21040;&mdash;&mdash;&#25105;&#21482;&#35828;&#20102;&#8220;&#35753;&#23427;&#26356;&#26126;&#26174;&#8221;&#65292;&#20960;&#20046;&#27809;&#26377;&#20854;&#20182;&#35774;&#35745;&#35201;&#27714;&#12290;</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9888;&#65039; What I Still Checked Myself</span><span class="zh">&#9888;&#65039; &#25105;&#20173;&#33258;&#24049;&#26597;&#26680;&#30340;&#20107;</span></h2>
+      <p class="en">The route AI draws is only as good as the address it started from. A couple of stops on Day 7 had coordinates that weren't confirmed by a real mapping service, so the page carries a visible warning on those pins and routes the actual "Directions" button off the address text instead of a guessed pin — never off a location I haven't verified myself.</p>
+      <p class="zh">AI&#30011;&#20986;&#30340;&#36335;&#32447;&#65292;&#20851;&#38190;&#20154;&#22312;&#20110;&#19968;&#24320;&#22987;&#30340;&#22320;&#22336;&#26159;&#21542;&#20934;&#30830;&#12290;&#31532;&#19971;&#22825;&#26377;&#20960;&#20010;&#31449;&#28857;&#30340;&#22352;&#26631;&#26410;&#32463;&#30495;&#23454;&#22320;&#22270;&#26381;&#21153;&#30830;&#35748;&#65292;&#25152;&#20197;&#39029;&#38754;&#19978;&#20250;&#26174;&#31034;&#26126;&#26174;&#30340;&#35686;&#31034;&#65292;&#24182;&#19988;&#8220;&#23548;&#33322;&#8221;&#25353;&#38062;&#20351;&#29992;&#30340;&#26159;&#22320;&#22336;&#25991;&#23383;&#32780;&#38750;&#25512;&#27979;&#30340;&#22352;&#26631;&mdash;&mdash;&#20174;&#19981;&#29992;&#25105;&#33258;&#24049;&#26410;&#30830;&#35748;&#36807;&#30340;&#20301;&#32622;&#12290;</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128248; Photo Journal</span><span class="zh">&#128248; &#29031;&#29255;&#26085;&#24535;</span></h2>
+      <p class="en">This section is ready for the real photos — Pi-kan Rollpizza's deck, the walk over to Milk Kobo, the drive back. Send them over and I'll drop them in, with bilingual captions and the date stamped on each one, right here.</p>
+      <p class="zh">&#36825;&#20010;&#26495;&#22359;&#24050;&#32463;&#20934;&#22791;&#22909;&#25509;&#25910;&#30495;&#23454;&#29031;&#29255;&#20102;&mdash;&mdash;Pi-kan&#21367;&#39292;&#25269;&#36529;&#30340;&#38598;&#38050;&#12289;&#27493;&#34892;&#21435;&#29275;&#22902;&#22330;&#30340;&#36335;&#19978;&#12289;&#39569;&#36710;&#36820;&#22238;&#30340;&#30011;&#38754;&#12290;&#23558;&#29031;&#29255;&#21457;&#36807;&#26469;&#65292;&#25105;&#20250;&#25226;&#23427;&#20204;&#25277;&#36827;&#26469;&#65292;&#24102;&#19978;&#20013;&#33521;&#25991;&#22833;&#35328;&#21644;&#26085;&#26399;&#25130;&#22270;&#12290;</p>
+      <div class="photo-empty">
+        <div class="icon">&#128247;</div>
+        <p class="en">No photos yet — send one and it'll appear here.</p>
+        <p class="zh">&#26410;&#26377;&#29031;&#29255; &mdash; &#21457;&#36865;&#19968;&#24352;&#65292;&#23427;&#23601;&#20250;&#20986;&#29616;&#22312;&#36825;&#37324;&#12290;</p>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Next Steps</span><span class="zh">&#9989; &#19979;&#19968;&#27493;</span></h2>
+      <ul class="checklist">
+        <li class="en">Add real photos from the day once they come in</li>
+        <li class="zh">&#31561;&#29031;&#29255;&#20256;&#26469;&#21518;&#28155;&#21152;&#30495;&#23454;&#22270;&#29255;</li>
+        <li class="en">Reuse the same "say it, don't draw it" trick for later trip days</li>
+        <li class="zh">&#26410;&#26469;&#20854;&#20182;&#26053;&#34892;&#26085;&#32487;&#32493;&#29992;&#36825;&#31181;&#8220;&#21929;&#20986;&#26469;&#65292;&#19981;&#29992;&#30011;&#8221;&#30340;&#26041;&#27861;</li>
+        <li class="en">Watch it live on the day itself, 13 Jul 2026</li>
+        <li class="zh">&#22312;2026&#24180;7&#26376;13&#26085;&#24403;&#22825;&#23454;&#22320;&#30475;&#23427;&#36816;&#34892;</li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128218; Built on These</span><span class="zh">&#128218; &#22522;&#20110;&#36825;&#20123;&#25991;&#31456;</span></h2>
+      <div class="pages-row">
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10-niseko-day7.html">
+          <div class="icon">&#128663;</div>
+          <strong><span class="en">MT10 Niseko Day 7 Log</span><span class="zh">MT10 &#20108;&#19990;&#35895;&#31532;&#19971;&#22825;&#26085;&#24535;</span></strong>
+          <span class="en">The real trip page this route is drawn from</span>
+          <span class="zh">&#26412;&#25991;&#36335;&#32447;&#30340;&#26469;&#28304;&#39029;&#38754;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI220-map.html">
+          <div class="icon">&#128736;&#65039;</div>
+          <strong><span class="en">AI220 Map (Standalone)</span><span class="zh">AI220&#22320;&#22270;&#65288;&#29420;&#31435;&#39029;&#38754;&#65289;</span></strong>
+          <span class="en">The actual animated map this article is about</span>
+          <span class="zh">&#26412;&#25991;&#25152;&#35762;&#30340;&#37027;&#24352;&#21160;&#30011;&#22320;&#22270;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI219.html">
+          <div class="icon">&#128739;</div>
+          <strong><span class="en">AI219: Animated Transfer Map</span><span class="zh">AI219&#65306;&#21160;&#30011;&#36716;&#20056;&#22320;&#22270;</span></strong>
+          <span class="en">The earlier article this one builds on</span>
+          <span class="zh">&#26412;&#25991;&#25152;&#24310;&#32493;&#30340;&#19978;&#19968;&#31687;&#25991;&#31456;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10.html">
+          <div class="icon">&#127749;</div>
+          <strong><span class="en">MT10: Family Trip to Japan</span><span class="zh">MT10&#65306;&#26085;&#26412;&#23478;&#24237;&#26053;&#34892;</span></strong>
+          <span class="en">The trip this daily route belongs to</span>
+          <span class="zh">&#36825;&#25552;&#27599;&#26085;&#36335;&#32447;&#25152;&#23646;&#30340;&#26053;&#34892;</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="closing">
+      <h2><span class="en">A Route I Never Drew</span><span class="zh">&#19968;&#26465;&#25105;&#20174;&#26410;&#30011;&#36807;&#30340;&#36335;&#32447;</span></h2>
+      <p class="en">I've planned plenty of driving days by hand — a list of addresses and a rough guess at the order. This is the first time I described a day in a sentence and got back a map that knows the real roads, knows when to put me on foot instead of behind a wheel, and moves on its own.</p>
+      <p class="zh">&#25105;&#20197;&#21069;&#29992;&#25163;&#35745;&#21010;&#36807;&#19981;&#23569;&#39569;&#36710;&#34892;&#31243;&mdash;&mdash;&#19968;&#25490;&#22320;&#22336;&#21152;&#19978;&#22823;&#33268;&#30340;&#39034;&#24207;&#12290;&#36825;&#26159;&#25105;&#31532;&#19968;&#27425;&#29992;&#19968;&#21477;&#35805;&#25551;&#36848;&#19968;&#22825;&#65292;&#23601;&#24471;&#21040;&#19968;&#24352;&#30693;&#36947;&#30495;&#23454;&#36947;&#36335;&#12289;&#30693;&#36947;&#20309;&#26102;&#35753;&#25105;&#25913;&#25104;&#27493;&#34892;&#32780;&#38750;&#24320;&#36710;&#12289;&#24182;&#33258;&#24049;&#31227;&#21160;&#30340;&#22320;&#22270;&#12290;</p>
+      <p class="en">If a 70-year-old retiree can plan a day out just by talking to it — no maps app, no route-planning software — that says something about how far this technology has come.</p>
+      <p class="zh">&#22914;&#26524;&#19968;&#20301;70&#23681;&#30340;&#36864;&#20241;&#32773;&#21482;&#38656;&#36328;&#23427;&#35828;&#35805;&#65292;&#19981;&#29992;&#22320;&#22270;&#24212;&#29992;&#65292;&#19981;&#29992;&#36335;&#32447;&#35268;&#21010;&#36719;&#20214;&#65292;&#23601;&#33021;&#35745;&#21010;&#22909;&#19968;&#22825;&#30340;&#34892;&#31243;&#65292;&#37027;&#35828;&#26126;&#36825;&#39033;&#25216;&#26415;&#24050;&#32463;&#36827;&#27493;&#21040;&#20160;&#20040;&#31243;&#24230;&#12290;</p>
+      <p style="margin-top:16px; font-style:italic; opacity:0.8;">&mdash; Paul Yeo, July 2026 &#127775;</p>
+    </div>
+
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+  <script>
+    function setLang(lang) {
+      document.body.className = lang === 'zh' ? 'lang-zh' : '';
+      document.querySelectorAll('.lang-btn').forEach(function(btn, i) {
+        btn.classList.toggle('active', (lang === 'en' && i === 0) || (lang === 'zh' && i === 1));
+      });
+    }
+    function shareThisPage() {
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function() { t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>
