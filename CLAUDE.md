@@ -179,6 +179,14 @@ Despite the rule above, `MT10-niseko-day6.html` shipped with the reverted full-p
 - **Pre-push hook now enforces this automatically** (`.githooks/pre-push`, `check_animated_map`) — blocks any push of an HTML file containing "Animated Route Map" that (a) has no `carIcon`/🚗 marker, or (b) resurrects the reverted `slideshow-active` + `arrival-card` pattern.
 - **Lesson:** a standing instruction written in this file is not self-enforcing — when a rule exists specifically to prevent a repeat mistake, back it with an automated check (like the bilingual pre-push check above) rather than relying on remembering to re-read CLAUDE.md every time.
 
+### 🚗 Real-Road Routing Rule (Standing Default — added 2026-07-12)
+Every "Animated Route Map" car — and its route line — **must follow the real driving road (turns included), never a straight line** between stops. This is the default for ALL trip day-log maps going forward; Paul never needs to ask for it.
+- Fetch each leg's real road geometry client-side from OSRM (free, no key, CORS-enabled): `https://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson`
+- Swap the placeholder straight dashed line for the real road points once fetched; animate the car marker along those points (by cumulative distance, not simple 2-point lerp) so it actually turns at bends.
+- Rotate the 🚗 marker to face the direction of travel — use a short look-ahead point along the current road segment (not just the straight stop-to-stop bearing) so it steers smoothly through turns.
+- Always keep a straight-line fallback (2-point "route") for a leg if the OSRM fetch fails or hasn't resolved yet — never leave the car stuck with no path.
+- Reference implementation: `MT10-niseko-day6.html` (`buildRoads()` / `pointAtFraction()` / `fetchRoadSegment()`) and `MT10-niseko-day5-map.html`.
+
 ## Map Links Rule
 **Photo with GPS EXIF data (added 2026-07-08):** Whenever Paul sends a photo, always check its EXIF metadata for GPS coordinates first.
 - If GPS is present: automatically create all three map links (Google/Baidu/Amap) from those exact coordinates and place them directly below the photo — no need to ask, no address required from Paul.
