@@ -423,6 +423,10 @@ const stops = [
     note: "Farm-run gelato shop & café on Lake Toya's shore, views to Mt Yotei. Tel: 0120-83-3376. Open 9:00–18:00 (LO 30 min before close)." }
 ];
 
+// Show the map full-page from the moment the page opens — don't wait for the
+// leg-driving phase of the slideshow or a manual click to expand it.
+document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+
 const map = L.map('map', { zoomControl: true }).setView([42.85, 140.72], 11);
 
 const tileLayers = {
@@ -535,7 +539,10 @@ stops.forEach((s, i) => {
   markerRefs.push(marker);
 });
 
-map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+setTimeout(function () {
+  map.invalidateSize();
+  map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+}, 60);
 
 const lastStop = stops[stops.length - 1];
 const waypointStops = stops.slice(0, -1);
