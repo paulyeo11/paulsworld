@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T22: Iron Condor Support &amp; Resistance Band Calculator</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.85rem; max-width:560px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:640px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:18px; }
+  .card h2 { font-size:.9rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:14px; }
+
+  .ticker-row { display:flex; gap:10px; margin-bottom:10px; }
+  .ticker-row input { flex:1; font-size:1.1rem; font-weight:700; text-transform:uppercase; padding:12px 14px; border:2px solid #2a3158; border-radius:10px; background:#0e1330; color:#fff; outline:none; }
+  .ticker-row input:focus { border-color:#4f46e5; }
+  .ticker-row button { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; border:0; font-size:.9rem; font-weight:700; padding:0 18px; border-radius:10px; cursor:pointer; }
+
+  .quicklinks { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+  .quicklinks a, .quicklinks button { background:#0e1330; border:1px solid #2a3158; color:#a5b4fc; font-size:.78rem; font-weight:700; padding:7px 12px; border-radius:20px; text-decoration:none; cursor:pointer; }
+  .quicklinks a:hover, .quicklinks button:hover { border-color:#4f46e5; }
+  .hint { font-size:.76rem; color:rgba(255,255,255,.45); margin-top:8px; line-height:1.5; }
+  .msg { font-size:.78rem; color:#ffd97a; margin-top:6px; min-height:1em; }
+
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:.78rem; font-weight:700; color:rgba(255,255,255,.6); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em; }
+  .field .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .field input[type=number] { width:100%; font-size:1rem; font-weight:700; padding:10px 12px; border:2px solid #2a3158; border-radius:10px; background:#0e1330; color:#fff; outline:none; }
+  .field input[type=number]:focus { border-color:#4f46e5; }
+  .field .slidewrap { display:flex; align-items:center; gap:12px; }
+  .field input[type=range] { flex:1; }
+  .field .slideval { min-width:52px; text-align:right; font-weight:800; color:#f4c869; }
+
+  /* gauge */
+  .gauge-wrap { margin:6px 0 4px; }
+  .gauge { position:relative; height:14px; border-radius:8px; background:linear-gradient(90deg,#dc2626,#f59e0b,#10b981,#f59e0b,#dc2626); }
+  .gauge .marker { position:absolute; top:-6px; width:4px; height:26px; background:#fff; border-radius:2px; box-shadow:0 0 6px rgba(0,0,0,.6); transform:translateX(-2px); }
+  .gauge-labels { display:flex; justify-content:space-between; font-size:.72rem; color:rgba(255,255,255,.5); margin-top:6px; }
+  .gauge-status { text-align:center; font-size:.85rem; font-weight:700; margin-top:10px; color:#a5f3fc; }
+
+  .mid-highlight { text-align:center; background:rgba(79,70,229,.18); border:1px solid rgba(124,58,237,.5); border-radius:12px; padding:14px; margin:14px 0; }
+  .mid-highlight .lbl { font-size:.75rem; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.04em; }
+  .mid-highlight .val { font-size:1.8rem; font-weight:800; color:#c4b5fd; margin-top:2px; }
+
+  table.strikes { width:100%; border-collapse:collapse; margin-top:6px; }
+  table.strikes th, table.strikes td { padding:9px 8px; font-size:.82rem; text-align:right; border-bottom:1px solid rgba(255,255,255,.08); }
+  table.strikes th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.68rem; letter-spacing:.03em; }
+  table.strikes td:first-child, table.strikes th:first-child { text-align:left; }
+  table.strikes tr.buy td:first-child { color:#93c5fd; }
+  table.strikes tr.sell td:first-child { color:#86efac; }
+  table.strikes td.strike { font-weight:800; font-size:.95rem; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+
+  @media (max-width:480px) {
+    .field .row3 { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">📐📊</div>
+  <h1><span class="en">T22: Support &amp; Resistance Band Calculator</span><span class="zh">T22：支撑与阻力区间计算器</span></h1>
+  <p><span class="en">Enter a ticker's current price, support and resistance — get the middle of the band and the suggested strike prices to enter for an Iron Condor.</span><span class="zh">输入股票代码的现价、支撑位与阻力位——即可得出区间中点，以及铁鹰策略建议输入的行使价。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> Support/resistance and strike suggestions here are simple estimates from the numbers you enter — always confirm the real chart, IV rank, earnings date and option chain liquidity on your broker before placing a trade.</span><span class="zh"><b>非投资建议。</b>本页的支撑/阻力与行使价建议仅根据你输入的数字进行简单估算——下单前请务必在券商平台核实真实图表、IV排名、财报日期与期权链流动性。</span>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">1. Ticker</span><span class="zh">1. 股票代码</span></h2>
+    <div class="ticker-row">
+      <input id="tickerInput" type="text" placeholder="MSFT" autocomplete="off" spellcheck="false">
+      <button id="lookBtn">🔎 <span class="en">Look Up</span><span class="zh">查看</span></button>
+    </div>
+    <div class="quicklinks">
+      <a id="yahooLink" href="#" target="_blank" rel="noopener">📈 Yahoo Finance</a>
+      <a id="stockchartsLink" href="#" target="_blank" rel="noopener">📉 StockCharts</a>
+      <button id="autofillBtn">⚡ <span class="en">Auto-fill price</span><span class="zh">自动填入现价</span></button>
+    </div>
+    <div class="hint"><span class="en">Open the chart link to read the support (recent swing low) and resistance (recent swing high) for the range you're trading, then type them below. "Auto-fill price" uses a free Finnhub key (saved on this device only) to fetch just the current price.</span><span class="zh">打开图表链接查看你所交易区间的支撑位（近期低点）与阻力位（近期高点），然后在下方输入。"自动填入现价"使用免费的Finnhub密钥（仅保存在本机）来获取当前价格。</span></div>
+    <div class="msg" id="autofillMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">2. Current Price, Support &amp; Resistance</span><span class="zh">2. 现价、支撑位与阻力位</span></h2>
+    <div class="field row3">
+      <div>
+        <label><span class="en">Current Price</span><span class="zh">现价</span></label>
+        <input type="number" id="priceInput" step="0.01" value="420">
+      </div>
+      <div>
+        <label><span class="en">Support</span><span class="zh">支撑位</span></label>
+        <input type="number" id="supportInput" step="0.01" value="400">
+      </div>
+      <div>
+        <label><span class="en">Resistance</span><span class="zh">阻力位</span></label>
+        <input type="number" id="resistanceInput" step="0.01" value="440">
+      </div>
+    </div>
+
+    <div class="gauge-wrap">
+      <div class="gauge"><div class="marker" id="gaugeMarker"></div></div>
+      <div class="gauge-labels"><span id="lblSupport">Support</span><span id="lblResistance">Resistance</span></div>
+      <div class="gauge-status" id="gaugeStatus">—</div>
+    </div>
+
+    <div class="mid-highlight">
+      <div class="lbl"><span class="en">Middle of the Band</span><span class="zh">区间中点</span></div>
+      <div class="val" id="midValue">$--</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">3. Iron Condor Strike Suggestions</span><span class="zh">3. 铁鹰策略行使价建议</span></h2>
+
+    <div class="field">
+      <label><span class="en">Buffer Outside the Band</span><span class="zh">区间外缓冲幅度</span></label>
+      <div class="slidewrap">
+        <input type="range" id="bufferSlider" min="0" max="10" step="0.5" value="3">
+        <span class="slideval" id="bufferVal">3%</span>
+      </div>
+      <div class="hint"><span class="en">How far past support/resistance to place your short strikes — a safety margin so a small overshoot doesn't test them immediately.</span><span class="zh">短腿行使价距离支撑/阻力位的安全边际——避免价格小幅突破就立刻测试到行使价。</span></div>
+    </div>
+
+    <div class="field">
+      <label><span class="en">Wing Width ($)</span><span class="zh">翼距（美元）</span></label>
+      <input type="number" id="wingInput" step="0.5" value="10">
+      <div class="hint"><span class="en">Distance from the short strike to the long (protective) strike on each side.</span><span class="zh">每侧短腿行使价与长腿（保护性）行使价之间的距离。</span></div>
+    </div>
+
+    <table class="strikes">
+      <thead><tr><th><span class="en">Leg</span><span class="zh">腿位</span></th><th><span class="en">Strike</span><span class="zh">行使价</span></th><th><span class="en">Distance</span><span class="zh">距现价</span></th></tr></thead>
+      <tbody>
+        <tr class="buy"><td><span class="en">Buy Put (long)</span><span class="zh">买入认沽（长）</span></td><td class="strike" id="strikeLongPut">--</td><td id="distLongPut">--</td></tr>
+        <tr class="sell"><td><span class="en">Sell Put (short)</span><span class="zh">卖出认沽（短）</span></td><td class="strike" id="strikeShortPut">--</td><td id="distShortPut">--</td></tr>
+        <tr class="sell"><td><span class="en">Sell Call (short)</span><span class="zh">卖出认购（短）</span></td><td class="strike" id="strikeShortCall">--</td><td id="distShortCall">--</td></tr>
+        <tr class="buy"><td><span class="en">Buy Call (long)</span><span class="zh">买入认购（长）</span></td><td class="strike" id="strikeLongCall">--</td><td id="distLongCall">--</td></tr>
+      </tbody>
+    </table>
+    <div class="hint"><span class="en">Strikes are rounded to a typical increment for the price level. Always match to strikes that actually exist and are liquid on your broker's option chain.</span><span class="zh">行使价已按该价位的常见间距四舍五入。请务必对照你券商期权链上实际存在且流动性良好的行使价。</span></div>
+  </div>
+
+  <div class="foot">
+    <a href="T21-IronCondor-Screener.html">🦅 <span class="en">Back to Stock Screener</span><span class="zh">返回选股清单</span></a><br>
+    <a href="options.html">📚 <span class="en">Iron Condor Knowledge Base</span><span class="zh">铁鹰策略知识库</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var els = {
+    ticker: document.getElementById("tickerInput"),
+    lookBtn: document.getElementById("lookBtn"),
+    yahooLink: document.getElementById("yahooLink"),
+    stockchartsLink: document.getElementById("stockchartsLink"),
+    autofillBtn: document.getElementById("autofillBtn"),
+    autofillMsg: document.getElementById("autofillMsg"),
+    price: document.getElementById("priceInput"),
+    support: document.getElementById("supportInput"),
+    resistance: document.getElementById("resistanceInput"),
+    marker: document.getElementById("gaugeMarker"),
+    lblSupport: document.getElementById("lblSupport"),
+    lblResistance: document.getElementById("lblResistance"),
+    gaugeStatus: document.getElementById("gaugeStatus"),
+    midValue: document.getElementById("midValue"),
+    bufferSlider: document.getElementById("bufferSlider"),
+    bufferVal: document.getElementById("bufferVal"),
+    wing: document.getElementById("wingInput"),
+    strikeLongPut: document.getElementById("strikeLongPut"),
+    strikeShortPut: document.getElementById("strikeShortPut"),
+    strikeShortCall: document.getElementById("strikeShortCall"),
+    strikeLongCall: document.getElementById("strikeLongCall"),
+    distLongPut: document.getElementById("distLongPut"),
+    distShortPut: document.getElementById("distShortPut"),
+    distShortCall: document.getElementById("distShortCall"),
+    distLongCall: document.getElementById("distLongCall")
+  };
+
+  var KEY_STORE = "finnhub_api_key";
+
+  function getKey(){ try { return localStorage.getItem(KEY_STORE) || ""; } catch(e){ return ""; } }
+  function setKey(k){ try { localStorage.setItem(KEY_STORE, k); } catch(e){} }
+
+  function fmtMoney(n){
+    if (n === null || n === undefined || isNaN(n)) return "--";
+    return "$" + Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function roundIncrement(price){
+    var p = Math.abs(price);
+    if (p >= 200) return 5;
+    if (p >= 100) return 2.5;
+    if (p >= 25) return 1;
+    return 0.5;
+  }
+  function roundToStrike(x, inc){
+    return Math.round(x / inc) * inc;
+  }
+
+  function updateQuickLinks(sym){
+    els.yahooLink.href = "https://finance.yahoo.com/quote/" + encodeURIComponent(sym);
+    els.stockchartsLink.href = "https://stockcharts.com/sc3/ui/?s=" + encodeURIComponent(sym);
+  }
+
+  function distanceLabel(strike, price){
+    var d = strike - price;
+    var pct = price ? (d / price * 100) : 0;
+    var sign = d >= 0 ? "+" : "-";
+    return sign + fmtMoney(Math.abs(d)) + " (" + sign + Math.abs(pct).toFixed(1) + "%)";
+  }
+
+  function recalc(){
+    var price = parseFloat(els.price.value) || 0;
+    var support = parseFloat(els.support.value) || 0;
+    var resistance = parseFloat(els.resistance.value) || 0;
+    var buffer = parseFloat(els.bufferSlider.value) || 0;
+    var wing = parseFloat(els.wing.value) || 0;
+
+    els.bufferVal.textContent = buffer + "%";
+    els.lblSupport.textContent = "Support " + fmtMoney(support);
+    els.lblResistance.textContent = "Resistance " + fmtMoney(resistance);
+
+    if (resistance <= support || price <= 0) {
+      els.gaugeStatus.textContent = "Enter valid support < resistance";
+      els.midValue.textContent = "$--";
+      return;
+    }
+
+    var mid = (support + resistance) / 2;
+    els.midValue.textContent = fmtMoney(mid);
+
+    var pct = (price - support) / (resistance - support) * 100;
+    var pctClamped = Math.max(0, Math.min(100, pct));
+    els.marker.style.left = pctClamped + "%";
+
+    var status;
+    if (pct < 0) status = "⚠️ Below support — already broke the band";
+    else if (pct > 100) status = "⚠️ Above resistance — already broke the band";
+    else if (pct < 15) status = "Near support (" + pct.toFixed(0) + "% into band)";
+    else if (pct > 85) status = "Near resistance (" + pct.toFixed(0) + "% into band)";
+    else if (Math.abs(pct - 50) <= 10) status = "≈ Middle of the band (" + pct.toFixed(0) + "%)";
+    else status = pct.toFixed(0) + "% into the band";
+    els.gaugeStatus.textContent = status;
+
+    var inc = roundIncrement(price);
+    var shortPut = roundToStrike(support * (1 - buffer/100), inc);
+    var shortCall = roundToStrike(resistance * (1 + buffer/100), inc);
+    var longPut = roundToStrike(shortPut - wing, inc);
+    var longCall = roundToStrike(shortCall + wing, inc);
+
+    els.strikeLongPut.textContent = fmtMoney(longPut);
+    els.strikeShortPut.textContent = fmtMoney(shortPut);
+    els.strikeShortCall.textContent = fmtMoney(shortCall);
+    els.strikeLongCall.textContent = fmtMoney(longCall);
+
+    els.distLongPut.textContent = distanceLabel(longPut, price);
+    els.distShortPut.textContent = distanceLabel(shortPut, price);
+    els.distShortCall.textContent = distanceLabel(shortCall, price);
+    els.distLongCall.textContent = distanceLabel(longCall, price);
+  }
+
+  function autofillPrice(sym){
+    var key = getKey();
+    if (!key) {
+      var entered = window.prompt("Paste your free Finnhub API key (saved on this device only, also used by T05).\n\nGet one at finnhub.io → Dashboard.", "");
+      if (entered && entered.trim()) { setKey(entered.trim()); key = entered.trim(); }
+      else { return; }
+    }
+    els.autofillMsg.textContent = "Fetching " + sym + "…";
+    var url = "https://finnhub.io/api/v1/quote?symbol=" + encodeURIComponent(sym) + "&token=" + encodeURIComponent(key);
+    fetch(url)
+      .then(function(r){ if (!r.ok) throw new Error("net"); return r.json(); })
+      .then(function(q){
+        if (!q || (q.c === 0 && q.h === 0 && q.l === 0 && q.pc === 0)) throw new Error("notfound");
+        els.price.value = q.c;
+        els.autofillMsg.textContent = "✅ Price filled from Finnhub — now enter support/resistance from your chart.";
+        recalc();
+      })
+      .catch(function(){
+        els.autofillMsg.textContent = "Couldn't fetch price automatically — enter it manually below.";
+      });
+  }
+
+  function lookup(){
+    var sym = (els.ticker.value || "").trim().toUpperCase();
+    if (!sym) return;
+    els.ticker.value = sym;
+    updateQuickLinks(sym);
+  }
+
+  els.lookBtn.onclick = lookup;
+  els.ticker.addEventListener("keydown", function(e){ if (e.key === "Enter") lookup(); });
+  els.autofillBtn.onclick = function(){
+    var sym = (els.ticker.value || "").trim().toUpperCase();
+    if (!sym) { els.autofillMsg.textContent = "Enter a ticker first."; return; }
+    autofillPrice(sym);
+  };
+
+  [els.price, els.support, els.resistance, els.bufferSlider, els.wing].forEach(function(el){
+    el.addEventListener("input", recalc);
+  });
+
+  // init from ?symbol=
+  var params = new URLSearchParams(window.location.search);
+  var initSym = (params.get("symbol") || "MSFT").toUpperCase();
+  els.ticker.value = initSym;
+  updateQuickLinks(initSym);
+  recalc();
+})();
+</script>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+</body>
+</html>
