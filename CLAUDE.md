@@ -124,6 +124,11 @@ After Stop A (the hotel, per the rule above), **auto-arrange the remaining stops
 - If Paul gives an explicit fixed order or a stop has a fixed time commitment (e.g. a booked lunch reservation, a scheduled tour), respect that override instead of re-sorting by distance — only auto-arrange when order isn't otherwise specified.
 - Applies to all trip day logs and route maps going forward, not just one page.
 
+### Distance-Between-Stops Table (Standing Default — added 2026-07-12)
+Every day-log route/map with 2+ stops must include a **"Distance Between Stops" table** right below the map legend, before the per-stop "Today's Visit" sections — automatically, without being asked. One row per consecutive leg (A → B, B → C, …), each showing the straight-line (great-circle) distance in km, e.g. `~1.1 km`. Straight-line from lat/lng is fine — no driving-time API needed (same reasoning as the Nearest-Next Stop Ordering Rule). Always add a small note under the table that it's straight-line, not driving distance. Reference implementation: `MT10-niseko-day6.html`.
+- If a stop's time/order changes later, keep this table in sync with the `stops` array (re-letter rows and recompute distances) in the same edit — don't leave it stale.
+- Applies to all trip day logs and route maps going forward, not just one page.
+
 ## Interactive Route Map Rule (Standing Default)
 Whenever Paul's article/story includes a hiking route, travel route, or any sequence of locations with photos — **always build an interactive Leaflet.js map** with ALL of the following, automatically, without being asked:
 
