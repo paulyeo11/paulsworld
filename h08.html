@@ -363,8 +363,8 @@
   <div class="hero-tag"><span class="en">Health · Symptom Tracker</span><span class="zh" style="display:none;">健康 · 症状追踪</span></div>
   <h1><span class="en">H08: My Pain Point Tracker</span><span class="zh" style="display:none;">H08：我的不适追踪记录</span></h1>
   <div class="hero-sub">
-    <span class="en">Skin issues, low energy, poor appetite, needing more rest — logged honestly.</span>
-    <span class="zh" style="display:none;">皮肤问题、精力下降、食欲不振、需要更多休息 — 如实记录。</span>
+    <span class="en">Skin issues, low energy, poor appetite, needing more rest, recurring back pain — logged honestly.</span>
+    <span class="zh" style="display:none;">皮肤问题、精力下降、食欲不振、需要更多休息、反复背痛 — 如实记录。</span>
   </div>
   <div class="hero-actions">
     <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
@@ -390,6 +390,7 @@
         <option value="energy">🔋 Low Energy</option>
         <option value="appetite">🍽️ Poor Appetite</option>
         <option value="rest">😴 Need More Rest</option>
+        <option value="back">🦴 Back Pain</option>
         <option value="other">📝 Other</option>
       </select>
     </div>
@@ -417,6 +418,10 @@
       <span class="en">If any symptom stays "severe" for more than a few days, or several pain points show up together (e.g. low energy + poor appetite + more rest needed), that combination is worth mentioning to a doctor — don't wait it out alone.</span>
       <span class="zh" style="display:none;">如果任何症状持续"严重"超过几天，或多个不适同时出现（例如精力下降+食欲不振+需要更多休息），这种组合值得告诉医生 — 不要一个人硬扛。</span>
     </p>
+    <p style="margin-top:10px;">
+      <span class="en">Back pain that keeps recurring — especially triggered by the same movements (squats, bending, lifting) — is a sign the back isn't fully recovered yet. Worth seeing a doctor or physiotherapist for a proper assessment rather than just resting it off each time.</span>
+      <span class="zh" style="display:none;">背痛反复发作——尤其是被同样的动作（深蹲、弯腰、提重物）引发——说明背部还没有完全恢复。建议看医生或物理治疗师做正式检查，而不是每次都只靠休息了事。</span>
+    </p>
   </div>
 
   <div class="view-counter-wrap">
@@ -425,7 +430,7 @@
 </div>
 
 <footer>
-  <p>H08: My Pain Point Tracker &nbsp;·&nbsp; Paul Yeo &nbsp;·&nbsp; Updated 2 July 2026</p>
+  <p>H08: My Pain Point Tracker &nbsp;·&nbsp; Paul Yeo &nbsp;·&nbsp; Updated 13 July 2026</p>
   <p style="margin-top:6px;"><a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></p>
 </footer>
 
@@ -436,8 +441,39 @@ var TYPE_META = {
   energy:   { icon: '🔋', en: 'Low Energy',        zh: '精力下降' },
   appetite: { icon: '🍽️', en: 'Poor Appetite',      zh: '食欲不振' },
   rest:     { icon: '😴', en: 'Need More Rest',    zh: '需要更多休息' },
+  back:     { icon: '🦴', en: 'Back Pain',         zh: '背痛' },
   other:    { icon: '📝', en: 'Other',             zh: '其他' }
 };
+
+var SEED_BACK_ENTRIES = [
+  {
+    type: 'back',
+    severity: 3,
+    note: 'Back pain came back after squat exercises and bending. This has now happened twice.',
+    zhNote: '做深蹲运动和弯腰后背痛又发作了。这已经是第二次了。',
+    date: '2026-07-13T07:00:00.000Z',
+    approx: false
+  },
+  {
+    type: 'back',
+    severity: 3,
+    note: 'Earlier occurrence, in China: hurt my back lifting my bag onto the overhead rack on the train.',
+    zhNote: '较早前一次，在中国：把行李搬上火车行李架时伤了背。',
+    date: '2026-06-15T07:00:00.000Z',
+    approx: true
+  }
+];
+
+function seedBackEntries() {
+  if (localStorage.getItem('h08_seed_back_v1')) return;
+  var entries = loadEntries();
+  SEED_BACK_ENTRIES.forEach(function(seed) {
+    entries.push(seed);
+  });
+  entries.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+  saveEntries(entries);
+  localStorage.setItem('h08_seed_back_v1', '1');
+}
 
 function loadEntries() {
   try {
@@ -477,8 +513,11 @@ function deleteEntry(idx) {
   render();
 }
 
-function formatDate(iso) {
+function formatDate(iso, approx) {
   var d = new Date(iso);
+  if (approx) {
+    return '~' + d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  }
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) +
     ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
@@ -501,7 +540,7 @@ function renderOverview(entries) {
       '<div class="severity-bar"><div class="severity-fill" style="width:' + pct + '%;background:' + (latest ? info.color : 'var(--border)') + ';"></div></div>' +
       '<div class="severity-label"><span>' +
         (latest ? ('<span class="en">' + info.en + '</span><span class="zh" style="display:none;">' + info.zh + '</span>') : '<span class="en">No data</span><span class="zh" style="display:none;">暂无数据</span>') +
-      '</span><span>' + (latest ? formatDate(latest.date).split(' · ')[0] : '—') + '</span></div>';
+      '</span><span>' + (latest ? formatDate(latest.date, latest.approx).split(' · ')[0] : '—') + '</span></div>';
     grid.appendChild(card);
   });
   applyLang();
@@ -523,10 +562,14 @@ function renderEntries(entries) {
       '<div class="entry-top">' +
         '<div class="entry-icon">' + meta.icon + '</div>' +
         '<div class="entry-title"><span class="en">' + meta.en + '</span><span class="zh" style="display:none;">' + meta.zh + '</span></div>' +
-        '<div class="entry-date">' + formatDate(entry.date) + '</div>' +
+        '<div class="entry-date">' + formatDate(entry.date, entry.approx) + '</div>' +
       '</div>' +
       '<span class="entry-tag tag-' + info.tier + '"><span class="en">' + info.en + ' (' + entry.severity + '/5)</span><span class="zh" style="display:none;">' + info.zh + ' (' + entry.severity + '/5)</span></span>' +
-      (entry.note ? '<div class="entry-note">' + escapeHtml(entry.note) + '</div>' : '') +
+      (entry.note ?
+        ('<div class="entry-note">' + (entry.zhNote ?
+          ('<span class="en">' + escapeHtml(entry.note) + '</span><span class="zh" style="display:none;">' + escapeHtml(entry.zhNote) + '</span>') :
+          escapeHtml(entry.note)) + '</div>')
+        : '') +
       '<button class="entry-del" onclick="deleteEntry(' + idx + ')"><span class="en">Delete</span><span class="zh" style="display:none;">删除</span></button>';
     list.appendChild(card);
   });
@@ -555,6 +598,7 @@ var TYPE_OPTION_TEXT = {
   energy:   { icon: '🔋', en: 'Low Energy',     zh: '精力下降' },
   appetite: { icon: '🍽️', en: 'Poor Appetite',  zh: '食欲不振' },
   rest:     { icon: '😴', en: 'Need More Rest', zh: '需要更多休息' },
+  back:     { icon: '🦴', en: 'Back Pain',      zh: '背痛' },
   other:    { icon: '📝', en: 'Other',          zh: '其他' }
 };
 
@@ -594,6 +638,7 @@ function shareThisPage(){
   }
 }
 
+seedBackEntries();
 render();
 </script>
 </body>
