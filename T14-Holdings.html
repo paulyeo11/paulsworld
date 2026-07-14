@@ -38,6 +38,15 @@
   .avgcost-table td{padding:8px;border-bottom:1px solid var(--border);}
   .avgcost-table th:not(:first-child),.avgcost-table td:not(:first-child){text-align:right;}
   .avgcost-table tr.total td{font-weight:700;color:var(--text);border-bottom:none;}
+  .cc-wrap{position:relative;z-index:1;margin:0 24px 20px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+  .cc-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .cc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px;align-items:end;}
+  .cc-form select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;}
+  .cc-form select:focus{outline:none;border-color:var(--accent);}
+  .cc-add-btn{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--green);padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+  .cc-summary{margin-top:10px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+  .cc-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;}
+  .cc-status-select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;padding:3px 6px;}
   .holdings{position:relative;z-index:1;padding:0 24px;display:flex;flex-direction:column;gap:12px;}
   .hcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
   .hcard.winner{border-left:3px solid var(--green);}
@@ -166,6 +175,26 @@
 <div class="holdings" id="holdingsList">
   <div class="hcard">Loading…</div>
 </div>
+
+<div class="cc-wrap">
+  <div class="cc-header">
+    <div class="avgcost-title">📝 Covered Call Planner</div>
+  </div>
+  <div class="cc-form">
+    <div class="field"><label>Symbol</label><select id="cc-symbol"><option value="POOL">POOL</option><option value="FDS">FDS</option><option value="ZTS">ZTS</option></select></div>
+    <div class="field"><label>Strike (US$)</label><input type="number" id="cc-strike" step="0.5" min="0"></div>
+    <div class="field"><label>Expiry</label><input type="date" id="cc-expiry"></div>
+    <div class="field"><label>Contracts</label><input type="number" id="cc-contracts" value="1" min="1" step="1"></div>
+    <div class="field"><label>Premium/Share (US$)</label><input type="number" id="cc-premium" step="0.01" min="0"></div>
+    <button class="cc-add-btn" onclick="addCoveredCall()">+ Log Call</button>
+  </div>
+  <table class="avgcost-table" id="ccTable">
+    <thead><tr><th>Symbol</th><th>Strike</th><th>Expiry</th><th>Cushion</th><th>Contracts</th><th>Premium</th><th>Status</th><th></th></tr></thead>
+    <tbody id="ccBody"></tbody>
+  </table>
+  <div class="cc-summary" id="ccSummary"></div>
+</div>
+
 <div class="timestamp" id="timestamp"></div>
 
 <div style="text-align:center;margin-top:40px;position:relative;z-index:1">
@@ -211,6 +240,87 @@ function saveStore(store) {
 }
 
 let store = loadStore();
+
+const CC_KEY = 'paulsworld_covered_calls_v1';
+
+function loadCoveredCalls() {
+  try {
+    const raw = localStorage.getItem(CC_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [
+    { id:'seed-fds-320', symbol:'FDS', strike:320, expiry:'2026-07-17', contracts:1, premium:2.5485, status:'closed' }
+  ];
+}
+
+function saveCoveredCalls() {
+  localStorage.setItem(CC_KEY, JSON.stringify(coveredCalls));
+}
+
+let coveredCalls = loadCoveredCalls();
+
+function addCoveredCall() {
+  const symbol = document.getElementById('cc-symbol').value;
+  const strike = parseFloat(document.getElementById('cc-strike').value);
+  const expiry = document.getElementById('cc-expiry').value;
+  const contracts = parseInt(document.getElementById('cc-contracts').value, 10) || 1;
+  const premium = parseFloat(document.getElementById('cc-premium').value);
+  if (!strike || !expiry || isNaN(premium)) { alert('Enter strike, expiry, and premium.'); return; }
+  coveredCalls.push({ id: Date.now().toString(36), symbol, strike, expiry, contracts, premium, status:'open' });
+  saveCoveredCalls();
+  document.getElementById('cc-strike').value = '';
+  document.getElementById('cc-expiry').value = '';
+  document.getElementById('cc-premium').value = '';
+  renderCoveredCalls();
+}
+
+function deleteCoveredCall(id) {
+  coveredCalls = coveredCalls.filter(c => c.id !== id);
+  saveCoveredCalls();
+  renderCoveredCalls();
+}
+
+function setCallStatus(id, status) {
+  const c = coveredCalls.find(c => c.id === id);
+  if (c) { c.status = status; saveCoveredCalls(); renderCoveredCalls(); }
+}
+
+function renderCoveredCalls() {
+  const body = document.getElementById('ccBody');
+  if (!coveredCalls.length) {
+    body.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">No calls logged yet.</td></tr>';
+    document.getElementById('ccSummary').textContent = '';
+    return;
+  }
+  let totalPremium = 0;
+  const now = new Date();
+  const statuses = ['open','closed','expired','assigned','rolled'];
+  const rows = coveredCalls.slice().sort((a,b) => new Date(b.expiry) - new Date(a.expiry)).map(c => {
+    const premTotal = c.premium * c.contracts * 100;
+    totalPremium += premTotal;
+    const lp = livePrices[c.symbol] ? livePrices[c.symbol].price : null;
+    const cushion = lp ? ((c.strike - lp) / lp) * 100 : null;
+    const cushionHtml = cushion != null ? (cushion >= 0 ? '+' : '') + cushion.toFixed(1) + '%' : '—';
+    const expDate = new Date(c.expiry + 'T00:00:00');
+    const daysLeft = Math.ceil((expDate - now) / 86400000);
+    const dteHtml = c.status === 'open' ? (daysLeft >= 0 ? ' (' + daysLeft + 'd left)' : ' (expired)') : '';
+    const statusOptions = statuses.map(s => `<option value="${s}" ${s===c.status?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('');
+    return `<tr>
+      <td>${c.symbol}</td>
+      <td>$${c.strike}</td>
+      <td>${c.expiry}<span style="color:var(--muted)">${dteHtml}</span></td>
+      <td>${cushionHtml}</td>
+      <td>${c.contracts}</td>
+      <td>$${premTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td><select class="cc-status-select" onchange="setCallStatus('${c.id}',this.value)">${statusOptions}</select></td>
+      <td><button class="cc-del" onclick="deleteCoveredCall('${c.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = rows;
+  document.getElementById('ccSummary').innerHTML = 'Total premium collected: <b style="color:var(--green)">$' +
+    totalPremium.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</b> across ' +
+    coveredCalls.length + ' call' + (coveredCalls.length !== 1 ? 's' : '');
+}
 
 function setBadge(id, cls, html) {
   const el = document.getElementById(id);
@@ -369,6 +479,7 @@ function render() {
   }).join('');
 
   renderAvgCostTable();
+  renderCoveredCalls();
 
   document.getElementById('sumValue').textContent = totalValueSGD > 0 ? fmtSGD(totalValueSGD) : '—';
   document.getElementById('sumInvested').textContent = totalCostSGD > 0 ? fmtSGD(totalCostSGD) : '—';
