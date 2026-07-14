@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI221: AI Plans My Route to Tomorrow's Places</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #2740b8;
+      --blue-deep: #1b2a78;
+      --blue-light: #e0e7ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .home-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 100;
+      background: var(--blue-dark); color: white; text-decoration: none;
+      font-size: 0.85em; font-weight: 600; padding: 10px 18px; border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(39,64,184,0.35); transition: transform 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    .lang-toggle { position: fixed; top: 16px; right: 16px; z-index: 100; display: flex; gap: 6px; }
+    .lang-btn {
+      padding: 8px 16px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(27,42,120,0.6); color: rgba(255,255,255,0.75); font-size: 0.8em;
+      font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(6px);
+    }
+    .lang-btn.active { background: #f4c430; border-color: #f4c430; color: #1a1a2e; }
+
+    .hero {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 50%, #4a6cf7 100%);
+      min-height: 60vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 90px 24px 60px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%);
+    }
+    .hero-dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 30px 30px; }
+    .hero-inner { position: relative; z-index: 2; max-width: 720px; }
+    .hero-tag {
+      display: inline-block; background: rgba(74,108,247,0.3); border: 1px solid rgba(255,255,255,0.4);
+      color: #c7d2fe; font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 16px;
+    }
+    .occasion-badge {
+      display: inline-flex; align-items: center; gap: 8px; background: rgba(244,129,63,0.25);
+      border: 1px solid rgba(244,129,63,0.6); color: #fbbf6e; font-size: 0.85em; font-weight: 600;
+      padding: 8px 18px; border-radius: 30px; margin-bottom: 20px;
+    }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8em, 5vw, 3em); font-weight: 900; color: white; line-height: 1.25; margin-bottom: 20px; }
+    .hero h1 span { color: #fbbf6e; }
+    .hero-sub { color: rgba(255,255,255,0.85); font-size: 1.05em; font-style: italic; max-width: 560px; margin: 0 auto 28px; }
+    .hero-meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .hero-meta span { color: rgba(255,255,255,0.75); font-size: 0.85em; }
+
+    .share-btn {
+      display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px;
+      cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem;
+      z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    .article-wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .lead {
+      background: white; border-radius: 16px; padding: 32px 36px; margin: -30px auto 40px;
+      position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.10); border-left: 5px solid var(--blue);
+      font-size: 1.1em; font-style: italic; color: var(--blue-deep); line-height: 1.9;
+    }
+
+    .section { margin-bottom: 44px; }
+    .section h2 {
+      font-family: 'Playfair Display', serif; font-size: 1.6em; color: var(--ink);
+      margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--blue-light);
+    }
+    .section p { margin-bottom: 16px; }
+
+    .pull-quote {
+      border-left: 4px solid var(--accent); padding: 16px 24px; margin: 32px 0;
+      font-family: 'Playfair Display', serif; font-size: 1.2em; font-style: italic;
+      color: var(--ink); background: #fff7f0; border-radius: 0 10px 10px 0;
+    }
+
+    .session-list { list-style: none; padding: 0; margin: 20px 0; counter-reset: session; }
+    .session-list li {
+      counter-increment: session; padding: 16px 18px 16px 58px; position: relative; margin-bottom: 12px;
+      background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--blue);
+    }
+    .session-list li::before {
+      content: counter(session); position: absolute; left: 14px; top: 18px; width: 30px; height: 30px;
+      background: var(--blue); color: white; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 0.85em;
+    }
+    .session-list li strong { color: var(--blue-dark); }
+    .session-list li .tag {
+      display: inline-block; font-size: 0.72em; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+    }
+
+    .checklist { list-style: none; padding: 0; margin: 20px 0; }
+    .checklist li {
+      padding: 12px 16px 12px 44px; position: relative; margin-bottom: 10px; background: #f0fdf4;
+      border: 1.5px solid #86efac; border-radius: 10px; font-size: 0.95em; color: #14532d;
+    }
+    .checklist li::before { content: '\2713'; position: absolute; left: 16px; top: 11px; color: #16a34a; font-weight: 700; }
+
+    .map-frame { width: 100%; height: 560px; border: none; border-radius: 14px; margin: 20px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .map-caption { text-align: center; font-size: 0.85em; color: var(--muted); margin-top: -10px; margin-bottom: 20px; }
+    .map-caption a { color: var(--blue); font-weight: 600; text-decoration: none; }
+
+    .pages-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .page-card {
+      background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--blue); text-decoration: none; color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s; display: block;
+    }
+    .page-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .page-card .icon { font-size: 1.4em; margin-bottom: 6px; }
+    .page-card strong { display: block; color: var(--blue-dark); font-size: 0.95em; margin-bottom: 4px; }
+    .page-card span { font-size: 0.8em; color: var(--muted); }
+
+    .photo-frame {
+      border-radius: 14px; overflow: hidden; margin: 20px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+    .photo-frame img { width: 100%; display: block; }
+    .photo-frame .cap {
+      background: white; padding: 12px 18px; font-size: 0.85em; color: var(--muted); font-style: italic;
+    }
+
+    .closing {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 100%); color: white; border-radius: 16px;
+      padding: 36px; margin-top: 48px; text-align: center;
+    }
+    .closing h2 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-bottom: 14px; color: #fbbf6e; }
+    .closing p { color: rgba(255,255,255,0.88); line-height: 1.8; margin-bottom: 10px; }
+    .closing p:last-child { margin: 0; }
+
+    .divider { text-align: center; margin: 36px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 12px; }
+
+    footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.85em; border-top: 1px solid #e5e7eb; }
+
+    .en { display: block; }
+    .zh { display: none; }
+    span.en { display: inline; }
+    span.zh { display: none; }
+    body.lang-zh .en { display: none; }
+    body.lang-zh .zh { display: block; }
+    body.lang-zh span.en { display: none; }
+    body.lang-zh span.zh { display: inline; }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .pages-row { grid-template-columns: 1fr; }
+      .hero-meta { gap: 12px; }
+      .map-frame { height: 620px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="home-btn" href="https://paulsworld.vercel.app/">&#127968; Home</a>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">&#127468;&#127463; English</button>
+    <button class="lang-btn" onclick="setLang('zh')">&#127464;&#127475; &#20013;&#25991;</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">&#129302; My AI Journey &middot; Article 24</div>
+      <div class="occasion-badge">&#127801; Niseko Day 9 Route &nbsp;&middot;&nbsp; 15 Jul 2026</div>
+      <h1 class="en">AI221: AI Plans My Route to <span>Tomorrow's Places</span></h1>
+      <h1 class="zh">AI221&#65306;AI&#20026;&#25105;&#35268;&#21010;<span>&#26126;&#22825;&#35201;&#21435;&#30340;&#22320;&#26041;</span></h1>
+      <p class="hero-sub en">It's still 14 July, still Day 8. But I already know where I'm sleeping tonight and what's next door tomorrow — so I asked AI to build tomorrow's route before tomorrow arrives.</p>
+      <p class="hero-sub zh">今天还是7月14日，第八天。但我已经知道今晚睡哪，也知道明天就在隔壁 — 于是我请AI在明天到来之前，先把明天的路线做出来。</p>
+      <div class="hero-meta">
+        <span>&#9999;&#65039; Paul Yeo</span>
+        <span>&#128197; 14 Jul 2026</span>
+        <span>&#128205; Biei, Hokkaido</span>
+        <span>&#9200; 4 min read</span>
+      </div>
+      <button class="share-btn" onclick="shareThisPage()">&#128279; Share</button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">&#9989; Link copied!</div>
+
+  <div class="article-wrap">
+
+    <div class="lead">
+      <span class="en">&ldquo;Create day 9 map for tomorrow visit, follow day 8.&rdquo; That's the whole request I typed. Nine words. What came back was a full route — real roads, a distance table, a photo already sitting on the right stop, and honest warnings on every pin it wasn't sure about.&rdquo;</span>
+      <span class="zh">&#8220;&#20570;&#31532;&#20061;&#22825;&#22320;&#22270;&#65292;&#26126;&#22825;&#35201;&#21435;&#30340;&#22320;&#26041;&#65292;&#25353;&#31532;&#20843;&#22825;&#30340;&#26684;&#24335;&#12290;&#8221;&#36825;&#23601;&#26159;&#25105;&#25552;&#20986;&#30340;&#20840;&#37096;&#35201;&#27714;&#12290;&#22238;&#26469;&#30340;&#21364;&#26159;&#19968;&#25972;&#26465;&#36335;&#32447;&mdash;&mdash;&#30495;&#23454;&#36947;&#36335;&#12289;&#36317;&#31163;&#34920;&#26684;&#12289;&#19968;&#24352;&#24050;&#32463;&#25918;&#22909;&#20301;&#32622;&#30340;&#29031;&#29255;&#65292;&#36824;&#26377;&#23545;&#27599;&#20010;&#19981;&#30830;&#23450;&#30340;&#22336;&#28857;&#30340;&#35786;&#23454;&#35686;&#31034;&#12290;</span>
+    </div>
+
+    <div class="section">
+      <h2><span class="en">&#128161; What I Actually Asked For</span><span class="zh">&#128161; &#25105;&#21040;&#24213;&#35831;&#27714;&#20102;&#20160;&#20040;</span></h2>
+      <p class="en">I'm partway through Day 8 of this trip — still on the road, not even checked in for the night yet. But I already know I'm staying two nights at the same guesthouse, and I already know roughly what's next door tomorrow: a flower hill and a scenic road. So instead of waiting until tomorrow morning to plan it, I asked AI to build tomorrow's route today, using yesterday's map as the template to copy.</p>
+      <p class="zh">这趟旅程我才走到第八天，人还在路上，晚上的酒店都还没入住。但我已经知道接下来要在同一家民宿住两晚，也大概知道明天隔壁就是花丘和一条风景公路。所以我没有等到明天早上才规划，而是直接请AI今天就把明天的路线做出来，并且照搬昨天地图的格式。</p>
+      <p class="en">The whole instruction was short: build Day 9's map, and make it follow Day 8's — same layout, same animated car, same distance table, same bilingual pages. I didn't have to re-explain any of that; it was already sitting in the previous day's page as a template to copy.</p>
+      <p class="zh">整个指令很简短：做出第九天的地图，并且要跟第八天保持一致 — 相同的版面、相同的动画小车、相同的距离表、相同的中英日双语页面。这些我完全不用重新解释一遍 — 它们本来就写在前一天的页面里，可以直接照搬。</p>
+      <div class="pull-quote">
+        <span class="en">I didn't describe a route. I pointed at yesterday and said "like that, but for tomorrow."</span>
+        <span class="zh">我没有描述路线本身，只是指着昨天说：&#8220;照那样做，但是给明天。&#8221;</span>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128736;&#65039; See the Map It Built</span><span class="zh">&#128736;&#65039; &#30475;&#30475;&#23427;&#20570;&#20986;&#26469;&#30340;&#22320;&#22270;</span></h2>
+      <p class="en">This is a live copy of the exact route now sitting on my Niseko Day 9 log — a day that, as I write this, hasn't happened yet. Press play and watch it drive from the guesthouse to the flower hill, along the scenic road to the famous lone tree, out to the optional flower-field detour, and back to the guesthouse for the second night.</p>
+      <p class="zh">这是二世谷第九天日志中那条真实路线的实时副本 — 而写这篇文章的此刻，那一天其实还没发生。点击播放，看它从民宿开到花丘，沿着风景公路开到著名的孤树景点，再绕到可选的花田景点，最后返回民宿住第二晚。</p>
+      <iframe class="map-frame" src="AI221-map.html" title="AI-planned route for tomorrow's visit"></iframe>
+      <div class="map-caption"><span class="en">Live embed of AI221-map.html &mdash; <a href="https://paulsworld.vercel.app/AI221-map.html" target="_blank">open full page &rarr;</a></span><span class="zh">AI221-map.html &#30340;&#23454;&#26102;&#24051;&#20837;&mdash;<a href="https://paulsworld.vercel.app/AI221-map.html" target="_blank">&#25171;&#24320;&#23436;&#25972;&#39029;&#38754; &rarr;</a></span></div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; What AI Figured Out For Me</span><span class="zh">&#9989; AI&#20026;&#25105;&#25214;&#20986;&#30340;&#20107;</span></h2>
+      <ul class="session-list">
+        <li>
+          <div class="tag"><span class="en">Thing 1</span><span class="zh">&#31532;&#19968;&#20214;</span></div>
+          <span class="en"><strong>Read the Trip Plan, Not Just the Map.</strong> It went back to an older trip-overview page, found the two-line description of what Day 9 was meant to be — a flower hill fifteen minutes away, then a scenic road — and turned that loose paragraph into an actual ordered route with times attached.</span>
+          <span class="zh"><strong>&#35835;&#24694;&#34892;&#31243;&#35745;&#21010;&#65292;&#32780;&#19981;&#21482;&#26159;&#22320;&#22270;&#12290;</strong>&#23427;&#22238;&#21435;&#32763;&#20102;&#26089;&#26399;&#19968;&#31163;&#26053;&#34892;&#27010;&#35272;&#39029;&#38754;&#65292;&#25214;&#21040;&#31532;&#20061;&#22825;&#30340;&#31616;&#30701;&#25551;&#36848;&mdash;&mdash;&#19968;&#22788;&#21313;&#20116;&#20998;&#38047;&#36335;&#31243;&#30340;&#33457;&#19969;&#65292;&#20877;&#21152;&#19978;&#19968;&#26465;&#39118;&#26223;&#20844;&#36335;&mdash;&mdash;&#24182;&#25226;&#37027;&#27573;&#25918;&#25439;&#30340;&#25551;&#36848;&#25913;&#25104;&#19968;&#26465;&#30495;&#27491;&#25353;&#39034;&#24207;&#12289;&#24102;&#26102;&#38388;&#30340;&#36335;&#32447;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 2</span><span class="zh">&#31532;&#20108;&#20214;</span></div>
+          <span class="en"><strong>Started the Day at the Right Place.</strong> Since tonight's guesthouse is also tomorrow's starting point, AI made Stop A the same guesthouse — no fresh check-in stop invented, no confusion about where the day begins. It just carried the fact forward.</span>
+          <span class="zh"><strong>&#20174;&#27491;&#30830;&#30340;&#22320;&#26041;&#24320;&#22987;&#26032;&#30340;&#19968;&#22825;&#12290;</strong>&#22240;&#20026;&#20170;&#26202;&#20303;&#30340;&#27665;&#23487;&#20063;&#26159;&#26126;&#22825;&#30340;&#20986;&#21457;&#28857;&#65292;AI&#30452;&#25509;&#25226;A&#28857;&#35774;&#20026;&#21516;&#19968;&#23478;&#27665;&#23487;&mdash;&mdash;&#27809;&#26377;&#20599;&#20581;&#20986;&#26032;&#30340;&#20837;&#20303;&#28857;&#65292;&#20063;&#27809;&#26377;&#25361;&#28082;&#20851;&#20110;&#19968;&#22825;&#20174;&#21738;&#37324;&#24320;&#22987;&#12290;&#23427;&#21482;&#26159;&#25226;&#36825;&#20010;&#20107;&#23454;&#24310;&#32493;&#19979;&#21435;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 3</span><span class="zh">&#31532;&#19977;&#20214;</span></div>
+          <span class="en"><strong>Flagged Every Guess Instead of Hiding It.</strong> None of Day 9's stops have a confirmed pin yet — so every single one carries a visible warning, and every "Directions" button routes off the address text, not the dot on the map. AI didn't quietly pretend to know where things are; it was upfront about what it didn't.</span>
+          <span class="zh"><strong>&#25226;&#27599;&#20010;&#29255;&#27979;&#37117;&#26126;&#30830;&#26631;&#20986;&#65292;&#32780;&#19981;&#26159;&#37096;&#36523;&#12290;</strong>&#31532;&#20061;&#22825;&#30340;&#25152;&#26377;&#31449;&#28857;&#30446;&#21069;&#37117;&#27809;&#26377;&#30830;&#35748;&#30340;&#23450;&#20301;&#28857;&mdash;&mdash;&#25152;&#20197;&#27599;&#19968;&#20010;&#37117;&#24102;&#30528;&#26126;&#26174;&#30340;&#35686;&#31034;&#65292;&#27599;&#19968;&#20010;&#8220;&#23548;&#33322;&#8221;&#25353;&#38062;&#37117;&#26159;&#25353;&#22320;&#22336;&#25991;&#23383;&#36208;&#65292;&#32780;&#19981;&#26159;&#25353;&#22320;&#22270;&#19978;&#30340;&#28857;&#12290;AI&#27809;&#26377;&#20551;&#35013;&#30693;&#36947;&#20301;&#32622;&#65292;&#32780;&#26159;&#22823;&#26041;&#25925;&#22320;&#25215;&#35748;&#33258;&#24049;&#19981;&#30830;&#23450;&#30340;&#22320;&#26041;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Thing 4</span><span class="zh">&#31532;&#22235;&#20214;</span></div>
+          <span class="en"><strong>Slotted In a Photo I Hadn't Asked It To Use.</strong> A screenshot of a striped rainbow flower field landed mid-conversation with no caption. AI matched it against tomorrow's stops, noticed it looked like the patchwork hill on the plan, and used it as a preview photo — then told me plainly it was a guess so I could correct it.</span>
+          <span class="zh"><strong>&#20351;&#29992;&#20102;&#25105;&#27809;&#35201;&#27714;&#23427;&#29992;&#30340;&#19968;&#24352;&#29031;&#29255;&#12290;</strong>&#19968;&#24352;&#24425;&#34074;&#26465;&#32441;&#33457;&#30000;&#30340;&#25130;&#22270;&#22312;&#23545;&#35805;&#20013;&#31359;&#25554;&#32780;&#26469;&#65292;&#27809;&#26377;&#20219;&#20309;&#35828;&#26126;&#12290;AI&#25226;&#23427;&#19982;&#26126;&#22825;&#30340;&#31449;&#28857;&#27604;&#23545;&#65292;&#21457;&#29616;&#23427;&#30475;&#36215;&#26469;&#20687;&#35745;&#21010;&#20013;&#30340;&#25340;&#24067;&#33457;&#19969;&#65292;&#20110;&#26159;&#23558;&#23427;&#29992;&#20316;&#39044;&#35272;&#29031;&#29255;&mdash;&mdash;&#28982;&#21518;&#22826;&#30333;&#22320;&#21578;&#35785;&#25105;&#36825;&#21482;&#26159;&#29228;&#27979;&#65292;&#22240;&#27492;&#25105;&#33021;&#38543;&#26102;&#31215;&#27491;&#12290;</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9888;&#65039; What I Still Checked Myself</span><span class="zh">&#9888;&#65039; &#25105;&#20173;&#33258;&#24049;&#26597;&#26680;&#30340;&#20107;</span></h2>
+      <p class="en">A route planned a day ahead is only a guess about tomorrow, not a promise. None of Stop B, C or D's coordinates on this map are confirmed — they're placed close enough to be useful, with a visible warning on each one, and every navigation button points at the written address instead of the pin. I'll only swap in real coordinates once I actually stand there tomorrow and can confirm the pin myself.</p>
+      <p class="zh">提前一天规划的路线，终究只是对明天的一种推测，而不是承诺。地图上B、C、D三个点的坐标目前都未经确认 — 位置足够接近可供参考，每一处都带有明显警示，所有导航按钮都指向文字地址而非地图上的点。只有等我明天真正站在那里、能亲自确认定位后，才会换上真实坐标。</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128248; Photo Journal</span><span class="zh">&#128248; &#29031;&#29255;&#26085;&#24535;</span></h2>
+      <p class="en">The one photo already on this route wasn't taken tomorrow — it can't have been, tomorrow hasn't happened yet. It's a preview image that arrived mid-session and matched the flower-hill stop closely enough to use as a stand-in. Once Day 9 actually happens, the real photos go here instead.</p>
+      <p class="zh">这条路线上已有的这张照片并不是明天拍的 — 明天还没到，当然不可能。这是一张在对话中途出现的预览图，恰好与花丘那一站十分吻合，于是先用作替代图。等第九天真正到来后，真实照片会替换到这里。</p>
+      <a class="photo-frame" href="MT10-niseko-day9.html" target="_blank">
+        <img src="img_MT10-niseko-day9/01-shikisai-no-oka-preview.jpg" alt="Preview of the striped flower fields expected at Shikisai no Oka">
+        <div class="cap"><span class="en">Preview photo used for Stop B (Shikisai no Oka) — tap to see it live on the Day 9 map</span><span class="zh">用于B点（四季彩之丘）的预览图 — 点击查看第九天地图上的实际展示</span></div>
+      </a>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Next Steps</span><span class="zh">&#9989; &#19979;&#19968;&#27497;</span></h2>
+      <ul class="checklist">
+        <li class="en">Walk the actual route tomorrow and send back real photos</li>
+        <li class="zh">明天真正走一遍这条路线，把真实照片传回来</li>
+        <li class="en">Confirm the guessed pins once I'm standing at each stop</li>
+        <li class="zh">等我站在每一站时，确认那些猜测的定位点</li>
+        <li class="en">Keep planning each day a day ahead, using the previous day as the template</li>
+        <li class="zh">继续每天提前一天规划，用前一天的格式当模板</li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128218; Built on These</span><span class="zh">&#128218; &#22522;&#20110;&#36825;&#20123;&#25991;&#31456;</span></h2>
+      <div class="pages-row">
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10-niseko-day9.html">
+          <div class="icon">&#127801;</div>
+          <strong><span class="en">MT10 Niseko Day 9 Log</span><span class="zh">MT10 二世谷第九天日志</span></strong>
+          <span class="en">The real trip page this route is drawn from</span>
+          <span class="zh">本文路线的来源页面</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI221-map.html">
+          <div class="icon">&#128736;&#65039;</div>
+          <strong><span class="en">AI221 Map (Standalone)</span><span class="zh">AI221地图（独立页面）</span></strong>
+          <span class="en">The actual animated map this article is about</span>
+          <span class="zh">本文所讲的那张动画地图</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI220.html">
+          <div class="icon">&#128663;</div>
+          <strong><span class="en">AI220: Daily Driving Route</span><span class="zh">AI220：每日驾车路线</span></strong>
+          <span class="en">The earlier article this one builds on</span>
+          <span class="zh">本文所延续的上一篇文章</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/MT10-niseko-day8.html">
+          <div class="icon">&#128204;</div>
+          <strong><span class="en">MT10 Niseko Day 8 Log</span><span class="zh">MT10 二世谷第八天日志</span></strong>
+          <span class="en">The template Day 9's map was copied from</span>
+          <span class="zh">第九天地图所照搬的模板</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="closing">
+      <h2><span class="en">Planning Tomorrow, Today</span><span class="zh">今天，规划明天</span></h2>
+      <p class="en">I used to plan a trip once, weeks before flying, and hope it still made sense by the time I got there. Now I can hand AI one line — "follow yesterday's format, but for tomorrow" — the night before, and wake up to a route that's already waiting, already honest about what it isn't sure of yet.</p>
+      <p class="zh">以前我总是提前几周把整趟行程规划好一次，然后祈祷等真正出发时它还合用。现在，我只需要在前一晚交给AI一句话&mdash;&mdash;&#8220;照昨天的格式，但换成明天&#8221;&mdash;&mdash;第二天一早，一条路线就已经在等着我，而且它对自己还不确定的地方，也说得明明白白。</p>
+      <p class="en">That's the part that still surprises me most: it's not just fast, it's honest about its own guesses. A 70-year-old retiree can plan tomorrow's day out the night before, just by talking — and still know exactly which parts to double-check.</p>
+      <p class="zh">这才是最让我惊讶的地方：它不只是快，还对自己的猜测坦诚相待。一位70岁的退休老人，只需在前一晚聊几句，就能规划好明天的行程 &mdash; 而且清楚知道哪些地方还需要自己再核实一遍。</p>
+      <p style="margin-top:16px; font-style:italic; opacity:0.8;">&mdash; Paul Yeo, July 2026 &#127775;</p>
+    </div>
+
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+  <script>
+    function setLang(lang) {
+      document.body.className = lang === 'zh' ? 'lang-zh' : '';
+      document.querySelectorAll('.lang-btn').forEach(function(btn, i) {
+        btn.classList.toggle('active', (lang === 'en' && i === 0) || (lang === 'zh' && i === 1));
+      });
+    }
+    function shareThisPage() {
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function() { t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>
