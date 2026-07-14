@@ -604,9 +604,16 @@ function fetchWikiThumb(wikiTitle) {
     .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
     .catch(function () { return null; });
 }
+// wikiTitle may be a single title or an array of fallback candidates, tried in order
+function fetchWikiThumbChain(titles) {
+  const list = Array.isArray(titles) ? titles : [titles];
+  return list.reduce(function (chain, title) {
+    return chain.then(function (src) { return src || fetchWikiThumb(title); });
+  }, Promise.resolve(null));
+}
 stops.forEach(function (s, i) {
   if (s.img || !s.wikiTitle) return;
-  fetchWikiThumb(s.wikiTitle).then(function (src) {
+  fetchWikiThumbChain(s.wikiTitle).then(function (src) {
     if (!src) return;
     s.img = src;
     s.imgCredit = 'Wikipedia';
