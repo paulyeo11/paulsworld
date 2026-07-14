@@ -38,6 +38,10 @@
   .hcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
   .h-ticker{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
   .h-name{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+  .h-earnings{display:inline-block;font-size:11px;font-family:'DM Mono',monospace;padding:3px 9px;border-radius:6px;margin-top:8px;}
+  .h-earnings.far{background:rgba(107,114,128,0.12);color:var(--muted);border:1px solid var(--border);}
+  .h-earnings.near{background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);}
+  .h-earnings.soon{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
   .h-price{text-align:right;}
   .h-price-live{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--gold);}
   .h-price-chg{font-family:'DM Mono',monospace;font-size:12px;margin-top:2px;}
@@ -141,7 +145,7 @@
 </div>
 
 <div class="note">
-  ✏️ <b>Manage your holdings:</b> enter your shares held &amp; average cost per stock below — it saves automatically in this browser (nothing is uploaded or stored on GitHub). Prices update live from Yahoo Finance.
+  ✏️ <b>Manage your holdings:</b> enter your shares held &amp; average cost per stock below — it saves automatically in this browser (nothing is uploaded or stored on GitHub). Prices and next earnings dates update live from Yahoo Finance.
 </div>
 
 <div class="holdings" id="holdingsList">
@@ -231,7 +235,7 @@ async function loadAll() {
     HOLDINGS.forEach(h => {
       const q = map[h.symbol];
       if (q && !q.error && q.price != null) {
-        livePrices[h.symbol] = { price: parseFloat(q.price), prevClose: q.prevClose != null ? parseFloat(q.prevClose) : null };
+        livePrices[h.symbol] = { price: parseFloat(q.price), prevClose: q.prevClose != null ? parseFloat(q.prevClose) : null, earningsDate: q.earningsDate ?? null };
         if (q.name) h.name = q.name;
         loaded++;
       }
@@ -252,6 +256,20 @@ async function loadAll() {
 
 const fmtSGD = n => 'S$' + n.toLocaleString('en-SG', { minimumFractionDigits:0, maximumFractionDigits:0 });
 const fmtUSD = n => 'US$' + n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+function earningsBadge(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const days = Math.ceil((d - now) / 86400000);
+  const dateStr = d.toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' });
+  if (days < -3) return '';
+  let cls = 'far', label = 'Next Earnings';
+  if (days <= 0) { cls = 'soon'; label = 'Reports Today'; }
+  else if (days <= 7) { cls = 'soon'; label = 'Next Earnings in ' + days + 'd'; }
+  else if (days <= 21) { cls = 'near'; }
+  return `<div class="h-earnings ${cls}">📅 ${label}: ${dateStr}</div>`;
+}
 
 function render() {
   const list = document.getElementById('holdingsList');
@@ -285,11 +303,14 @@ function render() {
       chgHtml = `<div class="h-price-chg ${chg>=0?'up':'down'}">${chg>=0?'▲':'▼'} ${chg>=0?'+':''}${chg.toFixed(2)}% today</div>`;
     }
 
+    const earnHtml = earningsBadge(lp && lp.earningsDate);
+
     return `<div class="hcard ${cardCls}">
       <div class="hcard-top">
         <div>
           <div class="h-ticker">${h.symbol}</div>
           <div class="h-name">${h.name}</div>
+          ${earnHtml}
         </div>
         <div class="h-price">
           <div class="h-price-live">${price != null ? (livePrices[h.symbol] ? '<span class="live-dot"></span>' : '') + fmtUSD(price) : '—'}</div>

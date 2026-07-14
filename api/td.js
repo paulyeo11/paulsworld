@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   // Try v7 batch quote (one request for all symbols)
   try {
     const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}${crumbParam}&fields=regularMarketPrice,regularMarketPreviousClose,currency`;
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}${crumbParam}&fields=regularMarketPrice,regularMarketPreviousClose,currency,earningsTimestamp,earningsTimestampStart,earningsTimestampEnd`;
     const r = await fetch(url, { headers: baseHeaders });
     if (r.ok) {
       const j = await r.json();
@@ -52,7 +52,8 @@ export default async function handler(req, res) {
         const seen = new Set();
         for (const q of quotes) {
           if (q.regularMarketPrice != null) {
-            out[q.symbol] = { price: q.regularMarketPrice, prevClose: q.regularMarketPreviousClose ?? null, currency: q.currency ?? null, name: q.shortName ?? q.longName ?? null };
+            const earn = q.earningsTimestampStart ?? q.earningsTimestamp ?? null;
+            out[q.symbol] = { price: q.regularMarketPrice, prevClose: q.regularMarketPreviousClose ?? null, currency: q.currency ?? null, name: q.shortName ?? q.longName ?? null, earningsDate: earn ? earn * 1000 : null };
             seen.add(q.symbol);
           }
         }
