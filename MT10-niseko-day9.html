@@ -441,6 +441,7 @@ body.lang-ja .en-block{display:none!important}
 // ── ANIMATED ROUTE MAP ──
 const stops = [
   { name: "Totonou Guest House ととのうプレース", lat: 43.6439, lng: 142.4510, time: "09:00", type: "start", verifiedGps: false, icon: "🛏️",
+    wikiTitle: ["Totonou Guest House", "Asahikawa"],
     address: "24 Go-463-38 Nishikagura 1 Sen, Asahikawa, Hokkaido 078-8381, Japan",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Totonou%20Guest%20House%20%E3%81%A8%E3%81%A8%E3%81%AE%E3%81%86%E3%83%97%E3%83%AC%E3%83%BC%E3%82%B9%2C%2024%20Go-463-38%20Nishikagura%201%20Sen%2C%20Asahikawa%2C%20Hokkaido%20078-8381%2C%20Japan",
     baiduUrl: "https://map.baidu.com/search/Totonou%20Guest%20House%20%E6%97%AD%E5%B7%9D",
@@ -454,19 +455,21 @@ const stops = [
     amapUrl: "https://uri.amap.com/search?keyword=%E5%9B%9B%E5%AD%A3%E5%BD%A9%E4%B9%8B%E4%B8%98",
     mustVisit: true,
     note: "⭐ Rolling patchwork flower hill — poppies, lavender, marigolds and cosmos with Mt Tokachi as backdrop. 📍 Pin location is an unconfirmed estimate — use the address-based Directions/Google buttons below, not this pin." },
-  { name: "Ken and Mary's Tree ケンとメリーの木", lat: 43.58, lng: 142.43, time: "10:20", type: "road", verifiedGps: false, icon: "🌳", wikiTitle: "Ken and Mary's Tree",
+  { name: "Ken and Mary's Tree ケンとメリーの木", lat: 43.58, lng: 142.43, time: "10:20", type: "road", verifiedGps: false, icon: "🌳", wikiTitle: ["Ken and Mary's Tree", "Biei, Hokkaido"],
     address: "Biei, Kamikawa District, Hokkaido, Japan",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Ken and Mary's Tree ケンとメリーの木, Biei, Kamikawa District, Hokkaido, Japan"),
     baiduUrl: "https://map.baidu.com/search/%E7%BE%8E%E7%91%9B%20%E3%82%B1%E3%83%B3%E3%81%A8%E3%83%A1%E3%83%AA%E3%83%BC%E3%81%AE%E6%9C%A8",
     amapUrl: "https://uri.amap.com/search?keyword=Ken%20and%20Mary%27s%20Tree%20Biei",
     note: "A famous lone-tree viewpoint on Panorama Road — drive slowly through the patchwork farmland hills. 📍 Pin location is an unconfirmed estimate — use the address-based Directions/Google buttons below, not this pin." },
   { name: "Flower Land Kamifurano フラワーランドかみふらの", lat: 43.45, lng: 142.47, time: "11:50", type: "flower", verifiedGps: false, icon: "🌷",
+    wikiTitle: ["Flower Land Kamifurano", "Kamifurano, Hokkaido"],
     address: "2-7 Nishi5-senkita, Kamifurano-cho, Hokkaido, Japan",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Flower%20Land%20Kamifurano%2C%202-7%20Nishi5-senkita%2C%20Kamifurano-cho%2C%20Hokkaido%2C%20Japan",
     baiduUrl: "https://map.baidu.com/search/Flower%20Land%20Kamifurano",
     amapUrl: "https://uri.amap.com/search?keyword=Flower%20Land%20Kamifurano",
     note: "Optional detour — open flower fields between Furano and Biei, plus a flower-shaped go-kart ride. 📍 Pin location is an unconfirmed estimate — use the address-based Directions/Google buttons below, not this pin." },
   { name: "Totonou Guest House ととのうプレース", lat: 43.6439, lng: 142.4510, time: "12:20", type: "end", verifiedGps: false, icon: "🛏️",
+    wikiTitle: ["Totonou Guest House", "Asahikawa"],
     address: "24 Go-463-38 Nishikagura 1 Sen, Asahikawa, Hokkaido 078-8381, Japan",
     mapUrl: "https://www.google.com/maps/search/?api=1&query=Totonou%20Guest%20House%20%E3%81%A8%E3%81%A8%E3%81%AE%E3%81%86%E3%83%97%E3%83%AC%E3%83%BC%E3%82%B9%2C%2024%20Go-463-38%20Nishikagura%201%20Sen%2C%20Asahikawa%2C%20Hokkaido%20078-8381%2C%20Japan",
     baiduUrl: "https://map.baidu.com/search/Totonou%20Guest%20House%20%E6%97%AD%E5%B7%9D",
@@ -601,9 +604,16 @@ function fetchWikiThumb(wikiTitle) {
     .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
     .catch(function () { return null; });
 }
+// wikiTitle may be a single title or an array of fallback candidates, tried in order
+function fetchWikiThumbChain(titles) {
+  const list = Array.isArray(titles) ? titles : [titles];
+  return list.reduce(function (chain, title) {
+    return chain.then(function (src) { return src || fetchWikiThumb(title); });
+  }, Promise.resolve(null));
+}
 stops.forEach(function (s, i) {
   if (s.img || !s.wikiTitle) return;
-  fetchWikiThumb(s.wikiTitle).then(function (src) {
+  fetchWikiThumbChain(s.wikiTitle).then(function (src) {
     if (!src) return;
     s.img = src;
     s.imgCredit = 'Wikipedia';
