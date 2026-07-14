@@ -89,9 +89,10 @@
     <ul>
       <li><span class="lbl"><span class="en">Market Cap</span><span class="zh">市值</span></span><span class="val">&gt; $10B</span></li>
       <li><span class="lbl"><span class="en">Price</span><span class="zh">股价</span></span><span class="val">&gt; $10</span></li>
-      <li><span class="lbl"><span class="en">Average Volume</span><span class="zh">平均成交量</span></span><span class="val">&gt; 500K</span></li>
+      <li><span class="lbl"><span class="en">Average Volume</span><span class="zh">平均成交量</span></span><span class="val" id="avgVolVal">&gt; 1M</span></li>
       <li><span class="lbl"><span class="en">Optionable</span><span class="zh">可交易期权</span></span><span class="val"><span class="en">Yes</span><span class="zh">是</span></span></li>
       <li id="rowSma" class="manual"><span class="lbl"><span class="en">200/50-Day SMA</span><span class="zh">200/50日均线</span></span><span class="val" id="smaVal">—</span></li>
+      <li id="rowRsi"><span class="lbl"><span class="en">RSI(14)</span><span class="zh">RSI(14)</span></span><span class="val"><span class="en">Not Overbought (&lt;60)</span><span class="zh">未超买（&lt;60）</span></span></li>
       <li><span class="lbl"><span class="en">Chart Pattern</span><span class="zh">图表形态</span></span><span class="val" id="patternVal"><span class="en" id="patternValEn">Horizontal S/R (Strong)</span><span class="zh" id="patternValZh">水平支撑/阻力（强）</span></span></li>
     </ul>
   </div>
@@ -101,7 +102,7 @@
     <ul>
       <li><span class="lbl"><span class="en">No earnings before expiry <span class="manual-tag">MANUAL</span></span><span class="zh">到期前无财报<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;"><span class="en">Check calendar</span><span class="zh">查看财报日历</span></span></li>
       <li><span class="lbl"><span class="en">IV Rank 30–70%+ <span class="manual-tag">MANUAL</span></span><span class="zh">IV排名30–70%以上<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;"><span class="en">Broker/option chain</span><span class="zh">券商期权链</span></span></li>
-      <li><span class="lbl"><span class="en">RSI(14) not at an extreme <span class="manual-tag">MANUAL</span></span><span class="zh">RSI(14)未处于极端<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;">~30–70</span></li>
+      <li><span class="lbl" id="rsiManualLbl"><span class="en">RSI(14) not oversold <span class="manual-tag">MANUAL</span></span><span class="zh">RSI(14)未超卖<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;" id="rsiManualVal">&gt;40</span></li>
     </ul>
   </div>
 
@@ -120,10 +121,11 @@
     <ol>
       <li><span class="en">Go to</span><span class="zh">前往</span> <b>finviz.com/screener.ashx</b></li>
       <li><b><span class="en">Market Cap</span><span class="zh">市值</span></b>: <span class="en">+Large (over $10bln)</span><span class="zh">+大型股（超过100亿美元）</span></li>
-      <li><b><span class="en">Average Volume</span><span class="zh">平均成交量</span></b>: <span class="en">Over 500K</span><span class="zh">超过50万</span></li>
+      <li><b><span class="en">Average Volume</span><span class="zh">平均成交量</span></b>: <span class="en" id="stepAvgVolEn">Over 1M</span><span class="zh" id="stepAvgVolZh">超过100万</span></li>
       <li><b><span class="en">Price</span><span class="zh">股价</span></b>: <span class="en">Over $10</span><span class="zh">超过10美元</span></li>
       <li><b><span class="en">Option/Short</span><span class="zh">期权/做空</span></b>: <span class="en">Optionable</span><span class="zh">可交易期权</span></li>
       <li id="stepSmaLi"><b><span class="en">200 &amp; 50-Day SMA</span><span class="zh">200及50日均线</span></b>: <span class="en" id="stepSmaEn">—</span><span class="zh" id="stepSmaZh">—</span></li>
+      <li id="stepRsiLi"><b><span class="en">RSI (14)</span><span class="zh">RSI (14)</span></b>: <span class="en">Not Overbought (&lt;60)</span><span class="zh">未超买（&lt;60）</span></li>
       <li><b><span class="en">Pattern</span><span class="zh">形态</span></b>: <span class="en" id="patternStepEn">Horizontal S/R (Strong)</span><span class="zh" id="patternStepZh">水平支撑/阻力（强）</span></li>
       <li><span class="en">Then manually check: earnings date, IV Rank, and RSI(14) before entering.</span><span class="zh">然后自行检查：财报日期、IV排名与RSI(14)，再决定是否下单。</span></li>
     </ol>
@@ -138,11 +140,16 @@
 <script>
 var STRATS = {
   condor: {
-    filters: 'cap_largeover,sh_avgvol_o500,sh_price_o10,sh_opt_option,ta_pattern_horizontal2',
+    filters: 'cap_largeover,sh_avgvol_o1000,sh_price_o10,sh_opt_option,ta_pattern_horizontal2,ta_rsi_nob60',
     patternEn: 'Horizontal S/R (Strong)', patternZh: '水平支撑/阻力（强）',
     smaEn: 'Not required', smaZh: '不要求',
-    descEn: 'Range-bound, delta-neutral: sell premium on both sides and profit if the stock stays inside its band. No trend direction required — a flat support/resistance level matters more than where the 200-day SMA is.',
-    descZh: '区间震荡、delta中性策略：在两侧同时卖出权利金，只要股价维持在区间内即可获利。不需要趋势方向 — 一个明确的水平支撑/阻力位比200日均线的位置更重要。',
+    avgVolEn: '&gt; 1M', avgVolZh: '&gt; 100万',
+    stepAvgVolEn: 'Over 1M', stepAvgVolZh: '超过100万',
+    hasRsi: true,
+    rsiManualEn: 'RSI(14) not oversold <span class="manual-tag">MANUAL</span>', rsiManualZh: 'RSI(14)未超卖<span class="manual-tag">手动</span>',
+    rsiManualValEn: '&gt;40', rsiManualValZh: '&gt;40',
+    descEn: 'Range-bound, delta-neutral: sell premium on both sides and profit if the stock stays inside its band. No trend direction required — a flat support/resistance level matters more than where the 200-day SMA is. Tightened to >1M avg volume (deeper options liquidity) and RSI not overbought (avoids names already breaking out).',
+    descZh: '区间震荡、delta中性策略：在两侧同时卖出权利金，只要股价维持在区间内即可获利。不需要趋势方向 — 一个明确的水平支撑/阻力位比200日均线的位置更重要。已收紧为平均成交量>100万（期权流动性更深）且RSI未超买（排除已经突破区间的个股）。',
     meaningEn: 'Horizontal S/R = a flat, well-tested ceiling and floor. That\'s the strongest signal a stock will stay inside a range through your option\'s expiry — which is exactly what an Iron Condor needs, regardless of the long-term trend.',
     meaningZh: '水平支撑/阻力代表一个经过多次测试、走势平坦的顶部与底部。这是股价在期权到期前维持在区间内最有力的信号 — 这正是铁鹰策略所需要的，与长期趋势方向无关。'
   },
@@ -150,6 +157,11 @@ var STRATS = {
     filters: 'cap_largeover,sh_avgvol_o500,sh_price_o10,sh_opt_option,ta_pattern_channelup,ta_sma200_pa,ta_sma50_pb',
     patternEn: 'Channel Up', patternZh: '上升通道',
     smaEn: 'Above SMA200, below SMA50', smaZh: '高于SMA200，低于SMA50',
+    avgVolEn: '&gt; 500K', avgVolZh: '&gt; 50万',
+    stepAvgVolEn: 'Over 500K', stepAvgVolZh: '超过50万',
+    hasRsi: false,
+    rsiManualEn: 'RSI(14) not at an extreme <span class="manual-tag">MANUAL</span>', rsiManualZh: 'RSI(14)未处于极端<span class="manual-tag">手动</span>',
+    rsiManualValEn: '~30–70', rsiManualValZh: '~30–70',
     descEn: 'Directional, bullish: the long-term trend (above SMA200) is still up, but the stock has pulled back short-term (below SMA50) inside a rising channel. Use the channel\'s lower trendline as your short put strike for a bull put spread, or as your entry for cash-secured puts.',
     descZh: '方向性看涨策略：长期趋势（高于SMA200）仍向上，但股价短期回调（低于SMA50）且仍在上升通道内运行。可将通道下轨作为牛市看跌价差的卖出履约价，或作为现金担保卖出看跌期权的入场参考。',
     meaningEn: 'Above the 200-day SMA = the long-term trend is still up. Below the 50-day SMA = a short-term dip. A rising Channel confirms the pullback is still orderly, not a breakdown — giving you a defined support line to sell your put below.',
@@ -177,6 +189,15 @@ function setStrategy(key){
   document.getElementById('stepSmaZh').textContent = s.smaZh;
   document.getElementById('rowSma').style.display = (key === 'condor') ? 'none' : 'flex';
   document.getElementById('stepSmaLi').style.display = (key === 'condor') ? 'none' : 'list-item';
+
+  document.getElementById('avgVolVal').innerHTML = '<span class="en">' + s.avgVolEn + '</span><span class="zh">' + s.avgVolZh + '</span>';
+  document.getElementById('stepAvgVolEn').textContent = s.stepAvgVolEn;
+  document.getElementById('stepAvgVolZh').textContent = s.stepAvgVolZh;
+
+  document.getElementById('rowRsi').style.display = s.hasRsi ? 'flex' : 'none';
+  document.getElementById('stepRsiLi').style.display = s.hasRsi ? 'list-item' : 'none';
+  document.getElementById('rsiManualLbl').innerHTML = '<span class="en">' + s.rsiManualEn + '</span><span class="zh">' + s.rsiManualZh + '</span>';
+  document.getElementById('rsiManualVal').innerHTML = '<span class="en">' + s.rsiManualValEn + '</span><span class="zh">' + s.rsiManualValZh + '</span>';
 
   document.getElementById('stratDesc').innerHTML = '<span class="en">' + s.descEn + '</span><span class="zh">' + s.descZh + '</span>';
   document.getElementById('meaningEn').textContent = s.meaningEn;
