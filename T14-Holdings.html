@@ -289,7 +289,8 @@ function loadCoveredCalls() {
     if (raw) return JSON.parse(raw);
   } catch(e) {}
   return [
-    { id:'seed-fds-320', symbol:'FDS', strike:320, expiry:'2026-07-17', contracts:1, premium:2.5485, status:'closed' }
+    { id:'seed-fds-320', symbol:'FDS', strike:320, expiry:'2026-07-17', contracts:1, premium:2.5485, status:'closed' },
+    { id:'seed-fds-320-aug', symbol:'FDS', strike:320, expiry:'2026-08-21', contracts:1, premium:2.18, status:'planned' }
   ];
 }
 
@@ -334,16 +335,16 @@ function renderCoveredCalls() {
   }
   let totalPremium = 0;
   const now = new Date();
-  const statuses = ['open','closed','expired','assigned','rolled'];
+  const statuses = ['planned','open','closed','expired','assigned','rolled'];
   const rows = coveredCalls.slice().sort((a,b) => new Date(b.expiry) - new Date(a.expiry)).map(c => {
     const premTotal = c.premium * c.contracts * 100;
-    totalPremium += premTotal;
+    if (c.status !== 'planned') totalPremium += premTotal;
     const lp = livePrices[c.symbol] ? livePrices[c.symbol].price : null;
     const cushion = lp ? ((c.strike - lp) / lp) * 100 : null;
     const cushionHtml = cushion != null ? (cushion >= 0 ? '+' : '') + cushion.toFixed(1) + '%' : '—';
     const expDate = new Date(c.expiry + 'T00:00:00');
     const daysLeft = Math.ceil((expDate - now) / 86400000);
-    const dteHtml = c.status === 'open' ? (daysLeft >= 0 ? ' (' + daysLeft + 'd left)' : ' (expired)') : '';
+    const dteHtml = (c.status === 'open' || c.status === 'planned') ? (daysLeft >= 0 ? ' (' + daysLeft + 'd left)' : ' (expired)') : '';
     const statusOptions = statuses.map(s => `<option value="${s}" ${s===c.status?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('');
     return `<tr>
       <td>${c.symbol}</td>
@@ -351,7 +352,7 @@ function renderCoveredCalls() {
       <td>${c.expiry}<span style="color:var(--muted)">${dteHtml}</span></td>
       <td>${cushionHtml}</td>
       <td>${c.contracts}</td>
-      <td>$${premTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td>$${premTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}${c.status==='planned'?' <span style="color:var(--muted)">(est.)</span>':''}</td>
       <td><select class="cc-status-select" onchange="setCallStatus('${c.id}',this.value)">${statusOptions}</select></td>
       <td><button class="cc-del" onclick="deleteCoveredCall('${c.id}')">✕</button></td>
     </tr>`;
