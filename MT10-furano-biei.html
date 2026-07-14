@@ -7,7 +7,6 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
 <link rel="icon" type="image/png" href="/japan-icon.png">
 <meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -68,62 +67,6 @@ body {
   margin: 26px 0 12px;
 }
 
-/* EMBEDDED ANIMATED MAP — always-visible map, car drives continuously (same pattern as MT10-niseko-day3-map.html) */
-.map-fullscreen-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
-  color: #f0a500; font-size: 0.78em; font-weight: 700;
-  padding: 7px 16px; border-radius: 18px; cursor: pointer;
-  margin-bottom: 10px;
-}
-.map-wrap { position: relative; height: 42vh; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
-#map { width: 100%; height: 100%; }
-#map.map-fullscreen {
-  position: fixed !important; top: 0; left: 0;
-  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
-  z-index: 9999; border-radius: 0 !important;
-}
-.map-wrap.map-fullscreen-wrap { border-radius: 0; border: none; }
-#mapCloseBtn {
-  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
-  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
-  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
-  cursor: pointer; align-items: center; gap: 6px;
-}
-.controls {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
-  border: 1px solid rgba(255,255,255,0.08); border-top: none; margin-top: 14px;
-}
-#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
-#timeLabel { font-weight: 700; color: #58a6ff; }
-.play-btn {
-  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
-  color: #f0a500; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
-  border-radius: 14px; cursor: pointer; white-space: nowrap;
-}
-.speed-control {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px; margin-top: 8px;
-}
-.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
-.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
-.speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
-.speed-control.fs-overlay {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
-  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
-}
-.legend {
-  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
-  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
-}
-.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
-.popup-card { font-family: -apple-system, system-ui, sans-serif; }
-.popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
-.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
-.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
-
 .gps-note { font-size: 0.78em; color: #8b949e; margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #f0a500; line-height: 1.6; }
 
 /* GARDEN CARDS */
@@ -132,11 +75,6 @@ body {
   border-radius: 14px; padding: 16px; margin-bottom: 14px;
 }
 .garden-title { font-size: 1rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.garden-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: 50%; background: #a855f7;
-  color: #0d1117; font-weight: 800; font-size: 0.78rem; flex-shrink: 0;
-}
 .garden-meta { font-size: 0.75em; color: #f0a500; font-weight: 700; margin-bottom: 8px; }
 .garden-text { font-size: 0.88rem; color: #c9d1d9; line-height: 1.65; }
 .garden-links { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
@@ -237,71 +175,16 @@ body.lang-ja .en-block{display:none!important}
 
 <div class="content">
 
-  <div class="section-title">🗺️ <span class="en">Animated Route Map — Hotel to Furano to Biei</span><span class="zh">动态路线地图 — 酒店到富良野再到美瑛</span><span class="ja">アニメーション経路マップ — ホテルから富良野・美瑛へ</span></div>
-  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
-  <div class="map-wrap" id="mapWrap">
-    <div id="map"></div>
-    <div style="position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:4px;">
-      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
-      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+  <div class="gps-note" style="margin-top:0;">🗺️ <span class="en">The live animated route map and POI pins for this leg of the trip now live on <strong>Niseko Day 8</strong> (14 Jul) — including the Farm Tomita lavender detour. This page keeps the flower-garden reference info and the 3-day plan below.</span><span class="zh">此段行程的动态路线地图与POI定位点现已移至<strong>二世谷第八天</strong>（7月14日）— 包括绕道富田农场赏薰衣草。本页保留花园参考信息与下方的3天行程规划。</span><span class="ja">この区間のアニメーション経路マップとPOIピンは<strong>ニセコ8日目</strong>（7月14日）に移動しました — ファーム富田でのラベンダー立ち寄りも含みます。本ページには花畑の参考情報と下記の3日間プランを残しています。</span>
+    <div style="margin-top:10px;">
+      <a href="MT10-niseko-day8.html" style="display:inline-flex;align-items:center;gap:6px;background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.85em;font-weight:700;padding:8px 16px;border-radius:10px;text-decoration:none;">🗺️ <span class="en">View Day 8 Route Map</span><span class="zh">查看第八天路线地图</span><span class="ja">8日目のルートマップを見る</span></a>
     </div>
-    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
   </div>
-  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
-
-  <div class="controls">
-    <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
-    <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">08:00</span></div>
-  </div>
-  <div class="speed-control" id="speedControl">
-    <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
-    <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
-    <span id="speedVal">1&times;</span>
-  </div>
-
-  <div class="legend">
-    <span class="dot" style="background:#f85149;"></span><span class="en">Hotel</span><span class="zh">酒店</span><span class="ja">ホテル</span>&nbsp;&nbsp;
-    <span class="dot" style="background:#a855f7;"></span><span class="en">Flower garden</span><span class="zh">花园</span><span class="ja">花畑</span>&nbsp;&nbsp;
-    <span class="dot" style="background:#f0a500;"></span><span class="en">Stay 2 nights here</span><span class="zh">在此住宿2晚</span><span class="ja">ここに2泊</span>&nbsp;&nbsp;
-    🚗 <span class="en">All legs by car</span><span class="zh">全程驾车</span><span class="ja">全区間 車</span>
-  </div>
-  <div class="gps-note">🎬 <span class="en">This animation compresses the 3-day trip into one continuous route for a quick preview — Stop D (Biei) is really a <strong>Day 2 day trip</strong> from the hostel (Stop B), not back-to-back with Stops A-C on Day 1. See the real day-by-day plan further down the page.</span><span class="zh">此动画将3天行程压缩为一条连续路线，方便快速预览 — D点（美瑛）实际是<strong>第2天从民宿（B点）出发的一日往返</strong>，并非与A-C点在第1天连续发生。详细的逐日行程请见下方。</span><span class="ja">このアニメーションは3日間の旅程を1本の連続ルートに圧縮したプレビューです — D地点（美瑛）は実際には宿泊先（B地点）からの<strong>2日目の日帰り旅行</strong>であり、1日目のA〜C地点と連続しているわけではありません。実際の日程は下記をご覧ください。</span></div>
-
-  <div class="section-title">📏 <span class="en">Distance Between Stops</span><span class="zh">各站点间距离</span><span class="ja">各地点間の距離</span></div>
-  <div class="distance-table">
-    <table>
-      <thead>
-        <tr>
-          <th><span class="en">Leg</span><span class="zh">路段</span><span class="ja">区間</span></th>
-          <th><span class="en">Distance</span><span class="zh">距离</span><span class="ja">距離</span></th>
-          <th><span class="en">Driving Time</span><span class="zh">车程</span><span class="ja">所要時間</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>A &rarr; B 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Hotel &rarr; Totonou Place — check in</span><span class="zh">酒店 &rarr; Totonou Place — 入住</span><span class="ja">ホテル &rarr; ととのうプレース — チェックイン</span>)</span></td>
-          <td>~230 km</td>
-          <td>~3.5-4 <span class="en">hr</span><span class="zh">小时</span><span class="ja">時間</span></td>
-        </tr>
-        <tr>
-          <td>B &rarr; C 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Totonou Place &rarr; Farm Tomita</span><span class="zh">Totonou Place &rarr; 富田农场</span><span class="ja">ととのうプレース &rarr; ファーム富田</span>)</span></td>
-          <td>~30 km</td>
-          <td>~40 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
-        </tr>
-        <tr>
-          <td>C &harr; D 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Farm Tomita &harr; Shikisai no Oka, Biei</span><span class="zh">富田农场 &harr; 四季彩之丘，美瑛</span><span class="ja">ファーム富田 &harr; 四季彩の丘（美瑛）</span>)</span></td>
-          <td>~13 km</td>
-          <td>~20 <span class="en">min each way</span><span class="zh">分钟（单程）</span><span class="ja">分（片道）</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="gps-note">📍 <span class="en"><strong>A&rarr;B</strong> is a driving-route estimate via the Dō-ō Expressway north to Asahikawa — not a straight line, since a 230 km intercity leg can't be estimated that way. <strong>B&rarr;C</strong> and <strong>C&harr;D</strong> are straight-line distance with a rough rural-road speed estimate (~40-45 km/h) — not live traffic. Day 3 return (B&rarr;A) mirrors A&rarr;B, roughly 3.5-4 hr back to the Niseko hotel. The route line and animated car above follow the actual roads (fetched live from OpenStreetMap routing), not straight lines. <strong>Stop B and Stop C's pins are approximate</strong> (not the exact building/farm entrance — see the note in each popup) — B could not be geocoded in this environment, and C's coordinates were reported inaccurate. Use the address-based Directions/Google buttons in each popup, not the pins, for actual navigation.</span><span class="zh"><strong>A&rarr;B</strong>为经道央高速公路北上旭川的行车距离估算 — 并非直线距离，因为230公里的城际路段无法用直线估算。<strong>B&rarr;C</strong>与<strong>C&harr;D</strong>为直线距离，并按乡村道路平均车速（约40-45公里/小时）粗略估算 — 非实时路况。第3天返程（B→A）与A→B路线相同，返回二世谷酒店约需3.5-4小时。上方地图的路线与动态车辆均沿实际道路行驶（实时从OpenStreetMap路线服务获取），并非直线。<strong>B点与C点的定位均为近似位置</strong>（非实际建筑/农场入口坐标，详见各点弹窗说明）— B点因本环境无法精确地理编码，C点坐标经反馈不准确。请使用各弹窗中基于地址的"导航/谷歌"按钮进行实际导航，而非依赖地图上的定位点。</span><span class="ja"><strong>A→B</strong>は道央自動車道を北上し旭川へ向かう走行距離の概算です — 230kmの都市間区間は直線では見積もれないためです。<strong>B→C</strong>と<strong>C⇄D</strong>は直線距離に、田舎道の平均速度（時速約40〜45km）を用いた大まかな推定値です — リアルタイムの交通状況ではありません。3日目の帰路（B→A）はA→Bと同じルートで、ニセコのホテルまで約3.5〜4時間です。上のマップのルートとアニメーションの車は、実際の道路（OpenStreetMapのルート案内から取得）に沿っており、直線ではありません。<strong>B地点とC地点のピンはどちらも概算位置</strong>です（実際の建物・農園入口の座標ではありません、詳細は各ポップアップ内の注記を参照）— B地点はこの環境で正確なジオコーディングができず、C地点は座標が不正確と報告されました。実際のナビゲーションには各ポップアップの住所ベースの「ルート案内/Google」ボタンをご利用ください。</span></div>
 
   <div class="section-title">🌼 <span class="en">Must-See Flower Gardens</span><span class="zh">必看花园</span><span class="ja">必見の花畑</span></div>
 
   <div class="garden-card">
-    <div class="garden-title"><span class="garden-badge">C</span><span class="en">Farm Tomita 富田農場 (Nakafurano)</span><span class="zh">富田农场（中富良野）</span><span class="ja">ファーム富田（中富良野）</span></div>
+    <div class="garden-title"><span class="en">Farm Tomita 富田農場 (Nakafurano)</span><span class="zh">富田农场（中富良野）</span><span class="ja">ファーム富田（中富良野）</span></div>
     <div class="garden-meta"><span class="en">🎟️ Free entry &middot; ⏰ Best 8-10 AM before tour buses arrive &middot; 🌸 Peak: mid-late July</span><span class="zh">🎟️ 免费入场 &middot; ⏰ 最佳时间为早上8-10点，避开旅行团 &middot; 🌸 盛花期：7月中下旬</span><span class="ja">🎟️ 入場無料 &middot; ⏰ 団体バスが来る前の朝8〜10時がベスト &middot; 🌸 見頃：7月中旬〜下旬</span></div>
     <div class="garden-text"><span class="en">The original and most famous lavender farm in Japan — the iconic striped rows of purple lavender against Mt Tokachi, plus the "Traditional Flower Garden" with rainbow bands of poppies, marigolds and salvia. Don't miss the lavender-flavoured soft serve at the Flower Land Hachiman Farm shop. This is the must-do stop.</span><span class="zh">日本最早、也是最著名的薰衣草农场 — 以十胜岳为背景的紫色薰衣草条纹田是标志性景观，另有"传统花园"以虞美人、万寿菊、鼠尾草组成彩虹色花带。别错过花人之田商店的薰衣草软雪糕。这是必去的一站。</span><span class="ja">日本発祥にして最も有名なラベンダー農園 — 十勝岳を背景にした紫色のラベンダーの縞模様が象徴的な景観。ポピー、マリーゴールド、サルビアが虹色の帯をなす「トラディショナルフラワーガーデン」もある。花人の畑ショップのラベンダーソフトクリームもお見逃しなく。ここは必ず訪れたい一箇所。</span></div>
     <div class="garden-links">
@@ -312,7 +195,7 @@ body.lang-ja .en-block{display:none!important}
   </div>
 
   <div class="garden-card">
-    <div class="garden-title"><span class="garden-badge">D</span><span class="en">Shikisai no Oka 四季彩之丘 (Biei)</span><span class="zh">四季彩之丘（美瑛）</span><span class="ja">四季彩の丘（美瑛）</span></div>
+    <div class="garden-title"><span class="en">Shikisai no Oka 四季彩之丘 (Biei)</span><span class="zh">四季彩之丘（美瑛）</span><span class="ja">四季彩の丘（美瑛）</span></div>
     <div class="garden-meta"><span class="en">🎟️ ~¥500 (~S$4.40) for the tractor "Norokko" bus &middot; walking is free &middot; 🌸 Peak: July</span><span class="zh">🎟️ 拖拉机"Norokko"观光车约¥500（约S$4.40），步行免费 &middot; 🌸 盛花期：7月</span><span class="ja">🎟️ トラクターバス「ノロッコ号」は約¥500 &middot; 徒歩は無料 &middot; 🌸 見頃：7月</span></div>
     <div class="garden-text"><span class="en">A rolling hillside "patchwork" of colour — wide bands of poppies, lavender, marigolds and cosmos rippling over the farmland, with the Tokachi mountain range as backdrop. Bigger and more photogenic than Farm Tomita for wide panoramic shots, and less crowded. About 45 min north of Furano.</span><span class="zh">起伏山丘上的"拼布"花田 — 大片虞美人、薰衣草、万寿菊与波斯菊如波浪般铺满农田，背景是十胜山脉。相比富田农场，这里更适合拍摄大全景，人也较少。从富良野出发车程约45分钟。</span><span class="ja">なだらかな丘に広がる「パッチワーク」のような花畑 — ポピー、ラベンダー、マリーゴールド、コスモスの帯が波打つように農地を彩り、背景には十勝連峰。ファーム富田より広大なパノラマ撮影に向いており、混雑も少なめ。富良野から車で約45分。</span></div>
     <div class="garden-links">
@@ -385,7 +268,6 @@ body.lang-ja .en-block{display:none!important}
 <div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
 <div class="footer-note">MT10 Furano-Biei Flower Trip · Japan 2026 · paulsworld.vercel.app</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 function shareThisPage(){
   var url=window.location.href;
@@ -400,295 +282,6 @@ function shareThisPage(){
     });
   }
 }
-
-// ── ANIMATED ROUTE MAP (same pattern as MT10 Niseko day logs) ──
-// Times below are a fictional single-day sequence used only to pace the animation —
-// Stop D is really a Day 2 side trip from Furano, not literally 40 min after check-in.
-// The visible "day" label (not the clock time) is what's shown to the reader.
-const stops = [
-  { name: "Torifito Hotel & Pod Niseko トリフィート・ホテル＆ポッド ニセコ", lat: 42.9007, lng: 140.7537, time: "08:00", day: "Day 1", type: "hotel", icon: "🏨", verifiedGps: true,
-    img: "img_MT10-niseko-day7/01-torifito-hotel-exterior.jpg",
-    address: "Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan",
-    mapUrl: "https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko",
-    baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
-    amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
-    note: "Depart early for the ~3 hr drive to Furano." },
-  { name: "Totonou Place ととのうプレース", lat: 43.6439, lng: 142.4510, time: "11:30", day: "Day 1 · Stay 2 nights", type: "stay", icon: "🛏️", verifiedGps: false,
-    img: "img_MT10-furano-biei/01-totonou-place-exterior.jpg",
-    address: "463-44 Nishikagura 1-sen 24-go, Asahikawa-shi, Hokkaido 078-8381, Japan",
-    phone: "+81-9012530007",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Totonou Place, 463-44 Nishikagura 1-sen 24-go, Asahikawa-shi, Hokkaido 078-8381, Japan"),
-    baiduUrl: "https://map.baidu.com/search/" + encodeURIComponent("Totonou Place 旭川"),
-    amapUrl: "https://uri.amap.com/search?keyword=" + encodeURIComponent("Totonou Place Asahikawa"),
-    pdf: "MT10_hostel_totonou-place.pdf",
-    note: "✅ Confirmed booking — check in Jul 14 (15:00–20:00), check out Jul 16 (06:00–10:00), Twin Room, 2 nights. 📍 Pin is approximate (nearest known point: Chiyogaoka Station, ~8 min walk) — exact building not geocoded, so Directions below routes by address, not this pin." },
-  { name: "Farm Tomita 富田農場", lat: 43.4184, lng: 142.4261, time: "12:15", day: "Day 1", type: "flower", icon: "🌸", verifiedGps: false,
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lavender_fields,_Furano_(48254611081).jpg?width=500",
-    imgCredit: "Wikimedia Commons",
-    address: "15 Kisenkita, Nakafurano, Sorachi District, Hokkaido 071-0704, Japan",
-    mapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Farm Tomita, 15 Kisenkita, Nakafurano, Sorachi District, Hokkaido 071-0704, Japan"),
-    baiduUrl: "https://map.baidu.com/search/%E5%AF%8C%E7%94%B0%E5%86%9C%E5%9C%BA",
-    amapUrl: "https://uri.amap.com/search?keyword=%E5%AF%8C%E7%94%B0%E5%86%9C%E5%9C%BA",
-    note: "Japan's most famous lavender farm — free entry, peak bloom mid-late July. ~30 min drive south of the hostel. 📍 Pin location was reported inaccurate — use the address-based Directions/Google buttons below, not this pin." },
-  { name: "Shikisai no Oka 四季彩之丘", lat: 43.5283, lng: 142.4654, time: "12:45", day: "Day 2 (day trip)", type: "flower", icon: "🌼", verifiedGps: true,
-    img: "https://commons.wikimedia.org/wiki/Special:FilePath/%E5%9B%9B%E5%AD%A3%E5%BD%A9%E3%81%AE%E4%B8%98-01.JPG?width=500",
-    imgCredit: "Wikimedia Commons",
-    address: "Dai 3 Shinsei, Biei-cho, Kamikawa-gun, Hokkaido 071-0473, Japan",
-    mapUrl: "https://maps.google.com/?q=43.5283,142.4654&label=Shikisai+no+Oka",
-    baiduUrl: "https://map.baidu.com/search/%E5%9B%9B%E5%AD%A3%E5%BD%A9%E4%B9%8B%E4%B8%98",
-    amapUrl: "https://uri.amap.com/marker?position=142.4654,43.5283&name=%E5%9B%9B%E5%AD%A3%E5%BD%A9%E4%B9%8B%E4%B8%98",
-    note: "Colourful patchwork flower hill — just ~15-20 min from the hostel, an easy Day 2 morning trip." }
-];
-
-const map = L.map('map', { zoomControl: true }).setView([43.15, 141.6], 7);
-
-const tileLayers = {
-  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
-  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
-};
-tileLayers.street.addTo(map);
-let currentTile = 'street';
-function setMapType(type) {
-  if (type === currentTile) return;
-  map.removeLayer(tileLayers[currentTile]);
-  tileLayers[type].addTo(map);
-  currentTile = type;
-  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
-  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
-  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
-  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
-}
-
-function stopLabel(i) { return String.fromCharCode(65 + i); }
-const colorFor = { hotel: '#f85149', flower: '#a855f7', stay: '#f0a500' };
-const fullLine = stops.map(s => [s.lat, s.lng]);
-let fullRoadPoints = fullLine;
-
-let routeLine = L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
-
-// ── REAL-ROAD ROUTING via OSRM ── the straight dashed line above is a placeholder;
-// swap in the actual driving path so the route (and the car animating along it) follows real roads.
-const roadSegs = [];
-function pathCumulativeDistances(points) {
-  const cum = [0];
-  for (let i = 1; i < points.length; i++) {
-    const dx = points[i][0] - points[i - 1][0];
-    const dy = points[i][1] - points[i - 1][1];
-    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
-  }
-  return cum;
-}
-function pointAtFraction(seg, frac) {
-  const { points, cum } = seg;
-  const total = cum[cum.length - 1];
-  if (total === 0) return points[0];
-  const target = frac * total;
-  for (let i = 1; i < cum.length; i++) {
-    if (target <= cum[i] || i === cum.length - 1) {
-      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
-      return [
-        points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac,
-        points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac
-      ];
-    }
-  }
-  return points[points.length - 1];
-}
-const legProfiles = ['driving', 'driving', 'driving'];
-async function fetchRoadSegment(a, b, profile) {
-  profile = profile || 'driving';
-  const url = `https://router.project-osrm.org/route/v1/${profile}/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.code === 'Ok') return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-  } catch (e) {}
-  return [[a.lat, a.lng], [b.lat, b.lng]];
-}
-async function buildRoads() {
-  const allPoints = [];
-  for (let i = 0; i < stops.length - 1; i++) {
-    const pts = await fetchRoadSegment(stops[i], stops[i + 1], legProfiles[i]);
-    roadSegs[i] = { points: pts, cum: pathCumulativeDistances(pts) };
-    allPoints.push(...pts);
-  }
-  if (allPoints.length) {
-    map.removeLayer(routeLine);
-    routeLine = L.polyline(allPoints, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
-    fullRoadPoints = allPoints;
-  }
-}
-
-function buildMapButtons(s) {
-  if (!s.mapUrl) return '';
-  const dirDest = s.verifiedGps ? (s.lat + ',' + s.lng) : (s.address ? encodeURIComponent(s.name + ', ' + s.address) : (s.lat + ',' + s.lng));
-  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
-    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + dirDest + '&travelmode=driving" target="_blank" onclick="event.stopPropagation()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🧭 Directions</a>' +
-    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
-    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
-    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
-    (s.pdf ? '<a href="' + s.pdf + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(240,165,0,0.15);border:1px solid rgba(240,165,0,0.4);color:#f0a500;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">📄 Voucher PDF</a>' : '') +
-    '</div>';
-}
-
-function buildPopupHtml(s, i) {
-  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
-  return '<div class="popup-card">' + imgHtml +
-    '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
-    '<div class="pmeta">' + s.day + ' — ' + s.note + '</div>' +
-    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
-    (s.phone ? '<div class="pmeta" style="margin-top:2px;">📞 ' + s.phone + '</div>' : '') +
-    (s.imgCredit ? '<div class="pmeta" style="margin-top:2px;opacity:0.7;">📷 ' + s.imgCredit + '</div>' : '') +
-    buildMapButtons(s) +
-    '</div>';
-}
-
-const markerRefs = [];
-stops.forEach((s, i) => {
-  const color = colorFor[s.type];
-  const marker = L.marker([s.lat, s.lng], {
-    icon: L.divIcon({
-      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + stopLabel(i) + '</div>',
-      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
-    })
-  }).addTo(map);
-  marker.bindPopup(buildPopupHtml(s, i));
-  markerRefs.push(marker);
-});
-
-map.fitBounds(fullLine, { padding: [30, 30] });
-
-const lastStop = stops[stops.length - 1];
-const waypointStops = stops.slice(0, -1);
-const lastDest = lastStop.verifiedGps ? (lastStop.lat + ',' + lastStop.lng) : (lastStop.address ? encodeURIComponent(lastStop.name + ', ' + lastStop.address) : (lastStop.lat + ',' + lastStop.lng));
-document.getElementById('btn-directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + lastDest +
-  (waypointStops.length ? '&waypoints=' + waypointStops.map(s => s.lat + ',' + s.lng).join('|') : '') +
-  '&travelmode=driving';
-
-function openMapFullscreen() {
-  if (window.self !== window.top) {
-    window.top.location.href = window.location.href;
-    return;
-  }
-  document.getElementById('map').classList.add('map-fullscreen');
-  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
-  document.getElementById('mapCloseBtn').style.display = 'flex';
-  document.getElementById('speedControl').classList.add('fs-overlay');
-  document.body.style.overflow = 'hidden';
-  setTimeout(function () { map.invalidateSize(); }, 100);
-}
-function closeMapFullscreen() {
-  document.getElementById('map').classList.remove('map-fullscreen');
-  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
-  document.getElementById('mapCloseBtn').style.display = 'none';
-  document.getElementById('speedControl').classList.remove('fs-overlay');
-  document.body.style.overflow = '';
-  setTimeout(function () { map.invalidateSize(); }, 100);
-}
-
-const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
-const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
-
-// The needle rotates to match the real driving bearing of the current leg —
-// it must never sit fixed pointing "up", or it silently lies about direction.
-function bearingDeg(lat1, lng1, lat2, lng2) {
-  const toRad = d => d * Math.PI / 180, toDeg = r => r * 180 / Math.PI;
-  const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
-  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
-  return (toDeg(Math.atan2(y, x)) + 360) % 360;
-}
-const compassNeedle = document.getElementById('compassNeedle');
-function setCompassHeading(deg) {
-  if (compassNeedle) compassNeedle.style.transform = 'rotate(' + deg + 'deg)';
-}
-
-function toMinutes(t) {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
-}
-const startMin = toMinutes(stops[0].time);
-const endMin = toMinutes(stops[stops.length - 1].time);
-const totalMin = endMin - startMin;
-let progress = 0;
-let speedMultiplier = 1;
-let playing = true;
-
-const speedSlider = document.getElementById('speedSlider');
-const speedVal = document.getElementById('speedVal');
-speedSlider.addEventListener('input', () => {
-  speedMultiplier = parseFloat(speedSlider.value);
-  speedVal.textContent = speedMultiplier + '×';
-});
-
-const statusEl = document.getElementById('status');
-const timeLabel = document.getElementById('timeLabel');
-
-function currentLegIndex(targetMin) {
-  for (let i = 0; i < stops.length - 1; i++) {
-    if (targetMin >= toMinutes(stops[i].time) && targetMin <= toMinutes(stops[i + 1].time)) return i;
-  }
-  return stops.length - 2;
-}
-
-// Interpolates along the real fetched road geometry for the current leg (not a straight line) —
-// falls back to a straight-line lerp only if that leg's OSRM fetch hasn't resolved yet.
-function interpolate(p) {
-  const targetMin = startMin + p * totalMin;
-  const i = currentLegIndex(targetMin);
-  const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
-  const legP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
-  const seg = roadSegs[i];
-  const [lat, lng] = seg ? pointAtFraction(seg, legP) : [
-    stops[i].lat + (stops[i + 1].lat - stops[i].lat) * legP,
-    stops[i].lng + (stops[i + 1].lng - stops[i].lng) * legP
-  ];
-  const aheadP = Math.min(legP + 0.03, 1);
-  const [aheadLat, aheadLng] = seg ? pointAtFraction(seg, aheadP) : [
-    stops[i].lat + (stops[i + 1].lat - stops[i].lat) * aheadP,
-    stops[i].lng + (stops[i + 1].lng - stops[i].lng) * aheadP
-  ];
-  if (aheadLat !== lat || aheadLng !== lng) setCompassHeading(bearingDeg(lat, lng, aheadLat, aheadLng));
-  const curMin = Math.round(targetMin);
-  const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
-  const mm = String(curMin % 60).padStart(2, '0');
-  return { lat, lng, timeStr: `${hh}:${mm}`, day: stops[i + 1].day };
-}
-
-function togglePlay() {
-  playing = !playing;
-  const btn = document.getElementById('playBtn');
-  if (playing) {
-    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
-    requestAnimationFrame(step);
-  } else {
-    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
-  }
-}
-
-function step() {
-  if (!playing) return;
-  progress += 0.0018 * speedMultiplier;
-  if (progress >= 1) {
-    const pos = interpolate(1);
-    mover.setLatLng([pos.lat, pos.lng]);
-    timeLabel.textContent = pos.timeStr;
-    statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — ' + stops[stops.length - 1].day + ' · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
-    setTimeout(() => {
-      progress = 0;
-      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
-      requestAnimationFrame(step);
-    }, 1400);
-    return;
-  }
-  const pos = interpolate(progress);
-  mover.setLatLng([pos.lat, pos.lng]);
-  document.getElementById('timeLabel').textContent = pos.timeStr;
-  requestAnimationFrame(step);
-}
-buildRoads().then(step);
-
-// ── DAY LABEL BADGE — since the animation compresses a 3-day trip into one loop,
-// keep the visible day tag next to the status text so it's always clear which day is which.
 </script>
 
 </body>
