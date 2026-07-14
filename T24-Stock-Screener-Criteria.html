@@ -19,15 +19,16 @@
 
   .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
 
+  .strat-wrap { text-align:center; margin-bottom:10px; }
+  .strat-label { font-size:.78rem; color:rgba(255,255,255,.55); margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .strat-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+  .strat-btn { background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.3); color:#fff; font-weight:700; padding:10px 16px; border-radius:20px; cursor:pointer; font-size:.83rem; }
+  .strat-btn.active { background:#f4c869; color:#0e1330; border-color:#f4c869; }
+  .strat-desc { text-align:center; font-size:.78rem; color:rgba(255,255,255,.5); margin:10px auto 20px; max-width:520px; line-height:1.5; }
+
   .cta { display:block; text-align:center; background:linear-gradient(135deg,#10b981,#0d9668); color:#0e1330; font-weight:800; padding:16px 20px; border-radius:16px; text-decoration:none; font-size:1rem; margin-bottom:8px; box-shadow:0 4px 16px rgba(16,185,129,.3); }
   .cta small { display:block; font-weight:600; font-size:.76rem; opacity:.8; margin-top:3px; }
   .cta-note { text-align:center; font-size:.74rem; color:rgba(255,255,255,.45); margin-bottom:26px; }
-
-  .ptt-wrap { text-align:center; margin-bottom:16px; }
-  .ptt-label { font-size:.78rem; color:rgba(255,255,255,.55); margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-  .ptt-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
-  .ptt-btn { background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.3); color:#fff; font-weight:700; padding:8px 18px; border-radius:20px; cursor:pointer; font-size:.82rem; }
-  .ptt-btn.active { background:#f4c869; color:#0e1330; border-color:#f4c869; }
 
   .checklist { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:22px; }
   .checklist h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; margin-bottom:10px; }
@@ -36,6 +37,8 @@
   .checklist li:last-child { border-bottom:none; }
   .checklist li .lbl { color:rgba(255,255,255,.6); flex-shrink:0; }
   .checklist li .val { font-weight:700; color:#f4c869; text-align:right; }
+  .checklist li.manual .val { color:#f59e0b; }
+  .manual-tag { font-size:.68rem; font-weight:800; background:rgba(245,158,11,.18); color:#f59e0b; padding:2px 7px; border-radius:8px; margin-left:6px; white-space:nowrap; }
 
   .steps { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:22px; }
   .steps h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; margin-bottom:10px; }
@@ -54,7 +57,7 @@
 <div class="hd">
   <div class="ic">🎯📊</div>
   <h1><span class="en">T24: My Stock Screener Criteria</span><span class="zh">T24：我的选股筛选条件</span></h1>
-  <p><span class="en">A saved screening rule I use to find large, liquid stocks in a long-term uptrend that have pulled back short-term and are trading in a channel.</span><span class="zh">这是我用来寻找大市值、高流动性、长期处于上升趋势、短期回调且呈通道走势的股票的筛选规则。</span></p>
+  <p><span class="en">Two saved screens for two different options strategies — pick the one that matches what you're trading.</span><span class="zh">两套针对不同期权策略的筛选规则 — 请选择与您交易策略相符的一套。</span></p>
 </div>
 
 <div class="wrap">
@@ -67,39 +70,51 @@
     ⚠️ <span class="en"><b>Not financial advice.</b> This page is an educational screening rule, not a live stock list or a recommendation. Tap the button below to run it live on Finviz — results change daily with the market.</span><span class="zh"><b>非投资建议。</b>本页仅为教育性筛选规则，并非实时股票清单或投资建议。点击下方按钮即可在Finviz上实时运行 — 结果会随市场每日变化。</span>
   </div>
 
-  <div class="ptt-wrap">
-    <div class="ptt-label"><span class="en">Chart Pattern Filter</span><span class="zh">图表形态筛选</span></div>
-    <div class="ptt-row">
-      <button class="ptt-btn active" id="pttChannel" onclick="setPattern('channel')"><span class="en">Channel</span><span class="zh">通道</span></button>
-      <button class="ptt-btn" id="pttHorizontal" onclick="setPattern('horizontal2')"><span class="en">Horizontal S/R</span><span class="zh">水平支撑/阻力</span></button>
-    </div>
-    <div class="cta-note" style="margin-top:8px;margin-bottom:0;">
-      <span class="en" id="patternDescEn">Channel — price moving in a slanted, orderly band (two roughly parallel trendlines).</span><span class="zh" id="patternDescZh">通道 — 股价在倾斜且有序的区间内运行（两条大致平行的趋势线）。</span>
+  <div class="strat-wrap">
+    <div class="strat-label"><span class="en">Options Strategy</span><span class="zh">期权策略</span></div>
+    <div class="strat-row">
+      <button class="strat-btn active" id="stratCondor" onclick="setStrategy('condor')">🦅 <span class="en">Iron Condor</span><span class="zh">铁鹰策略</span></button>
+      <button class="strat-btn" id="stratDip" onclick="setStrategy('dip')">📈 <span class="en">Bull Put Spread / Dip-Buy</span><span class="zh">牛市看跌价差 / 逢低买入</span></button>
     </div>
   </div>
+  <div class="strat-desc" id="stratDesc">
+    <span class="en">Range-bound, delta-neutral: sell premium on both sides and profit if the stock stays inside its band. No trend direction required — a flat support/resistance level matters more than where the 200-day SMA is.</span><span class="zh">区间震荡、delta中性策略：在两侧同时卖出权利金，只要股价维持在区间内即可获利。不需要趋势方向 — 一个明确的水平支撑/阻力位比200日均线的位置更重要。</span>
+  </div>
 
-  <a class="cta" id="ctaLink" href="https://finviz.com/screener.ashx?v=111&f=cap_largeover,sh_avgvol_o500,sh_price_o10,ta_pattern_channel,ta_sma200_pa,ta_sma50_pb" target="_blank" rel="noopener">
+  <a class="cta" id="ctaLink" href="https://finviz.com/screener.ashx?v=111&f=cap_largeover,sh_avgvol_o500,sh_price_o10,sh_opt_option,ta_pattern_horizontal2" target="_blank" rel="noopener">
     <span class="en">🔎 Run This Screen on Finviz</span><span class="zh">🔎 在Finviz上运行此筛选</span>
     <small><span class="en">Opens live, free results in a new tab</span><span class="zh">在新标签页打开实时免费结果</span></small>
   </a>
   <div class="cta-note"><span class="en">If the link ever breaks (Finviz changes its filter codes), use the manual steps below.</span><span class="zh">如果此链接失效（Finviz更改了筛选代码），请使用下方的手动步骤。</span></div>
 
   <div class="checklist">
-    <h2><span class="en">✅ Screening Criteria</span><span class="zh">✅ 筛选条件</span></h2>
+    <h2><span class="en">✅ Live Screening Criteria</span><span class="zh">✅ 实时筛选条件</span></h2>
     <ul>
       <li><span class="lbl"><span class="en">Market Cap</span><span class="zh">市值</span></span><span class="val">&gt; $10B</span></li>
       <li><span class="lbl"><span class="en">Price</span><span class="zh">股价</span></span><span class="val">&gt; $10</span></li>
       <li><span class="lbl"><span class="en">Average Volume</span><span class="zh">平均成交量</span></span><span class="val">&gt; 500K</span></li>
-      <li><span class="lbl"><span class="en">200-Day SMA</span><span class="zh">200日均线</span></span><span class="val"><span class="en">Price above SMA200</span><span class="zh">股价高于SMA200</span></span></li>
-      <li><span class="lbl"><span class="en">50-Day SMA</span><span class="zh">50日均线</span></span><span class="val"><span class="en">Price below SMA50</span><span class="zh">股价低于SMA50</span></span></li>
-      <li><span class="lbl"><span class="en">Chart Pattern</span><span class="zh">图表形态</span></span><span class="val" id="patternVal"><span class="en" id="patternValEn">Channel</span><span class="zh" id="patternValZh">通道</span></span></li>
+      <li><span class="lbl"><span class="en">Optionable</span><span class="zh">可交易期权</span></span><span class="val"><span class="en">Yes</span><span class="zh">是</span></span></li>
+      <li id="rowSma" class="manual"><span class="lbl"><span class="en">200/50-Day SMA</span><span class="zh">200/50日均线</span></span><span class="val" id="smaVal">—</span></li>
+      <li><span class="lbl"><span class="en">Chart Pattern</span><span class="zh">图表形态</span></span><span class="val" id="patternVal"><span class="en" id="patternValEn">Horizontal S/R (Strong)</span><span class="zh" id="patternValZh">水平支撑/阻力（强）</span></span></li>
+    </ul>
+  </div>
+
+  <div class="checklist">
+    <h2><span class="en">⚠️ Still Manual — Check Yourself Before Entry</span><span class="zh">⚠️ 仍需自行检查（下单前）</span></h2>
+    <ul>
+      <li><span class="lbl"><span class="en">No earnings before expiry <span class="manual-tag">MANUAL</span></span><span class="zh">到期前无财报<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;"><span class="en">Check calendar</span><span class="zh">查看财报日历</span></span></li>
+      <li><span class="lbl"><span class="en">IV Rank 30–70%+ <span class="manual-tag">MANUAL</span></span><span class="zh">IV排名30–70%以上<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;"><span class="en">Broker/option chain</span><span class="zh">券商期权链</span></span></li>
+      <li><span class="lbl"><span class="en">RSI(14) not at an extreme <span class="manual-tag">MANUAL</span></span><span class="zh">RSI(14)未处于极端<span class="manual-tag">手动</span></span></span><span class="val" style="color:rgba(255,255,255,.7);font-weight:600;">~30–70</span></li>
     </ul>
   </div>
 
   <div class="checklist">
     <h2><span class="en">💡 What This Setup Means</span><span class="zh">💡 这个组合代表什么</span></h2>
     <ul style="display:block;">
-      <li style="display:block;"><span class="en">Above the 200-day SMA = the long-term trend is still up. Below the 50-day SMA = the stock has pulled back short-term. Together, this is a classic "uptrend + dip" setup, and the Channel pattern filter narrows it further to stocks moving in an orderly, range-bound way rather than crashing.</span><span class="zh">股价高于200日均线代表长期趋势仍向上；低于50日均线代表短期出现回调。两者结合是经典的"上升趋势中回调"形态，再加上通道形态筛选，可进一步锁定走势有序、区间震荡而非暴跌的股票。</span></li>
+      <li style="display:block;" id="meaningText">
+        <span class="en" id="meaningEn">Horizontal S/R = a flat, well-tested ceiling and floor. That's the strongest signal a stock will stay inside a range through your option's expiry — which is exactly what an Iron Condor needs, regardless of the long-term trend.</span>
+        <span class="zh" id="meaningZh">水平支撑/阻力代表一个经过多次测试、走势平坦的顶部与底部。这是股价在期权到期前维持在区间内最有力的信号 — 这正是铁鹰策略所需要的，与长期趋势方向无关。</span>
+      </li>
     </ul>
   </div>
 
@@ -110,9 +125,10 @@
       <li><b><span class="en">Market Cap</span><span class="zh">市值</span></b>: <span class="en">+Large (over $10bln)</span><span class="zh">+大型股（超过100亿美元）</span></li>
       <li><b><span class="en">Average Volume</span><span class="zh">平均成交量</span></b>: <span class="en">Over 500K</span><span class="zh">超过50万</span></li>
       <li><b><span class="en">Price</span><span class="zh">股价</span></b>: <span class="en">Over $10</span><span class="zh">超过10美元</span></li>
-      <li><b><span class="en">200-Day Simple Moving Average</span><span class="zh">200日简单移动均线</span></b>: <span class="en">Price above SMA200</span><span class="zh">股价高于SMA200</span></li>
-      <li><b><span class="en">50-Day Simple Moving Average</span><span class="zh">50日简单移动均线</span></b>: <span class="en">Price below SMA50</span><span class="zh">股价低于SMA50</span></li>
-      <li><b><span class="en">Pattern</span><span class="zh">形态</span></b>: <span class="en" id="patternStepEn">Channel</span><span class="zh" id="patternStepZh">通道</span></li>
+      <li><b><span class="en">Option/Short</span><span class="zh">期权/做空</span></b>: <span class="en">Optionable</span><span class="zh">可交易期权</span></li>
+      <li id="stepSmaLi"><b><span class="en">200 &amp; 50-Day SMA</span><span class="zh">200及50日均线</span></b>: <span class="en" id="stepSmaEn">—</span><span class="zh" id="stepSmaZh">—</span></li>
+      <li><b><span class="en">Pattern</span><span class="zh">形态</span></b>: <span class="en" id="patternStepEn">Horizontal S/R (Strong)</span><span class="zh" id="patternStepZh">水平支撑/阻力（强）</span></li>
+      <li><span class="en">Then manually check: earnings date, IV Rank, and RSI(14) before entering.</span><span class="zh">然后自行检查：财报日期、IV排名与RSI(14)，再决定是否下单。</span></li>
     </ol>
   </div>
 
@@ -123,38 +139,54 @@
 </div>
 
 <script>
-var PATTERNS = {
-  channel: {
-    code: 'ta_pattern_channel',
-    en: 'Channel', zh: '通道',
-    descEn: 'Channel — price moving in a slanted, orderly band (two roughly parallel trendlines).',
-    descZh: '通道 — 股价在倾斜且有序的区间内运行（两条大致平行的趋势线）。'
+var STRATS = {
+  condor: {
+    filters: 'cap_largeover,sh_avgvol_o500,sh_price_o10,sh_opt_option,ta_pattern_horizontal2',
+    patternEn: 'Horizontal S/R (Strong)', patternZh: '水平支撑/阻力（强）',
+    smaEn: 'Not required', smaZh: '不要求',
+    descEn: 'Range-bound, delta-neutral: sell premium on both sides and profit if the stock stays inside its band. No trend direction required — a flat support/resistance level matters more than where the 200-day SMA is.',
+    descZh: '区间震荡、delta中性策略：在两侧同时卖出权利金，只要股价维持在区间内即可获利。不需要趋势方向 — 一个明确的水平支撑/阻力位比200日均线的位置更重要。',
+    meaningEn: 'Horizontal S/R = a flat, well-tested ceiling and floor. That\'s the strongest signal a stock will stay inside a range through your option\'s expiry — which is exactly what an Iron Condor needs, regardless of the long-term trend.',
+    meaningZh: '水平支撑/阻力代表一个经过多次测试、走势平坦的顶部与底部。这是股价在期权到期前维持在区间内最有力的信号 — 这正是铁鹰策略所需要的，与长期趋势方向无关。'
   },
-  horizontal2: {
-    code: 'ta_pattern_horizontal2',
-    en: 'Horizontal S/R (Strong)', zh: '水平支撑/阻力（强）',
-    descEn: 'Horizontal S/R — price bouncing between a flat support and resistance level, no clear slant.',
-    descZh: '水平支撑/阻力 — 股价在水平的支撑位与阻力位之间来回震荡，没有明显倾斜趋势。'
+  dip: {
+    filters: 'cap_largeover,sh_avgvol_o500,sh_price_o10,sh_opt_option,ta_pattern_channelup,ta_sma200_pa,ta_sma50_pb',
+    patternEn: 'Channel Up', patternZh: '上升通道',
+    smaEn: 'Above SMA200, below SMA50', smaZh: '高于SMA200，低于SMA50',
+    descEn: 'Directional, bullish: the long-term trend (above SMA200) is still up, but the stock has pulled back short-term (below SMA50) inside a rising channel. Use the channel\'s lower trendline as your short put strike for a bull put spread, or as your entry for cash-secured puts.',
+    descZh: '方向性看涨策略：长期趋势（高于SMA200）仍向上，但股价短期回调（低于SMA50）且仍在上升通道内运行。可将通道下轨作为牛市看跌价差的卖出履约价，或作为现金担保卖出看跌期权的入场参考。',
+    meaningEn: 'Above the 200-day SMA = the long-term trend is still up. Below the 50-day SMA = a short-term dip. A rising Channel confirms the pullback is still orderly, not a breakdown — giving you a defined support line to sell your put below.',
+    meaningZh: '股价高于200日均线代表长期趋势仍向上；低于50日均线代表短期回调。上升通道形态确认这次回调走势仍然有序，而非趋势破坏 — 为您提供一条明确的支撑线，可在其下方卖出看跌期权。'
   }
 };
 
 function buildFinvizUrl(key){
-  var p = PATTERNS[key];
-  return 'https://finviz.com/screener.ashx?v=111&f=cap_largeover,sh_avgvol_o500,sh_price_o10,' + p.code + ',ta_sma200_pa,ta_sma50_pb';
+  return 'https://finviz.com/screener.ashx?v=111&f=' + STRATS[key].filters;
 }
 
-function setPattern(key){
-  var p = PATTERNS[key];
-  document.getElementById('pttChannel').classList.toggle('active', key === 'channel');
-  document.getElementById('pttHorizontal').classList.toggle('active', key === 'horizontal2');
+function setStrategy(key){
+  var s = STRATS[key];
+  document.getElementById('stratCondor').classList.toggle('active', key === 'condor');
+  document.getElementById('stratDip').classList.toggle('active', key === 'dip');
   document.getElementById('ctaLink').href = buildFinvizUrl(key);
-  document.getElementById('patternValEn').textContent = p.en;
-  document.getElementById('patternValZh').textContent = p.zh;
-  document.getElementById('patternStepEn').textContent = p.en;
-  document.getElementById('patternStepZh').textContent = p.zh;
-  document.getElementById('patternDescEn').textContent = p.descEn;
-  document.getElementById('patternDescZh').textContent = p.descZh;
+
+  document.getElementById('patternValEn').textContent = s.patternEn;
+  document.getElementById('patternValZh').textContent = s.patternZh;
+  document.getElementById('patternStepEn').textContent = s.patternEn;
+  document.getElementById('patternStepZh').textContent = s.patternZh;
+
+  document.getElementById('smaVal').innerHTML = '<span class="en">' + s.smaEn + '</span><span class="zh">' + s.smaZh + '</span>';
+  document.getElementById('stepSmaEn').textContent = s.smaEn;
+  document.getElementById('stepSmaZh').textContent = s.smaZh;
+  document.getElementById('rowSma').style.display = (key === 'condor') ? 'none' : 'flex';
+  document.getElementById('stepSmaLi').style.display = (key === 'condor') ? 'none' : 'list-item';
+
+  document.getElementById('stratDesc').innerHTML = '<span class="en">' + s.descEn + '</span><span class="zh">' + s.descZh + '</span>';
+  document.getElementById('meaningEn').textContent = s.meaningEn;
+  document.getElementById('meaningZh').textContent = s.meaningZh;
 }
+
+document.addEventListener('DOMContentLoaded', function(){ setStrategy('condor'); });
 
 function shareThisPage(){
   var url=window.location.href;
@@ -169,7 +201,6 @@ function shareThisPage(){
     });
   }
 }
-
 </script>
 <script src="/bilingual.js"></script>
 <script src="/view-counter.js"></script>
