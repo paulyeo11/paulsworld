@@ -145,7 +145,7 @@
 </div>
 
 <div class="note">
-  ✏️ <b>Manage your holdings:</b> enter your shares held &amp; average cost per stock below — it saves automatically in this browser (nothing is uploaded or stored on GitHub). Prices and next earnings dates update live from Yahoo Finance.
+  ✏️ <b>Manage your holdings:</b> pre-filled from your IBKR statement (100 shares each) — edit shares held &amp; average cost anytime, it saves automatically in this browser (nothing is uploaded or stored on GitHub). Prices and next earnings dates update live from Yahoo Finance.
 </div>
 
 <div class="holdings" id="holdingsList">
@@ -167,9 +167,9 @@ const PRICE_API = '/api/td';
 const STORE_KEY = 'paulsworld_holdings_v1';
 
 const HOLDINGS = [
-  { symbol:'POOL', name:'Pool Corp' },
-  { symbol:'FDS',  name:'FactSet Research' },
-  { symbol:'ZTS',  name:'Zoetis' }
+  { symbol:'POOL', name:'Pool Corp', defaultQty:100, defaultCost:278.40 },
+  { symbol:'FDS',  name:'FactSet Research', defaultQty:100, defaultCost:343.24 },
+  { symbol:'ZTS',  name:'Zoetis', defaultQty:100, defaultCost:135.60 }
 ];
 
 let fxRates = { USD:1.35 };
@@ -181,12 +181,12 @@ function loadStore() {
     const saved = raw ? JSON.parse(raw) : {};
     const out = {};
     HOLDINGS.forEach(h => {
-      out[h.symbol] = { qty: saved[h.symbol]?.qty ?? 0, avgCost: saved[h.symbol]?.avgCost ?? 0 };
+      out[h.symbol] = { qty: saved[h.symbol]?.qty ?? h.defaultQty ?? 0, avgCost: saved[h.symbol]?.avgCost ?? h.defaultCost ?? 0 };
     });
     return out;
   } catch(e) {
     const out = {};
-    HOLDINGS.forEach(h => out[h.symbol] = { qty:0, avgCost:0 });
+    HOLDINGS.forEach(h => out[h.symbol] = { qty: h.defaultQty ?? 0, avgCost: h.defaultCost ?? 0 });
     return out;
   }
 }
