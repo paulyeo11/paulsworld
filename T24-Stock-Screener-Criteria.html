@@ -23,6 +23,12 @@
   .cta small { display:block; font-weight:600; font-size:.76rem; opacity:.8; margin-top:3px; }
   .cta-note { text-align:center; font-size:.74rem; color:rgba(255,255,255,.45); margin-bottom:26px; }
 
+  .ptt-wrap { text-align:center; margin-bottom:16px; }
+  .ptt-label { font-size:.78rem; color:rgba(255,255,255,.55); margin-bottom:8px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .ptt-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+  .ptt-btn { background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.3); color:#fff; font-weight:700; padding:8px 18px; border-radius:20px; cursor:pointer; font-size:.82rem; }
+  .ptt-btn.active { background:#f4c869; color:#0e1330; border-color:#f4c869; }
+
   .checklist { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:22px; }
   .checklist h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; margin-bottom:10px; }
   .checklist ul { list-style:none; }
@@ -61,7 +67,18 @@
     ⚠️ <span class="en"><b>Not financial advice.</b> This page is an educational screening rule, not a live stock list or a recommendation. Tap the button below to run it live on Finviz — results change daily with the market.</span><span class="zh"><b>非投资建议。</b>本页仅为教育性筛选规则，并非实时股票清单或投资建议。点击下方按钮即可在Finviz上实时运行 — 结果会随市场每日变化。</span>
   </div>
 
-  <a class="cta" href="https://finviz.com/screener.ashx?v=111&f=cap_largeover,sh_avgvol_o500,sh_price_o10,ta_pattern_channel,ta_sma200_pa,ta_sma50_pb" target="_blank" rel="noopener">
+  <div class="ptt-wrap">
+    <div class="ptt-label"><span class="en">Chart Pattern Filter</span><span class="zh">图表形态筛选</span></div>
+    <div class="ptt-row">
+      <button class="ptt-btn active" id="pttChannel" onclick="setPattern('channel')"><span class="en">Channel</span><span class="zh">通道</span></button>
+      <button class="ptt-btn" id="pttHorizontal" onclick="setPattern('horizontal2')"><span class="en">Horizontal S/R</span><span class="zh">水平支撑/阻力</span></button>
+    </div>
+    <div class="cta-note" style="margin-top:8px;margin-bottom:0;">
+      <span class="en" id="patternDescEn">Channel — price moving in a slanted, orderly band (two roughly parallel trendlines).</span><span class="zh" id="patternDescZh">通道 — 股价在倾斜且有序的区间内运行（两条大致平行的趋势线）。</span>
+    </div>
+  </div>
+
+  <a class="cta" id="ctaLink" href="https://finviz.com/screener.ashx?v=111&f=cap_largeover,sh_avgvol_o500,sh_price_o10,ta_pattern_channel,ta_sma200_pa,ta_sma50_pb" target="_blank" rel="noopener">
     <span class="en">🔎 Run This Screen on Finviz</span><span class="zh">🔎 在Finviz上运行此筛选</span>
     <small><span class="en">Opens live, free results in a new tab</span><span class="zh">在新标签页打开实时免费结果</span></small>
   </a>
@@ -75,7 +92,7 @@
       <li><span class="lbl"><span class="en">Average Volume</span><span class="zh">平均成交量</span></span><span class="val">&gt; 500K</span></li>
       <li><span class="lbl"><span class="en">200-Day SMA</span><span class="zh">200日均线</span></span><span class="val"><span class="en">Price above SMA200</span><span class="zh">股价高于SMA200</span></span></li>
       <li><span class="lbl"><span class="en">50-Day SMA</span><span class="zh">50日均线</span></span><span class="val"><span class="en">Price below SMA50</span><span class="zh">股价低于SMA50</span></span></li>
-      <li><span class="lbl"><span class="en">Chart Pattern</span><span class="zh">图表形态</span></span><span class="val"><span class="en">Channel</span><span class="zh">通道</span></span></li>
+      <li><span class="lbl"><span class="en">Chart Pattern</span><span class="zh">图表形态</span></span><span class="val" id="patternVal"><span class="en" id="patternValEn">Channel</span><span class="zh" id="patternValZh">通道</span></span></li>
     </ul>
   </div>
 
@@ -95,7 +112,7 @@
       <li><b><span class="en">Price</span><span class="zh">股价</span></b>: <span class="en">Over $10</span><span class="zh">超过10美元</span></li>
       <li><b><span class="en">200-Day Simple Moving Average</span><span class="zh">200日简单移动均线</span></b>: <span class="en">Price above SMA200</span><span class="zh">股价高于SMA200</span></li>
       <li><b><span class="en">50-Day Simple Moving Average</span><span class="zh">50日简单移动均线</span></b>: <span class="en">Price below SMA50</span><span class="zh">股价低于SMA50</span></li>
-      <li><b><span class="en">Pattern</span><span class="zh">形态</span></b>: <span class="en">Channel</span><span class="zh">通道</span></li>
+      <li><b><span class="en">Pattern</span><span class="zh">形态</span></b>: <span class="en" id="patternStepEn">Channel</span><span class="zh" id="patternStepZh">通道</span></li>
     </ol>
   </div>
 
@@ -106,6 +123,39 @@
 </div>
 
 <script>
+var PATTERNS = {
+  channel: {
+    code: 'ta_pattern_channel',
+    en: 'Channel', zh: '通道',
+    descEn: 'Channel — price moving in a slanted, orderly band (two roughly parallel trendlines).',
+    descZh: '通道 — 股价在倾斜且有序的区间内运行（两条大致平行的趋势线）。'
+  },
+  horizontal2: {
+    code: 'ta_pattern_horizontal2',
+    en: 'Horizontal S/R (Strong)', zh: '水平支撑/阻力（强）',
+    descEn: 'Horizontal S/R — price bouncing between a flat support and resistance level, no clear slant.',
+    descZh: '水平支撑/阻力 — 股价在水平的支撑位与阻力位之间来回震荡，没有明显倾斜趋势。'
+  }
+};
+
+function buildFinvizUrl(key){
+  var p = PATTERNS[key];
+  return 'https://finviz.com/screener.ashx?v=111&f=cap_largeover,sh_avgvol_o500,sh_price_o10,' + p.code + ',ta_sma200_pa,ta_sma50_pb';
+}
+
+function setPattern(key){
+  var p = PATTERNS[key];
+  document.getElementById('pttChannel').classList.toggle('active', key === 'channel');
+  document.getElementById('pttHorizontal').classList.toggle('active', key === 'horizontal2');
+  document.getElementById('ctaLink').href = buildFinvizUrl(key);
+  document.getElementById('patternValEn').textContent = p.en;
+  document.getElementById('patternValZh').textContent = p.zh;
+  document.getElementById('patternStepEn').textContent = p.en;
+  document.getElementById('patternStepZh').textContent = p.zh;
+  document.getElementById('patternDescEn').textContent = p.descEn;
+  document.getElementById('patternDescZh').textContent = p.descZh;
+}
+
 function shareThisPage(){
   var url=window.location.href;
   var title=document.title;
