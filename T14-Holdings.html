@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T14: My Holdings — POOL, FDS &amp; ZTS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0c10;--surface:#111318;--border:#1e2230;--accent:#f4813f;--text:#e8eaf0;--muted:#6b7280;--card:#13161f;--red:#ef4444;--green:#10b981;--gold:#f4813f;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:0 0 80px;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(244,129,63,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(244,129,63,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  header{position:relative;z-index:1;padding:28px 24px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(244,129,63,0.06) 0%,transparent 100%);}
+  .header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .title-block{display:flex;align-items:center;gap:12px;}
+  .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);}
+  .logo span{color:var(--accent);}
+  .subtitle{font-size:12px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;}
+  .home-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(244,129,63,0.12);border:1px solid rgba(244,129,63,0.3);color:var(--accent);text-decoration:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;}
+  .refresh-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;}
+  .badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;}
+  .badge{font-family:'DM Mono',monospace;font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);}
+  .badge.ok{color:var(--green);border-color:rgba(16,185,129,0.3);}
+  .badge.loading{color:#f59e0b;border-color:rgba(245,158,11,0.3);}
+  .badge.err{color:var(--red);border-color:rgba(239,68,68,0.3);}
+  .summary-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:20px 24px;}
+  .sum-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .sum-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;font-family:'DM Mono',monospace;}
+  .sum-value{font-size:20px;font-weight:700;font-family:'Syne',sans-serif;}
+  .sum-value.green{color:var(--green);}.sum-value.red{color:var(--red);}
+  .sum-sub{font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;}
+  .note{position:relative;z-index:1;margin:0 24px 18px;background:rgba(244,129,63,0.06);border:1px solid rgba(244,129,63,0.2);border-radius:10px;padding:12px 16px;font-size:12.5px;color:var(--muted);line-height:1.6;}
+  .note b{color:var(--text);}
+  .holdings{position:relative;z-index:1;padding:0 24px;display:flex;flex-direction:column;gap:12px;}
+  .hcard{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .hcard.winner{border-left:3px solid var(--green);}
+  .hcard.loser{border-left:3px solid var(--red);}
+  .hcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .h-ticker{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
+  .h-name{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;}
+  .h-price{text-align:right;}
+  .h-price-live{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--gold);}
+  .h-price-chg{font-family:'DM Mono',monospace;font-size:12px;margin-top:2px;}
+  .h-price-chg.up{color:var(--green);}.h-price-chg.down{color:var(--red);}
+  .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:middle;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .h-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .field label{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'DM Mono',monospace;margin-bottom:5px;}
+  .field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;}
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .h-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding-top:12px;border-top:1px solid var(--border);}
+  .stat{}
+  .stat-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'DM Mono',monospace;margin-bottom:3px;}
+  .stat-value{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;}
+  .stat-value.green{color:var(--green);}.stat-value.red{color:var(--red);}
+  .save-flash{font-size:11px;color:var(--green);font-family:'DM Mono',monospace;margin-top:8px;height:14px;opacity:0;transition:opacity .3s;}
+  .save-flash.show{opacity:1;}
+  .timestamp{position:relative;z-index:1;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);padding:20px 24px 0;}
+</style>
+</head>
+<body>
+<!-- PIN LOCK SCREEN -->
+<div id="pin-overlay" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0d1117,#161b22);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div style="font-size:2em;">🔒</div>
+  <div style="font-size:1.15em;font-weight:700;color:#e6edf3;font-family:sans-serif;letter-spacing:0.05em;">Holdings Manager</div>
+  <div style="font-size:0.85em;color:#8b949e;font-family:monospace;">Enter PIN to access</div>
+  <div style="display:flex;gap:12px;margin:8px 0;" id="pin-dots">
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+  </div>
+  <div id="pin-error" style="color:#f87171;font-size:0.85em;font-family:monospace;min-height:20px;text-align:center;"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px;">
+    <button class="pk" onclick="pinKey('1')">1</button>
+    <button class="pk" onclick="pinKey('2')">2</button>
+    <button class="pk" onclick="pinKey('3')">3</button>
+    <button class="pk" onclick="pinKey('4')">4</button>
+    <button class="pk" onclick="pinKey('5')">5</button>
+    <button class="pk" onclick="pinKey('6')">6</button>
+    <button class="pk" onclick="pinKey('7')">7</button>
+    <button class="pk" onclick="pinKey('8')">8</button>
+    <button class="pk" onclick="pinKey('9')">9</button>
+    <button class="pk" onclick="pinKey('clr')" style="color:#f87171;font-size:1.1em;">⌫</button>
+    <button class="pk" onclick="pinKey('0')">0</button>
+    <button class="pk" onclick="pinKey('ok')" style="color:#10b981;font-size:0.9em;font-weight:800;">OK</button>
+  </div>
+</div>
+<style>
+  .pd{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);transition:background 0.15s;}
+  .pd.filled{background:#f0a500;border-color:#f0a500;}
+  .pk{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e6edf3;font-size:1.35em;font-weight:700;cursor:pointer;transition:background 0.15s;font-family:sans-serif;}
+  .pk:active{background:rgba(240,165,0,0.25);}
+</style>
+<script>
+(function(){
+  var C='121062',SK='t14_auth_v1';
+  if(localStorage.getItem(SK)==='1'){document.getElementById('pin-overlay').style.display='none';return;}
+  var entered='';
+  window.pinKey=function(k){
+    var err=document.getElementById('pin-error');
+    err.textContent='';
+    if(k==='clr'){entered=entered.slice(0,-1);}
+    else if(k==='ok'){check();}
+    else{if(entered.length<6)entered+=k;if(entered.length===6)check();}
+    document.querySelectorAll('.pd').forEach(function(d,i){d.classList.toggle('filled',i<entered.length);});
+  };
+  function check(){
+    if(entered===C){localStorage.setItem(SK,'1');document.getElementById('pin-overlay').style.display='none';}
+    else{document.getElementById('pin-error').textContent='Incorrect PIN. Try again.';entered='';document.querySelectorAll('.pd').forEach(function(d){d.classList.remove('filled');});}
+  }
+  document.addEventListener('keydown',function(e){
+    if(document.getElementById('pin-overlay').style.display==='none')return;
+    if(e.key>='0'&&e.key<='9')pinKey(e.key);
+    else if(e.key==='Backspace')pinKey('clr');
+    else if(e.key==='Enter')pinKey('ok');
+  });
+})();
+</script>
+
+<header>
+  <div class="header-top">
+    <div class="title-block">
+      <a href="/tools.html" class="home-btn">🏠 Home</a>
+      <div>
+        <div class="logo">📊 T14: <span>My Holdings</span></div>
+        <div class="subtitle">T14 · POOL · FDS · ZTS · Live prices · SGD</div>
+      </div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">🔄 Refresh</button>
+  </div>
+  <div class="badges">
+    <span class="badge loading" id="priceStatus">⟳ Prices…</span>
+    <span class="badge" id="fxBadge">FX loading…</span>
+    <span class="badge" id="fetchTime">—</span>
+  </div>
+</header>
+
+<div class="summary-grid">
+  <div class="sum-card"><div class="sum-label">Total Value</div><div class="sum-value" id="sumValue">—</div><div class="sum-sub">SGD · live prices</div></div>
+  <div class="sum-card"><div class="sum-label">Total Cost</div><div class="sum-value" id="sumInvested">—</div><div class="sum-sub">SGD</div></div>
+  <div class="sum-card"><div class="sum-label">Total P&amp;L</div><div class="sum-value" id="sumPnl">—</div><div class="sum-sub" id="sumPnlPct"></div></div>
+</div>
+
+<div class="note">
+  ✏️ <b>Manage your holdings:</b> enter your shares held &amp; average cost per stock below — it saves automatically in this browser (nothing is uploaded or stored on GitHub). Prices update live from Yahoo Finance.
+</div>
+
+<div class="holdings" id="holdingsList">
+  <div class="hcard">Loading…</div>
+</div>
+<div class="timestamp" id="timestamp"></div>
+
+<div style="text-align:center;margin-top:40px;position:relative;z-index:1">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer style="position:relative;z-index:1;text-align:center;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;margin-top:20px;line-height:1.8;padding:0 24px;">
+  Paul's World · <a href="https://paulsworld.vercel.app/" style="color:var(--accent);text-decoration:none;">paulsworld.vercel.app</a><br>
+  Prices via Yahoo Finance (~15 min delay) · Holdings data stored locally in your browser only
+</footer>
+
+<script>
+const PRICE_API = '/api/td';
+const STORE_KEY = 'paulsworld_holdings_v1';
+
+const HOLDINGS = [
+  { symbol:'POOL', name:'Pool Corp' },
+  { symbol:'FDS',  name:'FactSet Research' },
+  { symbol:'ZTS',  name:'Zoetis' }
+];
+
+let fxRates = { USD:1.35 };
+let livePrices = {};
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    const saved = raw ? JSON.parse(raw) : {};
+    const out = {};
+    HOLDINGS.forEach(h => {
+      out[h.symbol] = { qty: saved[h.symbol]?.qty ?? 0, avgCost: saved[h.symbol]?.avgCost ?? 0 };
+    });
+    return out;
+  } catch(e) {
+    const out = {};
+    HOLDINGS.forEach(h => out[h.symbol] = { qty:0, avgCost:0 });
+    return out;
+  }
+}
+
+function saveStore(store) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+
+let store = loadStore();
+
+function setBadge(id, cls, html) {
+  const el = document.getElementById(id);
+  el.className = 'badge ' + cls;
+  el.innerHTML = html;
+}
+
+function updateField(symbol, field, value) {
+  const n = parseFloat(value);
+  store[symbol][field] = isNaN(n) ? 0 : n;
+  saveStore(store);
+  const flash = document.getElementById('flash-' + symbol);
+  if (flash) {
+    flash.textContent = '✓ Saved';
+    flash.classList.add('show');
+    clearTimeout(flash._t);
+    flash._t = setTimeout(() => flash.classList.remove('show'), 1400);
+  }
+  render();
+}
+
+async function loadAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.textContent = '⟳ Loading…'; btn.style.pointerEvents = 'none';
+  setBadge('priceStatus', 'loading', '⟳ Loading prices…');
+
+  const syms = [...HOLDINGS.map(h => h.symbol), 'USDSGD=X'];
+  let loaded = 0;
+
+  try {
+    const r = await fetch(PRICE_API + '?symbols=' + encodeURIComponent(syms.join(',')));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const map = await r.json();
+
+    if (map['USDSGD=X']?.price) fxRates.USD = parseFloat(map['USDSGD=X'].price);
+
+    HOLDINGS.forEach(h => {
+      const q = map[h.symbol];
+      if (q && !q.error && q.price != null) {
+        livePrices[h.symbol] = { price: parseFloat(q.price), prevClose: q.prevClose != null ? parseFloat(q.prevClose) : null };
+        if (q.name) h.name = q.name;
+        loaded++;
+      }
+    });
+
+    setBadge('priceStatus', loaded > 0 ? 'ok' : 'err',
+      loaded > 0 ? '<span class="live-dot"></span>' + loaded + '/' + HOLDINGS.length + ' live' : '⚠ No prices');
+  } catch(e) {
+    setBadge('priceStatus', 'err', '⚠ ' + e.message);
+  }
+
+  document.getElementById('fxBadge').textContent = 'USD/SGD: ' + fxRates.USD.toFixed(4);
+  document.getElementById('fetchTime').textContent = '🕐 ' + new Date().toLocaleTimeString('en-SG', { hour:'2-digit', minute:'2-digit' });
+
+  render();
+  btn.textContent = '🔄 Refresh'; btn.style.pointerEvents = '';
+}
+
+const fmtSGD = n => 'S$' + n.toLocaleString('en-SG', { minimumFractionDigits:0, maximumFractionDigits:0 });
+const fmtUSD = n => 'US$' + n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+function render() {
+  const list = document.getElementById('holdingsList');
+  const fx = fxRates.USD || 1;
+
+  let totalValueSGD = 0, totalCostSGD = 0;
+
+  list.innerHTML = HOLDINGS.map(h => {
+    const s = store[h.symbol];
+    const qty = s.qty || 0;
+    const avgCost = s.avgCost || 0;
+    const lp = livePrices[h.symbol];
+    const price = lp ? lp.price : null;
+
+    const costUSD = qty * avgCost;
+    const valueUSD = price != null ? qty * price : null;
+    const valueSGD = valueUSD != null ? valueUSD * fx : null;
+    const costSGD = costUSD * fx;
+
+    if (valueSGD != null) totalValueSGD += valueSGD;
+    totalCostSGD += costSGD;
+
+    const pnlUSD = (valueUSD != null && costUSD > 0) ? valueUSD - costUSD : null;
+    const pnlPct = (pnlUSD != null && costUSD > 0) ? (pnlUSD / costUSD) * 100 : null;
+    const hasPnl = pnlPct !== null;
+    const cardCls = hasPnl ? (pnlPct >= 0 ? 'winner' : 'loser') : '';
+
+    let chgHtml = '';
+    if (price != null && lp.prevClose) {
+      const chg = ((price - lp.prevClose) / lp.prevClose) * 100;
+      chgHtml = `<div class="h-price-chg ${chg>=0?'up':'down'}">${chg>=0?'▲':'▼'} ${chg>=0?'+':''}${chg.toFixed(2)}% today</div>`;
+    }
+
+    return `<div class="hcard ${cardCls}">
+      <div class="hcard-top">
+        <div>
+          <div class="h-ticker">${h.symbol}</div>
+          <div class="h-name">${h.name}</div>
+        </div>
+        <div class="h-price">
+          <div class="h-price-live">${price != null ? (livePrices[h.symbol] ? '<span class="live-dot"></span>' : '') + fmtUSD(price) : '—'}</div>
+          ${chgHtml}
+        </div>
+      </div>
+      <div class="h-inputs">
+        <div class="field">
+          <label>Shares Held</label>
+          <input type="number" min="0" step="1" value="${qty}" onchange="updateField('${h.symbol}','qty',this.value)">
+        </div>
+        <div class="field">
+          <label>Avg Cost (US$)</label>
+          <input type="number" min="0" step="0.01" value="${avgCost}" onchange="updateField('${h.symbol}','avgCost',this.value)">
+        </div>
+      </div>
+      <div class="h-stats">
+        <div class="stat"><div class="stat-label">Market Value</div><div class="stat-value">${valueSGD != null ? fmtSGD(valueSGD) : '—'}</div></div>
+        <div class="stat"><div class="stat-label">Cost Basis</div><div class="stat-value">${costSGD > 0 ? fmtSGD(costSGD) : '—'}</div></div>
+        <div class="stat"><div class="stat-label">P&amp;L (S$)</div><div class="stat-value ${hasPnl?(pnlPct>=0?'green':'red'):''}">${pnlUSD != null ? (pnlUSD>=0?'+':'')+fmtSGD(pnlUSD*fx) : '—'}</div></div>
+        <div class="stat"><div class="stat-label">P&amp;L (%)</div><div class="stat-value ${hasPnl?(pnlPct>=0?'green':'red'):''}">${hasPnl ? (pnlPct>=0?'+':'')+pnlPct.toFixed(2)+'%' : '—'}</div></div>
+      </div>
+      <div class="save-flash" id="flash-${h.symbol}"></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('sumValue').textContent = totalValueSGD > 0 ? fmtSGD(totalValueSGD) : '—';
+  document.getElementById('sumInvested').textContent = totalCostSGD > 0 ? fmtSGD(totalCostSGD) : '—';
+  const pnlEl = document.getElementById('sumPnl');
+  const pnlPctEl = document.getElementById('sumPnlPct');
+  if (totalCostSGD > 0) {
+    const totalPnl = totalValueSGD - totalCostSGD;
+    const totalPnlPct = (totalPnl / totalCostSGD) * 100;
+    pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtSGD(totalPnl);
+    pnlEl.className = 'sum-value ' + (totalPnl >= 0 ? 'green' : 'red');
+    pnlPctEl.textContent = (totalPnlPct >= 0 ? '+' : '') + totalPnlPct.toFixed(2) + '%';
+  } else {
+    pnlEl.textContent = '—';
+    pnlEl.className = 'sum-value';
+    pnlPctEl.textContent = '';
+  }
+
+  const now = new Date();
+  document.getElementById('timestamp').textContent = 'Updated: ' +
+    now.toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' }) + ' ' +
+    now.toLocaleTimeString('en-SG', { hour:'2-digit', minute:'2-digit' });
+}
+
+render();
+loadAll();
+</script>
+</body>
+</html>
