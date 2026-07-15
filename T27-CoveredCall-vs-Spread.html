@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T27: Covered Call vs Call Spread — and the Liquidity Lesson</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:580px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .lesson { background:linear-gradient(135deg,#3b1a1a,#5c1d1d); border:1px solid rgba(239,68,68,.45); border-radius:14px; padding:18px; margin-bottom:22px; }
+  .lesson h2 { font-size:.95rem; font-weight:800; color:#fca5a5; text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px; }
+  .lesson p { font-size:.86rem; color:rgba(255,255,255,.85); line-height:1.6; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card .badge { display:inline-block; font-size:.68rem; font-weight:800; padding:3px 10px; border-radius:20px; margin-bottom:10px; text-transform:uppercase; letter-spacing:.03em; }
+  .badge.safe { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+  .badge.def { background:rgba(79,70,229,.2); color:#c4b5fd; border:1px solid rgba(79,70,229,.45); }
+
+  table.cmp { width:100%; border-collapse:collapse; margin:6px 0; }
+  table.cmp th, table.cmp td { padding:9px 8px; font-size:.8rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; vertical-align:top; }
+  table.cmp th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; }
+  table.cmp td.k { color:#f4c869; font-weight:700; white-space:nowrap; }
+  table.cmp td.bad { color:#fca5a5; }
+  table.cmp td.good { color:#86efac; }
+
+  .setup-nums { display:grid; grid-template-columns:1fr; gap:8px; margin:10px 0 14px; }
+  .setup-nums .row { display:flex; gap:10px; align-items:flex-start; background:#0e1330; border:1px solid #2a3158; border-radius:10px; padding:9px 12px; }
+  .setup-nums .row .lbl { flex:1; font-size:.82rem; color:rgba(255,255,255,.82); line-height:1.45; }
+  .setup-nums .row .amt { font-weight:800; font-size:.85rem; white-space:nowrap; }
+  .amt.green { color:#6ee7b7; }
+  .amt.red { color:#fca5a5; }
+
+  .takeaway ul { list-style:none; }
+  .takeaway li { font-size:.85rem; color:rgba(255,255,255,.82); padding:8px 0; line-height:1.55; border-bottom:1px solid rgba(255,255,255,.06); }
+  .takeaway li:last-child { border-bottom:none; }
+  .takeaway li b { color:#6ee7b7; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+
+  @media (max-width:480px) {
+    table.cmp { font-size:.74rem; }
+  }
+</style>
+</head>
+<body>
+
+<a href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">📉📈</div>
+  <h1><span class="en">T27: Covered Call vs Call Spread — and the Liquidity Lesson</span><span class="zh">T27：备兑认购 vs 认购价差——以及流动性这一课</span></h1>
+  <p><span class="en">A real side-by-side: an untradeable naked call on a thin stock (FDS) vs two sensible ways to sell the same premium on a liquid one (SPY). The single biggest lesson from three screenshots.</span><span class="zh">真实的对比：在流动性差的股票（FDS）上一张无法成交的裸认购，对比在流动性好的股票（SPY）上卖出同样权利金的两种合理做法。三张截图带来的最重要一课。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> Educational notes written for Paul's own learning. Options carry real risk of loss. Prices below are from live broker screenshots on 15 Jul 2026 and will move — always re-check strikes, bid/ask, IV and volume on your own platform before trading.</span><span class="zh"><b>非投资建议。</b>这是为Paul学习而写的教育性笔记。期权存在真实亏损风险。以下价格来自2026年7月15日的券商实时截图，会随时变动——下单前请务必在你自己的平台重新核对行使价、买卖价、IV与成交量。</span>
+  </div>
+
+  <!-- THE LESSON -->
+  <div class="lesson">
+    <h2><span class="en">🔑 The One Lesson: Liquidity Beats Everything</span><span class="zh">🔑 最重要的一课：流动性胜过一切</span></h2>
+    <p><span class="en">The original idea was to <b>sell 1 FDS 310 Call</b> for a "$5.10 credit." It looked fine — but the option was <b>untradeable</b>. The bid/ask was $0.10 vs $5.10 — a $5 gap — and only 44 contracts traded all day. That $5 spread is a loss you take <i>before the trade even moves</i>. The exact same strategy on SPY, where the spread is 4 cents and millions trade daily, actually works. The strike didn't sink the FDS trade — the <b>illiquidity</b> did.</span><span class="zh">最初的想法是<b>卖出1张FDS 310认购</b>，收取"5.10美元权利金"。看起来没问题——但这张期权<b>根本无法成交</b>。买价/卖价是0.10对5.10——相差5美元——而且全天只成交了44张。这5美元的价差是你<i>在价格还没变动之前</i>就已承受的亏损。同样的策略放到SPY上——价差只有4美分、每天成交数百万张——就真的可行。让FDS这笔交易失败的不是行使价，而是<b>流动性太差</b>。</span></p>
+  </div>
+
+  <!-- LIQUIDITY TABLE -->
+  <div class="card">
+    <h2><span class="en">Side by Side: FDS vs SPY</span><span class="zh">并排对比：FDS vs SPY</span></h2>
+    <table class="cmp">
+      <tr>
+        <th><span class="en">Measure</span><span class="zh">指标</span></th>
+        <th><span class="en">FDS 310 Call</span><span class="zh">FDS 310 认购</span></th>
+        <th><span class="en">SPY 755 Call</span><span class="zh">SPY 755 认购</span></th>
+      </tr>
+      <tr>
+        <td class="k"><span class="en">Bid / Ask</span><span class="zh">买价 / 卖价</span></td>
+        <td class="bad">0.10 / 5.10<br><span class="en">($5.00 wide)</span><span class="zh">（相差5.00美元）</span></td>
+        <td class="good">15.71 / 15.75<br><span class="en">($0.04 wide)</span><span class="zh">（相差0.04美元）</span></td>
+      </tr>
+      <tr>
+        <td class="k"><span class="en">Daily volume</span><span class="zh">每日成交量</span></td>
+        <td class="bad">44 <span class="en">contracts</span><span class="zh">张</span></td>
+        <td class="good">1.26M <span class="en">contracts</span><span class="zh">张</span></td>
+      </tr>
+      <tr>
+        <td class="k"><span class="en">Can you exit fast?</span><span class="zh">能否快速离场？</span></td>
+        <td class="bad"><span class="en">No</span><span class="zh">不能</span></td>
+        <td class="good"><span class="en">Instantly</span><span class="zh">瞬间成交</span></td>
+      </tr>
+      <tr>
+        <td class="k"><span class="en">Fill quality</span><span class="zh">成交质量</span></td>
+        <td class="bad"><span class="en">Terrible — you lose the spread</span><span class="zh">很差——白白损失价差</span></td>
+        <td class="good"><span class="en">Near fair value</span><span class="zh">接近公允价值</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- OPTION 1: COVERED CALL -->
+  <div class="card">
+    <span class="badge safe"><span class="en">No unlimited risk</span><span class="zh">无限风险已消除</span></span>
+    <h2><span class="en">Setup 1 · Covered Call (SPY)</span><span class="zh">方案一 · 备兑认购（SPY）</span></h2>
+    <p><span class="en">You <b>own the stock</b> and sell a call against it for income. Because you hold the shares, the call is "covered" — the scary unlimited-loss risk of a naked call is gone. SPY = $753.48, expiry Aug 28 (44 days).</span><span class="zh">你<b>持有股票</b>，并卖出认购来赚取收入。因为你手上有股票，这张认购是"备兑"的——裸认购那种可怕的无限亏损风险就消失了。SPY = 753.48美元，到期日8月28日（44天）。</span></p>
+    <div class="setup-nums">
+      <div class="row"><div class="lbl"><span class="en">Buy 100 shares SPY</span><span class="zh">买入100股SPY</span></div><div class="amt red">≈ −$75,350</div></div>
+      <div class="row"><div class="lbl"><span class="en">Sell the 755 Call</span><span class="zh">卖出755认购</span></div><div class="amt green">≈ +$1,570</div></div>
+    </div>
+    <table class="cmp">
+      <tr>
+        <th><span class="en">At expiry</span><span class="zh">到期时</span></th>
+        <th><span class="en">Result</span><span class="zh">结果</span></th>
+      </tr>
+      <tr>
+        <td class="k">SPY ≥ $755</td>
+        <td class="good"><span class="en">Shares called away. Profit = ($755−$753.48)×100 + $1,570 = <b>~$1,722 (~2.3% in 44 days)</b></span><span class="zh">股票被行权卖出。利润 = ($755−$753.48)×100 + $1,570 = <b>约$1,722（44天约2.3%）</b></span></td>
+      </tr>
+      <tr>
+        <td class="k">SPY &lt; $755</td>
+        <td><span class="en">Keep the shares + the $1,570. New break-even drops to <b>~$737.80</b> (~2% cushion).</span><span class="zh">保留股票 + 收到的$1,570。新的保本点降到<b>约$737.80</b>（约2%缓冲）。</span></td>
+      </tr>
+    </table>
+    <p><span class="en"><b>Catch:</b> ties up ~$75k of capital — SPY is a pricey ticket at 100 shares.</span><span class="zh"><b>缺点：</b>占用约7.5万美元资金——100股SPY是一张很贵的"门票"。</span></p>
+  </div>
+
+  <!-- OPTION 2: CALL SPREAD -->
+  <div class="card">
+    <span class="badge def"><span class="en">Defined risk · small capital</span><span class="zh">风险明确 · 小资金</span></span>
+    <h2><span class="en">Setup 2 · Bear Call Spread (SPY)</span><span class="zh">方案二 · 熊市认购价差（SPY）</span></h2>
+    <p><span class="en">The same "SPY won't rally" bet, but the loss is <b>capped</b> and you don't need to own the stock. You sell one call and buy a higher one as insurance.</span><span class="zh">同样是"SPY不会大涨"的押注，但亏损被<b>封顶</b>，而且不需要持有股票。你卖出一张认购，同时买入一张更高行使价的认购作为保险。</span></p>
+    <div class="setup-nums">
+      <div class="row"><div class="lbl"><span class="en">Sell the 754 Call</span><span class="zh">卖出754认购</span></div><div class="amt green">≈ +$16.28</div></div>
+      <div class="row"><div class="lbl"><span class="en">Buy the 757 Call (insurance)</span><span class="zh">买入757认购（保险）</span></div><div class="amt red">≈ −$14.53</div></div>
+      <div class="row"><div class="lbl"><span class="en">Net credit collected</span><span class="zh">净收权利金</span></div><div class="amt green">≈ +$175</div></div>
+    </div>
+    <table class="cmp">
+      <tr>
+        <th><span class="en">At expiry</span><span class="zh">到期时</span></th>
+        <th><span class="en">Result</span><span class="zh">结果</span></th>
+      </tr>
+      <tr>
+        <td class="k">SPY &lt; $754</td>
+        <td class="good"><span class="en">Keep the full <b>$175</b> (max profit)</span><span class="zh">保留全部<b>$175</b>（最大利润）</span></td>
+      </tr>
+      <tr>
+        <td class="k">SPY &gt; $757</td>
+        <td class="bad"><span class="en">Max loss = $3 width − $1.75 credit = <b>$125</b></span><span class="zh">最大亏损 = $3价差 − $1.75权利金 = <b>$125</b></span></td>
+      </tr>
+    </table>
+    <p><span class="en">Risk <b>$125 to make $175</b> — a healthy ratio, with only ~$125 at risk. This is what a sane premium-selling trade looks like, and it's exactly what FDS's junk spread could never deliver.</span><span class="zh">用<b>$125博取$175</b>——比例健康，且只有约$125面临风险。这就是一笔理性的卖权交易该有的样子——也正是FDS那种糟糕价差永远给不了的。</span></p>
+  </div>
+
+  <!-- TAKEAWAY -->
+  <div class="card takeaway">
+    <h2><span class="en">✅ Takeaways</span><span class="zh">✅ 总结要点</span></h2>
+    <ul>
+      <li><b><span class="en">Check liquidity first.</span><span class="zh">先看流动性。</span></b> <span class="en">Tight bid/ask (pennies) + high volume before you even look at the strike.</span><span class="zh">在看行使价之前，先确认买卖价差窄（几美分）且成交量高。</span></li>
+      <li><b><span class="en">Never sell a naked call.</span><span class="zh">绝不卖裸认购。</span></b> <span class="en">Unlimited upside risk for a small, uncertain premium is a bad trade.</span><span class="zh">用无限的上行风险去换一点点不确定的权利金，是糟糕的交易。</span></li>
+      <li><b><span class="en">Covered call</span><span class="zh">备兑认购</span></b> <span class="en">= own the stock first; income + cushion, no unlimited risk, but big capital.</span><span class="zh">= 先持有股票；有收入+缓冲，无无限风险，但占用资金大。</span></li>
+      <li><b><span class="en">Call spread</span><span class="zh">认购价差</span></b> <span class="en">= capped loss, tiny capital; the efficient way to sell premium.</span><span class="zh">= 亏损封顶、占用资金小；卖权利金最有效率的方式。</span></li>
+      <li><b><span class="en">Trade liquid names</span><span class="zh">交易流动性好的标的</span></b> <span class="en">— SPY, QQQ, AAPL, NVDA — so the math works in your favour, not the market-maker's.</span><span class="zh">——SPY、QQQ、AAPL、NVDA——让数学站在你这边，而不是做市商那边。</span></li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    <span class="en">Educational guide · Last reviewed <span id="lastReviewedEn">15 Jul 2026</span></span><span class="zh">教育性指南 · 最后更新于<span id="lastReviewedZh">2026年7月15日</span></span><br>
+    <a href="T23-IronCondor-Guide.html">📘 <span class="en">T23: Iron Condor Guide</span><span class="zh">T23：铁鹰策略指南</span></a><br>
+    <a href="options.html">📈 <span class="en">Option Paul — Options Trading Hub</span><span class="zh">Option Paul — 期权交易中心</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+</body>
+</html>
