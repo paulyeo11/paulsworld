@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 · Shakotan Coastal Drive — Cape Kamui (15 Jul 2026)</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55); text-decoration: none;
+  font-size: 0.78em; font-weight: 600;
+  padding: 6px 12px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 30px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #06243a);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.gold { color: #38bdf8; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.35);
+  color: #38bdf8; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #7dd3fc; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #38bdf8;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+.log-sub { font-size: 0.9em; color: #c9d1d9; }
+
+/* PHOTO JOURNAL */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-media { position: relative; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-date { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.6); color: #7dd3fc; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 6px; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-empty-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* GPS / warning notes */
+.gps-note { font-size: 0.78em; color: #8b949e; margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #38bdf8; line-height: 1.6; }
+.warn-note { font-size: 0.8em; color: #fbbf24; margin-top: 8px; padding: 10px 12px; background: rgba(251,191,36,0.08); border-radius: 8px; border-left: 3px solid #fbbf24; line-height: 1.6; }
+
+/* LIGHTBOX */
+.lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 10000; align-items: center; justify-content: center; }
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.lightbox-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0) 100%); color: #eee; font-size: 0.88rem; text-align: center; font-style: italic; padding: 60px 16px 22px; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; z-index: 2; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note { text-align: center; padding: 18px 16px; font-size: 0.72em; color: #484f58; font-family: monospace; }
+
+/* MAP */
+.map-fullscreen-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4);
+  color: #38bdf8; font-size: 0.82em; font-weight: 700;
+  padding: 10px 16px; border-radius: 18px; cursor: pointer;
+  margin: 4px 0 10px; width: 100%;
+}
+.map-wrap { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#map { width: 100%; height: 46vh; min-height: 320px; }
+#map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border-radius: 0 !important;
+}
+.map-wrap.map-fullscreen-wrap { margin: 0; border-radius: 0; border: none; }
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
+}
+.controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-top: none;
+}
+#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+#timeLabel { font-weight: 700; color: #38bdf8; }
+.play-btn {
+  background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4);
+  color: #38bdf8; font-size: 0.85em; font-weight: 700; padding: 7px 16px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap;
+}
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 0 0; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #38bdf8; }
+.speed-control #speedVal { font-size: 0.8em; color: #38bdf8; font-weight: 700; width: 34px; text-align: right; }
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
+}
+.legend {
+  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+.popup-card { font-family: -apple-system, system-ui, sans-serif; }
+.popup-card img { width: 190px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
+.badge { display:inline-flex; align-items:center; gap:4px; font-size:0.72em; font-weight:700; padding:4px 10px; border-radius:14px; margin:0 6px 8px 0; }
+</style>
+<script src="/bilingual.js"></script>
+<style>
+.ja{display:none!important}
+body.lang-ja .ja{display:inline!important}
+body.lang-ja .zh{display:none!important}
+body.lang-ja .en{display:none!important}
+.ja-block{display:none!important}
+body.lang-ja .ja-block{display:block!important}
+body.lang-ja .en-block{display:none!important}
+</style>
+<script>
+(function(){
+  function setLang3(lang){
+    document.body.classList.remove('lang-zh','lang-ja');
+    if(lang==='zh') document.body.classList.add('lang-zh');
+    if(lang==='ja') document.body.classList.add('lang-ja');
+    document.querySelectorAll('.pw-lang-btn').forEach(function(btn,i){
+      btn.classList.toggle('active',(lang==='en'&&i===0)||(lang==='zh'&&i===1)||(lang==='ja'&&i===2));
+    });
+    try{ localStorage.setItem('pw-lang', lang); }catch(e){}
+  }
+  window.setLang = setLang3;
+  function addJaButton(){
+    var wrap = document.querySelector('.pw-lang-toggle');
+    if(!wrap || wrap.querySelector('.pw-lang-ja-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'pw-lang-btn pw-lang-ja-btn';
+    btn.innerHTML = '&#x1F1EF;&#x1F1F5; 日本語';
+    btn.onclick = function(){ setLang3('ja'); };
+    wrap.appendChild(btn);
+    var saved;
+    try{ saved = localStorage.getItem('pw-lang'); }catch(e){}
+    if(saved === 'ja') setLang3('ja');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', addJaButton);
+  } else {
+    addJaButton();
+  }
+})();
+</script>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · <span class="gold">Shakotan Coastal Drive — Cape Kamui</span></h1>
+  <div class="header-sub"><span class="en">A free day by the sea — the "Shakotan Blue" coast loop, ending at the Cape Kamui hike · Wed, 15 Jul 2026</span><span class="zh">海边的悠闲一日 — "积丹蓝"海岸环线，以神威岬健行收尾 · 2026年7月15日（周三）</span><span class="ja">海辺の自由な一日 — 「積丹ブルー」の海岸周遊、締めくくりは神威岬のハイキング · 2026年7月15日（水）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span><span class="ja">MT10 旅行ハブ</span></a>
+    <a href="MT10-niseko-day9.html" class="day-chip">📔 <span class="en">Niseko Day 9</span><span class="zh">二世谷第九天</span><span class="ja">ニセコ9日目</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span><span class="ja">シェア</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span><span class="ja">計算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="section-title">🚗 <span class="en">Today's Coastal Drive — the plan</span><span class="zh">今日海岸自驾 — 计划</span><span class="ja">今日の海岸ドライブ — プラン</span></div>
+  <div class="log-sub" style="margin-bottom:8px;">
+    <span class="en">A relaxed loop out to the Shakotan Peninsula — the clearest, most jewel-blue sea in Hokkaido ("Shakotan Blue"). Drive up the west coast to <strong>Cape Kamui</strong> for the ridge-top walk, loop round to the <strong>Shimamui Coast</strong> beach, drop into <strong>Bikuni</strong> for a fresh sea-urchin (uni) lunch — July is peak uni season — then the long, scenic run home to Niseko. The strenuous Cape Kamui walk is done first, while legs are fresh and the wind gate is more likely open.</span>
+    <span class="zh">悠闲绕行积丹半岛 — 北海道最清澈、如宝石般湛蓝的海（"积丹蓝"）。沿西海岸北上前往 <strong>神威岬</strong> 走那条山脊步道，再绕到 <strong>岛武意海岸</strong> 的沙滩，顺道到 <strong>美国（Bikuni）</strong> 吃一顿新鲜海胆（uni）午餐 — 七月正是海胆旺季 — 之后再沿风景优美的路线长途返回二世谷。较费力的神威岬步道安排在最前面，趁体力充沛、且强风关卡更可能开放时先走。</span>
+    <span class="ja">積丹半島へのんびり周遊 — 北海道で最も澄んだ、宝石のような青い海（「積丹ブルー」）。西海岸を北上して <strong>神威岬</strong> の尾根の遊歩道を歩き、<strong>島武意海岸</strong> のビーチへ回り込み、<strong>美国（びくに）</strong> で新鮮なウニのランチ — 7月はウニの最盛期 — その後、景色のよい道でニセコへ長距離ドライブ。ややきつい神威岬の遊歩道は、脚が元気で強風ゲートも開いている可能性が高い最初に済ませます。</span>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Animated Route Map — Today's Visit</span><span class="zh">动态路线地图 — 今日行程</span><span class="ja">アニメーション経路マップ — 今日の予定</span></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
+    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+  <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
+    <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">08:30</span></div>
+  </div>
+  <div class="speed-control" id="speedControl">
+    <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+    <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="speedVal">1&times;</span>
+  </div>
+  <div class="legend">
+    <span class="dot" style="background:#f85149;"></span><span class="en">A / E. Niseko hotel — start &amp; drive home</span><span class="zh">A / E. 二世谷酒店 — 出发与返回</span><span class="ja">A / E. ニセコのホテル — 出発・帰宅</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#3fb950;"></span><span class="en">Cape / hike</span><span class="zh">海岬 / 健行</span><span class="ja">岬・ハイキング</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#58a6ff;"></span><span class="en">Coast / beach</span><span class="zh">海岸 / 沙滩</span><span class="ja">海岸・ビーチ</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#f0a500;"></span><span class="en">Seafood lunch</span><span class="zh">海鲜午餐</span><span class="ja">海鮮ランチ</span>&nbsp;&nbsp;
+    🚗 <span class="en">A→B→C→D→E by car — Niseko up the west coast to Cape Kamui, round to Shimamui Coast, down to Bikuni for uni lunch, then the long drive home. Route line &amp; car follow the real roads (live OpenStreetMap routing).</span><span class="zh">A→B→C→D→E 驾车 — 从二世谷沿西海岸北上神威岬，绕到岛武意海岸，再南下美国吃海胆午餐，随后长途返回。路线与车辆均沿真实道路行驶（实时OpenStreetMap路线）。</span><span class="ja">A→B→C→D→E 車 — ニセコから西海岸を北上して神威岬、島武意海岸へ回り、美国でウニのランチ、その後帰宅の長距離ドライブ。ルート線と車は実際の道路に沿います（OpenStreetMapのライブ経路）。</span>
+  </div>
+
+  <div class="section-title">📏 <span class="en">Distance Between Stops</span><span class="zh">各站点间距离</span><span class="ja">各地点間の距離</span></div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;font-size:0.85em;">
+      <thead>
+        <tr style="background:rgba(56,189,248,0.12);">
+          <th style="text-align:left;padding:10px 12px;color:#38bdf8;font-weight:800;"><span class="en">Leg</span><span class="zh">路段</span><span class="ja">区間</span></th>
+          <th style="text-align:right;padding:10px 12px;color:#38bdf8;font-weight:800;"><span class="en">Distance</span><span class="zh">距离</span><span class="ja">距離</span></th>
+          <th style="text-align:right;padding:10px 12px;color:#38bdf8;font-weight:800;"><span class="en">Driving Time</span><span class="zh">车程</span><span class="ja">所要時間</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">A &rarr; B 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Niseko hotel &rarr; Cape Kamui — up the west coast</span><span class="zh">二世谷酒店 &rarr; 神威岬 — 沿西海岸北上</span><span class="ja">ニセコのホテル &rarr; 神威岬 — 西海岸を北上</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~78 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~1 <span class="en">hr</span><span class="zh">小时</span><span class="ja">時間</span> 45 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">B &rarr; C 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Cape Kamui &rarr; Shimamui Coast</span><span class="zh">神威岬 &rarr; 岛武意海岸</span><span class="ja">神威岬 &rarr; 島武意海岸</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~20 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~35 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">C &rarr; D 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Shimamui Coast &rarr; Bikuni (Cape Ogon) — uni lunch</span><span class="zh">岛武意海岸 &rarr; 美国（黄金岬）— 海胆午餐</span><span class="ja">島武意海岸 &rarr; 美国（黄金岬）— ウニのランチ</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~13 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~25 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">D &rarr; E 🚗 <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Bikuni &rarr; Niseko hotel — the drive home</span><span class="zh">美国 &rarr; 二世谷酒店 — 驱车返回</span><span class="ja">美国 &rarr; ニセコのホテル — 帰宅ドライブ</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~72 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~1 <span class="en">hr</span><span class="zh">小时</span><span class="ja">時間</span> 40 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="gps-note">📍 <span class="en">Distances are straight-line / typical-road estimates (not live traffic), and driving times assume ~40–45 km/h on the coast road. The route line and animated car follow the actual roads (fetched live from OpenStreetMap routing). <strong>Stops B, C and D pins are approximate estimates, not confirmed geocodes</strong> — geocoding was blocked this session — so use the address-based Directions/Google button in each popup, not the pin, for navigation.</span><span class="zh">距离为直线/常规道路估算（非实时路况），车程按海岸公路约40–45公里/小时估计。上方路线与动态车辆均沿真实道路行驶（实时OpenStreetMap路线）。<strong>B、C、D点的定位均为近似估计，并非已确认的地理编码</strong> — 本次会话地理编码被阻挡 — 导航请使用各弹窗中基于地址的"导航/谷歌"按钮，而非依赖定位点。</span><span class="ja">距離は直線／一般道路の概算（ライブ交通ではありません）で、所要時間は海岸道路で約40〜45km/hを想定。上のルート線とアニメーションの車は実際の道路（OpenStreetMapのライブ経路）に沿います。<strong>B・C・D地点のピンは概算位置で、確認済みの座標ではありません</strong> — 今回のセッションではジオコーディングがブロックされました — ナビには各ポップアップ内の住所ベースの「ルート案内／Google」ボタンをご利用ください。</span></div>
+
+  <!-- STOP A -->
+  <div class="section-title">🏨 <span class="en">A. Start — Torifito Hotel &amp; Pod Niseko トリフィート・ホテル＆ポッド ニセコ</span><span class="zh">A. 出发 — Torifito Hotel &amp; Pod Niseko</span><span class="ja">A. 出発 — トリフィート・ホテル＆ポッド ニセコ</span></div>
+  <div class="log-sub" style="margin-bottom:8px;">
+    <span class="en">Set off around <strong>08:30</strong> from <strong>A. Torifito Hotel &amp; Pod Niseko</strong> — Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan. Grab a coffee, fill the tank in Kutchan, and head north-west through Kyowa and Iwanai onto the Rt229 coast road. Roughly ~78 km / ~1¾ hrs to the cape.</span>
+    <span class="zh">约 <strong>08:30</strong> 从 <strong>A. Torifito Hotel &amp; Pod Niseko</strong> 出发 — 地址：日本北海道虻田郡俱知安町南11条西1-46-1，邮编044-0045。买杯咖啡、在俱知安加满油，经共和町、岩内上229号海岸公路向西北行驶。到海岬约 ~78 公里 / 约1.75小时。</span>
+    <span class="ja"><strong>08:30</strong> 頃、<strong>A. トリフィート・ホテル＆ポッド ニセコ</strong> を出発 — 〒044-0045 北海道虻田郡倶知安町南11条西1-46-1。コーヒーを買い、倶知安で給油、共和・岩内を抜けて国道229号の海岸道路へ北西に。岬まで約78km／約1時間45分。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <!-- STOP B -->
+  <div class="section-title">🥾 <span class="en">B. Cape Kamui 神威岬 — the ridge-top hike</span><span class="zh">B. 神威岬 — 山脊步道健行</span><span class="ja">B. 神威岬 — 尾根の遊歩道ハイキング</span></div>
+  <div>
+    <span class="badge" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#6ee7b7;">🎟️ <span class="en">Free · car park free</span><span class="zh">免费 · 停车免费</span><span class="ja">無料・駐車場無料</span></span>
+    <span class="badge" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.35);color:#7dd3fc;">🚶 <span class="en">~770 m each way · ~20 min · gate closes in strong wind</span><span class="zh">单程约770米 · 约20分钟 · 强风时关闭闸门</span><span class="ja">片道約770m・約20分・強風時はゲート閉鎖</span></span>
+  </div>
+  <div class="log-sub" style="margin-bottom:8px;">
+    <span class="en">The main event — <strong>B. Cape Kamui 神威岬</strong>, Bikunicho, Shakotan, Shakotan District, Hokkaido. Park up, pass through the old "Chalenka-no-Michi" gate, and walk the narrow ridge path (~770 m, ~20 min each way) out to the lighthouse at the tip, ocean falling away steep-blue on both sides — this is the "Shakotan Blue" at its most dramatic. Wear proper shoes; it's exposed and the wind gate is shut when it's blowing hard. Free to enter and to park.</span>
+    <span class="zh">今日重头戏 — <strong>B. 神威岬</strong>，北海道积丹郡积丹町美国町。停好车，穿过古老的"查连卡之路"闸门，沿狭窄的山脊步道（单程约770米、约20分钟）走到岬角尖端的灯塔，两侧海面陡然落下、湛蓝一片 — 这正是最震撼的"积丹蓝"。请穿合脚的鞋；步道暴露在外，强风时闸门会关闭。入内与停车皆免费。</span>
+    <span class="ja">今日のメイン — <strong>B. 神威岬</strong>、北海道積丹郡積丹町美国町。駐車して、古い「チャレンカの道」の門を抜け、狭い尾根の遊歩道（片道約770m・約20分）を先端の灯台まで歩くと、両側に紺碧の海が切れ落ちる — 最も劇的な「積丹ブルー」。しっかりした靴で。露出した道で、強風時はゲートが閉まります。入場・駐車ともに無料。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=Cape%20Kamui%20%E7%A5%9E%E5%A8%81%E5%B2%AC%2C%20Shakotan%2C%20Hokkaido%2C%20Japan" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E7%A5%9E%E5%A8%81%E5%B2%AC" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E7%A5%9E%E5%A8%81%E5%B2%AC%20Shakotan" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+  <div class="warn-note">⚠️ <span class="en"><strong>Pin is an unconfirmed estimate.</strong> Cape Kamui's exact coordinates couldn't be geocoded this session — don't trust the map pin for navigation; tap the address-based <strong>🗺️ Google</strong> button above (it searches "Cape Kamui, Shakotan"), and check the wind-gate status before driving out.</span><span class="zh"><strong>定位点为未确认的估算位置。</strong>本次会话无法对神威岬进行地理编码 — 导航请勿依赖地图定位点；请点上方基于地址的 <strong>🗺️ Google</strong> 按钮（搜索"Cape Kamui, Shakotan"），出发前先确认强风闸门是否开放。</span><span class="ja"><strong>ピンは未確認の概算位置です。</strong>今回のセッションでは神威岬をジオコーディングできませんでした — ナビにはピンを信用せず、上の住所ベースの <strong>🗺️ Google</strong> ボタン（「Cape Kamui, Shakotan」を検索）をタップし、出発前に強風ゲートの状況を確認してください。</span></div>
+
+  <!-- STOP C -->
+  <div class="section-title">🏖️ <span class="en">C. Shimamui Coast 島武意海岸 — Shakotan Blue beach</span><span class="zh">C. 岛武意海岸 — 积丹蓝沙滩</span><span class="ja">C. 島武意海岸 — 積丹ブルーのビーチ</span></div>
+  <div>
+    <span class="badge" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#6ee7b7;">🎟️ <span class="en">Free · car park free</span><span class="zh">免费 · 停车免费</span><span class="ja">無料・駐車場無料</span></span>
+    <span class="badge" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.35);color:#7dd3fc;">🚶 <span class="en">Short dark tunnel + steep steps down</span><span class="zh">穿过短暗隧道 + 陡阶而下</span><span class="ja">短い暗いトンネル＋急な階段</span></span>
+  </div>
+  <div class="log-sub" style="margin-bottom:8px;">
+    <span class="en">A short loop round to <strong>C. Shimamui Coast 島武意海岸</strong>, Nozukacho, Shakotan, Shakotan District, Hokkaido — chosen as one of "Japan's 100 finest sceneries." Walk through a narrow hand-dug tunnel and, at the far end, the view suddenly opens onto a tiny pebble cove and impossibly clear blue-green water framed by cliffs. Steep steps lead down to the shore. Bring your camera — this is the postcard "Shakotan Blue."</span>
+    <span class="zh">短途绕行到 <strong>C. 岛武意海岸（島武意海岸）</strong>，北海道积丹郡积丹町野塚町 — 入选"日本百景"。先穿过一条狭窄的手凿隧道，尽头处视野豁然开朗，是一处小小的卵石海湾与清澈到不可思议的蓝绿海水，两旁峭壁环抱。陡峭的台阶通向海边。记得带相机 — 这就是明信片般的"积丹蓝"。</span>
+    <span class="ja">短い周回で <strong>C. 島武意海岸</strong> へ、北海道積丹郡積丹町野塚町 — 「日本の渚百選」に選定。狭い手掘りのトンネルを抜けると、その先で視界が一気に開け、小さな玉石の入り江と信じられないほど澄んだ青緑の海が断崖に縁取られて広がります。急な階段で浜辺へ。カメラを忘れずに — 絵はがきの「積丹ブルー」。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E5%B3%B6%E6%AD%A6%E6%84%8F%E6%B5%B7%E5%B2%B8%20Shimamui%20Coast%2C%20Shakotan%2C%20Hokkaido%2C%20Japan" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%B3%B6%E6%AD%A6%E6%84%8F%E6%B5%B7%E5%B2%B8" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E5%B3%B6%E6%AD%A6%E6%84%8F%E6%B5%B7%E5%B2%B8%20Shakotan" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+  <div class="warn-note">⚠️ <span class="en"><strong>Pin is an unconfirmed estimate</strong> — use the address-based <strong>🗺️ Google</strong> button above for navigation, not the map pin.</span><span class="zh"><strong>定位点为未确认的估算位置</strong> — 导航请使用上方基于地址的 <strong>🗺️ Google</strong> 按钮，而非地图定位点。</span><span class="ja"><strong>ピンは未確認の概算位置です</strong> — ナビには上の住所ベースの <strong>🗺️ Google</strong> ボタンをご利用ください（ピンではなく）。</span></div>
+
+  <!-- STOP D -->
+  <div class="section-title">🍣 <span class="en">D. Bikuni 美国 (Cape Ogon 黄金岬) — fresh uni lunch</span><span class="zh">D. 美国（黄金岬）— 新鲜海胆午餐</span><span class="ja">D. 美国（黄金岬）— 新鮮ウニのランチ</span></div>
+  <div>
+    <span class="badge" style="background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;">⭐ <span class="en">Peak uni season · July</span><span class="zh">海胆旺季 · 七月</span><span class="ja">ウニ最盛期・7月</span></span>
+    <span class="badge" style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.35);color:#7dd3fc;">💴 <span class="en">Uni-don ~¥3,500 (~S$30)</span><span class="zh">海胆盖饭约¥3,500（约S$30）</span><span class="ja">ウニ丼 約¥3,500（約S$30）</span></span>
+  </div>
+  <div class="log-sub" style="margin-bottom:8px;">
+    <span class="en">Late lunch in <strong>D. Bikuni 美国</strong>, Shakotan — the peninsula's main fishing port and the reason people make this drive in summer: <strong>uni (sea urchin)</strong>, landed that morning. A <em>uni-don</em> (sea-urchin rice bowl) at one of the harbour restaurants runs about ¥3,000–4,000 (~S$26–35). Afterwards, stretch your legs on the short ~15-min climb up to <strong>Cape Ogon 黄金岬</strong> for a last look over the bay before the drive home.</span>
+    <span class="zh">在 <strong>D. 美国（Bikuni）</strong> 吃个晚午餐，积丹町 — 半岛的主要渔港，也是夏天大家专程开车来的原因：当天清晨上岸的 <strong>海胆（uni）</strong>。在港边餐厅点一碗 <em>海胆盖饭</em> 约¥3,000–4,000（约S$26–35）。饭后，走那段约15分钟的短爬坡到 <strong>黄金岬</strong>，返程前再眺望一次海湾。</span>
+    <span class="ja"><strong>D. 美国（びくに）</strong> で遅めのランチ、積丹町 — 半島の主要漁港で、夏に人々がこのドライブに来る理由：その朝水揚げされた <strong>ウニ</strong>。港の食堂で <em>ウニ丼</em> は約¥3,000〜4,000（約S$26〜35）。食後は約15分の短い登りで <strong>黄金岬</strong> へ、帰る前にもう一度湾を見渡します。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E9%BB%84%E9%87%91%E5%B2%AC%20Cape%20Ogon%2C%20Bikuni%2C%20Shakotan%2C%20Hokkaido%2C%20Japan" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E7%BE%8E%E5%9B%BD%20%E9%BB%84%E9%87%91%E5%B2%AC" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E9%BB%84%E9%87%91%E5%B2%AC%20Bikuni%20Shakotan" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+  <div class="warn-note">⚠️ <span class="en"><strong>Pin is an unconfirmed estimate</strong> — use the address-based <strong>🗺️ Google</strong> button above for navigation, not the map pin.</span><span class="zh"><strong>定位点为未确认的估算位置</strong> — 导航请使用上方基于地址的 <strong>🗺️ Google</strong> 按钮，而非地图定位点。</span><span class="ja"><strong>ピンは未確認の概算位置です</strong> — ナビには上の住所ベースの <strong>🗺️ Google</strong> ボタンをご利用ください（ピンではなく）。</span></div>
+
+  <!-- STOP E -->
+  <div class="section-title">🏠 <span class="en">E. Drive home — Torifito Hotel &amp; Pod Niseko</span><span class="zh">E. 驱车返回 — Torifito Hotel &amp; Pod Niseko</span><span class="ja">E. 帰宅ドライブ — トリフィート・ホテル＆ポッド ニセコ</span></div>
+  <div class="log-sub" style="margin-bottom:8px;">
+    <span class="en">Aim to leave Bikuni by mid-afternoon for the ~72 km / ~1¾ hr run back to <strong>E. Torifito Hotel &amp; Pod Niseko</strong>, central Kutchan — a relaxed, scenic drive back over the hills with Mt Yotei ahead of you as you near home. In around 15:00.</span>
+    <span class="zh">下午过半前离开美国，约72公里 / 约1.75小时返回 <strong>E. Torifito Hotel &amp; Pod Niseko</strong>，俱知安中心 — 一段悠闲、风景怡人的翻山返程，快到家时羊蹄山正在前方。约15:00抵达。</span>
+    <span class="ja">午後半ばまでに美国を出発、約72km／約1時間45分で <strong>E. トリフィート・ホテル＆ポッド ニセコ</strong>（倶知安中心部）へ — のんびり景色のよい山越えの帰り道、家に近づくと羊蹄山が正面に。15:00頃到着。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Photo Log</span><span class="zh">今日照片日记</span><span class="ja">今日のフォト日記</span></div>
+  <div class="log-card" id="emptyLog">
+    <div class="log-icon">🌊</div>
+    <div class="log-title"><span class="en">Send me your Cape Kamui photos</span><span class="zh">把你的神威岬照片发给我</span><span class="ja">神威岬の写真を送ってください</span></div>
+    <div class="log-empty-sub"><span class="en">As you send photos from today's drive, I'll add each one here with a caption and the map link — same as every other trip day.</span><span class="zh">你把今天自驾的照片发过来，我就会逐张加到这里，配上说明和地图链接 — 和其他行程日一样。</span><span class="ja">今日のドライブの写真を送ってくれたら、キャプションと地図リンク付きで1枚ずつここに追加します — 他の旅行日と同じように。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 · Shakotan Coastal Drive · Cape Kamui · Japan 2026 · paulsworld.vercel.app</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── ANIMATED ROUTE MAP (standard always-visible style: car drives continuously on real roads) ──
+const stops = [
+  { name: "Torifito Hotel & Pod Niseko トリフィート・ホテル＆ポッド ニセコ", lat: 42.9007, lng: 140.7537, time: "08:30", type: "start", verifiedGps: true, icon: "🏨",
+    address: "Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan",
+    mapUrl: "https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko",
+    baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
+    amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
+    note: "Start here ~08:30 — coffee, fuel in Kutchan, then north-west via Kyowa & Iwanai to the Rt229 coast road." },
+  { name: "Cape Kamui 神威岬", lat: 43.3338, lng: 140.3374, time: "10:15", type: "nature", verifiedGps: false, icon: "🥾", wikiTitle: "Cape Kamui",
+    address: "Bikunicho, Shakotan, Shakotan District, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Cape Kamui 神威岬, Shakotan, Hokkaido, Japan"),
+    baiduUrl: "https://map.baidu.com/search/%E7%A5%9E%E5%A8%81%E5%B2%AC",
+    amapUrl: "https://uri.amap.com/search?keyword=%E7%A5%9E%E5%A8%81%E5%B2%AC%20Shakotan",
+    note: "⭐ The hike — walk the ~770m ridge path (~20 min each way) to the lighthouse over the Shakotan Blue sea. 🎟️ Free. ⚠️ Pin is an unconfirmed estimate — use the address-based Directions/Google button, not the pin. Gate closes in strong wind." },
+  { name: "Shimamui Coast 島武意海岸", lat: 43.3436, lng: 140.4628, time: "11:45", type: "water", verifiedGps: false, icon: "🏖️", wikiTitle: ["Cape Shakotan", "Shakotan Peninsula"],
+    address: "Nozukacho, Shakotan, Shakotan District, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Shimamui Coast 島武意海岸, Shakotan, Hokkaido, Japan"),
+    baiduUrl: "https://map.baidu.com/search/%E5%B3%B6%E6%AD%A6%E6%84%8F%E6%B5%B7%E5%B2%B8",
+    amapUrl: "https://uri.amap.com/search?keyword=%E5%B3%B6%E6%AD%A6%E6%84%8F%E6%B5%B7%E5%B2%B8%20Shakotan",
+    note: "One of Japan's 100 finest sceneries — through a dark hand-dug tunnel to a tiny cove of impossibly clear blue-green water. 🎟️ Free. ⚠️ Pin is an unconfirmed estimate — use the address-based button, not the pin." },
+  { name: "Bikuni 美国 · Cape Ogon 黄金岬 (uni lunch)", lat: 43.2807, lng: 140.5798, time: "12:45", type: "food", verifiedGps: false, icon: "🍣",
+    address: "Bikunicho, Shakotan, Shakotan District, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("黄金岬 Cape Ogon, Bikuni, Shakotan, Hokkaido, Japan"),
+    baiduUrl: "https://map.baidu.com/search/%E7%BE%8E%E5%9B%BD%20%E9%BB%84%E9%87%91%E5%B2%AC",
+    amapUrl: "https://uri.amap.com/search?keyword=%E9%BB%84%E9%87%91%E5%B2%AC%20Bikuni%20Shakotan",
+    note: "🍣 Late lunch — fresh uni-don (sea-urchin rice bowl) ~¥3,000–4,000 (~S$26–35) at the harbour; short ~15-min climb up to Cape Ogon after. ⚠️ Pin is an unconfirmed estimate — use the address-based button, not the pin." },
+  { name: "Torifito Hotel & Pod Niseko トリフィート・ホテル＆ポッド ニセコ (home)", lat: 42.9007, lng: 140.7537, time: "15:00", type: "end", verifiedGps: true, icon: "🏠",
+    address: "Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan",
+    mapUrl: "https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko",
+    baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
+    amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
+    note: "🏠 Drive home — ~72 km / ~1¾ hrs back over the hills to Niseko, Mt Yotei ahead as you near home. In around 15:00." }
+];
+
+function openMapFullscreen() {
+  if (window.self !== window.top) { window.top.location.href = window.location.href; return; }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); if (typeof fullRoadPoints !== 'undefined' && !playing) map.fitBounds(fullRoadPoints, { padding: [30, 30] }); }, 100);
+}
+
+const map = L.map('map', { zoomControl: true }).setView([43.15, 140.55], 9);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+function stopLabel(i) { return String.fromCharCode(65 + i); }
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff', food: '#f0a500' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+let fullRoadPoints = fullLine;
+let routeLine = L.polyline(fullLine, { color: '#38bdf8', weight: 4, opacity: 0.85, dashArray: '8 8' }).addTo(map);
+
+// ── REAL-ROAD ROUTING via OSRM ── replace the straight placeholder with the actual driving path per leg.
+const roadSegs = [];
+function pathCumulativeDistances(points) {
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i - 1][0];
+    const dy = points[i][1] - points[i - 1][1];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  return cum;
+}
+function pointAtFraction(seg, frac) {
+  const { points, cum } = seg;
+  const total = cum[cum.length - 1];
+  if (total === 0) return points[0];
+  const target = frac * total;
+  for (let i = 1; i < cum.length; i++) {
+    if (target <= cum[i] || i === cum.length - 1) {
+      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+      return [
+        points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac,
+        points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac
+      ];
+    }
+  }
+  return points[points.length - 1];
+}
+const legProfiles = stops.slice(0, -1).map(() => 'driving');
+async function fetchRoadSegment(a, b, profile) {
+  profile = profile || 'driving';
+  const url = `https://router.project-osrm.org/route/v1/${profile}/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok') return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  } catch (e) {}
+  return [[a.lat, a.lng], [b.lat, b.lng]];
+}
+async function buildRoads() {
+  const allPoints = [];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const pts = await fetchRoadSegment(stops[i], stops[i + 1], legProfiles[i]);
+    roadSegs[i] = { points: pts, cum: pathCumulativeDistances(pts) };
+    allPoints.push(...pts);
+  }
+  if (allPoints.length) {
+    map.removeLayer(routeLine);
+    routeLine = L.polyline(allPoints, { color: '#38bdf8', weight: 4, opacity: 0.85, dashArray: '8 8' }).addTo(map);
+    fullRoadPoints = allPoints;
+    if (!playing) map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+  }
+}
+buildRoads();
+
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  const dirDest = s.verifiedGps ? (s.lat + ',' + s.lng) : (s.address ? encodeURIComponent(s.name + ', ' + s.address) : (s.lat + ',' + s.lng));
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + dirDest + '&travelmode=driving" target="_blank" onclick="event.stopPropagation()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🧭 Directions</a>' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+function buildPopupHtml(s, i) {
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  return '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>';
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + stopLabel(i) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  marker.bindPopup(buildPopupHtml(s, i));
+  markerRefs.push(marker);
+});
+
+// ── WIKIPEDIA PHOTO FALLBACK — CORS-enabled REST summary API (never hardcode upload.wikimedia thumb URLs) ──
+function fetchWikiThumb(wikiTitle) {
+  return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
+    .catch(function () { return null; });
+}
+function fetchWikiThumbChain(titles) {
+  const list = Array.isArray(titles) ? titles : [titles];
+  return list.reduce(function (chain, title) {
+    return chain.then(function (src) { return src || fetchWikiThumb(title); });
+  }, Promise.resolve(null));
+}
+stops.forEach(function (s, i) {
+  if (s.img || !s.wikiTitle) return;
+  fetchWikiThumbChain(s.wikiTitle).then(function (src) {
+    if (!src) return;
+    s.img = src;
+    markerRefs[i].setPopupContent(buildPopupHtml(s, i));
+  });
+});
+
+setTimeout(function () { map.invalidateSize(); map.fitBounds(fullRoadPoints, { padding: [30, 30] }); }, 60);
+
+// Directions button (whole route): verified stops by coord, unverified by address so Google geocodes them.
+const lastStop = stops[stops.length - 1];
+const waypointStops = stops.slice(1, -1);
+const lastDest = lastStop.verifiedGps ? (lastStop.lat + ',' + lastStop.lng) : encodeURIComponent(lastStop.name + ', ' + lastStop.address);
+document.getElementById('btn-directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + lastDest +
+  (waypointStops.length ? '&waypoints=' + waypointStops.map(function (s) { return s.verifiedGps ? (s.lat + ',' + s.lng) : encodeURIComponent(s.name + ', ' + s.address); }).join('|') : '') +
+  '&travelmode=driving';
+
+const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+function bearingDeg(lat1, lng1, lat2, lng2) {
+  const toRad = d => d * Math.PI / 180, toDeg = r => r * 180 / Math.PI;
+  const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+  const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+const compassNeedle = document.getElementById('compassNeedle');
+function setCompassHeading(deg) { if (compassNeedle) compassNeedle.style.transform = 'rotate(' + deg + 'deg)'; }
+
+function toMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+let speedMultiplier = 1;
+let playing = true;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+const statusEl = document.getElementById('status');
+
+// Continuous drive: global progress → time → which leg + intra-leg fraction → real-road position.
+function positionForProgress(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const seg = roadSegs[i];
+      const here = seg ? pointAtFraction(seg, segP) : [
+        stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP,
+        stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP
+      ];
+      const aheadP = Math.min(segP + 0.05, 1);
+      const ahead = seg ? pointAtFraction(seg, aheadP) : [
+        stops[i].lat + (stops[i + 1].lat - stops[i].lat) * aheadP,
+        stops[i].lng + (stops[i + 1].lng - stops[i].lng) * aheadP
+      ];
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      return { here, ahead, timeStr: `${hh}:${mm}`, leg: i };
+    }
+  }
+  const last = stops[stops.length - 1];
+  return { here: [last.lat, last.lng], ahead: [last.lat, last.lng], timeStr: last.time, leg: stops.length - 2 };
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    requestAnimationFrame(step);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+  }
+}
+
+function step() {
+  if (!playing) return;
+  progress += 0.0016 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = positionForProgress(1);
+    mover.setLatLng(pos.here);
+    statusEl.innerHTML = '<span class="en">Arrived home</span><span class="zh">已到家</span><span class="ja">帰宅</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
+    setTimeout(() => {
+      progress = 0;
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      if (playing) requestAnimationFrame(step);
+    }, 1600);
+    return;
+  }
+  const pos = positionForProgress(progress);
+  mover.setLatLng(pos.here);
+  if (pos.ahead[0] !== pos.here[0] || pos.ahead[1] !== pos.here[1]) {
+    setCompassHeading(bearingDeg(pos.here[0], pos.here[1], pos.ahead[0], pos.ahead[1]));
+  }
+  const timeLabelEl = document.getElementById('timeLabel');
+  if (timeLabelEl) timeLabelEl.textContent = pos.timeStr;
+  requestAnimationFrame(step);
+}
+step();
+
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-15T00:00:00+09:00');
+  var end = new Date('2026-07-16T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var days = Math.ceil((start - now) / 86400000);
+    banner.innerHTML = '🕓 <span class="en">Coastal drive day is in <strong>' + days + ' day' + (days === 1 ? '' : 's') + '</strong>.</span><span class="zh">海岸自驾日还有 <strong>' + days + '</strong> 天。</span><span class="ja">海岸ドライブの日まであと<strong>' + days + '日</strong>。</span>';
+  } else if (now >= start && now < end) {
+    banner.innerHTML = '🟢 <span class="en"><strong>Today\'s the day — free day by the sea!</strong> Shakotan Blue coast &amp; the Cape Kamui hike.</span><span class="zh"><strong>就是今天 — 海边悠闲一日！</strong>积丹蓝海岸与神威岬健行。</span><span class="ja"><strong>今日がその日 — 海辺の自由な一日！</strong>積丹ブルーの海岸と神威岬のハイキング。</span>';
+    banner.style.background = 'rgba(56,189,248,0.15)';
+    banner.style.borderColor = 'rgba(56,189,248,0.4)';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Coastal drive complete — send your photos and I\'ll log them below.</span><span class="zh">海岸自驾已完成 — 把照片发来，我会记录在下方。</span><span class="ja">海岸ドライブ完了 — 写真を送ってくれれば下に記録します。</span>';
+    banner.style.background = 'rgba(240,165,0,0.1)';
+    banner.style.borderColor = 'rgba(240,165,0,0.3)';
+  }
+}
+updateBanner();
+
+// ── PHOTO JOURNAL DATA — empty until photos come in ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) { emptyLog.style.display = 'block'; return; }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function (p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" poster="' + (p.poster || '') + '" muted playsinline preload="metadata"></video>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    var dateBadge = p.date ? '<div class="pj-date"><span class="en">' + p.date + '</span><span class="zh">' + (p.dateZh || p.date) + '</span><span class="ja">' + (p.dateJa || p.date) + '</span></div>' : '';
+    media = '<div class="pj-media">' + media + dateBadge + '</div>';
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      '</div>';
+    item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── LIGHTBOX ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none'; video.style.display = 'block';
+    video.poster = p.poster || ''; video.src = p.src; video.play().catch(function () {});
+  } else {
+    video.pause(); video.style.display = 'none'; img.style.display = 'block'; img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = (p.caption || '') + (p.date ? '  ·  ' + p.date : '');
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+
+</body>
+</html>
