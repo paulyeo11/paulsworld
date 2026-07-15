@@ -9,6 +9,9 @@
 - **Index Page Rule:** the homepage must always display **"Retired at 67"** — never 70.
 - **Favourite singers/music:** Susan Wong, Julienne Taylor.
 
+## Paul's Abbreviations (Standing Glossary)
+- **IG** = **Iron Condor** (the options strategy). When Paul says "trade IG", "IG setup", etc. he means the Iron Condor strategy — NOT the IG broker/platform or IG Group stock. (Added 2026-07-15.)
+
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
 - **Be brief.** Terse, no-fluff answers. Lead with the outcome.
