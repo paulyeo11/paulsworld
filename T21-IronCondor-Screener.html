@@ -45,6 +45,11 @@
   .sdata .up { color:#10b981; font-weight:700; }
   .sdata .down { color:#ef4444; font-weight:700; }
   .sdata .dim { color:rgba(255,255,255,.35); }
+  .verdict { display:inline-block; margin-top:6px; font-size:.72rem; font-weight:800; padding:3px 9px; border-radius:8px; letter-spacing:.02em; }
+  .verdict.vg { background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#34d399; }
+  .verdict.vo { background:rgba(245,158,11,.18); border:1px solid rgba(245,158,11,.5); color:#fbbf24; }
+  .verdict.vr { background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#f87171; }
+  .verdict.vd { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.4); }
   .sarr { color:#4f46e5; font-size:1.2rem; font-weight:700; flex-shrink:0; }
 
   .live-ts { text-align:center; font-size:.72rem; color:rgba(255,255,255,.45); margin:-8px 0 18px; }
@@ -71,6 +76,9 @@
   <div class="share-toast" id="shareToast">✅ Link copied!</div>
   <div class="live-ts" id="liveTs">
     <span class="en">Live price data loading…</span><span class="zh">实时价格数据加载中…</span>
+  </div>
+  <div class="live-ts" style="margin-top:-12px;">
+    <span class="en">Each row shows a live <b>“good for IG (Iron Condor) now?”</b> verdict from its 52-week position — ✅ mid-range = good, ⚠️ near edge, ❌ at a 52w extreme. Position only — still check IV &amp; earnings yourself.</span><span class="zh">每一行会根据52周区间位置显示实时<b>“现在适合铁鹰(IG)吗？”</b>判定 — ✅区间中部=适合，⚠️接近边缘，❌处于52周极值。仅依据位置 — 仍须自行查看IV与财报。</span>
   </div>
 
   <div class="disclaimer">
@@ -184,7 +192,7 @@
   </div>
 
   <div class="foot">
-    <span class="en">Educational screening list · Last reviewed <span id="lastReviewedEn">12 Jul 2026</span></span><span class="zh">教育性筛选清单 · 最后更新于<span id="lastReviewedZh">2026年7月12日</span></span><br>
+    <span class="en">Educational screening list · Last reviewed <span id="lastReviewedEn">15 Jul 2026</span></span><span class="zh">教育性筛选清单 · 最后更新于<span id="lastReviewedZh">2026年7月15日</span></span><br>
     <a href="T23-IronCondor-Guide.html">📘 <span class="en">Full Trading Guide (the 4 legs, entry &amp; exit rules)</span><span class="zh">完整交易指南（四条腿、入场与离场规则）</span></a><br>
     <a href="T22-IronCondor-Bands.html">📐 <span class="en">Support &amp; Resistance Band Calculator</span><span class="zh">支撑与阻力区间计算器</span></a><br>
     <a href="options.html">🦅 <span class="en">Iron Condor Knowledge Base</span><span class="zh">铁鹰策略知识库</span></a><br>
@@ -194,6 +202,27 @@
 
 <script>
 var TICKERS = ['SPY','QQQ','IWM','DIA','MSFT','AAPL','AMZN','GOOGL','XLE','XLF','XLU','NVDA','TSLA','META'];
+// Trend-prone / high-IV names — cap their verdict and always remind to widen wings
+var TREND_PRONE = {NVDA:1, TSLA:1, META:1};
+
+// Live "good for IG now?" verdict, based on where price sits in its 52-week range.
+// Mid-range = ideal for an Iron Condor; near the 52w high/low = trending, risky.
+// NOTE: position-based only — it does NOT know IV Rank or the earnings date,
+// which Paul must still check on the broker chain himself.
+function igVerdict(symbol, rangePos){
+  if(typeof rangePos !== 'number'){
+    return {cls:'vd', en:'IG: check live', zh:'铁鹰：请查实时'};
+  }
+  var trend = TREND_PRONE[symbol];
+  if(rangePos >= 35 && rangePos <= 65){
+    if(trend) return {cls:'vo', en:'⚠️ IG: OK — mid-range but trend-prone, widen wings', zh:'⚠️ 铁鹰：尚可 — 区间中部但易走单边，加宽翼距'};
+    return {cls:'vg', en:'✅ IG: Good zone (mid-range)', zh:'✅ 铁鹰：适合（区间中部）'};
+  }
+  if(rangePos >= 20 && rangePos <= 80){
+    return {cls:'vo', en:'⚠️ IG: OK — near band edge, size down', zh:'⚠️ 铁鹰：尚可 — 接近区间边缘，减小仓位'};
+  }
+  return {cls:'vr', en:'❌ IG: Risky — trending at 52w extreme', zh:'❌ 铁鹰：偏险 — 处于52周极值、趋势明显'};
+}
 
 function fetchQuote(symbol){
   var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=1y';
@@ -220,12 +249,15 @@ function renderQuote(symbol, meta){
     pctHtml = ' <span class="' + cls + '">' + arrow + Math.abs(pct).toFixed(2) + '%</span>';
   }
   var rangeHtml = '';
+  var rangePos;
   var hi = meta.fiftyTwoWeekHigh, lo = meta.fiftyTwoWeekLow;
   if(typeof hi === 'number' && typeof lo === 'number' && hi > lo){
-    var rangePos = ((price - lo) / (hi - lo)) * 100;
+    rangePos = ((price - lo) / (hi - lo)) * 100;
     rangeHtml = ' <span class="dim">· 52w pos: ' + rangePos.toFixed(0) + '%</span>';
   }
-  el.innerHTML = '$' + price.toFixed(2) + pctHtml + rangeHtml;
+  var v = igVerdict(symbol, rangePos);
+  var verdictHtml = '<br><span class="verdict ' + v.cls + '"><span class="en">' + v.en + '</span><span class="zh">' + v.zh + '</span></span>';
+  el.innerHTML = '$' + price.toFixed(2) + pctHtml + rangeHtml + verdictHtml;
 }
 
 function fetchAllQuotes(){
