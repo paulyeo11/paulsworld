@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T30: Iron Condor Delta Cheat-Sheet — Which Delta to Sell</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:580px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card p b { color:#f4c869; }
+
+  .big-answer { background:linear-gradient(135deg,#10240f,#123d2a); border:1px solid rgba(16,185,129,.4); border-radius:14px; padding:18px; margin-bottom:22px; text-align:center; }
+  .big-answer .lbl { font-size:.72rem; font-weight:700; color:#86efac; text-transform:uppercase; letter-spacing:.05em; }
+  .big-answer .val { font-size:1.5rem; font-weight:800; color:#fff; margin:6px 0 4px; }
+  .big-answer .sub { font-size:.82rem; color:rgba(255,255,255,.7); line-height:1.5; }
+
+  table.d { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.d th, table.d td { padding:9px 8px; font-size:.8rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; vertical-align:top; }
+  table.d th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; }
+  table.d td.delta { font-weight:800; white-space:nowrap; }
+  table.d tr.cons td.delta { color:#93c5fd; }
+  table.d tr.reco td.delta { color:#86efac; }
+  table.d tr.aggr td.delta { color:#fca5a5; }
+  table.d tr.reco { background:rgba(16,185,129,.08); }
+  .badge { display:inline-block; font-size:.6rem; font-weight:800; padding:2px 7px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+  .badge.best { background:#10b981; color:#0e1330; }
+
+  .ruler { display:flex; align-items:center; gap:0; margin:14px 0 6px; border-radius:8px; overflow:hidden; }
+  .ruler .seg { flex:1; text-align:center; padding:8px 4px; font-size:.7rem; font-weight:700; color:#0e1330; }
+  .ruler .s1 { background:#93c5fd; }
+  .ruler .s2 { background:#86efac; }
+  .ruler .s3 { background:#fca5a5; }
+  .ruler-note { font-size:.72rem; color:rgba(255,255,255,.5); text-align:center; }
+
+  .checklist ul, .steps ol { list-style:none; }
+  .checklist li { font-size:.85rem; color:rgba(255,255,255,.8); padding:7px 0; line-height:1.5; border-bottom:1px solid rgba(255,255,255,.06); }
+  .checklist li:last-child { border-bottom:none; }
+  .checklist li b { color:#f4c869; }
+  .steps ol { counter-reset:step; }
+  .steps li { position:relative; font-size:.85rem; color:rgba(255,255,255,.82); padding:9px 0 9px 40px; line-height:1.5; border-bottom:1px solid rgba(255,255,255,.06); }
+  .steps li:last-child { border-bottom:none; }
+  .steps li::before { counter-increment:step; content:counter(step); position:absolute; left:0; top:8px; width:26px; height:26px; border-radius:50%; background:#4f46e5; color:#fff; font-weight:800; font-size:.8rem; display:flex; align-items:center; justify-content:center; }
+  .steps li b { color:#f4c869; }
+
+  .formula-grid { display:grid; grid-template-columns:1fr; gap:10px; margin-top:12px; }
+  .formula { background:#0e1330; border:1px solid #2a3158; border-radius:10px; padding:10px 14px; }
+  .formula .flabel { font-size:.72rem; font-weight:700; color:#f4c869; text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
+  .formula .fval { font-size:.82rem; color:rgba(255,255,255,.85); font-family:'Courier New',monospace; }
+
+  .rel { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+  .rel a { display:flex; align-items:center; gap:12px; background:#0e1330; border:1px solid #2a3158; border-radius:12px; padding:12px 14px; text-decoration:none; color:#fff; }
+  .rel a:hover { border-color:#10b981; }
+  .rel .ri { font-size:1.2rem; flex-shrink:0; }
+  .rel .rt { flex:1; min-width:0; font-size:.85rem; font-weight:700; }
+  .rel .ra { color:#4f46e5; font-weight:700; flex-shrink:0; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+
+  @media (max-width:480px) {
+    table.d { font-size:.74rem; }
+    .ruler .seg { font-size:.62rem; }
+  }
+</style>
+</head>
+<body>
+
+<a href="/tools.html" class="home-btn">🏠 <span class="en">Home</span><span class="zh">主页</span></a>
+
+<div class="hd">
+  <div class="ic">🦅🎯</div>
+  <h1><span class="en">T30: Iron Condor Delta Cheat-Sheet</span><span class="zh">T30：铁鹰 Delta 速查表</span></h1>
+  <p><span class="en">Which delta should you sell the short put (and short call) at? A quick reference for picking short strikes — plus how to turn on the Delta column in IBKR and what to do when you can't find an exact 0.25.</span><span class="zh">短腿认沽（及认购）该卖在哪个 delta？挑选短腿行使价的快速参考——附上如何在 IBKR 打开 Delta 栏，以及找不到刚好 0.25 时该怎么办。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> Educational reference written for Paul's own learning. Options carry real risk of loss — verify delta, IV rank, liquidity and earnings dates on your own broker's platform before trading.</span><span class="zh"><b>非投资建议。</b>本页为教育性质的学习参考。期权交易存在真实亏损风险——下单前请在你自己的券商平台核实 delta、IV 排名、流动性与财报日期。</span>
+  </div>
+
+  <div class="big-answer">
+    <div class="lbl"><span class="en">Best all-round short-leg delta</span><span class="zh">短腿最佳通用 delta</span></div>
+    <div class="val">~0.16 <span style="font-size:1rem;color:rgba(255,255,255,.6)">(0.16–0.20)</span></div>
+    <div class="sub"><span class="en">The "1 standard deviation" strike — the classic Iron Condor default. Balanced premium vs. ~80% win rate. <b style="color:#fca5a5">0.25 is the aggressive end</b> — more premium, tested more often.</span><span class="zh">"1 个标准差"行使价——铁鹰的经典默认值。权利金与约 80% 胜率之间取得平衡。<b style="color:#fca5a5">0.25 属于激进端</b>——权利金更多，但更常被测试。</span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">First — What Delta Actually Means</span><span class="zh">先搞懂 — Delta 到底是什么</span></h2>
+    <p><span class="en"><b>Delta ≈ the probability the option finishes in-the-money.</b> A put at −0.25 delta has roughly a <b>25% chance</b> of being ITM at expiry — so about a <b>75% chance it expires worthless</b> and you keep the premium.</span><span class="zh"><b>Delta ≈ 期权到期时变为价内（ITM）的概率。</b>一个 −0.25 delta 的认沽，到期时变为价内的概率约 <b>25%</b>——也就是约 <b>75% 的概率归零</b>，你保留全部权利金。</span></p>
+    <p><span class="en"><b>Put deltas are negative</b> (−0.25), call deltas positive (+0.25). "Delta 25" just means the strike whose delta reads <b>0.25</b> (ignore the sign). Lower delta = further out-of-the-money = safer but less premium.</span><span class="zh"><b>认沽 delta 为负</b>（−0.25），认购 delta 为正（+0.25）。"Delta 25"就是 delta 读数为 <b>0.25</b> 的那个行使价（不看正负号）。delta 越低 = 越价外 = 越安全但权利金越少。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">🎯 Short-Leg Delta Bands</span><span class="zh">🎯 短腿 Delta 区间</span></h2>
+    <table class="d">
+      <thead><tr>
+        <th><span class="en">Delta</span><span class="zh">Delta</span></th>
+        <th><span class="en">Style</span><span class="zh">风格</span></th>
+        <th><span class="en">Approx. win rate</span><span class="zh">大致胜率</span></th>
+        <th><span class="en">Trade-off</span><span class="zh">取舍</span></th>
+      </tr></thead>
+      <tbody>
+        <tr class="cons">
+          <td class="delta">0.10–0.15</td>
+          <td><span class="en">Conservative</span><span class="zh">保守</span></td>
+          <td>~85–90%</td>
+          <td><span class="en">Very safe, small premium — wide range, rarely tested</span><span class="zh">很安全，权利金少——区间宽，很少被测试</span></td>
+        </tr>
+        <tr class="reco">
+          <td class="delta">0.16–0.20<span class="badge best">BEST</span></td>
+          <td><span class="en">Recommended</span><span class="zh">推荐</span></td>
+          <td>~80%</td>
+          <td><span class="en">The textbook Iron Condor — best balance of premium &amp; probability</span><span class="zh">教科书式铁鹰——权利金与概率的最佳平衡</span></td>
+        </tr>
+        <tr class="aggr">
+          <td class="delta">0.25–0.30</td>
+          <td><span class="en">Aggressive</span><span class="zh">激进</span></td>
+          <td>~70%</td>
+          <td><span class="en">More premium, but strikes sit closer &amp; get tested more often</span><span class="zh">权利金更多，但行使价更近、更常被测试</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="ruler">
+      <div class="seg s1"><span class="en">0.10–0.15<br>Safe</span><span class="zh">0.10–0.15<br>安全</span></div>
+      <div class="seg s2"><span class="en">0.16–0.20<br>★ Best</span><span class="zh">0.16–0.20<br>★ 最佳</span></div>
+      <div class="seg s3"><span class="en">0.25–0.30<br>Aggressive</span><span class="zh">0.25–0.30<br>激进</span></div>
+    </div>
+    <div class="ruler-note"><span class="en">← lower delta = safer, less premium&nbsp;&nbsp;·&nbsp;&nbsp;higher delta = more premium, more risk →</span><span class="zh">← delta 越低 = 越安全、权利金越少&nbsp;&nbsp;·&nbsp;&nbsp;delta 越高 = 权利金越多、风险越大 →</span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">⚖️ The Golden Rule — Keep It Balanced</span><span class="zh">⚖️ 黄金法则 — 保持平衡</span></h2>
+    <p><span class="en">Whatever delta you sell the <b>put</b> at, sell the <b>call</b> at the <b>same delta</b>. This centres the condor around the current price so neither side is favoured.</span><span class="zh">无论你把<b>认沽</b>卖在哪个 delta，就把<b>认购</b>卖在<b>相同的 delta</b>。这样铁鹰会以现价为中心，两侧不偏不倚。</span></p>
+    <div class="formula-grid">
+      <div class="formula"><div class="flabel"><span class="en">Balanced example</span><span class="zh">平衡示例</span></div><div class="fval">Short Put −0.16&nbsp;&nbsp;/&nbsp;&nbsp;Short Call +0.16</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">🤷 If You Can't Find Exactly 0.25</span><span class="zh">🤷 如果找不到刚好 0.25</span></h2>
+    <p><span class="en"><b>Never force it — take the nearest delta.</b> Strikes only come in fixed steps (e.g. $1 apart), so you rarely land on an exact number. Pick the strike whose delta is <b>closest to your target</b>.</span><span class="zh"><b>不要勉强——取最接近的 delta。</b>行使价只有固定间距（例如相差 $1），所以很难刚好命中某个数值。挑选 delta <b>最接近目标</b>的那个行使价即可。</span></p>
+    <p><span class="en">Example from Paul's QQQ chain (Aug 28 expiry): the puts read −0.247 at strike <b>669</b> and −0.251 at strike <b>670</b>. Both are effectively "delta 25" — either one works.</span><span class="zh">以 Paul 的 QQQ 期权链为例（8 月 28 日到期）：认沽在行使价 <b>669</b> 读数 −0.247，在 <b>670</b> 读数 −0.251。两者实际上都是"delta 25"——任选其一都行。</span></p>
+  </div>
+
+  <div class="card steps">
+    <h2><span class="en">📱 How to Show Delta in IBKR (Mobile)</span><span class="zh">📱 如何在 IBKR（手机版）显示 Delta</span></h2>
+    <ol>
+      <li><span class="en">Open the stock → <b>Options</b> tab (the CALLS · STRIKE · PUTS chain).</span><span class="zh">打开股票 → <b>Options</b> 标签（CALLS · STRIKE · PUTS 期权链）。</span></li>
+      <li><span class="en">Tap the blue <b>sliders icon</b> on the left, next to the expiry-date row.</span><span class="zh">点击左侧到期日期一行旁边的蓝色<b>滑块图标</b>。</span></li>
+      <li><span class="en">In <b>Options Settings</b>, scroll down and tap <b>Manage Columns</b>.</span><span class="zh">在 <b>Options Settings</b> 里向下滑，点击 <b>Manage Columns</b>。</span></li>
+      <li><span class="en">Tap the blue <b>⊕</b> next to <b>Delta</b> → back → <b>Done</b>.</span><span class="zh">点击 <b>Delta</b> 旁边的蓝色 <b>⊕</b> → 返回 → <b>Done</b>。</span></li>
+      <li><span class="en">Back on the chain, scroll the <b>puts</b> down (strikes below the price) and find the one closest to <b>−0.25</b>.</span><span class="zh">回到期权链，向下滑动<b>认沽</b>（低于现价的行使价），找到最接近 <b>−0.25</b> 的那一个。</span></li>
+    </ol>
+    <p style="margin-top:10px"><span class="en"><b>Note:</b> Delta is <b>not</b> in the "Manage Metrics" menu (that's for the quote/watchlist stats) — it's inside the option chain's own <b>Manage Columns</b>.</span><span class="zh"><b>注意：</b>Delta <b>不</b>在"Manage Metrics"菜单里（那是行情/自选股统计用的）——它在期权链自己的 <b>Manage Columns</b> 里。</span></p>
+  </div>
+
+  <div class="card checklist">
+    <h2><span class="en">✅ Quick Recap</span><span class="zh">✅ 快速回顾</span></h2>
+    <ul>
+      <li><b><span class="en">Best default:</span><span class="zh">最佳默认：</span></b> <span class="en">sell short strikes at ~0.16 delta</span><span class="zh">短腿卖在约 0.16 delta</span></li>
+      <li><b><span class="en">Want more premium?</span><span class="zh">想多收权利金？</span></b> <span class="en">go up to 0.25–0.30 — but expect it tested more often</span><span class="zh">可加大到 0.25–0.30——但要预期更常被测试</span></li>
+      <li><b><span class="en">Want more safety?</span><span class="zh">想更安全？</span></b> <span class="en">drop to 0.10–0.15 — less premium, wider range</span><span class="zh">降到 0.10–0.15——权利金少，区间更宽</span></li>
+      <li><b><span class="en">Always:</span><span class="zh">务必：</span></b> <span class="en">match put delta = call delta</span><span class="zh">让认沽 delta = 认购 delta</span></li>
+      <li><b><span class="en">Can't hit it exactly?</span><span class="zh">无法刚好命中？</span></b> <span class="en">pick the nearest strike — don't force it</span><span class="zh">选最接近的行使价——不要勉强</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">🔗 Related Iron Condor Tools</span><span class="zh">🔗 相关铁鹰工具</span></h2>
+    <div class="rel">
+      <a href="T23-IronCondor-Guide.html"><span class="ri">📘</span><span class="rt"><span class="en">T23: 4-Leg Iron Condor — Full Trading Guide</span><span class="zh">T23：四腿铁鹰完整交易指南</span></span><span class="ra">→</span></a>
+      <a href="T21-IronCondor-Screener.html"><span class="ri">🦅</span><span class="rt"><span class="en">T21: Iron Condor Stock Screener</span><span class="zh">T21：铁鹰选股清单</span></span><span class="ra">→</span></a>
+      <a href="T22-IronCondor-Bands.html"><span class="ri">📐</span><span class="rt"><span class="en">T22: Support &amp; Resistance Band Calculator</span><span class="zh">T22：支撑与阻力区间计算器</span></span><span class="ra">→</span></a>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="en">Educational reference · Last reviewed 16 Jul 2026</span><span class="zh">教育性参考 · 最后更新于 2026年7月16日</span><br>
+    <a href="options.html">📚 <span class="en">Iron Condor Knowledge Base</span><span class="zh">铁鹰策略知识库</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+</body>
+</html>
