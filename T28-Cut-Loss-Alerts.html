@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T28: Cut-Loss Alerts</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#7a1d1d); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.5rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:560px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:680px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:20px; }
+  .refresh-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:18px; }
+  .refresh-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); color:#fff; font-weight:700; padding:7px 18px; border-radius:20px; cursor:pointer; font-size:.8rem; }
+  .refresh-btn:active { transform:scale(.96); }
+  .live-ts { font-size:.72rem; color:rgba(255,255,255,.45); }
+
+  .stock { background:#1a1f3d; border:1px solid #2a3158; border-radius:16px; padding:18px; margin-bottom:16px; }
+  .st-top { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; }
+  .st-sym { font-size:1.05rem; font-weight:800; }
+  .st-name { font-size:.72rem; color:rgba(255,255,255,.5); margin-top:2px; }
+  .st-price { text-align:right; }
+  .st-price .p { font-size:1.4rem; font-weight:800; }
+  .st-price .c { font-size:.75rem; font-weight:700; }
+  .c.up { color:#10b981; } .c.down { color:#ef4444; }
+
+  .badge { display:inline-block; font-size:.72rem; font-weight:800; padding:4px 12px; border-radius:20px; letter-spacing:.03em; white-space:nowrap; }
+  .badge.safe { background:rgba(16,185,129,.18); color:#34d399; border:1px solid rgba(16,185,129,.5); }
+  .badge.warn { background:rgba(244,165,0,.18); color:#fbbf24; border:1px solid rgba(244,165,0,.5); }
+  .badge.cut  { background:rgba(239,68,68,.2); color:#f87171; border:1px solid rgba(239,68,68,.55); }
+  .badge.wait { background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.2); }
+
+  .bandbar { position:relative; height:12px; border-radius:8px; margin:16px 0 8px; background:linear-gradient(90deg,#ef4444 0%,#ef4444 14%,#10b981 20%,#10b981 80%,#ef4444 86%,#ef4444 100%); }
+  .marker { position:absolute; top:-6px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:11px solid #fff; transform:translateX(-50%); filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); transition:left .4s ease; }
+  .band-labels { display:flex; justify-content:space-between; font-size:.72rem; margin-top:2px; }
+  .band-labels .lo { color:#f87171; font-weight:700; }
+  .band-labels .hi { color:#f87171; font-weight:700; }
+
+  .thresh { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .th { background:rgba(255,255,255,.05); border-radius:10px; padding:10px 12px; text-align:center; }
+  .th .tl { font-size:.66rem; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.03em; }
+  .th .tv { font-size:1rem; font-weight:800; margin-top:3px; }
+  .th .td { font-size:.7rem; margin-top:3px; color:rgba(255,255,255,.55); }
+  .th.low .tv { color:#f87171; } .th.high .tv { color:#f87171; }
+
+  .note { font-size:.78rem; color:rgba(255,255,255,.6); margin-top:12px; line-height:1.5; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">🚨📉</div>
+  <h1><span class="en">T28: Cut-Loss Alerts</span><span class="zh">T28：止损警报</span></h1>
+  <p><span class="en">My cut-loss price levels for QQQ, NVDA &amp; AVGO — live price checked against each band. Green = safe, red = cut loss triggered.</span><span class="zh">QQQ、NVDA 与 AVGO 的止损价位 — 实时价格对照每个区间。绿色＝安全，红色＝触发止损。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> My own cut-loss tracker. Live price is delayed/approximate via Yahoo Finance and may be unavailable when the market is closed. Always confirm on my broker before acting.</span><span class="zh"><b>非投资建议。</b>这是我自己的止损记录。实时价格来自雅虎财经，可能有延迟或在休市时无法获取。行动前请务必在券商确认。</span>
+  </div>
+
+  <div class="refresh-row">
+    <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
+    <span class="live-ts" id="liveTs"></span>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="foot">
+    <span class="en">Live price via Yahoo Finance · Thresholds set by Paul</span><span class="zh">实时价格来自雅虎财经 · 止损价位由 Paul 设定</span><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+
+  <script src="/view-counter.js"></script>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href, title=document.title;
+  if(navigator.share){ navigator.share({title:title,url:url}).catch(function(){}); }
+  else { navigator.clipboard.writeText(url).then(function(){
+    var t=document.getElementById('shareToast'); t.style.display='block';
+    setTimeout(function(){t.style.display='none';},2200); }); }
+}
+
+// Paul's cut-loss thresholds: break BELOW low OR ABOVE high => cut loss.
+var STOCKS = [
+  { sym:'QQQ',  name:'Invesco QQQ Trust',      low:678, high:748 },
+  { sym:'NVDA', name:'Nvidia Corporation',     low:192, high:232 },
+  { sym:'AVGO', name:'Broadcom Inc.',          low:345, high:434 }
+];
+
+function fmt(n){ return '$' + n.toFixed(2); }
+
+function fetchQuote(symbol){
+  var url='https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?interval=1d&range=5d';
+  return fetch(url).then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(d){
+      var meta=d&&d.chart&&d.chart.result&&d.chart.result[0]&&d.chart.result[0].meta;
+      if(!meta||typeof meta.regularMarketPrice!=='number') throw new Error('no meta');
+      return meta;
+    });
+}
+
+function statusFor(price, s){
+  if(price===null) return { cls:'wait', en:'Waiting for price', zh:'等待价格' };
+  if(price <= s.low)  return { cls:'cut',  en:'⛔ CUT LOSS — below '+fmt(s.low), zh:'⛔ 止损 — 跌破 '+fmt(s.low) };
+  if(price >= s.high) return { cls:'cut',  en:'⛔ CUT LOSS — above '+fmt(s.high), zh:'⛔ 止损 — 突破 '+fmt(s.high) };
+  var span=s.high-s.low, nearLo=(price-s.low)/span, nearHi=(s.high-price)/span;
+  if(nearLo<0.10) return { cls:'warn', en:'⚠️ Near low cut-loss', zh:'⚠️ 接近下限止损' };
+  if(nearHi<0.10) return { cls:'warn', en:'⚠️ Near high cut-loss', zh:'⚠️ 接近上限止损' };
+  return { cls:'safe', en:'✅ Safe — inside band', zh:'✅ 安全 — 区间内' };
+}
+
+function render(){
+  var wrap=document.getElementById('cards'); wrap.innerHTML='';
+  STOCKS.forEach(function(s){
+    var price = (typeof s.price==='number') ? s.price : null;
+    var st = statusFor(price, s);
+    var pctPos = price===null ? 50 : Math.max(2, Math.min(98, ((price-s.low)/(s.high-s.low))*100));
+
+    var chgHtml='';
+    if(price!==null && typeof s.prev==='number' && s.prev>0){
+      var diff=price-s.prev, pct=diff/s.prev*100, up=diff>=0;
+      chgHtml='<div class="c '+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</div>';
+    }
+
+    var loDist = price===null ? '' : (price>s.low ? ((price-s.low)/price*100).toFixed(1)+'% <span class="en">above</span><span class="zh">以上</span>' : '<span class="en">breached</span><span class="zh">已跌破</span>');
+    var hiDist = price===null ? '' : (price<s.high ? ((s.high-price)/price*100).toFixed(1)+'% <span class="en">below</span><span class="zh">以下</span>' : '<span class="en">breached</span><span class="zh">已突破</span>');
+
+    var el=document.createElement('div');
+    el.className='stock';
+    el.innerHTML=
+      '<div class="st-top">'+
+        '<div><div class="st-sym">'+s.sym+'</div><div class="st-name">'+s.name+'</div></div>'+
+        '<div style="text-align:center;"><span class="badge '+st.cls+'"><span class="en">'+st.en+'</span><span class="zh">'+st.zh+'</span></span></div>'+
+        '<div class="st-price"><div class="p">'+(price===null?'—':fmt(price))+'</div>'+chgHtml+'</div>'+
+      '</div>'+
+      '<div class="bandbar"><div class="marker" style="left:'+pctPos+'%;"></div></div>'+
+      '<div class="band-labels"><span class="lo">'+fmt(s.low)+'</span><span style="color:rgba(255,255,255,.45);"><span class="en">safe band</span><span class="zh">安全区间</span></span><span class="hi">'+fmt(s.high)+'</span></div>'+
+      '<div class="thresh">'+
+        '<div class="th low"><div class="tl"><span class="en">Cut loss if below</span><span class="zh">跌破止损</span></div><div class="tv">'+fmt(s.low)+'</div><div class="td">'+loDist+'</div></div>'+
+        '<div class="th high"><div class="tl"><span class="en">Cut loss if above</span><span class="zh">突破止损</span></div><div class="tv">'+fmt(s.high)+'</div><div class="td">'+hiDist+'</div></div>'+
+      '</div>';
+    wrap.appendChild(el);
+  });
+}
+
+function loadAll(){
+  render();
+  STOCKS.forEach(function(s){
+    fetchQuote(s.sym).then(function(meta){
+      s.price=meta.regularMarketPrice;
+      s.prev=meta.chartPreviousClose||meta.previousClose;
+      render();
+      stamp();
+    }).catch(function(){ /* leave as — */ stamp(); });
+  });
+}
+
+function stamp(){
+  var now=new Date(), t=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('liveTs').innerHTML='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
+}
+
+loadAll();
+</script>
+
+<script src="/bilingual.js"></script>
+</body>
+</html>
