@@ -142,6 +142,39 @@
     margin-top: 3px;
   }
 
+  /* SHARE BUTTON */
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.45);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 11px 26px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    margin-top: 6px;
+    transition: background 0.2s;
+  }
+  .share-btn:hover { background: rgba(255,255,255,0.28); }
+  .share-toast {
+    display: none;
+    position: fixed;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    background: #1a2e1a;
+    color: #fff;
+    padding: 11px 26px;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
   /* COUNTDOWN BANNER */
   .countdown-banner {
     background: var(--green);
@@ -873,7 +906,11 @@
       <div class="lbl">2026</div>
     </div>
   </div>
+  <div style="margin-top:22px;">
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share this trip</span><span class="zh">分享此行程</span></button>
+  </div>
 </section>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
 
 <!-- COUNTDOWN BANNER -->
 <div class="countdown-banner" id="countdownBanner">
@@ -1335,6 +1372,22 @@
   }
   updateCountdown();
   setInterval(updateCountdown, 60000);
+
+  // ---- Share ----
+  function shareThisPage() {
+    var url = window.location.href;
+    var title = document.title;
+    if (navigator.share) {
+      navigator.share({ title: title, url: url }).catch(function () {});
+    } else {
+      navigator.clipboard.writeText(url).then(function () {
+        var t = document.getElementById('shareToast');
+        t.style.display = 'block';
+        setTimeout(function () { t.style.display = 'none'; }, 2200);
+      });
+    }
+  }
+  window.shareThisPage = shareThisPage;
 
   // ---- Tab bar active highlight ----
   (function () {
