@@ -73,6 +73,26 @@
   @media(max-width:560px){ .metrics{grid-template-columns:repeat(2,1fr);} }
 
   .note { font-size:.72rem; color:#8b98a5; margin:18px 0; padding:12px; background:#161b22; border-radius:10px; border:1px solid rgba(255,255,255,.06); }
+
+  /* Tabs */
+  .tabs { display:flex; gap:6px; margin:22px 0 4px; }
+  .tab-btn { flex:1; background:#161b22; border:1px solid rgba(255,255,255,.1); color:#9fb3c8; font-size:.82rem; font-weight:700; padding:11px 8px; border-radius:11px; cursor:pointer; }
+  .tab-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
+
+  /* Analysis */
+  .verdict { background:linear-gradient(135deg,rgba(63,185,80,.12),rgba(245,158,11,.10)); border:1px solid rgba(245,158,11,.3); border-radius:14px; padding:15px; margin:14px 0; font-size:.86rem; }
+  .verdict b { color:#f5c869; }
+  .warn { background:rgba(248,81,73,.08); border:1px solid rgba(248,81,73,.35); border-radius:14px; padding:15px; margin:14px 0; font-size:.82rem; }
+  .warn h3 { color:#f85149; font-size:.95rem; margin-bottom:8px; }
+  .good { background:rgba(63,185,80,.07); border:1px solid rgba(63,185,80,.3); border-radius:14px; padding:15px; margin:14px 0; font-size:.82rem; }
+  .good h3 { color:#3fb950; font-size:.95rem; margin-bottom:8px; }
+  .abox { background:#161b22; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:15px; margin:14px 0; font-size:.82rem; }
+  .abox h3 { color:#e6edf3; font-size:.95rem; margin-bottom:8px; }
+  .analysis ul { margin:6px 0 0 18px; } .analysis li { margin:5px 0; color:#c9d1d9; }
+  table.suit { width:100%; border-collapse:collapse; margin-top:10px; font-size:.76rem; }
+  table.suit th { text-align:left; color:#8b98a5; font-size:.62rem; text-transform:uppercase; padding:6px 5px; border-bottom:1px solid rgba(255,255,255,.1); }
+  table.suit td { padding:7px 5px; border-bottom:1px solid rgba(255,255,255,.05); color:#c9d1d9; }
+  table.suit td b { color:#e6edf3; }
   footer { text-align:center; color:#6b7684; font-size:.72rem; padding:30px 14px 10px; }
 </style>
 </head>
@@ -94,6 +114,12 @@
 
 <div class="wrap">
 
+  <div class="tabs">
+    <button class="tab-btn active" id="tb-pos" onclick="setTab('positions')">📊 <span class="en">Positions</span><span class="zh">持仓</span></button>
+    <button class="tab-btn" id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">Risk Analysis</span><span class="zh">风险分析</span></button>
+  </div>
+
+  <div id="tab-positions">
   <div class="summary">
     <div class="box"><div class="k"><span class="en">Total Credit</span><span class="zh">总收权利金</span></div><div class="v green">+$1,384</div></div>
     <div class="box"><div class="k"><span class="en">Total Max Risk</span><span class="zh">总最大风险</span></div><div class="v red">−$1,616</div></div>
@@ -208,6 +234,63 @@
     <span class="en"><b>Break-evens</b> — NVDA: 192.85 / 232.15 · QQQ: 677.41 / 747.59 · AVGO: 345.25 / 434.75 · SMH: 510.65 / 654.35. Between each pair the position is profitable at expiry. Commissions (~$4/leg set) are not deducted from the credit figures above.</span>
     <span class="zh"><b>保本点</b> — NVDA：192.85 / 232.15 · QQQ：677.41 / 747.59 · AVGO：345.25 / 434.75 · SMH：510.65 / 654.35。到期时股价处于每对之间即盈利。以上权利金未扣除佣金（每组约4美元）。</span>
   </div>
+  </div><!-- /tab-positions -->
+
+  <div id="tab-analysis" class="analysis" style="display:none">
+
+    <div class="verdict">
+      <span class="en"><b>Verdict:</b> The individual condors are well-built — right strategy, strikes sized to each name's volatility, rich credit (43–52% of wing width vs the textbook ~33%). The catch: <b>all four are essentially the same trade.</b> Treat this as ONE semiconductor bet, not four diversified ones.</span>
+      <span class="zh"><b>结论：</b>单个铁鹰构建得很好——策略正确、行权价按各标的波动率设置、权利金丰厚（占价差宽度43–52%，教科书约33%）。问题在于：<b>四个本质上是同一笔交易。</b>应视为一个半导体方向的赌注，而非四个分散的仓位。</span>
+    </div>
+
+    <div class="good">
+      <h3>✅ <span class="en">Why the setups are sound</span><span class="zh">为何这些设置合理</span></h3>
+      <ul>
+        <li><span class="en"><b>Rich credit</b> — collecting 43–52% of the wing width. Textbook ICs aim for ~33%. High tech IV pays you well to sell the range.</span><span class="zh"><b>权利金丰厚</b>——收取价差宽度的43–52%，教科书目标约33%。科技股高波动率让你卖出区间获利颇丰。</span></li>
+        <li><span class="en"><b>Wings scale to volatility</b> — tight cushion on calm QQQ (±4.6%), wide on jumpy NVDA/AVGO (±8–10%). Strikes matched to expected move — the right instinct.</span><span class="zh"><b>翼宽随波动率调整</b>——平静的QQQ缓冲较窄（±4.6%），波动大的NVDA/AVGO较宽（±8–10%）。行权价匹配预期波动——思路正确。</span></li>
+        <li><span class="en"><b>36–43 DTE</b> — the sweet spot for time decay without constant babysitting.</span><span class="zh"><b>36–43天到期</b>——时间衰减的最佳区间，无需频繁盯盘。</span></li>
+      </ul>
+    </div>
+
+    <div class="abox">
+      <h3><span class="en">IC-suitability, one at a time</span><span class="zh">逐个评估铁鹰适用性</span></h3>
+      <table class="suit">
+        <tr><th></th><th><span class="en">Cushion</span><span class="zh">缓冲</span></th><th><span class="en">Credit/width</span><span class="zh">权利金/宽度</span></th><th><span class="en">Verdict</span><span class="zh">评价</span></th></tr>
+        <tr><td><b>QQQ</b></td><td>±4.6%</td><td>52% ⭐</td><td><span class="en">Best — ETF, low gap risk</span><span class="zh">最佳——ETF，跳空风险低</span></td></tr>
+        <tr><td><b>SMH</b></td><td>±11.6%</td><td>43%</td><td><span class="en">Good — ETF, wide cushion</span><span class="zh">良好——ETF，缓冲宽</span></td></tr>
+        <tr><td><b>NVDA</b></td><td>±8.2%</td><td>43%</td><td><span class="en">OK — single name</span><span class="zh">尚可——单一个股</span></td></tr>
+        <tr><td><b>AVGO</b></td><td>±10.3%</td><td>48%</td><td><span class="en">OK — single name</span><span class="zh">尚可——单一个股</span></td></tr>
+      </table>
+    </div>
+
+    <div class="warn">
+      <h3>⚠️ <span class="en">Biggest issue: these 4 are the SAME trade</span><span class="zh">最大问题：这4个是同一笔交易</span></h3>
+      <ul>
+        <li><span class="en"><b>SMH</b> <i>is</i> the semiconductor ETF. <b>NVDA + AVGO</b> are its two largest holdings. <b>QQQ</b> is ~50% the same tech/semis.</span><span class="zh"><b>SMH</b>就是半导体ETF。<b>NVDA+AVGO</b>是它的两大持仓。<b>QQQ</b>约50%是相同的科技/半导体。</span></li>
+        <li><span class="en">So this isn't 4 diversified condors — it's <b>~4x one view: "chips stay flat for 5–6 weeks."</b></span><span class="zh">所以这不是4个分散的铁鹰——而是<b>约4倍押注同一观点："芯片股未来5–6周保持横盘"。</b></span></li>
+        <li><span class="en">A big semiconductor move <b>either direction</b> tests all four at once. Your $1,616 max risk is <b>correlated</b>, not spread across independent bets.</span><span class="zh">半导体<b>任一方向</b>的大幅波动会同时冲击全部四个。你的1,616美元最大风险是<b>高度相关的</b>，并未分散到独立仓位。</span></li>
+      </ul>
+    </div>
+
+    <div class="warn">
+      <h3>⚠️ <span class="en">Second risk: earnings before expiry</span><span class="zh">第二风险：到期前财报</span></h3>
+      <span class="en"><b>NVDA</b> and <b>AVGO</b> are single stocks — one earnings gap can blow through the wings. Confirm NVDA's late-Aug report falls <i>after</i> the Aug 21 expiry, and AVGO's Sept report falls after Aug 28. ETFs (QQQ/SMH) have no single-name earnings risk — the safer two.</span>
+      <span class="zh"><b>NVDA</b>和<b>AVGO</b>是个股——一次财报跳空就可能击穿翼宽。请确认NVDA的8月底财报在8月21日到期<i>之后</i>，AVGO的9月财报在8月28日之后。ETF（QQQ/SMH）无个股财报风险——较安全的两个。</span>
+    </div>
+
+    <div class="abox">
+      <h3><span class="en">Bottom line</span><span class="zh">总结</span></h3>
+      <ul>
+        <li><span class="en"><b>Right strategy, right strike-sizing, rich credit</b> — the craft is good.</span><span class="zh"><b>策略正确、行权价设置合理、权利金丰厚</b>——技术层面做得好。</span></li>
+        <li><span class="en"><b>Don't treat as diversified.</b> Size the whole thing as one semiconductor bet, because it is.</span><span class="zh"><b>不要当作分散仓位。</b>把整体作为一个半导体赌注来控制仓位，因为它就是。</span></li>
+        <li><span class="en"><b>For real diversification</b>, swap one or two for an uncorrelated underlying — an index (SPX/IWM) or a non-tech name (energy, financials, gold).</span><span class="zh"><b>若想真正分散</b>，把一两个换成不相关的标的——指数（SPX/IWM）或非科技名（能源、金融、黄金）。</span></li>
+        <li><span class="en"><b>Do before expiry week:</b> confirm NVDA &amp; AVGO earnings dates fall outside your expiries.</span><span class="zh"><b>到期周前务必：</b>确认NVDA与AVGO财报日期在到期日之外。</span></li>
+      </ul>
+    </div>
+
+    <div class="note"><span class="en">Educational analysis of your own trades — not financial advice. Cushion % is distance from the mid-point to each short strike; credit/width is net credit ÷ wing width.</span><span class="zh">对你自己交易的教育性分析——非投资建议。缓冲%为中点到卖出行权价的距离；权利金/宽度为净权利金÷翼宽。</span></div>
+
+  </div><!-- /tab-analysis -->
 
   <footer><span class="en">Paul's World · Options Breadboard · updated 16 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月16日</span></footer>
 </div>
@@ -221,6 +304,15 @@ function setLang(l){
   document.getElementById('btn-zh').classList.toggle('active', l==='zh');
 }
 setLang('en');
+
+// Tabs
+function setTab(t){
+  document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
+  document.getElementById('tab-analysis').style.display = t==='analysis'?'':'none';
+  document.getElementById('tb-pos').classList.toggle('active', t==='positions');
+  document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
+  window.scrollTo(0,0);
+}
 
 // Share
 function shareThisPage(){
