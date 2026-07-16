@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health &amp; Wellness – Paul's World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --teal:#10b981; --teal-dark:#065f46; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: #f0fdf4; color: #0d1117; line-height: 1.6;
+  }
+  .zh { display: none; }
+  body.zh-on .en { display: none; }
+  body.zh-on .zh { display: inline; }
+  body.zh-on .zh-block { display: block; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; padding: 14px 18px; max-width: 820px; margin: 0 auto;
+  }
+  .home-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fff; border: 1.5px solid #a7f3d0; color: var(--teal-dark);
+    font-weight: 700; padding: 8px 16px; border-radius: 30px;
+    text-decoration: none; font-size: .9rem;
+  }
+  .lang-toggle button {
+    border: 1.5px solid #a7f3d0; background: #fff; color: var(--teal-dark);
+    font-weight: 700; padding: 7px 13px; border-radius: 30px; cursor: pointer;
+    font-size: .85rem; margin-left: 4px;
+  }
+  .lang-toggle button.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+  .hero {
+    max-width: 820px; margin: 6px auto 0; padding: 30px 22px 26px;
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-left: 6px solid var(--teal); border-radius: 18px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    margin: 0 0 8px; font-size: 2rem; color: var(--teal-dark);
+  }
+  .hero p { margin: 0; color: #047857; font-size: 1.02rem; }
+  .share-btn {
+    display: inline-block; margin-top: 16px;
+    background: var(--teal); border: none; color: #fff;
+    font-weight: 700; padding: 10px 24px; border-radius: 30px; cursor: pointer;
+    font-size: .95rem; font-family: inherit;
+  }
+  .share-toast {
+    display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+    font-size: .9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
+
+  .list-wrap { max-width: 820px; margin: 20px auto 40px; padding: 0 18px; }
+  #health-list { list-style: none; margin: 0; padding: 0; }
+  #health-list li { border-bottom: 1px solid #d1fae5; }
+  #health-list li a {
+    display: block; padding: 18px 8px; text-decoration: none;
+    color: var(--teal-dark); font-size: 1.18rem; font-weight: 600;
+    transition: background .15s;
+  }
+  #health-list li a:hover { background: #ecfdf5; }
+  .count { color: #047857; font-size: .9rem; font-weight: 600; padding: 4px 2px; }
+
+  footer {
+    text-align: center; padding: 26px 18px 40px; color: #6b7280; font-size: .85rem;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="home-btn" href="https://paulsworld.vercel.app/">&#x1F3E0; <span class="en">Home</span><span class="zh">首页</span></a>
+    <div class="lang-toggle">
+      <button id="btn-en" class="active" onclick="setLang('en')">&#x1F1EC;&#x1F1E7; English</button>
+      <button id="btn-zh" onclick="setLang('zh')">&#x1F1E8;&#x1F1F3; 中文</button>
+    </div>
+  </div>
+
+  <section class="hero">
+    <h1>&#x1FA7A; <span class="en">Health &amp; Wellness</span><span class="zh">健康与养生</span></h1>
+    <p><span class="en">My personal health journey — tests, trackers, habits, and what I've learned about staying well in my 70s.</span><span class="zh">我的个人健康之旅 — 检查、追踪记录、习惯，以及关于70岁后保持健康的心得。</span></p>
+    <button class="share-btn" onclick="shareThisPage()">&#x1F517; <span class="en">Share</span><span class="zh">分享</span></button>
+  </section>
+
+  <div class="list-wrap">
+    <div class="count" id="health-status">Loading…</div>
+    <ul id="health-list"></ul>
+  </div>
+
+  <div class="share-toast" id="shareToast">&#x2705; Link copied!</div>
+
+  <script src="/view-counter.js"></script>
+  <footer>
+    <span class="en">&copy; Paul's World — Health &amp; Wellness</span><span class="zh">&copy; Paul的世界 — 健康与养生</span>
+  </footer>
+
+<script>
+  function setLang(l){
+    document.body.classList.toggle('zh-on', l === 'zh');
+    document.getElementById('btn-en').classList.toggle('active', l === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', l === 'zh');
+  }
+
+  function shareThisPage(){
+    var url = window.location.href, title = document.title;
+    if (navigator.share) { navigator.share({title:title, url:url}).catch(function(){}); }
+    else {
+      navigator.clipboard.writeText(url).then(function(){
+        var t = document.getElementById('shareToast');
+        t.style.display = 'block';
+        setTimeout(function(){ t.style.display = 'none'; }, 2200);
+      });
+    }
+  }
+
+  // Chinese titles (fallback to English if not listed)
+  var zhTitles = {
+    'h01':'h01：我的肠镜检查之旅 — 亡羊补牢，为时未晚',
+    'h02':'h02：胆固醇追踪器',
+    'h03':'h03：启发我下一个十年的那张照片',
+    'h04':'h04：我的步行习惯',
+    'h05':'h05：我的血压之旅',
+    'h06':'h06：Joanne的血液检查报告 — 2026年6月23日',
+    'h08':'h08：我的不适追踪记录',
+    'h09':'h09：我的身体每天如何对抗癌症',
+    'h10':'h10：我的15K步挑战',
+    'h11':'h11：我的体重管理追踪',
+    'h12':'h12：为什么听到高速列车驶过我会感到害怕？',
+    'h13':'h13：为什么长时间开车后我的心跳会加快？',
+    'h14':'h14：我现在每天使用的两款日本药妆好物',
+    'h15':'h15：5种平息炎症的食物'
+  };
+
+  function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+
+  async function getTitle(filename){
+    try {
+      var res = await fetch(filename);
+      if (!res.ok) return null;
+      var html = await res.text();
+      var m = html.match(/<title>(.*?)<\/title>/i);
+      return m ? m[1].trim() : filename;
+    } catch(e){ return null; }
+  }
+
+  (async function loadHealth(){
+    var MAX = 15, SKIP = ['h07.html'];
+    var list = document.getElementById('health-list');
+    var status = document.getElementById('health-status');
+    var found = 0;
+    for (var i = 1; i <= MAX; i++){
+      var key = 'h' + pad2(i);
+      var filename = key + '.html';
+      if (SKIP.indexOf(filename) !== -1) continue;
+      var title = await getTitle(filename);
+      if (title === null) continue;
+      var en = title.replace(/\s*[–-]\s*Paul's World\s*$/i, '').trim();
+      found++;
+      var li = document.createElement('li');
+      var a = document.createElement('a');
+      a.href = filename;
+      var eSpan = document.createElement('span'); eSpan.className = 'en'; eSpan.textContent = en;
+      var zSpan = document.createElement('span'); zSpan.className = 'zh'; zSpan.textContent = zhTitles[key] || en;
+      a.appendChild(eSpan); a.appendChild(zSpan);
+      li.appendChild(a); list.appendChild(li);
+    }
+    status.innerHTML = found > 0
+      ? '<span class="en">' + found + ' found</span><span class="zh">共' + found + '篇</span>'
+      : '<span class="en">None yet</span><span class="zh">尚无内容</span>';
+  })();
+</script>
+</body>
+</html>
