@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Niseko Day 11 — 17 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.header {
+  padding: 56px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #1a1208);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-media { position: relative; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-media-note { background: linear-gradient(135deg, #1a1208, #241a0d); display: flex; align-items: center; justify-content: center; padding: 30px 0; cursor: default; }
+.pj-note-icon { font-size: 2.6em; }
+.pj-date { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.6); color: #f4c869; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 6px; }
+.pj-play-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,0.15); pointer-events: none; }
+.pj-play-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.85); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+.pj-play-text { background: rgba(0,0,0,0.6); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 12px; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* NO GPS NOTE */
+.gps-note { font-size: 0.78em; color: #8b949e; margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #f0a500; line-height: 1.6; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.97);
+  z-index: 10000; align-items: center; justify-content: center;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.lightbox-caption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0) 100%);
+  color: #eee; font-size: 0.88rem; text-align: center; font-style: italic;
+  padding: 60px 16px 22px;
+}
+.lightbox-close { position: absolute; top: 18px; right: 22px; z-index: 2; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+
+/* EMBEDDED ANIMATED MAP — normal-sized, car drives continuously along the route */
+.map-fullscreen-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.82em; font-weight: 700;
+  padding: 9px 16px; border-radius: 18px; cursor: pointer;
+  margin: 0 0 10px; width: 100%;
+}
+.map-wrap { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#map { width: 100%; height: 58vh; }
+#map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border-radius: 0 !important;
+}
+.map-wrap.map-fullscreen-wrap { border-radius: 0; border: none; }
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
+}
+.controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-top: none;
+}
+#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+#timeLabel { font-weight: 700; color: #58a6ff; }
+.play-btn {
+  background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+  color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap;
+}
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-top: 8px; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
+}
+.legend {
+  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+.popup-card { font-family: -apple-system, system-ui, sans-serif; }
+.popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
+</style>
+<script src="/bilingual.js"></script>
+<style>
+.ja{display:none!important}
+body.lang-ja .ja{display:inline!important}
+body.lang-ja .zh{display:none!important}
+body.lang-ja .en{display:none!important}
+.ja-block{display:none!important}
+body.lang-ja .ja-block{display:block!important}
+body.lang-ja .en-block{display:none!important}
+</style>
+<script>
+(function(){
+  function setLang3(lang){
+    document.body.classList.remove('lang-zh','lang-ja');
+    if(lang==='zh') document.body.classList.add('lang-zh');
+    if(lang==='ja') document.body.classList.add('lang-ja');
+    document.querySelectorAll('.pw-lang-btn').forEach(function(btn,i){
+      btn.classList.toggle('active',(lang==='en'&&i===0)||(lang==='zh'&&i===1)||(lang==='ja'&&i===2));
+    });
+    try{ localStorage.setItem('pw-lang', lang); }catch(e){}
+  }
+  window.setLang = setLang3;
+  function addJaButton(){
+    var wrap = document.querySelector('.pw-lang-toggle');
+    if(!wrap || wrap.querySelector('.pw-lang-ja-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'pw-lang-btn pw-lang-ja-btn';
+    btn.innerHTML = '&#x1F1EF;&#x1F1F5; 日本語';
+    btn.onclick = function(){ setLang3('ja'); };
+    wrap.appendChild(btn);
+    var saved;
+    try{ saved = localStorage.getItem('pw-lang'); }catch(e){}
+    if(saved === 'ja') setLang3('ja');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', addJaButton);
+  } else {
+    addJaButton();
+  }
+})();
+</script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · <span class="gold">Niseko Day 11</span></h1>
+  <div class="header-sub"><span class="en">Western Niseko scenic loop · Fri, 17 Jul 2026</span><span class="zh">二世谷西部风景环线 · 2026年7月17日（周五）</span><span class="ja">ニセコ西部の絶景ドライブループ · 2026年7月17日（金）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span><span class="ja">MT10 旅行ハブ</span></a>
+    <a href="MT10-niseko-day10.html" class="day-chip">📔 <span class="en">Niseko Day 10</span><span class="zh">二世谷第十天</span><span class="ja">ニセコ10日目</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span><span class="ja">シェア</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span><span class="ja">計算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="day-banner" style="background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:#9ecbff;">
+    ✏️ <span class="en"><strong>You drew this loop.</strong> A big western circle out of Kutchan — north-west to the Iwanai coast, down to Suttsu &amp; Benkei Cape, inland through Kuromatsunai's beech forest, back east via Niseko, and home. About <strong>124 km</strong>, a full day's scenic drive.</span><span class="zh"><strong>这是你画的环线。</strong>从倶知安出发的西部大圈 — 向西北到岩内海岸，南下寿都与弁庆岬，内陆穿过黑松内的山毛榉森林，再向东经二世谷回家。全程约 <strong>124 公里</strong>，一整天的风景自驾。</span><span class="ja"><strong>あなたが描いたループ。</strong>倶知安から西へ大きく一周 — 北西の岩内海岸、南の寿都と弁慶岬、内陸のくろまつないのブナ林、そして東のニセコを経て帰宅。全長約 <strong>124 km</strong>、一日がかりの絶景ドライブ。</span>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Animated Route Map — Today's Western Loop</span><span class="zh">动态路线地图 — 今天的西部环线</span><span class="ja">アニメーション経路マップ — 今日の西部ループ</span></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
+    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+
+  <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
+    <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">09:00</span></div>
+  </div>
+  <div class="speed-control" id="speedControl">
+    <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+    <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="speedVal">1&times;</span>
+  </div>
+  <div class="legend">
+    <span class="dot" style="background:#f85149;"></span><span class="en">Hotel — start &amp; drive home</span><span class="zh">酒店 — 出发与返回</span><span class="ja">ホテル — 出発・帰宅</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#58a6ff;"></span><span class="en">Coast</span><span class="zh">海岸</span><span class="ja">海岸</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#3fb950;"></span><span class="en">Cape / forest / nature</span><span class="zh">海岬/森林/自然</span><span class="ja">岬・森・自然</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#f0a500;"></span><span class="en">Roadside station / food</span><span class="zh">道路休息站/美食</span><span class="ja">道の駅・食事</span>
+  </div>
+
+  <div class="section-title">📏 <span class="en">Distance Between Stops</span><span class="zh">各站点间距离</span><span class="ja">各地点間の距離</span></div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;font-size:0.85em;">
+      <thead>
+        <tr style="background:rgba(240,165,0,0.12);">
+          <th style="text-align:left;padding:10px 12px;color:#f0a500;font-weight:800;"><span class="en">Leg</span><span class="zh">路段</span><span class="ja">区間</span></th>
+          <th style="text-align:right;padding:10px 12px;color:#f0a500;font-weight:800;"><span class="en">Distance</span><span class="zh">距离</span><span class="ja">距離</span></th>
+          <th style="text-align:right;padding:10px 12px;color:#f0a500;font-weight:800;"><span class="en">Driving Time</span><span class="zh">车程</span><span class="ja">走行時間</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">A &rarr; B <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Hotel &rarr; Iwanai</span><span class="zh">酒店 &rarr; 岩内</span><span class="ja">ホテル &rarr; 岩内</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~21.7 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~30 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">B &rarr; C <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Iwanai &rarr; Benkei Cape</span><span class="zh">岩内 &rarr; 弁庆岬</span><span class="ja">岩内 &rarr; 弁慶岬</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~35.8 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~50 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">C &rarr; D <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Benkei Cape &rarr; Suttsu</span><span class="zh">弁庆岬 &rarr; 寿都</span><span class="ja">弁慶岬 &rarr; 寿都</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~5.2 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~10 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">D &rarr; E <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Suttsu &rarr; Kuromatsunai</span><span class="zh">寿都 &rarr; 黑松内</span><span class="ja">寿都 &rarr; くろまつない</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~15.2 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~22 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">E &rarr; F <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Kuromatsunai &rarr; Niseko</span><span class="zh">黑松内 &rarr; 二世谷</span><span class="ja">くろまつない &rarr; ニセコ</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~34.1 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~45 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">F &rarr; G <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Niseko &rarr; Hotel</span><span class="zh">二世谷 &rarr; 酒店</span><span class="ja">ニセコ &rarr; ホテル</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~11.9 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~18 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="gps-note">📍 <span class="en">Straight-line distance (not driving distance) — actual road distance will be longer around the coast and hills. Driving time is an estimate based on typical local road speeds, not live traffic.</span><span class="zh">为直线距离（非行车距离）— 沿海岸与山区的实际行车距离会更长。车程为根据当地道路平均车速的估算值，非实时路况。</span><span class="ja">直線距離です（走行距離ではありません）— 海岸や山沿いの実際の道路距離はこれより長くなります。走行時間は現地の道路の平均速度に基づく推定値で、リアルタイムの交通状況ではありません。</span></div>
+
+  <div class="gps-note" style="border-left-color:#f85149;">⚠️ <span class="en"><strong>Planned route — coordinates are approximate.</strong> The stops below are placed from known addresses / general geography, not verified GPS pins, so don't trust the exact marker position — use the <strong>address-based Google button</strong> under each stop for Directions. Send me a screenshot of a correct Google Maps pin for any stop and I'll lock in the exact coordinate.</span><span class="zh"><strong>计划路线 — 坐标为大致位置。</strong>下方站点是根据已知地址/大致地理位置放置的，并非核实过的GPS定位，请勿完全信任标记的精确位置 — 请使用每个站点下方的<strong>基于地址的Google按钮</strong>来导航。发我任一站点正确的Google地图定位截图，我就会锁定精确坐标。</span><span class="ja"><strong>予定ルート — 座標は概算です。</strong>以下の地点は既知の住所・おおよその地理から配置しており、確認済みのGPSピンではありません。マーカーの正確な位置は信頼せず、各地点下の<strong>住所ベースのGoogleボタン</strong>でルート案内をご利用ください。正しいGoogleマップのピンのスクリーンショットを送っていただければ、正確な座標に修正します。</span></div>
+
+  <div class="section-title">🏨 <span class="en">Starting Point: A. Torifito Hotel &amp; Pod Niseko</span><span class="zh">出发点：A. 二世谷托里菲托酒店</span><span class="ja">出発地点：A. トリフィート・ホテル＆ポッド ニセコ</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Start Niseko Day 11 at <strong>A. Torifito Hotel &amp; Pod Niseko トリフィート・ホテル＆ポッド ニセコ</strong> — Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045. Central Kutchan, on-site parking, right on Rt5/Rt393 — a good early start for a full loop day. Fill up the tank and grab a coffee before heading north-west.</span>
+    <span class="zh">二世谷第十一天从 <strong>A. 二世谷托里菲托酒店（トリフィート・ホテル＆ポッド ニセコ）</strong> 出发 — 地址：北海道倶知安町南11条西1-46-1，邮编044-0045。位于倶知安町中心，设有内部停车场，就在国道5号/393号线上 — 适合早出发跑完一整天环线。出发向西北前先加满油、买杯咖啡。</span>
+    <span class="ja">ニセコ11日目は<strong>A. トリフィート・ホテル＆ポッド ニセコ</strong>から出発 — 〒044-0045 北海道倶知安町南11条西1-46-1。倶知安町中心部、敷地内駐車場あり、国道5号・393号線沿い — 一日ループには早めの出発が◎。北西へ向かう前に給油とコーヒーを。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🌊 <span class="en">Today's Plan: B. Michi-no-Eki Iwanai (Tara-maru-kan)</span><span class="zh">今日计划：B. 道の駅いわない（岩内海岸休息站）</span><span class="ja">今日の予定：B. 道の駅いわない（たら丸館）</span></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:14px;margin-bottom:8px;">⏰ <span class="en">~9:40 AM</span><span class="zh">约上午9:40</span><span class="ja">午前9:40頃</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">First stop out west — <strong>B. Michi-no-Eki Iwanai 道の駅いわない</strong>, the coastal roadside station in Iwanai town on the Sea of Japan. Iwanai is a fishing port famous for its cod (tara) — the station mascot is even a cod named "Tara-maru." Stretch the legs, look at the water, pick up local snacks before the coast road south.</span>
+    <span class="zh">向西的第一站 — <strong>B. 道の駅いわない</strong>，位于日本海畔岩内町的海岸道路休息站。岩内是以鳕鱼闻名的渔港，休息站的吉祥物就是一只叫"Tara-maru"的鳕鱼。下车走走、看海、买点当地小吃，再走沿海公路南下。</span>
+    <span class="ja">西へ最初の立ち寄り — <strong>B. 道の駅いわない</strong>、日本海に面した岩内町の海沿いの道の駅。岩内はタラで知られる漁港で、道の駅のマスコットもタラの「たら丸」。海を眺めて足を伸ばし、地元のおやつを買って海岸線を南下。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%84%E3%82%8F%E3%81%AA%E3%81%84" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%81%84%E3%82%8F%E3%81%AA%E3%81%84" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%84%E3%82%8F%E3%81%AA%E3%81%84" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🏞️ <span class="en">Today's Plan: C. Benkei Cape (Benkei-misaki)</span><span class="zh">今日计划：C. 弁庆岬</span><span class="ja">今日の予定：C. 弁慶岬</span></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:14px;margin-bottom:8px;">⏰ <span class="en">~10:45 AM</span><span class="zh">约上午10:45</span><span class="ja">午前10:45頃</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">The western turn of the loop — <strong>C. Benkei Cape 弁慶岬</strong> in Suttsu town, a windswept headland with a white lighthouse jutting into the Sea of Japan. Named after the legendary warrior-monk Benkei, who is said to have waited here for his lord. Big sky, big water, sea breeze — the most scenic point of the whole drive.</span>
+    <span class="zh">环线的最西转折点 — 寿都町的 <strong>C. 弁庆岬（弁慶岬）</strong>，一处伸入日本海、风势强劲的海角，立着一座白色灯塔。名字来自传说中的武僧弁庆，据说他曾在此等候主公。辽阔天空、无边海面、海风阵阵 — 全程最美的一个点。</span>
+    <span class="ja">ループの西の折り返し — 寿都町の <strong>C. 弁慶岬</strong>、日本海に突き出す風の強い岬で、白い灯台が立つ。伝説の荒法師・弁慶が主君を待ったとされる地。広い空と海、潮風 — ドライブ全体で一番の絶景ポイント。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E5%BC%81%E6%85%B6%E5%B2%AC%20%E5%AF%BF%E9%83%BD" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%BC%81%E6%85%B6%E5%B2%AC" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E5%BC%81%E6%85%B6%E5%B2%AC" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🦑 <span class="en">Today's Plan: D. Michi-no-Eki Minato-Maare Suttsu ⭐ Lunch</span><span class="zh">今日计划：D. 道の駅みなとま～れ寿都 ⭐ 午餐</span><span class="ja">今日の予定：D. 道の駅みなとま〜れ寿都 ⭐ 昼食</span></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:14px;margin-bottom:8px;">⏰ <span class="en">~11:05 AM · Lunch</span><span class="zh">约上午11:05 · 午餐</span><span class="ja">午前11:05頃 · 昼食</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Lunch by the harbour at <strong>D. Michi-no-Eki Minato-Maare Suttsu 道の駅みなとま～れ寿都</strong>, right on Suttsu's fishing port. Suttsu is "the town of wind" — its famous product is fresh squid (the town even holds a squid festival). Grab a seafood bowl, local squid, and a rest before turning inland.</span>
+    <span class="zh">在寿都渔港边的 <strong>D. 道の駅みなとま～れ寿都</strong> 吃午餐。寿都是"风之町"，名产是新鲜鱿鱼（镇上还办鱿鱼祭）。来一碗海鲜盖饭、尝尝当地鱿鱼，休息一下再转向内陆。</span>
+    <span class="ja">寿都の漁港沿い、<strong>D. 道の駅みなとま〜れ寿都</strong>で昼食。寿都は「風のまち」、名物は新鮮なイカ（イカ祭りも開催）。海鮮丼や地元のイカを味わい、内陸へ向かう前にひと休み。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BE%E3%80%9C%E3%82%8C%E5%AF%BF%E9%83%BD" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BE%E3%81%88%E5%AF%BF%E9%83%BD" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BE%E3%81%88%E5%AF%BF%E9%83%BD" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🌲 <span class="en">Today's Plan: E. Michi-no-Eki Kuromatsunai (Beech Forest &amp; Pizza)</span><span class="zh">今日计划：E. 道の駅くろまつない（山毛榉森林与披萨）</span><span class="ja">今日の予定：E. 道の駅くろまつない（ブナ林とピザ）</span></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:14px;margin-bottom:8px;">⏰ <span class="en">~12:30 PM</span><span class="zh">约下午12:30</span><span class="ja">午後12:30頃</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Inland to <strong>E. Michi-no-Eki Kuromatsunai 道の駅くろまつない</strong> — a station beloved for its wood-fired pizza and fresh-baked bread. Kuromatsunai holds Japan's <strong>northernmost natural beech (buna) forest</strong>, protected as a special site. A green, peaceful contrast to the windy coast — a slice of pizza and a walk among the beeches.</span>
+    <span class="zh">转向内陆的 <strong>E. 道の駅くろまつない</strong> — 以柴火披萨和现烤面包闻名的休息站。黑松内拥有<strong>日本最北端的天然山毛榉（buna）森林</strong>，被列为特别保护地。相比多风的海岸，这里绿意盎然、宁静宜人 — 来一块披萨，在山毛榉林间走走。</span>
+    <span class="ja">内陸の <strong>E. 道の駅くろまつない</strong> へ — 薪窯ピザと焼きたてパンで人気の道の駅。くろまつないは<strong>日本最北の天然ブナ林</strong>を有し、特別な地として保護されている。風の海岸とは対照的に緑豊かで穏やか — ピザを一切れ、ブナ林を散策。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%8F%E3%82%8D%E3%81%BE%E3%81%A4%E3%81%AA%E3%81%84" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%81%8F%E3%82%8D%E3%81%BE%E3%81%A4%E3%81%AA%E3%81%84" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%8F%E3%82%8D%E3%81%BE%E3%81%A4%E3%81%AA%E3%81%84" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🗻 <span class="en">Today's Plan: F. Michi-no-Eki Niseko View Plaza (Mt Yotei View)</span><span class="zh">今日计划：F. 道の駅ニセコビュープラザ（羊蹄山景）</span><span class="ja">今日の予定：F. 道の駅ニセコビュープラザ（羊蹄山ビュー）</span></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:14px;margin-bottom:8px;">⏰ <span class="en">~2:00 PM</span><span class="zh">约下午2:00</span><span class="ja">午後2:00頃</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Last stop before home — <strong>F. Michi-no-Eki Niseko View Plaza 道の駅ニセコビュープラザ</strong> on Route 66 in Niseko town. A big farm market with mountains of fresh Niseko vegetables, local milk sweets, and — on a clear afternoon — a fine view of <strong>Mt Yotei</strong>, "the Fuji of Ezo." Load up on produce and soft serve, then the short drive back to Kutchan.</span>
+    <span class="zh">回家前的最后一站 — 二世谷町国道66号线上的 <strong>F. 道の駅ニセコビュープラザ</strong>。一个大型农产市集，堆满新鲜的二世谷蔬菜、当地牛奶甜点，晴朗的午后还能看到<strong>羊蹄山</strong>（"虾夷富士"）的美景。买满蔬菜和软雪糕，再短程开回倶知安。</span>
+    <span class="ja">帰宅前の最後の立ち寄り — ニセコ町の国道66号沿い <strong>F. 道の駅ニセコビュープラザ</strong>。新鮮なニセコ野菜や地元の牛乳スイーツが山盛りの大きなファーマーズマーケットで、晴れた午後には<strong>羊蹄山</strong>（蝦夷富士）の眺めも。野菜とソフトクリームを買い込み、倶知安まで短いドライブで帰宅。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%93%E3%83%A5%E3%83%BC%E3%83%97%E3%83%A9%E3%82%B6" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%93%E3%83%A5%E3%83%BC%E3%83%97%E3%83%A9%E3%82%B6" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%93%E3%83%A5%E3%83%BC%E3%83%97%E3%83%A9%E3%82%B6" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🏨 <span class="en">Return: G. Torifito Hotel &amp; Pod Niseko — Drive Home</span><span class="zh">返回：G. 二世谷托里菲托酒店 — 开车回家</span><span class="ja">帰着：G. トリフィート・ホテル＆ポッド ニセコ — 帰宅</span></div>
+  <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.72em;font-weight:700;padding:4px 10px;border-radius:14px;margin-bottom:8px;">⏰ <span class="en">~2:50 PM</span><span class="zh">约下午2:50</span><span class="ja">午後2:50頃</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Loop closed — back to <strong>G. Torifito Hotel &amp; Pod Niseko</strong> in Kutchan by mid-afternoon, ~124 km of Sea-of-Japan coast, cape, beech forest and Mt Yotei views done. Rest of the day free for an onsen soak.</span>
+    <span class="zh">环线闭合 — 下午稍早回到倶知安的 <strong>G. 二世谷托里菲托酒店</strong>，约124公里的日本海岸、海岬、山毛榉森林与羊蹄山美景全部走完。剩下的时间自由，泡个温泉放松。</span>
+    <span class="ja">ループ完了 — 昼過ぎに倶知安の <strong>G. トリフィート・ホテル＆ポッド ニセコ</strong> へ帰着。約124kmの日本海岸・岬・ブナ林・羊蹄山ビューを走破。残りの時間は温泉でのんびり。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span><span class="ja">今日の日記</span></div>
+  <div class="log-card" id="emptyLog" style="display:none;">
+    <div class="log-icon">🚗</div>
+    <div class="log-title"><span class="en">Nothing logged yet — this is tomorrow's plan</span><span class="zh">今天还没有日记内容 — 这是明天的计划</span><span class="ja">まだ記録なし — これは明日の予定です</span></div>
+    <div class="log-sub"><span class="en">Niseko Day 11 is <strong>17 Jul 2026</strong>. Send photos as you drive the loop and I'll add each one to this log automatically.</span><span class="zh">二世谷第十一天是 <strong>2026年7月17日</strong>。开这条环线时把照片发给我，我会自动加进这份日记。</span><span class="ja">ニセコ11日目は<strong>2026年7月17日</strong>。ループを走りながら写真を送ってくれれば、自動でこの日記に追加します。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Niseko Day 11 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── ANIMATED ROUTE MAP — the western loop Paul drew ──
+const stops = [
+  { name: "Torifito Hotel & Pod Niseko トリフィート・ホテル＆ポッド ニセコ", lat: 42.9007, lng: 140.7537, time: "09:00", type: "start",
+    icon: "🏠", verifiedGps: true,
+    address: "Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan",
+    mapUrl: "https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko",
+    baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
+    amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
+    note: "Start of Niseko Day 11 — central Kutchan, fill up and head north-west into the loop." },
+  { name: "Michi-no-Eki Iwanai 道の駅いわない", lat: 42.9772, lng: 140.5093, time: "09:40", type: "water",
+    icon: "🌊", verifiedGps: false,
+    address: "Michi-no-Eki Iwanai (Tara-maru-kan), Iwanai-cho, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%84%E3%82%8F%E3%81%AA%E3%81%84",
+    baiduUrl: "https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%81%84%E3%82%8F%E3%81%AA%E3%81%84",
+    amapUrl: "https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%84%E3%82%8F%E3%81%AA%E3%81%84",
+    note: "Coastal roadside station in Iwanai, a cod-fishing port on the Sea of Japan — stretch the legs and look at the water." },
+  { name: "Benkei Cape 弁慶岬", lat: 42.7597, lng: 140.1856, time: "10:45", type: "nature",
+    icon: "🏞", verifiedGps: false,
+    address: "Benkei-misaki, Suttsu-cho, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E5%BC%81%E6%85%B6%E5%B2%AC%20%E5%AF%BF%E9%83%BD",
+    baiduUrl: "https://map.baidu.com/search/%E5%BC%81%E6%85%B6%E5%B2%AC",
+    amapUrl: "https://uri.amap.com/search?keyword=%E5%BC%81%E6%85%B6%E5%B2%AC",
+    note: "Windswept headland with a white lighthouse — the westernmost, most scenic turn of the loop." },
+  { name: "Michi-no-Eki Minato-Maare Suttsu 道の駅みなとま〜れ寿都", lat: 42.7962, lng: 140.2258, time: "11:05", type: "food",
+    icon: "🦑", verifiedGps: false,
+    address: "Michi-no-Eki Minato-Maare Suttsu, Suttsu-cho, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BE%E3%80%9C%E3%82%8C%E5%AF%BF%E9%83%BD",
+    baiduUrl: "https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BE%E3%81%88%E5%AF%BF%E9%83%BD",
+    amapUrl: "https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%BF%E3%81%AA%E3%81%A8%E3%81%BE%E3%81%88%E5%AF%BF%E9%83%BD",
+    note: "⭐ Lunch by the harbour in Suttsu, 'the town of wind' — fresh squid and seafood bowls." },
+  { name: "Michi-no-Eki Kuromatsunai 道の駅くろまつない", lat: 42.6739, lng: 140.3086, time: "12:30", type: "nature",
+    icon: "🌲", verifiedGps: false,
+    address: "Michi-no-Eki Kuromatsunai, Kuromatsunai-cho, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%8F%E3%82%8D%E3%81%BE%E3%81%A4%E3%81%AA%E3%81%84",
+    baiduUrl: "https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%81%8F%E3%82%8D%E3%81%BE%E3%81%A4%E3%81%AA%E3%81%84",
+    amapUrl: "https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%81%8F%E3%82%8D%E3%81%BE%E3%81%A4%E3%81%AA%E3%81%84",
+    note: "Wood-fired pizza & fresh bread — beside Japan's northernmost natural beech (buna) forest." },
+  { name: "Michi-no-Eki Niseko View Plaza 道の駅ニセコビュープラザ", lat: 42.8055, lng: 140.6870, time: "14:00", type: "food",
+    icon: "🗻", verifiedGps: false,
+    address: "Michi-no-Eki Niseko View Plaza, Route 66, Niseko-cho, Hokkaido, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E9%81%93%E3%81%AE%E9%A7%85%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%93%E3%83%A5%E3%83%BC%E3%83%97%E3%83%A9%E3%82%B6",
+    baiduUrl: "https://map.baidu.com/search/%E9%81%93%E3%81%AE%E9%A7%85%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%93%E3%83%A5%E3%83%BC%E3%83%97%E3%83%A9%E3%82%B6",
+    amapUrl: "https://uri.amap.com/search?keyword=%E9%81%93%E3%81%AE%E9%A7%85%E3%83%8B%E3%82%BB%E3%82%B3%E3%83%93%E3%83%A5%E3%83%BC%E3%83%97%E3%83%A9%E3%82%B6",
+    note: "Big farm market of fresh Niseko produce & milk sweets — Mt Yotei view on a clear afternoon." },
+  { name: "Torifito Hotel & Pod Niseko トリフィート・ホテル＆ポッド ニセコ (return)", lat: 42.9007, lng: 140.7537, time: "14:50", type: "end",
+    icon: "🏠", verifiedGps: true,
+    address: "Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan",
+    mapUrl: "https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko",
+    baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
+    amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
+    note: "Loop closed — back to the hotel in Kutchan by mid-afternoon. Onsen time." }
+];
+
+const map = L.map('map', { zoomControl: true });
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+function stopLabel(i) { return String.fromCharCode(65 + i); }
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff', food: '#f0a500', camp: '#06b6d4', church: '#a78bfa' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+let fullRoadPoints = fullLine;
+
+// ── REAL-ROAD ROUTING via OSRM — the straight dashed line is just a placeholder
+// until the actual driving route (with its turns) comes back and replaces it.
+const roadSegs = [];
+function pathCumulativeDistances(points) {
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i - 1][0];
+    const dy = points[i][1] - points[i - 1][1];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  return cum;
+}
+function pointAtFraction(seg, frac) {
+  const { points, cum } = seg;
+  const total = cum[cum.length - 1];
+  if (total === 0) return points[0];
+  const target = frac * total;
+  for (let i = 1; i < cum.length; i++) {
+    if (target <= cum[i] || i === cum.length - 1) {
+      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+      return [
+        points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac,
+        points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac
+      ];
+    }
+  }
+  return points[points.length - 1];
+}
+async function fetchRoadSegment(a, b) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok') return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  } catch (e) {}
+  return [[a.lat, a.lng], [b.lat, b.lng]];
+}
+let routeLine = L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+async function buildRoads() {
+  const allPoints = [];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const pts = await fetchRoadSegment(stops[i], stops[i + 1]);
+    roadSegs[i] = { points: pts, cum: pathCumulativeDistances(pts) };
+    allPoints.push(...pts);
+  }
+  if (allPoints.length) {
+    map.removeLayer(routeLine);
+    routeLine = L.polyline(allPoints, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+    fullRoadPoints = allPoints;
+    if (!playing) map.fitBounds(fullRoadPoints, { padding: [40, 40] });
+  }
+}
+buildRoads();
+
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  const dirLabel = '🧭 Directions';
+  const dirDest = s.verifiedGps ? (s.lat + ',' + s.lng) : (s.address ? encodeURIComponent(s.name + ', ' + s.address) : (s.lat + ',' + s.lng));
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + dirDest + '&travelmode=driving" target="_blank" onclick="event.stopPropagation()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">' + dirLabel + '</a>' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+function buildPopupHtml(s, i) {
+  const caption = s.name + (s.imgCredit ? ' (' + s.imgCredit + ')' : '');
+  const imgHtml = s.img ? '<img class="popup-photo" src="' + s.img + '" style="cursor:pointer;" data-src="' + escapeAttr(s.img) + '" data-caption="' + escapeAttr(caption) + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  return '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + stopLabel(i) + '. ' + s.name + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>';
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + stopLabel(i) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  marker.bindPopup(buildPopupHtml(s, i));
+  markerRefs.push(marker);
+});
+
+function bindPopupPhotoClick(popupEl) {
+  const photo = popupEl && popupEl.querySelector('.popup-photo');
+  if (photo) photo.onclick = function () { openLightboxSrc(photo.getAttribute('data-src'), photo.getAttribute('data-caption')); };
+}
+map.on('popupopen', function (e) { bindPopupPhotoClick(e.popup.getElement()); });
+
+// ── WIKIPEDIA PHOTO FALLBACK — for stops without one of Paul's own photos ──
+// Uses the CORS-enabled REST summary API (never hardcode upload.wikimedia.org thumb URLs — see CLAUDE.md).
+function fetchWikiThumb(wikiTitle) {
+  return fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(wikiTitle))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) { return (d && d.thumbnail) ? d.thumbnail.source : null; })
+    .catch(function () { return null; });
+}
+function fetchWikiThumbChain(titles) {
+  const list = Array.isArray(titles) ? titles : [titles];
+  return list.reduce(function (chain, title) {
+    return chain.then(function (src) { return src || fetchWikiThumb(title); });
+  }, Promise.resolve(null));
+}
+stops.forEach(function (s, i) {
+  if (s.img || !s.wikiTitle) return;
+  fetchWikiThumbChain(s.wikiTitle).then(function (src) {
+    if (!src) return;
+    s.img = src;
+    s.imgCredit = 'Wikipedia';
+    markerRefs[i].setPopupContent(buildPopupHtml(s, i));
+    if (markerRefs[i].isPopupOpen()) bindPopupPhotoClick(markerRefs[i].getPopup().getElement());
+  });
+});
+
+map.fitBounds(fullRoadPoints, { padding: [40, 40] });
+
+const lastStop = stops[stops.length - 1];
+const waypointStops = stops.slice(0, -1);
+document.getElementById('btn-directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + (lastStop.verifiedGps ? (lastStop.lat + ',' + lastStop.lng) : encodeURIComponent(lastStop.name + ', ' + lastStop.address)) +
+  (waypointStops.length ? '&waypoints=' + waypointStops.map(s => s.verifiedGps ? (s.lat + ',' + s.lng) : encodeURIComponent(s.name + ', ' + (s.address || ''))).join('|') : '') +
+  '&travelmode=driving';
+
+function openMapFullscreen() {
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+// 🚗 mover marker — drives the whole loop along the real road.
+const carIcon = L.divIcon({ html: '<span id="moverEmoji" style="display:inline-block;transition:transform .2s linear;">🚗</span>', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+let lastFocusedLeg = -1;
+function focusLeg(legIndex) {
+  if (legIndex === lastFocusedLeg) return;
+  lastFocusedLeg = legIndex;
+}
+
+// 🚗 emoji faces left (~270°/west) by default on most platforms, so rotate
+// by (bearing + 90) to align the car's nose with its actual direction of travel.
+function bearingDeg(lat1, lng1, lat2, lng2) {
+  const rad = Math.PI / 180;
+  const y = Math.sin((lng2 - lng1) * rad) * Math.cos(lat2 * rad);
+  const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos((lng2 - lng1) * rad);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function setCarHeading(bearing) {
+  const el = document.getElementById('moverEmoji');
+  if (el) el.style.transform = 'rotate(' + ((bearing + 90) % 360) + 'deg)';
+}
+if (stops.length > 1) setCarHeading(bearingDeg(stops[0].lat, stops[0].lng, stops[1].lat, stops[1].lng));
+
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+let speedMultiplier = 1;
+let playing = false;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+const statusEl = document.getElementById('status');
+const timeLabel = document.getElementById('timeLabel');
+
+let lastArrivedIndex = -1;
+function checkArrival(targetMin) {
+  for (let i = 0; i < stops.length; i++) {
+    if (targetMin >= toMinutes(stops[i].time) && i > lastArrivedIndex) {
+      lastArrivedIndex = i;
+      markerRefs[i].openPopup();
+    }
+  }
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    requestAnimationFrame(step);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+  }
+}
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const seg = roadSegs[i];
+      let lat, lng, bearing;
+      if (seg) {
+        const pt = pointAtFraction(seg, segP);
+        const aheadPt = pointAtFraction(seg, Math.min(segP + 0.02, 1));
+        lat = pt[0]; lng = pt[1];
+        bearing = (aheadPt[0] !== pt[0] || aheadPt[1] !== pt[1])
+          ? bearingDeg(pt[0], pt[1], aheadPt[0], aheadPt[1])
+          : bearingDeg(stops[i].lat, stops[i].lng, stops[i + 1].lat, stops[i + 1].lng);
+      } else {
+        lat = stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP;
+        lng = stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP;
+        bearing = bearingDeg(stops[i].lat, stops[i].lng, stops[i + 1].lat, stops[i + 1].lng);
+      }
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      return { lat, lng, timeStr: `${hh}:${mm}`, bearing, legIndex: i };
+    }
+  }
+  const last = stops.length - 1;
+  const bearing = bearingDeg(stops[last - 1].lat, stops[last - 1].lng, stops[last].lat, stops[last].lng);
+  return { lat: stops[last].lat, lng: stops[last].lng, timeStr: stops[last].time, bearing, legIndex: last - 1 };
+}
+
+function step() {
+  if (!playing) return;
+  progress += 0.0016 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    setCarHeading(pos.bearing);
+    timeLabel.textContent = pos.timeStr;
+    checkArrival(endMin);
+    statusEl.innerHTML = '<span class="en">Arrived home</span><span class="zh">已到家</span><span class="ja">帰着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
+    setTimeout(() => {
+      progress = 0;
+      lastArrivedIndex = -1;
+      lastFocusedLeg = -1;
+      map.closePopup();
+      map.flyToBounds(fullRoadPoints, { padding: [40, 40], duration: 0.7 });
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      requestAnimationFrame(step);
+    }, 1400);
+    return;
+  }
+  const pos = interpolate(progress);
+  focusLeg(pos.legIndex);
+  mover.setLatLng([pos.lat, pos.lng]);
+  setCarHeading(pos.bearing);
+  document.getElementById('timeLabel').textContent = pos.timeStr;
+  checkArrival(startMin + progress * totalMin);
+  requestAnimationFrame(step);
+}
+
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-17T00:00:00+09:00');
+  var end = new Date('2026-07-18T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var days = Math.ceil((start - now) / 86400000);
+    banner.innerHTML = '🕓 <span class="en">Niseko Day 11 is in <strong>' + days + ' day' + (days === 1 ? '' : 's') + '</strong>.</span><span class="zh">距离二世谷第十一天还有 <strong>' + days + '</strong> 天。</span><span class="ja">ニセコ11日目まであと<strong>' + days + '日</strong>。</span>';
+  } else if (now >= start && now < end) {
+    banner.innerHTML = '🟢 <span class="en"><strong>Niseko Day 11 is today!</strong> Driving the western loop.</span><span class="zh"><strong>今天就是二世谷第十一天！</strong>正在跑西部环线。</span><span class="ja"><strong>今日がニセコ11日目！</strong>西部ループをドライブ中。</span>';
+    banner.style.background = 'rgba(16,185,129,0.15)';
+    banner.style.borderColor = 'rgba(16,185,129,0.4)';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Niseko Day 11 is complete — see the log below.</span><span class="zh">二世谷第十一天已结束 — 请看下方日记。</span><span class="ja">ニセコ11日目は終了 — 下記の日記をご覧ください。</span>';
+    banner.style.background = 'rgba(240,165,0,0.1)';
+    banner.style.borderColor = 'rgba(240,165,0,0.3)';
+  }
+}
+updateBanner();
+
+// ── PHOTO JOURNAL DATA (empty until a photo is sent) ──
+const galleryPhotos = [];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" poster="' + (p.poster || '') + '" muted playsinline preload="metadata"></video>'
+      : p.type === 'note'
+      ? '<div class="pj-note-icon">' + (p.icon || '📝') + '</div>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    var dateBadge = p.date ? '<div class="pj-date"><span class="en">' + p.date + '</span><span class="zh">' + (p.dateZh || p.date) + '</span><span class="ja">' + (p.dateJa || p.date) + '</span></div>' : '';
+    var playHint = p.type === 'video' ? '<div class="pj-play-hint"><div class="pj-play-icon">▶</div><div class="pj-play-text"><span class="en">Tap ▶ to play video</span><span class="zh">点击▶播放视频</span><span class="ja">▶をタップして再生</span></div></div>' : '';
+    media = '<div class="pj-media' + (p.type === 'note' ? ' pj-media-note' : '') + '">' + media + dateBadge + playHint + '</div>';
+    var mapBtn = '';
+    if (p.mapUrl) {
+      mapBtn = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">' +
+        '<a href="' + p.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+        (p.baiduUrl ? '<a href="' + p.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+        (p.amapUrl ? '<a href="' + p.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+        '</div>';
+    }
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : p.type === 'note' ? 'Note' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      mapBtn +
+      '</div>';
+    if (p.type !== 'note') item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── AUTO-PLAY MAP ON LOAD ──
+togglePlay();
+
+// ── LIGHTBOX (gallery) ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.poster = p.poster || '';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = (p.caption || '') + (p.date ? '  ·  ' + p.date : '');
+  document.getElementById('lightbox').classList.add('active');
+}
+function openLightboxSrc(src, caption) {
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  video.pause();
+  video.style.display = 'none';
+  img.style.display = 'block';
+  img.src = src;
+  document.getElementById('lbCaption').textContent = caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+
+</body>
+</html>
