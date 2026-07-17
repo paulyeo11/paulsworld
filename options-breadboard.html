@@ -54,6 +54,10 @@
   .sp-time { color:#8b98a5; font-size:.66rem; }
   .sp-old { color:#8b98a5; font-size:.7rem; }
   .sp-old b { color:#c9d1d9; font-weight:700; }
+  .sp-change { flex-basis:100%; font-size:.72rem; color:#8b98a5; margin-top:2px; }
+  .sp-change b { font-weight:800; font-size:.82rem; }
+  .sp-change .up { color:#3fb950; }
+  .sp-change .down { color:#f85149; }
   .sp-loading { color:#8b98a5; font-size:.72rem; }
 
   /* Strike rail (the "breadboard") */
@@ -636,6 +640,11 @@ function renderSharePrices(){
       '<span class="sp-time">'+fmtSpTime(latest.t)+'</span>';
     if(day1){
       html += '<span class="sp-old"><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> <b>'+fmt(day1.p)+'</b> · '+fmtSpTime(day1.t)+'</span>';
+      // New row: % change of Now share price vs DTE Day 1 price = (Now − Day1) / Day1 × 100
+      var pct = (latest.p - day1.p) / day1.p * 100;
+      var cls = pct >= 0 ? 'up' : 'down';
+      var sign = pct >= 0 ? '+' : '';
+      html += '<span class="sp-change"><span class="en">Price change (Now vs DTE Day 1)</span><span class="zh">股价变化（现价 vs DTE第1天）</span> <b class="'+cls+'">'+sign+pct.toFixed(2)+'%</b></span>';
     } else {
       html += '<span class="sp-old"><span class="en">first capture</span><span class="zh">首次记录</span></span>';
     }
