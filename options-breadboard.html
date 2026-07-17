@@ -98,6 +98,42 @@
   table.suit th { text-align:left; color:#8b98a5; font-size:.62rem; text-transform:uppercase; padding:6px 5px; border-bottom:1px solid rgba(255,255,255,.1); }
   table.suit td { padding:7px 5px; border-bottom:1px solid rgba(255,255,255,.05); color:#c9d1d9; }
   table.suit td b { color:#e6edf3; }
+
+  /* Cut-Loss tab (merged from T28) */
+  .disclaimer { background:rgba(244,165,0,.1); border:1px solid rgba(244,165,0,.35); border-radius:12px; padding:11px 14px; font-size:.76rem; color:#ffd97a; line-height:1.5; margin:14px 0; }
+  .refresh-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; }
+  .refresh-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); color:#fff; font-weight:700; padding:7px 18px; border-radius:20px; cursor:pointer; font-size:.8rem; }
+  .refresh-btn:active { transform:scale(.96); }
+  .live-ts { font-size:.72rem; color:rgba(255,255,255,.45); }
+  .stock { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:16px; margin-bottom:14px; }
+  .st-top { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; }
+  .st-sym { font-size:1.05rem; font-weight:800; }
+  .st-name { font-size:.7rem; color:rgba(255,255,255,.5); margin-top:2px; }
+  .st-price { text-align:right; }
+  .st-price .p { font-size:1.35rem; font-weight:800; }
+  .st-price .c { font-size:.74rem; font-weight:700; }
+  .c.up { color:#3fb950; } .c.down { color:#f85149; }
+  .badge { display:inline-block; font-size:.7rem; font-weight:800; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+  .badge.safe { background:rgba(63,185,80,.16); color:#34d399; border:1px solid rgba(63,185,80,.5); }
+  .badge.warn { background:rgba(244,165,0,.18); color:#fbbf24; border:1px solid rgba(244,165,0,.5); }
+  .badge.cut  { background:rgba(248,81,73,.2); color:#f87171; border:1px solid rgba(248,81,73,.55); }
+  .badge.wait { background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.2); }
+  .bandbar { position:relative; height:12px; border-radius:8px; margin:15px 0 8px; background:linear-gradient(90deg,#f85149 0%,#f85149 14%,#3fb950 20%,#3fb950 80%,#f85149 86%,#f85149 100%); }
+  .marker { position:absolute; top:-6px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:11px solid #fff; transform:translateX(-50%); filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); transition:left .4s ease; }
+  .band-labels { display:flex; justify-content:space-between; font-size:.72rem; margin-top:2px; }
+  .band-labels .lo, .band-labels .hi { color:#f87171; font-weight:700; }
+  .thresh { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .th { background:rgba(255,255,255,.05); border-radius:10px; padding:10px 12px; text-align:center; }
+  .th .tl { font-size:.64rem; color:rgba(255,255,255,.5); text-transform:uppercase; }
+  .th .tv { font-size:1rem; font-weight:800; margin-top:3px; }
+  .th .td { font-size:.7rem; margin-top:3px; color:rgba(255,255,255,.55); }
+  .th.low .tv, .th.high .tv { color:#f87171; }
+  .gap { font-weight:700; }
+  .gap.ok { color:#34d399; } .gap.mid { color:#fbbf24; } .gap.near { color:#f87171; } .gap.breached { color:#f85149; }
+  .neargap { text-align:center; font-size:.78rem; margin-top:10px; padding:7px 12px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .neargap b { font-size:.95rem; }
+  .neargap.ok { color:#8ff0bd; } .neargap.mid { color:#fcd77a; } .neargap.near { color:#fca5a5; background:rgba(248,81,73,.1); }
+  .neargap.breached-txt { color:#fca5a5; background:rgba(248,81,73,.15); font-weight:800; }
   footer { text-align:center; color:#6b7684; font-size:.72rem; padding:30px 14px 10px; }
 </style>
 </head>
@@ -114,7 +150,7 @@
   <div class="date"><span class="en">Opened 16–17 Jul 2026 · 4 open condors</span><span class="zh">2026年7月16–17日建仓 · 4个铁鹰</span></div>
   <br>
   <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
-  <a class="share-btn" href="T28-Cut-Loss-Alerts.html" style="text-decoration:none;">🚨 <span class="en">T28 Cut-Loss</span><span class="zh">T28 止损提醒</span></a>
+  <button class="share-btn" onclick="setTab('cutloss')">🚨 <span class="en">Cut-Loss Alerts</span><span class="zh">止损警报</span></button>
   <div class="share-toast" id="shareToast">✅ Link copied!</div>
 </header>
 
@@ -122,7 +158,8 @@
 
   <div class="tabs">
     <button class="tab-btn active" id="tb-pos" onclick="setTab('positions')">📊 <span class="en">Positions</span><span class="zh">持仓</span></button>
-    <button class="tab-btn" id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">Risk Analysis</span><span class="zh">风险分析</span></button>
+    <button class="tab-btn" id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">Risk</span><span class="zh">风险</span></button>
+    <button class="tab-btn" id="tb-cut" onclick="setTab('cutloss')">🚨 <span class="en">Cut-Loss</span><span class="zh">止损</span></button>
   </div>
 
   <div id="tab-positions">
@@ -298,12 +335,24 @@
 
   </div><!-- /tab-analysis -->
 
+  <div id="tab-cutloss" style="display:none">
+    <div class="disclaimer">⚠️ <span class="en"><b>Not financial advice.</b> My own cut-loss levels. Live price is delayed/approximate via Yahoo Finance and may be unavailable when the market is closed. Always confirm on my broker before acting.</span><span class="zh"><b>非投资建议。</b>这是我自己的止损价位。实时价格来自雅虎财经，可能有延迟或在休市时无法获取。行动前请务必在券商确认。</span></div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
+      <span class="live-ts" id="liveTs"></span>
+    </div>
+    <div id="cards"></div>
+    <div class="note"><span class="en">Live price via Yahoo Finance · cut-loss levels set by Paul. Bands align with each condor's short strikes on the Positions tab.</span><span class="zh">实时价格来自雅虎财经 · 止损价位由 Paul 设定。区间与「持仓」标签中每个铁鹰的卖出行权价一致。</span></div>
+  </div><!-- /tab-cutloss -->
+
   <footer><span class="en">Paul's World · Options Breadboard · updated 16 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月16日</span></footer>
 </div>
 
 <script>
 // Language toggle
+var curLang = 'en';
 function setLang(l){
+  curLang = l;
   document.querySelectorAll('.en').forEach(function(e){e.style.display = l==='en'?'':'none';});
   document.querySelectorAll('.zh').forEach(function(e){e.style.display = l==='zh'?'':'none';});
   document.getElementById('btn-en').classList.toggle('active', l==='en');
@@ -312,11 +361,15 @@ function setLang(l){
 setLang('en');
 
 // Tabs
+var cutLoaded = false;
 function setTab(t){
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
   document.getElementById('tab-analysis').style.display = t==='analysis'?'':'none';
+  document.getElementById('tab-cutloss').style.display = t==='cutloss'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
+  document.getElementById('tb-cut').classList.toggle('active', t==='cutloss');
+  if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   window.scrollTo(0,0);
 }
 
@@ -362,6 +415,84 @@ drawRail('rail-nvda', {lo:185, hi:240, longP:190, shortP:195, shortC:230, longC:
 drawRail('rail-qqq',  {lo:670, hi:755, longP:675, shortP:680, shortC:745, longC:750, beLo:677.41, beHi:747.59});
 drawRail('rail-avgo', {lo:335, hi:445, longP:340, shortP:350, shortC:430, longC:440, beLo:345.25, beHi:434.75});
 drawRail('rail-smh',  {lo:500, hi:665, longP:505, shortP:515, shortC:650, longC:660, beLo:510.65, beHi:654.35});
+
+// ===== Cut-Loss live prices (merged from T28) =====
+var STOCKS = [
+  { sym:'QQQ',  name:'Invesco QQQ Trust',        low:678, high:748 },
+  { sym:'NVDA', name:'Nvidia Corporation',       low:192, high:232 },
+  { sym:'AVGO', name:'Broadcom Inc.',            low:345, high:434 },
+  { sym:'SMH',  name:'VanEck Semiconductor ETF', low:510, high:670 }
+];
+function fmt(n){ return '$' + n.toFixed(2); }
+function fetchQuotes(symbols){
+  return fetch('/api/td?symbols='+encodeURIComponent(symbols.join(','))).then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); });
+}
+function statusFor(price, s){
+  if(price===null) return { cls:'wait', en:'Waiting for price', zh:'等待价格' };
+  if(price <= s.low)  return { cls:'cut',  en:'⛔ CUT LOSS — below '+fmt(s.low), zh:'⛔ 止损 — 跌破 '+fmt(s.low) };
+  if(price >= s.high) return { cls:'cut',  en:'⛔ CUT LOSS — above '+fmt(s.high), zh:'⛔ 止损 — 突破 '+fmt(s.high) };
+  var span=s.high-s.low, nearLo=(price-s.low)/span, nearHi=(s.high-price)/span;
+  if(nearLo<0.10) return { cls:'warn', en:'⚠️ Near low cut-loss', zh:'⚠️ 接近下限止损' };
+  if(nearHi<0.10) return { cls:'warn', en:'⚠️ Near high cut-loss', zh:'⚠️ 接近上限止损' };
+  return { cls:'safe', en:'✅ Safe — inside band', zh:'✅ 安全 — 区间内' };
+}
+function renderCut(){
+  var wrap=document.getElementById('cards'); if(!wrap) return; wrap.innerHTML='';
+  STOCKS.forEach(function(s){
+    var price = (typeof s.price==='number') ? s.price : null;
+    var st = statusFor(price, s);
+    var pctPos = price===null ? 50 : Math.max(2, Math.min(98, ((price-s.low)/(s.high-s.low))*100));
+    var chgHtml='';
+    if(price!==null && typeof s.prev==='number' && s.prev>0){
+      var diff=price-s.prev, pct=diff/s.prev*100, up=diff>=0;
+      chgHtml='<div class="c '+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</div>';
+    }
+    var loGap = price===null ? null : (price-s.low)/price*100;
+    var hiGap = price===null ? null : (s.high-price)/price*100;
+    function gapHtml(g, dir){
+      if(g===null) return '';
+      if(g<=0) return '<span class="gap breached"><span class="en">breached</span><span class="zh">已触发</span></span>';
+      var cls = g<3 ? 'near' : (g<8 ? 'mid' : 'ok');
+      return '<span class="gap '+cls+'">'+dir+' '+g.toFixed(1)+'% <span class="en">to cut</span><span class="zh">距止损</span></span>';
+    }
+    var el=document.createElement('div');
+    el.className='stock';
+    el.innerHTML=
+      '<div class="st-top">'+
+        '<div><div class="st-sym">'+s.sym+'</div><div class="st-name">'+s.name+'</div></div>'+
+        '<div style="text-align:center;"><span class="badge '+st.cls+'"><span class="en">'+st.en+'</span><span class="zh">'+st.zh+'</span></span></div>'+
+        '<div class="st-price"><div class="p">'+(price===null?'—':fmt(price))+'</div>'+chgHtml+'</div>'+
+      '</div>'+
+      (function(){
+        if(price===null) return '';
+        if(loGap<=0||hiGap<=0) return '<div class="neargap breached-txt"><span class="en">⛔ Cut-loss level breached</span><span class="zh">⛔ 已触发止损位</span></div>';
+        var near = Math.min(loGap, hiGap);
+        var nearWhich = (loGap<hiGap ? '<span class="en">to low cut</span><span class="zh">距下限止损</span>' : '<span class="en">to high cut</span><span class="zh">距上限止损</span>');
+        var cls = near<3 ? 'near' : (near<8 ? 'mid' : 'ok');
+        return '<div class="neargap '+cls+'"><span class="en">Nearest cut-loss:</span><span class="zh">最近止损：</span> <b>'+near.toFixed(1)+'%</b> '+nearWhich+'</div>';
+      })()+
+      '<div class="bandbar"><div class="marker" style="left:'+pctPos+'%;"></div></div>'+
+      '<div class="band-labels"><span class="lo">'+fmt(s.low)+'</span><span style="color:rgba(255,255,255,.45);"><span class="en">safe band</span><span class="zh">安全区间</span></span><span class="hi">'+fmt(s.high)+'</span></div>'+
+      '<div class="thresh">'+
+        '<div class="th low"><div class="tl"><span class="en">Cut loss if below</span><span class="zh">跌破止损</span></div><div class="tv">'+fmt(s.low)+'</div><div class="td">'+gapHtml(loGap,'▼')+'</div></div>'+
+        '<div class="th high"><div class="tl"><span class="en">Cut loss if above</span><span class="zh">突破止损</span></div><div class="tv">'+fmt(s.high)+'</div><div class="td">'+gapHtml(hiGap,'▲')+'</div></div>'+
+      '</div>';
+    wrap.appendChild(el);
+  });
+  setLang(curLang); // apply language to freshly rendered content
+}
+function stampCut(){
+  var now=new Date(), t=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  var el=document.getElementById('liveTs'); if(el) el.innerHTML='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
+  setLang(curLang);
+}
+function loadAll(){
+  renderCut();
+  fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
+    STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; } });
+    renderCut(); stampCut();
+  }).catch(function(){ stampCut(); });
+}
 </script>
 <script src="/view-counter.js"></script>
 </body>
