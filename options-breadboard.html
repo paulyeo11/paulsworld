@@ -47,6 +47,15 @@
   .pill.open { background:rgba(63,185,80,.15); color:#3fb950; border:1px solid rgba(63,185,80,.4); }
   .strat { display:inline-block; background:rgba(245,158,11,.14); color:#f59e0b; border:1px solid rgba(245,158,11,.35); font-size:.66rem; font-weight:700; padding:3px 9px; border-radius:6px; margin-top:6px; }
 
+  /* Share price row */
+  .sp-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:7px; margin-top:10px; padding:9px 11px; background:#0d1117; border:1px solid rgba(255,255,255,.07); border-radius:9px; font-size:.76rem; }
+  .sp-label { color:#8b98a5; font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+  .sp-new { color:#f5c869; font-weight:800; font-size:.92rem; }
+  .sp-time { color:#8b98a5; font-size:.66rem; }
+  .sp-old { color:#8b98a5; font-size:.7rem; }
+  .sp-old b { color:#c9d1d9; font-weight:700; }
+  .sp-loading { color:#8b98a5; font-size:.72rem; }
+
   /* Strike rail (the "breadboard") */
   .rail-wrap { margin:18px 0 6px; }
   .rail { position:relative; height:64px; background:linear-gradient(90deg,rgba(248,81,73,.12),rgba(139,148,165,.08),rgba(248,81,73,.12)); border-radius:10px; }
@@ -180,6 +189,7 @@
       <div class="c-meta"><span class="en">Exp Aug 21 '26 · 36 DTE</span><span class="zh">到期 2026年8月21日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
       <div class="pill open">● OPEN</div>
     </div>
+    <div class="sp-row" id="sp-nvda"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
     <div class="rail-wrap"><div class="rail" id="rail-nvda"></div>
       <div class="rail-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span></div>
     </div>
@@ -205,6 +215,7 @@
       <div class="c-meta"><span class="en">Exp Aug 28 '26 · 43 DTE</span><span class="zh">到期 2026年8月28日 · 43天</span><br><span class="strat">IG · Iron Condor</span></div>
       <div class="pill open">● OPEN</div>
     </div>
+    <div class="sp-row" id="sp-qqq"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
     <div class="rail-wrap"><div class="rail" id="rail-qqq"></div>
       <div class="rail-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span></div>
     </div>
@@ -230,6 +241,7 @@
       <div class="c-meta"><span class="en">Exp Aug 28 '26 · 43 DTE</span><span class="zh">到期 2026年8月28日 · 43天</span><br><span class="strat">IG · Iron Condor</span></div>
       <div class="pill open">● OPEN</div>
     </div>
+    <div class="sp-row" id="sp-avgo"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
     <div class="rail-wrap"><div class="rail" id="rail-avgo"></div>
       <div class="rail-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span></div>
     </div>
@@ -255,6 +267,7 @@
       <div class="c-meta"><span class="en">Exp Aug 21 '26 · 36 DTE</span><span class="zh">到期 2026年8月21日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
       <div class="pill open">● OPEN</div>
     </div>
+    <div class="sp-row" id="sp-smh"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
     <div class="rail-wrap"><div class="rail" id="rail-smh"></div>
       <div class="rail-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span></div>
     </div>
@@ -486,13 +499,67 @@ function stampCut(){
   var el=document.getElementById('liveTs'); if(el) el.innerHTML='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
   setLang(curLang);
 }
+
+// ===== Share Price history (Positions tab — old + new, never overwritten) =====
+var SP_HIST_KEY = 'T29_sharePriceHist_v1';
+var SP_ROW_ID = { QQQ:'sp-qqq', NVDA:'sp-nvda', AVGO:'sp-avgo', SMH:'sp-smh' };
+function loadSpHist(){
+  try{ return JSON.parse(localStorage.getItem(SP_HIST_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveSpHist(h){ localStorage.setItem(SP_HIST_KEY, JSON.stringify(h)); }
+// Append a new price capture for a symbol, but only if it differs from the last one on record —
+// old captures are kept forever (capped at 5) so nothing already recorded is ever deleted or replaced.
+function recordSharePrice(sym, price){
+  if(typeof price!=='number') return;
+  var h = loadSpHist();
+  var arr = h[sym] || [];
+  var last = arr[arr.length-1];
+  if(!last || last.p !== price){
+    arr.push({ p:price, t:Date.now() });
+    if(arr.length>5) arr = arr.slice(arr.length-5);
+    h[sym] = arr;
+    saveSpHist(h);
+  }
+}
+function fmtSpTime(ts){
+  var d = new Date(ts);
+  return d.toLocaleDateString('en-SG',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+function renderSharePrices(){
+  var h = loadSpHist();
+  Object.keys(SP_ROW_ID).forEach(function(sym){
+    var el = document.getElementById(SP_ROW_ID[sym]); if(!el) return;
+    var arr = h[sym] || [];
+    if(!arr.length) return; // still loading — leave the "Loading…" placeholder
+    var latest = arr[arr.length-1];
+    var prev = arr.length>1 ? arr[arr.length-2] : null;
+    var html =
+      '<span class="sp-label"><span class="en">Share Price</span><span class="zh">股价</span></span>'+
+      '<span class="sp-new">'+fmt(latest.p)+'</span>'+
+      '<span class="sp-time">'+fmtSpTime(latest.t)+'</span>';
+    if(prev){
+      html += '<span class="sp-old"><span class="en">prev</span><span class="zh">前值</span> <b>'+fmt(prev.p)+'</b> · '+fmtSpTime(prev.t)+'</span>';
+    } else {
+      html += '<span class="sp-old"><span class="en">first capture</span><span class="zh">首次记录</span></span>';
+    }
+    el.innerHTML = html;
+  });
+  setLang(curLang);
+}
 function loadAll(){
   renderCut();
   fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
-    STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; } });
-    renderCut(); stampCut();
+    STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; recordSharePrice(s.sym, q.price); } });
+    renderCut(); stampCut(); renderSharePrices();
   }).catch(function(){ stampCut(); });
 }
+// Fetch live prices as soon as the page loads so the Positions tab share-price rows
+// are populated without needing to open the Cut-Loss tab first.
+renderSharePrices();
+fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
+  STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; recordSharePrice(s.sym, q.price); } });
+  renderSharePrices();
+}).catch(function(){});
 </script>
 <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
