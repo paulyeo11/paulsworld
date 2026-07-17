@@ -560,7 +560,7 @@
     border: 1px solid var(--pale);
     box-shadow: 0 2px 14px rgba(26,46,26,0.06);
   }
-  #chcMap {
+  #chcMap, #siMap {
     width: 100%;
     height: 380px;
     background: #cfe3f0;
@@ -573,7 +573,7 @@
     border-radius: 0;
     border: none;
   }
-  .map-wrap.fs #chcMap { height: 100vh; }
+  .map-wrap.fs #chcMap, .map-wrap.fs #siMap { height: 100vh; }
   .map-typebtns {
     position: absolute;
     top: 10px; right: 48px;
@@ -621,6 +621,44 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
+
+  /* DISTANCE TABLE + STOP LIST */
+  .dist-table { width: 100%; border-collapse: collapse; margin: 16px 0 4px; font-size: 0.85rem; }
+  .dist-table th, .dist-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--pale); }
+  .dist-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mist);
+  }
+  .dist-table td:first-child { font-weight: 600; color: var(--ink); }
+  .dist-note { font-size: 0.72rem; color: var(--mist); margin: 4px 0 0; line-height: 1.5; }
+  .si-stoplist { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .si-stop {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    background: white;
+    border: 1px solid var(--pale);
+    border-radius: 12px;
+    padding: 10px 14px;
+  }
+  .si-badge {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .si-name { font-weight: 700; color: var(--ink); font-size: 0.98rem; }
+  .si-role { font-size: 0.8rem; color: #666; }
 
   /* AIR TICKETS */
   .ticket {
@@ -947,6 +985,7 @@
 <!-- TAB BAR -->
 <nav class="tabbar" id="tabbar">
   <a href="#sec-itinerary" data-target="sec-itinerary"><span class="en">🗓 Itinerary</span><span class="zh">🗓 行程</span></a>
+  <a href="#sec-southisland" data-target="sec-southisland"><span class="en">🗺 S. Island</span><span class="zh">🗺 南岛</span></a>
   <a href="#sec-flights" data-target="sec-flights"><span class="en">✈️ Flights</span><span class="zh">✈️ 航班</span></a>
   <a href="#sec-hotel" data-target="sec-hotel"><span class="en">🏨 Hotel</span><span class="zh">🏨 酒店</span></a>
   <a href="#sec-mustvisit" data-target="sec-mustvisit" class="tab-must"><span class="en">⭐ Must Visit</span><span class="zh">⭐ 必访</span></a>
@@ -996,6 +1035,49 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- SOUTH ISLAND ROUTE -->
+<div class="section" id="sec-southisland" style="padding-top:0">
+  <p class="section-label"><span class="en">🗺️ South Island Tour Route</span><span class="zh">🗺️ 南岛旅游路线</span></p>
+  <p style="font-size:0.92rem;color:#555;line-height:1.55;margin-bottom:14px;">
+    <span class="en">Land at <strong>Queenstown (ZQN)</strong>, tour up through the south, and fly home from <strong>Christchurch (CHC)</strong> — an open-jaw loop with no backtracking, right next to the Milford Sound cruise.</span>
+    <span class="zh">在<strong>皇后镇 (ZQN)</strong>降落，一路向北游览南岛，最后从<strong>基督城 (CHC)</strong>飞回家 —— 不走回头路的开口式环线，紧邻米尔福德峡湾游船。</span>
+  </p>
+  <button class="map-openbtn" onclick="openSiFull()">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+  <div class="map-wrap" id="siMapWrap">
+    <button class="map-closebtn" onclick="closeSiFull()">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    <div class="map-typebtns">
+      <button onclick="setSiMapType('satellite')" id="si-btn-satellite" style="background:rgba(255,255,255,0.85);color:#1a2e1a;border:1px solid rgba(0,0,0,0.15);">🛰 Satellite</button>
+      <button onclick="setSiMapType('street')" id="si-btn-street" style="background:#c9933a;color:#fff;border:none;">🗺 Street</button>
+    </div>
+    <div id="siMap"></div>
+    <div class="map-legend">
+      <div class="lg-row"><span class="dot" style="background:#e63b2e;"></span><span class="en">Start / End (airports)</span><span class="zh">起点/终点（机场）</span></div>
+      <div class="lg-row"><span class="dot" style="background:#1b6ca8;"></span><span class="en">Water / lakes</span><span class="zh">水景/湖泊</span></div>
+      <div class="lg-row"><span class="dot" style="background:#2d6a4f;"></span><span class="en">Nature / mountains</span><span class="zh">自然/山景</span></div>
+    </div>
+  </div>
+
+  <table class="dist-table">
+    <thead>
+      <tr>
+        <th><span class="en">Leg</span><span class="zh">路段</span></th>
+        <th><span class="en">Distance</span><span class="zh">距离</span></th>
+        <th><span class="en">Driving Time</span><span class="zh">车程</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>A → B · <span class="en">Queenstown → Milford Sound</span><span class="zh">皇后镇 → 米尔福德峡湾</span></td><td>~288 km</td><td>~4 hr</td></tr>
+      <tr><td>B → C · <span class="en">Milford Sound → Wanaka</span><span class="zh">米尔福德峡湾 → 瓦纳卡</span></td><td>~350 km</td><td>~5 hr</td></tr>
+      <tr><td>C → D · <span class="en">Wanaka → Aoraki/Mt Cook</span><span class="zh">瓦纳卡 → 库克山</span></td><td>~200 km</td><td>~3 hr</td></tr>
+      <tr><td>D → E · <span class="en">Mt Cook → Lake Tekapo</span><span class="zh">库克山 → 特卡波湖</span></td><td>~105 km</td><td>~1 hr</td></tr>
+      <tr><td>E → F · <span class="en">Lake Tekapo → Christchurch</span><span class="zh">特卡波湖 → 基督城</span></td><td>~225 km</td><td>~3 hr</td></tr>
+    </tbody>
+  </table>
+  <p class="dist-note"><span class="en">Distances &amp; driving times are typical real-road estimates (Milford is an out-and-back via Te Anau), not live traffic.</span><span class="zh">距离与车程为典型实际道路估算（米尔福德峡湾需经蒂阿瑙往返），非实时路况。</span></p>
+
+  <div class="si-stoplist" id="siStopList"></div>
 </div>
 
 <!-- ITINERARY -->
@@ -1556,6 +1638,103 @@
   }
   window.openChcFull = openChcFull;
   window.closeChcFull = closeChcFull;
+
+  // ---- South Island tour route map ----
+  var siStops = [
+    { letter: 'A', name: 'Queenstown', zh: '皇后镇', lat: -45.0312, lng: 168.6626, color: '#e63b2e', role: '🛬 Land here (ZQN)', roleZh: '🛬 在此降落 (ZQN)', wikiTitle: 'Queenstown, New Zealand' },
+    { letter: 'B', name: 'Milford Sound', zh: '米尔福德峡湾', lat: -44.6414, lng: 167.8974, color: '#1b6ca8', role: '⭐ Must-visit cruise', roleZh: '⭐ 必访游船', wikiTitle: 'Milford Sound' },
+    { letter: 'C', name: 'Wanaka', zh: '瓦纳卡', lat: -44.7032, lng: 169.1321, color: '#2d6a4f', role: 'Lakeside town', roleZh: '湖畔小镇', wikiTitle: 'Wānaka' },
+    { letter: 'D', name: 'Aoraki / Mount Cook', zh: '库克山', lat: -43.7340, lng: 170.0964, color: '#2d6a4f', role: "NZ's tallest peak", roleZh: '新西兰最高峰', wikiTitle: 'Aoraki / Mount Cook' },
+    { letter: 'E', name: 'Lake Tekapo', zh: '特卡波湖', lat: -44.0049, lng: 170.4787, color: '#1b6ca8', role: 'Turquoise lake', roleZh: '蓝绿色湖泊', wikiTitle: 'Lake Tekapo' },
+    { letter: 'F', name: 'Christchurch', zh: '基督城', lat: -43.5321, lng: 172.6362, color: '#e63b2e', role: '✈️ Fly home (CHC)', roleZh: '✈️ 从此回家 (CHC)', wikiTitle: 'Christchurch' }
+  ];
+  var siMap = L.map('siMap', { scrollWheelZoom: false });
+  var siTiles = {
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+  };
+  siTiles.street.addTo(siMap);
+  var siCurrentTile = 'street';
+  function setSiMapType(type) {
+    if (type === siCurrentTile) return;
+    siMap.removeLayer(siTiles[siCurrentTile]);
+    siTiles[type].addTo(siMap);
+    siCurrentTile = type;
+    var sat = document.getElementById('si-btn-satellite');
+    var st = document.getElementById('si-btn-street');
+    if (type === 'satellite') {
+      sat.style.background = '#c9933a'; sat.style.color = '#fff'; sat.style.border = 'none';
+      st.style.background = 'rgba(255,255,255,0.85)'; st.style.color = '#1a2e1a'; st.style.border = '1px solid rgba(0,0,0,0.15)';
+    } else {
+      st.style.background = '#c9933a'; st.style.color = '#fff'; st.style.border = 'none';
+      sat.style.background = 'rgba(255,255,255,0.85)'; sat.style.color = '#1a2e1a'; sat.style.border = '1px solid rgba(0,0,0,0.15)';
+    }
+  }
+  window.setSiMapType = setSiMapType;
+
+  function siIcon(color, letter) {
+    return L.divIcon({
+      className: '',
+      html: '<div style="background:' + color + ';width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;font-family:monospace;">' + letter + '</div>',
+      iconSize: [28, 28], iconAnchor: [14, 14]
+    });
+  }
+  function siPopup(s) {
+    var img = s.img ? '<img src="' + s.img + '" style="width:100%;max-width:190px;border-radius:8px;margin-bottom:6px;display:block;">' : '';
+    return '<div style="min-width:150px;">' + img + '<b>' + s.letter + ' · ' + s.name + '</b><br><span style="color:#555;font-size:0.85em;">' + s.role + '</span></div>';
+  }
+  var siLatLngs = [];
+  siStops.forEach(function (s) {
+    siLatLngs.push([s.lat, s.lng]);
+    s.marker = L.marker([s.lat, s.lng], { icon: siIcon(s.color, s.letter) }).addTo(siMap).bindPopup(siPopup(s));
+  });
+  L.polyline(siLatLngs, { color: '#f4813f', weight: 3, dashArray: '9,9' }).addTo(siMap);
+  siMap.fitBounds(siLatLngs, { padding: [40, 40] });
+  if (L.control.fullscreen) { siMap.addControl(new L.Control.FullScreen({ position: 'topleft' })); }
+
+  function openSiFull() {
+    document.getElementById('siMapWrap').classList.add('fs');
+    setTimeout(function () { siMap.invalidateSize(); siMap.fitBounds(siLatLngs, { padding: [60, 60] }); }, 60);
+  }
+  function closeSiFull() {
+    document.getElementById('siMapWrap').classList.remove('fs');
+    setTimeout(function () { siMap.invalidateSize(); siMap.fitBounds(siLatLngs, { padding: [40, 40] }); }, 60);
+  }
+  window.openSiFull = openSiFull;
+  window.closeSiFull = closeSiFull;
+
+  // stop list
+  (function () {
+    var el = document.getElementById('siStopList');
+    if (!el) return;
+    var isZh = document.body.classList.contains('zh-mode');
+    siStops.forEach(function (s) {
+      var row = document.createElement('div');
+      row.className = 'si-stop';
+      row.innerHTML = '<div class="si-badge" style="background:' + s.color + ';">' + s.letter + '</div>' +
+        '<div><div class="si-name"><span class="en">' + s.name + '</span><span class="zh">' + s.zh + '</span></div>' +
+        '<div class="si-role"><span class="en">' + s.role + '</span><span class="zh">' + s.roleZh + '</span></div></div>';
+      row.addEventListener('click', function () {
+        document.getElementById('siMapWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        s.marker.openPopup();
+      });
+      el.appendChild(row);
+    });
+  })();
+
+  // Wikipedia photos on markers
+  siStops.forEach(function (s) {
+    if (!s.wikiTitle) return;
+    fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(s.wikiTitle))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.thumbnail && d.thumbnail.source) {
+          s.img = d.thumbnail.source;
+          if (s.marker) { s.marker.setPopupContent(siPopup(s)); }
+        }
+      })
+      .catch(function () {});
+  });
 </script>
 
 </body>
