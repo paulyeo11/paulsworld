@@ -198,6 +198,28 @@
 
 <div class="wrap">
 
+  <div class="condor" id="acctValueCard">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">💼 <span class="en">Account Value</span><span class="zh">账户总值</span></div>
+      <div class="c-meta"><span class="en">IBKR total account · 3-month view</span><span class="zh">IBKR账户总值 · 3个月走势</span></div>
+      <div></div>
+    </div>
+    <div style="font-size:1.9rem;font-weight:800;margin-top:10px">$56,556.48</div>
+    <div style="color:#f85149;font-weight:700;font-size:.9rem;margin-top:2px">
+      <span class="en">−$3,481.89 (−5.80%) past three months</span><span class="zh">−$3,481.89（−5.80%）过去三个月</span>
+    </div>
+    <div style="position:relative;height:180px;margin-top:14px"><canvas id="acctValueChart"></canvas></div>
+    <div class="rail-legend" style="margin-top:8px">
+      <span style="opacity:.4">1W</span><span style="opacity:.4">MTD</span><span style="opacity:.4">1M</span>
+      <span class="strat" style="margin-top:0">3M</span>
+      <span style="opacity:.4">YTD</span><span style="opacity:.4">1Y</span><span style="opacity:.4">All</span>
+    </div>
+    <div class="note" style="margin-top:12px">
+      <span class="en">From Paul's IBKR app (Home tab, 3M view). Line shape is traced approximately from the app screenshot — not exact daily NAV — the start/end values and % change are exact.</span>
+      <span class="zh">来自Paul的IBKR应用（首页，3个月视图）。曲线形状根据App截图大致描绘——并非精确每日净值——起止数值与百分比变化为精确数字。</span>
+    </div>
+  </div>
+
   <div class="tabs">
     <button class="tab-btn active" id="tb-pos" onclick="setTab('positions')">📊 <span class="en">Positions</span><span class="zh">持仓</span></button>
     <button class="tab-btn" id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">Risk</span><span class="zh">风险</span></button>
@@ -836,6 +858,37 @@ fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
   STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; recordSharePrice(s.sym, q.price); } });
   renderSharePrices();
 }).catch(function(){});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('acctValueChart'), {
+  type: 'line',
+  data: {
+    labels: Array.from({length:24}, function(_,i){ return i; }),
+    datasets: [{
+      data: [59.2,60.3,58.5,55.0,52.0,49.0,46.7,48.0,50.5,52.0,53.5,54.0,53.0,54.2,53.0,51.5,53.0,55.0,56.5,57.0,55.8,57.2,56.0,56.56],
+      borderColor: '#58a6ff',
+      backgroundColor: 'rgba(88,166,255,.12)',
+      fill: true,
+      tension: 0.25,
+      pointRadius: 0,
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display:false }, tooltip: { enabled:false } },
+    scales: {
+      x: { display:false },
+      y: {
+        min: 45, max: 65,
+        grid: { color: 'rgba(255,255,255,.06)' },
+        ticks: { color:'#8b98a5', font:{size:10}, callback:function(v){ return v+'K'; } }
+      }
+    }
+  }
+});
 </script>
 <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
