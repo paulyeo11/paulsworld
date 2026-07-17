@@ -110,6 +110,10 @@
 
   .note { font-size:.72rem; color:#8b98a5; margin:18px 0; padding:12px; background:#161b22; border-radius:10px; border:1px solid rgba(255,255,255,.06); }
 
+  /* IBKR shares table */
+  .pl-up { color:#3fb950; font-weight:800; } .pl-down { color:#f85149; font-weight:800; }
+  .shr-name { color:#8b98a5; font-size:.68rem; }
+
   /* Tabs */
   .tabs { display:flex; gap:6px; margin:22px 0 4px; }
   .tab-btn { flex:1; background:#161b22; border:1px solid rgba(255,255,255,.1); color:#9fb3c8; font-size:.82rem; font-weight:700; padding:11px 8px; border-radius:11px; cursor:pointer; }
@@ -206,6 +210,25 @@
   <div class="note" style="margin-top:8px">
     <span class="en">All four are <b>Iron Condors</b> (sell a put spread + sell a call spread). You keep the full credit if the stock stays <b>between the two short strikes</b> at expiry (the green zone). Max loss is the wing width minus the credit, on one side only. Max risk shown is the sum of all four worst-cases.</span>
     <span class="zh">四个都是<b>铁鹰</b>（卖出看跌价差 + 卖出看涨价差）。到期时股价停留在<b>两个卖出行权价之间</b>（绿色区域）即可保留全部权利金。最大亏损 = 价差宽度 − 权利金（仅一侧）。所示总风险为四者最坏情况之和。</span>
+  </div>
+
+  <!-- IBKR Shares -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">📦 <span class="en">IBKR Shares</span><span class="zh">IBKR持股</span></div>
+      <div class="c-meta"><span class="en">3 stock holdings — separate from the Iron Condors below</span><span class="zh">3只股票持仓——与下方铁鹰持仓分开</span></div>
+      <div class="pill open">● <span class="en">HELD</span><span class="zh">持有中</span></div>
+    </div>
+    <table class="legs">
+      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Shares</span><span class="zh">股数</span></th><th class="num"><span class="en">Avg Cost</span><span class="zh">平均成本</span></th><th class="num"><span class="en">Now</span><span class="zh">现价</span></th><th class="num"><span class="en">P&amp;L %</span><span class="zh">盈亏%</span></th></tr>
+      <tbody id="sharesBody">
+        <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:12px">
+      <span class="en">Live price via Yahoo Finance (~15 min delay). P&amp;L % is vs your average cost, not including dividends. Full editable holdings manager: <b>T14</b>.</span>
+      <span class="zh">实时价格来自雅虎财经（约延迟15分钟）。盈亏%相对于平均成本，不含股息。完整可编辑持仓管理请见 <b>T14</b>。</span>
+    </div>
   </div>
 
   <!-- NVDA -->
@@ -565,6 +588,38 @@ function plotDay1Marker(sym, price){
     setLang(curLang);
   }
 }
+
+// ===== IBKR Shares (owned stock, not options) =====
+var SHARES = [
+  { symbol:'POOL', name:'Pool Corp',            qty:100, avgCost:278.40 },
+  { symbol:'FDS',  name:'FactSet Research',     qty:100, avgCost:343.24 },
+  { symbol:'ZTS',  name:'Zoetis',                qty:100, avgCost:135.60 }
+];
+function renderShares(){
+  var body = document.getElementById('sharesBody'); if(!body) return;
+  body.innerHTML = SHARES.map(function(s){
+    var priceHtml = typeof s.price==='number' ? fmt(s.price) : '—';
+    var plHtml = '—';
+    if(typeof s.price==='number'){
+      var pl = (s.price - s.avgCost) / s.avgCost * 100;
+      var cls = pl>=0 ? 'pl-up' : 'pl-down', sign = pl>=0 ? '+' : '';
+      plHtml = '<span class="'+cls+'">'+sign+pl.toFixed(1)+'%</span>';
+    }
+    return '<tr><td><b>'+s.symbol+'</b><br><span class="shr-name">'+s.name+'</span></td>'+
+      '<td class="num">'+s.qty+'</td>'+
+      '<td class="num">'+fmt(s.avgCost)+'</td>'+
+      '<td class="num">'+priceHtml+'</td>'+
+      '<td class="num">'+plHtml+'</td></tr>';
+  }).join('');
+  setLang(curLang);
+}
+function loadShares(){
+  fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
+    SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number') s.price=q.price; });
+    renderShares();
+  }).catch(function(){ renderShares(); });
+}
+loadShares();
 
 // ===== Cut-Loss live prices (merged from T28) =====
 var STOCKS = [
