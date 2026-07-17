@@ -630,6 +630,15 @@
     border-radius: 50%;
     flex-shrink: 0;
   }
+  .map-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 4px 4px;
+  }
+  .map-controls label { font-size: 0.78rem; color: var(--mist); white-space: nowrap; }
+  .map-controls input[type=range] { flex: 1; accent-color: var(--gold); }
+  .map-controls #chcSpeedVal { font-size: 0.78rem; color: var(--ocean); font-weight: 700; width: 34px; text-align: right; }
 
   /* DISTANCE TABLE + STOP LIST */
   .dist-table { width: 100%; border-collapse: collapse; margin: 16px 0 4px; font-size: 0.85rem; }
@@ -1019,9 +1028,15 @@
     </div>
     <div id="chcMap"></div>
     <div class="map-legend">
-      <div class="lg-row"><span class="dot" style="background:#e74c3c;"></span><span class="en">A · Melbourne (departed)</span><span class="zh">A · 墨尔本（出发）</span></div>
-      <div class="lg-row"><span class="dot" style="background:#2d6a4f;"></span><span class="en">B · Christchurch (landed 🛬)</span><span class="zh">B · 基督城（抵达 🛬）</span></div>
+      <div class="lg-row"><span class="dot" style="background:#e74c3c;"></span><span class="en">A · Singapore (departed 🛫)</span><span class="zh">A · 新加坡（出发 🛫）</span></div>
+      <div class="lg-row"><span class="dot" style="background:#c9933a;"></span><span class="en">B · Melbourne (transit)</span><span class="zh">B · 墨尔本（中转）</span></div>
+      <div class="lg-row"><span class="dot" style="background:#2d6a4f;"></span><span class="en">C · Christchurch (landed 🛬)</span><span class="zh">C · 基督城（抵达 🛬）</span></div>
     </div>
+  </div>
+  <div class="map-controls">
+    <label for="chcSpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+    <input type="range" id="chcSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="chcSpeedVal">1&times;</span>
   </div>
 </div>
 
@@ -1660,7 +1675,8 @@
   })();
 
   // ---- Landed at Christchurch map ----
-  var mel = [-37.6690, 144.8410];   // Melbourne Airport (departed)
+  var sg = [1.3592, 103.9895];      // Singapore Changi Airport (departed)
+  var mel = [-37.6690, 144.8410];   // Melbourne Airport (transit)
   var chc = [-43.4894, 172.5320];   // Christchurch Airport (landed)
   var chcMap = L.map('chcMap', { scrollWheelZoom: false });
 
@@ -1694,26 +1710,55 @@
       iconSize: [26, 26], iconAnchor: [13, 13]
     });
   }
-  L.marker(mel, { icon: chcMarker('#e74c3c', 'A') }).addTo(chcMap)
-    .bindPopup('<b>A · Melbourne</b><br>Departed — SQ flight across the Tasman');
-  L.marker(chc, { icon: chcMarker('#2d6a4f', 'B') }).addTo(chcMap)
-    .bindPopup('<b>B · Christchurch Airport 🛬</b><br>You landed here — gateway to the South Island');
+  L.marker(sg, { icon: chcMarker('#e74c3c', 'A') }).addTo(chcMap)
+    .bindPopup('<b>A · Singapore 🛫</b><br><span class="en">Departed — SQ 207 to Melbourne</span><span class="zh">出发 — SQ 207 飞往墨尔本</span>');
+  L.marker(mel, { icon: chcMarker('#c9933a', 'B') }).addTo(chcMap)
+    .bindPopup('<b>B · Melbourne</b><br><span class="en">Transit — onward across the Tasman</span><span class="zh">中转 — 继续飞越塔斯曼海</span>');
+  L.marker(chc, { icon: chcMarker('#2d6a4f', 'C') }).addTo(chcMap)
+    .bindPopup('<b>C · Christchurch Airport 🛬</b><br><span class="en">You landed here — gateway to the South Island</span><span class="zh">抵达此地 — 通往南岛的门户</span>');
 
-  L.polyline([mel, chc], { color: '#f4813f', weight: 3, dashArray: '8,8' }).addTo(chcMap);
-  chcMap.fitBounds([mel, chc], { padding: [45, 45] });
+  var chcRoute = [sg, mel, chc];
+  L.polyline(chcRoute, { color: '#f4813f', weight: 3, dashArray: '8,8' }).addTo(chcMap);
+  chcMap.fitBounds(chcRoute, { padding: [45, 45] });
 
   if (L.control.fullscreen) { chcMap.addControl(new L.Control.FullScreen({ position: 'topleft' })); }
 
   function openChcFull() {
     document.getElementById('chcMapWrap').classList.add('fs');
-    setTimeout(function () { chcMap.invalidateSize(); chcMap.fitBounds([mel, chc], { padding: [60, 60] }); }, 60);
+    setTimeout(function () { chcMap.invalidateSize(); chcMap.fitBounds(chcRoute, { padding: [60, 60] }); }, 60);
   }
   function closeChcFull() {
     document.getElementById('chcMapWrap').classList.remove('fs');
-    setTimeout(function () { chcMap.invalidateSize(); chcMap.fitBounds([mel, chc], { padding: [45, 45] }); }, 60);
+    setTimeout(function () { chcMap.invalidateSize(); chcMap.fitBounds(chcRoute, { padding: [45, 45] }); }, 60);
   }
   window.openChcFull = openChcFull;
   window.closeChcFull = closeChcFull;
+
+  // ---- Animated plane marker — loops Singapore → Melbourne → Christchurch ----
+  var chcPlaneIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">✈️</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+  var chcPlaneMarker = L.marker(chcRoute[0], { icon: chcPlaneIcon, zIndexOffset: 1000 }).addTo(chcMap);
+  var chcProgress = 0, chcSpeedMultiplier = 1;
+  var chcSpeedSlider = document.getElementById('chcSpeedSlider');
+  var chcSpeedVal = document.getElementById('chcSpeedVal');
+  chcSpeedSlider.addEventListener('input', function () {
+    chcSpeedMultiplier = parseFloat(chcSpeedSlider.value);
+    chcSpeedVal.textContent = chcSpeedMultiplier + '×';
+  });
+  function chcInterpolate(p) {
+    var segCount = chcRoute.length - 1;
+    var segFloat = p * segCount;
+    var segIdx = Math.min(Math.floor(segFloat), segCount - 1);
+    var localFrac = segFloat - segIdx;
+    var a = chcRoute[segIdx], b = chcRoute[segIdx + 1];
+    return [a[0] + (b[0] - a[0]) * localFrac, a[1] + (b[1] - a[1]) * localFrac];
+  }
+  function chcStep() {
+    chcProgress += 0.0006 * chcSpeedMultiplier;
+    if (chcProgress >= 1) chcProgress = 0;
+    chcPlaneMarker.setLatLng(chcInterpolate(chcProgress));
+    requestAnimationFrame(chcStep);
+  }
+  chcStep();
 
   // ---- South Island tour route map ----
   var siStops = [
