@@ -238,6 +238,25 @@
     <div class="box"><div class="k"><span class="en">Realized P&amp;L</span><span class="zh">已实现盈亏</span></div><div class="v amber">$0</div></div>
     <div class="box"><div class="k"><span class="en">Unrealized P&amp;L</span><span class="zh">未实现盈亏</span></div><div class="v red">−$55</div></div>
   </div>
+
+  <div class="condor" id="putVarianceCard" style="margin-top:16px">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Share Price vs Selling Put</span><span class="zh">股价 vs 卖出认沽</span></div>
+      <div class="c-meta"><span class="en">Current price (A) vs each condor's short put strike</span><span class="zh">现价（A）vs 各铁鹰卖出认沽行权价</span></div>
+      <div></div>
+    </div>
+    <table class="legs" style="margin-top:10px">
+      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
+      <tbody id="putVarBody">
+        <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:12px">
+      <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay).</span>
+      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟）。</span>
+    </div>
+  </div>
+
   <div class="note" style="margin-top:8px">
     <span class="en">Unrealized P&amp;L as of <b>Jul 16, 2026</b> (IBKR PortfolioAnalyst statement) — mark-to-market change on all four Iron Condors combined, before commissions on close.</span>
     <span class="zh">未实现盈亏截至<b>2026年7月16日</b>（IBKR投资组合分析报表）——四个铁鹰持仓合计的按市值计价变动，未计平仓佣金。</span>
@@ -848,6 +867,29 @@ function renderSharePrices(){
     plotNowMarker(sym, latest.p);
     if(day1) plotDay1Marker(sym, day1.p);
   });
+  renderPutVarianceTable();
+  setLang(curLang);
+}
+// Share Price (A) vs Selling Put strike — one row per condor
+function renderPutVarianceTable(){
+  var body = document.getElementById('putVarBody'); if(!body) return;
+  var rows = ['NVDA','QQQ','AVGO','SMH'].map(function(sym){
+    var cfg = RAIL_CFG[sym];
+    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
+    var price = s && typeof s.price==='number' ? s.price : null;
+    if(price===null){
+      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">—</td></tr>';
+    }
+    var vpct = (price - cfg.shortP) / cfg.shortP * 100;
+    var vcls = vpct >= 0 ? 'pl-up' : 'pl-down';
+    var vsign = vpct >= 0 ? '+' : '';
+    var cushion;
+    if(vpct <= 0) cushion = '<span class="badge cut"><span class="en">⛔ Below</span><span class="zh">⛔ 跌破</span></span>';
+    else if(vpct < 5) cushion = '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
+    else cushion = '<span class="badge safe"><span class="en">✅ Safe</span><span class="zh">✅ 安全</span></span>';
+    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+cushion+'</td></tr>';
+  });
+  body.innerHTML = rows.join('');
   setLang(curLang);
 }
 function loadAll(){
