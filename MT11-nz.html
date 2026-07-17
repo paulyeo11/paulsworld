@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT11: New Zealand Itinerary · South Island · 30 Sep – 27 Oct 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/MT11-apple-touch-icon.png">
+<link rel="apple-touch-icon" href="/MT11-apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="180x180" href="/MT11-apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/MT11-nz-icon.svg">
+<meta name="apple-mobile-web-app-title" content="NZ Trip">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+  :root{
+    --ink:#1a2e1a; --paper:#f4f7f4; --green:#2d6a4f; --lime:#52b788; --gold:#c9933a;
+    --mist:#7a9e8a; --pale:#e8f0eb; --white:#fff; --ocean:#1b6ca8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;font-size:1rem;}
+
+  /* NAV */
+  nav#homeBar{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    background:var(--ink);padding:10px 14px;position:sticky;top:0;z-index:1200;
+  }
+  nav#homeBar a{
+    background:rgba(255,255,255,0.12);color:#fff;text-decoration:none;border-radius:8px;
+    padding:7px 13px;font-size:0.85rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;
+  }
+  nav#homeBar a:hover{background:var(--green);}
+  nav#homeBar .share-btn{
+    background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;
+    border-radius:8px;padding:7px 13px;font-size:0.85rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  nav#homeBar .share-btn:hover{background:var(--green);}
+
+  /* HERO */
+  .hero{background:linear-gradient(160deg,#1a2e1a 0%,#2d5a1b 45%,#1b6ca8 100%);color:#fff;padding:50px 24px 44px;text-align:center;position:relative;overflow:hidden;}
+  .hero::before{content:'🥝';position:absolute;font-size:16vw;opacity:0.06;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+  .hero-tag{font-family:'Space Mono',monospace;font-size:0.72rem;letter-spacing:0.2em;color:#a8d5b5;text-transform:uppercase;margin-bottom:12px;}
+  .hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.7rem,6vw,3rem);font-weight:900;line-height:1.15;margin-bottom:10px;}
+  .hero h1 span{color:#a8d5b5;}
+  .hero-sub{font-size:1rem;color:rgba(255,255,255,0.7);margin-bottom:26px;font-weight:300;}
+  .hero-stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+  .stat-pill{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:40px;padding:9px 20px;text-align:center;}
+  .stat-pill .num{font-family:'Space Mono',monospace;font-size:1.4rem;font-weight:700;color:#a8d5b5;line-height:1;}
+  .stat-pill .lbl{font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:3px;}
+
+  .share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1a2e1a;color:#fff;padding:11px 26px;border-radius:24px;font-size:0.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);}
+
+  /* SECTION */
+  .section{max-width:720px;margin:0 auto;padding:34px 20px;}
+  .section-label{font-family:'Space Mono',monospace;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--mist);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--pale);}
+  .intro{font-size:0.94rem;color:#555;line-height:1.6;margin-bottom:16px;}
+
+  /* MAP */
+  .map-openbtn{display:inline-flex;align-items:center;gap:8px;background:var(--ocean);color:#fff;border:none;border-radius:30px;padding:11px 22px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;margin-bottom:14px;box-shadow:0 3px 12px rgba(27,108,168,0.28);}
+  .map-openbtn:hover{background:#12385f;}
+  .map-wrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--pale);box-shadow:0 2px 14px rgba(26,46,26,0.06);}
+  #nzMap{width:100%;height:440px;background:#cfe3f0;}
+  .map-wrap.fs{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:3000;border-radius:0;border:none;}
+  .map-wrap.fs #nzMap{height:100vh;}
+  .map-typebtns{position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;}
+  .map-typebtns button{border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+  .map-closebtn{display:none;position:absolute;top:10px;left:10px;z-index:1001;background:#c0392b;color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+  .map-wrap.fs .map-closebtn{display:block;}
+  .map-legend{position:absolute;bottom:10px;left:10px;z-index:1000;background:rgba(255,255,255,0.92);border-radius:10px;padding:8px 12px;font-size:0.72rem;line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+  .map-legend .lg-row{display:flex;align-items:center;gap:7px;}
+  .map-legend .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+  /* DISTANCE TABLE */
+  .dist-table{width:100%;border-collapse:collapse;margin:16px 0 4px;font-size:0.85rem;}
+  .dist-table th,.dist-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--pale);}
+  .dist-table th{font-family:'Space Mono',monospace;font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--mist);}
+  .dist-table td:first-child{font-weight:600;color:var(--ink);}
+  .dist-note{font-size:0.72rem;color:var(--mist);margin:4px 0 0;line-height:1.5;}
+
+  /* ITINERARY STAGES */
+  .stages{display:flex;flex-direction:column;gap:14px;}
+  .stage{background:#fff;border:1px solid var(--pale);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(26,46,26,0.05);}
+  .stage-head{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--pale);}
+  .stage-badge{width:34px;height:34px;border-radius:50%;color:#fff;font-family:'Space Mono',monospace;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+  .stage-title{font-family:'Playfair Display',serif;font-size:1.12rem;font-weight:700;color:var(--ink);line-height:1.25;}
+  .stage-dates{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--mist);margin-top:2px;}
+  .stage-nights{background:var(--pale);border-radius:20px;padding:5px 11px;font-size:0.72rem;font-weight:700;color:var(--green);white-space:nowrap;}
+  .stage-body{padding:14px 16px;}
+  .stage-desc{font-size:0.9rem;color:#555;line-height:1.55;margin-bottom:10px;}
+  .stage-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .stage-tag{background:var(--pale);border-radius:20px;padding:4px 11px;font-size:0.76rem;color:var(--ink);}
+  .stage-tag.star{background:#fff3cd;color:#856404;font-weight:700;}
+  .stage-map{display:inline-flex;align-items:center;gap:6px;margin-top:12px;text-decoration:none;font-size:0.78rem;font-weight:600;padding:8px 14px;border-radius:8px;background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#1a6fa0;}
+
+  /* FINISH CARD */
+  .finish{background:linear-gradient(135deg,#12385f 0%,#1b6ca8 100%);color:#fff;border-radius:16px;padding:20px;text-align:center;margin-top:14px;}
+  .finish .f-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:6px;}
+  .finish .f-sub{font-size:0.9rem;opacity:0.85;line-height:1.5;}
+
+  /* TIPS */
+  .tips{display:flex;flex-direction:column;gap:10px;}
+  .tip{background:#fff;border:1px solid var(--pale);border-left:4px solid var(--green);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;}
+  .tip .t-ico{font-size:1.4rem;flex-shrink:0;}
+  .tip .t-title{font-weight:600;font-size:0.96rem;margin-bottom:2px;}
+  .tip .t-sub{font-size:0.85rem;color:#666;line-height:1.5;}
+
+  .view-counter-wrap{text-align:center;padding:24px 20px 10px;color:var(--mist);font-size:0.85rem;font-family:'Space Mono',monospace;}
+  footer{text-align:center;padding:20px;font-size:0.8rem;color:var(--mist);border-top:1px solid var(--pale);font-family:'Space Mono',monospace;}
+  @media(max-width:420px){.hero h1{font-size:1.7rem;}.stat-pill .num{font-size:1.2rem;}}
+</style>
+<script src="/bilingual.js"></script>
+</head>
+<body>
+
+<nav id="homeBar">
+  <a href="https://paulsworld.vercel.app/">🏠 <span class="en">Home</span><span class="zh">首页</span></a>
+  <a href="/MT11.html">← <span class="en">MT11 Trip</span><span class="zh">MT11行程</span></a>
+  <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+</nav>
+
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-tag"><span class="en">MT11 · New Zealand Leg · 30 Sep – 27 Oct 2026</span><span class="zh">MT11 · 新西兰段 · 2026年9月30日–10月27日</span></p>
+  <h1><span class="en">New Zealand <span>South Island</span></span><span class="zh">新西兰 <span>南岛</span></span></h1>
+  <p class="hero-sub"><span class="en">Paul &amp; Joanne · Grand South Island self-drive · land Queenstown, fly home Christchurch</span><span class="zh">保罗与乔安妮 · 南岛自驾环线 · 皇后镇入境，基督城回国</span></p>
+  <div class="hero-stats">
+    <div class="stat-pill"><div class="num">28</div><div class="lbl"><span class="en">Days</span><span class="zh">天</span></div></div>
+    <div class="stat-pill"><div class="num">10</div><div class="lbl"><span class="en">Bases</span><span class="zh">住宿点</span></div></div>
+    <div class="stat-pill"><div class="num">~2k</div><div class="lbl"><span class="en">km drive</span><span class="zh">公里车程</span></div></div>
+    <div class="stat-pill"><div class="num">Oct</div><div class="lbl"><span class="en">Spring</span><span class="zh">春季</span></div></div>
+  </div>
+</section>
+
+<!-- MAP -->
+<div class="section">
+  <p class="section-label"><span class="en">🗺️ South Island Route Map</span><span class="zh">🗺️ 南岛路线地图</span></p>
+  <p class="intro"><span class="en">A relaxed anticlockwise loop of the South Island — you land at <strong>Queenstown (ZQN)</strong>, drive the fjords, glaciers, west coast, alpine passes and lakes, and fly home from <strong>Christchurch (CHC)</strong>. No backtracking, and Milford Sound comes early.</span><span class="zh">悠闲的南岛逆时针环线 —— 在<strong>皇后镇 (ZQN)</strong>降落，自驾游览峡湾、冰川、西海岸、高山垭口与湖泊，最后从<strong>基督城 (CHC)</strong>飞回家。不走回头路，米尔福德峡湾早早安排。</span></p>
+  <button class="map-openbtn" onclick="openNzFull()">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+  <div class="map-wrap" id="nzMapWrap">
+    <button class="map-closebtn" onclick="closeNzFull()">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    <div class="map-typebtns">
+      <button onclick="setNzMapType('satellite')" id="nz-btn-satellite" style="background:rgba(255,255,255,0.85);color:#1a2e1a;border:1px solid rgba(0,0,0,0.15);">🛰 Satellite</button>
+      <button onclick="setNzMapType('street')" id="nz-btn-street" style="background:#c9933a;color:#fff;border:none;">🗺 Street</button>
+    </div>
+    <div id="nzMap"></div>
+    <div class="map-legend">
+      <div class="lg-row"><span class="dot" style="background:#e63b2e;"></span><span class="en">Start / End (airports)</span><span class="zh">起点/终点（机场）</span></div>
+      <div class="lg-row"><span class="dot" style="background:#1b6ca8;"></span><span class="en">Water / fjords / lakes</span><span class="zh">水景/峡湾/湖泊</span></div>
+      <div class="lg-row"><span class="dot" style="background:#2d6a4f;"></span><span class="en">Nature / mountains</span><span class="zh">自然/山景</span></div>
+    </div>
+  </div>
+
+  <table class="dist-table">
+    <thead>
+      <tr>
+        <th><span class="en">Leg</span><span class="zh">路段</span></th>
+        <th><span class="en">Distance</span><span class="zh">距离</span></th>
+        <th><span class="en">Drive</span><span class="zh">车程</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>A → B · <span class="en">Queenstown → Milford Sound</span><span class="zh">皇后镇 → 米尔福德峡湾</span></td><td>~288 km</td><td>~4 hr</td></tr>
+      <tr><td>B → C · <span class="en">Milford → Wanaka</span><span class="zh">米尔福德 → 瓦纳卡</span></td><td>~350 km</td><td>~5 hr</td></tr>
+      <tr><td>C → D · <span class="en">Wanaka → Franz Josef (Haast Pass)</span><span class="zh">瓦纳卡 → 弗朗兹约瑟夫（哈斯特山口）</span></td><td>~285 km</td><td>~4 hr</td></tr>
+      <tr><td>D → E · <span class="en">Franz Josef → Punakaiki</span><span class="zh">弗朗兹约瑟夫 → 普纳凯基</span></td><td>~245 km</td><td>~3.5 hr</td></tr>
+      <tr><td>E → F · <span class="en">Punakaiki → Arthur's Pass</span><span class="zh">普纳凯基 → 亚瑟山口</span></td><td>~150 km</td><td>~2.5 hr</td></tr>
+      <tr><td>F → G · <span class="en">Arthur's Pass → Kaikōura</span><span class="zh">亚瑟山口 → 凯库拉</span></td><td>~335 km</td><td>~4.5 hr</td></tr>
+      <tr><td>G → H · <span class="en">Kaikōura → Christchurch</span><span class="zh">凯库拉 → 基督城</span></td><td>~180 km</td><td>~2.5 hr</td></tr>
+      <tr><td>H → I · <span class="en">Christchurch → Lake Tekapo</span><span class="zh">基督城 → 特卡波湖</span></td><td>~225 km</td><td>~3 hr</td></tr>
+      <tr><td>I → J · <span class="en">Lake Tekapo → Aoraki/Mt Cook</span><span class="zh">特卡波湖 → 库克山</span></td><td>~105 km</td><td>~1.5 hr</td></tr>
+      <tr><td>J → <span class="en">CHC · Mt Cook → Christchurch (fly home)</span><span class="zh">CHC · 库克山 → 基督城（回国）</span></td><td>~330 km</td><td>~4.5 hr</td></tr>
+    </tbody>
+  </table>
+  <p class="dist-note"><span class="en">Distances &amp; drive times are typical real-road estimates (Milford is an out-and-back via Te Anau), not live traffic.</span><span class="zh">距离与车程为典型实际道路估算（米尔福德峡湾需经蒂阿瑙往返），非实时路况。</span></p>
+</div>
+
+<!-- ITINERARY -->
+<div class="section" style="padding-top:0">
+  <p class="section-label"><span class="en">📅 Your Planned Itinerary · 26 nights</span><span class="zh">📅 为你规划的行程 · 26晚</span></p>
+  <div class="stages">
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#e63b2e;">A</div>
+        <div>
+          <div class="stage-title"><span class="en">Queenstown &amp; Arrowtown</span><span class="zh">皇后镇与箭镇</span></div>
+          <div class="stage-dates">30 Sep – 4 Oct · 🛬 <span class="en">Land ZQN</span><span class="zh">皇后镇降落</span></div>
+        </div>
+        <div class="stage-nights">4 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Settle in at the adventure capital. Ride the Skyline Gondola, wander historic gold-mining Arrowtown, cruise Lake Wakatipu on the TSS Earnslaw, and drive out to Glenorchy. Pick up your one-way rental car here.</span><span class="zh">在冒险之都安顿下来。搭乘天际缆车，漫步淘金古镇箭镇，乘坐古董蒸汽船畅游瓦卡蒂普湖，并驱车前往格伦诺基。在此取单程租车。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">🚡 <span class="en">Skyline Gondola</span><span class="zh">天际缆车</span></span>
+          <span class="stage-tag">⛏️ <span class="en">Arrowtown</span><span class="zh">箭镇</span></span>
+          <span class="stage-tag">🍷 <span class="en">Wineries</span><span class="zh">酒庄</span></span>
+          <span class="stage-tag">🚗 <span class="en">Collect car</span><span class="zh">取车</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Queenstown%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#1b6ca8;">B</div>
+        <div>
+          <div class="stage-title"><span class="en">Te Anau &amp; Milford Sound</span><span class="zh">蒂阿瑙与米尔福德峡湾</span></div>
+          <div class="stage-dates">4 – 7 Oct · Fiordland</div>
+        </div>
+        <div class="stage-nights">3 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Base in Te Anau, gateway to Fiordland. The highlight: your ⭐ Milford Sound nature cruise — Mitre Peak, waterfalls and seals. Add the Te Anau glowworm caves and, if time allows, a quieter Doubtful Sound overnight.</span><span class="zh">以蒂阿瑙为基地，通往峡湾国家公园。重头戏：⭐ 米尔福德峡湾游船 —— 米特峰、瀑布与海豹。再加上蒂阿瑙萤火虫洞，若时间允许，可安排更宁静的神秘峡湾过夜游。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag star">⭐ <span class="en">Milford Sound cruise</span><span class="zh">米尔福德峡湾游船</span></span>
+          <span class="stage-tag">✨ <span class="en">Glowworm caves</span><span class="zh">萤火虫洞</span></span>
+          <span class="stage-tag">🚢 <span class="en">Doubtful Sound</span><span class="zh">神秘峡湾</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Milford%20Sound%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#2d6a4f;">C</div>
+        <div>
+          <div class="stage-title"><span class="en">Wanaka</span><span class="zh">瓦纳卡</span></div>
+          <div class="stage-dates">7 – 10 Oct · Lake district</div>
+        </div>
+        <div class="stage-nights">3 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">A calmer lakeside town. Photograph #ThatWanakaTree, hike Roys Peak for the classic view, visit Puzzling World, and drive the Cardrona valley. Great cafés and Rippon vineyard by the lake.</span><span class="zh">更宁静的湖畔小镇。拍摄著名的“瓦纳卡树”，登罗伊峰饱览经典景色，参观迷宫世界，驱车卡德罗纳山谷。湖边有很棒的咖啡馆和里彭酒庄。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">🌳 <span class="en">#ThatWanakaTree</span><span class="zh">瓦纳卡树</span></span>
+          <span class="stage-tag">🥾 <span class="en">Roys Peak</span><span class="zh">罗伊峰</span></span>
+          <span class="stage-tag">🧩 <span class="en">Puzzling World</span><span class="zh">迷宫世界</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Wanaka%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#2d6a4f;">D</div>
+        <div>
+          <div class="stage-title"><span class="en">Franz Josef &amp; Fox Glaciers</span><span class="zh">弗朗兹约瑟夫与福克斯冰川</span></div>
+          <div class="stage-dates">10 – 13 Oct · West Coast · Haast Pass</div>
+        </div>
+        <div class="stage-nights">3 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Cross the scenic Haast Pass to glacier country. Walk to the glacier faces, take a heli-hike onto the ice, see the mirror reflections at Lake Matheson, and soak in the hot pools.</span><span class="zh">翻越风景优美的哈斯特山口，进入冰川之乡。步行至冰川脚下，乘直升机徒步登上冰面，欣赏马西森湖的镜面倒影，再泡泡温泉。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">🧊 <span class="en">Glacier walks</span><span class="zh">冰川徒步</span></span>
+          <span class="stage-tag">🚁 <span class="en">Heli-hike</span><span class="zh">直升机徒步</span></span>
+          <span class="stage-tag">🪞 <span class="en">Lake Matheson</span><span class="zh">马西森湖</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Franz%20Josef%20Glacier%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#1b6ca8;">E</div>
+        <div>
+          <div class="stage-title"><span class="en">Hokitika &amp; Punakaiki</span><span class="zh">霍基蒂卡与普纳凯基</span></div>
+          <div class="stage-dates">13 – 15 Oct · West Coast</div>
+        </div>
+        <div class="stage-nights">2 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Wild west coast. Marvel at the turquoise Hokitika Gorge, shop for greenstone (pounamu jade), and watch the sea explode through the Punakaiki Pancake Rocks &amp; blowholes at high tide.</span><span class="zh">狂野的西海岸。惊叹于霍基蒂卡峡谷的碧绿湖水，选购绿玉（普纳姆玉），在涨潮时观赏普纳凯基千层岩与喷水孔的海浪奇观。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">💎 <span class="en">Hokitika Gorge</span><span class="zh">霍基蒂卡峡谷</span></span>
+          <span class="stage-tag">🥞 <span class="en">Pancake Rocks</span><span class="zh">千层岩</span></span>
+          <span class="stage-tag">🌊 <span class="en">Blowholes</span><span class="zh">喷水孔</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Punakaiki%20Pancake%20Rocks%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#2d6a4f;">F</div>
+        <div>
+          <div class="stage-title"><span class="en">Arthur's Pass</span><span class="zh">亚瑟山口</span></div>
+          <div class="stage-dates">15 – 17 Oct · Alpine crossing</div>
+        </div>
+        <div class="stage-nights">2 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">The grandest alpine pass, straddling the Southern Alps. Short walks to Devils Punchbowl Falls, cheeky kea mountain parrots, and the famous TranzAlpine railway scenery through the mountains.</span><span class="zh">最壮丽的高山垭口，横跨南阿尔卑斯山。步行前往魔鬼酒杯瀑布，偶遇顽皮的高山鹦鹉“kea”，欣赏著名的高山观光火车穿越群山的美景。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">💧 <span class="en">Devils Punchbowl</span><span class="zh">魔鬼酒杯瀑布</span></span>
+          <span class="stage-tag">🦜 <span class="en">Kea parrots</span><span class="zh">高山鹦鹉</span></span>
+          <span class="stage-tag">🚂 <span class="en">TranzAlpine</span><span class="zh">高山火车</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Arthur%27s%20Pass%20National%20Park%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#1b6ca8;">G</div>
+        <div>
+          <div class="stage-title"><span class="en">Kaikōura</span><span class="zh">凯库拉</span></div>
+          <div class="stage-dates">17 – 19 Oct · Whale coast</div>
+        </div>
+        <div class="stage-nights">2 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Where mountains meet the sea. Go whale watching (resident sperm whales year-round), meet fur seal colonies and dusky dolphins, and feast on the crayfish the town is named for.</span><span class="zh">高山与大海相接之地。出海观鲸（常年可见抹香鲸），探访毛皮海豹群与暗色海豚，品尝这座以“小龙虾大餐”命名的小镇的招牌美食。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag star">🐋 <span class="en">Whale watching</span><span class="zh">观鲸</span></span>
+          <span class="stage-tag">🦭 <span class="en">Seal colony</span><span class="zh">海豹群</span></span>
+          <span class="stage-tag">🦞 <span class="en">Crayfish</span><span class="zh">小龙虾</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Kaikoura%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#e63b2e;">H</div>
+        <div>
+          <div class="stage-title"><span class="en">Christchurch</span><span class="zh">基督城</span></div>
+          <div class="stage-dates">19 – 21 Oct · Garden City</div>
+        </div>
+        <div class="stage-nights">2 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">The elegant Garden City. Go punting on the Avon River, ride the heritage tram, stroll the Botanic Gardens, and see the creative post-earthquake rebuild and street art.</span><span class="zh">优雅的花园之城。在雅芳河上撑篙泛舟，乘坐古董电车，漫步植物园，感受震后充满创意的重建与街头艺术。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">🛶 <span class="en">Punting the Avon</span><span class="zh">雅芳河泛舟</span></span>
+          <span class="stage-tag">🚋 <span class="en">Heritage tram</span><span class="zh">古董电车</span></span>
+          <span class="stage-tag">🌷 <span class="en">Botanic Gardens</span><span class="zh">植物园</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Christchurch%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#1b6ca8;">I</div>
+        <div>
+          <div class="stage-title"><span class="en">Lake Tekapo</span><span class="zh">特卡波湖</span></div>
+          <div class="stage-dates">21 – 23 Oct · Dark Sky</div>
+        </div>
+        <div class="stage-nights">2 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Impossibly turquoise glacier-fed lake. Photograph the little Church of the Good Shepherd, ride up Mt John for the view, relax in the hot springs, and stargaze in this International Dark Sky Reserve.</span><span class="zh">碧蓝得不可思议的冰川湖。拍摄小巧的好牧羊人教堂，登上约翰山俯瞰美景，在温泉中放松，并在这片国际暗夜保护区里观星。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag">⛪ <span class="en">Good Shepherd Church</span><span class="zh">好牧羊人教堂</span></span>
+          <span class="stage-tag">🔭 <span class="en">Mt John · stargazing</span><span class="zh">约翰山·观星</span></span>
+          <span class="stage-tag">♨️ <span class="en">Hot springs</span><span class="zh">温泉</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Lake%20Tekapo%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head">
+        <div class="stage-badge" style="background:#2d6a4f;">J</div>
+        <div>
+          <div class="stage-title"><span class="en">Aoraki / Mount Cook</span><span class="zh">库克山</span></div>
+          <div class="stage-dates">23 – 26 Oct · NZ's highest peak</div>
+        </div>
+        <div class="stage-nights">3 <span class="en">nights</span><span class="zh">晚</span></div>
+      </div>
+      <div class="stage-body">
+        <div class="stage-desc"><span class="en">Finish among the giants. Walk the stunning Hooker Valley Track to the glacier lake beneath NZ's tallest mountain, take a Tasman Glacier boat tour among icebergs, and enjoy world-class dark skies.</span><span class="zh">在群峰之巅收尾。漫步壮丽的胡克山谷步道，走到新西兰最高峰脚下的冰川湖，参加塔斯曼冰川游船穿行于冰山之间，并欣赏世界级的暗夜星空。</span></div>
+        <div class="stage-tags">
+          <span class="stage-tag star">🏔️ <span class="en">Hooker Valley Track</span><span class="zh">胡克山谷步道</span></span>
+          <span class="stage-tag">🛥️ <span class="en">Tasman Glacier</span><span class="zh">塔斯曼冰川</span></span>
+          <span class="stage-tag">🌌 <span class="en">Dark Sky stars</span><span class="zh">暗夜星空</span></span>
+        </div>
+        <a class="stage-map" href="https://www.google.com/maps/search/?api=1&query=Aoraki%20Mount%20Cook%20National%20Park%2C%20New%20Zealand" target="_blank">🗺️ <span class="en">Map</span><span class="zh">地图</span></a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="finish">
+    <div class="f-title">✈️ <span class="en">26 Oct → Fly Home</span><span class="zh">10月26日 → 回国</span></div>
+    <div class="f-sub"><span class="en">Drive Mt Cook → Christchurch (~4.5 hr) on 26 Oct, then Singapore Airlines SQ 296 departs Christchurch 01:05 on 27 Oct → home to Singapore 06:40.</span><span class="zh">10月26日自驾库克山 → 基督城（约4.5小时），然后搭乘新加坡航空 SQ 296，10月27日01:05从基督城起飞 → 06:40抵达新加坡。</span></div>
+  </div>
+</div>
+
+<!-- TIPS -->
+<div class="section" style="padding-top:0">
+  <p class="section-label"><span class="en">💡 Practical Tips</span><span class="zh">💡 实用贴士</span></p>
+  <div class="tips">
+    <div class="tip">
+      <div class="t-ico">🚗</div>
+      <div><div class="t-title"><span class="en">One-way rental car</span><span class="zh">单程租车</span></div><div class="t-sub"><span class="en">Pick up in Queenstown, drop off in Christchurch. Book an open-jaw hire early — it saves days of backtracking.</span><span class="zh">在皇后镇取车，基督城还车。尽早预订异地还车，可省下好几天的回头路。</span></div></div>
+    </div>
+    <div class="tip">
+      <div class="t-ico">🌸</div>
+      <div><div class="t-title"><span class="en">October = spring</span><span class="zh">十月＝春季</span></div><div class="t-sub"><span class="en">Snow-capped peaks, baby lambs, blossom and fewer crowds — but mountain weather is changeable. Pack layers and a warm jacket.</span><span class="zh">雪顶山峰、初生羊羔、繁花盛开、游人较少 —— 但山区天气多变，请备好多层衣物和保暖外套。</span></div></div>
+    </div>
+    <div class="tip">
+      <div class="t-ico">🛣️</div>
+      <div><div class="t-title"><span class="en">Drive on the left · take it slow</span><span class="zh">靠左行驶·慢慢开</span></div><div class="t-sub"><span class="en">Roads are scenic but winding and often single-lane. Distances take longer than they look — plan generous drive times and stop often.</span><span class="zh">道路风景优美但弯多、常为单车道。实际车程比看起来更久 —— 请预留充裕时间，多多停车休息。</span></div></div>
+    </div>
+    <div class="tip">
+      <div class="t-ico">📅</div>
+      <div><div class="t-title"><span class="en">Book Milford &amp; whales ahead</span><span class="zh">提前预订峡湾与观鲸</span></div><div class="t-sub"><span class="en">The Milford Sound cruise and Kaikōura whale watching sell out in peak season — reserve these two before you fly.</span><span class="zh">米尔福德峡湾游船和凯库拉观鲸在旺季常常售罄 —— 请在出发前订好这两项。</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW COUNTER -->
+<div class="view-counter-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  MT11 · New Zealand South Island Itinerary 2026 · paulsworld.vercel.app
+</footer>
+
+<script>
+  // ---- Share ----
+  function shareThisPage() {
+    var url = window.location.href, title = document.title;
+    if (navigator.share) { navigator.share({ title: title, url: url }).catch(function () {}); }
+    else {
+      navigator.clipboard.writeText(url).then(function () {
+        var t = document.getElementById('shareToast'); t.style.display = 'block';
+        setTimeout(function () { t.style.display = 'none'; }, 2200);
+      });
+    }
+  }
+  window.shareThisPage = shareThisPage;
+
+  // ---- New Zealand route map ----
+  var nzStops = [
+    { letter:'A', name:'Queenstown', lat:-45.0312, lng:168.6626, color:'#e63b2e', role:'🛬 Land here (ZQN)', wikiTitle:'Queenstown, New Zealand' },
+    { letter:'B', name:'Milford Sound', lat:-44.6414, lng:167.8974, color:'#1b6ca8', role:'⭐ Milford Sound cruise', wikiTitle:'Milford Sound' },
+    { letter:'C', name:'Wanaka', lat:-44.7032, lng:169.1321, color:'#2d6a4f', role:'Lakeside town', wikiTitle:'Wānaka' },
+    { letter:'D', name:'Franz Josef Glacier', lat:-43.3907, lng:170.1836, color:'#2d6a4f', role:'Glacier country', wikiTitle:'Franz Josef Glacier' },
+    { letter:'E', name:'Punakaiki', lat:-42.1147, lng:171.3369, color:'#1b6ca8', role:'Pancake Rocks coast', wikiTitle:'Punakaiki' },
+    { letter:'F', name:"Arthur's Pass", lat:-42.9447, lng:171.5636, color:'#2d6a4f', role:'Alpine pass', wikiTitle:'Arthur\'s Pass' },
+    { letter:'G', name:'Kaikōura', lat:-42.3987, lng:173.6800, color:'#1b6ca8', role:'🐋 Whale watching', wikiTitle:'Kaikōura' },
+    { letter:'H', name:'Christchurch', lat:-43.5321, lng:172.6362, color:'#e63b2e', role:'✈️ Fly home (CHC)', wikiTitle:'Christchurch' },
+    { letter:'I', name:'Lake Tekapo', lat:-44.0049, lng:170.4787, color:'#1b6ca8', role:'Turquoise lake', wikiTitle:'Lake Tekapo' },
+    { letter:'J', name:'Aoraki / Mount Cook', lat:-43.7340, lng:170.0964, color:'#2d6a4f', role:"NZ's tallest peak", wikiTitle:'Aoraki / Mount Cook' }
+  ];
+  var nzMap = L.map('nzMap', { scrollWheelZoom:false });
+  var nzTiles = {
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'© Esri', maxZoom:18 }),
+    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap contributors', maxZoom:19 })
+  };
+  nzTiles.street.addTo(nzMap);
+  var nzCurrentTile = 'street';
+  function setNzMapType(type){
+    if (type === nzCurrentTile) return;
+    nzMap.removeLayer(nzTiles[nzCurrentTile]);
+    nzTiles[type].addTo(nzMap);
+    nzCurrentTile = type;
+    var sat = document.getElementById('nz-btn-satellite'), st = document.getElementById('nz-btn-street');
+    if (type === 'satellite'){ sat.style.background='#c9933a';sat.style.color='#fff';sat.style.border='none';st.style.background='rgba(255,255,255,0.85)';st.style.color='#1a2e1a';st.style.border='1px solid rgba(0,0,0,0.15)'; }
+    else { st.style.background='#c9933a';st.style.color='#fff';st.style.border='none';sat.style.background='rgba(255,255,255,0.85)';sat.style.color='#1a2e1a';sat.style.border='1px solid rgba(0,0,0,0.15)'; }
+  }
+  window.setNzMapType = setNzMapType;
+
+  function nzIcon(color, letter){
+    return L.divIcon({ className:'', html:'<div style="background:'+color+';width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;font-family:monospace;">'+letter+'</div>', iconSize:[28,28], iconAnchor:[14,14] });
+  }
+  function nzPopup(s){
+    var img = s.img ? '<img src="'+s.img+'" style="width:100%;max-width:190px;border-radius:8px;margin-bottom:6px;display:block;">' : '';
+    return '<div style="min-width:150px;">'+img+'<b>'+s.letter+' · '+s.name+'</b><br><span style="color:#555;font-size:0.85em;">'+s.role+'</span></div>';
+  }
+  // route order includes the final return leg J -> Christchurch
+  var routeOrder = ['A','B','C','D','E','F','G','H','I','J'];
+  var byLetter = {}; nzStops.forEach(function(s){ byLetter[s.letter]=s; });
+  var nzLatLngs = [];
+  nzStops.forEach(function(s){
+    nzLatLngs.push([s.lat, s.lng]);
+    s.marker = L.marker([s.lat, s.lng], { icon:nzIcon(s.color, s.letter) }).addTo(nzMap).bindPopup(nzPopup(s));
+  });
+  var linePts = routeOrder.map(function(L2){ return [byLetter[L2].lat, byLetter[L2].lng]; });
+  linePts.push([byLetter['H'].lat, byLetter['H'].lng]); // J -> back to Christchurch to fly home
+  L.polyline(linePts, { color:'#f4813f', weight:3, dashArray:'9,9' }).addTo(nzMap);
+  nzMap.fitBounds(nzLatLngs, { padding:[40,40] });
+  if (L.control.fullscreen){ nzMap.addControl(new L.Control.FullScreen({ position:'topleft' })); }
+
+  function openNzFull(){ document.getElementById('nzMapWrap').classList.add('fs'); setTimeout(function(){ nzMap.invalidateSize(); nzMap.fitBounds(nzLatLngs,{padding:[60,60]}); },60); }
+  function closeNzFull(){ document.getElementById('nzMapWrap').classList.remove('fs'); setTimeout(function(){ nzMap.invalidateSize(); nzMap.fitBounds(nzLatLngs,{padding:[40,40]}); },60); }
+  window.openNzFull = openNzFull; window.closeNzFull = closeNzFull;
+
+  // Wikipedia photos on markers
+  nzStops.forEach(function(s){
+    if (!s.wikiTitle) return;
+    fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(s.wikiTitle))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d && d.thumbnail && d.thumbnail.source){ s.img = d.thumbnail.source; if (s.marker) s.marker.setPopupContent(nzPopup(s)); } })
+      .catch(function(){});
+  });
+</script>
+
+</body>
+</html>
