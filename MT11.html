@@ -1057,6 +1057,7 @@
       <div class="lg-row"><span class="dot" style="background:#e63b2e;"></span><span class="en">Start / End (airports)</span><span class="zh">起点/终点（机场）</span></div>
       <div class="lg-row"><span class="dot" style="background:#1b6ca8;"></span><span class="en">Water / lakes</span><span class="zh">水景/湖泊</span></div>
       <div class="lg-row"><span class="dot" style="background:#2d6a4f;"></span><span class="en">Nature / mountains</span><span class="zh">自然/山景</span></div>
+      <div class="lg-row"><span class="dot" style="background:#c9933a;"></span>★ <span class="en">Deep-south stops</span><span class="zh">深南景点</span></div>
     </div>
   </div>
 
@@ -1079,6 +1080,10 @@
   <p class="dist-note"><span class="en">Distances &amp; driving times are typical real-road estimates (Milford is an out-and-back via Te Anau), not live traffic.</span><span class="zh">距离与车程为典型实际道路估算（米尔福德峡湾需经蒂阿瑙往返），非实时路况。</span></p>
 
   <div class="si-stoplist" id="siStopList"></div>
+
+  <p class="section-label" style="margin-top:24px;"><span class="en">⭐ Deep South · Places of Interest</span><span class="zh">⭐ 深南 · 精选景点</span></p>
+  <p style="font-size:0.88rem;color:#555;line-height:1.55;margin-bottom:12px;"><span class="en">Extra stops in the far south you circled — the wild Fiordland, Southland coast, the Catlins and Stewart Island. Tap any to jump to it on the map.</span><span class="zh">你圈出的最南端额外景点 —— 狂野的峡湾区、南地海岸、卡特林斯与斯图尔特岛。点击任意一项可在地图上定位。</span></p>
+  <div class="si-stoplist" id="siPoiList"></div>
 </div>
 
 <!-- ITINERARY -->
@@ -1703,6 +1708,55 @@
   }
   window.openSiFull = openSiFull;
   window.closeSiFull = closeSiFull;
+
+  // ---- Deep South places of interest (the circled Southland region) ----
+  var siPois = [
+    { name: 'Te Anau', zh: '蒂阿瑙', lat: -45.4145, lng: 167.7180, desc: 'Fiordland gateway · glowworm caves · Kepler Track', descZh: '峡湾门户 · 萤火虫洞 · 开普勒步道', wikiTitle: 'Te Anau' },
+    { name: 'Doubtful Sound', zh: '神秘峡湾', lat: -45.5667, lng: 167.6167, desc: 'Wilder, quieter fjord via Lake Manapouri', descZh: '经玛纳普里湖前往，更原始宁静的峡湾', wikiTitle: 'Doubtful Sound' },
+    { name: 'Invercargill', zh: '因弗卡吉尔', lat: -46.4132, lng: 168.3538, desc: "NZ's southernmost city · Transport World", descZh: '新西兰最南城市 · 交通世界博物馆', wikiTitle: 'Invercargill' },
+    { name: 'Bluff · Stirling Point', zh: '布拉夫·斯特灵角', lat: -46.6116, lng: 168.3376, desc: 'Southern tip · famous oysters · signpost', descZh: '南岛最南端 · 著名生蚝 · 路标', wikiTitle: 'Bluff, New Zealand' },
+    { name: 'Stewart Island · Rakiura', zh: '斯图尔特岛', lat: -46.8969, lng: 168.1258, desc: "NZ's third island · wild kiwi · Ulva Island birds", descZh: '新西兰第三大岛 · 野生几维鸟 · 乌尔瓦岛观鸟', wikiTitle: 'Stewart Island' },
+    { name: 'Nugget Point', zh: '纳盖特角', lat: -46.4497, lng: 169.8144, desc: 'Catlins lighthouse · sea rocks · sea lions', descZh: '卡特林斯灯塔 · 海中礁岩 · 海狮', wikiTitle: 'Nugget Point' },
+    { name: 'Curio Bay', zh: '库里奥湾', lat: -46.6606, lng: 169.1030, desc: 'Petrified forest · yellow-eyed penguins · dolphins', descZh: '石化森林 · 黄眼企鹅 · 海豚', wikiTitle: 'Curio Bay' }
+  ];
+  function siPoiIcon() {
+    return L.divIcon({ className: '', html: '<div style="background:#c9933a;width:24px;height:24px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;">★</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+  }
+  function siPoiPopup(s) {
+    var img = s.img ? '<img src="' + s.img + '" style="width:100%;max-width:190px;border-radius:8px;margin-bottom:6px;display:block;">' : '';
+    return '<div style="min-width:150px;">' + img + '<b>★ ' + s.name + '</b><br><span style="color:#555;font-size:0.85em;">' + s.desc + '</span></div>';
+  }
+  siPois.forEach(function (s) {
+    s.marker = L.marker([s.lat, s.lng], { icon: siPoiIcon() }).addTo(siMap).bindPopup(siPoiPopup(s));
+  });
+  // include POIs in the map view so the whole circled south is visible
+  siMap.fitBounds(siLatLngs.concat(siPois.map(function (s) { return [s.lat, s.lng]; })), { padding: [40, 40] });
+
+  // POI list
+  (function () {
+    var el = document.getElementById('siPoiList');
+    if (!el) return;
+    siPois.forEach(function (s) {
+      var row = document.createElement('div');
+      row.className = 'si-stop';
+      row.innerHTML = '<div class="si-badge" style="background:#c9933a;">★</div>' +
+        '<div><div class="si-name"><span class="en">' + s.name + '</span><span class="zh">' + s.zh + '</span></div>' +
+        '<div class="si-role"><span class="en">' + s.desc + '</span><span class="zh">' + s.descZh + '</span></div></div>';
+      row.addEventListener('click', function () {
+        document.getElementById('siMapWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        s.marker.openPopup();
+      });
+      el.appendChild(row);
+    });
+  })();
+  // Wikipedia photos on POI markers
+  siPois.forEach(function (s) {
+    if (!s.wikiTitle) return;
+    fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(s.wikiTitle))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.thumbnail && d.thumbnail.source) { s.img = d.thumbnail.source; if (s.marker) s.marker.setPopupContent(siPoiPopup(s)); } })
+      .catch(function () {});
+  });
 
   // stop list
   (function () {
