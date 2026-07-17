@@ -12,6 +12,9 @@
 ## Paul's Abbreviations (Standing Glossary)
 - **IG** = **Iron Condor** (the options strategy). When Paul says "trade IG", "IG setup", etc. he means the Iron Condor strategy — NOT the IG broker/platform or IG Group stock. (Added 2026-07-15.)
 
+## IG (Iron Condor) Cushion Watch — Log
+- **2026-07-17:** Dashboard "Share Price vs Selling Put" check flagged **NVDA** (⚠️ Tight, $202.81 vs 195P, +4.01% variance) and **QQQ** (⚠️ Tight, $695.33 vs 680P, +2.25% variance) as close to their short put strike. **AVGO** (+5.95%) and **SMH** (+8.06%) were ✅ Safe. Summary emailed as a draft to paul11ipad@gmail.com (Gmail MCP only creates drafts, not sends — Paul reviews/sends manually).
+
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
 - **Be brief.** Terse, no-fluff answers. Lead with the outcome.
