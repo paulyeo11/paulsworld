@@ -329,6 +329,33 @@
     </div>
   </div>
 
+  <div class="condor" id="premiumByStockCard" style="margin-top:16px">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">💵 <span class="en">Option Premium Collected by Stock</span><span class="zh">按股票划分的期权权利金收入</span></div>
+      <div class="c-meta"><span class="en">Since inception (May 2024 – Jul 2026) · net of buybacks &amp; protective legs</span><span class="zh">自成立以来（2024年5月–2026年7月）· 已扣除平仓及保护腿成本</span></div>
+      <div></div>
+    </div>
+    <table class="legs" style="margin-top:10px">
+      <thead><tr>
+        <th><span class="en">Stock</span><span class="zh">股票</span></th>
+        <th style="text-align:right"><span class="en">Received</span><span class="zh">收到</span></th>
+        <th style="text-align:right"><span class="en">Paid</span><span class="zh">支付</span></th>
+        <th style="text-align:right"><span class="en">Net Collected</span><span class="zh">净收入</span></th>
+      </tr></thead>
+      <tbody id="premiumByStockBody"></tbody>
+      <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+        <td><span class="en">Total</span><span class="zh">合计</span></td>
+        <td class="num" id="premTotalRecv">—</td>
+        <td class="num" id="premTotalPaid">—</td>
+        <td class="num" id="premTotalNet" style="color:#3fb950">—</td>
+      </tr></tfoot>
+    </table>
+    <div class="note" style="margin-top:12px">
+      <span class="en">From the IBKR PortfolioAnalyst Trade Summary — every option contract touched since inception, grouped by underlying. <b>Received</b> = premium taken in from selling (opening short legs or closing long ones); <b>Paid</b> = premium spent buying (opening long/protective legs or closing shorts); <b>Net Collected</b> = Received + Paid. This is lifetime cash flow, not current unrealized P&amp;L — it includes many now-closed single-leg trades (CELH, GOOGL, LULU, etc.) alongside the 4 still-open Iron Condors.</span>
+      <span class="zh">数据来自IBKR投资组合分析报表的交易汇总——自成立以来涉及的每份期权合约，按标的股票分组。<b>收到</b> = 卖出权利金收入（开仓卖出腿或平仓买入腿）；<b>支付</b> = 买入权利金支出（开仓买入/保护腿或平仓卖出腿）；<b>净收入</b> = 收到 + 支付。这是自成立以来的现金流合计，并非当前未实现盈亏——其中包含许多已平仓的单腿交易（如CELH、GOOGL、LULU等），以及目前仍持有的4个铁鹰。</span>
+    </div>
+  </div>
+
   <div class="condor" id="putVarianceCard" style="margin-top:16px">
     <div class="c-head">
       <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Share Price vs Selling Put</span><span class="zh">股价 vs 卖出认沽</span></div>
@@ -1714,6 +1741,41 @@ if (typeof Chart !== 'undefined' && document.getElementById('unrealByYearChart')
     }
   });
 }
+
+// Option Premium Collected by Stock — static snapshot from the IBKR Trade Summary (since
+// inception through 16 Jul 2026), summed per underlying from every option leg's Bought/Sold
+// proceeds (see premiumByStockCard note). [received, paid] per symbol; net = received + paid.
+var PREMIUM_BY_STOCK = [
+  ['ELV', 8699.00, -65.00], ['LULU', 2740.00, -90.00], ['NVDA', 3165.00, -853.00],
+  ['UNH', 2445.00, -584.00], ['FDS', 6517.00, -5005.00], ['TMO', 1500.00, 0.00],
+  ['POOL', 1210.00, -5.00], ['META', 1400.00, -200.00], ['TSM', 1085.00, 0.00],
+  ['ZTS', 912.00, 0.00], ['CELH', 1723.00, -851.00], ['CRM', 1056.00, -206.00],
+  ['MSFT', 842.00, -110.00], ['AMZN', 845.00, -134.00], ['V', 633.00, -97.00],
+  ['AVGO', 2252.00, -1777.00], ['SMH', 2931.00, -2496.00], ['NVO', 360.00, 0.00],
+  ['QQQ', 2063.00, -1804.00], ['INTC', 209.00, -1.00], ['FTNT', 427.00, -244.00],
+  ['AAPL', 589.00, -431.00], ['CPRT', 145.00, -9.00], ['MNST', 140.00, -60.00],
+  ['GOOGL', 1687.00, -1998.00]
+];
+(function(){
+  var body = document.getElementById('premiumByStockBody');
+  if (!body) return;
+  function fmtSigned2(v){ return (v>=0?'+':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtPlain2(v){ return (v<0?'-':'') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  var sorted = PREMIUM_BY_STOCK.slice().sort(function(a,b){ return (b[1]+b[2]) - (a[1]+a[2]); });
+  var totalRecv = 0, totalPaid = 0;
+  body.innerHTML = sorted.map(function(r){
+    var sym = r[0], recv = r[1], paid = r[2], net = recv + paid;
+    totalRecv += recv; totalPaid += paid;
+    var color = net >= 0 ? '#3fb950' : '#f85149';
+    return '<tr><td><b>'+sym+'</b></td>' +
+      '<td class="num">'+fmtPlain2(recv)+'</td>' +
+      '<td class="num">'+fmtPlain2(paid)+'</td>' +
+      '<td class="num" style="color:'+color+';font-weight:700">'+fmtSigned2(net)+'</td></tr>';
+  }).join('');
+  document.getElementById('premTotalRecv').textContent = fmtPlain2(totalRecv);
+  document.getElementById('premTotalPaid').textContent = fmtPlain2(totalPaid);
+  document.getElementById('premTotalNet').textContent = fmtSigned2(totalRecv + totalPaid);
+})();
 
 if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
 else if (location.hash.indexOf('#qpnl-') === 0) { setQpnlYear(location.hash.slice(6)); setTab('qpnl'); }
