@@ -557,6 +557,9 @@
       </div>
       <div class="rail-legend" id="pnlYearBtns" style="margin-top:10px"></div>
       <div style="position:relative;height:180px;margin-top:14px"><canvas id="pnlChart"></canvas></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.72rem;color:#8b98a5">
+        <span style="color:#f4c869">★</span><span class="en">Number of options traded that month (right axis)</span><span class="zh">当月交易的期权笔数（右侧坐标轴）</span>
+      </div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
           <th><span class="en">Month</span><span class="zh">月份</span></th>
@@ -584,6 +587,12 @@
         <div class="tkr" style="font-size:1.05rem">📆 <span class="en">Yearly P&amp;L</span><span class="zh">年度盈亏</span></div>
         <div class="c-meta"><span class="en">NAV change by year · IBKR PortfolioAnalyst</span><span class="zh">按年净值变动 · IBKR投资组合分析报表</span></div>
         <div></div>
+      </div>
+      <div style="position:relative;height:180px;margin-top:14px"><canvas id="yearlyChart"></canvas></div>
+      <div style="display:flex;gap:14px;align-items:center;margin-top:8px;font-size:.72rem;color:#8b98a5">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#3fb950;margin-right:5px"></span><span class="en">Gain</span><span class="zh">盈利</span></span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f85149;margin-right:5px"></span><span class="en">Loss</span><span class="zh">亏损</span></span>
+        <span style="color:#f4c869">★</span><span class="en">Options traded (right axis)</span><span class="zh">交易笔数（右侧坐标轴）</span>
       </div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
@@ -618,6 +627,7 @@
       <div style="display:flex;gap:14px;align-items:center;margin-top:8px;font-size:.72rem;color:#8b98a5">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#3fb950;margin-right:5px"></span><span class="en">Gain</span><span class="zh">盈利</span></span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f85149;margin-right:5px"></span><span class="en">Loss</span><span class="zh">亏损</span></span>
+        <span style="color:#f4c869">★</span><span class="en">Options traded (right axis)</span><span class="zh">交易笔数（右侧坐标轴）</span>
       </div>
       <table class="legs" style="margin-top:14px">
         <thead><tr>
@@ -681,6 +691,8 @@ function setTab(t){
   document.getElementById('acctValueCard').style.display = (t==='pnl'||t==='ypnl'||t==='qpnl') ? 'none' : '';
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='pnl' && typeof pnlChart !== 'undefined' && pnlChart) pnlChart.resize();
+  if(t==='ypnl' && typeof yearlyChart !== 'undefined' && yearlyChart) yearlyChart.resize();
+  if(t==='qpnl' && typeof qtrChart !== 'undefined' && qtrChart) qtrChart.resize();
   window.scrollTo(0,0);
 }
 
@@ -1021,6 +1033,20 @@ var NAV_HISTORY = [
   {m:'Jan 26', v:64760.24}, {m:'Feb 26', v:59016.81}, {m:'Mar 26', v:55346.67}, {m:'Apr 26', v:58180.27},
   {m:'May 26', v:53219.84}, {m:'Jun 26', v:54718.62}, {m:'Jul 26', v:57728.11}
 ];
+// Number of option (IC) trades opened, keyed to the same month label as NAV_HISTORY.
+// Paul started trading options in Jul 2026 (4 Iron Condors: NVDA, QQQ, AVGO, SMH) — add new
+// month entries here as more trades are opened; months with no entry count as 0.
+var TRADE_COUNTS = {
+  'Jul 26': 4
+};
+function tradeCountForMonth(m){ return TRADE_COUNTS[m] || 0; }
+// Headroom for the right-hand "Options Traded" axis so the star marker never collides
+// with the $ value label plugin sitting at the top of the tallest bar.
+function tradesSuggestedMax(arr){
+  var max = 0;
+  arr.forEach(function(v){ if(typeof v === 'number' && v > max) max = v; });
+  return max + 1;
+}
 var ACCT_PERIODS = {
   mtd: NAV_HISTORY.slice(-2),
   '3m': NAV_HISTORY.slice(-4),
@@ -1116,18 +1142,31 @@ function setPnlYear(yr){
 
 var pnlChart = new Chart(document.getElementById('pnlChart'), {
   type: 'bar',
-  data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4, maxBarThickness: 36 }] },
+  data: { labels: [], datasets: [
+    { order: 2, data: [], backgroundColor: [], borderRadius: 4, maxBarThickness: 36 },
+    { order: 1, type: 'line', data: [], yAxisID: 'y1', showLine: false, pointStyle: 'star', pointRadius: 9, pointHoverRadius: 11, backgroundColor: '#f4c869', borderColor: '#f4c869', borderWidth: 1 }
+  ] },
   options: {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display:false }, tooltip: {
-      callbacks: { label: function(ctx){ return fmtChangeUSD(ctx.parsed.y); } }
+      callbacks: { label: function(ctx){
+        if (ctx.datasetIndex === 1) return (curLang==='zh' ? '交易笔数: ' : 'Options traded: ') + ctx.parsed.y;
+        return fmtChangeUSD(ctx.parsed.y);
+      } }
     } },
     scales: {
       x: { ticks:{ color:'#8b98a5', font:{size:10} }, grid:{ display:false } },
       y: {
         grid: { color: 'rgba(255,255,255,.06)' },
         ticks: { color:'#8b98a5', font:{size:10}, callback:function(v){ return (v>=0?'+':'-')+'$'+(Math.abs(v)/1000).toFixed(1)+'K'; } }
+      },
+      y1: {
+        position: 'right',
+        beginAtZero: true,
+        grid: { display:false },
+        ticks: { color:'#f4c869', font:{size:10}, stepSize:1, precision:0 },
+        title: { display:true, text:'Options Traded', color:'#f4c869', font:{size:10} }
       }
     }
   }
@@ -1143,7 +1182,7 @@ function renderPnlTable(year){
   var seen = {};
   var rows = '';
   var prevNav = baselineNav;
-  var chartLabels = [], chartData = [], chartColors = [];
+  var chartLabels = [], chartData = [], chartColors = [], chartTrades = [];
   yIdx.forEach(function(i, k){
     var d = NAV_HISTORY[i];
     var monIdx = MONTH_SHORT.indexOf(d.m.slice(0,3));
@@ -1164,6 +1203,7 @@ function renderPnlTable(year){
       chartLabels.push(MONTH_SHORT[monIdx]);
       chartData.push(Math.round(chg*100)/100);
       chartColors.push(chg>=0 ? '#3fb950' : '#f85149');
+      chartTrades.push(tradeCountForMonth(d.m));
     }
     prevNav = d.v;
   });
@@ -1175,6 +1215,8 @@ function renderPnlTable(year){
   pnlChart.data.labels = chartLabels;
   pnlChart.data.datasets[0].data = chartData;
   pnlChart.data.datasets[0].backgroundColor = chartColors;
+  pnlChart.data.datasets[1].data = chartTrades;
+  pnlChart.options.scales.y1.suggestedMax = tradesSuggestedMax(chartTrades);
   pnlChart.update();
 
   var totalStart = hasBaseline ? baselineNav : NAV_HISTORY[yIdx[0]].v;
@@ -1224,6 +1266,89 @@ function renderYearlyPnlTable(){
   totalEl.textContent = fmtChangeUSD(totalChg) + ' (' + (totalPct>=0?'+':'') + totalPct.toFixed(2) + '%)';
   totalEl.style.color = totalChg>=0 ? '#3fb950' : '#f85149';
 }
+
+// Yearly P&L bar chart — $ change by year (left axis) with option trade count as star
+// markers against a right axis. Shares the year-end rollup logic used by the table above.
+var yearlyChart = null;
+function renderYearlyChart(){
+  if (typeof Chart === 'undefined') return;
+  var order = [], yearEnd = {}, yearTrades = {};
+  NAV_HISTORY.forEach(function(d){
+    var yr = d.m.slice(-2);
+    if (yearEnd[yr] === undefined) order.push(yr);
+    yearEnd[yr] = d;
+    yearTrades[yr] = (yearTrades[yr]||0) + tradeCountForMonth(d.m);
+  });
+  var labels = [], values = [], colors = [], trades = [];
+  var prevNav = null;
+  order.forEach(function(yr){
+    var d = yearEnd[yr];
+    var chg = prevNav!=null ? Math.round((d.v - prevNav)*100)/100 : null;
+    labels.push('20'+yr);
+    values.push(chg);
+    colors.push(chg==null ? 'rgba(139,152,168,.25)' : (chg>=0 ? '#3fb950' : '#f85149'));
+    trades.push(yearTrades[yr]||0);
+    prevNav = d.v;
+  });
+  if (yearlyChart) {
+    yearlyChart.data.labels = labels;
+    yearlyChart.data.datasets[0].data = values;
+    yearlyChart.data.datasets[0].backgroundColor = colors;
+    yearlyChart.data.datasets[1].data = trades;
+    yearlyChart.options.scales.y1.suggestedMax = tradesSuggestedMax(trades);
+    yearlyChart.update();
+    return;
+  }
+  yearlyChart = new Chart(document.getElementById('yearlyChart'), {
+    type: 'bar',
+    data: { labels: labels, datasets: [
+      { order: 2, data: values, backgroundColor: colors, borderRadius: 4, maxBarThickness: 56 },
+      { order: 1, type: 'line', data: trades, yAxisID: 'y1', showLine: false, pointStyle: 'star', pointRadius: 10, pointHoverRadius: 12, backgroundColor: '#f4c869', borderColor: '#f4c869', borderWidth: 1 }
+    ] },
+    plugins: [qtrLabelPlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 18, bottom: 4 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: '#161b22',
+          borderColor: 'rgba(255,255,255,.15)',
+          borderWidth: 1,
+          titleColor: '#e6edf3',
+          bodyColor: '#c9d1d9',
+          padding: 10,
+          callbacks: {
+            label: function(ctx){
+              if (ctx.datasetIndex === 1) return (curLang==='zh' ? '交易笔数: ' : 'Options traded: ') + ctx.parsed.y;
+              var v = values[ctx.dataIndex];
+              if (v == null) return curLang==='zh' ? '暂无数据' : 'No data yet';
+              var sign = v>=0 ? '+' : '-';
+              return sign+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks:{ color:'#8b98a5', font:{size:11,weight:'700'} }, grid:{ display:false } },
+        y: {
+          grid: { color: function(c){ return c.tick.value===0 ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.06)'; } },
+          ticks: { color:'#8b98a5', font:{size:10}, callback:function(v){ return (v>=0?'':'-')+'$'+(Math.abs(v)/1000).toFixed(0)+'K'; } }
+        },
+        y1: {
+          position: 'right',
+          beginAtZero: true,
+          suggestedMax: tradesSuggestedMax(trades),
+          grid: { display:false },
+          ticks: { color:'#f4c869', font:{size:10}, stepSize:1, precision:0 },
+          title: { display:true, text:'Options Traded', color:'#f4c869', font:{size:10} }
+        }
+      }
+    }
+  });
+}
 renderYearlyPnlTable();
 
 // Quarterly P&L tab — also derived from NAV_HISTORY, grouped Jan-Mar/Apr-Jun/Jul-Sep/Oct-Dec
@@ -1245,6 +1370,7 @@ var QTR_ENDS = (function(){
     o.v = last.v;
     o.lastMonth = last.m.slice(0,3);
     o.isFull = o.lastMonth === QTR_END_MONTH[o.q];
+    o.trades = o.entries.reduce(function(sum, d){ return sum + tradeCountForMonth(d.m); }, 0);
   });
   return list;
 })();
@@ -1281,12 +1407,13 @@ function computeQtrData(year){
       q: o.q, v: o.v, chg: chg, pct: pct, lastMonth: o.lastMonth,
       sinceInception: k===0 && !hasBaseline,
       partial: isLast && !o.isFull,
+      trades: o.trades,
       future: false
     });
     prevVal = o.v;
   });
   for (var q=0; q<4; q++){
-    if (!seenQ[q]) rows.push({ q:q, v:null, chg:null, pct:null, future:true });
+    if (!seenQ[q]) rows.push({ q:q, v:null, chg:null, pct:null, trades:null, future:true });
   }
   rows.sort(function(a,b){ return a.q - b.q; });
   var totalStart = hasBaseline ? baselineVal : QTR_ENDS[idxForYear[0]].v;
@@ -1351,16 +1478,22 @@ function renderQtrChart(year){
   var labels = data.rows.map(function(r){ return 'Q'+(r.q+1); });
   var values = data.rows.map(function(r){ return r.chg; });
   var colors = data.rows.map(function(r){ return r.chg==null ? 'rgba(139,152,168,.25)' : (r.chg>=0 ? '#3fb950' : '#f85149'); });
+  var trades = data.rows.map(function(r){ return r.trades==null ? null : r.trades; });
   if (qtrChart) {
     qtrChart.data.labels = labels;
     qtrChart.data.datasets[0].data = values;
     qtrChart.data.datasets[0].backgroundColor = colors;
+    qtrChart.data.datasets[1].data = trades;
+    qtrChart.options.scales.y1.suggestedMax = tradesSuggestedMax(trades);
     qtrChart.update();
     return;
   }
   qtrChart = new Chart(document.getElementById('qtrChart'), {
     type: 'bar',
-    data: { labels: labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, maxBarThickness: 56 }] },
+    data: { labels: labels, datasets: [
+      { order: 2, data: values, backgroundColor: colors, borderRadius: 4, maxBarThickness: 56 },
+      { order: 1, type: 'line', data: trades, yAxisID: 'y1', showLine: false, pointStyle: 'star', pointRadius: 10, pointHoverRadius: 12, backgroundColor: '#f4c869', borderColor: '#f4c869', borderWidth: 1 }
+    ] },
     plugins: [qtrLabelPlugin],
     options: {
       responsive: true,
@@ -1378,6 +1511,10 @@ function renderQtrChart(year){
           padding: 10,
           callbacks: {
             label: function(ctx){
+              if (ctx.datasetIndex === 1) {
+                if (ctx.parsed.y == null) return curLang==='zh' ? '暂无数据' : 'No data yet';
+                return (curLang==='zh' ? '交易笔数: ' : 'Options traded: ') + ctx.parsed.y;
+              }
               var r = data.rows[ctx.dataIndex];
               if (r.chg == null) return curLang==='zh' ? '暂无数据' : 'No data yet';
               var sign = r.chg>=0 ? '+' : '-';
@@ -1392,6 +1529,14 @@ function renderQtrChart(year){
         y: {
           grid: { color: function(c){ return c.tick.value===0 ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.06)'; } },
           ticks: { color:'#8b98a5', font:{size:10}, callback:function(v){ return (v>=0?'':'-')+'$'+(Math.abs(v)/1000).toFixed(0)+'K'; } }
+        },
+        y1: {
+          position: 'right',
+          beginAtZero: true,
+          suggestedMax: tradesSuggestedMax(trades),
+          grid: { display:false },
+          ticks: { color:'#f4c869', font:{size:10}, stepSize:1, precision:0 },
+          title: { display:true, text:'Options Traded', color:'#f4c869', font:{size:10} }
         }
       }
     }
@@ -1401,6 +1546,7 @@ function renderQtrChart(year){
 renderQpnlYearButtons();
 renderQtrTable();
 renderQtrChart();
+renderYearlyChart();
 
 if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
 else if (location.hash.indexOf('#qpnl-') === 0) { setQpnlYear(location.hash.slice(6)); setTab('qpnl'); }
