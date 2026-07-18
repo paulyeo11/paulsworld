@@ -1849,7 +1849,14 @@ var ALL_TRADES = [
   var total = 0;
   // Trades with more than 2 legs (the 4-leg Iron Condors — still open, not closed/realized)
   // are excluded from this list entirely, not just their premium.
-  var visible = ALL_TRADES.filter(function(r){ return r[3] <= 2; });
+  function entrySortKey(entryLabel){
+    var parts = entryLabel.split(' ');
+    return parseInt(parts[1], 10) * 12 + MONTH_SHORT.indexOf(parts[0]);
+  }
+  var visible = ALL_TRADES.filter(function(r){ return r[3] <= 2; }).sort(function(a,b){
+    if (a[1] !== b[1]) return a[1] < b[1] ? -1 : 1;
+    return entrySortKey(a[0]) - entrySortKey(b[0]);
+  });
   body.innerHTML = visible.map(function(r){
     var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
     total += prem;
