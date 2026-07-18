@@ -567,12 +567,14 @@
           <th style="text-align:right"><span class="en">NAV (EOM)</span><span class="zh">月末净值</span></th>
           <th style="text-align:right"><span class="en">$ Change</span><span class="zh">金额变动</span></th>
           <th style="text-align:right"><span class="en">% Change</span><span class="zh">百分比变动</span></th>
+          <th style="text-align:right"><span class="en"># Trades</span><span class="zh">交易笔数</span></th>
         </tr></thead>
         <tbody id="pnlTableBody"></tbody>
         <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
           <td><span class="en" id="pnlTotalLabelEn">2026 Total</span><span class="zh" id="pnlTotalLabelZh">2026年合计</span></td>
           <td class="num"></td>
           <td class="num" colspan="2" id="pnlTotalChg">—</td>
+          <td class="num" id="pnlTotalTrades">—</td>
         </tr></tfoot>
       </table>
       <div class="note" style="margin-top:12px">
@@ -1220,20 +1222,22 @@ function renderPnlTable(year){
     if (k===0 && !hasBaseline) tag = ' <span style="font-size:.62rem;font-weight:700;color:#8b98a5;background:rgba(139,152,168,.15);padding:1px 6px;border-radius:8px;">since inception</span>';
     else if (isLast && !isDec) tag = ' <span style="font-size:.62rem;font-weight:700;color:#f0a500;background:rgba(240,165,0,.12);padding:1px 6px;border-radius:8px;">partial</span>';
     var color = chg==null ? '' : (chg>=0 ? '#3fb950' : '#f85149');
+    var trades = tradeCountForMonth(d.m);
     rows += '<tr><td>'+MONTH_FULL[monIdx]+tag+'</td>' +
       '<td class="num">'+fmtUSD(d.v)+'</td>' +
       '<td class="num" style="color:'+color+';font-weight:700">'+(chg==null?'—':fmtChangeUSD(chg))+'</td>' +
-      '<td class="num" style="color:'+color+';font-weight:700">'+(pct==null?'—':(pct>=0?'+':'')+pct.toFixed(1)+'%')+'</td></tr>';
+      '<td class="num" style="color:'+color+';font-weight:700">'+(pct==null?'—':(pct>=0?'+':'')+pct.toFixed(1)+'%')+'</td>' +
+      '<td class="num" style="color:#f4c869;font-weight:700">'+trades+'</td></tr>';
     if (chg != null) {
       chartLabels.push(MONTH_SHORT[monIdx]);
       chartData.push(Math.round(chg*100)/100);
       chartColors.push(chg>=0 ? '#3fb950' : '#f85149');
-      chartTrades.push(tradeCountForMonth(d.m));
+      chartTrades.push(trades);
     }
     prevNav = d.v;
   });
   for(var m=0;m<12;m++){
-    if(!seen[m]) rows += '<tr style="opacity:.4"><td>'+MONTH_FULL[m]+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+    if(!seen[m]) rows += '<tr style="opacity:.4"><td>'+MONTH_FULL[m]+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
   }
   document.getElementById('pnlTableBody').innerHTML = rows;
 
@@ -1254,6 +1258,9 @@ function renderPnlTable(year){
 
   document.getElementById('pnlTotalLabelEn').textContent = '20'+year+' Total';
   document.getElementById('pnlTotalLabelZh').textContent = '20'+year+'年合计';
+
+  var totalTrades = chartTrades.reduce(function(sum, n){ return sum + n; }, 0);
+  document.getElementById('pnlTotalTrades').textContent = totalTrades;
 }
 renderPnlYearButtons();
 renderPnlTable();
