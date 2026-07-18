@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT11: Queenstown Airport → Jack's Point</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, system-ui, sans-serif;
+    background: #0d1117; color: #e6edf3;
+  }
+  .header { padding: 16px 18px 10px; text-align: center; }
+  .header h1 { font-size: 1.15em; margin: 0 0 4px; }
+  .header p { font-size: 0.85em; color: #8b949e; margin: 0; }
+  .warning-banner {
+    margin: 0 16px 12px; padding: 10px 14px; background: rgba(240,165,0,0.12);
+    border: 1px solid rgba(240,165,0,0.5); border-radius: 10px;
+    font-size: 0.8em; color: #f0a500; line-height: 1.5;
+  }
+  .map-wrap { position: relative; }
+  #map { width: 100%; height: 62vh; }
+  #map.map-fullscreen {
+    position: fixed !important; top: 0; left: 0;
+    width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+    z-index: 9999; border-radius: 0 !important;
+  }
+  .map-fullscreen-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+    color: #f0a500; font-size: 0.78em; font-weight: 700;
+    padding: 6px 14px; border-radius: 18px; cursor: pointer;
+    margin: 0 16px 10px;
+  }
+  #mapCloseBtn {
+    display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+    background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+    cursor: pointer; align-items: center; gap: 6px;
+  }
+  .dir-buttons {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 0 16px 14px;
+  }
+  .dir-btn {
+    flex: 1; min-width: 140px; text-align: center;
+    background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+    color: #58a6ff; font-size: 0.82em; font-weight: 700;
+    padding: 10px 12px; border-radius: 10px; text-decoration: none;
+  }
+  .info-box {
+    margin: 0 16px 16px; padding: 12px 14px; background: #161b22;
+    border-radius: 10px; font-size: 0.85em; color: #c9d1d9; line-height: 1.7;
+  }
+  .info-box b { color: #f4c869; }
+  .legend {
+    padding: 10px 16px 8px; font-size: 0.8em; color: #8b949e; line-height: 1.7;
+  }
+  .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+  .note {
+    padding: 0 16px 18px; font-size: 0.72em; color: #6e7681; line-height: 1.5;
+  }
+  .home-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #21262d; color: #c9d1d9; text-decoration: none;
+    padding: 10px 16px; border-radius: 8px; font-size: 0.95em; font-weight: 600;
+    margin: 16px auto 0; width: fit-content;
+  }
+  .home-wrap { display: flex; justify-content: center; padding-bottom: 18px; }
+  .view-counter-wrap { text-align: center; padding: 10px 0 20px; font-size: 0.8em; color: #8b949e; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🚗 Queenstown Airport → Jack's Point</h1>
+  <p>Queenstown Airport (ZQN) → 7 Plough Street, Jack's Point 9371, New Zealand</p>
+</div>
+
+<div class="warning-banner">
+  ⚠️ The Jack's Point pin below is an <b>approximate</b> location (not a verified geocode of 7 Plough Street). Do NOT rely on the pin for navigation — use the "Directions" / "Search on Google Maps" buttons below, which route by the exact address text.
+</div>
+
+<button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; Open Full Screen Map</button>
+<div class="map-wrap">
+  <div id="map"></div>
+  <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+    <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+    <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+  </div>
+</div>
+<button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; Close Map</button>
+
+<div class="dir-buttons">
+  <a class="dir-btn" href="https://www.google.com/maps/dir/?api=1&origin=Queenstown+Airport+(ZQN),+New+Zealand&destination=7+Plough+Street,+Jack%27s+Point+9371,+New+Zealand" target="_blank">🧭 Directions (Google Maps)</a>
+  <a class="dir-btn" href="https://www.google.com/maps/search/?api=1&query=7+Plough+Street,+Jack%27s+Point+9371,+New+Zealand" target="_blank">🔍 Search Destination</a>
+</div>
+
+<div class="info-box">
+  <b>Route:</b> Via State Highway 6 (SH6), south of Queenstown town centre, past Frankton and along the shore of Lake Wakatipu to Jack's Point.<br>
+  <b>Distance:</b> ~11 km (straight-line ≈ 9 km) &nbsp;·&nbsp; <b>Drive time:</b> ~10–12 min<br>
+  <span style="color:#6e7681;">Distance/time sourced from public route info for Queenstown Airport ↔ Jack's Point; not a live-traffic estimate.</span>
+</div>
+
+<div class="legend">
+  <span class="dot" style="background:#e63b2e;"></span>A — Queenstown Airport (ZQN)&nbsp;&nbsp;
+  <span class="dot" style="background:#f4c869;"></span>B — Jack's Point (approx.)
+</div>
+
+<div class="note">
+  Route line is a straight-line fallback until the real road path loads from OSRM (turn-by-turn driving route via SH6). Straight-line distance shown above; driving time is a typical-speed estimate, not live traffic.
+</div>
+
+<div class="home-wrap">
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 Home</a>
+</div>
+
+<div class="view-counter-wrap">
+  <script src="/view-counter.js"></script>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+function openMapFullscreen() {
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+// A = Queenstown Airport (ZQN) — verified public coordinates.
+// B = Jack's Point — APPROXIMATE only (verifiedGps:false). See warning banner.
+const stops = [
+  { letter: 'A', name: "Queenstown Airport (ZQN)", lat: -45.0211, lng: 168.7392, color: '#e63b2e', verifiedGps: true },
+  { letter: 'B', name: "7 Plough Street, Jack's Point (approx.)", lat: -45.0838, lng: 168.6790, color: '#f4c869', verifiedGps: false }
+];
+
+const map = L.map('map', { zoomControl: true }).setView([-45.052, 168.71], 12);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+const fullLine = stops.map(s => [s.lat, s.lng]);
+let routeLine = L.polyline(fullLine, { color: '#f0883e', weight: 4, opacity: 0.85, dashArray: '8,8' }).addTo(map);
+
+stops.forEach(s => {
+  const icon = L.divIcon({
+    html: '<div style="background:' + s.color + ';color:#0d1117;font-weight:800;font-size:0.8rem;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #0d1117;">' + s.letter + '</div>',
+    className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+  });
+  const popupExtra = s.verifiedGps ? '' : '<br><span style="color:#f0a500;">⚠️ approximate — use Directions button, not this pin</span>';
+  L.marker([s.lat, s.lng], { icon: icon }).addTo(map).bindPopup('<b>' + s.letter + ' — ' + s.name + '</b>' + popupExtra);
+});
+
+map.fitBounds(fullLine, { padding: [40, 40] });
+
+// Real-road routing via OSRM, with straight-line fallback until it resolves.
+fetch('https://router.project-osrm.org/route/v1/driving/' + stops[0].lng + ',' + stops[0].lat + ';' + stops[1].lng + ',' + stops[1].lat + '?overview=full&geometries=geojson')
+  .then(r => r.json())
+  .then(d => {
+    if (d.routes && d.routes[0]) {
+      const coords = d.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+      map.removeLayer(routeLine);
+      routeLine = L.polyline(coords, { color: '#f0883e', weight: 4, opacity: 0.9 }).addTo(map);
+      map.fitBounds(coords, { padding: [40, 40] });
+    }
+  })
+  .catch(() => { /* keep straight-line fallback */ });
+</script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
