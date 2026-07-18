@@ -550,10 +550,11 @@
   <div id="tab-pnl" style="display:none">
     <div class="condor">
       <div class="c-head">
-        <div class="tkr" style="font-size:1.05rem">📅 <span class="en">2026 Monthly P&amp;L</span><span class="zh">2026年月度盈亏</span></div>
+        <div class="tkr" style="font-size:1.05rem">📅 <span class="en">Monthly P&amp;L</span><span class="zh">月度盈亏</span></div>
         <div class="c-meta"><span class="en">NAV change by month · IBKR PortfolioAnalyst</span><span class="zh">按月净值变动 · IBKR投资组合分析报表</span></div>
         <div></div>
       </div>
+      <div class="rail-legend" id="pnlYearBtns" style="margin-top:10px"></div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
           <th><span class="en">Month</span><span class="zh">月份</span></th>
@@ -563,7 +564,7 @@
         </tr></thead>
         <tbody id="pnlTableBody"></tbody>
         <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
-          <td><span class="en">2026 Total</span><span class="zh">2026年合计</span></td>
+          <td><span class="en" id="pnlTotalLabelEn">2026 Total</span><span class="zh" id="pnlTotalLabelZh">2026年合计</span></td>
           <td class="num"></td>
           <td class="num" colspan="2" id="pnlTotalChg">—</td>
         </tr></tfoot>
@@ -1054,38 +1055,69 @@ var MONTH_FULL = ['January','February','March','April','May','June','July','Augu
 var MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtUSD(v){ return (v>=0?'':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtChangeUSD(v){ return (v>=0?'+':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function renderPnlTable(){
-  var y26 = [];
-  NAV_HISTORY.forEach(function(d,i){ if(d.m.slice(-2)==='26') y26.push(i); });
-  if(!y26.length) return;
+var PNL_YEARS = [];
+(function(){
+  var seen = {};
+  NAV_HISTORY.forEach(function(d){ var yr = d.m.slice(-2); if(!seen[yr]){ seen[yr]=true; PNL_YEARS.push(yr); } });
+})();
+var curPnlYear = PNL_YEARS[PNL_YEARS.length-1];
+
+function renderPnlYearButtons(){
+  document.getElementById('pnlYearBtns').innerHTML = PNL_YEARS.map(function(yr){
+    return '<span class="period-btn'+(yr===curPnlYear?' active':'')+'" onclick="setPnlYear(\''+yr+'\')">20'+yr+'</span>';
+  }).join('');
+}
+function setPnlYear(yr){
+  curPnlYear = yr;
+  renderPnlYearButtons();
+  renderPnlTable(yr);
+}
+
+function renderPnlTable(year){
+  year = year || curPnlYear;
+  var yIdx = [];
+  NAV_HISTORY.forEach(function(d,i){ if(d.m.slice(-2)===year) yIdx.push(i); });
+  if(!yIdx.length) return;
+  var hasBaseline = NAV_HISTORY[yIdx[0]-1] !== undefined;
+  var baselineNav = hasBaseline ? NAV_HISTORY[yIdx[0]-1].v : null;
   var seen = {};
   var rows = '';
-  var prevNav = NAV_HISTORY[y26[0]-1] ? NAV_HISTORY[y26[0]-1].v : null;
-  y26.forEach(function(i, k){
+  var prevNav = baselineNav;
+  yIdx.forEach(function(i, k){
     var d = NAV_HISTORY[i];
     var monIdx = MONTH_SHORT.indexOf(d.m.slice(0,3));
     seen[monIdx] = true;
     var chg = prevNav!=null ? d.v - prevNav : null;
     var pct = prevNav ? (chg/prevNav*100) : null;
-    prevNav = d.v;
-    var isLast = k === y26.length - 1;
-    var tag = isLast ? ' <span style="font-size:.62rem;font-weight:700;color:#f0a500;background:rgba(240,165,0,.12);padding:1px 6px;border-radius:8px;">partial</span>' : '';
+    var isLast = k === yIdx.length - 1;
+    var isDec = d.m.slice(0,3) === 'Dec';
+    var tag = '';
+    if (k===0 && !hasBaseline) tag = ' <span style="font-size:.62rem;font-weight:700;color:#8b98a5;background:rgba(139,152,168,.15);padding:1px 6px;border-radius:8px;">since inception</span>';
+    else if (isLast && !isDec) tag = ' <span style="font-size:.62rem;font-weight:700;color:#f0a500;background:rgba(240,165,0,.12);padding:1px 6px;border-radius:8px;">partial</span>';
     var color = chg==null ? '' : (chg>=0 ? '#3fb950' : '#f85149');
     rows += '<tr><td>'+MONTH_FULL[monIdx]+tag+'</td>' +
       '<td class="num">'+fmtUSD(d.v)+'</td>' +
       '<td class="num" style="color:'+color+';font-weight:700">'+(chg==null?'—':fmtChangeUSD(chg))+'</td>' +
       '<td class="num" style="color:'+color+';font-weight:700">'+(pct==null?'—':(pct>=0?'+':'')+pct.toFixed(2)+'%')+'</td></tr>';
+    prevNav = d.v;
   });
   for(var m=0;m<12;m++){
     if(!seen[m]) rows += '<tr style="opacity:.4"><td>'+MONTH_FULL[m]+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
   }
   document.getElementById('pnlTableBody').innerHTML = rows;
-  var totalChg = NAV_HISTORY[y26[y26.length-1]].v - NAV_HISTORY[y26[0]-1].v;
-  var totalPct = totalChg / NAV_HISTORY[y26[0]-1].v * 100;
+
+  var totalStart = hasBaseline ? baselineNav : NAV_HISTORY[yIdx[0]].v;
+  var totalEnd = NAV_HISTORY[yIdx[yIdx.length-1]].v;
+  var totalChg = totalEnd - totalStart;
+  var totalPct = totalStart ? (totalChg/totalStart*100) : null;
   var totalEl = document.getElementById('pnlTotalChg');
-  totalEl.textContent = fmtChangeUSD(totalChg) + ' (' + (totalPct>=0?'+':'') + totalPct.toFixed(2) + '%)';
+  totalEl.textContent = fmtChangeUSD(totalChg) + (totalPct!=null ? ' (' + (totalPct>=0?'+':'') + totalPct.toFixed(2) + '%)' : '');
   totalEl.style.color = totalChg>=0 ? '#3fb950' : '#f85149';
+
+  document.getElementById('pnlTotalLabelEn').textContent = '20'+year+' Total';
+  document.getElementById('pnlTotalLabelZh').textContent = '20'+year+'年合计';
 }
+renderPnlYearButtons();
 renderPnlTable();
 
 // Yearly P&L tab — also derived from NAV_HISTORY (year-end / latest-available rollup)
@@ -1123,7 +1155,8 @@ function renderYearlyPnlTable(){
 }
 renderYearlyPnlTable();
 
-if (location.hash === '#pnl') setTab('pnl');
+if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
+else if (location.hash === '#pnl') setTab('pnl');
 else if (location.hash === '#ypnl') setTab('ypnl');
 </script>
 <script src="/view-counter.js"></script>
