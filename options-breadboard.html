@@ -229,6 +229,7 @@
     <button class="tab-btn active" id="tb-pos" onclick="setTab('positions')">📊 <span class="en">Positions</span><span class="zh">持仓</span></button>
     <button class="tab-btn" id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">Risk</span><span class="zh">风险</span></button>
     <button class="tab-btn" id="tb-cut" onclick="setTab('cutloss')">🚨 <span class="en">Cut-Loss</span><span class="zh">止损</span></button>
+    <button class="tab-btn" id="tb-pnl" onclick="setTab('pnl')">📅 <span class="en">Monthly P&amp;L</span><span class="zh">月度盈亏</span></button>
   </div>
 
   <div id="tab-positions">
@@ -545,6 +546,34 @@
     <div class="note"><span class="en">Live price via Yahoo Finance · cut-loss levels set by Paul. Bands align with each condor's short strikes on the Positions tab.</span><span class="zh">实时价格来自雅虎财经 · 止损价位由 Paul 设定。区间与「持仓」标签中每个铁鹰的卖出行权价一致。</span></div>
   </div><!-- /tab-cutloss -->
 
+  <div id="tab-pnl" style="display:none">
+    <div class="condor">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.05rem">📅 <span class="en">2026 Monthly P&amp;L</span><span class="zh">2026年月度盈亏</span></div>
+        <div class="c-meta"><span class="en">NAV change by month · IBKR PortfolioAnalyst</span><span class="zh">按月净值变动 · IBKR投资组合分析报表</span></div>
+        <div></div>
+      </div>
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Month</span><span class="zh">月份</span></th>
+          <th style="text-align:right"><span class="en">NAV (EOM)</span><span class="zh">月末净值</span></th>
+          <th style="text-align:right"><span class="en">$ Change</span><span class="zh">金额变动</span></th>
+          <th style="text-align:right"><span class="en">% Change</span><span class="zh">百分比变动</span></th>
+        </tr></thead>
+        <tbody id="pnlTableBody"></tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td><span class="en">2026 Total</span><span class="zh">2026年合计</span></td>
+          <td class="num"></td>
+          <td class="num" colspan="2" id="pnlTotalChg">—</td>
+        </tr></tfoot>
+      </table>
+      <div class="note" style="margin-top:12px">
+        <span class="en">Same monthly NAV data as the Account Value chart above — $/% Change is raw NAV change (includes deposits/withdrawals), not investment return. IBKR's official YTD time-weighted return (TWR) is shown under the chart above.</span>
+        <span class="zh">与上方账户总值图表使用相同的月度净值数据——金额/百分比变动是净值原始变动（含存取款），并非真实投资回报。IBKR官方年初至今时间加权回报率（TWR）显示在上方图表下方。</span>
+      </div>
+    </div>
+  </div><!-- /tab-pnl -->
+
   <footer><span class="en">Paul's World · Options Breadboard · updated 16 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月16日</span></footer>
 </div>
 
@@ -574,9 +603,11 @@ function setTab(t){
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
   document.getElementById('tab-analysis').style.display = t==='analysis'?'':'none';
   document.getElementById('tab-cutloss').style.display = t==='cutloss'?'':'none';
+  document.getElementById('tab-pnl').style.display = t==='pnl'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
   document.getElementById('tb-cut').classList.toggle('active', t==='cutloss');
+  document.getElementById('tb-pnl').classList.toggle('active', t==='pnl');
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   window.scrollTo(0,0);
 }
@@ -986,6 +1017,46 @@ document.querySelectorAll('.period-btn').forEach(function(b){
   b.addEventListener('click', function(){ setAcctPeriod(b.dataset.p); });
 });
 setAcctPeriod('all');
+
+// Monthly P&L tab — derived from the same NAV_HISTORY above (single source of truth)
+var MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtUSD(v){ return (v>=0?'':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtChangeUSD(v){ return (v>=0?'+':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function renderPnlTable(){
+  var y26 = [];
+  NAV_HISTORY.forEach(function(d,i){ if(d.m.slice(-2)==='26') y26.push(i); });
+  if(!y26.length) return;
+  var seen = {};
+  var rows = '';
+  var prevNav = NAV_HISTORY[y26[0]-1] ? NAV_HISTORY[y26[0]-1].v : null;
+  y26.forEach(function(i, k){
+    var d = NAV_HISTORY[i];
+    var monIdx = MONTH_SHORT.indexOf(d.m.slice(0,3));
+    seen[monIdx] = true;
+    var chg = prevNav!=null ? d.v - prevNav : null;
+    var pct = prevNav ? (chg/prevNav*100) : null;
+    prevNav = d.v;
+    var isLast = k === y26.length - 1;
+    var tag = isLast ? ' <span style="font-size:.62rem;font-weight:700;color:#f0a500;background:rgba(240,165,0,.12);padding:1px 6px;border-radius:8px;">partial</span>' : '';
+    var color = chg==null ? '' : (chg>=0 ? '#3fb950' : '#f85149');
+    rows += '<tr><td>'+MONTH_FULL[monIdx]+tag+'</td>' +
+      '<td class="num">'+fmtUSD(d.v)+'</td>' +
+      '<td class="num" style="color:'+color+';font-weight:700">'+(chg==null?'—':fmtChangeUSD(chg))+'</td>' +
+      '<td class="num" style="color:'+color+';font-weight:700">'+(pct==null?'—':(pct>=0?'+':'')+pct.toFixed(2)+'%')+'</td></tr>';
+  });
+  for(var m=0;m<12;m++){
+    if(!seen[m]) rows += '<tr style="opacity:.4"><td>'+MONTH_FULL[m]+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+  }
+  document.getElementById('pnlTableBody').innerHTML = rows;
+  var totalChg = NAV_HISTORY[y26[y26.length-1]].v - NAV_HISTORY[y26[0]-1].v;
+  var totalPct = totalChg / NAV_HISTORY[y26[0]-1].v * 100;
+  var totalEl = document.getElementById('pnlTotalChg');
+  totalEl.textContent = fmtChangeUSD(totalChg) + ' (' + (totalPct>=0?'+':'') + totalPct.toFixed(2) + '%)';
+  totalEl.style.color = totalChg>=0 ? '#3fb950' : '#f85149';
+}
+renderPnlTable();
+if (location.hash === '#pnl') setTab('pnl');
 </script>
 <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
