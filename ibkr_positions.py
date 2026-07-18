@@ -33,9 +33,8 @@ CLIENT_ID = 1
 # Upload now goes through the LOCAL git clone (this directory is a working
 # clone of paulyeo11/paulsworld, remote 'origin', branch 'main') using the
 # already-configured git credential helper. No token is stored or used here.
-GITHUB_FILE      = "positions.json"
-PNL_HISTORY_FILE = "pnl_history.json"
-GITHUB_BRANCH    = "main"
+GITHUB_FILE   = "positions.json"
+GITHUB_BRANCH = "main"
 # ────────────────────────────────────────────────────────────
 
 
@@ -229,30 +228,6 @@ def fetch_positions():
         except Exception as e:
             print(f"Note (daily pnl fallback): {e}")
 
-    # Append today's snapshot to pnl_history.json so T32 (Monthly P&L) can
-    # build a month-by-month table over time. IBKR's 'RealizedPnL' account
-    # tag is the REALIZED P&L FOR THE DAY (not cumulative), so summing each
-    # day's entry within a calendar month gives that month's realized P&L —
-    # but only for days this script was actually run. Re-running on the same
-    # date overwrites that date's entry instead of double-counting it.
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    try:
-        with open(PNL_HISTORY_FILE, "r") as _f:
-            pnl_history = json.load(_f)
-    except Exception:
-        pnl_history = []
-    pnl_history = [e for e in pnl_history if e.get("date") != today_str]
-    pnl_history.append({
-        "date"          : today_str,
-        "realizedPnL"   : realized_pnl,
-        "unrealizedPnL" : unrealized_pnl,
-        "netLiquidation": net_liq,
-    })
-    pnl_history.sort(key=lambda e: e["date"])
-    with open(PNL_HISTORY_FILE, "w") as f:
-        json.dump(pnl_history, f, indent=2)
-    print(f"✅ Saved pnl_history.json ({len(pnl_history)} day(s) logged).")
-
     output = {
         "fetchedAt"       : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "netLiquidation"  : net_liq,
@@ -277,13 +252,12 @@ def fetch_positions():
     upload_to_github()
 
 def upload_to_github():
-    """Push positions.json + pnl_history.json to GitHub using the LOCAL git
-    clone and its already configured credential helper — NO embedded token,
-    no GitHub REST API.
+    """Push positions.json to GitHub using the LOCAL git clone and its already
+    configured credential helper — NO embedded token, no GitHub REST API.
 
     This directory is a working clone of paulyeo11/paulsworld (origin/main).
     The working tree may contain unrelated edits (.gitignore, HTML, etc.), so
-    we stage ONLY these two files and never `git add .`.
+    we stage ONLY positions.json and never `git add .`.
 
     Divergence handling: commit positions.json first so the index is clean,
     then push. If the remote has advanced (push rejected), stash any unrelated
@@ -307,20 +281,19 @@ def upload_to_github():
         )
 
     try:
-        # a. Stage ONLY these two files (never other working-tree edits).
-        git("add", GITHUB_FILE, PNL_HISTORY_FILE)
+        # a. Stage ONLY positions.json (never other working-tree edits).
+        git("add", GITHUB_FILE)
 
         # b. Anything actually staged? `git diff --cached --quiet` exits 0 when
         #    there are NO staged changes, non-zero (1) when there are.
-        staged = git("diff", "--cached", "--quiet", "--",
-                      GITHUB_FILE, PNL_HISTORY_FILE, check=False)
+        staged = git("diff", "--cached", "--quiet", "--", GITHUB_FILE, check=False)
         if staged.returncode == 0:
-            print("ℹ️  positions.json / pnl_history.json unchanged, nothing to push.")
+            print("ℹ️  positions.json unchanged, nothing to push.")
             return
 
-        # c. Commit just these files.
+        # c. Commit just this file.
         commit = git("commit", "-m",
-                     "Auto-refresh IBKR positions + P&L history [skip ci]", check=False)
+                     "Auto-refresh IBKR positions data [skip ci]", check=False)
         print((commit.stdout or commit.stderr).strip())
 
         # d. Try to push; on rejection, rebase onto the advanced remote.

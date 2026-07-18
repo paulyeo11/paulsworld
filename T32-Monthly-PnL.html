@@ -23,17 +23,6 @@
   .subtitle { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
   #fetch-time { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); background:var(--surface); padding:6px 14px; border-radius:20px; border:1px solid var(--border); }
   main { max-width:900px; margin:0 auto; padding:32px 24px; }
-  #loading-state { text-align:center; padding:80px 20px; }
-  .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 20px; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  #loading-state p { color:var(--muted); font-size:.9rem; }
-  #nodata-state { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; text-align:center; }
-  #nodata-state h3 { color:#fff; margin-bottom:12px; }
-  #nodata-state p { color:var(--muted); font-size:.88rem; line-height:1.7; margin-bottom:16px; }
-  code { background:#1f2d45; color:var(--accent); padding:2px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-size:.85em; }
-  .steps { background:rgba(0,212,170,.05); border:1px solid rgba(0,212,170,.2); border-radius:10px; padding:20px 24px; margin:16px 0; text-align:left; }
-  .step { display:flex; gap:12px; margin-bottom:10px; align-items:flex-start; font-size:.85rem; color:var(--text); line-height:1.5; }
-  .step-num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#000; font-weight:800; font-size:.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
   .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
   .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; position:relative; overflow:hidden; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
@@ -41,10 +30,7 @@
   .card-value { font-size:1.5rem; font-weight:800; color:var(--accent); letter-spacing:-.03em; line-height:1; }
   .card-value.neg { color:var(--red); }
   .card-sub { font-size:.68rem; color:var(--muted); margin-top:5px; font-family:'DM Mono',monospace; }
-  .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.75rem; cursor:pointer; font-family:'DM Mono',monospace; transition:all .15s; }
-  .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
-  .toolbar { display:flex; gap:8px; margin-bottom:18px; align-items:center; justify-content:flex-end; }
-  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:16px; }
   .table-header { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
   .table-title { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
   table { width:100%; border-collapse:collapse; }
@@ -55,10 +41,9 @@
   tbody td { padding:12px 16px; font-size:.86rem; vertical-align:middle; }
   tbody td.num { font-family:'DM Mono',monospace; text-align:right; }
   .month-name { font-weight:700; color:#fff; }
+  .month-name .tag { display:inline-block; margin-left:6px; font-size:.62rem; font-weight:700; color:var(--warn); background:rgba(245,158,11,.12); padding:1px 6px; border-radius:8px; vertical-align:middle; }
   .pnl.pos { color:var(--green); font-weight:700; }
   .pnl.neg { color:var(--red); font-weight:700; }
-  .pnl.nil { color:var(--muted); }
-  .days-badge { display:inline-block; background:rgba(255,255,255,.06); color:var(--muted); font-size:.68rem; padding:2px 8px; border-radius:10px; font-family:'DM Mono',monospace; }
   tfoot td { padding:14px 16px; font-weight:800; border-top:2px solid var(--border); background:rgba(255,255,255,.02); }
   .price-note{font-size:.65rem;color:var(--muted);text-align:center;padding:10px 16px 14px;line-height:1.6}
   footer { text-align:center; color:var(--muted); font-size:.7rem; font-family:'DM Mono',monospace; margin-top:40px; line-height:1.8; }
@@ -136,69 +121,47 @@
     <div class="logo-dot"></div>
     <div>
       <h1>T32: 2026 Monthly P&amp;L</h1>
-      <div class="subtitle">T32 · Realized P&amp;L by month · from ibkr_positions.py</div>
+      <div class="subtitle">T32 · Monthly NAV change · IBKR PortfolioAnalyst</div>
     </div>
   </div>
-  <div id="fetch-time">Loading…</div>
+  <div id="fetch-time">🕐 Statement dated 16 Jul 2026</div>
 </header>
 
 <main>
-  <div id="loading-state">
-    <div class="spinner"></div>
-    <p>Loading P&amp;L history…</p>
+  <div class="summary-grid">
+    <div class="card"><div class="card-label">2026 NAV Change</div><div class="card-value neg" id="total-change">—</div><div class="card-sub">Jan–Jul (partial), vs Dec 2025</div></div>
+    <div class="card"><div class="card-label">Latest NAV</div><div class="card-value" style="color:#fff" id="latest-nav">—</div><div class="card-sub">as of 16 Jul 2026</div></div>
+    <div class="card"><div class="card-label">IBKR YTD TWR</div><div class="card-value neg">-12.33%</div><div class="card-sub">official time-weighted return</div></div>
+    <div class="card"><div class="card-label">Months Reported</div><div class="card-value" style="color:#fff">7</div><div class="card-sub">of 12, 2026</div></div>
   </div>
 
-  <div id="nodata-state">
-    <h3>📭 No P&amp;L history yet</h3>
-    <p>This table builds itself automatically each time you run <code>ibkr_positions.py</code> on your computer — it logs that day's realized P&amp;L to <code>pnl_history.json</code> and pushes it to GitHub.<br>No runs have been logged yet, so there's nothing to show.</p>
-    <div class="steps">
-      <div class="step"><div class="step-num">1</div><div>Open IB Gateway — port <code>4001</code></div></div>
-      <div class="step"><div class="step-num">2</div><div>Run: <code>python ibkr_positions.py</code></div></div>
-      <div class="step"><div class="step-num">3</div><div>Come back and refresh — that day's P&amp;L appears in its month row ✅</div></div>
-      <div class="step"><div class="step-num">4</div><div>Run it regularly (e.g. daily/weekly) for the monthly totals to be complete — a month only totals the days the script actually ran</div></div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">2026 · Month by Month</div>
+      <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)">USD</div>
     </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th style="text-align:right">NAV (End of Month)</th>
+          <th style="text-align:right">$ Change</th>
+          <th style="text-align:right">% Change</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+      <tfoot>
+        <tr>
+          <td>2026 Total</td>
+          <td class="num" id="foot-nav">—</td>
+          <td class="num" id="foot-change">—</td>
+          <td class="num" id="foot-pct">—</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="price-note">NAV = Net Asset Value (net liquidation) at month end, from Paul's IBKR PortfolioAnalyst statement — same source as the T29 Account Value chart. $/% Change is raw NAV change (includes any deposits/withdrawals), not investment return. IBKR's official time-weighted return (TWR) for 2026 YTD is -12.33% — that's the number that reflects actual performance. Months without a ✓ haven't happened yet or the statement hasn't been pulled for them.</div>
   </div>
-
-  <div id="dashboard" style="display:none">
-    <div class="summary-grid">
-      <div class="card"><div class="card-label">2026 Realized P&amp;L</div><div class="card-value" id="total-realized">—</div><div class="card-sub">sum of logged days</div></div>
-      <div class="card"><div class="card-label">Days Logged</div><div class="card-value" id="days-logged" style="color:#fff">—</div><div class="card-sub">in 2026</div></div>
-      <div class="card"><div class="card-label">Latest Net Liq</div><div class="card-value" id="latest-liq" style="color:#fff">—</div><div class="card-sub" id="latest-liq-date">—</div></div>
-      <div class="card"><div class="card-label">Latest Unrealized</div><div class="card-value" id="latest-unreal">—</div><div class="card-sub">open positions</div></div>
-    </div>
-
-    <div class="toolbar">
-      <button class="refresh-btn" onclick="reloadAll()">↻ Refresh</button>
-    </div>
-
-    <div class="table-wrap">
-      <div class="table-header">
-        <div class="table-title">2026 · Month by Month</div>
-        <div id="year-label" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)">USD</div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th>Days Logged</th>
-            <th style="text-align:right">Realized P&amp;L</th>
-            <th style="text-align:right">Unrealized P&amp;L (EOM)</th>
-            <th style="text-align:right">Net Liq (EOM)</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2">2026 Total</td>
-            <td class="num" id="foot-realized">—</td>
-            <td class="num" id="foot-unreal">—</td>
-            <td class="num" id="foot-liq">—</td>
-          </tr>
-        </tfoot>
-      </table>
-      <div class="price-note">Realized P&amp;L = sum of each logged day's IBKR "RealizedPnL for the day" figure — only days you actually ran <code>ibkr_positions.py</code> count. Unrealized P&amp;L / Net Liq shown are the last snapshot logged in that month (end-of-month value), not a monthly average. All figures in account base currency (USD).</div>
-    </div>
-  </div>
+  <div class="price-note" style="margin-top:-8px">To update: pull a fresh IBKR PortfolioAnalyst statement, add the new month(s) to <code>NAV_HISTORY</code> in <a href="/options-breadboard.html" style="color:var(--accent)">T29 (options-breadboard.html)</a>, then update this page's <code>DATA_2026</code> array to match.</div>
 </main>
 
 <div style="text-align:center;margin-top:40px">
@@ -207,112 +170,75 @@
 
 <footer>
   Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
-  Data from GitHub · Run ibkr_positions.py to log a new day
+  Source: IBKR PortfolioAnalyst statement (16 Jul 2026), same data as T29
 </footer>
 
 <script>
-const DATA_URL = 'https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/pnl_history.json';
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const YEAR = '2026';
+// Same monthly NAV history Paul keeps in T29 (options-breadboard.html) —
+// update both places together when a new statement is pulled.
+var DEC_2025_NAV = 65847.86;
+var DATA_2026 = [
+  {m:'January',   short:'Jan', v:64760.24, reported:true},
+  {m:'February',  short:'Feb', v:59016.81, reported:true},
+  {m:'March',     short:'Mar', v:55346.67, reported:true},
+  {m:'April',     short:'Apr', v:58180.27, reported:true},
+  {m:'May',       short:'May', v:53219.84, reported:true},
+  {m:'June',      short:'Jun', v:54718.62, reported:true},
+  {m:'July',      short:'Jul', v:57728.11, reported:true, partial:true},
+  {m:'August',    short:'Aug', v:null, reported:false},
+  {m:'September', short:'Sep', v:null, reported:false},
+  {m:'October',   short:'Oct', v:null, reported:false},
+  {m:'November',  short:'Nov', v:null, reported:false},
+  {m:'December',  short:'Dec', v:null, reported:false}
+];
 
 function fmtMoney(v) {
   if (v == null || isNaN(v)) return '—';
   const sign = v < 0 ? '-' : '';
   return sign + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
-
+function fmtPct(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+}
 function pnlClass(v) {
-  if (v == null || isNaN(v) || Math.abs(v) < 0.005) return 'nil';
-  return v > 0 ? 'pos' : 'neg';
+  if (v == null || isNaN(v)) return '';
+  return v >= 0 ? 'pos' : 'neg';
 }
 
-async function loadData() {
-  document.getElementById('fetch-time').textContent = 'Loading…';
-  try {
-    const r = await fetch(DATA_URL + '?t=' + Date.now());
-    if (!r.ok) throw new Error();
-    const history = await r.json();
-    const entries2026 = (history || []).filter(e => (e.date || '').startsWith(YEAR + '-'));
-    if (!entries2026.length) throw new Error('no-data');
-    showDashboard(entries2026, history);
-  } catch(e) {
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('nodata-state').style.display = 'block';
-    document.getElementById('fetch-time').textContent = 'No data';
+let prevNav = DEC_2025_NAV;
+let lastReported = null;
+const rows = DATA_2026.map(row => {
+  if (!row.reported) {
+    return `<tr class="future"><td class="month-name">${row.m}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
   }
-}
+  const change = row.v - prevNav;
+  const pct = change / prevNav * 100;
+  prevNav = row.v;
+  lastReported = row;
+  const tag = row.partial ? '<span class="tag">partial</span>' : '';
+  return `<tr>
+    <td class="month-name">${row.m}${tag}</td>
+    <td class="num">${fmtMoney(row.v)}</td>
+    <td class="num pnl ${pnlClass(change)}">${fmtMoney(change)}</td>
+    <td class="num pnl ${pnlClass(pct)}">${fmtPct(pct)}</td>
+  </tr>`;
+}).join('');
 
-async function reloadAll() { await loadData(); }
+document.getElementById('table-body').innerHTML = rows;
 
-function showDashboard(entries2026, fullHistory) {
-  entries2026.sort((a,b) => a.date < b.date ? -1 : 1);
-  const latest = entries2026[entries2026.length - 1];
+const totalChange = lastReported.v - DEC_2025_NAV;
+const totalPct = totalChange / DEC_2025_NAV * 100;
 
-  document.getElementById('fetch-time').textContent = '🕐 last logged ' + latest.date;
-  document.getElementById('latest-liq-date').textContent = 'as of ' + latest.date;
+document.getElementById('total-change').textContent = fmtMoney(totalChange);
+document.getElementById('total-change').className = 'card-value ' + (totalChange < 0 ? 'neg' : '');
+document.getElementById('latest-nav').textContent = fmtMoney(lastReported.v);
 
-  // Group by month
-  const months = {};
-  for (let m = 1; m <= 12; m++) {
-    const key = String(m).padStart(2,'0');
-    months[key] = { entries: [], realized: 0, hasRealized: false };
-  }
-  entries2026.forEach(e => {
-    const m = e.date.slice(5,7);
-    months[m].entries.push(e);
-    const rp = parseFloat(e.realizedPnL);
-    if (!isNaN(rp)) { months[m].realized += rp; months[m].hasRealized = true; }
-  });
-
-  let totalRealized = 0, anyRealized = false;
-  const rows = Object.keys(months).map(key => {
-    const mo = months[key];
-    const mIdx = parseInt(key,10) - 1;
-    const monthLabel = MONTH_NAMES[mIdx];
-    const isFuture = mo.entries.length === 0;
-    let realizedFmt = '—', realizedCls = 'nil';
-    if (mo.hasRealized) {
-      totalRealized += mo.realized; anyRealized = true;
-      realizedFmt = fmtMoney(mo.realized);
-      realizedCls = pnlClass(mo.realized);
-    }
-    let unrealFmt = '—', liqFmt = '—';
-    if (mo.entries.length) {
-      const last = mo.entries[mo.entries.length - 1];
-      const u = parseFloat(last.unrealizedPnL);
-      const l = parseFloat(last.netLiquidation);
-      if (!isNaN(u)) unrealFmt = fmtMoney(u);
-      if (!isNaN(l)) liqFmt = fmtMoney(l);
-    }
-    return `<tr class="${isFuture ? 'future' : ''}">
-      <td class="month-name">${monthLabel}</td>
-      <td><span class="days-badge">${mo.entries.length}</span></td>
-      <td class="num pnl ${realizedCls}">${realizedFmt}</td>
-      <td class="num">${unrealFmt}</td>
-      <td class="num">${liqFmt}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('table-body').innerHTML = rows;
-
-  document.getElementById('total-realized').textContent = anyRealized ? fmtMoney(totalRealized) : '—';
-  document.getElementById('total-realized').className = 'card-value ' + (totalRealized < 0 ? 'neg' : '');
-  document.getElementById('days-logged').textContent = entries2026.length;
-  document.getElementById('latest-liq').textContent = fmtMoney(parseFloat(latest.netLiquidation));
-  const latestUnreal = parseFloat(latest.unrealizedPnL);
-  document.getElementById('latest-unreal').textContent = fmtMoney(latestUnreal);
-  document.getElementById('latest-unreal').className = 'card-value ' + (latestUnreal < 0 ? 'neg' : '');
-
-  document.getElementById('foot-realized').textContent = anyRealized ? fmtMoney(totalRealized) : '—';
-  document.getElementById('foot-unreal').textContent = fmtMoney(latestUnreal);
-  document.getElementById('foot-liq').textContent = fmtMoney(parseFloat(latest.netLiquidation));
-
-  document.getElementById('loading-state').style.display = 'none';
-  document.getElementById('nodata-state').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-}
-
-loadData();
+document.getElementById('foot-nav').textContent = fmtMoney(lastReported.v);
+document.getElementById('foot-change').textContent = fmtMoney(totalChange);
+document.getElementById('foot-change').className = 'num pnl ' + pnlClass(totalChange);
+document.getElementById('foot-pct').textContent = fmtPct(totalPct);
+document.getElementById('foot-pct').className = 'num pnl ' + pnlClass(totalPct);
 </script>
 <script src="/sw-register.js" defer></script>
 </body>
