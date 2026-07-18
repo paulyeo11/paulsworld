@@ -179,18 +179,29 @@ stops.forEach(s => {
 
 map.fitBounds(fullLine, { padding: [40, 40] });
 
-// Real-road routing via OSRM, with straight-line fallback until it resolves.
-fetch('https://router.project-osrm.org/route/v1/driving/' + stops[0].lng + ',' + stops[0].lat + ';' + stops[1].lng + ',' + stops[1].lat + '?overview=full&geometries=geojson')
-  .then(r => r.json())
-  .then(d => {
-    if (d.routes && d.routes[0]) {
-      const coords = d.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-      map.removeLayer(routeLine);
-      routeLine = L.polyline(coords, { color: '#f0883e', weight: 4, opacity: 0.9 }).addTo(map);
-      map.fitBounds(coords, { padding: [40, 40] });
-    }
-  })
-  .catch(() => { /* keep straight-line fallback */ });
+// Real-road routing via OSRM, with a second mirror tried before falling back to the straight line.
+function loadRoad(urls, idx) {
+  idx = idx || 0;
+  if (idx >= urls.length) return;
+  fetch(urls[idx])
+    .then(r => { if (!r.ok) throw new Error('bad status'); return r.json(); })
+    .then(d => {
+      if (d.routes && d.routes[0]) {
+        const coords = d.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        map.removeLayer(routeLine);
+        routeLine = L.polyline(coords, { color: '#f0883e', weight: 4, opacity: 0.9 }).addTo(map);
+        map.fitBounds(coords, { padding: [40, 40] });
+      } else {
+        loadRoad(urls, idx + 1);
+      }
+    })
+    .catch(() => loadRoad(urls, idx + 1));
+}
+const odLatLng = stops[0].lng + ',' + stops[0].lat + ';' + stops[1].lng + ',' + stops[1].lat;
+loadRoad([
+  'https://router.project-osrm.org/route/v1/driving/' + odLatLng + '?overview=full&geometries=geojson',
+  'https://routing.openstreetmap.de/routed-car/route/v1/driving/' + odLatLng + '?overview=full&geometries=geojson'
+]);
 </script>
 
 <script src="/sw-register.js" defer></script>

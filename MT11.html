@@ -1973,20 +1973,33 @@
   }
   melStep();
 
-  // Swap in the real driving road (turns included) once OSRM resolves; keep the straight line if it fails.
-  fetch('https://router.project-osrm.org/route/v1/driving/' + melAirport[1] + ',' + melAirport[0] + ';' + melHotel[1] + ',' + melHotel[0] + '?overview=full&geometries=geojson')
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d.routes && d.routes[0]) {
-        var coords = d.routes[0].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
-        melCoords = coords;
-        melCum = melCumDist(coords);
-        melMap.removeLayer(melRouteLine);
-        melRouteLine = L.polyline(coords, { color: '#f4813f', weight: 3, opacity: 0.9 }).addTo(melMap);
-        melMap.fitBounds(coords, { padding: [45, 45] });
-      }
-    })
-    .catch(function () { /* keep straight-line fallback */ });
+  // Swap in the real driving road (turns included) once OSRM resolves; keep the straight line if all mirrors fail.
+  // Two mirrors tried in order — the public router.project-osrm.org demo is flaky/rate-limited on some networks,
+  // so a single-mirror fetch can silently leave the car driving a straight line through whatever's in between.
+  function melLoadRoad(urls, idx) {
+    idx = idx || 0;
+    if (idx >= urls.length) return;
+    fetch(urls[idx])
+      .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
+      .then(function (d) {
+        if (d.routes && d.routes[0]) {
+          var coords = d.routes[0].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
+          melCoords = coords;
+          melCum = melCumDist(coords);
+          melMap.removeLayer(melRouteLine);
+          melRouteLine = L.polyline(coords, { color: '#f4813f', weight: 3, opacity: 0.9 }).addTo(melMap);
+          melMap.fitBounds(coords, { padding: [45, 45] });
+        } else {
+          melLoadRoad(urls, idx + 1);
+        }
+      })
+      .catch(function () { melLoadRoad(urls, idx + 1); });
+  }
+  var melODLatLng = melAirport[1] + ',' + melAirport[0] + ';' + melHotel[1] + ',' + melHotel[0];
+  melLoadRoad([
+    'https://router.project-osrm.org/route/v1/driving/' + melODLatLng + '?overview=full&geometries=geojson',
+    'https://routing.openstreetmap.de/routed-car/route/v1/driving/' + melODLatLng + '?overview=full&geometries=geojson'
+  ]);
 
   // ---- 28 Sep: Animated Route Map — Queenstown Airport to Hotel (Jack's Point) ----
   // A verified: Queenstown Airport (ZQN), public/stable coordinates.
@@ -2104,20 +2117,31 @@
   }
   ahStep();
 
-  // Swap in the real driving road (turns included) once OSRM resolves; keep the straight line if it fails.
-  fetch('https://router.project-osrm.org/route/v1/driving/' + ahAirport[1] + ',' + ahAirport[0] + ';' + ahHotel[1] + ',' + ahHotel[0] + '?overview=full&geometries=geojson')
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d.routes && d.routes[0]) {
-        var coords = d.routes[0].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
-        ahCoords = coords;
-        ahCum = ahCumDist(coords);
-        ahMap.removeLayer(ahRouteLine);
-        ahRouteLine = L.polyline(coords, { color: '#f4813f', weight: 3, opacity: 0.9 }).addTo(ahMap);
-        ahMap.fitBounds(coords, { padding: [45, 45] });
-      }
-    })
-    .catch(function () { /* keep straight-line fallback */ });
+  // Swap in the real driving road (turns included) once OSRM resolves; keep the straight line if all mirrors fail.
+  function ahLoadRoad(urls, idx) {
+    idx = idx || 0;
+    if (idx >= urls.length) return;
+    fetch(urls[idx])
+      .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
+      .then(function (d) {
+        if (d.routes && d.routes[0]) {
+          var coords = d.routes[0].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
+          ahCoords = coords;
+          ahCum = ahCumDist(coords);
+          ahMap.removeLayer(ahRouteLine);
+          ahRouteLine = L.polyline(coords, { color: '#f4813f', weight: 3, opacity: 0.9 }).addTo(ahMap);
+          ahMap.fitBounds(coords, { padding: [45, 45] });
+        } else {
+          ahLoadRoad(urls, idx + 1);
+        }
+      })
+      .catch(function () { ahLoadRoad(urls, idx + 1); });
+  }
+  var ahODLatLng = ahAirport[1] + ',' + ahAirport[0] + ';' + ahHotel[1] + ',' + ahHotel[0];
+  ahLoadRoad([
+    'https://router.project-osrm.org/route/v1/driving/' + ahODLatLng + '?overview=full&geometries=geojson',
+    'https://routing.openstreetmap.de/routed-car/route/v1/driving/' + ahODLatLng + '?overview=full&geometries=geojson'
+  ]);
 
   // ---- South Island tour route map ----
   var siStops = [
