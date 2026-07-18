@@ -356,6 +356,32 @@
     </div>
   </div>
 
+  <div class="condor" id="allTradesCard" style="margin-top:16px">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">📋 <span class="en">All Option Trades</span><span class="zh">全部期权交易</span></div>
+      <div class="c-meta"><span class="en">57 trades since inception · one row per position, net premium collected</span><span class="zh">自成立以来共57笔交易 · 每行一个持仓，显示净权利金收入</span></div>
+      <div></div>
+    </div>
+    <table class="legs" style="margin-top:10px">
+      <thead><tr>
+        <th><span class="en">Entry (est.)</span><span class="zh">建仓（估计）</span></th>
+        <th><span class="en">Stock</span><span class="zh">股票</span></th>
+        <th><span class="en">Expiry</span><span class="zh">到期日</span></th>
+        <th style="text-align:right"><span class="en">Legs</span><span class="zh">腿数</span></th>
+        <th style="text-align:right"><span class="en">Premium</span><span class="zh">权利金</span></th>
+      </tr></thead>
+      <tbody id="allTradesBody"></tbody>
+      <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+        <td colspan="4"><span class="en">Total</span><span class="zh">合计</span></td>
+        <td class="num" id="allTradesTotal" style="color:#3fb950">—</td>
+      </tr></tfoot>
+    </table>
+    <div class="note" style="margin-top:12px">
+      <span class="en">Every option position touched since inception (May 2024 – Jul 2026), one row per underlying+expiration (multi-leg trades like the 4 Iron Condors are collapsed into a single row). <b>Entry month is estimated</b> as expiration month minus 1 (the statement only records expiration dates) — confirmed exact for the Jul 2026 Iron Condors. <b>Premium</b> is net cash flow for that trade (credit received minus any debit paid for protective legs), negative when it was a net debit.</span>
+      <span class="zh">自成立以来（2024年5月–2026年7月）涉及的每个期权持仓，按标的+到期日合并为一行（如4个铁鹰等多腿交易合并为单行）。<b>建仓月份为估算值</b>（到期月份减1个月，因报表仅记录到期日）——2026年7月的4个铁鹰已核实准确无误。<b>权利金</b>为该笔交易的净现金流（收到的权利金减去保护腿支出），若为净支出则显示负值。</span>
+    </div>
+  </div>
+
   <div class="condor" id="putVarianceCard" style="margin-top:16px">
     <div class="c-head">
       <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Share Price vs Selling Put</span><span class="zh">股价 vs 卖出认沽</span></div>
@@ -1775,6 +1801,56 @@ var PREMIUM_BY_STOCK = [
   document.getElementById('premTotalRecv').textContent = fmtPlain2(totalRecv);
   document.getElementById('premTotalPaid').textContent = fmtPlain2(totalPaid);
   document.getElementById('premTotalNet').textContent = fmtSigned2(totalRecv + totalPaid);
+})();
+
+// All Option Trades — one row per underlying+expiration position (57 total), net premium
+// collected for that specific trade. Same source/method as PREMIUM_BY_STOCK and TRADE_COUNTS
+// above (IBKR Trade Summary, since inception through 16 Jul 2026).
+var ALL_TRADES = [
+  ['Jul 24','CELH','23 Aug 2024',1,-430.00], ['Jul 24','FTNT','02 Aug 2024',1,187.00],
+  ['Jul 24','GOOGL','16 Aug 2024',1,87.00], ['Jul 24','GOOGL','30 Aug 2024',1,63.00],
+  ['Jul 24','LULU','23 Aug 2024',1,850.00], ['Jul 24','LULU','30 Aug 2024',1,440.00],
+  ['Jul 24','META','30 Aug 2024',1,1200.00], ['Jul 24','MNST','16 Aug 2024',1,80.00],
+  ['Jul 24','NVDA','30 Aug 2024',1,250.00], ['Aug 24','CELH','27 Sep 2024',1,811.00],
+  ['Aug 24','GOOGL','13 Sep 2024',1,51.00], ['Sep 24','LULU','18 Oct 2024',1,600.00],
+  ['Oct 24','LULU','08 Nov 2024',1,760.00], ['Nov 24','FTNT','06 Dec 2024',1,-4.00],
+  ['Jan 25','GOOGL','21 Feb 2025',1,-1131.00], ['Feb 25','CELH','21 Mar 2025',1,-101.00],
+  ['Feb 25','ELV','21 Mar 2025',1,351.00], ['Feb 25','TSM','21 Mar 2025',1,690.00],
+  ['Mar 25','NVDA','04 Apr 2025',1,414.00], ['Apr 25','AAPL','23 May 2025',1,158.00],
+  ['Apr 25','GOOGL','02 May 2025',1,349.00], ['May 25','CELH','27 Jun 2025',1,126.00],
+  ['May 25','GOOGL','27 Jun 2025',1,270.00], ['May 25','TSM','27 Jun 2025',1,395.00],
+  ['May 25','UNH','27 Jun 2025',2,1121.00], ['Jun 25','CRM','11 Jul 2025',1,526.00],
+  ['Jun 25','ELV','18 Jul 2025',1,1150.00], ['Jul 25','CELH','01 Aug 2025',1,221.00],
+  ['Jul 25','CELH','15 Aug 2025',1,245.00], ['Jul 25','NVDA','08 Aug 2025',1,590.00],
+  ['Jul 25','NVO','29 Aug 2025',1,360.00], ['Jul 25','TMO','08 Aug 2025',1,1500.00],
+  ['Jul 25','ZTS','15 Aug 2025',1,472.00], ['Aug 25','CPRT','19 Sep 2025',1,136.00],
+  ['Aug 25','ELV','19 Sep 2025',1,6273.00], ['Aug 25','UNH','05 Sep 2025',1,740.00],
+  ['Sep 25','AMZN','31 Oct 2025',1,315.00], ['Sep 25','CRM','17 Oct 2025',1,324.00],
+  ['Sep 25','ELV','17 Oct 2025',1,860.00], ['Sep 25','FDS','17 Oct 2025',1,676.00],
+  ['Sep 25','INTC','31 Oct 2025',1,208.00], ['Sep 25','NVDA','31 Oct 2025',1,443.00],
+  ['Oct 25','AMZN','14 Nov 2025',1,396.00], ['Oct 25','FDS','21 Nov 2025',1,883.00],
+  ['Oct 25','NVDA','14 Nov 2025',1,209.00], ['Oct 25','POOL','21 Nov 2025',1,1160.00],
+  ['Nov 25','NVDA','19 Dec 2025',1,191.00], ['Nov 25','ZTS','19 Dec 2025',1,440.00],
+  ['Apr 26','MSFT','15 May 2026',1,732.00], ['Apr 26','V','29 May 2026',1,536.00],
+  ['May 26','FDS','18 Jun 2026',1,-298.00], ['Jun 26','FDS','17 Jul 2026',1,251.00],
+  ['Jun 26','POOL','17 Jul 2026',1,45.00], ['Jul 26','AVGO','28 Aug 2026',4,475.00],
+  ['Jul 26','NVDA','21 Aug 2026',4,215.00], ['Jul 26','QQQ','28 Aug 2026',4,259.00],
+  ['Jul 26','SMH','21 Aug 2026',4,435.00]
+];
+(function(){
+  var body = document.getElementById('allTradesBody');
+  if (!body) return;
+  function fmtSigned2(v){ return (v>=0?'+':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  var total = 0;
+  body.innerHTML = ALL_TRADES.map(function(r){
+    var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
+    total += prem;
+    var color = prem >= 0 ? '#3fb950' : '#f85149';
+    return '<tr><td>'+entry+'</td><td><b>'+sym+'</b></td><td>'+exp+'</td>' +
+      '<td class="num">'+legs+'</td>' +
+      '<td class="num" style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</td></tr>';
+  }).join('');
+  document.getElementById('allTradesTotal').textContent = fmtSigned2(total);
 })();
 
 if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
