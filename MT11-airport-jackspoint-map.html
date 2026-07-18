@@ -79,7 +79,7 @@
 </div>
 
 <div class="warning-banner">
-  ⚠️ The address (15 Plough Street, Jack's Point) is confirmed by the host, Joanne, but the pin below is only a rough placement within the Jack's Point locality, not a verified geocode of the exact street address. Do NOT rely on the pin for navigation — use the "Directions" / "Search on Google Maps" buttons below, which route by the exact address text.
+  ⚠️ The address (15 Plough Street, Jack's Point) is confirmed by the host, Joanne — but two attempts at plotting an approximate pin for it both landed in the lake (wrong). No pin is shown until the exact location is confirmed; the map below shows Queenstown Airport only. Use the "Directions" / "Search on Google Maps" buttons below, which route by the exact address text.
 </div>
 
 <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; Open Full Screen Map</button>
@@ -105,11 +105,11 @@
 
 <div class="legend">
   <span class="dot" style="background:#e63b2e;"></span>A — Queenstown Airport (ZQN)&nbsp;&nbsp;
-  <span class="dot" style="background:#f4c869;"></span>B — Jack's Point (approx.)
+  <span style="color:#8b949e;">B — pin removed, location unconfirmed (see warning above)</span>
 </div>
 
 <div class="note">
-  Route line is a straight-line fallback until the real road path loads from OSRM (turn-by-turn driving route via SH6). Straight-line distance shown above; driving time is a typical-speed estimate, not live traffic.
+  No route line is drawn until the exact pin for Jack's Point is confirmed.
 </div>
 
 <div class="home-wrap">
@@ -140,13 +140,14 @@ function closeMapFullscreen() {
 }
 
 // A = Queenstown Airport (ZQN) — verified public coordinates.
-// B = Jack's Point — address confirmed by host (Joanne); pin is APPROXIMATE only (verifiedGps:false). See warning banner.
+// B intentionally omitted: two guessed pins for Jack's Point both landed in the lake (wrong).
+// Address is host-confirmed (15 Plough Street, Jack's Point) but no pin is plotted until the
+// real location is confirmed — see warning banner and Directions/Search buttons (address-based).
 const stops = [
-  { letter: 'A', name: "Queenstown Airport (ZQN)", lat: -45.0211, lng: 168.7392, color: '#e63b2e', verifiedGps: true },
-  { letter: 'B', name: "15 Plough Street, Jack's Point (approx.)", lat: -45.0630, lng: 168.7160, color: '#f4c869', verifiedGps: false }
+  { letter: 'A', name: "Queenstown Airport (ZQN)", lat: -45.0211, lng: 168.7392, color: '#e63b2e', verifiedGps: true }
 ];
 
-const map = L.map('map', { zoomControl: true }).setView([-45.052, 168.71], 12);
+const map = L.map('map', { zoomControl: true }).setView([-45.0211, 168.7392], 13);
 
 const tileLayers = {
   satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
@@ -165,43 +166,13 @@ function setMapType(type) {
   document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
 }
 
-const fullLine = stops.map(s => [s.lat, s.lng]);
-let routeLine = L.polyline(fullLine, { color: '#f0883e', weight: 4, opacity: 0.85, dashArray: '8,8' }).addTo(map);
-
 stops.forEach(s => {
   const icon = L.divIcon({
     html: '<div style="background:' + s.color + ';color:#0d1117;font-weight:800;font-size:0.8rem;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #0d1117;">' + s.letter + '</div>',
     className: '', iconSize: [26, 26], iconAnchor: [13, 13]
   });
-  const popupExtra = s.verifiedGps ? '' : '<br><span style="color:#f0a500;">⚠️ approximate — use Directions button, not this pin</span>';
-  L.marker([s.lat, s.lng], { icon: icon }).addTo(map).bindPopup('<b>' + s.letter + ' — ' + s.name + '</b>' + popupExtra);
+  L.marker([s.lat, s.lng], { icon: icon }).addTo(map).bindPopup('<b>' + s.letter + ' — ' + s.name + '</b>');
 });
-
-map.fitBounds(fullLine, { padding: [40, 40] });
-
-// Real-road routing via OSRM, with a second mirror tried before falling back to the straight line.
-function loadRoad(urls, idx) {
-  idx = idx || 0;
-  if (idx >= urls.length) return;
-  fetch(urls[idx])
-    .then(r => { if (!r.ok) throw new Error('bad status'); return r.json(); })
-    .then(d => {
-      if (d.routes && d.routes[0]) {
-        const coords = d.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        map.removeLayer(routeLine);
-        routeLine = L.polyline(coords, { color: '#f0883e', weight: 4, opacity: 0.9 }).addTo(map);
-        map.fitBounds(coords, { padding: [40, 40] });
-      } else {
-        loadRoad(urls, idx + 1);
-      }
-    })
-    .catch(() => loadRoad(urls, idx + 1));
-}
-const odLatLng = stops[0].lng + ',' + stops[0].lat + ';' + stops[1].lng + ',' + stops[1].lat;
-loadRoad([
-  'https://router.project-osrm.org/route/v1/driving/' + odLatLng + '?overview=full&geometries=geojson',
-  'https://routing.openstreetmap.de/routed-car/route/v1/driving/' + odLatLng + '?overview=full&geometries=geojson'
-]);
 </script>
 
 <script src="/sw-register.js" defer></script>
