@@ -301,6 +301,20 @@ stops.forEach((s, i) => {
 
 map.fitBounds(fullRoadPoints, { padding: [40, 40] });
 
+// iOS Safari computes `vh` against the full viewport before the address-bar
+// chrome collapses, so the map can init at the wrong size and tiles in the
+// mismatched margin render gray until Leaflet recalculates. Force a couple of
+// recalculations shortly after load (and on resize/orientation change) so the
+// map always fills correctly.
+function refreshMapSize() {
+  map.invalidateSize();
+  map.fitBounds(fullRoadPoints, { padding: [40, 40] });
+}
+setTimeout(refreshMapSize, 300);
+setTimeout(refreshMapSize, 1000);
+window.addEventListener('resize', function () { map.invalidateSize(); });
+window.addEventListener('orientationchange', function () { setTimeout(refreshMapSize, 300); });
+
 function openMapFullscreen() {
   if (window.self !== window.top) {
     window.top.location.href = window.location.href;
