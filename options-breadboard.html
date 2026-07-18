@@ -209,6 +209,7 @@
     <button class="tab-btn" id="tb-ypnl" onclick="setTab('ypnl')">📆 <span class="en">Yearly P&amp;L</span><span class="zh">年度盈亏</span></button>
     <button class="tab-btn" id="tb-qpnl" onclick="setTab('qpnl')">📊 <span class="en">Quarterly P&amp;L</span><span class="zh">季度盈亏</span></button>
     <button class="tab-btn" id="tb-trades" onclick="setTab('trades')">📋 <span class="en">Trade Log</span><span class="zh">交易记录</span></button>
+    <button class="tab-btn" id="tb-dep" onclick="setTab('deposits')">💰 <span class="en">Deposits</span><span class="zh">存款</span></button>
   </div>
 
   <div class="condor" id="acctValueCard">
@@ -821,6 +822,80 @@
     </div>
   </div><!-- /tab-trades -->
 
+  <div id="tab-deposits" style="display:none">
+    <div class="condor" id="depositSummaryCard">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">💰 <span class="en">Cash Deposited Into IBKR</span><span class="zh">存入IBKR的资金</span></div>
+        <div class="c-meta"><span class="en">Since inception (27 May 2024 – 16 Jul 2026) · from IBKR PortfolioAnalyst statement</span><span class="zh">自成立以来（2024年5月27日–2026年7月16日）· 来自IBKR投资组合分析报表</span></div>
+        <div></div>
+      </div>
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Item</span><span class="zh">项目</span></th>
+          <th style="text-align:right"><span class="en">Amount</span><span class="zh">金额</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><span class="en">Beginning NAV (27 May 2024)</span><span class="zh">期初净值（2024年5月27日）</span></td><td class="num">$0.00</td></tr>
+          <tr><td><b><span class="en">Deposits (8 transfers)</span><span class="zh">存款（8笔转账）</span></b></td><td class="num" style="color:#3fb950;font-weight:800">+$60,087.40</td></tr>
+          <tr><td><span class="en">Dividends received</span><span class="zh">已收股息</span></td><td class="num" style="color:#3fb950">+$775.03</td></tr>
+          <tr><td><span class="en">Interest received</span><span class="zh">已收利息</span></td><td class="num" style="color:#3fb950">+$519.30</td></tr>
+          <tr><td><span class="en">Fees &amp; commissions</span><span class="zh">手续费及佣金</span></td><td class="num" style="color:#f85149">−$108.38</td></tr>
+          <tr><td><span class="en">Other</span><span class="zh">其他</span></td><td class="num" style="color:#f85149">−$21.46</td></tr>
+          <tr><td><span class="en">Market value change (trading gain/loss)</span><span class="zh">市值变动（交易盈亏）</span></td><td class="num" style="color:#f85149">−$3,523.79</td></tr>
+        </tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td><span class="en">Ending NAV (16 Jul 2026)</span><span class="zh">期末净值（2026年7月16日）</span></td>
+          <td class="num" style="color:#f4c869">$57,728.11</td>
+        </tr></tfoot>
+      </table>
+      <div class="note" style="margin-top:12px">
+        <span class="en">Straight from IBKR's Account Overview reconciliation: Beginning NAV + Deposits/Withdrawals + Dividends + Interest − Fees − Other + Market value change = Ending NAV. <b>You've put in $60,087.40 of your own cash since the account opened</b> — everything else on this line (dividends, interest, fees, market moves) is what the account itself generated or lost, not new money from you.</span>
+        <span class="zh">直接取自IBKR「账户概览」的对账数据：期初净值 + 存款/取款 + 股息 + 利息 − 手续费 − 其他 + 市值变动 = 期末净值。<b>自开户以来，你自己实际存入的资金共计$60,087.40</b>——其余项目（股息、利息、手续费、市值变动）均为账户自身产生或损耗的部分，并非你新投入的资金。</span>
+      </div>
+    </div>
+
+    <div class="condor" id="depositDetailCard" style="margin-top:16px">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.05rem">📋 <span class="en">Deposit-by-Deposit Breakdown</span><span class="zh">逐笔存款明细</span></div>
+        <div class="c-meta"><span class="en">8 electronic fund transfers into the account · running total</span><span class="zh">8笔电子转账存入账户 · 累计总额</span></div>
+        <div></div>
+      </div>
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Date</span><span class="zh">日期</span></th>
+          <th><span class="en">Type</span><span class="zh">类型</span></th>
+          <th style="text-align:right"><span class="en">Amount</span><span class="zh">金额</span></th>
+          <th style="text-align:right"><span class="en">Running Total</span><span class="zh">累计总额</span></th>
+        </tr></thead>
+        <tbody id="depositBody"></tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td colspan="2"><span class="en">Total deposited</span><span class="zh">存款合计</span></td>
+          <td class="num" id="depositTotal" style="color:#3fb950">—</td>
+          <td class="num" style="color:#3fb950">—</td>
+        </tr></tfoot>
+      </table>
+      <table class="legs" style="margin-top:16px">
+        <thead><tr>
+          <th><span class="en">Year</span><span class="zh">年份</span></th>
+          <th><span class="en">Transfers</span><span class="zh">转账次数</span></th>
+          <th style="text-align:right"><span class="en">Deposited</span><span class="zh">存款金额</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><b>2024</b></td><td>5</td><td class="num">$44,654.15</td></tr>
+          <tr><td><b>2025</b></td><td>3</td><td class="num">$15,433.24</td></tr>
+        </tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td colspan="2"><span class="en">Total</span><span class="zh">合计</span></td>
+          <td class="num" style="color:#3fb950">$60,087.39</td>
+        </tr></tfoot>
+      </table>
+      <div class="note" style="margin-top:12px">
+        <span class="en">Source: IBKR PortfolioAnalyst "Deposits and Withdrawals" report (statement dated 16 Jul 2026). All 8 rows are electronic fund transfers into the account — <b>there have been zero withdrawals</b> since inception. The per-transfer rows sum to $60,087.39; IBKR's own report total shows $60,087.40 — a 1-cent difference that reconciles against a separate $0.01 "Commission (Audit Trail Fee Refund)" adjustment dated 18 Dec 2024, which IBKR folds into the same page's Total row even though it isn't itself a deposit.</span>
+        <span class="zh">数据来源：IBKR投资组合分析报表中的「存款与取款」报告（报表日期2026年7月16日）。全部8笔均为转入账户的电子转账——<b>自成立以来没有任何一笔取款</b>。逐笔转账相加为$60,087.39；IBKR报表自身合计显示为$60,087.40——这1美分的差异来自另一笔2024年12月18日的$0.01「手续费（审计追踪费退款）」调整，IBKR将其并入了同一页面的合计行，尽管它本身并非存款。</span>
+      </div>
+    </div>
+  </div><!-- /tab-deposits -->
+
   <footer><span class="en">Paul's World · Options Breadboard · updated 18 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月18日</span></footer>
 </div>
 
@@ -846,6 +921,7 @@ setLang('en');
 
 // Tabs
 var cutLoaded = false;
+var depositsLoaded = false;
 function setTab(t){
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
   document.getElementById('tab-analysis').style.display = t==='analysis'?'':'none';
@@ -854,6 +930,7 @@ function setTab(t){
   document.getElementById('tab-ypnl').style.display = t==='ypnl'?'':'none';
   document.getElementById('tab-qpnl').style.display = t==='qpnl'?'':'none';
   document.getElementById('tab-trades').style.display = t==='trades'?'':'none';
+  document.getElementById('tab-deposits').style.display = t==='deposits'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
   document.getElementById('tb-cut').classList.toggle('active', t==='cutloss');
@@ -861,7 +938,9 @@ function setTab(t){
   document.getElementById('tb-ypnl').classList.toggle('active', t==='ypnl');
   document.getElementById('tb-qpnl').classList.toggle('active', t==='qpnl');
   document.getElementById('tb-trades').classList.toggle('active', t==='trades');
-  document.getElementById('acctValueCard').style.display = (t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades') ? 'none' : '';
+  document.getElementById('tb-dep').classList.toggle('active', t==='deposits');
+  document.getElementById('acctValueCard').style.display = (t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='deposits') ? 'none' : '';
+  if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='pnl' && typeof pnlChart !== 'undefined' && pnlChart) pnlChart.resize();
   if(t==='ypnl' && typeof yearlyChart !== 'undefined' && yearlyChart) yearlyChart.resize();
@@ -1834,6 +1913,34 @@ var PREMIUM_BY_STOCK = [
   document.getElementById('premTotalNet').textContent = fmtSigned2(totalRecv + totalPaid);
 })();
 
+// Deposits — from IBKR "Deposits and Withdrawals" report (statement dated 16 Jul 2026).
+// [date, type, amount] — every electronic fund transfer into the account since inception.
+var DEPOSITS = [
+  ['05/27/2024', 'Electronic Fund Transfer', 741.10],
+  ['05/27/2024', 'Electronic Fund Transfer', 2964.40],
+  ['06/05/2024', 'Electronic Fund Transfer', 7413.90],
+  ['06/05/2024', 'Electronic Fund Transfer', 18534.75],
+  ['08/30/2024', 'Electronic Fund Transfer', 15000.00],
+  ['09/25/2025', 'Electronic Fund Transfer', 11586.15],
+  ['11/25/2025', 'Electronic Fund Transfer', 2305.47],
+  ['11/26/2025', 'Electronic Fund Transfer', 1541.62]
+];
+function renderDeposits(){
+  var body = document.getElementById('depositBody');
+  if (!body) return;
+  function fmt(v){ return '$' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  var running = 0;
+  body.innerHTML = DEPOSITS.map(function(r){
+    running += r[2];
+    return '<tr><td>'+r[0]+'</td>' +
+      '<td><span class="en">'+r[1]+'</span><span class="zh">电子转账</span></td>' +
+      '<td class="num" style="color:#3fb950">+'+fmt(r[2])+'</td>' +
+      '<td class="num">'+fmt(running)+'</td></tr>';
+  }).join('');
+  document.getElementById('depositTotal').textContent = '+' + fmt(running);
+  setLang(curLang);
+}
+
 // All Option Trades — one row per underlying+expiration position (57 total), net premium
 // collected for that specific trade. Same source/method as PREMIUM_BY_STOCK and TRADE_COUNTS
 // above (IBKR Trade Summary, since inception through 16 Jul 2026).
@@ -1901,6 +2008,7 @@ else if (location.hash === '#pnl') setTab('pnl');
 else if (location.hash === '#ypnl') setTab('ypnl');
 else if (location.hash === '#qpnl') setTab('qpnl');
 else if (location.hash === '#trades') setTab('trades');
+else if (location.hash === '#deposits') setTab('deposits');
 </script>
 <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
