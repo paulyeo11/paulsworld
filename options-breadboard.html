@@ -556,6 +556,7 @@
         <div></div>
       </div>
       <div class="rail-legend" id="pnlYearBtns" style="margin-top:10px"></div>
+      <div style="position:relative;height:180px;margin-top:14px"><canvas id="pnlChart"></canvas></div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
           <th><span class="en">Month</span><span class="zh">月份</span></th>
@@ -673,6 +674,7 @@ function setTab(t){
   document.getElementById('tb-ypnl').classList.toggle('active', t==='ypnl');
   document.getElementById('tb-qpnl').classList.toggle('active', t==='qpnl');
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
+  if(t==='pnl' && typeof pnlChart !== 'undefined' && pnlChart) pnlChart.resize();
   window.scrollTo(0,0);
 }
 
@@ -1105,6 +1107,25 @@ function setPnlYear(yr){
   renderPnlTable(yr);
 }
 
+var pnlChart = new Chart(document.getElementById('pnlChart'), {
+  type: 'bar',
+  data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 4, maxBarThickness: 36 }] },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display:false }, tooltip: {
+      callbacks: { label: function(ctx){ return fmtChangeUSD(ctx.parsed.y); } }
+    } },
+    scales: {
+      x: { ticks:{ color:'#8b98a5', font:{size:10} }, grid:{ display:false } },
+      y: {
+        grid: { color: 'rgba(255,255,255,.06)' },
+        ticks: { color:'#8b98a5', font:{size:10}, callback:function(v){ return (v>=0?'+':'-')+'$'+(Math.abs(v)/1000).toFixed(1)+'K'; } }
+      }
+    }
+  }
+});
+
 function renderPnlTable(year){
   year = year || curPnlYear;
   var yIdx = [];
@@ -1115,6 +1136,7 @@ function renderPnlTable(year){
   var seen = {};
   var rows = '';
   var prevNav = baselineNav;
+  var chartLabels = [], chartData = [], chartColors = [];
   yIdx.forEach(function(i, k){
     var d = NAV_HISTORY[i];
     var monIdx = MONTH_SHORT.indexOf(d.m.slice(0,3));
@@ -1131,12 +1153,22 @@ function renderPnlTable(year){
       '<td class="num">'+fmtUSD(d.v)+'</td>' +
       '<td class="num" style="color:'+color+';font-weight:700">'+(chg==null?'—':fmtChangeUSD(chg))+'</td>' +
       '<td class="num" style="color:'+color+';font-weight:700">'+(pct==null?'—':(pct>=0?'+':'')+pct.toFixed(2)+'%')+'</td></tr>';
+    if (chg != null) {
+      chartLabels.push(MONTH_SHORT[monIdx]);
+      chartData.push(Math.round(chg*100)/100);
+      chartColors.push(chg>=0 ? '#3fb950' : '#f85149');
+    }
     prevNav = d.v;
   });
   for(var m=0;m<12;m++){
     if(!seen[m]) rows += '<tr style="opacity:.4"><td>'+MONTH_FULL[m]+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
   }
   document.getElementById('pnlTableBody').innerHTML = rows;
+
+  pnlChart.data.labels = chartLabels;
+  pnlChart.data.datasets[0].data = chartData;
+  pnlChart.data.datasets[0].backgroundColor = chartColors;
+  pnlChart.update();
 
   var totalStart = hasBaseline ? baselineNav : NAV_HISTORY[yIdx[0]].v;
   var totalEnd = NAV_HISTORY[yIdx[yIdx.length-1]].v;
