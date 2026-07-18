@@ -231,6 +231,7 @@
     <button class="tab-btn" id="tb-cut" onclick="setTab('cutloss')">🚨 <span class="en">Cut-Loss</span><span class="zh">止损</span></button>
     <button class="tab-btn" id="tb-pnl" onclick="setTab('pnl')">📅 <span class="en">Monthly P&amp;L</span><span class="zh">月度盈亏</span></button>
     <button class="tab-btn" id="tb-ypnl" onclick="setTab('ypnl')">📆 <span class="en">Yearly P&amp;L</span><span class="zh">年度盈亏</span></button>
+    <button class="tab-btn" id="tb-qpnl" onclick="setTab('qpnl')">📊 <span class="en">Quarterly P&amp;L</span><span class="zh">季度盈亏</span></button>
   </div>
 
   <div id="tab-positions">
@@ -604,6 +605,35 @@
     </div>
   </div><!-- /tab-ypnl -->
 
+  <div id="tab-qpnl" style="display:none">
+    <div class="condor">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.05rem">📊 <span class="en">Quarterly P&amp;L</span><span class="zh">季度盈亏</span></div>
+        <div class="c-meta"><span class="en">NAV change by quarter · IBKR PortfolioAnalyst</span><span class="zh">按季净值变动 · IBKR投资组合分析报表</span></div>
+        <div></div>
+      </div>
+      <div class="rail-legend" id="qpnlYearBtns" style="margin-top:10px"></div>
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Quarter</span><span class="zh">季度</span></th>
+          <th style="text-align:right"><span class="en">NAV (EOQ)</span><span class="zh">季末净值</span></th>
+          <th style="text-align:right"><span class="en">$ Change</span><span class="zh">金额变动</span></th>
+          <th style="text-align:right"><span class="en">% Change</span><span class="zh">百分比变动</span></th>
+        </tr></thead>
+        <tbody id="qpnlTableBody"></tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td><span class="en" id="qpnlTotalLabelEn">2026 Total</span><span class="zh" id="qpnlTotalLabelZh">2026年合计</span></td>
+          <td class="num"></td>
+          <td class="num" colspan="2" id="qpnlTotalChg">—</td>
+        </tr></tfoot>
+      </table>
+      <div class="note" style="margin-top:12px">
+        <span class="en">Same monthly NAV data as the Account Value chart above, rolled up to quarter-end (or latest available) values. $/% Change is raw NAV change (includes deposits/withdrawals), not investment return. A quarter with only partial data (e.g. Q3 2026 = Jul only, no Aug/Sep yet) is tagged "partial".</span>
+        <span class="zh">与上方账户总值图表使用相同的月度净值数据，按季末（或最新可用）数值汇总。金额/百分比变动是净值原始变动（含存取款），并非真实投资回报。仅有部分月份数据的季度（例如2026年第三季度只有7月数据，尚无8、9月）会标注「partial」。</span>
+      </div>
+    </div>
+  </div><!-- /tab-qpnl -->
+
   <footer><span class="en">Paul's World · Options Breadboard · updated 16 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月16日</span></footer>
 </div>
 
@@ -635,11 +665,13 @@ function setTab(t){
   document.getElementById('tab-cutloss').style.display = t==='cutloss'?'':'none';
   document.getElementById('tab-pnl').style.display = t==='pnl'?'':'none';
   document.getElementById('tab-ypnl').style.display = t==='ypnl'?'':'none';
+  document.getElementById('tab-qpnl').style.display = t==='qpnl'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
   document.getElementById('tb-cut').classList.toggle('active', t==='cutloss');
   document.getElementById('tb-pnl').classList.toggle('active', t==='pnl');
   document.getElementById('tb-ypnl').classList.toggle('active', t==='ypnl');
+  document.getElementById('tb-qpnl').classList.toggle('active', t==='qpnl');
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   window.scrollTo(0,0);
 }
@@ -1155,9 +1187,90 @@ function renderYearlyPnlTable(){
 }
 renderYearlyPnlTable();
 
+// Quarterly P&L tab — also derived from NAV_HISTORY, grouped Jan-Mar/Apr-Jun/Jul-Sep/Oct-Dec
+var QTR_END_MONTH = ['Mar','Jun','Sep','Dec'];
+var curQpnlYear = PNL_YEARS[PNL_YEARS.length-1];
+
+// Global chronological list of quarter-end entries (one per year+quarter present in NAV_HISTORY)
+var QTR_ENDS = (function(){
+  var byKey = {}, list = [];
+  NAV_HISTORY.forEach(function(d){
+    var yr = d.m.slice(-2);
+    var qi = Math.floor(MONTH_SHORT.indexOf(d.m.slice(0,3)) / 3);
+    var key = yr + '-' + qi;
+    if (!byKey[key]) { byKey[key] = { yr: yr, q: qi, entries: [] }; list.push(byKey[key]); }
+    byKey[key].entries.push(d);
+  });
+  list.forEach(function(o){
+    var last = o.entries[o.entries.length-1];
+    o.v = last.v;
+    o.lastMonth = last.m.slice(0,3);
+    o.isFull = o.lastMonth === QTR_END_MONTH[o.q];
+  });
+  return list;
+})();
+
+function renderQpnlYearButtons(){
+  document.getElementById('qpnlYearBtns').innerHTML = PNL_YEARS.map(function(yr){
+    return '<span class="period-btn'+(yr===curQpnlYear?' active':'')+'" onclick="setQpnlYear(\''+yr+'\')">20'+yr+'</span>';
+  }).join('');
+}
+function setQpnlYear(yr){
+  curQpnlYear = yr;
+  renderQpnlYearButtons();
+  renderQtrTable(yr);
+}
+
+function renderQtrTable(year){
+  year = year || curQpnlYear;
+  var idxForYear = [];
+  QTR_ENDS.forEach(function(o,i){ if(o.yr===year) idxForYear.push(i); });
+  if(!idxForYear.length) return;
+  var hasBaseline = idxForYear[0] > 0;
+  var baselineVal = hasBaseline ? QTR_ENDS[idxForYear[0]-1].v : null;
+  var seenQ = {};
+  var rows = '';
+  var prevVal = baselineVal;
+  idxForYear.forEach(function(i, k){
+    var o = QTR_ENDS[i];
+    seenQ[o.q] = true;
+    var chg = prevVal!=null ? o.v - prevVal : null;
+    var pct = prevVal ? (chg/prevVal*100) : null;
+    var isLast = k === idxForYear.length - 1;
+    var tag = '';
+    if (k===0 && !hasBaseline) tag = ' <span style="font-size:.62rem;font-weight:700;color:#8b98a5;background:rgba(139,152,168,.15);padding:1px 6px;border-radius:8px;">since inception</span>';
+    else if (isLast && !o.isFull) tag = ' <span style="font-size:.62rem;font-weight:700;color:#f0a500;background:rgba(240,165,0,.12);padding:1px 6px;border-radius:8px;">partial, thru '+o.lastMonth+'</span>';
+    var color = chg==null ? '' : (chg>=0 ? '#3fb950' : '#f85149');
+    rows += '<tr><td>Q'+(o.q+1)+tag+'</td>' +
+      '<td class="num">'+fmtUSD(o.v)+'</td>' +
+      '<td class="num" style="color:'+color+';font-weight:700">'+(chg==null?'—':fmtChangeUSD(chg))+'</td>' +
+      '<td class="num" style="color:'+color+';font-weight:700">'+(pct==null?'—':(pct>=0?'+':'')+pct.toFixed(2)+'%')+'</td></tr>';
+    prevVal = o.v;
+  });
+  for(var q=0;q<4;q++){
+    if(!seenQ[q]) rows += '<tr style="opacity:.4"><td>Q'+(q+1)+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+  }
+  document.getElementById('qpnlTableBody').innerHTML = rows;
+
+  var totalStart = hasBaseline ? baselineVal : QTR_ENDS[idxForYear[0]].v;
+  var totalEnd = QTR_ENDS[idxForYear[idxForYear.length-1]].v;
+  var totalChg = totalEnd - totalStart;
+  var totalPct = totalStart ? (totalChg/totalStart*100) : null;
+  var totalEl = document.getElementById('qpnlTotalChg');
+  totalEl.textContent = fmtChangeUSD(totalChg) + (totalPct!=null ? ' (' + (totalPct>=0?'+':'') + totalPct.toFixed(2) + '%)' : '');
+  totalEl.style.color = totalChg>=0 ? '#3fb950' : '#f85149';
+
+  document.getElementById('qpnlTotalLabelEn').textContent = '20'+year+' Total';
+  document.getElementById('qpnlTotalLabelZh').textContent = '20'+year+'年合计';
+}
+renderQpnlYearButtons();
+renderQtrTable();
+
 if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
+else if (location.hash.indexOf('#qpnl-') === 0) { setQpnlYear(location.hash.slice(6)); setTab('qpnl'); }
 else if (location.hash === '#pnl') setTab('pnl');
 else if (location.hash === '#ypnl') setTab('ypnl');
+else if (location.hash === '#qpnl') setTab('qpnl');
 </script>
 <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
