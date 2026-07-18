@@ -569,7 +569,7 @@
     border: 1px solid var(--pale);
     box-shadow: 0 2px 14px rgba(26,46,26,0.06);
   }
-  #chcMap, #siMap, #ahMap {
+  #chcMap, #siMap, #ahMap, #melMap {
     width: 100%;
     height: 380px;
     background: #cfe3f0;
@@ -582,7 +582,7 @@
     border-radius: 0;
     border: none;
   }
-  .map-wrap.fs #chcMap, .map-wrap.fs #siMap, .map-wrap.fs #ahMap { height: 100vh; }
+  .map-wrap.fs #chcMap, .map-wrap.fs #siMap, .map-wrap.fs #ahMap, .map-wrap.fs #melMap { height: 100vh; }
   .map-typebtns {
     position: absolute;
     top: 10px; right: 48px;
@@ -1005,6 +1005,7 @@
 <nav class="tabbar" id="tabbar">
   <a href="#sec-itinerary" data-target="sec-itinerary"><span class="en">🗓 Itinerary</span><span class="zh">🗓 行程</span></a>
   <a href="#sec-flights" data-target="sec-flights"><span class="en">✈️ Flights</span><span class="zh">✈️ 航班</span></a>
+  <a href="#sec-airporthotel23" data-target="sec-airporthotel23"><span class="en">🚗 23 Sep Drive</span><span class="zh">🚗 9月23日车程</span></a>
   <a href="#sec-airporthotel" data-target="sec-airporthotel"><span class="en">🚗 28 Sep Drive</span><span class="zh">🚗 9月28日车程</span></a>
   <a href="#sec-hotel" data-target="sec-hotel"><span class="en">🏨 Hotel</span><span class="zh">🏨 酒店</span></a>
   <a href="#sec-southisland" data-target="sec-southisland"><span class="en">🗺 S. Island</span><span class="zh">🗺 南岛</span></a>
@@ -1130,7 +1131,7 @@
         <span class="tl-badge badge-fly">✈️ Fly</span>
         <div class="tl-title"><span class="en">Depart SG → Melbourne</span><span class="zh">出发 新加坡 → 墨尔本</span></div>
         <div class="tl-desc"><span class="en">SQ 207 · 07:50 SIN (T3) → 17:10 MEL (T2) · Paul &amp; Joanne, Melbourne bound!</span><span class="zh">SQ 207 · 07:50 新加坡 (T3) → 17:10 墨尔本 (T2) · 保罗与乔安妮，飞往墨尔本！</span></div>
-        <a href="MT11-melbourne-arrival-map.html" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.75rem;font-weight:700;padding:5px 12px;border-radius:14px;text-decoration:none;">🚗 <span class="en">Animated Route: Airport → Hotel</span><span class="zh">动态路线：机场 → 酒店</span></a>
+        <a href="#sec-airporthotel23" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.35);color:#f0a500;font-size:0.75rem;font-weight:700;padding:5px 12px;border-radius:14px;text-decoration:none;">🚗 <span class="en">Animated Route: Airport → Hotel</span><span class="zh">动态路线：机场 → 酒店</span></a>
       </div>
     </div>
 
@@ -1290,6 +1291,52 @@
   </div>
 </div>
 
+<!-- 23 SEP: ANIMATED ROUTE MAP — MELBOURNE AIRPORT TO HOTEL -->
+<div class="section" id="sec-airporthotel23" style="padding-top:0">
+  <p class="section-label"><span class="en">🚗 23 Sep · Animated Route Map — Airport → Hotel</span><span class="zh">🚗 9月23日 · 动态路线图 — 机场→酒店</span></p>
+  <p style="font-size:0.92rem;color:#555;line-height:1.55;margin-bottom:14px;">
+    <span class="en">Land at <strong>Melbourne Airport (MEL) 17:10</strong> on SQ 207, clear customs, then drive ~23 km to View Melbourne on St Kilda Rd.</span>
+    <span class="zh">乘SQ 207于<strong>墨尔本机场 (MEL) 17:10</strong>降落，通关后驱车约23公里前往圣基尔达路的View Melbourne酒店。</span>
+  </p>
+  <button class="map-openbtn" onclick="openMelFull()">⛶ <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+  <div class="map-wrap" id="melMapWrap">
+    <button class="map-closebtn" onclick="closeMelFull()">✕ <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+    <div class="map-typebtns">
+      <button onclick="setMelMapType('satellite')" id="mel-btn-satellite" style="background:rgba(255,255,255,0.85);color:#1a2e1a;border:1px solid rgba(0,0,0,0.15);">🛰 Satellite</button>
+      <button onclick="setMelMapType('street')" id="mel-btn-street" style="background:#c9933a;color:#fff;border:none;">🗺 Street</button>
+    </div>
+    <div id="melMap"></div>
+    <div class="map-legend">
+      <div class="lg-row"><span class="dot" style="background:#e63b2e;"></span><span class="en">A · Melbourne Airport (MEL)</span><span class="zh">A · 墨尔本机场 (MEL)</span></div>
+      <div class="lg-row"><span class="dot" style="background:#c9933a;"></span><span class="en">B · View Melbourne Hotel</span><span class="zh">B · View Melbourne 酒店</span></div>
+    </div>
+  </div>
+  <div class="map-controls">
+    <label for="melSpeedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+    <input type="range" id="melSpeedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="melSpeedVal">1&times;</span>
+  </div>
+
+  <table class="dist-table">
+    <thead>
+      <tr>
+        <th><span class="en">Leg</span><span class="zh">路段</span></th>
+        <th><span class="en">Distance</span><span class="zh">距离</span></th>
+        <th><span class="en">Driving Time</span><span class="zh">车程</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>A → B · <span class="en">Airport → Hotel</span><span class="zh">机场 → 酒店</span></td><td>~22.6 km</td><td>~30 min</td></tr>
+    </tbody>
+  </table>
+  <p class="dist-note"><span class="en">Distance is straight-line, driving time is a typical-speed estimate — not live traffic. Route line follows the real road once it loads from OSRM; a straight line shows until then. Both pins are verified coordinates (Melbourne Airport is a known public location; the hotel coordinate came from Booking.com's own listing data).</span><span class="zh">距离为直线距离，车程为一般车速估算 — 非实时路况。道路线在OSRM实际路径加载完成后显示真实道路，之前显示直线。两个图钉均为已验证坐标（墨尔本机场为公开地点；酒店坐标来自Booking.com官方数据）。</span></p>
+
+  <div class="hotel-btns" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;">
+    <a class="h-btn-map" href="https://maps.google.com/?q=-37.846289,144.978606&label=View+Melbourne" target="_blank">🗺️ <span class="en">Search Hotel</span><span class="zh">搜索酒店</span></a>
+    <a class="h-btn-dir" href="https://www.google.com/maps/dir/?api=1&origin=-37.6733,144.8433&destination=-37.846289,144.978606&travelmode=driving" target="_blank">🧭 <span class="en">Directions</span><span class="zh">导航路线</span></a>
+  </div>
+</div>
+
 <!-- 28 SEP: ANIMATED ROUTE MAP — AIRPORT TO HOTEL -->
 <div class="section" id="sec-airporthotel" style="padding-top:0">
   <p class="section-label"><span class="en">🚗 28 Sep · Animated Route Map — Airport → Hotel</span><span class="zh">🚗 9月28日 · 动态路线图 — 机场→酒店</span></p>
@@ -1407,7 +1454,7 @@
         <a class="h-btn-dir" href="https://www.google.com/maps/dir/?api=1&destination=View%20Melbourne%2C%20562%20St%20Kilda%20Rd%2C%20Melbourne%20VIC%203004%2C%20Australia" target="_blank">🧭 <span class="en">Directions</span><span class="zh">导航路线</span></a>
         <a class="pdf-btn" href="/img_MT11/MT11_hotel_view_melbourne.pdf" target="_blank" style="margin-top:0;">📄 <span class="en">Hotel PDF</span><span class="zh">酒店PDF</span></a>
         <a class="pdf-btn" href="/img_MT11/MT11_hotel_view_melbourne_bookings.pdf" target="_blank" style="margin-top:0;">📄 <span class="en">Bookings PDF</span><span class="zh">订单PDF</span></a>
-        <a class="pdf-btn" href="MT11-melbourne-arrival-map.html" style="margin-top:0;">🚗 <span class="en">Animated Map: Airport → Hotel</span><span class="zh">动态地图：机场 → 酒店</span></a>
+        <a class="pdf-btn" href="#sec-airporthotel23" style="margin-top:0;">🚗 <span class="en">Animated Map: Airport → Hotel</span><span class="zh">动态地图：机场 → 酒店</span></a>
       </div>
     </div>
   </div>
@@ -1812,6 +1859,134 @@
     requestAnimationFrame(chcStep);
   }
   chcStep();
+
+  // ---- 23 Sep: Animated Route Map — Melbourne Airport to Hotel (View Melbourne) ----
+  // A verified: Melbourne Airport (MEL), public/stable coordinates.
+  // B verified: View Melbourne — coordinates from Booking.com's own listing data.
+  var melAirport = [-37.6733, 144.8433];
+  var melHotel = [-37.846289, 144.978606];
+  var melMap = L.map('melMap', { scrollWheelZoom: false });
+
+  var melTiles = {
+    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+  };
+  melTiles.street.addTo(melMap);
+  var melCurrentTile = 'street';
+  function setMelMapType(type) {
+    if (type === melCurrentTile) return;
+    melMap.removeLayer(melTiles[melCurrentTile]);
+    melTiles[type].addTo(melMap);
+    melCurrentTile = type;
+    var sat = document.getElementById('mel-btn-satellite');
+    var st = document.getElementById('mel-btn-street');
+    if (type === 'satellite') {
+      sat.style.background = '#c9933a'; sat.style.color = '#fff'; sat.style.border = 'none';
+      st.style.background = 'rgba(255,255,255,0.85)'; st.style.color = '#1a2e1a'; st.style.border = '1px solid rgba(0,0,0,0.15)';
+    } else {
+      st.style.background = '#c9933a'; st.style.color = '#fff'; st.style.border = 'none';
+      sat.style.background = 'rgba(255,255,255,0.85)'; sat.style.color = '#1a2e1a'; sat.style.border = '1px solid rgba(0,0,0,0.15)';
+    }
+  }
+  window.setMelMapType = setMelMapType;
+
+  function melMarker(color, letter) {
+    return L.divIcon({
+      className: '',
+      html: '<div style="background:' + color + ';width:26px;height:26px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;font-family:monospace;">' + letter + '</div>',
+      iconSize: [26, 26], iconAnchor: [13, 13]
+    });
+  }
+  L.marker(melAirport, { icon: melMarker('#e63b2e', 'A') }).addTo(melMap)
+    .bindPopup('<b>A · Melbourne Airport (MEL) 🛬</b><br><span class="en">Land 17:10, 23 Sep — SQ 207 from Singapore</span><span class="zh">9月23日17:10降落 — SQ 207 新加坡航班</span>');
+  L.marker(melHotel, { icon: melMarker('#c9933a', 'B') }).addTo(melMap)
+    .bindPopup('<b>B · View Melbourne</b><br>562 St Kilda Rd, Melbourne VIC 3004');
+
+  // Straight-line fallback until OSRM's real-road geometry loads.
+  var melCoords = [melAirport, melHotel];
+  var melRouteLine = L.polyline(melCoords, { color: '#f4813f', weight: 3, dashArray: '8,8' }).addTo(melMap);
+  melMap.fitBounds(melCoords, { padding: [45, 45] });
+
+  if (L.control.fullscreen) { melMap.addControl(new L.Control.FullScreen({ position: 'topleft' })); }
+
+  function openMelFull() {
+    document.getElementById('melMapWrap').classList.add('fs');
+    setTimeout(function () { melMap.invalidateSize(); melMap.fitBounds(melCoords, { padding: [60, 60] }); }, 60);
+  }
+  function closeMelFull() {
+    document.getElementById('melMapWrap').classList.remove('fs');
+    setTimeout(function () { melMap.invalidateSize(); melMap.fitBounds(melCoords, { padding: [45, 45] }); }, 60);
+  }
+  window.openMelFull = openMelFull;
+  window.closeMelFull = closeMelFull;
+
+  // Great-circle distance in metres, for cumulative-distance animation along the road.
+  function melHaversine(a, b) {
+    var R = 6371000;
+    var dLat = (b[0] - a[0]) * Math.PI / 180, dLng = (b[1] - a[1]) * Math.PI / 180;
+    var la1 = a[0] * Math.PI / 180, la2 = b[0] * Math.PI / 180;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function melCumDist(coords) {
+    var cum = [0];
+    for (var i = 1; i < coords.length; i++) cum.push(cum[i - 1] + melHaversine(coords[i - 1], coords[i]));
+    return cum;
+  }
+  function melPointAtFraction(coords, cum, frac) {
+    var target = frac * cum[cum.length - 1];
+    for (var i = 1; i < cum.length; i++) {
+      if (target <= cum[i]) {
+        var segLen = cum[i] - cum[i - 1];
+        var segFrac = segLen > 0 ? (target - cum[i - 1]) / segLen : 0;
+        var a = coords[i - 1], b = coords[i];
+        return [a[0] + (b[0] - a[0]) * segFrac, a[1] + (b[1] - a[1]) * segFrac];
+      }
+    }
+    return coords[coords.length - 1];
+  }
+  function melBearing(a, b) {
+    var la1 = a[0] * Math.PI / 180, la2 = b[0] * Math.PI / 180, dLng = (b[1] - a[1]) * Math.PI / 180;
+    var y = Math.sin(dLng) * Math.cos(la2);
+    var x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLng);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }
+  var melCum = melCumDist(melCoords);
+
+  var melCarMarker = L.marker(melCoords[0], { icon: carIcon(melBearing(melCoords[0], melCoords[1])), zIndexOffset: 1000 }).addTo(melMap);
+  var melProgress = 0, melSpeedMultiplier = 1;
+  var melSpeedSlider = document.getElementById('melSpeedSlider');
+  var melSpeedVal = document.getElementById('melSpeedVal');
+  melSpeedSlider.addEventListener('input', function () {
+    melSpeedMultiplier = parseFloat(melSpeedSlider.value);
+    melSpeedVal.textContent = melSpeedMultiplier + '×';
+  });
+  function melStep() {
+    melProgress += 0.0006 * melSpeedMultiplier;
+    if (melProgress >= 1) melProgress = 0;
+    var pos = melPointAtFraction(melCoords, melCum, melProgress);
+    var lookAhead = melPointAtFraction(melCoords, melCum, Math.min(melProgress + 0.01, 1));
+    var heading = melBearing(pos, lookAhead);
+    melCarMarker.setLatLng(pos);
+    melCarMarker.setIcon(carIcon(heading));
+    requestAnimationFrame(melStep);
+  }
+  melStep();
+
+  // Swap in the real driving road (turns included) once OSRM resolves; keep the straight line if it fails.
+  fetch('https://router.project-osrm.org/route/v1/driving/' + melAirport[1] + ',' + melAirport[0] + ';' + melHotel[1] + ',' + melHotel[0] + '?overview=full&geometries=geojson')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.routes && d.routes[0]) {
+        var coords = d.routes[0].geometry.coordinates.map(function (c) { return [c[1], c[0]]; });
+        melCoords = coords;
+        melCum = melCumDist(coords);
+        melMap.removeLayer(melRouteLine);
+        melRouteLine = L.polyline(coords, { color: '#f4813f', weight: 3, opacity: 0.9 }).addTo(melMap);
+        melMap.fitBounds(coords, { padding: [45, 45] });
+      }
+    })
+    .catch(function () { /* keep straight-line fallback */ });
 
   // ---- 28 Sep: Animated Route Map — Queenstown Airport to Hotel (Jack's Point) ----
   // A verified: Queenstown Airport (ZQN), public/stable coordinates.
