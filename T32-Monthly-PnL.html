@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T32: 2026 Monthly P&amp;L</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0e17; --surface:#111827; --border:#1f2d45;
+    --accent:#00d4aa; --accent2:#3b82f6; --warn:#f59e0b;
+    --danger:#ef4444; --text:#e2e8f0; --muted:#64748b;
+    --green:#00d4aa; --red:#ef4444;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; padding-bottom:60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  header { background:linear-gradient(135deg,#0a0e17,#0d1f35); border-bottom:1px solid var(--border); padding:28px 40px 28px 130px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; flex-wrap:wrap; gap:10px; }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-dot { width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  h1 { font-size:1.2rem; font-weight:800; color:#fff; }
+  .subtitle { font-size:.72rem; color:var(--muted); font-family:'DM Mono',monospace; }
+  #fetch-time { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); background:var(--surface); padding:6px 14px; border-radius:20px; border:1px solid var(--border); }
+  main { max-width:900px; margin:0 auto; padding:32px 24px; }
+  #loading-state { text-align:center; padding:80px 20px; }
+  .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 20px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loading-state p { color:var(--muted); font-size:.9rem; }
+  #nodata-state { display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px; text-align:center; }
+  #nodata-state h3 { color:#fff; margin-bottom:12px; }
+  #nodata-state p { color:var(--muted); font-size:.88rem; line-height:1.7; margin-bottom:16px; }
+  code { background:#1f2d45; color:var(--accent); padding:2px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-size:.85em; }
+  .steps { background:rgba(0,212,170,.05); border:1px solid rgba(0,212,170,.2); border-radius:10px; padding:20px 24px; margin:16px 0; text-align:left; }
+  .step { display:flex; gap:12px; margin-bottom:10px; align-items:flex-start; font-size:.85rem; color:var(--text); line-height:1.5; }
+  .step-num { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#000; font-weight:800; font-size:.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  .card-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:6px; font-family:'DM Mono',monospace; }
+  .card-value { font-size:1.5rem; font-weight:800; color:var(--accent); letter-spacing:-.03em; line-height:1; }
+  .card-value.neg { color:var(--red); }
+  .card-sub { font-size:.68rem; color:var(--muted); margin-top:5px; font-family:'DM Mono',monospace; }
+  .refresh-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 14px; border-radius:20px; font-size:.75rem; cursor:pointer; font-family:'DM Mono',monospace; transition:all .15s; }
+  .refresh-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .toolbar { display:flex; gap:8px; margin-bottom:18px; align-items:center; justify-content:flex-end; }
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .table-header { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .table-title { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  table { width:100%; border-collapse:collapse; }
+  thead th { padding:10px 16px; text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); background:rgba(255,255,255,.02); font-family:'DM Mono',monospace; white-space:nowrap; }
+  tbody tr { border-top:1px solid rgba(255,255,255,.04); transition:background .1s; }
+  tbody tr:hover { background:rgba(255,255,255,.03); }
+  tbody tr.future { opacity:.4; }
+  tbody td { padding:12px 16px; font-size:.86rem; vertical-align:middle; }
+  tbody td.num { font-family:'DM Mono',monospace; text-align:right; }
+  .month-name { font-weight:700; color:#fff; }
+  .pnl.pos { color:var(--green); font-weight:700; }
+  .pnl.neg { color:var(--red); font-weight:700; }
+  .pnl.nil { color:var(--muted); }
+  .days-badge { display:inline-block; background:rgba(255,255,255,.06); color:var(--muted); font-size:.68rem; padding:2px 8px; border-radius:10px; font-family:'DM Mono',monospace; }
+  tfoot td { padding:14px 16px; font-weight:800; border-top:2px solid var(--border); background:rgba(255,255,255,.02); }
+  .price-note{font-size:.65rem;color:var(--muted);text-align:center;padding:10px 16px 14px;line-height:1.6}
+  footer { text-align:center; color:var(--muted); font-size:.7rem; font-family:'DM Mono',monospace; margin-top:40px; line-height:1.8; }
+  footer a { color:var(--accent); text-decoration:none; }
+  @media(max-width:600px){
+    header{padding:20px 16px 20px 90px}
+    tbody td,thead th{padding:10px 8px;font-size:.8rem}
+    .card-value{font-size:1.3rem}
+    main{padding:20px 12px}
+  }
+</style>
+</head>
+<body>
+<!-- PIN LOCK SCREEN -->
+<div id="pin-overlay" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0d1117,#161b22);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div style="font-size:2em;">🔒</div>
+  <div style="font-size:1.15em;font-weight:700;color:#e6edf3;font-family:sans-serif;letter-spacing:0.05em;">Portfolio Dashboard</div>
+  <div style="font-size:0.85em;color:#8b949e;font-family:monospace;">Enter PIN to access</div>
+  <div style="display:flex;gap:12px;margin:8px 0;" id="pin-dots">
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+    <div class="pd"></div><div class="pd"></div><div class="pd"></div>
+  </div>
+  <div id="pin-error" style="color:#f87171;font-size:0.85em;font-family:monospace;min-height:20px;text-align:center;"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px;">
+    <button class="pk" onclick="pinKey('1')">1</button>
+    <button class="pk" onclick="pinKey('2')">2</button>
+    <button class="pk" onclick="pinKey('3')">3</button>
+    <button class="pk" onclick="pinKey('4')">4</button>
+    <button class="pk" onclick="pinKey('5')">5</button>
+    <button class="pk" onclick="pinKey('6')">6</button>
+    <button class="pk" onclick="pinKey('7')">7</button>
+    <button class="pk" onclick="pinKey('8')">8</button>
+    <button class="pk" onclick="pinKey('9')">9</button>
+    <button class="pk" onclick="pinKey('clr')" style="color:#f87171;font-size:1.1em;">⌫</button>
+    <button class="pk" onclick="pinKey('0')">0</button>
+    <button class="pk" onclick="pinKey('ok')" style="color:#10b981;font-size:0.9em;font-weight:800;">OK</button>
+  </div>
+</div>
+<style>
+  .pd{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);transition:background 0.15s;}
+  .pd.filled{background:#f0a500;border-color:#f0a500;}
+  .pk{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e6edf3;font-size:1.35em;font-weight:700;cursor:pointer;transition:background 0.15s;font-family:sans-serif;}
+  .pk:active{background:rgba(240,165,0,0.25);}
+</style>
+<script>
+(function(){
+  var C='121062',SK='t20_auth_v1';
+  if(localStorage.getItem(SK)==='1'){document.getElementById('pin-overlay').style.display='none';return;}
+  var entered='';
+  window.pinKey=function(k){
+    var err=document.getElementById('pin-error');
+    err.textContent='';
+    if(k==='clr'){entered=entered.slice(0,-1);}
+    else if(k==='ok'){check();}
+    else{if(entered.length<6)entered+=k;if(entered.length===6)check();}
+    document.querySelectorAll('.pd').forEach(function(d,i){d.classList.toggle('filled',i<entered.length);});
+  };
+  function check(){
+    if(entered===C){localStorage.setItem(SK,'1');document.getElementById('pin-overlay').style.display='none';}
+    else{document.getElementById('pin-error').textContent='Incorrect PIN. Try again.';entered='';document.querySelectorAll('.pd').forEach(function(d){d.classList.remove('filled');});}
+  }
+  document.addEventListener('keydown',function(e){
+    if(document.getElementById('pin-overlay').style.display==='none')return;
+    if(e.key>='0'&&e.key<='9')pinKey(e.key);
+    else if(e.key==='Backspace')pinKey('clr');
+    else if(e.key==='Enter')pinKey('ok');
+  });
+})();
+</script>
+
+<a href="/tools.html" class="home-btn">🏠 Home</a>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <h1>T32: 2026 Monthly P&amp;L</h1>
+      <div class="subtitle">T32 · Realized P&amp;L by month · from ibkr_positions.py</div>
+    </div>
+  </div>
+  <div id="fetch-time">Loading…</div>
+</header>
+
+<main>
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p>Loading P&amp;L history…</p>
+  </div>
+
+  <div id="nodata-state">
+    <h3>📭 No P&amp;L history yet</h3>
+    <p>This table builds itself automatically each time you run <code>ibkr_positions.py</code> on your computer — it logs that day's realized P&amp;L to <code>pnl_history.json</code> and pushes it to GitHub.<br>No runs have been logged yet, so there's nothing to show.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div>Open IB Gateway — port <code>4001</code></div></div>
+      <div class="step"><div class="step-num">2</div><div>Run: <code>python ibkr_positions.py</code></div></div>
+      <div class="step"><div class="step-num">3</div><div>Come back and refresh — that day's P&amp;L appears in its month row ✅</div></div>
+      <div class="step"><div class="step-num">4</div><div>Run it regularly (e.g. daily/weekly) for the monthly totals to be complete — a month only totals the days the script actually ran</div></div>
+    </div>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="summary-grid">
+      <div class="card"><div class="card-label">2026 Realized P&amp;L</div><div class="card-value" id="total-realized">—</div><div class="card-sub">sum of logged days</div></div>
+      <div class="card"><div class="card-label">Days Logged</div><div class="card-value" id="days-logged" style="color:#fff">—</div><div class="card-sub">in 2026</div></div>
+      <div class="card"><div class="card-label">Latest Net Liq</div><div class="card-value" id="latest-liq" style="color:#fff">—</div><div class="card-sub" id="latest-liq-date">—</div></div>
+      <div class="card"><div class="card-label">Latest Unrealized</div><div class="card-value" id="latest-unreal">—</div><div class="card-sub">open positions</div></div>
+    </div>
+
+    <div class="toolbar">
+      <button class="refresh-btn" onclick="reloadAll()">↻ Refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">2026 · Month by Month</div>
+        <div id="year-label" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)">USD</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Days Logged</th>
+            <th style="text-align:right">Realized P&amp;L</th>
+            <th style="text-align:right">Unrealized P&amp;L (EOM)</th>
+            <th style="text-align:right">Net Liq (EOM)</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2">2026 Total</td>
+            <td class="num" id="foot-realized">—</td>
+            <td class="num" id="foot-unreal">—</td>
+            <td class="num" id="foot-liq">—</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="price-note">Realized P&amp;L = sum of each logged day's IBKR "RealizedPnL for the day" figure — only days you actually ran <code>ibkr_positions.py</code> count. Unrealized P&amp;L / Net Liq shown are the last snapshot logged in that month (end-of-month value), not a monthly average. All figures in account base currency (USD).</div>
+    </div>
+  </div>
+</main>
+
+<div style="text-align:center;margin-top:40px">
+  <script src="/view-counter.js"></script>
+</div>
+
+<footer>
+  Paul's World · <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a><br>
+  Data from GitHub · Run ibkr_positions.py to log a new day
+</footer>
+
+<script>
+const DATA_URL = 'https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/pnl_history.json';
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const YEAR = '2026';
+
+function fmtMoney(v) {
+  if (v == null || isNaN(v)) return '—';
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function pnlClass(v) {
+  if (v == null || isNaN(v) || Math.abs(v) < 0.005) return 'nil';
+  return v > 0 ? 'pos' : 'neg';
+}
+
+async function loadData() {
+  document.getElementById('fetch-time').textContent = 'Loading…';
+  try {
+    const r = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!r.ok) throw new Error();
+    const history = await r.json();
+    const entries2026 = (history || []).filter(e => (e.date || '').startsWith(YEAR + '-'));
+    if (!entries2026.length) throw new Error('no-data');
+    showDashboard(entries2026, history);
+  } catch(e) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('nodata-state').style.display = 'block';
+    document.getElementById('fetch-time').textContent = 'No data';
+  }
+}
+
+async function reloadAll() { await loadData(); }
+
+function showDashboard(entries2026, fullHistory) {
+  entries2026.sort((a,b) => a.date < b.date ? -1 : 1);
+  const latest = entries2026[entries2026.length - 1];
+
+  document.getElementById('fetch-time').textContent = '🕐 last logged ' + latest.date;
+  document.getElementById('latest-liq-date').textContent = 'as of ' + latest.date;
+
+  // Group by month
+  const months = {};
+  for (let m = 1; m <= 12; m++) {
+    const key = String(m).padStart(2,'0');
+    months[key] = { entries: [], realized: 0, hasRealized: false };
+  }
+  entries2026.forEach(e => {
+    const m = e.date.slice(5,7);
+    months[m].entries.push(e);
+    const rp = parseFloat(e.realizedPnL);
+    if (!isNaN(rp)) { months[m].realized += rp; months[m].hasRealized = true; }
+  });
+
+  let totalRealized = 0, anyRealized = false;
+  const rows = Object.keys(months).map(key => {
+    const mo = months[key];
+    const mIdx = parseInt(key,10) - 1;
+    const monthLabel = MONTH_NAMES[mIdx];
+    const isFuture = mo.entries.length === 0;
+    let realizedFmt = '—', realizedCls = 'nil';
+    if (mo.hasRealized) {
+      totalRealized += mo.realized; anyRealized = true;
+      realizedFmt = fmtMoney(mo.realized);
+      realizedCls = pnlClass(mo.realized);
+    }
+    let unrealFmt = '—', liqFmt = '—';
+    if (mo.entries.length) {
+      const last = mo.entries[mo.entries.length - 1];
+      const u = parseFloat(last.unrealizedPnL);
+      const l = parseFloat(last.netLiquidation);
+      if (!isNaN(u)) unrealFmt = fmtMoney(u);
+      if (!isNaN(l)) liqFmt = fmtMoney(l);
+    }
+    return `<tr class="${isFuture ? 'future' : ''}">
+      <td class="month-name">${monthLabel}</td>
+      <td><span class="days-badge">${mo.entries.length}</span></td>
+      <td class="num pnl ${realizedCls}">${realizedFmt}</td>
+      <td class="num">${unrealFmt}</td>
+      <td class="num">${liqFmt}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-body').innerHTML = rows;
+
+  document.getElementById('total-realized').textContent = anyRealized ? fmtMoney(totalRealized) : '—';
+  document.getElementById('total-realized').className = 'card-value ' + (totalRealized < 0 ? 'neg' : '');
+  document.getElementById('days-logged').textContent = entries2026.length;
+  document.getElementById('latest-liq').textContent = fmtMoney(parseFloat(latest.netLiquidation));
+  const latestUnreal = parseFloat(latest.unrealizedPnL);
+  document.getElementById('latest-unreal').textContent = fmtMoney(latestUnreal);
+  document.getElementById('latest-unreal').className = 'card-value ' + (latestUnreal < 0 ? 'neg' : '');
+
+  document.getElementById('foot-realized').textContent = anyRealized ? fmtMoney(totalRealized) : '—';
+  document.getElementById('foot-unreal').textContent = fmtMoney(latestUnreal);
+  document.getElementById('foot-liq').textContent = fmtMoney(parseFloat(latest.netLiquidation));
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('nodata-state').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+loadData();
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
