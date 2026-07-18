@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T33: How to Set Up IBKR Tiered Pricing for Multi-Leg Options</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:580px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+
+  table.legs { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.legs th, table.legs td { padding:9px 8px; font-size:.8rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.legs th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; }
+  table.legs td.leg-name { font-weight:800; white-space:nowrap; }
+  table.legs tr.sell td.leg-name { color:#86efac; }
+
+  .steps { display:flex; flex-direction:column; gap:14px; }
+  .step-item { display:flex; gap:14px; }
+  .step-item .snum { flex-shrink:0; width:30px; height:30px; border-radius:50%; background:#10b981; color:#0e1330; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+  .step-item .sbody { flex:1; min-width:0; }
+  .step-item .stitle { font-weight:700; font-size:.88rem; margin-bottom:4px; }
+  .step-item .sdesc { color:rgba(255,255,255,.72); font-size:.8rem; line-height:1.5; margin-bottom:10px; }
+  .step-item img { width:100%; max-width:280px; border-radius:12px; border:1px solid #2a3158; display:block; }
+
+  .result-badge { display:inline-block; background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#86efac; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">⚙️📊</div>
+  <h1><span class="en">T33: How to Set Up IBKR Tiered Pricing for Multi-Leg Options (IG)</span><span class="zh">T33：如何设置IBKR分级式（Tiered）收费以降低多腿期权（铁鹰）手续费</span></h1>
+  <p><span class="en">Step-by-step walkthrough of switching an IBKR account to the Tiered pricing plan — the lower-fee option for 4-leg Iron Condor (IG) orders.</span><span class="zh">逐步教学：如何将IBKR账户切换为分级式（Tiered）收费方案——这是4腿铁鹰（IG）订单的较低费率选项。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is a personal setup log for Paul's own IBKR account. Pricing plans and fees can change — always confirm current rates on IBKR's own website before relying on them.</span><span class="zh"><b>非投资建议。</b>本文为Paul本人IBKR账户的个人设置记录。收费方案与费率可能变动——请务必以IBKR官网的最新资料为准。</span>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Tiered vs Fixed — Why It Matters for IG</span><span class="zh">分级式 vs 固定式 — 为何对IG（铁鹰）很重要</span></h2>
+    <p><span class="en">IBKR Pro accounts can choose between two commission plans. An Iron Condor (IG) is a <b>4-leg</b> order, so the per-contract rate gets charged 4× on entry and 4× on exit — small differences in the plan add up fast.</span><span class="zh">IBKR Pro账户可在两种佣金方案中选择。铁鹰（IG）是<b>4腿</b>订单，因此每张合约的费率在开仓与平仓时都要乘以4次——方案之间的微小差异会迅速累积。</span></p>
+    <table class="legs">
+      <thead><tr><th><span class="en">Plan</span><span class="zh">方案</span></th><th><span class="en">How it works</span><span class="zh">运作方式</span></th></tr></thead>
+      <tbody>
+        <tr class="sell"><td class="leg-name"><span class="en">Tiered</span><span class="zh">分级式</span></td><td><span class="en">Per-contract rate drops as monthly volume rises; exchange &amp; regulatory fees passed through at cost (no markup) — usually cheaper for active multi-leg traders</span><span class="zh">每张合约费率随月交易量增加而降低；交易所及监管费按实际成本转嫁（不加价）——对活跃的多腿交易者通常更划算</span></td></tr>
+        <tr><td class="leg-name"><span class="en">Fixed</span><span class="zh">固定式</span></td><td><span class="en">One flat all-in rate per contract regardless of volume — simpler, but no volume discount</span><span class="zh">无论交易量多少，每张合约收取统一的全包费率——较简单，但没有交易量折扣</span></td></tr>
+      </tbody>
+    </table>
+    <p><span class="en">See the fee breakdown in <a href="T23-IronCondor-Guide.html" style="color:#86efac">T23: 4-Leg Iron Condor Guide</a> for what a round-trip actually costs.</span><span class="zh">实际来回一趟的费用明细请见 <a href="T23-IronCondor-Guide.html" style="color:#86efac">T23：四腿铁鹰交易指南</a>。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Step-by-Step: Check / Switch Your Plan</span><span class="zh">逐步教学：查看／切换你的方案</span></h2>
+    <div class="steps">
+      <div class="step-item">
+        <div class="snum">1</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Confirm you're on IBKR Pro</span><span class="zh">确认你使用的是IBKR Pro</span></div>
+          <div class="sdesc"><span class="en">Tiered/Fixed only applies to Pro accounts. Open the IBKR app home screen — look for the "IBKR PRO" badge on your profile icon next to your account number.</span><span class="zh">分级式／固定式仅适用于Pro账户。打开IBKR应用主页——在账号旁的头像图标上查找「IBKR PRO」徽章。</span></div>
+          <img src="img_T33/01-account-summary.jpg" alt="IBKR app home screen showing IBKR PRO badge">
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">2</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Open Settings</span><span class="zh">打开「设置」</span></div>
+          <div class="sdesc"><span class="en">Tap the hamburger menu → Settings.</span><span class="zh">点击左上角菜单图标 → 设置。</span></div>
+          <img src="img_T33/02-settings-menu.jpg" alt="IBKR app Settings menu">
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">3</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Account Settings → All Account Settings</span><span class="zh">账户设置 → 所有账户设置</span></div>
+          <div class="sdesc"><span class="en">Tap Account Settings, then the blue "All Account Settings" button — this opens the full Client Portal settings page.</span><span class="zh">点击「账户设置」，再点击蓝色的「所有账户设置」按钮——这会打开完整的客户端后台设置页面。</span></div>
+          <img src="img_T33/03-account-settings.jpg" alt="IBKR Account Settings screen">
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">4</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Select the account</span><span class="zh">选择账户</span></div>
+          <div class="sdesc"><span class="en">If you have more than one IBKR account, pick the one you trade IG (Iron Condor) in, then tap Continue.</span><span class="zh">如果你有多个IBKR账户，选择你用来交易IG（铁鹰）的那个，然后点击「继续」。</span></div>
+          <img src="img_T33/04-select-account.jpg" alt="IBKR select account screen">
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">5</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Scroll to Account Configuration</span><span class="zh">滚动到「账户配置」</span></div>
+          <div class="sdesc"><span class="en">Scroll down past Account Profile/Financial Profile to the "Account Configuration" section.</span><span class="zh">滚动经过「账户资料」／「财务资料」，到达「账户配置」部分。</span></div>
+          <img src="img_T33/05-account-management.jpg" alt="IBKR Account Management page">
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">6</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Check "IBKR Pricing Plan"</span><span class="zh">查看「IBKR定价方案」</span></div>
+          <div class="sdesc"><span class="en">This line shows your current plan directly — e.g. "IBKR Pro; Futures: Tiered, Stocks: Tiered". If it already says Tiered, you're done. If it says Fixed, tap it to switch to Tiered.</span><span class="zh">这一行会直接显示你目前的方案——例如「IBKR Pro；期货：分级式，股票：分级式」。若已显示Tiered（分级式），即已完成设置。若显示Fixed（固定式），点击即可切换为Tiered。</span></div>
+          <img src="img_T33/06-pricing-plan-confirmed.jpg" alt="IBKR Pricing Plan showing Tiered confirmed">
+          <div class="result-badge">✅ <span class="en">Paul's account U19689825: already on Tiered (Futures &amp; Stocks)</span><span class="zh">Paul的账户U19689825：期货与股票均已设为分级式</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="en">Personal setup log · Last reviewed <span id="lastReviewedEn">18 Jul 2026</span></span><span class="zh">个人设置记录 · 最后更新于<span id="lastReviewedZh">2026年7月18日</span></span><br>
+    <a href="T23-IronCondor-Guide.html">📘 <span class="en">4-Leg Iron Condor Guide</span><span class="zh">四腿铁鹰交易指南</span></a><br>
+    <a href="T07-IBKR.html">🇺🇸 <span class="en">IBKR Portfolio Viewer</span><span class="zh">IBKR持仓查看器</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
