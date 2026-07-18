@@ -789,8 +789,8 @@
         </tr></tfoot>
       </table>
       <div class="note" style="margin-top:12px">
-        <span class="en">Every option position touched since inception (May 2024 – Jul 2026), one row per underlying+expiration (multi-leg trades like the 4 Iron Condors are collapsed into a single row). <b>Entry month is estimated</b> as expiration month minus 1 (the statement only records expiration dates) — confirmed exact for the Jul 2026 Iron Condors. <b>Premium</b> is net cash flow for that trade (credit received minus any debit paid for protective legs), negative when it was a net debit.</span>
-        <span class="zh">自成立以来（2024年5月–2026年7月）涉及的每个期权持仓，按标的+到期日合并为一行（如4个铁鹰等多腿交易合并为单行）。<b>建仓月份为估算值</b>（到期月份减1个月，因报表仅记录到期日）——2026年7月的4个铁鹰已核实准确无误。<b>权利金</b>为该笔交易的净现金流（收到的权利金减去保护腿支出），若为净支出则显示负值。</span>
+        <span class="en">Every option position touched since inception (May 2024 – Jul 2026), one row per underlying+expiration (multi-leg trades like the 4 Iron Condors are collapsed into a single row). <b>Entry month is estimated</b> as expiration month minus 1 (the statement only records expiration dates) — confirmed exact for the Jul 2026 Iron Condors. <b>Premium</b> is net cash flow for that closed trade (credit received minus any debit paid for protective legs); <b>4-leg rows (the still-open Iron Condors) show no premium</b> here since they haven't closed — see the Positions tab for their live unrealized P&amp;L instead. The total only sums the closed (non-4-leg) rows.</span>
+        <span class="zh">自成立以来（2024年5月–2026年7月）涉及的每个期权持仓，按标的+到期日合并为一行（如4个铁鹰等多腿交易合并为单行）。<b>建仓月份为估算值</b>（到期月份减1个月，因报表仅记录到期日）——2026年7月的4个铁鹰已核实准确无误。<b>权利金</b>为该笔已平仓交易的净现金流（收到的权利金减去保护腿支出）；<b>4腿行（目前仍持有的铁鹰）不显示权利金</b>，因为尚未平仓——其实时未实现盈亏请见「持仓」页签。合计仅计算已平仓（非4腿）的行。</span>
       </div>
     </div>
   </div><!-- /tab-trades -->
@@ -1849,11 +1849,17 @@ var ALL_TRADES = [
   var total = 0;
   body.innerHTML = ALL_TRADES.map(function(r){
     var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
-    total += prem;
-    var color = prem >= 0 ? '#3fb950' : '#f85149';
+    // 4-leg trades are the still-open Iron Condors — premium not shown here (still at risk,
+    // not a closed/realized figure like the other rows).
+    var premCell = '—';
+    if (legs !== 4) {
+      total += prem;
+      var color = prem >= 0 ? '#3fb950' : '#f85149';
+      premCell = '<span style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</span>';
+    }
     return '<tr><td>'+entry+'</td><td><b>'+sym+'</b></td><td>'+exp+'</td>' +
       '<td class="num">'+legs+'</td>' +
-      '<td class="num" style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</td></tr>';
+      '<td class="num">'+premCell+'</td></tr>';
   }).join('');
   document.getElementById('allTradesTotal').textContent = fmtSigned2(total);
 })();
