@@ -559,7 +559,7 @@
       <div class="rail-legend" id="pnlYearBtns" style="margin-top:10px"></div>
       <div style="position:relative;height:180px;margin-top:14px"><canvas id="pnlChart"></canvas></div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.72rem;color:#8b98a5">
-        <span style="color:#f4c869">★</span><span class="en">Number of options traded that month (right axis)</span><span class="zh">当月交易的期权笔数（右侧坐标轴）</span>
+        <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f4c869"></span><span class="en">Number of options traded that month (right axis)</span><span class="zh">当月交易的期权笔数（右侧坐标轴）</span>
       </div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
@@ -593,7 +593,7 @@
       <div style="display:flex;gap:14px;align-items:center;margin-top:8px;font-size:.72rem;color:#8b98a5">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#3fb950;margin-right:5px"></span><span class="en">Gain</span><span class="zh">盈利</span></span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f85149;margin-right:5px"></span><span class="en">Loss</span><span class="zh">亏损</span></span>
-        <span style="color:#f4c869">★</span><span class="en">Options traded (right axis)</span><span class="zh">交易笔数（右侧坐标轴）</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f4c869;margin-right:5px"></span><span class="en">Options traded (right axis)</span><span class="zh">交易笔数（右侧坐标轴）</span></span>
       </div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
@@ -628,7 +628,7 @@
       <div style="display:flex;gap:14px;align-items:center;margin-top:8px;font-size:.72rem;color:#8b98a5">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#3fb950;margin-right:5px"></span><span class="en">Gain</span><span class="zh">盈利</span></span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f85149;margin-right:5px"></span><span class="en">Loss</span><span class="zh">亏损</span></span>
-        <span style="color:#f4c869">★</span><span class="en">Options traded (right axis)</span><span class="zh">交易笔数（右侧坐标轴）</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f4c869;margin-right:5px"></span><span class="en">Options traded (right axis)</span><span class="zh">交易笔数（右侧坐标轴）</span></span>
       </div>
       <table class="legs" style="margin-top:14px">
         <thead><tr>
@@ -1041,13 +1041,36 @@ var TRADE_COUNTS = {
   'Jul 26': 4
 };
 function tradeCountForMonth(m){ return TRADE_COUNTS[m] || 0; }
-// Headroom for the right-hand "Options Traded" axis so the star marker never collides
+// Headroom for the right-hand "Options Traded" axis so the trade-count label never collides
 // with the $ value label plugin sitting at the top of the tallest bar.
 function tradesSuggestedMax(arr){
   var max = 0;
   arr.forEach(function(v){ if(typeof v === 'number' && v > max) max = v; });
   return max + 1;
 }
+// Chart.js plugin: draws the actual option-trade count as gold text at each point of the
+// hidden "Options Traded" line series (dataset index 1), against the right-side axis.
+var tradesLabelPlugin = {
+  id: 'tradesLabelPlugin',
+  afterDatasetsDraw: function(chart){
+    var meta = chart.getDatasetMeta(1);
+    var dataset = chart.data.datasets[1];
+    if (!meta || !dataset) return;
+    var data = dataset.data;
+    var ctx = chart.ctx;
+    ctx.save();
+    ctx.font = '700 11px DM Mono, monospace';
+    ctx.fillStyle = '#f4c869';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    meta.data.forEach(function(point, i){
+      var v = data[i];
+      if (v == null) return;
+      ctx.fillText(String(v), point.x, point.y);
+    });
+    ctx.restore();
+  }
+};
 var ACCT_PERIODS = {
   mtd: NAV_HISTORY.slice(-2),
   '3m': NAV_HISTORY.slice(-4),
@@ -1145,8 +1168,9 @@ var pnlChart = new Chart(document.getElementById('pnlChart'), {
   type: 'bar',
   data: { labels: [], datasets: [
     { order: 2, data: [], backgroundColor: [], borderRadius: 4, maxBarThickness: 36 },
-    { order: 1, type: 'line', data: [], yAxisID: 'y1', showLine: false, pointStyle: 'star', pointRadius: 9, pointHoverRadius: 11, backgroundColor: '#f4c869', borderColor: '#f4c869', borderWidth: 1 }
+    { order: 1, type: 'line', data: [], yAxisID: 'y1', showLine: false, pointRadius: 0, pointHoverRadius: 8, backgroundColor: '#f4c869', borderColor: '#f4c869' }
   ] },
+  plugins: [tradesLabelPlugin],
   options: {
     responsive: true,
     maintainAspectRatio: false,
@@ -1304,9 +1328,9 @@ function renderYearlyChart(){
     type: 'bar',
     data: { labels: labels, datasets: [
       { order: 2, data: values, backgroundColor: colors, borderRadius: 4, maxBarThickness: 56 },
-      { order: 1, type: 'line', data: trades, yAxisID: 'y1', showLine: false, pointStyle: 'star', pointRadius: 10, pointHoverRadius: 12, backgroundColor: '#f4c869', borderColor: '#f4c869', borderWidth: 1 }
+      { order: 1, type: 'line', data: trades, yAxisID: 'y1', showLine: false, pointRadius: 0, pointHoverRadius: 8, backgroundColor: '#f4c869', borderColor: '#f4c869' }
     ] },
-    plugins: [qtrLabelPlugin],
+    plugins: [qtrLabelPlugin, tradesLabelPlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1493,9 +1517,9 @@ function renderQtrChart(year){
     type: 'bar',
     data: { labels: labels, datasets: [
       { order: 2, data: values, backgroundColor: colors, borderRadius: 4, maxBarThickness: 56 },
-      { order: 1, type: 'line', data: trades, yAxisID: 'y1', showLine: false, pointStyle: 'star', pointRadius: 10, pointHoverRadius: 12, backgroundColor: '#f4c869', borderColor: '#f4c869', borderWidth: 1 }
+      { order: 1, type: 'line', data: trades, yAxisID: 'y1', showLine: false, pointRadius: 0, pointHoverRadius: 8, backgroundColor: '#f4c869', borderColor: '#f4c869' }
     ] },
-    plugins: [qtrLabelPlugin],
+    plugins: [qtrLabelPlugin, tradesLabelPlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
