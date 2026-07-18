@@ -771,7 +771,7 @@
     <div class="condor" id="allTradesCard">
       <div class="c-head">
         <div class="tkr" style="font-size:1.05rem">📋 <span class="en">All Option Trades</span><span class="zh">全部期权交易</span></div>
-        <div class="c-meta"><span class="en">57 trades since inception · one row per position, net premium collected</span><span class="zh">自成立以来共57笔交易 · 每行一个持仓，显示净权利金收入</span></div>
+        <div class="c-meta"><span class="en"><span class="allTradesCount">53</span> closed trades since inception · one row per position, net premium collected</span><span class="zh">自成立以来共<span class="allTradesCount">53</span>笔已平仓交易 · 每行一个持仓，显示净权利金收入</span></div>
         <div></div>
       </div>
       <table class="legs" style="margin-top:10px">
@@ -789,8 +789,8 @@
         </tr></tfoot>
       </table>
       <div class="note" style="margin-top:12px">
-        <span class="en">Every option position touched since inception (May 2024 – Jul 2026), one row per underlying+expiration (multi-leg trades like the 4 Iron Condors are collapsed into a single row). <b>Entry month is estimated</b> as expiration month minus 1 (the statement only records expiration dates) — confirmed exact for the Jul 2026 Iron Condors. <b>Premium</b> is net cash flow for that closed trade (credit received minus any debit paid for protective legs); <b>4-leg rows (the still-open Iron Condors) show no premium</b> here since they haven't closed — see the Positions tab for their live unrealized P&amp;L instead. The total only sums the closed (non-4-leg) rows.</span>
-        <span class="zh">自成立以来（2024年5月–2026年7月）涉及的每个期权持仓，按标的+到期日合并为一行（如4个铁鹰等多腿交易合并为单行）。<b>建仓月份为估算值</b>（到期月份减1个月，因报表仅记录到期日）——2026年7月的4个铁鹰已核实准确无误。<b>权利金</b>为该笔已平仓交易的净现金流（收到的权利金减去保护腿支出）；<b>4腿行（目前仍持有的铁鹰）不显示权利金</b>，因为尚未平仓——其实时未实现盈亏请见「持仓」页签。合计仅计算已平仓（非4腿）的行。</span>
+        <span class="en">Every <b>closed</b> option position since inception (May 2024 – Jul 2026), one row per underlying+expiration. <b>Trades with more than 2 legs — the 4 still-open Iron Condors (AVGO/NVDA/QQQ/SMH) — are excluded</b> since they haven't closed yet; see the Positions tab for their live unrealized P&amp;L instead. <b>Entry month is estimated</b> as expiration month minus 1 (the statement only records expiration dates). <b>Premium</b> is net cash flow for that trade (credit received minus any debit paid for protective legs).</span>
+        <span class="zh">自成立以来（2024年5月–2026年7月）每个已<b>平仓</b>的期权持仓，按标的+到期日合并为一行。<b>超过2腿的交易——即目前仍持有的4个铁鹰（AVGO/NVDA/QQQ/SMH）——已被排除</b>，因为尚未平仓；其实时未实现盈亏请见「持仓」页签。<b>建仓月份为估算值</b>（到期月份减1个月，因报表仅记录到期日）。<b>权利金</b>为该笔交易的净现金流（收到的权利金减去保护腿支出）。</span>
       </div>
     </div>
   </div><!-- /tab-trades -->
@@ -1847,21 +1847,19 @@ var ALL_TRADES = [
   if (!body) return;
   function fmtSigned2(v){ return (v>=0?'+':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   var total = 0;
-  body.innerHTML = ALL_TRADES.map(function(r){
+  // Trades with more than 2 legs (the 4-leg Iron Condors — still open, not closed/realized)
+  // are excluded from this list entirely, not just their premium.
+  var visible = ALL_TRADES.filter(function(r){ return r[3] <= 2; });
+  body.innerHTML = visible.map(function(r){
     var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
-    // 4-leg trades are the still-open Iron Condors — premium not shown here (still at risk,
-    // not a closed/realized figure like the other rows).
-    var premCell = '—';
-    if (legs !== 4) {
-      total += prem;
-      var color = prem >= 0 ? '#3fb950' : '#f85149';
-      premCell = '<span style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</span>';
-    }
+    total += prem;
+    var color = prem >= 0 ? '#3fb950' : '#f85149';
     return '<tr><td>'+entry+'</td><td><b>'+sym+'</b></td><td>'+exp+'</td>' +
       '<td class="num">'+legs+'</td>' +
-      '<td class="num">'+premCell+'</td></tr>';
+      '<td class="num"><span style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</span></td></tr>';
   }).join('');
   document.getElementById('allTradesTotal').textContent = fmtSigned2(total);
+  document.querySelectorAll('.allTradesCount').forEach(function(el){ el.textContent = visible.length; });
 })();
 
 if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
