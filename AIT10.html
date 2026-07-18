@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIT10: When My Website Stopped Updating — A Vercel Deployment Freeze</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1a1a2e;
+      --blue: #4a6cf7;
+      --blue-light: #e8eeff;
+      --blue-mid: #c5d3ff;
+      --accent: #f4813f;
+      --soft: #f7f8fc;
+      --line: #e4e8f5;
+      --text: #2d2d44;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Source Serif 4', Georgia, serif; background: var(--soft); color: var(--text); font-size: 18px; line-height: 1.9; }
+    .home-btn { position: fixed; top: 16px; left: 16px; z-index: 999; background: var(--blue); color: white; text-decoration: none; font-family: 'Source Serif 4', serif; font-size: 0.82em; font-weight: 600; padding: 10px 18px; border-radius: 24px; box-shadow: 0 4px 14px rgba(74,108,247,0.35); transition: transform 0.2s, box-shadow 0.2s; letter-spacing: 0.3px; }
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(74,108,247,0.45); }
+    .share-btn { display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4); color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px; cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; margin-left: 12px; transition: background .2s; }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast { display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+
+    .hero { background: linear-gradient(155deg, #1a1a2e 0%, #0f2060 45%, #1a3a8f 100%); color: white; padding: 100px 24px 70px; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 50%, rgba(74,108,247,0.25) 0%, transparent 55%), radial-gradient(ellipse at 80% 30%, rgba(244,129,63,0.15) 0%, transparent 50%); pointer-events: none; }
+    .hero::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 60px 60px; animation: gridMove 20s linear infinite; pointer-events: none; }
+    @keyframes gridMove { from { background-position: 0 0; } to { background-position: 60px 60px; } }
+    .hero-tag { position: relative; z-index: 2; display: inline-block; background: rgba(74,108,247,0.35); border: 1px solid rgba(74,108,247,0.6); color: #a5b4fc; font-family: 'Source Serif 4', serif; font-size: 0.78em; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 6px 18px; border-radius: 20px; margin-bottom: 24px; }
+    .hero h1 { position: relative; z-index: 2; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.8em, 5vw, 3em); font-weight: 700; line-height: 1.25; max-width: 820px; margin: 0 auto 20px; text-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+    .hero h1 em { font-style: italic; color: #f4b87a; }
+    .hero-meta { position: relative; z-index: 2; display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 0.85em; color: rgba(255,255,255,0.7); margin-top: 10px; }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-cta { position: relative; z-index: 2; margin-top: 28px; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; }
+
+    .article-wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+    .lead { font-size: 1.18em; font-weight: 400; font-style: italic; color: #3d3d5c; border-left: 4px solid var(--blue); padding: 16px 24px; margin: 48px 0 36px; background: var(--blue-light); border-radius: 0 12px 12px 0; line-height: 1.8; }
+    h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.55em; font-weight: 700; color: var(--ink); margin: 52px 0 18px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+    h2::before { content: attr(data-num); display: inline-block; background: var(--blue); color: white; font-family: 'Source Serif 4', serif; font-size: 0.52em; font-weight: 700; padding: 3px 10px; border-radius: 10px; margin-right: 10px; vertical-align: middle; letter-spacing: 1px; text-transform: uppercase; }
+    p { margin-bottom: 20px; }
+
+    .pullquote { margin: 44px 0; padding: 28px 32px; background: linear-gradient(135deg, #1a1a2e, #0f2060); color: white; border-radius: 16px; position: relative; overflow: hidden; }
+    .pullquote::before { content: '"'; position: absolute; top: -10px; left: 16px; font-family: 'Playfair Display', serif; font-size: 8em; color: rgba(74,108,247,0.25); line-height: 1; pointer-events: none; }
+    .pullquote p { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 1.15em; line-height: 1.7; position: relative; z-index: 1; margin-bottom: 0; color: #e2e8ff; }
+
+    .info-box { background: white; border: 1px solid var(--line); border-left: 5px solid var(--blue); border-radius: 0 12px 12px 0; padding: 22px 26px; margin: 36px 0; box-shadow: 0 2px 10px rgba(74,108,247,0.07); }
+    .info-box .box-title { font-family: 'Source Serif 4', serif; font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--blue); margin-bottom: 12px; }
+    .info-box ul { list-style: none; padding: 0; }
+    .info-box ul li { padding: 6px 0; border-bottom: 1px solid #f0f2fa; font-size: 0.96em; display: flex; align-items: flex-start; gap: 10px; }
+    .info-box ul li:last-child { border-bottom: none; }
+    .info-box ul li::before { content: '→'; color: var(--blue); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    .highlight-card { background: linear-gradient(135deg, #fff7ed, #ffedd5); border: 1px solid #fed7aa; border-left: 5px solid var(--accent); border-radius: 0 14px 14px 0; padding: 22px 26px; margin: 36px 0; }
+    .highlight-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .highlight-card p { margin-bottom: 0; }
+
+    .warning-card { background: linear-gradient(135deg, #fefce8, #fef9c3); border: 1px solid #fde68a; border-left: 5px solid #f59e0b; border-radius: 0 14px 14px 0; padding: 22px 26px; margin: 36px 0; }
+    .warning-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .warning-card p { margin-bottom: 0; }
+
+    .good-card { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-left: 5px solid #22c55e; border-radius: 0 14px 14px 0; padding: 22px 26px; margin: 36px 0; }
+    .good-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .good-card p { margin-bottom: 0; }
+
+    .steps { counter-reset: step; margin: 36px 0; }
+    .step { counter-increment: step; display: flex; gap: 20px; margin-bottom: 32px; align-items: flex-start; }
+    .step-num { flex-shrink: 0; width: 44px; height: 44px; background: var(--blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1em; box-shadow: 0 4px 12px rgba(74,108,247,0.3); }
+    .step-num::before { content: counter(step); }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; font-family: 'Playfair Display', serif; font-size: 1.05em; color: var(--ink); margin-bottom: 6px; }
+    .step-body p { margin-bottom: 8px; font-size: 0.97em; }
+
+    .divider { text-align: center; margin: 48px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 8px; opacity: 0.4; }
+    .view-counter-wrap { text-align: center; margin: 60px 0 20px; padding: 24px; background: var(--blue-light); border-radius: 14px; }
+    footer { text-align: center; font-size: 0.82em; color: var(--muted); padding: 24px 16px 48px; border-top: 1px solid var(--line); margin-top: 16px; }
+    footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 80px 20px 50px; }
+      .home-btn { font-size: 0.78em; padding: 8px 14px; }
+      h2 { font-size: 1.3em; }
+      .pullquote::before { font-size: 5em; }
+      .step-num { width: 36px; height: 36px; font-size: 0.9em; }
+    }
+  </style>
+  <script src="/bilingual.js"></script>
+</head>
+<body>
+
+  <a class="home-btn" href="https://paulsworld.vercel.app/">🏠 <span class="en">Home</span><span class="zh">主页</span></a>
+
+  <header class="hero">
+    <div class="hero-tag"><span class="en">🤖 AI Tools · Tool 10</span><span class="zh">🤖 AI工具 · 工具10</span></div>
+    <h1>
+      <span class="en">AIT10: When My Website Stopped Updating —<br><em>A Vercel Deployment Freeze</em></span>
+      <span class="zh">AIT10：当我的网站停止更新时——<br><em>一次Vercel部署卡死事件</em></span>
+    </h1>
+    <div class="hero-meta">
+      <span>📅 <span class="en">July 2026</span><span class="zh">2026年7月</span></span>
+      <span>⏱️ <span class="en">6 min read</span><span class="zh">6分钟阅读</span></span>
+    </div>
+    <div class="hero-cta">
+      <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+  <div class="article-wrap">
+
+    <p class="lead">
+      <span class="en">I kept asking Claude to add things to my T29 options page. Claude kept saying "done, pushed, merged." But the live site just... didn't change. Here's what actually happened, and the exact steps I'm keeping for next time.</span>
+      <span class="zh">我一直让Claude在我的T29期权页面上添加内容。Claude一直说「完成了，已推送，已合并」。但实际网站却……毫无变化。这是真正发生的事情，以及我为下次保留的具体步骤。</span>
+    </p>
+
+    <h2 data-num="01"><span class="en">What Happened</span><span class="zh">发生了什么</span></h2>
+    <p><span class="en">Claude had made a whole string of changes to my Options Breadboard page — a new Q&amp;A, a sorted trade log, a brand-new reflection article. Every single time, it told me the change was committed to GitHub and merged into the live branch. But when I opened the actual link on my phone, I kept seeing the old version — or a flat <strong>404 error</strong> for a page that should have existed.</span><span class="zh">Claude对我的期权面包板页面做了一连串更改——新的问答、排序后的交易记录、一篇全新的反思文章。每一次它都告诉我更改已提交到GitHub并合并到了正式分支。但当我在手机上打开实际链接时，看到的却一直是旧版本——或者是本该存在的页面出现<strong>404错误</strong>。</span></p>
+
+    <p><span class="en">I refreshed. I tried Private Browsing. I cleared cache. Nothing changed. Something was stuck between "Claude says it's done" and "my phone can actually see it."</span><span class="zh">我刷新过，试过隐私浏览模式，也清过缓存。什么都没变。在「Claude说完成了」和「我的手机真的能看到」之间，有什么东西卡住了。</span></p>
+
+    <h2 data-num="02"><span class="en">What It Wasn't</span><span class="zh">这不是什么原因</span></h2>
+    <p><span class="en">Before assuming the worst, we ruled things out one by one:</span><span class="zh">在假设最坏情况之前，我们逐一排除了各种可能：</span></p>
+    <div class="info-box">
+      <div class="box-title"><span class="en">Things we checked and confirmed were fine</span><span class="zh">我们检查并确认没问题的事项</span></div>
+      <ul>
+        <li><span class="en">GitHub had every single change — confirmed directly, every time, by fetching the file straight from GitHub's own servers.</span><span class="zh">GitHub上确实有每一处更改——每次都直接从GitHub自己的服务器上核实过。</span></li>
+        <li><span class="en">The website's own code was fine — no broken config file, no setting telling Vercel to skip builds.</span><span class="zh">网站自身的代码没有问题——没有损坏的配置文件，也没有设置让Vercel跳过构建。</span></li>
+        <li><span class="en">The connection between GitHub and Vercel (the "app" that watches for new changes) was installed correctly, with no warning or permission issue.</span><span class="zh">GitHub与Vercel之间的连接（负责监视新更改的「应用程序」）安装正确，没有任何警告或权限问题。</span></li>
+        <li><span class="en">When a build DID run, it finished successfully in about 25 seconds every time — so it wasn't a broken build either.</span><span class="zh">当构建确实运行时，每次都能在约25秒内成功完成——所以也不是构建本身出了问题。</span></li>
+      </ul>
+    </div>
+
+    <h2 data-num="03"><span class="en">What It Actually Was</span><span class="zh">真正的原因</span></h2>
+    <p><span class="en">Here's the part that's genuinely useful to understand: publishing a change to a website like mine has <strong>two separate steps</strong>, and they can fail independently.</span><span class="zh">这部分才是真正值得理解的：像我这样的网站要发布一次更改，其实有<strong>两个独立的步骤</strong>，而它们可能各自出问题。</span></p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Step A — Save the change (GitHub)</span><span class="zh">步骤A——保存更改（GitHub）</span></strong>
+          <p><span class="en">This is Claude writing the file and saving it. This part never failed — every change was safely saved, the whole time.</span><span class="zh">这是Claude编写文件并保存的过程。这部分从未失败——所有更改始终都被安全保存着。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Step B — Publish the change (Vercel)</span><span class="zh">步骤B——发布更改（Vercel）</span></strong>
+          <p><span class="en">A separate company (Vercel) hosts the actual live website. It's supposed to notice every time GitHub is updated and automatically rebuild the site. For about an hour, it stopped noticing — most updates went in one ear and out the other, with no error message anywhere. Then, just as suddenly, it caught up and started working again on its own.</span><span class="zh">另一家公司（Vercel）负责托管实际的正式网站。它本该每次GitHub更新时都察觉到，并自动重新构建网站。有大约一个小时的时间，它「没有察觉」——大多数更新都石沉大海，没有任何错误提示。然后，突然间，它又自己恢复正常了。</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pullquote">
+      <p><span class="en">The code was never broken. The message just got lost between two computers talking to each other — and I had no way to see that from my side until we went looking for it.</span><span class="zh">代码从来没有出过问题。只是两台电脑之间的消息在传递途中丢失了——而在我们去查找之前，我从自己这边根本无法察觉这一点。</span></p>
+    </div>
+
+    <h2 data-num="04"><span class="en">My Checklist For Next Time</span><span class="zh">下次遇到时的检查清单</span></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Don't panic — wait 30-60 minutes first</span><span class="zh">别慌——先等30-60分钟</span></strong>
+          <p><span class="en">It resolved itself last time without anyone fixing anything. Most of the time, patience alone is the fix.</span><span class="zh">上次它是自己恢复的，没有任何人做任何修复。大多数情况下，耐心等待本身就是解决办法。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Tell Claude right away — it can check GitHub instantly</span><span class="zh">立即告诉Claude——它能立刻查GitHub</span></strong>
+          <p><span class="en">Claude can confirm in seconds whether my content actually saved correctly, before we ever assume it's a bigger problem.</span><span class="zh">Claude能在几秒内确认我的内容是否确实正确保存了，无需一开始就假设是更大的问题。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Still stuck after an hour? Use the computer, not the phone</span><span class="zh">一小时后仍卡住？用电脑，别用手机</span></strong>
+          <p><span class="en">The Vercel dashboard is much easier to see clearly on a real screen. I use TeamViewer to reach my computer remotely when I'm travelling without my laptop.</span><span class="zh">Vercel控制台在真正的大屏幕上看起来清楚得多。出门在外没带笔记本电脑时，我会用TeamViewer远程连接我的电脑。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Look at the "Deployments" list for the project</span><span class="zh">查看项目的「Deployments」（部署）列表</span></strong>
+          <p><span class="en">If the newest entry is old, and nothing newer shows up at all — not even as an error — that's the same signature as last time. It's their side, not mine.</span><span class="zh">如果最新的一条记录是旧的，而且完全没有更新的记录出现——甚至连错误提示都没有——那就和上次的情况一模一样。是他们那边的问题，不是我这边的。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">If it's been over an hour, email support — in the same thread as last time</span><span class="zh">如果超过一小时，发邮件给客服——回复上次同一封邮件</span></strong>
+          <p><span class="en">I already have a draft explaining exactly what to look for. Reply to that thread instead of starting fresh, so they have the history.</span><span class="zh">我已经有一份草稿，准确说明了该检查什么。回复那封邮件的原有对话，而不是重新写一封，这样对方就能看到历史记录。</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning-card">
+      <span class="card-emoji">⚠️</span>
+      <p><span class="en"><strong>One important limit:</strong> Claude cannot see the live Vercel dashboard or fix a stuck deployment by itself — it can only confirm GitHub is correct, and guide me through the Vercel screens. The actual click-through has to be me.</span><span class="zh"><strong>一个重要的限制：</strong>Claude无法自己查看Vercel的实时控制台，也无法自行修复卡住的部署——它只能确认GitHub那边没问题，并指导我操作Vercel的界面。真正点击操作的必须是我自己。</span></p>
+    </div>
+
+    <div class="good-card">
+      <span class="card-emoji">✅</span>
+      <p><span class="en"><strong>The reassuring part:</strong> nothing was ever lost. Every single change was safely saved on GitHub the whole time — this was purely a "publishing" delay, not a "losing my work" problem.</span><span class="zh"><strong>让人安心的一点：</strong>没有任何东西丢失。每一处更改在GitHub上始终被安全保存着——这纯粹是「发布」延迟的问题，不是「丢失我的工作成果」的问题。</span></p>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <p style="font-style: italic; color: var(--muted); text-align: center;">
+      <span class="en">This article is part of my AI Tools series — practical guides for using AI technology in everyday life, written from the perspective of a 70-year-old beginner who is learning as he goes.</span>
+      <span class="zh">本文是我AI工具系列的一部分——从一个边学边做的70岁初学者的角度，撰写的关于在日常生活中使用AI技术的实用指南。</span>
+    </p>
+
+    <div class="view-counter-wrap">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp; <span class="en">AI Tools Series</span><span class="zh">AI工具系列</span>
+  </footer>
+
+  <script>
+    function shareThisPage(){
+      var url = window.location.href;
+      var title = document.title;
+      if(navigator.share){
+        navigator.share({title: title, url: url}).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(url).then(function(){
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function(){ t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+  <script src="/sw-register.js" defer></script>
+</body>
+</html>
