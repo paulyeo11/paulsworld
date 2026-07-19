@@ -2,7 +2,7 @@
 // Strategy: cache pages/assets as they're visited so they work offline later.
 // Navigations: network-first (fresh content when online), cache fallback, then offline.html.
 // Everything else (css/js/images/pdf): cache-first, refreshed in the background.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = 'paulsworld-' + CACHE_VERSION;
 const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = ['/', '/index.html', OFFLINE_URL, '/manifest.json'];
@@ -36,6 +36,15 @@ self.addEventListener('fetch', function (event) {
 
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // don't touch cross-origin (counter API, maps, wikipedia, fonts, etc.)
+
+  // API routes are dynamic data (live prices etc), never static assets — go straight to
+  // network every time. Caching these previously meant a single failed price fetch (still
+  // an HTTP 200, just {error:true} inside) got cached and kept being served back stale even
+  // after the underlying API was fixed server-side.
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(req));
+    return;
+  }
 
   if (req.mode === 'navigate') {
     event.respondWith(
