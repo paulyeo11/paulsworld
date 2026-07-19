@@ -111,10 +111,10 @@
 </div>
 
 <div class="tab-nav">
-  <button class="tab-btn active" onclick="switchTab('views',this)">👁 Page Views</button>
-  <button class="tab-btn" onclick="switchTab('content',this)">📝 Content Created</button>
-  <button class="tab-btn" onclick="switchTab('options',this)">📈 OTM Options</button>
-  <button class="tab-btn" onclick="switchTab('lost',this)">📉 Lost Trades</button>
+  <button class="tab-btn active" data-tab="views" onclick="switchTab('views',this)">👁 Page Views</button>
+  <button class="tab-btn" data-tab="content" onclick="switchTab('content',this)">📝 Content Created</button>
+  <button class="tab-btn" data-tab="options" onclick="switchTab('options',this)">📈 OTM Options</button>
+  <button class="tab-btn" data-tab="lost" onclick="switchTab('lost',this)">📉 Lost Trades</button>
 </div>
 
 <!-- PAGE VIEWS TAB (v2) -->
@@ -362,7 +362,13 @@ function switchTab(name,btn){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  btn.classList.add('active');
+  if(btn){btn.classList.add('active');}
+  else{document.querySelector('.tab-btn[data-tab="'+name+'"]').classList.add('active');}
+  history.replaceState(null,'','#'+name);
+}
+function openTabFromHash(){
+  const name=(location.hash||'').replace('#','');
+  if(name && document.getElementById('tab-'+name)){switchTab(name,null);}
 }
 
 /* ---- PAGE VIEWS ---- */
@@ -585,6 +591,7 @@ function renderLostTrades(){
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 updateOtmPill();updateExpiryDate();renderMain();initViews();renderLostTrades();
 loadLivePrices();
+openTabFromHash();
 </script>
 <script src="/sw-register.js" defer></script>
 </body>
