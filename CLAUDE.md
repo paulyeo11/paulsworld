@@ -6,6 +6,7 @@
 - Wife: **Joanne** (joanneng16@yahoo.com). Married at age **32**.
 - Baptised **29 April 2026**.
 - Worked at **ECO for 9 years**.
+- Holds a **Singapore driving licence** and an **International Driving Permit (IDP)** — already has both, not just planning to get one. (Added 2026-07-19.)
 - **Index Page Rule:** the homepage must always display **"Retired at 67"** — never 70.
 - **Favourite singers/music:** Susan Wong, Julienne Taylor.
 
