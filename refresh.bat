@@ -19,7 +19,7 @@ echo.
 
 echo ==========================================
 echo   Done! Both portfolios updated.
-echo   Visit: https://paulsworld.netlify.app
+echo   Visit: https://paulsworld.vercel.app
 echo ==========================================
 echo.
 pause

@@ -11,7 +11,7 @@ Before running:
   - Tick "Read-Only API" for safety
 
 Run: python ibkr_positions.py
-Then visit: https://paulsworld.netlify.app/ai5.html
+Then visit: https://paulsworld.vercel.app/ai5.html
 """
 
 from ib_async import IB, util
@@ -327,7 +327,7 @@ def upload_to_github():
         if push.returncode == 0:
             print((push.stderr or push.stdout).strip())
             print("✅ Uploaded to GitHub successfully!")
-            print("🌐 Visit: https://paulsworld.netlify.app/ai5.html")
+            print("🌐 Visit: https://paulsworld.vercel.app/ai5.html")
         else:
             print(f"❌ GitHub push failed:\n{(push.stderr or push.stdout).strip()}")
 
