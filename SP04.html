@@ -114,7 +114,6 @@
   <button class="tab-btn active" data-tab="views" onclick="switchTab('views',this)">👁 Page Views</button>
   <button class="tab-btn" data-tab="content" onclick="switchTab('content',this)">📝 Content Created</button>
   <button class="tab-btn" data-tab="options" onclick="switchTab('options',this)">📈 OTM Options</button>
-  <button class="tab-btn" data-tab="lost" onclick="switchTab('lost',this)">📉 Lost Trades</button>
 </div>
 
 <!-- PAGE VIEWS TAB (v2) -->
@@ -315,42 +314,6 @@
   <div style="text-align:center;margin-top:8px;">
     <button onclick="loadLivePrices()" style="background:#6366f1;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">🔄 Refresh Live Prices</button>
   </div>
-</div>
-</div>
-
-<!-- LOST TRADES TAB -->
-<div id="tab-lost" class="tab-panel">
-<div class="otm-wrap">
-  <div class="otm-header">
-    <div>
-      <div class="live-dot" style="opacity:0"><span></span></div>
-      <h2>📉 Lost Trades Log</h2>
-      <p>Every losing trade in the full trade log · everything else was a winner</p>
-    </div>
-    <span class="badge" style="background:#3a0d0d;color:#fca5a5;border:1px solid #7f1d1d;">5 Losers Total</span>
-  </div>
-
-  <div class="stat-row">
-    <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-label">Losing Trades</div><div class="stat-value" style="color:#fca5a5;">5</div><div class="stat-sub">Out of the whole log</div></div>
-    <div class="stat-card"><div class="stat-icon">💸</div><div class="stat-label">Total Losses</div><div class="stat-value" style="color:#ef4444;">-$1,964</div><div class="stat-sub">Sum of all 5 losers</div></div>
-    <div class="stat-card"><div class="stat-icon">📛</div><div class="stat-label">Biggest Single Loss</div><div class="stat-value" style="color:#ef4444;">GOOGL -$1,131</div><div class="stat-sub">Largest loser in the log</div></div>
-    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Everything Else</div><div class="stat-value" style="color:#4ade80;">Winner</div><div class="stat-sub">All other trades in the log</div></div>
-  </div>
-
-  <div class="otm-card">
-    <div class="otm-card-hdr">
-      <h3>All 5 Losing Trades (sorted by size)</h3>
-      <small>Everything not listed here was a winner</small>
-    </div>
-    <div style="overflow-x:auto;">
-      <table class="otm-table">
-        <thead><tr><th>Symbol</th><th>Loss</th><th>Notes</th></tr></thead>
-        <tbody id="lost-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="disclaimer">⚠️ <strong style="color:#4b5563;">Note:</strong> Figures from Paul's own trade log screenshot. Not financial advice.</div>
 </div>
 </div>
 
@@ -562,34 +525,9 @@ async function loadLivePrices(){
   }
 }
 
-/* ---- LOST TRADES ---- */
-const LOST_TRADES=[
-  {symbol:'GOOGL',loss:1131,note:'Biggest single loss in the log'},
-  {symbol:'CELH', loss:430, note:'Largest of two CELH losers'},
-  {symbol:'FDS',  loss:298, note:'Small loss, right lesson'},
-  {symbol:'CELH', loss:101, note:'Second CELH loser'},
-  {symbol:'FTNT', loss:4,   note:'Basically a breakeven'},
-];
-function renderLostTrades(){
-  const tbody=document.getElementById('lost-tbody');if(!tbody)return;
-  tbody.innerHTML='';
-  LOST_TRADES.slice().sort((a,b)=>b.loss-a.loss).forEach(t=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td><div class="sym-name">'+t.symbol+'</div></td>'+
-      '<td style="color:#ef4444;font-weight:700;">-$'+t.loss.toLocaleString()+'</td>'+
-      '<td style="color:#94a3b8;">'+t.note+'</td>';
-    tbody.appendChild(tr);
-  });
-  const total=LOST_TRADES.reduce((s,t)=>s+t.loss,0);
-  const ttr=document.createElement('tr');ttr.className='total-row';
-  ttr.innerHTML='<td style="color:#6b7280;font-size:0.75rem;font-weight:600;">TOTAL</td>'+
-    '<td style="color:#ef4444;font-weight:800;">-$'+total.toLocaleString()+'</td><td></td>';
-  tbody.appendChild(ttr);
-}
-
 /* ---- INIT ---- */
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-updateOtmPill();updateExpiryDate();renderMain();initViews();renderLostTrades();
+updateOtmPill();updateExpiryDate();renderMain();initViews();
 loadLivePrices();
 openTabFromHash();
 </script>
