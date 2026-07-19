@@ -23,28 +23,60 @@ async function getCrumb() {
   return { crumb: crumb.trim(), cookie: cookieHeader };
 }
 
+// Stooq — free, keyless, no crumb/cookie dance. Used as the primary source for the full=1
+// (chart-history) path below, since Yahoo's crumb auth is frequently blocked from cloud/
+// server IPs (Vercel included), which is why the site's live prices went dark. Only handles
+// plain US-listed tickers (".us" suffix); HK tickers and FX pairs still go through Yahoo.
+async function fetchStooqDaily(symbol) {
+  const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol.toLowerCase())}.us&i=d`;
+  const r = await fetch(url, { headers: { 'User-Agent': UA } });
+  if (!r.ok) throw new Error('stooq_bad_response');
+  const text = await r.text();
+  const lines = text.trim().split('\n');
+  if (lines.length < 3 || !/^Date,/.test(lines[0])) throw new Error('stooq_no_data');
+  const closes = lines.slice(1).map((line) => parseFloat(line.split(',')[4])).filter((c) => !isNaN(c));
+  if (closes.length < 2) throw new Error('stooq_insufficient');
+  const recent = closes.slice(-252);
+  return {
+    price: closes[closes.length - 1],
+    prevClose: closes[closes.length - 2],
+    fiftyTwoWeekHigh: Math.max.apply(null, recent),
+    fiftyTwoWeekLow: Math.min.apply(null, recent),
+    closes: closes.slice(-135),
+  };
+}
+
 export default async function handler(req, res) {
   const symbols = String(req.query.symbols || '')
     .split(',').map(s => s.trim()).filter(Boolean).slice(0, 40);
   if (!symbols.length) return res.status(400).json({ error: 'no_symbols' });
 
-  let crumb = '', cookie = '';
-  try {
-    ({ crumb, cookie } = await getCrumb());
-  } catch (e) {
-    // crumb fetch failed — try without it
+  // Crumb is only fetched lazily, the first time a Yahoo call actually needs it — full=1
+  // requests for plain US tickers now resolve entirely via Stooq and never touch this.
+  let crumbPromise = null;
+  function ensureCrumb() {
+    if (!crumbPromise) crumbPromise = getCrumb().catch(() => ({ crumb: '', cookie: '' }));
+    return crumbPromise;
   }
-
-  const baseHeaders = { 'User-Agent': UA, 'Accept': 'application/json' };
-  if (cookie) baseHeaders['Cookie'] = cookie;
 
   const out = {};
 
   // full=1&range=6mo etc — 52-week range + historical daily closes for a price chart
-  // (e.g. T39's Profit Zone chart), always via v8 chart since v7 quote has no history.
+  // (e.g. T39's Profit Zone chart).
   if (req.query.full === '1') {
     const range = String(req.query.range || '6mo');
     await Promise.all(symbols.map(async (sym) => {
+      // Plain US ticker (no exchange suffix / FX marker) — try Stooq first.
+      if (!/[.=]/.test(sym)) {
+        try {
+          const s = await fetchStooqDaily(sym);
+          out[sym] = { price: s.price, prevClose: s.prevClose, fiftyTwoWeekHigh: s.fiftyTwoWeekHigh, fiftyTwoWeekLow: s.fiftyTwoWeekLow, currency: 'USD', closes: s.closes };
+          return;
+        } catch (_) { /* fall through to Yahoo below */ }
+      }
+      const { crumb, cookie } = await ensureCrumb();
+      const baseHeaders = { 'User-Agent': UA, 'Accept': 'application/json' };
+      if (cookie) baseHeaders['Cookie'] = cookie;
       for (const host of ['query1.finance.yahoo.com', 'query2.finance.yahoo.com']) {
         try {
           const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
@@ -72,6 +104,10 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=40');
     return res.status(200).json(out);
   }
+
+  const { crumb, cookie } = await ensureCrumb();
+  const baseHeaders = { 'User-Agent': UA, 'Accept': 'application/json' };
+  if (cookie) baseHeaders['Cookie'] = cookie;
 
   // Try v7 batch quote (one request for all symbols)
   try {
