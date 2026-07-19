@@ -337,6 +337,9 @@ Never use flexbox + `margin-left:auto` for this 3-column pattern.
 Every page/article must have a visible **Home button** that returns to
 https://paulsworld.vercel.app/
 
+### 🔗 New-Tab Navigation Rule (Standing Default — added 2026-07-19)
+Every navigation link that takes Paul AWAY from the current page — the Home button, any "back to hub" floating button (e.g. the 📈 Investment Tools shortcut), and similar nav links — must open in a **new tab** (`target="_blank"`), so he never loses the page he was reading. This applies automatically to every new page going forward. In-page controls that don't navigate away (language toggle, tabs, accordions) are unaffected. If Paul asks to retrofit this onto older existing pages site-wide, treat it as a separate bulk task — don't assume it's already done everywhere.
+
 ### 👁️ View Counter
 Add a visible view counter at the **end of every article, just before the footer**,
 using exactly: `<script src="/view-counter.js"></script>`
