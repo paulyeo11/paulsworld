@@ -40,6 +40,39 @@ export default async function handler(req, res) {
 
   const out = {};
 
+  // full=1&range=6mo etc — 52-week range + historical daily closes for a price chart
+  // (e.g. T39's Profit Zone chart), always via v8 chart since v7 quote has no history.
+  if (req.query.full === '1') {
+    const range = String(req.query.range || '6mo');
+    await Promise.all(symbols.map(async (sym) => {
+      for (const host of ['query1.finance.yahoo.com', 'query2.finance.yahoo.com']) {
+        try {
+          const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
+          const url = `https://${host}/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=${encodeURIComponent(range)}${crumbParam}`;
+          const r = await fetch(url, { headers: baseHeaders });
+          const j = await r.json();
+          const result = j?.chart?.result?.[0];
+          const m = result?.meta;
+          if (m?.regularMarketPrice != null) {
+            const closes = (result?.indicators?.quote?.[0]?.close || []).filter((c) => typeof c === 'number');
+            out[sym] = {
+              price: m.regularMarketPrice,
+              prevClose: m.chartPreviousClose ?? m.previousClose ?? null,
+              fiftyTwoWeekHigh: m.fiftyTwoWeekHigh ?? null,
+              fiftyTwoWeekLow: m.fiftyTwoWeekLow ?? null,
+              currency: m.currency ?? null,
+              closes,
+            };
+            return;
+          }
+        } catch (_) {}
+      }
+      out[sym] = { error: true };
+    }));
+    res.setHeader('Cache-Control', 's-maxage=20, stale-while-revalidate=40');
+    return res.status(200).json(out);
+  }
+
   // Try v7 batch quote (one request for all symbols)
   try {
     const crumbParam = crumb ? `&crumb=${encodeURIComponent(crumb)}` : '';
