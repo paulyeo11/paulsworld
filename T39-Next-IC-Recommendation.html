@@ -244,16 +244,19 @@ function buildCard(symbol){
 }
 
 function fetchQuote(symbol){
-  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=6mo';
+  // Server-side proxy (api/td.js) — Yahoo Finance blocks direct browser fetches via CORS,
+  // this avoids that the same way options-breadboard.html / T20 etc already do.
+  var url = '/api/td?symbols=' + encodeURIComponent(symbol) + '&full=1&range=6mo';
   return fetch(url).then(function(r){
     if(!r.ok) throw new Error('bad response');
     return r.json();
   }).then(function(d){
-    var result = d && d.chart && d.chart.result && d.chart.result[0];
-    var meta = result && result.meta;
-    if(!meta || typeof meta.regularMarketPrice !== 'number') throw new Error('no meta');
-    var closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
-    return { meta: meta, closes: closes };
+    var q = d && d[symbol];
+    if(!q || typeof q.price !== 'number') throw new Error('no data');
+    return {
+      meta: { regularMarketPrice: q.price, chartPreviousClose: q.prevClose, fiftyTwoWeekHigh: q.fiftyTwoWeekHigh, fiftyTwoWeekLow: q.fiftyTwoWeekLow },
+      closes: q.closes || []
+    };
   });
 }
 
