@@ -47,6 +47,31 @@
   .sk .val { font-size:.85rem; font-weight:800; color:#8ea0ff; margin-top:2px; }
   .sk.short .val { color:#f4c869; }
 
+  /* Strike rail ("breadboard" chart) — same visual format as the NVDA/QQQ/AVGO/SMH
+     condor cards on T29 (options-breadboard.html), adapted for suggested (not yet
+     opened) strikes: no break-even lines since no real credit has been collected. */
+  .rail-wrap { margin-top:22px; }
+  .rail { position:relative; height:56px; background:linear-gradient(90deg,rgba(239,68,68,.10),rgba(255,255,255,.05),rgba(239,68,68,.10)); border-radius:10px; border:1px solid #2a3158; }
+  .rail .zone { position:absolute; top:0; bottom:0; background:rgba(16,185,129,.18); border-left:2px dashed #10b981; border-right:2px dashed #10b981; }
+  .rail .zone .zlab { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:.58rem; font-weight:800; color:#10b981; letter-spacing:.03em; white-space:nowrap; }
+  .rail .peg { position:absolute; top:0; bottom:0; width:0; }
+  .rail .peg .dot { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; }
+  .rail .peg.long .dot { background:#12172e; border:2px solid #8ea0ff; }
+  .rail .peg.short .dot { background:#f4c869; border:2px solid #f4c869; }
+  /* Long (outer) labels sit above the rail, short (inner) labels sit below — since the fixed
+     $5 wing puts long/short strikes very close together on higher-priced tickers like SPY,
+     stacking them on separate rows keeps them legible instead of overlapping mid-rail. */
+  .rail .peg .lab { position:absolute; left:50%; transform:translateX(-50%); font-size:.6rem; color:#fff; font-weight:700; white-space:nowrap; }
+  .rail .peg.long .lab { top:-15px; color:#8ea0ff; }
+  .rail .peg.short .lab { bottom:-15px; color:#f4c869; }
+  .rail .now-mark { position:absolute; top:0; bottom:0; width:0; z-index:6; pointer-events:none; transition:left .5s ease; }
+  .rail .now-mark .now-line { position:absolute; top:0; bottom:0; left:0; width:2px; background:#f4c869; box-shadow:0 0 5px rgba(244,200,105,.85); }
+  .rail .now-mark .now-arrow { position:absolute; top:-7px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:7px solid #f4c869; }
+  .rail-empty { display:flex; align-items:center; justify-content:center; height:100%; font-size:.72rem; color:rgba(255,255,255,.35); }
+  .rail-legend { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:18px; font-size:.6rem; color:rgba(255,255,255,.5); }
+  .rail-legend span b { color:rgba(255,255,255,.85); }
+  .rail-legend .now-leg b { color:#f4c869; }
+
   .why { margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.08); font-size:.78rem; color:rgba(255,255,255,.65); line-height:1.6; }
   .why b { color:rgba(255,255,255,.9); }
 
@@ -165,6 +190,7 @@ function roundIncrement(price){
   return 0.5;
 }
 function roundToStrike(x, inc){ return Math.round(x / inc) * inc; }
+function fmtStrike(n){ return (Math.round(n * 100) / 100).toString(); }
 
 // Same mid-range verdict logic as T21's screener
 function igVerdict(rangePos){
@@ -196,6 +222,15 @@ function buildCard(symbol){
       '<div class="sk short"><div class="lbl">Short P</div><div class="val">--</div></div>' +
       '<div class="sk short"><div class="lbl">Short C</div><div class="val">--</div></div>' +
       '<div class="sk"><div class="lbl">Long C</div><div class="val">--</div></div>' +
+    '</div>' +
+    '<div class="rail-wrap">' +
+      '<div class="rail" id="rail-' + symbol + '"><div class="rail-empty">--</div></div>' +
+      '<div class="rail-legend">' +
+        '<span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span>' +
+        '<span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span>' +
+        '<span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span>' +
+        '<span class="now-leg" id="now-' + symbol + '">🟡 <b><span class="en">Now</span><span class="zh">现价</span> --</b></span>' +
+      '</div>' +
     '</div>' +
     '<div class="why">' +
       '<span class="en"><b>Why this pick:</b> ' + c.enWhy + '</span>' +
@@ -250,6 +285,51 @@ function renderQuote(symbol, meta){
     '<div class="sk short"><div class="lbl">Short P</div><div class="val">' + fmtMoney(shortPut) + '</div></div>' +
     '<div class="sk short"><div class="lbl">Short C</div><div class="val">' + fmtMoney(shortCall) + '</div></div>' +
     '<div class="sk"><div class="lbl">Long C</div><div class="val">' + fmtMoney(longCall) + '</div></div>';
+
+  // Strike rail — same "breadboard" chart format as the NVDA/QQQ/AVGO/SMH condors on T29
+  var wing = shortPut - longPut;
+  drawRail(symbol, { lo: longPut - wing, hi: longCall + wing, longP: longPut, shortP: shortPut, shortC: shortCall, longC: longCall, price: price });
+}
+
+// Draw the strike rail ("breadboard" chart) for a suggested (not-yet-opened) Iron Condor —
+// same visual as drawRail()/plotNowMarker() on T29 (options-breadboard.html), but rebuilt
+// from scratch on every refresh since suggested strikes move with the live price.
+function drawRail(symbol, cfg){
+  var rail = document.getElementById('rail-' + symbol);
+  if(!rail) return;
+  rail.innerHTML = '';
+  var lo = cfg.lo, hi = cfg.hi, span = hi - lo;
+  if(!(span > 0)) return;
+  function pct(v){ return Math.max(0, Math.min(100, (v - lo) / span * 100)); }
+
+  var zone = document.createElement('div');
+  zone.className = 'zone';
+  zone.style.left = pct(cfg.shortP) + '%';
+  zone.style.width = (pct(cfg.shortC) - pct(cfg.shortP)) + '%';
+  zone.innerHTML = '<div class="zlab">PROFIT</div>';
+  rail.appendChild(zone);
+
+  [
+    { v: cfg.longP, cls: 'long', lab: fmtStrike(cfg.longP) + 'P' },
+    { v: cfg.shortP, cls: 'short', lab: fmtStrike(cfg.shortP) + 'P' },
+    { v: cfg.shortC, cls: 'short', lab: fmtStrike(cfg.shortC) + 'C' },
+    { v: cfg.longC, cls: 'long', lab: fmtStrike(cfg.longC) + 'C' }
+  ].forEach(function(p){
+    var el = document.createElement('div');
+    el.className = 'peg ' + p.cls;
+    el.style.left = pct(p.v) + '%';
+    el.innerHTML = '<div class="lab">' + p.lab + '</div><div class="dot"></div>';
+    rail.appendChild(el);
+  });
+
+  var mark = document.createElement('div');
+  mark.className = 'now-mark';
+  mark.style.left = pct(cfg.price) + '%';
+  mark.innerHTML = '<div class="now-arrow"></div><div class="now-line"></div>';
+  rail.appendChild(mark);
+
+  var lab = document.getElementById('now-' + symbol);
+  if(lab) lab.innerHTML = '🟡 <b><span class="en">Now</span><span class="zh">现价</span> ' + fmtMoney(cfg.price) + '</b>';
 }
 
 function fetchAllQuotes(){
