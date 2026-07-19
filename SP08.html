@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+  <script src="/ga4.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SP08: Paul's Buying List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f4ede1;
+    --ink: #1a1612;
+    --ochre: #c8843a;
+    --teal: #2d5f5d;
+    --rust: #a8442a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: 'Fraunces', serif; }
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(168,68,42,0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 60%, rgba(45,95,93,0.05) 0%, transparent 50%);
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  .nav-back {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--rust);
+    text-decoration: none;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--rust);
+    padding-bottom: 2px;
+  }
+  .nav-back:hover { color: var(--ink); border-color: var(--ink); }
+
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 32px; margin-bottom: 48px; }
+  .eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rust); margin-bottom: 16px; }
+  h1 { font-family: 'Fraunces', serif; font-weight: 300; font-size: clamp(40px, 7vw, 80px); line-height: 0.95; letter-spacing: -0.03em; font-style: italic; }
+  h1 .accent { font-weight: 700; font-style: normal; color: var(--rust); }
+  .subtitle { margin-top: 20px; max-width: 620px; font-size: 17px; line-height: 1.5; color: rgba(26,22,18,0.7); }
+
+  .share-btn{display:inline-block;background:var(--ink);border:1.5px solid var(--ink);color:var(--paper);font-weight:700;letter-spacing:.04em;padding:9px 22px;border-radius:30px;cursor:pointer;font-size:13px;font-family:'DM Mono',monospace;text-transform:uppercase;margin-top:20px;transition:background .2s;}
+  .share-btn:hover{background:var(--rust);border-color:var(--rust);}
+  .share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--ink); border: 2px solid var(--ink); margin-bottom: 48px; }
+  .stat { background: var(--paper); padding: 24px 20px; }
+  .stat-num { font-family: 'Fraunces', serif; font-size: 38px; font-weight: 500; line-height: 1; margin-bottom: 6px; }
+  .stat-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(26,22,18,0.6); }
+  .stat.highlight .stat-num { color: var(--rust); }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+  .filter-btn { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; border: 1.5px solid var(--ink); padding: 8px 16px; cursor: pointer; color: var(--ink); transition: all 0.2s; }
+  .filter-btn:hover { background: var(--ink); color: var(--paper); }
+  .filter-btn.active { background: var(--ink); color: var(--paper); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+  .card { background: var(--paper); border: 1.5px solid var(--ink); position: relative; transition: transform 0.25s ease, box-shadow 0.25s ease; display: flex; flex-direction: column; padding: 22px; }
+  .card:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--ink); }
+  .card.bought { opacity: 0.6; }
+  .card.bought .card-title { text-decoration: line-through; }
+
+  .card-type { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--rust); margin-bottom: 10px; }
+  .card-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; line-height: 1.1; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .card-price { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--teal); margin-bottom: 12px; }
+  .card-price .was { text-decoration: line-through; color: rgba(26,22,18,0.4); margin-right: 8px; }
+  .card-desc { font-size: 14px; line-height: 1.5; color: rgba(26,22,18,0.75); margin-bottom: 14px; }
+
+  .compat-note { font-size: 13px; line-height: 1.5; padding: 10px 12px; border-radius: 4px; margin-bottom: 16px; }
+  .compat-note.no { background: rgba(168,68,42,0.1); border: 1px solid rgba(168,68,42,0.3); color: var(--rust); }
+  .compat-note.yes { background: rgba(45,95,93,0.1); border: 1px solid rgba(45,95,93,0.3); color: var(--teal); }
+
+  .card-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px dashed rgba(26,22,18,0.25); gap: 10px; margin-top: auto; }
+  .check { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; user-select: none; }
+  .checkbox { width: 18px; height: 18px; border: 1.5px solid var(--ink); display: inline-flex; align-items: center; justify-content: center; background: var(--paper); transition: background 0.2s; flex-shrink: 0; }
+  .card.bought .checkbox { background: var(--teal); color: var(--paper); }
+  .card.bought .checkbox::after { content: '✓'; font-size: 13px; font-weight: 700; }
+  .view-link { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--rust); text-decoration: none; border-bottom: 1px solid var(--rust); padding-bottom: 1px; }
+  .delete-btn { background: none; border: none; color: rgba(26,22,18,0.4); cursor: pointer; font-size: 16px; padding: 4px 8px; }
+  .delete-btn:hover { color: var(--rust); }
+
+  .add-row { display: flex; gap: 10px; margin-top: 32px; flex-wrap: wrap; }
+  .add-row input { flex: 1; min-width: 180px; font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 12px; border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink); }
+  .add-btn { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; background: var(--ink); color: var(--paper); border: none; padding: 10px 18px; cursor: pointer; }
+  .add-btn:hover { background: var(--rust); }
+
+  /* ── HOME NAV BAR ── */
+  #homeBar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: #1a1a2e; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.5);
+    font-family: Arial, sans-serif;
+  }
+  #homeBar .hb-home {
+    background: #f4813f; color: #fff; text-decoration: none;
+    font-size: 15px; font-weight: 700; padding: 8px 20px; border-radius: 25px;
+    box-shadow: 0 2px 8px rgba(244,129,63,0.5);
+  }
+  #homeBar .hb-site { color: rgba(255,255,255,0.7); font-size: 13px; }
+  body { padding-top: 52px; }
+
+  .lang-toggle { position: absolute; top: 10px; right: 16px; display: flex; gap: 6px; z-index: 100; }
+  .lang-btn { font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; border-radius: 16px; border: 1.5px solid rgba(255,255,255,0.4); background: transparent; color: #fff; cursor: pointer; }
+  .lang-btn.active { background: #f4813f; border-color: #f4813f; }
+  body.zh-mode .en { display: none; }
+  body:not(.zh-mode) .zh { display: none; }
+
+  @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div id="homeBar">
+  <a class="hb-home" href="https://paulsworld.vercel.app/">🏠 Home</a>
+  <span class="hb-site">✈️ Paul's World</span>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <a class="nav-back" href="index.html"><span class="en">← Back to Paul's World</span><span class="zh">← 返回Paul's World</span></a>
+
+  <header>
+    <div class="eyebrow">— <span class="en">Paul's Gadget Ledger · Gear worth wanting</span><span class="zh">Paul的购物清单 · 值得拥有的好物</span></div>
+    <h1><span class="en">SP08:</span><span class="zh">SP08：</span> <span class="accent"><span class="en">Buying</span><span class="zh">购物</span></span><br><em><span class="en">List.</span><span class="zh">清单。</span></em></h1>
+    <p class="subtitle"><span class="en">Gadgets, gear, and travel tech Paul is considering — with price, deal links, and compatibility notes so nothing gets bought by mistake.</span><span class="zh">Paul正在考虑的装备、器材与旅行科技产品——附价格、优惠链接与兼容性说明，避免买错。</span></p>
+    <button class="share-btn" onclick="shareThisPage()"><span class="en">🔗 Share</span><span class="zh">🔗 分享</span></button>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-num" id="totalCount">0</div><div class="stat-label"><span class="en">Items</span><span class="zh">项目</span></div></div>
+    <div class="stat highlight"><div class="stat-num" id="boughtCount">0</div><div class="stat-label"><span class="en">Bought</span><span class="zh">已购买</span></div></div>
+    <div class="stat"><div class="stat-num" id="pendingCount">0</div><div class="stat-label"><span class="en">Still Want</span><span class="zh">仍想要</span></div></div>
+  </section>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all"><span class="en">All</span><span class="zh">全部</span></button>
+    <button class="filter-btn" data-filter="pending"><span class="en">Still Want</span><span class="zh">仍想要</span></button>
+    <button class="filter-btn" data-filter="bought"><span class="en">Bought</span><span class="zh">已购买</span></button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="add-row">
+    <input type="text" id="newName" placeholder="Item name" />
+    <input type="text" id="newPrice" placeholder="Price e.g. US$1,279" />
+    <input type="text" id="newLink" placeholder="Product link (optional)" />
+    <button class="add-btn" onclick="addItem()"><span class="en">+ Add Item</span><span class="zh">+ 添加项目</span></button>
+  </div>
+
+</div>
+
+<script>
+  const defaultList = [
+    {
+      name: 'Antigravity A1 — 8K 360 Drone',
+      category: 'Drone / Camera',
+      price: 'US$1,279 (Standard Bundle, deal price)',
+      wasPrice: 'US$1,599 list',
+      desc_en: 'World’s first consumer drone with a built-in 8K 360° camera, made by Antigravity (an Insta360 subsidiary). Controlled via Vision Goggles + hand-gesture Grip Controller instead of a normal remote. Spotted via a "Big Deal Days 2026" promo link.',
+      desc_zh: '全球首款内置8K 360°相机的消费级无人机，由Antigravity（Insta360子公司）出品。通过Vision Goggles眼镜和手势Grip遥控器操控，而非传统遥控器。来自 "Big Deal Days 2026" 促销链接。',
+      compat: 'no',
+      compat_en: '⚠️ NOT DJI-compatible. This is a standalone competitor to DJI (rivals the DJI Avata 360) with its own closed ecosystem — own goggles, own controller, own app. It will not pair with any DJI drone, DJI goggles, or DJI remote.',
+      compat_zh: '⚠️ 不兼容DJI。这是DJI的独立竞品（对标DJI Avata 360），拥有自己封闭的生态系统——自己的眼镜、自己的遥控器、自己的App。无法与任何DJI无人机、DJI眼镜或DJI遥控器配对使用。',
+      link: 'https://www.antigravity.tech/us/campaign/big-deal-days-2026?utm_medium=KOL&utm_term=AGRCOUX',
+      bought: false
+    }
+  ];
+
+  const STORAGE_KEY = 'buying-list-v1';
+  let list = [];
+  let activeFilter = 'all';
+
+  function setLang(lang) {
+    document.body.classList.toggle('zh-mode', lang === 'zh');
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  }
+
+  function shareThisPage(){
+    var url = window.location.href;
+    var title = document.title;
+    if (navigator.share) {
+      navigator.share({ title: title, url: url }).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url).then(function(){
+        var t = document.getElementById('shareToast');
+        if (t) { t.style.display = 'block'; setTimeout(function(){ t.style.display = 'none'; }, 2200); }
+      });
+    }
+  }
+
+  async function load() {
+    try {
+      const r = await window.storage.get(STORAGE_KEY);
+      list = r ? JSON.parse(r.value) : JSON.parse(JSON.stringify(defaultList));
+    } catch { list = JSON.parse(JSON.stringify(defaultList)); }
+    render();
+  }
+
+  async function save() {
+    try { await window.storage.set(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function render() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    const filtered = list.filter(item => {
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'bought') return item.bought;
+      if (activeFilter === 'pending') return !item.bought;
+      return true;
+    });
+
+    filtered.forEach(item => {
+      const realIdx = list.indexOf(item);
+      const card = document.createElement('div');
+      card.className = 'card' + (item.bought ? ' bought' : '');
+
+      const priceHTML = item.wasPrice
+        ? `<span class="was">${item.wasPrice}</span>${item.price}`
+        : item.price;
+
+      const compatHTML = item.compat
+        ? `<div class="compat-note ${item.compat}">
+             <span class="en">${item.compat_en || ''}</span>
+             <span class="zh">${item.compat_zh || ''}</span>
+           </div>`
+        : '';
+
+      const descHTML = (item.desc_en || item.desc)
+        ? `<div class="card-desc"><span class="en">${item.desc_en || item.desc || ''}</span><span class="zh">${item.desc_zh || item.desc || ''}</span></div>`
+        : '';
+
+      card.innerHTML = `
+        <div class="card-type">${item.category || ''}</div>
+        <div class="card-title">${item.name}</div>
+        ${item.price ? `<div class="card-price">${priceHTML}</div>` : ''}
+        ${descHTML}
+        ${compatHTML}
+        <div class="card-foot">
+          <label class="check" data-action="toggle" data-idx="${realIdx}">
+            <span class="checkbox"></span>
+            <span><span class="en">${item.bought ? 'Bought' : 'Mark bought'}</span><span class="zh">${item.bought ? '已购买' : '标记已购买'}</span></span>
+          </label>
+          ${item.link ? `<a class="view-link" href="${item.link}" target="_blank" rel="noopener"><span class="en">View</span><span class="zh">查看</span></a>` : ''}
+          <button class="delete-btn" data-action="delete" data-idx="${realIdx}" title="Remove">✕</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    const total = list.length;
+    const bought = list.filter(i => i.bought).length;
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('boughtCount').textContent = bought;
+    document.getElementById('pendingCount').textContent = total - bought;
+  }
+
+  document.getElementById('grid').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const idx = parseInt(btn.dataset.idx, 10);
+
+    if (action === 'toggle') {
+      list[idx].bought = !list[idx].bought;
+      save(); render();
+    } else if (action === 'delete') {
+      if (confirm('Remove ' + list[idx].name + '?')) {
+        list.splice(idx, 1);
+        save(); render();
+      }
+    }
+  });
+
+  document.getElementById('filters').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      render();
+    }
+  });
+
+  function addItem() {
+    const name = document.getElementById('newName').value.trim();
+    if (!name) return;
+    const price = document.getElementById('newPrice').value.trim();
+    const link = document.getElementById('newLink').value.trim();
+    list.push({ name, category: '', price, desc_en: '', desc_zh: '', compat: '', link, bought: false });
+    document.getElementById('newName').value = '';
+    document.getElementById('newPrice').value = '';
+    document.getElementById('newLink').value = '';
+    save(); render();
+  }
+
+  load();
+</script>
+
+<div class="share-toast" id="shareToast"><span class="en">✅ Link copied!</span><span class="zh">✅ 链接已复制！</span></div>
+
+<script src="/view-counter.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
