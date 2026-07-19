@@ -94,9 +94,9 @@ Whenever a video is added to a photo journal (`galleryPhotos` array or equivalen
 - **Play hint text (generic, not content-specific):** the tap-to-play overlay caption must always read **"Tap ▶ to play video"** (bilingual: `<span class="en">Tap ▶ to play video</span><span class="zh">点击▶播放视频</span><span class="ja">▶をタップして再生</span>`) — never reference the subject of the photo (e.g. not "Tap mountain to play"), since future videos won't always show a mountain.
 
 ## Site Info
-- **Live URL:** https://paulsworld.netlify.app
-- **GitHub repo:** paulyeo11/paulsworld · **Branch:** main (Netlify auto-deploys from `main`)
-- **Hosting note (added 2026-07-19):** the site moved from Vercel to Netlify after Vercel's production deployment got permanently stuck on an old commit despite multiple clean pushes to `main` — a recurring problem Paul had hit before. Netlify was tested in parallel first (confirmed a fresh push actually deployed, which Vercel had stopped doing) before fully cutting over. Do not use or reference Vercel going forward; `vercel.json` and the old `api/` Vercel functions are left in the repo as inert leftovers, not the active deploy path. The live serverless functions are now `netlify/functions/*.js` (Netlify's `(event) -> {statusCode, headers, body}` handler signature, not Vercel's `(req, res)`), routed via the `[[redirects]]` rule in `netlify.toml` so `/api/*` still works from existing page code.
+- **Live URL:** https://paulsworld.vercel.app
+- **GitHub repo:** paulyeo11/paulsworld · **Branch:** main (Vercel auto-deploys from `main`)
+- **Hosting note (added 2026-07-19, reverted same night):** briefly migrated to Netlify after Vercel's production deployment got stuck on an old commit for over an hour despite clean pushes to `main` — a recurring problem (see AIT10, AIT12). Netlify deployed reliably during testing, but Paul chose to move back to Vercel the same night after Vercel started working again. `netlify.toml` and `netlify/functions/*.js` are left in the repo as inert leftovers from that attempt, not the active deploy path — the live serverless functions are `api/*.js` (Vercel's `(req, res)` handler signature). If Vercel's deployment freezes again, Netlify is already fully wired up (same repo, same GitHub connection) as a fast fallback — see AIT12.html for the full story.
 - **Profile photo:** `IMG_1887.jpeg` (repo root). Always reference via absolute URL:
   https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/IMG_1887.jpeg
 
@@ -116,7 +116,7 @@ Whenever a video is added to a photo journal (`galleryPhotos` array or equivalen
   another session or commit has already advanced `main`. Never skip this step.
 
 ### ⚠️ Feature/session branches MUST land on `main` the same turn (learned 2026-07-03)
-Netlify **only deploys from `main`**. On Claude Code web/remote sessions, the harness may assign
+Vercel **only deploys from `main`**. On Claude Code web/remote sessions, the harness may assign
 a separate working branch (e.g. `claude/day-3-my83ms`) instead of `main`. If work is committed
 and pushed only to that branch, it is invisible on the live site — Paul will see "photo not
 appear" even though the push "succeeded." To prevent this:
@@ -250,7 +250,7 @@ Button style pattern:
 Whenever a foreign currency amount (¥ JPY, etc.) appears anywhere on a trip page — timelines, receipts, cost breakdowns, transport fares — always show the approximate **SGD** conversion alongside it, e.g. `¥4,345 (~S$38.10)`. Use a consistent approximate rate (~¥114 = S$1 unless Paul provides a more current rate) and label it as approximate (`~S$`), not exact. Applies to both English and Chinese spans. Do this automatically going forward — no need to ask each time.
 
 ## After Every Deployment — MANDATORY
-1. Wait ~1-2 minutes for Netlify to deploy.
+1. Wait ~2 minutes for Vercel to deploy.
 2. Use **WebFetch** to check the live URL and confirm the change is visible yourself.
 3. Only THEN tell Paul it's ready — include the confirmed live link.
 - Never say "check in 1-2 minutes" without verifying it first.
@@ -339,7 +339,7 @@ Never use flexbox + `margin-left:auto` for this 3-column pattern.
 
 ### 🏠 Home Button
 Every page/article must have a visible **Home button** that returns to
-https://paulsworld.netlify.app/
+https://paulsworld.vercel.app/
 
 ### 🔗 New-Tab Navigation Rule (Standing Default — added 2026-07-19)
 Every navigation link that takes Paul AWAY from the current page — the Home button, any "back to hub" floating button (e.g. the 📈 Investment Tools shortcut), and similar nav links — must open in a **new tab** (`target="_blank"`), so he never loses the page he was reading. This applies automatically to every new page going forward. In-page controls that don't navigate away (language toggle, tabs, accordions) are unaffected. If Paul asks to retrofit this onto older existing pages site-wide, treat it as a separate bulk task — don't assume it's already done everywhere.
@@ -359,7 +359,7 @@ using exactly: `<script src="/view-counter.js"></script>`
   - Update all `<img>` paths to reference that folder (e.g. `img_S15/01-photo.jpg`).
   - **Tell Paul the exact folder name** he needs to create on GitHub before uploading.
 - **Image Folder Deployment Rule:** once images are added to a new folder, immediately
-  push a small update to the linked HTML so Netlify picks up the new folder in the same deploy.
+  push a small update to the linked HTML so Vercel picks up the new folder in the same deploy.
 
 ### 🖼️ Photo Journal Rule (Standing Default)
 Every article/story that contains photos **must** include a **Photo Journal** section at the end — after the main story text. Each photo must be displayed with **visible descriptive text beneath it** (not hover-only captions). Format:
@@ -431,7 +431,7 @@ Paul never needs to ask — this happens automatically every time.
 ## Categories / Page Index
 Base: `https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/[filename].html`
 
-**NAMING CONVENTION (updated 2026-05-31): UPPERCASE prefix + ZERO-PADDED 2-DIGIT number for EVERY section (S01, AI01, AIT01, AC01, B01, T01, h01 …). Files, image folders, and on-screen labels/titles all use the same 2-digit number.** Prefixes are case-sensitive on Netlify — always use the exact case below. To add a page, create `<PREFIX><2-digit next#>.html` and it auto-appears in the right section (index.html auto-discovers each prefix up to its max).
+**NAMING CONVENTION (updated 2026-05-31): UPPERCASE prefix + ZERO-PADDED 2-DIGIT number for EVERY section (S01, AI01, AIT01, AC01, B01, T01, h01 …). Files, image folders, and on-screen labels/titles all use the same 2-digit number.** Prefixes are case-sensitive on Vercel — always use the exact case below. To add a page, create `<PREFIX><2-digit next#>.html` and it auto-appears in the right section (index.html auto-discovers each prefix up to its max).
 
 | Category | Prefix | Files | Label shown |
 |----------|--------|-------|-------------|
