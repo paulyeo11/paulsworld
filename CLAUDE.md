@@ -17,6 +17,9 @@
 ## Contacts
 - **IBKR (Interactive Brokers) help email:** help@interactivebrokers.com
 
+## Reminders Rule (Standing Default — added 2026-07-19)
+Whenever Paul asks to be reminded of something, always create a **Google Calendar event** (via the Google Calendar MCP tools) — never use a chat-only/session-based reminder. Default reminder popup at event time unless Paul specifies otherwise. Use `Asia/Singapore` timezone unless told otherwise.
+
 ## IBKR Raw Data via Google Drive (Standing Default — added 2026-07-19)
 Paul is often on phone-only (no PC/IB Gateway), so he can't always run the automated `ibkr_positions.py` / `refresh-ibkr.bat` script (which pushes straight to GitHub with zero manual steps — that's still the best option whenever his PC + IB Gateway are available).
 - **Source folder:** the **"IBKR" folder in Paul's Google Drive** (folder id `1csY623IELGv_1UWFlAPAOpkaBPGEFBb2`, owner paul11ipad@gmail.com). Paul saves/overwrites his raw IBKR export(s) there — no need for him to paste a Drive link or attach the file in chat each time (a pasted link/attachment doesn't persist across sessions or authenticate reliably; the Drive MCP connector does).
