@@ -15,6 +15,12 @@
 ## Contacts
 - **IBKR (Interactive Brokers) help email:** help@interactivebrokers.com
 
+## IBKR Raw Data via Google Drive (Standing Default — added 2026-07-19)
+Paul is often on phone-only (no PC/IB Gateway), so he can't always run the automated `ibkr_positions.py` / `refresh-ibkr.bat` script (which pushes straight to GitHub with zero manual steps — that's still the best option whenever his PC + IB Gateway are available).
+- **Source folder:** the **"IBKR" folder in Paul's Google Drive** (folder id `1csY623IELGv_1UWFlAPAOpkaBPGEFBb2`, owner paul11ipad@gmail.com). Paul saves/overwrites his raw IBKR export(s) there — no need for him to paste a Drive link or attach the file in chat each time (a pasted link/attachment doesn't persist across sessions or authenticate reliably; the Drive MCP connector does).
+- **Trigger phrases — treat both the same way:** "check the IBKR folder in Drive" and "update my IBKR raw data". On either phrase: look up the latest file(s) in that Drive folder via the Google Drive MCP tools, read the raw data, and update the relevant dashboard(s)/positions data from it.
+- If the Google Drive MCP tools return an approval/auth error, don't keep silently retrying — tell Paul plainly that the connector needs re-authorization via claude.ai → Settings → Connectors → Google Drive (this has happened before; a "Yes" typed in chat does not resolve it, only the actual connector settings page does).
+
 ## IG (Iron Condor) Cushion Watch — Log
 - **2026-07-17:** Dashboard "Share Price vs Selling Put" check flagged **NVDA** (⚠️ Tight, $202.81 vs 195P, +4.01% variance) and **QQQ** (⚠️ Tight, $695.33 vs 680P, +2.25% variance) as close to their short put strike. **AVGO** (+5.95%) and **SMH** (+8.06%) were ✅ Safe. Summary emailed as a draft to paul11ipad@gmail.com (Gmail MCP only creates drafts, not sends — Paul reviews/sends manually).
 - **2026-07-17: Started IC (Iron Condor) option position(s).** Entry date marked per Paul's request.
