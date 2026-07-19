@@ -2,7 +2,7 @@
 // Strategy: cache pages/assets as they're visited so they work offline later.
 // Navigations: network-first (fresh content when online), cache fallback, then offline.html.
 // Everything else (css/js/images/pdf): cache-first, refreshed in the background.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = 'paulsworld-' + CACHE_VERSION;
 const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = ['/', '/index.html', OFFLINE_URL, '/manifest.json'];
