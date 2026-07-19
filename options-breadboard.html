@@ -209,6 +209,7 @@
     <button class="tab-btn" id="tb-ypnl" onclick="setTab('ypnl')">📆 <span class="en">Yearly P&amp;L</span><span class="zh">年度盈亏</span></button>
     <button class="tab-btn" id="tb-qpnl" onclick="setTab('qpnl')">📊 <span class="en">Quarterly P&amp;L</span><span class="zh">季度盈亏</span></button>
     <button class="tab-btn" id="tb-trades" onclick="setTab('trades')">📋 <span class="en">Trade Log</span><span class="zh">交易记录</span></button>
+    <button class="tab-btn" id="tb-win" onclick="setTab('win')">🏆 <span class="en">Win Trades</span><span class="zh">盈利交易</span></button>
     <button class="tab-btn" id="tb-dep" onclick="setTab('deposits')">💰 <span class="en">Deposits</span><span class="zh">存款</span></button>
     <button class="tab-btn" id="tb-prem" onclick="setTab('premium')">💵 <span class="en">Premium</span><span class="zh">权利金</span></button>
   </div>
@@ -796,6 +797,53 @@
     </div>
   </div><!-- /tab-trades -->
 
+  <div id="tab-win" style="display:none">
+    <div class="condor" id="winStatsCard">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.05rem">🏆 <span class="en">Win Trades — Detail Report</span><span class="zh">盈利交易 — 详细报告</span></div>
+        <div class="c-meta"><span class="en">Every closed trade with positive net premium (a "win") · same trade set as Trade Log</span><span class="zh">每笔净权利金为正（「盈利」）的已平仓交易 · 与「交易记录」页签数据一致</span></div>
+        <div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px">
+        <div style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px">
+          <div style="font-size:.68rem;color:#8b98a5;text-transform:uppercase;letter-spacing:.04em"><span class="en">Total Win Amount</span><span class="zh">总盈利金额</span></div>
+          <div style="font-size:1.35rem;font-weight:800;color:#3fb950;margin-top:4px" id="winTotalAmt">—</div>
+        </div>
+        <div style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px">
+          <div style="font-size:.68rem;color:#8b98a5;text-transform:uppercase;letter-spacing:.04em"><span class="en">Winning Trades</span><span class="zh">盈利交易数</span></div>
+          <div style="font-size:1.35rem;font-weight:800;margin-top:4px" id="winCount">—</div>
+        </div>
+        <div style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px">
+          <div style="font-size:.68rem;color:#8b98a5;text-transform:uppercase;letter-spacing:.04em"><span class="en">Win Rate</span><span class="zh">胜率</span></div>
+          <div style="font-size:1.35rem;font-weight:800;margin-top:4px" id="winRate">—</div>
+        </div>
+        <div style="background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px">
+          <div style="font-size:.68rem;color:#8b98a5;text-transform:uppercase;letter-spacing:.04em"><span class="en">Average Win</span><span class="zh">平均盈利</span></div>
+          <div style="font-size:1.35rem;font-weight:800;color:#3fb950;margin-top:4px" id="winAvgAmt">—</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:.78rem;color:#9fb3c8"><span class="en">🥇 Biggest win: <b id="winBiggestLabel">—</b></span><span class="zh">🥇 最大盈利：<b id="winBiggestLabelZh">—</b></span></div>
+      <table class="legs" style="margin-top:14px">
+        <thead><tr>
+          <th><span class="en">Entry (est.)</span><span class="zh">建仓（估计）</span></th>
+          <th><span class="en">Stock</span><span class="zh">股票</span></th>
+          <th><span class="en">Expiry</span><span class="zh">到期日</span></th>
+          <th style="text-align:right"><span class="en">Legs</span><span class="zh">腿数</span></th>
+          <th style="text-align:right"><span class="en">Win Amount</span><span class="zh">盈利金额</span></th>
+        </tr></thead>
+        <tbody id="winTradesBody"></tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td colspan="4"><span class="en">Total</span><span class="zh">合计</span></td>
+          <td class="num" id="winTradesTotal" style="color:#3fb950">—</td>
+        </tr></tfoot>
+      </table>
+      <div class="note" style="margin-top:12px">
+        <span class="en">A "win" here is any <b>closed</b> trade with net premium collected greater than $0 (sorted biggest win first). Same underlying data as the Trade Log tab — the 4 still-open Iron Condors (AVGO/NVDA/QQQ/SMH) are excluded since they haven't closed yet. <b>Win Rate</b> = winning trades ÷ all closed trades shown in Trade Log.</span>
+        <span class="zh">此处「盈利」指任何净权利金收入大于$0的<b>已平仓</b>交易（按盈利金额从高到低排序）。数据来源与「交易记录」页签一致——目前仍持有的4个铁鹰（AVGO/NVDA/QQQ/SMH）已被排除，因为尚未平仓。<b>胜率</b> = 盈利交易数 ÷「交易记录」页签中全部已平仓交易数。</span>
+      </div>
+    </div>
+  </div><!-- /tab-win -->
+
   <div id="tab-deposits" style="display:none">
     <div class="condor" id="depositSummaryCard">
       <div class="c-head">
@@ -937,6 +985,7 @@ function setTab(t){
   document.getElementById('tab-ypnl').style.display = t==='ypnl'?'':'none';
   document.getElementById('tab-qpnl').style.display = t==='qpnl'?'':'none';
   document.getElementById('tab-trades').style.display = t==='trades'?'':'none';
+  document.getElementById('tab-win').style.display = t==='win'?'':'none';
   document.getElementById('tab-deposits').style.display = t==='deposits'?'':'none';
   document.getElementById('tab-premium').style.display = t==='premium'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
@@ -946,9 +995,10 @@ function setTab(t){
   document.getElementById('tb-ypnl').classList.toggle('active', t==='ypnl');
   document.getElementById('tb-qpnl').classList.toggle('active', t==='qpnl');
   document.getElementById('tb-trades').classList.toggle('active', t==='trades');
+  document.getElementById('tb-win').classList.toggle('active', t==='win');
   document.getElementById('tb-dep').classList.toggle('active', t==='deposits');
   document.getElementById('tb-prem').classList.toggle('active', t==='premium');
-  document.getElementById('acctValueCard').style.display = (t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='deposits'||t==='premium') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='deposits'||t==='premium') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='pnl' && typeof pnlChart !== 'undefined' && pnlChart) pnlChart.resize();
@@ -2009,6 +2059,32 @@ var ALL_TRADES = [
   }).join('');
   document.getElementById('allTradesTotal').textContent = fmtSigned2(total);
   document.querySelectorAll('.allTradesCount').forEach(function(el){ el.textContent = visible.length; });
+
+  // Win Trades — same closed-trade set (<=2 legs), filtered to premium > 0, sorted biggest win first.
+  var winBody = document.getElementById('winTradesBody');
+  if (winBody) {
+    function fmtPlain2(v){ return '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    var wins = visible.filter(function(r){ return r[4] > 0; }).sort(function(a,b){ return b[4] - a[4]; });
+    var winTotal = 0;
+    winBody.innerHTML = wins.map(function(r){
+      var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
+      winTotal += prem;
+      return '<tr><td>'+entry+'</td><td><b>'+sym+'</b></td><td>'+exp+'</td>' +
+        '<td class="num">'+legs+'</td>' +
+        '<td class="num"><span style="color:#3fb950;font-weight:700">+'+fmtPlain2(prem)+'</span></td></tr>';
+    }).join('');
+    document.getElementById('winTradesTotal').textContent = '+' + fmtPlain2(winTotal);
+    document.getElementById('winTotalAmt').textContent = '+' + fmtPlain2(winTotal);
+    document.getElementById('winCount').textContent = wins.length;
+    document.getElementById('winRate').textContent = visible.length ? (wins.length / visible.length * 100).toFixed(1) + '%' : '—';
+    document.getElementById('winAvgAmt').textContent = wins.length ? '+' + fmtPlain2(winTotal / wins.length) : '—';
+    if (wins.length) {
+      var biggest = wins[0];
+      var biggestTxt = biggest[1] + ' (' + biggest[2] + ') +' + fmtPlain2(biggest[4]);
+      document.getElementById('winBiggestLabel').textContent = biggestTxt;
+      document.getElementById('winBiggestLabelZh').textContent = biggestTxt;
+    }
+  }
 })();
 
 if (location.hash.indexOf('#pnl-') === 0) { setPnlYear(location.hash.slice(5)); setTab('pnl'); }
@@ -2017,6 +2093,7 @@ else if (location.hash === '#pnl') setTab('pnl');
 else if (location.hash === '#ypnl') setTab('ypnl');
 else if (location.hash === '#qpnl') setTab('qpnl');
 else if (location.hash === '#trades') setTab('trades');
+else if (location.hash === '#win') setTab('win');
 else if (location.hash === '#deposits') setTab('deposits');
 else if (location.hash === '#premium') setTab('premium');
 </script>
