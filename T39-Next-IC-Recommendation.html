@@ -41,6 +41,8 @@
   .verdict.vr { background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#f87171; }
   .verdict.vd { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.4); }
 
+  .pricechart-wrap { position:relative; height:150px; background:#12172e; border:1px solid #2a3158; border-radius:10px; }
+
   .strikes { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-top:12px; }
   .sk { background:#12172e; border:1px solid #2a3158; border-radius:8px; padding:7px 4px; text-align:center; }
   .sk .lbl { font-size:.62rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.03em; }
@@ -216,6 +218,8 @@ function buildCard(symbol){
       '<div><div class="cname">' + c.name + '</div></div>' +
     '</div>' +
     '<div class="cprice" id="price-' + symbol + '">···</div>' +
+    '<div class="cat-title" style="margin:14px 0 2px;font-size:.72rem;"><span class="en">6-Month Price vs Profit Zone</span><span class="zh">6个月股价 vs 盈利区</span></div>' +
+    '<div class="pricechart-wrap"><canvas id="pricechart-' + symbol + '"></canvas></div>' +
     '<div class="cat-title" style="margin:14px 0 6px;font-size:.72rem;"><span class="en">Suggested Strikes (10% / $5 wings)</span><span class="zh">建议行使价（10%／$5翼宽）</span></div>' +
     '<div class="strikes" id="strikes-' + symbol + '">' +
       '<div class="sk"><div class="lbl">Long P</div><div class="val">--</div></div>' +
@@ -240,18 +244,21 @@ function buildCard(symbol){
 }
 
 function fetchQuote(symbol){
-  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=1y';
+  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=6mo';
   return fetch(url).then(function(r){
     if(!r.ok) throw new Error('bad response');
     return r.json();
   }).then(function(d){
-    var meta = d && d.chart && d.chart.result && d.chart.result[0] && d.chart.result[0].meta;
+    var result = d && d.chart && d.chart.result && d.chart.result[0];
+    var meta = result && result.meta;
     if(!meta || typeof meta.regularMarketPrice !== 'number') throw new Error('no meta');
-    return meta;
+    var closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
+    return { meta: meta, closes: closes };
   });
 }
 
-function renderQuote(symbol, meta){
+function renderQuote(symbol, data){
+  var meta = data.meta;
   var price = meta.regularMarketPrice;
   var prevClose = meta.chartPreviousClose || meta.previousClose;
 
@@ -289,6 +296,81 @@ function renderQuote(symbol, meta){
   // Strike rail — same "breadboard" chart format as the NVDA/QQQ/AVGO/SMH condors on T29
   var wing = shortPut - longPut;
   drawRail(symbol, { lo: longPut - wing, hi: longCall + wing, longP: longPut, shortP: shortPut, shortC: shortCall, longC: longCall, price: price });
+
+  // 6-month price chart with the Profit Zone shaded — same "chart + Profit Zone band" format Paul's
+  // trade mentor Bang uses on his NVDA screenshots, built from the free Yahoo daily closes above.
+  drawPriceChart(symbol, data.closes, price, shortPut, shortCall);
+}
+
+function drawPriceChart(symbol, closes, price, shortPut, shortCall){
+  var canvas = document.getElementById('pricechart-' + symbol);
+  if(!canvas) return;
+  var wrap = canvas.parentElement;
+  var cssW = wrap.clientWidth, cssH = wrap.clientHeight;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  var series = (closes || []).filter(function(v){ return typeof v === 'number'; });
+  if(series.length < 2){
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.font = '12px Segoe UI, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('chart data unavailable', cssW / 2, cssH / 2);
+    return;
+  }
+
+  var padL = 8, padR = 50, padT = 12, padB = 8;
+  var plotW = cssW - padL - padR, plotH = cssH - padT - padB;
+  var lo = Math.min.apply(null, series.concat([shortPut]));
+  var hi = Math.max.apply(null, series.concat([shortCall]));
+  var pad = (hi - lo) * 0.08 || 1;
+  lo -= pad; hi += pad;
+  function X(i){ return padL + (i / (series.length - 1)) * plotW; }
+  function Y(v){ return padT + (1 - (v - lo) / (hi - lo)) * plotH; }
+
+  // Profit Zone band (between short put and short call)
+  ctx.fillStyle = 'rgba(16,185,129,.18)';
+  ctx.fillRect(padL, Y(shortCall), plotW, Y(shortPut) - Y(shortCall));
+  ctx.strokeStyle = '#10b981';
+  ctx.setLineDash([4, 3]);
+  ctx.lineWidth = 1;
+  [shortCall, shortPut].forEach(function(v){
+    ctx.beginPath(); ctx.moveTo(padL, Y(v)); ctx.lineTo(padL + plotW, Y(v)); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#10b981';
+  ctx.font = '700 10px Segoe UI, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('PROFIT ZONE', padL + plotW / 2, (Y(shortCall) + Y(shortPut)) / 2 + 3);
+
+  // Right-edge strike labels
+  ctx.textAlign = 'left';
+  ctx.fillText('$' + fmtStrike(shortCall), padL + plotW + 6, Y(shortCall) + 3);
+  ctx.fillText('$' + fmtStrike(shortPut), padL + plotW + 6, Y(shortPut) + 3);
+
+  // Price line
+  ctx.strokeStyle = '#8ea0ff';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  series.forEach(function(c, i){
+    var x = X(i), y = Y(c);
+    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Live price marker
+  var lx = X(series.length - 1), ly = Y(price);
+  ctx.fillStyle = '#f4c869';
+  ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.font = '700 10px Segoe UI, Arial, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('$' + fmtStrike(price), lx - 6, ly - 6 < padT + 8 ? ly + 14 : ly - 8);
 }
 
 // Draw the strike rail ("breadboard" chart) for a suggested (not-yet-opened) Iron Condor —
@@ -339,8 +421,8 @@ function fetchAllQuotes(){
   btn.disabled = true;
 
   var results = TICKERS.map(function(symbol){
-    return fetchQuote(symbol).then(function(meta){
-      renderQuote(symbol, meta);
+    return fetchQuote(symbol).then(function(data){
+      renderQuote(symbol, data);
       return true;
     }).catch(function(){
       var el = document.getElementById('price-' + symbol);
