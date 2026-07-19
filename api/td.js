@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       if (!/[.=]/.test(sym)) {
         try {
           const s = await fetchStooqDaily(sym);
-          out[sym] = { price: s.price, prevClose: s.prevClose, fiftyTwoWeekHigh: s.fiftyTwoWeekHigh, fiftyTwoWeekLow: s.fiftyTwoWeekLow, currency: 'USD', closes: s.closes };
+          out[sym] = { price: s.price, prevClose: s.prevClose, fiftyTwoWeekHigh: s.fiftyTwoWeekHigh, fiftyTwoWeekLow: s.fiftyTwoWeekLow, currency: 'USD', closes: s.closes, _src: 'stooq' };
           return;
         } catch (_) { /* fall through to Yahoo below */ }
       }
@@ -94,6 +94,7 @@ export default async function handler(req, res) {
               fiftyTwoWeekLow: m.fiftyTwoWeekLow ?? null,
               currency: m.currency ?? null,
               closes,
+              _src: 'yahoo',
             };
             return;
           }
