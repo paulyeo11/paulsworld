@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T39: Next Iron Condor Recommendation</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:560px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:680px; margin:0 auto; padding:22px 18px; }
+  .btn-row { display:flex; justify-content:center; gap:10px; margin-bottom:18px; }
+  .share-btn { display:block; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .refresh-btn { display:flex; align-items:center; gap:6px; background:rgba(16,185,129,.15); border:1.5px solid rgba(16,185,129,.5); color:#10b981; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .refresh-btn.spinning .rico { animation:spin .7s linear infinite; }
+  @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:18px; }
+  .ctxbox { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:22px; font-size:.85rem; color:rgba(255,255,255,.8); line-height:1.6; }
+  .ctxbox b { color:#f4c869; }
+
+  .live-ts { text-align:center; font-size:.72rem; color:rgba(255,255,255,.45); margin:-8px 0 18px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:14px; box-shadow:0 3px 12px rgba(0,0,0,.25); }
+  .card-hd { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .ticker-badge { flex-shrink:0; min-width:58px; text-align:center; background:#10b981; color:#0e1330; font-weight:800; font-size:.85rem; padding:8px 6px; border-radius:10px; }
+  .cname { font-weight:700; font-size:.98rem; }
+  .csub { color:rgba(255,255,255,.5); font-size:.76rem; margin-top:2px; }
+  .cprice { font-size:.85rem; margin-top:6px; font-variant-numeric:tabular-nums; }
+  .up { color:#10b981; font-weight:700; }
+  .down { color:#ef4444; font-weight:700; }
+  .dim { color:rgba(255,255,255,.4); }
+  .verdict { display:inline-block; margin-top:6px; font-size:.72rem; font-weight:800; padding:3px 9px; border-radius:8px; letter-spacing:.02em; }
+  .verdict.vg { background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#34d399; }
+  .verdict.vo { background:rgba(245,158,11,.18); border:1px solid rgba(245,158,11,.5); color:#fbbf24; }
+  .verdict.vr { background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#f87171; }
+  .verdict.vd { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); color:rgba(255,255,255,.4); }
+
+  .strikes { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-top:12px; }
+  .sk { background:#12172e; border:1px solid #2a3158; border-radius:8px; padding:7px 4px; text-align:center; }
+  .sk .lbl { font-size:.62rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.03em; }
+  .sk .val { font-size:.85rem; font-weight:800; color:#8ea0ff; margin-top:2px; }
+  .sk.short .val { color:#f4c869; }
+
+  .existing { margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.08); font-size:.78rem; color:rgba(255,255,255,.65); line-height:1.6; }
+  .existing b { color:rgba(255,255,255,.9); }
+
+  .warnbox { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.35); border-radius:12px; padding:14px 16px; margin:22px 0; font-size:.82rem; color:#fca5a5; line-height:1.6; }
+  .warnbox b { color:#f87171; }
+
+  .checklist { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px 18px; margin-bottom:22px; }
+  .checklist h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; margin-bottom:10px; }
+  .checklist ul { list-style:none; }
+  .checklist li { font-size:.85rem; color:rgba(255,255,255,.8); padding:6px 0; line-height:1.5; border-bottom:1px solid rgba(255,255,255,.06); }
+  .checklist li:last-child { border-bottom:none; }
+  .checklist li b { color:#f4c869; }
+
+  .cat-title { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin:24px 0 10px; padding-left:2px; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">🦅🌙</div>
+  <h1><span class="en">T39: Next Iron Condor Recommendation</span><span class="zh">T39：下一轮铁鹰策略建议</span></h1>
+  <p><span class="en">For tomorrow night's US session — based on the same 4 stocks you opened Iron Condors on: NVDA, QQQ, AVGO &amp; SMH.</span><span class="zh">为明晚的美股交易时段准备——基于你已开仓铁鹰的同4只股票：NVDA、QQQ、AVGO 与 SMH。</span></p>
+</div>
+
+<div class="wrap">
+  <div class="btn-row">
+    <button class="refresh-btn" id="refreshBtn" onclick="fetchAllQuotes()"><span class="rico">🔄</span><span class="en">Refresh</span><span class="zh">刷新</span></button>
+    <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  </div>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="live-ts" id="liveTs"><span class="en">Live price data loading…</span><span class="zh">实时价格数据加载中…</span></div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> Educational recommendation only, built from live Yahoo Finance data (delayed, best-effort) and your own trading rule (10% short-strike / $5 wings from T31). Verify price, IV Rank, liquidity and earnings date on IBKR's actual option chain before placing any trade.</span><span class="zh"><b>非投资建议。</b>本页仅为教育性建议，数据来自Yahoo Finance实时行情（有延迟，尽力而为），行使价则依你自己的交易法则（T31：短腿10%／翼宽$5）计算。下单前请务必在IBKR的实际期权链核实价格、IV排名、流动性与财报日期。</span>
+  </div>
+
+  <div class="ctxbox">
+    <span class="en"><b>Why these 4:</b> you started 4 Iron Condors on 17 Jul 2026 — NVDA (21 Aug exp), AVGO &amp; QQQ (28 Aug exp), SMH (21 Aug exp). This page checks tomorrow night's live price against those positions and, if you're considering a <b>second</b> round on the same names, suggests fresh strikes using your 10% short-strike / $5-wing rule.</span>
+    <span class="zh"><b>为何是这4只：</b>你已于2026年7月17日开仓4个铁鹰——NVDA（8月21日到期）、AVGO与QQQ（8月28日到期）、SMH（8月21日到期）。本页会核对明晚的实时价格与现有持仓，若你考虑在同一批标的上再开<b>第二轮</b>，会依你的短腿10%／翼宽$5法则给出新的建议行使价。</span>
+  </div>
+
+  <div id="cards"></div>
+
+  <div class="warnbox">
+    ⚠️ <span class="en"><b>Concentration warning:</b> NVDA + AVGO are SMH's two largest holdings, and QQQ is ~50% the same tech/semis. Stacking a 2nd Iron Condor round on all 4 again means doubling down on essentially <b>one correlated bet</b> (semiconductors/tech), not 4 independent ones. If NVDA or AVGO gaps on earnings or an AI-sector selloff, all 4 positions likely move together. Consider sizing down, skipping one or two names, or diversifying into T21's other candidates (SPY, MSFT, XLU) instead.</span>
+    <span class="zh">⚠️ <b>集中度提醒：</b>NVDA与AVGO是SMH的两大持仓，QQQ约50%也是相同的科技/半导体股。若在这4只标的上再开第二轮铁鹰，等于把仓位再次押在几乎<b>同一个相关性赌注</b>（半导体/科技）上，而非4个独立标的。若NVDA或AVGO因财报或AI板块抛售出现跳空，4个仓位很可能同步波动。建议考虑缩小仓位、跳过一两只标的，或改用T21清单中的其他标的（如SPY、MSFT、XLU）分散风险。</span>
+  </div>
+
+  <div class="checklist">
+    <h2><span class="en">✅ Before Opening Any New Leg Tomorrow Night</span><span class="zh">✅ 明晚开新仓前的检查清单</span></h2>
+    <ul>
+      <li><b><span class="en">Earnings check:</span><span class="zh">财报日期：</span></b> <span class="en">confirm NVDA's late-Aug report and AVGO's Sept report fall after your new expiry — an earnings gap can blow through both wings.</span><span class="zh">确认NVDA的8月底财报与AVGO的9月财报都落在新到期日之后——财报跳空可能击穿两侧翼。</span></li>
+      <li><b><span class="en">IV Rank:</span><span class="zh">IV排名：</span></b> <span class="en">check the live option chain on IBKR — this page can't see IV, only price position.</span><span class="zh">请在IBKR期权链查看实时数据——本页仅能显示价格位置，无法显示IV。</span></li>
+      <li><b><span class="en">Position sizing:</span><span class="zh">仓位大小：</span></b> <span class="en">you already hold 1 IC per ticker — a 2nd round doubles your exposure on each name.</span><span class="zh">你目前每只标的已持有1个铁鹰——再开第二轮会使每只标的的风险敞口翻倍。</span></li>
+      <li><b><span class="en">DTE 15 exit rule:</span><span class="zh">DTE15离场法则：</span></b> <span class="en">still applies from T31 — if price breaks &gt;10% against you after DTE 15, close all 4 legs.</span><span class="zh">T31法则仍适用——DTE15之后若价格反向突破10%，立即平掉全部4条腿。</span></li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    <span class="en">Educational tool · Live prices via Yahoo Finance (delayed)</span><span class="zh">教育性工具 · 实时价格来自Yahoo Finance（有延迟）</span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Current 4 Iron Condors — Breadboard</span><span class="zh">T29：目前4个铁鹰持仓——面包板</span></a><br>
+    <a href="T31-Bang-IronCondor-Training-Notes.html">🍞🦅 <span class="en">T31: 10% / $5 Wing Rule &amp; DTE 15 Exit</span><span class="zh">T31：10%／$5翼宽法则与DTE15离场</span></a><br>
+    <a href="T22-IronCondor-Bands.html">📐 <span class="en">T22: Support &amp; Resistance Band Calculator</span><span class="zh">T22：支撑与阻力区间计算器</span></a><br>
+    <a href="T21-IronCondor-Screener.html">🦅 <span class="en">T21: Iron Condor Stock Screener</span><span class="zh">T21：铁鹰策略选股清单</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+
+  <script src="/view-counter.js"></script>
+</div>
+
+<script>
+// Existing open Iron Condor legs, entered 17 Jul 2026 (from T29 options-breadboard.html)
+var POSITIONS = {
+  NVDA: { name:'Nvidia Corporation', expiry:'21 Aug 2026', longP:190, shortP:195, shortC:230, longC:235 },
+  QQQ:  { name:'Invesco QQQ Trust',  expiry:'28 Aug 2026', longP:675, shortP:680, shortC:745, longC:750 },
+  AVGO: { name:'Broadcom Inc.',      expiry:'28 Aug 2026', longP:340, shortP:350, shortC:430, longC:440 },
+  SMH:  { name:'VanEck Semiconductor ETF', expiry:'21 Aug 2026', longP:505, shortP:515, shortC:650, longC:660 }
+};
+var TICKERS = ['NVDA','QQQ','AVGO','SMH'];
+
+function fmtMoney(n){
+  if (n === null || n === undefined || isNaN(n)) return '--';
+  return '$' + Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function roundIncrement(price){
+  var p = Math.abs(price);
+  if (p >= 200) return 5;
+  if (p >= 100) return 2.5;
+  if (p >= 25) return 1;
+  return 0.5;
+}
+function roundToStrike(x, inc){ return Math.round(x / inc) * inc; }
+
+// Same mid-range verdict logic as T21's screener
+function igVerdict(rangePos){
+  if(typeof rangePos !== 'number'){
+    return {cls:'vd', en:'IG: check live', zh:'铁鹰：请查实时'};
+  }
+  if(rangePos >= 35 && rangePos <= 65){
+    return {cls:'vo', en:'⚠️ Mid-range but this group trends hard — widen wings', zh:'⚠️ 区间中部，但该组个股易走单边——请加宽翼距'};
+  }
+  if(rangePos >= 20 && rangePos <= 80){
+    return {cls:'vo', en:'⚠️ Near band edge — size down or skip this name', zh:'⚠️ 接近区间边缘——请减小仓位或跳过此标的'};
+  }
+  return {cls:'vr', en:'❌ At 52w extreme — high risk for a new short strike here', zh:'❌ 处于52周极值——此时开新短腿风险较高'};
+}
+
+function buildCard(symbol){
+  var pos = POSITIONS[symbol];
+  var div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML =
+    '<div class="card-hd">' +
+      '<div class="ticker-badge">' + symbol + '</div>' +
+      '<div><div class="cname">' + pos.name + '</div>' +
+      '<div class="csub"><span class="en">Existing IC expiry: ' + pos.expiry + '</span><span class="zh">现有铁鹰到期日：' + pos.expiry + '</span></div></div>' +
+    '</div>' +
+    '<div class="cprice" id="price-' + symbol + '">···</div>' +
+    '<div class="cat-title" style="margin:14px 0 6px;font-size:.72rem;"><span class="en">Suggested New Strikes (10% / $5 wings)</span><span class="zh">建议新行使价（10%／$5翼宽）</span></div>' +
+    '<div class="strikes" id="strikes-' + symbol + '">' +
+      '<div class="sk"><div class="lbl">Long P</div><div class="val">--</div></div>' +
+      '<div class="sk short"><div class="lbl">Short P</div><div class="val">--</div></div>' +
+      '<div class="sk short"><div class="lbl">Short C</div><div class="val">--</div></div>' +
+      '<div class="sk"><div class="lbl">Long C</div><div class="val">--</div></div>' +
+    '</div>' +
+    '<div class="existing" id="existing-' + symbol + '">' +
+      '<span class="en">Current open legs: <b>' + fmtMoney(pos.longP) + ' / ' + fmtMoney(pos.shortP) + ' / ' + fmtMoney(pos.shortC) + ' / ' + fmtMoney(pos.longC) + '</b> — checking live cushion…</span>' +
+      '<span class="zh">现有持仓四腿：<b>' + fmtMoney(pos.longP) + ' / ' + fmtMoney(pos.shortP) + ' / ' + fmtMoney(pos.shortC) + ' / ' + fmtMoney(pos.longC) + '</b> — 正在核对实时缓冲空间…</span>' +
+    '</div>';
+  return div;
+}
+
+function fetchQuote(symbol){
+  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?interval=1d&range=1y';
+  return fetch(url).then(function(r){
+    if(!r.ok) throw new Error('bad response');
+    return r.json();
+  }).then(function(d){
+    var meta = d && d.chart && d.chart.result && d.chart.result[0] && d.chart.result[0].meta;
+    if(!meta || typeof meta.regularMarketPrice !== 'number') throw new Error('no meta');
+    return meta;
+  });
+}
+
+function renderQuote(symbol, meta){
+  var pos = POSITIONS[symbol];
+  var price = meta.regularMarketPrice;
+  var prevClose = meta.chartPreviousClose || meta.previousClose;
+
+  var priceEl = document.getElementById('price-' + symbol);
+  var pctHtml = '';
+  if(typeof prevClose === 'number' && prevClose > 0){
+    var pct = ((price - prevClose) / prevClose) * 100;
+    var cls = pct >= 0 ? 'up' : 'down';
+    var arrow = pct >= 0 ? '▲' : '▼';
+    pctHtml = ' <span class="' + cls + '">' + arrow + Math.abs(pct).toFixed(2) + '%</span>';
+  }
+  var rangeHtml = '';
+  var rangePos;
+  var hi = meta.fiftyTwoWeekHigh, lo = meta.fiftyTwoWeekLow;
+  if(typeof hi === 'number' && typeof lo === 'number' && hi > lo){
+    rangePos = ((price - lo) / (hi - lo)) * 100;
+    rangeHtml = ' <span class="dim">· 52w pos: ' + rangePos.toFixed(0) + '%</span>';
+  }
+  var v = igVerdict(rangePos);
+  priceEl.innerHTML = fmtMoney(price) + pctHtml + rangeHtml + '<br><span class="verdict ' + v.cls + '"><span class="en">' + v.en + '</span><span class="zh">' + v.zh + '</span></span>';
+
+  // New suggested strikes: 10% OTM short strikes, $5 wings, rounded to broker increment
+  var inc = roundIncrement(price);
+  var shortPut = roundToStrike(price * 0.90, inc);
+  var shortCall = roundToStrike(price * 1.10, inc);
+  var longPut = roundToStrike(shortPut - 5, inc);
+  var longCall = roundToStrike(shortCall + 5, inc);
+  var skEl = document.getElementById('strikes-' + symbol);
+  skEl.innerHTML =
+    '<div class="sk"><div class="lbl">Long P</div><div class="val">' + fmtMoney(longPut) + '</div></div>' +
+    '<div class="sk short"><div class="lbl">Short P</div><div class="val">' + fmtMoney(shortPut) + '</div></div>' +
+    '<div class="sk short"><div class="lbl">Short C</div><div class="val">' + fmtMoney(shortCall) + '</div></div>' +
+    '<div class="sk"><div class="lbl">Long C</div><div class="val">' + fmtMoney(longCall) + '</div></div>';
+
+  // Cushion on the EXISTING open position vs live price
+  var cushionPut = ((price - pos.shortP) / price * 100).toFixed(1);
+  var cushionCall = ((pos.shortC - price) / price * 100).toFixed(1);
+  var existEl = document.getElementById('existing-' + symbol);
+  var tightPut = Math.abs(cushionPut) < 4;
+  var tightCall = Math.abs(cushionCall) < 4;
+  var tightNote = (tightPut || tightCall)
+    ? ' ⚠️'
+    : ' ✅';
+  existEl.innerHTML =
+    '<span class="en">Current open legs: <b>' + fmtMoney(pos.longP) + ' / ' + fmtMoney(pos.shortP) + ' / ' + fmtMoney(pos.shortC) + ' / ' + fmtMoney(pos.longC) + '</b> — live cushion to short put ' + cushionPut + '%, to short call ' + cushionCall + '%' + tightNote + '</span>' +
+    '<span class="zh">现有持仓四腿：<b>' + fmtMoney(pos.longP) + ' / ' + fmtMoney(pos.shortP) + ' / ' + fmtMoney(pos.shortC) + ' / ' + fmtMoney(pos.longC) + '</b> — 距短沽缓冲' + cushionPut + '%，距短购缓冲' + cushionCall + '%' + tightNote + '</span>';
+}
+
+function fetchAllQuotes(){
+  var btn = document.getElementById('refreshBtn');
+  var ts = document.getElementById('liveTs');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+
+  var results = TICKERS.map(function(symbol){
+    return fetchQuote(symbol).then(function(meta){
+      renderQuote(symbol, meta);
+      return true;
+    }).catch(function(){
+      var el = document.getElementById('price-' + symbol);
+      if(el) el.innerHTML = '<span class="dim">live data unavailable — check IBKR directly</span>';
+      return false;
+    });
+  });
+
+  Promise.all(results).then(function(oks){
+    var okCount = oks.filter(Boolean).length;
+    var now = new Date();
+    var stamp = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    if(okCount === 0){
+      ts.innerHTML = '<span class="en">⚠️ Live price data unavailable right now — check IBKR directly.</span><span class="zh">⚠️ 目前无法获取实时价格数据 — 请直接查看IBKR。</span>';
+    } else {
+      ts.innerHTML = '<span class="en">Live price data as of ' + stamp + '</span><span class="zh">实时价格数据更新于 ' + stamp + '</span>';
+    }
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  });
+}
+
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+
+(function init(){
+  var cardsWrap = document.getElementById('cards');
+  TICKERS.forEach(function(symbol){
+    cardsWrap.appendChild(buildCard(symbol));
+  });
+  fetchAllQuotes();
+})();
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
