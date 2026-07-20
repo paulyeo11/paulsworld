@@ -317,6 +317,10 @@
       <div class="c-meta"><span class="en">Current price (A) vs each condor's short put strike</span><span class="zh">现价（A）vs 各铁鹰卖出认沽行权价</span></div>
       <div></div>
     </div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
+      <span class="live-ts" id="putVarTs"></span>
+    </div>
     <table class="legs" style="margin-top:10px">
       <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
       <tbody id="putVarBody">
@@ -324,8 +328,8 @@
       </tbody>
     </table>
     <div class="note" style="margin-top:12px">
-      <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay).</span>
-      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟）。</span>
+      <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
+      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
     </div>
   </div>
 
@@ -1522,7 +1526,9 @@ function renderCut(){
 }
 function stampCut(){
   var now=new Date(), t=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  var el=document.getElementById('liveTs'); if(el) el.innerHTML='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
+  var html='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
+  var el=document.getElementById('liveTs'); if(el) el.innerHTML=html;
+  var el2=document.getElementById('putVarTs'); if(el2) el2.innerHTML=html;
   setLang(curLang);
 }
 
@@ -1635,8 +1641,11 @@ function loadAll(){
 renderSharePrices();
 fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
   STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; recordSharePrice(s.sym, q.price); } });
-  renderSharePrices();
+  renderSharePrices(); stampCut();
 }).catch(function(){});
+// Auto-refresh every 5 min while the page stays open — Yahoo's own data is ~15 min
+// delayed, so refreshing faster than that wouldn't show anything new.
+setInterval(loadAll, 5*60*1000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
