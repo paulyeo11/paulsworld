@@ -375,11 +375,18 @@ function drawPriceChart(symbol, closes, price, shortPut, shortCall){
   ctx.textAlign = 'right';
   ctx.fillText('$' + fmtStrike(price), lx - 6, ly - 6 < padT + 8 ? ly + 14 : ly - 8);
 
-  // X-axis label — the whole line above is the trailing 6 months of daily closes
-  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  // X-axis ticks — series spans 6 months ago (left) to now (right)
   ctx.font = '700 9px Segoe UI, Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('6M', padL + plotW / 2, padT + plotH + 14);
+  [6, 4, 2].forEach(function(monthsAgo){
+    var frac = 1 - monthsAgo / 6;
+    var tx = X(Math.round(frac * (series.length - 1)));
+    ctx.strokeStyle = 'rgba(255,255,255,.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(tx, padT + plotH); ctx.lineTo(tx, padT + plotH + 4); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.textAlign = frac <= 0.01 ? 'left' : 'center';
+    ctx.fillText(monthsAgo + 'M', tx, padT + plotH + 14);
+  });
 }
 
 // Draw the strike rail ("breadboard" chart) for a suggested (not-yet-opened) Iron Condor —
