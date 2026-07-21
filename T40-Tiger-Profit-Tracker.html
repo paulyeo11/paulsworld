@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T40: Tiger Profit-Take Tracker</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#5a3d0e); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.5rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:560px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:680px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:20px; }
+  .refresh-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:18px; }
+  .refresh-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); color:#fff; font-weight:700; padding:7px 18px; border-radius:20px; cursor:pointer; font-size:.8rem; }
+  .refresh-btn:active { transform:scale(.96); }
+  .live-ts { font-size:.72rem; color:rgba(255,255,255,.45); }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:16px; padding:20px; margin-bottom:16px; }
+  .card h3 { font-size:.95rem; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+
+  .pnl-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px; }
+  .pnl-usd { font-size:2rem; font-weight:800; }
+  .pnl-usd.pos { color:#34d399; } .pnl-usd.neg { color:#f87171; }
+  .pnl-sgd { font-size:.85rem; color:rgba(255,255,255,.55); }
+
+  .badge { display:inline-block; font-size:.72rem; font-weight:800; padding:5px 14px; border-radius:20px; letter-spacing:.02em; white-space:nowrap; margin-bottom:14px; }
+  .badge.building { background:rgba(255,255,255,.08); color:rgba(255,255,255,.6); border:1px solid rgba(255,255,255,.2); }
+  .badge.target { background:rgba(16,185,129,.18); color:#34d399; border:1px solid rgba(16,185,129,.5); }
+  .badge.trail-ok { background:rgba(16,185,129,.18); color:#34d399; border:1px solid rgba(16,185,129,.5); }
+  .badge.trail-warn { background:rgba(244,165,0,.18); color:#fbbf24; border:1px solid rgba(244,165,0,.5); }
+  .badge.trail-hit { background:rgba(239,68,68,.2); color:#f87171; border:1px solid rgba(239,68,68,.55); }
+
+  .gauge-wrap { margin:10px 0 6px; }
+  .gauge { position:relative; height:14px; border-radius:8px; background:linear-gradient(90deg,#2a3158 0%,#2a3158 100%); overflow:visible; }
+  .gauge-fill { position:absolute; top:0; left:0; height:100%; border-radius:8px; background:linear-gradient(90deg,#4a6cf7,#34d399); transition:width .5s ease; }
+  .gauge-target { position:absolute; top:-4px; width:2px; height:22px; background:#f4c869; }
+  .gauge-target::after { content:'$10k'; position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:.65rem; color:#f4c869; font-weight:700; white-space:nowrap; }
+  .gauge-labels { display:flex; justify-content:space-between; font-size:.7rem; color:rgba(255,255,255,.45); margin-top:8px; }
+
+  .rule-list { list-style:none; }
+  .rule-list li { display:grid; grid-template-columns:auto 1fr; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.06); align-items:start; }
+  .rule-list li:last-child { border-bottom:none; }
+  .rule-num { flex-shrink:0; width:26px; height:26px; border-radius:50%; background:rgba(244,200,105,.18); color:#f4c869; font-weight:800; font-size:.8rem; display:flex; align-items:center; justify-content:center; }
+  .rule-txt { font-size:.85rem; line-height:1.5; color:rgba(255,255,255,.85); }
+  .rule-txt b { color:#f4c869; }
+
+  .lesson { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.35); border-radius:12px; padding:14px 16px; font-size:.82rem; line-height:1.55; color:#fca5a5; }
+  .lesson b { color:#f87171; }
+
+  .peak-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+  .peak-box { background:rgba(255,255,255,.05); border-radius:10px; padding:10px 12px; text-align:center; }
+  .peak-box .pl { font-size:.66rem; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.03em; }
+  .peak-box .pv { font-size:1rem; font-weight:800; margin-top:3px; color:#f4c869; }
+  .reset-btn { display:block; margin:14px auto 0; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); color:rgba(255,255,255,.7); font-size:.72rem; font-weight:700; padding:6px 16px; border-radius:16px; cursor:pointer; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">🐯🎯</div>
+  <h1><span class="en">T40: Tiger Profit-Take Tracker</span><span class="zh">T40：老虎证券止盈追踪器</span></h1>
+  <p><span class="en">Live Open P&amp;L on my Tiger account vs my +$10k profit-take rule — so a big gain never round-trips back to zero again.</span><span class="zh">实时追踪老虎证券账户的浮动盈亏，对照我的 +$10,000 止盈规则 — 确保大额浮盈不会再次跌回归零。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  <div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is my own profit-take tracker for my Tiger Brokers account. Open P&amp;L comes from my own Tiger data export (may lag by up to a day) plus live prices where available. Always confirm the real number in the Tiger app before acting.</span><span class="zh"><b>非投资建议。</b>这是我自己老虎证券账户的止盈追踪工具。浮动盈亏数据来自我自己导出的老虎数据（可能有最多一天的延迟），并尽量结合实时价格。行动前请务必在老虎证券 App 中确认实际数字。</span>
+  </div>
+
+  <div class="refresh-row">
+    <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh</span><span class="zh">刷新</span></button>
+    <span class="live-ts" id="liveTs"></span>
+  </div>
+
+  <div class="card">
+    <h3>💰 <span class="en">Current Open P&amp;L</span><span class="zh">当前浮动盈亏</span></h3>
+    <div id="badgeWrap"></div>
+    <div class="pnl-row">
+      <div>
+        <div class="pnl-usd" id="pnlUsd">—</div>
+        <div class="pnl-sgd" id="pnlSgd">—</div>
+      </div>
+    </div>
+    <div class="gauge-wrap">
+      <div class="gauge">
+        <div class="gauge-fill" id="gaugeFill" style="width:0%;"></div>
+        <div class="gauge-target" style="left:66.7%;"></div>
+      </div>
+      <div class="gauge-labels"><span>$0</span><span><span class="en">gauge scaled to $15k</span><span class="zh">刻度至 $15,000</span></span><span>$15k+</span></div>
+    </div>
+    <div class="peak-row">
+      <div class="peak-box"><div class="pl"><span class="en">Peak Open P&amp;L Seen</span><span class="zh">历史最高浮盈</span></div><div class="pv" id="peakVal">—</div></div>
+      <div class="peak-box"><div class="pl"><span class="en">Trailing Stop Level</span><span class="zh">移动止盈线</span></div><div class="pv" id="stopVal">—</div></div>
+    </div>
+    <button class="reset-btn" onclick="resetPeak()">↺ <span class="en">Reset peak (new profit cycle)</span><span class="zh">重置峰值（开始新一轮）</span></button>
+  </div>
+
+  <div class="card">
+    <h3>📋 <span class="en">My Profit-Take Rules</span><span class="zh">我的止盈规则</span></h3>
+    <ul class="rule-list">
+      <li><div class="rule-num">1</div><div class="rule-txt"><span class="en"><b>Scale out in thirds.</b> At +$10k Open P&amp;L, close 1/3 of the position to lock in real cash. At +$15k, close another 1/3.</span><span class="zh"><b>分批止盈。</b>浮盈达到 +$10,000 时，先平掉三分之一仓位锁定现金。达到 +$15,000 时再平掉三分之一。</span></div></li>
+      <li><div class="rule-num">2</div><div class="rule-txt"><span class="en"><b>Trailing stop on the rest.</b> Once peak profit passes $10k, never let it give back more than 30% from the peak — that's the "Trailing Stop Level" above. If Open P&amp;L drops to that level, close everything.</span><span class="zh"><b>剩余仓位设移动止盈。</b>一旦峰值浮盈超过 $10,000，回撤幅度绝不超过峰值的 30%（即上方的"移动止盈线"）。一旦浮盈跌到该线，全部平仓。</span></div></li>
+      <li><div class="rule-num">3</div><div class="rule-txt"><span class="en"><b>No exceptions for "it might come back."</b> Greed to let a winner run without any stop is exactly what turned +$10k into $0 before.</span><span class="zh"><b>不要因为"可能还会涨回去"而破例。</b>正是这种贪心让获利仓位在没有止损的情况下，从 +$10,000 跌回归零。</span></div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>🧠 <span class="en">Lesson Learned</span><span class="zh">经验教训</span></h3>
+    <div class="lesson">
+      <span class="en"><b>Past cycle:</b> unrealized profit exceeded $10,000, then dropped suddenly to zero — not a slow bleed, a fast drop with no stop in place to catch it. This tracker exists so that next time Open P&amp;L crosses $10k, I actually act (scale out + trailing stop) instead of just watching it.</span>
+      <span class="zh"><b>过往经历：</b>浮动盈利曾超过 $10,000，随后迅速跌回归零 — 不是缓慢回落，而是快速下跌且当时没有设置止损。这个追踪工具的存在，就是为了确保下次浮盈再次突破 $10,000 时，我会真正采取行动（分批止盈 + 移动止盈线），而不是眼睁睁看着它跌回去。</span>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="en">Data from my Tiger export (T08) · Peak/stop tracked locally on this device</span><span class="zh">数据来自我的老虎导出 (T08)· 峰值/止盈线仅保存在本设备</span><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+
+  <script src="/view-counter.js"></script>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href, title=document.title;
+  if(navigator.share){ navigator.share({title:title,url:url}).catch(function(){}); }
+  else { navigator.clipboard.writeText(url).then(function(){
+    var t=document.getElementById('shareToast'); t.style.display='block';
+    setTimeout(function(){t.style.display='none';},2200); }); }
+}
+
+var DATA_URL = 'https://raw.githubusercontent.com/paulyeo11/Dynamic-Index/refs/heads/main/tiger_positions.json';
+var PRICE_API = '/api/td';
+var TARGET = 10000;
+var PEAK_KEY = 'tigerProfitPeak';
+
+function fmtUsd(n){
+  var sign = n>=0 ? '+' : '-';
+  return sign + '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtSgd(n){
+  var sign = n>=0 ? '+' : '-';
+  return sign + 'S$' + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
+}
+
+function getPeak(){
+  try { return parseFloat(localStorage.getItem(PEAK_KEY)) || 0; } catch(e){ return 0; }
+}
+function setPeak(v){
+  try { localStorage.setItem(PEAK_KEY, String(v)); } catch(e){}
+}
+function resetPeak(){
+  try { localStorage.removeItem(PEAK_KEY); } catch(e){}
+  loadAll();
+}
+
+function render(openPnlUSD, openPnlSGD, fetchedAt){
+  var badgeWrap = document.getElementById('badgeWrap');
+  var pnlUsdEl = document.getElementById('pnlUsd');
+  var pnlSgdEl = document.getElementById('pnlSgd');
+  var gaugeFill = document.getElementById('gaugeFill');
+  var peakValEl = document.getElementById('peakVal');
+  var stopValEl = document.getElementById('stopVal');
+
+  if(openPnlUSD===null){
+    pnlUsdEl.textContent = '—';
+    pnlSgdEl.textContent = '—';
+    return;
+  }
+
+  pnlUsdEl.textContent = fmtUsd(openPnlUSD);
+  pnlUsdEl.className = 'pnl-usd ' + (openPnlUSD>=0 ? 'pos' : 'neg');
+  pnlSgdEl.textContent = (openPnlSGD!==null ? fmtSgd(openPnlSGD) : '—') + (fetchedAt ? ' · ' + fetchedAt : '');
+
+  var pct = Math.max(0, Math.min(100, (openPnlUSD/15000)*100));
+  gaugeFill.style.width = pct + '%';
+
+  var peak = getPeak();
+  if(openPnlUSD > peak){ peak = openPnlUSD; setPeak(peak); }
+  peakValEl.textContent = peak>0 ? fmtUsd(peak) : '—';
+
+  var badgeHtml, stopLevel = null;
+  if(peak >= TARGET){
+    stopLevel = peak * 0.7;
+    stopValEl.textContent = fmtUsd(stopLevel);
+    if(openPnlUSD <= stopLevel){
+      badgeHtml = '<span class="badge trail-hit">⛔ <span class="en">TRAILING STOP HIT — close everything now</span><span class="zh">⛔ 已触发移动止盈线 — 立即全部平仓</span></span>';
+    } else if(openPnlUSD < TARGET){
+      badgeHtml = '<span class="badge trail-warn">⚠️ <span class="en">Below $10k again — was above target, now retreating</span><span class="zh">⚠️ 已跌破 $10,000 — 曾达标现正回落</span></span>';
+    } else {
+      badgeHtml = '<span class="badge trail-ok">✅ <span class="en">Above $10k target — trailing stop active</span><span class="zh">✅ 已超过 $10,000 目标 — 移动止盈线已启动</span></span>';
+    }
+  } else {
+    stopValEl.textContent = '—';
+    if(openPnlUSD >= TARGET){
+      badgeHtml = '<span class="badge target">🎯 <span class="en">TARGET HIT — scale out 1/3 now</span><span class="zh">🎯 已达标 — 立即平掉三分之一</span></span>';
+    } else {
+      badgeHtml = '<span class="badge building">⏳ <span class="en">Building toward $10k target</span><span class="zh">⏳ 正朝 $10,000 目标累积</span></span>';
+    }
+  }
+  badgeWrap.innerHTML = badgeHtml;
+}
+
+function loadAll(){
+  fetch(DATA_URL + '?t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var positions = data.positions || [];
+      var usdSgd = 1.35;
+
+      function finish(openPnlUSD){
+        var openPnlSGD = openPnlUSD!==null ? openPnlUSD * usdSgd : null;
+        render(openPnlUSD, openPnlSGD, data.fetchedAt);
+        stamp();
+      }
+
+      var accountPnl = (data.accountOpenPnlUSD != null) ? parseFloat(data.accountOpenPnlUSD) : null;
+
+      var fxSyms = ['USDSGD=X'];
+      fetch(PRICE_API + '?symbols=' + encodeURIComponent(fxSyms.join(',')))
+        .then(function(r){ return r.json(); })
+        .then(function(map){
+          if(map && map['USDSGD=X'] && map['USDSGD=X'].price) usdSgd = parseFloat(map['USDSGD=X'].price);
+        })
+        .catch(function(){})
+        .then(function(){
+          if(accountPnl !== null){ finish(accountPnl); return; }
+          // fallback: sum unrealizedPnl across positions (already in each position's stated currency-adjusted USD figure if present)
+          var sum = positions.reduce(function(s,p){ return s + (parseFloat(p.unrealizedPnlUSD || p.unrealizedPnl) || 0); }, 0);
+          finish(positions.length ? sum : null);
+        });
+    })
+    .catch(function(){
+      render(null, null, null);
+      stamp();
+    });
+}
+
+function stamp(){
+  var now=new Date(), t=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('liveTs').innerHTML='<span class="en">Checked '+t+'</span><span class="zh">检查于 '+t+'</span>';
+}
+
+loadAll();
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
