@@ -215,6 +215,7 @@
     <button class="tab-btn" id="tb-dep" onclick="setTab('deposits')">💰 <span class="en">Deposit/MVC</span><span class="zh">存款/市值变动</span></button>
     <button class="tab-btn" id="tb-prem" onclick="setTab('premium')">💵 <span class="en">Premium</span><span class="zh">权利金</span></button>
     <button class="tab-btn" id="tb-perf" onclick="setTab('perf')">📈 <span class="en">Overall Performance</span><span class="zh">整体表现</span></button>
+    <button class="tab-btn" id="tb-tasks" onclick="setTab('tasks')">✅ <span class="en">Task List</span><span class="zh">任务清单</span></button>
   </div>
 
   <div class="condor" id="acctValueCard">
@@ -1270,6 +1271,25 @@
     </div>
   </div><!-- /tab-perf -->
 
+  <div id="tab-tasks" style="display:none">
+    <div class="condor" id="tasksCard" style="margin-top:16px">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">✅ <span class="en">Task List</span><span class="zh">任务清单</span></div>
+        <div class="c-meta"><span class="en">Reminders &amp; to-dos for this portfolio</span><span class="zh">此投资组合的提醒与待办事项</span></div>
+        <div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <input id="taskInput" type="text" placeholder="Add a task…" style="flex:1;background:#0d1117;border:1px solid rgba(255,255,255,.15);color:#e6edf3;border-radius:9px;padding:10px 12px;font-size:.88rem" onkeydown="if(event.key==='Enter')addTask()">
+        <button onclick="addTask()" style="background:#f59e0b;color:#0d1117;border:none;border-radius:9px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.85rem">+ <span class="en">Add</span><span class="zh">添加</span></button>
+      </div>
+      <ul id="taskListUl" style="list-style:none;padding:0;margin:16px 0 0"></ul>
+      <div class="note" style="margin-top:12px">
+        <span class="en">Saved on this device only (browser local storage) — tasks won't sync across phone/notebook.</span>
+        <span class="zh">仅保存在本设备（浏览器本地存储）——任务不会在手机/笔记本之间同步。</span>
+      </div>
+    </div>
+  </div><!-- /tab-tasks -->
+
   <footer><span class="en">Paul's World · Options Breadboard · updated 20 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月20日</span></footer>
 </div>
 
@@ -1285,6 +1305,65 @@ function setLang(l){
   if (typeof acctChart !== 'undefined' && acctChart) setAcctPeriod(curAcctPeriod);
 }
 
+// Task List
+var TASKS_KEY = 'T29_taskList';
+function getTasks(){
+  var raw = localStorage.getItem(TASKS_KEY);
+  if(raw) return JSON.parse(raw);
+  var seeded = [{id:Date.now(), text:'9:30 PM – Trade FDS option: sell call option', done:false, added:'21 Jul 2026'}];
+  localStorage.setItem(TASKS_KEY, JSON.stringify(seeded));
+  return seeded;
+}
+function saveTasks(tasks){ localStorage.setItem(TASKS_KEY, JSON.stringify(tasks)); }
+function renderTasks(){
+  var tasks = getTasks();
+  var ul = document.getElementById('taskListUl');
+  ul.innerHTML = '';
+  if(!tasks.length){
+    ul.innerHTML = '<li style="color:#8b98a5;font-size:.85rem;padding:8px 0">No tasks yet.</li>';
+    return;
+  }
+  tasks.forEach(function(t){
+    var li = document.createElement('li');
+    li.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = t.done;
+    cb.style.cssText = 'width:18px;height:18px;flex:none;cursor:pointer';
+    cb.onclick = function(){ toggleTask(t.id); };
+    var span = document.createElement('span');
+    span.textContent = t.text;
+    span.style.cssText = 'flex:1;font-size:.88rem;' + (t.done ? 'text-decoration:line-through;color:#8b98a5' : 'color:#e6edf3');
+    var del = document.createElement('button');
+    del.textContent = '✕';
+    del.style.cssText = 'background:none;border:none;color:#f85149;font-size:1rem;cursor:pointer;padding:2px 6px';
+    del.onclick = function(){ deleteTask(t.id); };
+    li.appendChild(cb); li.appendChild(span); li.appendChild(del);
+    ul.appendChild(li);
+  });
+}
+function addTask(){
+  var input = document.getElementById('taskInput');
+  var text = input.value.trim();
+  if(!text) return;
+  var tasks = getTasks();
+  tasks.push({id:Date.now(), text:text, done:false, added:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})});
+  saveTasks(tasks);
+  input.value = '';
+  renderTasks();
+}
+function toggleTask(id){
+  var tasks = getTasks();
+  tasks.forEach(function(t){ if(t.id===id) t.done = !t.done; });
+  saveTasks(tasks);
+  renderTasks();
+}
+function deleteTask(id){
+  var tasks = getTasks().filter(function(t){ return t.id!==id; });
+  saveTasks(tasks);
+  renderTasks();
+}
+
 function toggleQA(h3){
   var body = h3.nextElementSibling;
   var open = body.style.display !== 'none';
@@ -1296,6 +1375,7 @@ setLang('en');
 // Tabs
 var cutLoaded = false;
 var depositsLoaded = false;
+var tasksLoaded = false;
 function setTab(t){
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
   document.getElementById('tab-accbal').style.display = t==='accbal'?'':'none';
@@ -1310,6 +1390,7 @@ function setTab(t){
   document.getElementById('tab-deposits').style.display = t==='deposits'?'':'none';
   document.getElementById('tab-premium').style.display = t==='premium'?'':'none';
   document.getElementById('tab-perf').style.display = t==='perf'?'':'none';
+  document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-accbal').classList.toggle('active', t==='accbal');
   document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
@@ -1323,9 +1404,11 @@ function setTab(t){
   document.getElementById('tb-dep').classList.toggle('active', t==='deposits');
   document.getElementById('tb-prem').classList.toggle('active', t==='premium');
   document.getElementById('tb-perf').classList.toggle('active', t==='perf');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='perf') ? 'none' : '';
+  document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
+  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='perf'||t==='tasks') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
+  if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
   if(t==='pnl' && typeof pnlChart !== 'undefined' && pnlChart) pnlChart.resize();
   if(t==='ypnl' && typeof yearlyChart !== 'undefined' && yearlyChart) yearlyChart.resize();
   if(t==='qpnl' && typeof qtrChart !== 'undefined' && qtrChart) qtrChart.resize();
