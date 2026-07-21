@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT10 Niseko Day 12 — 21 Jul 2026</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/japan-icon.png">
+<link rel="icon" type="image/png" href="/japan-icon.png">
+<meta property="og:image" content="https://paulsworld.vercel.app/japan-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  line-height: 1.6;
+}
+.home-btn {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.75em; font-weight: 400;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.home-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.plan-btn {
+  position: fixed; bottom: 16px; right: 92px; z-index: 999;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35); text-decoration: none; font-size: 0.75em;
+  padding: 5px 10px; border-radius: 20px; white-space: nowrap;
+  backdrop-filter: blur(6px);
+}
+.plan-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
+.breadcrumb { display:flex; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); padding:56px 16px 0; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f0a500; }
+
+.header {
+  padding: 10px 16px 14px;
+  background: linear-gradient(135deg, #0d1117, #0d1a11);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.header h1 { font-size: 1.3em; font-weight: 800; color: #fff; line-height: 1.25; }
+.header h1 span.gold { color: #f0a500; }
+.header-sub { font-size: 0.88em; color: #8b949e; margin-top: 4px; }
+.header-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.back-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35);
+  color: #f0a500; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.day-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  color: #6ee7b7; font-size: 0.78em; font-weight: 700;
+  padding: 5px 12px; border-radius: 14px; text-decoration: none;
+}
+.share-btn {
+  font-size: 0.78em; padding: 5px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-weight: 700; cursor: pointer;
+}
+.share-toast {
+  display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px;
+  font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+}
+
+.day-banner {
+  margin: 14px 16px 0; padding: 10px 14px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; font-size: 0.85em; color: #6ee7b7; line-height: 1.55;
+}
+
+.content { max-width: 640px; margin: 0 auto; padding: 0 16px 30px; }
+
+.section-title {
+  font-size: 0.78em; font-weight: 800; color: #f0a500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin: 26px 0 12px;
+}
+
+/* LOG / EMPTY STATE */
+.log-card {
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 26px 20px; text-align: center;
+}
+.log-icon { font-size: 2.2em; margin-bottom: 10px; }
+.log-title { font-size: 1.02em; font-weight: 700; color: #e6edf3; }
+.log-sub { font-size: 0.87em; color: #8b949e; margin-top: 8px; line-height: 1.65; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+/* PHOTO JOURNAL */
+.photo-journal { display: flex; flex-direction: column; gap: 24px; margin-top: 14px; }
+.pj-item { background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-media { position: relative; }
+.pj-item img, .pj-item video { width: 100%; display: block; }
+.pj-media-note { background: linear-gradient(135deg, #0d1a11, #132417); display: flex; align-items: center; justify-content: center; padding: 30px 0; cursor: default; }
+.pj-note-icon { font-size: 2.6em; }
+.pj-date { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.6); color: #f4c869; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 6px; }
+.pj-play-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,0.15); pointer-events: none; }
+.pj-body { padding: 14px 16px; }
+.pj-num { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.92rem; color: #c9d1d9; line-height: 1.65; }
+
+/* NO GPS NOTE */
+.gps-note { font-size: 0.78em; color: #8b949e; margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #f0a500; line-height: 1.6; }
+
+/* LIGHTBOX */
+.lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.97);
+  z-index: 10000; align-items: center; justify-content: center;
+}
+.lightbox.active { display: flex; }
+.lightbox img, .lightbox video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.lightbox-caption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0) 100%);
+  color: #eee; font-size: 0.88rem; text-align: center; font-style: italic;
+  padding: 60px 16px 22px;
+}
+.lightbox-close { position: absolute; top: 18px; right: 22px; z-index: 2; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+.footer-note {
+  text-align: center; padding: 18px 16px; font-size: 0.72em;
+  color: #484f58; font-family: monospace;
+}
+
+/* EMBEDDED ANIMATED MAP */
+.map-fullscreen-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4);
+  color: #f0a500; font-size: 0.82em; font-weight: 700;
+  padding: 9px 16px; border-radius: 18px; cursor: pointer;
+  margin: 0 0 10px; width: 100%;
+}
+.map-wrap { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+#map { width: 100%; height: 58vh; }
+#map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border-radius: 0 !important;
+}
+.map-wrap.map-fullscreen-wrap { border-radius: 0; border: none; }
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px;
+}
+.controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: #161b22; border-radius: 0 0 14px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-top: none;
+}
+#status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+#timeLabel { font-weight: 700; color: #58a6ff; }
+.play-btn {
+  background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4);
+  color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px;
+  border-radius: 14px; cursor: pointer; white-space: nowrap;
+}
+.speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-top: 8px; }
+.speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+.speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+.speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+.speed-control.fs-overlay {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000;
+  background: rgba(13,17,23,0.92); backdrop-filter: blur(6px);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0;
+}
+.legend {
+  margin-top: 14px; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9;
+  background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+.popup-card { font-family: -apple-system, system-ui, sans-serif; }
+.popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+.popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+.popup-card .pmeta { font-size: 0.72em; color: #57606a; }
+</style>
+<script src="/bilingual.js"></script>
+<style>
+.ja{display:none!important}
+body.lang-ja .ja{display:inline!important}
+body.lang-ja .zh{display:none!important}
+body.lang-ja .en{display:none!important}
+.ja-block{display:none!important}
+body.lang-ja .ja-block{display:block!important}
+body.lang-ja .en-block{display:none!important}
+</style>
+<script>
+(function(){
+  function setLang3(lang){
+    document.body.classList.remove('lang-zh','lang-ja');
+    if(lang==='zh') document.body.classList.add('lang-zh');
+    if(lang==='ja') document.body.classList.add('lang-ja');
+    document.querySelectorAll('.pw-lang-btn').forEach(function(btn,i){
+      btn.classList.toggle('active',(lang==='en'&&i===0)||(lang==='zh'&&i===1)||(lang==='ja'&&i===2));
+    });
+    try{ localStorage.setItem('pw-lang', lang); }catch(e){}
+  }
+  window.setLang = setLang3;
+  function addJaButton(){
+    var wrap = document.querySelector('.pw-lang-toggle');
+    if(!wrap || wrap.querySelector('.pw-lang-ja-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 'pw-lang-btn pw-lang-ja-btn';
+    btn.innerHTML = '&#x1F1EF;&#x1F1F5; 日本語';
+    btn.onclick = function(){ setLang3('ja'); };
+    wrap.appendChild(btn);
+    var saved;
+    try{ saved = localStorage.getItem('pw-lang'); }catch(e){}
+    if(saved === 'ja') setLang3('ja');
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', addJaButton);
+  } else {
+    addJaButton();
+  }
+})();
+</script>
+</head>
+<body>
+
+<a href="/SP06.html" class="plan-btn">📅 20-Year Plan</a>
+<a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+
+<div class="breadcrumb">
+  <a href="/index.html"><span class="en">Travel Stories</span><span class="zh">旅行故事</span></a>
+  <span class="sep">›</span>
+  <a href="MT10.html"><span class="en">MT10 Hokkaido Trip</span><span class="zh">MT10 北海道之旅</span></a>
+  <span class="sep">›</span>
+  <span class="current"><span class="en">Niseko Day 12</span><span class="zh">二世谷第十二天</span></span>
+</div>
+
+<div class="header">
+  <h1>🇯🇵 MT10 · <span class="gold">Niseko Day 12</span></h1>
+  <div class="header-sub"><span class="en">Lake Hill Farm garden visit · Tue, 21 Jul 2026</span><span class="zh">Lake Hill Farm 花园游览 · 2026年7月21日（周二）</span><span class="ja">レークヒル・ファーム 庭園訪問 · 2026年7月21日（火）</span></div>
+  <div class="header-actions">
+    <a href="MT10.html" class="back-chip">📅 <span class="en">MT10 Trip Hub</span><span class="zh">MT10 行程主页</span><span class="ja">MT10 旅行ハブ</span></a>
+    <a href="MT10-niseko-day11.html" class="day-chip">📔 <span class="en">Niseko Day 11</span><span class="zh">二世谷第十一天</span><span class="ja">ニセコ11日目</span></a>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span><span class="ja">シェア</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<div class="day-banner" id="dayBanner">
+  🕓 <span class="en">Calculating status…</span><span class="zh">计算中…</span><span class="ja">計算中…</span>
+</div>
+
+<div class="content">
+
+  <div class="day-banner" style="background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:#9ecbff;">
+    🌷 <span class="en">A quieter day around <strong>Toyako (Lake Toya)</strong> — visited <strong>Lake Hill Farm レークヒル・ファーム</strong>, a garden &amp; farm café overlooking the lake and Mt Yotei. Paul's note: "this garden very nice."</span><span class="zh"><strong>洞爺湖畔悠闲的一天</strong> — 游览了俯瞰洞爺湖与羊蹄山的花园餐厅 <strong>Lake Hill Farm（レークヒル・ファーム）</strong>。Paul 说："这个花园很漂亮。"</span><span class="ja"><strong>洞爺湖周辺でのんびりした一日</strong> — 洞爺湖と羊蹄山を望む庭園カフェ <strong>レークヒル・ファーム</strong> を訪問。Paulのメモ：「この庭はとても素敵」。</span>
+  </div>
+
+  <div class="section-title">🗺️ <span class="en">Route Map — Today's Stops</span><span class="zh">路线地图 — 今日站点</span><span class="ja">経路マップ — 今日の立ち寄り先</span></div>
+  <button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span><span class="ja">全画面マップを開く</span></button>
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+      <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+      <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+    </div>
+    <a href="#" id="btn-directions" target="_blank" style="position:absolute;bottom:10px;left:10px;z-index:1000;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.35);"><svg id="compassNeedle" width="22" height="22" viewBox="0 0 24 24" style="transition:transform .3s linear;"><polygon points="12,2 15,12 12,10 9,12" fill="#ff3b30"/><polygon points="12,22 15,12 12,14 9,12" fill="#8e8e93"/></svg></a>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span><span class="ja">マップを閉じる</span></button>
+
+  <div class="controls">
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span></button>
+    <div id="status"><span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">10:00</span></div>
+  </div>
+  <div class="speed-control" id="speedControl">
+    <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span><span class="ja">速度</span></label>
+    <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+    <span id="speedVal">1&times;</span>
+  </div>
+  <div class="legend">
+    <span class="dot" style="background:#f85149;"></span><span class="en">Hotel — start &amp; drive home</span><span class="zh">酒店 — 出发与返回</span><span class="ja">ホテル — 出発・帰宅</span>&nbsp;&nbsp;
+    <span class="dot" style="background:#3fb950;"></span><span class="en">Garden / farm</span><span class="zh">花园/农场</span><span class="ja">庭園・ファーム</span>
+  </div>
+
+  <div class="section-title">📏 <span class="en">Distance Between Stops</span><span class="zh">各站点间距离</span><span class="ja">各地点間の距離</span></div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;font-size:0.85em;">
+      <thead>
+        <tr style="background:rgba(240,165,0,0.12);">
+          <th style="text-align:left;padding:10px 12px;color:#f0a500;font-weight:800;"><span class="en">Leg</span><span class="zh">路段</span><span class="ja">区間</span></th>
+          <th style="text-align:right;padding:10px 12px;color:#f0a500;font-weight:800;"><span class="en">Distance</span><span class="zh">距离</span><span class="ja">距離</span></th>
+          <th style="text-align:right;padding:10px 12px;color:#f0a500;font-weight:800;"><span class="en">Driving Time</span><span class="zh">车程</span><span class="ja">走行時間</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:10px 12px;color:#e6edf3;">A &rarr; B <span style="color:#8b949e;font-size:0.85em;">(<span class="en">Hotel &rarr; Lake Hill Farm</span><span class="zh">酒店 &rarr; Lake Hill Farm</span><span class="ja">ホテル &rarr; レークヒル・ファーム</span>)</span></td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~35 km</td>
+          <td style="padding:10px 12px;text-align:right;color:#e6edf3;font-weight:700;">~45 <span class="en">min</span><span class="zh">分钟</span><span class="ja">分</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="gps-note">📍 <span class="en">General estimate for the Kutchan/Niseko → Toyako drive (not derived from Lake Hill Farm's exact pin, since it isn't verified yet — see note below). Driving time is a typical-speed estimate, not live traffic.</span><span class="zh">此为倶知安/二世谷至洞爺湖町的大致车程估算（并非根据Lake Hill Farm的精确定位计算，因其坐标尚未核实 — 见下方说明）。车程为一般车速估算，非实时路况。</span><span class="ja">倶知安・ニセコ⇄洞爺湖町間のおおまかな走行目安です（レークヒル・ファームの正確なピンから算出したものではありません。座標は未確認 — 下記参照）。走行時間は一般的な速度の目安で、リアルタイムの交通状況ではありません。</span></div>
+
+  <div class="gps-note" style="border-left-color:#f85149;">⚠️ <span class="en"><strong>Lake Hill Farm's exact GPS pin is not yet verified.</strong> The marker below is placed near Toyako town for reference only — don't trust its exact position. Use the <strong>address-based Google/Baidu/Amap buttons</strong> under Stop B for real directions (they route off the address text, not a guessed coordinate). Send a screenshot of the correct Google Maps pin and I'll lock in the exact coordinate.</span><span class="zh"><strong>Lake Hill Farm 的精确GPS坐标尚未核实。</strong>下方标记仅为参考，大致放在洞爺湖町附近 — 请勿完全信任其精确位置。请使用 B 站点下方<strong>基于地址的Google/百度/高德按钮</strong>进行真实导航（它们根据地址文字导航，而非猜测的坐标）。发我正确的Google地图定位截图，我就会锁定精确坐标。</span><span class="ja"><strong>レークヒル・ファームの正確なGPSピンはまだ確認されていません。</strong>以下のマーカーは参考として洞爺湖町付近に配置しているだけです — 正確な位置とは思わないでください。実際のルート案内には B地点下の<strong>住所ベースのGoogle/百度/高德ボタン</strong>をご利用ください（座標の推測ではなく住所テキストから案内されます）。正しいGoogleマップのピンのスクリーンショットを送っていただければ、正確な座標に修正します。</span></div>
+
+  <div class="section-title">🏨 <span class="en">Starting Point: A. Torifito Hotel &amp; Pod Niseko</span><span class="zh">出发点：A. 二世谷托里菲托酒店</span><span class="ja">出発地点：A. トリフィート・ホテル＆ポッド ニセコ</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en">Start Niseko Day 12 at <strong>A. Torifito Hotel &amp; Pod Niseko トリフィート・ホテル＆ポッド ニセコ</strong> — Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045. Drove south towards Toyako for a garden day.</span>
+    <span class="zh">二世谷第十二天从 <strong>A. 二世谷托里菲托酒店（トリフィート・ホテル＆ポッド ニセコ）</strong> 出发 — 地址：北海道倶知安町南11条西1-46-1，邮编044-0045。向南开往洞爺湖町，安排一天花园之旅。</span>
+    <span class="ja">ニセコ12日目は<strong>A. トリフィート・ホテル＆ポッド ニセコ</strong>から出発 — 〒044-0045 北海道倶知安町南11条西1-46-1。庭園めぐりの一日のため、南の洞爺湖町へ。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">🌻 <span class="en">Today's Visit: B. Lake Hill Farm レークヒル・ファーム</span><span class="zh">今日游览：B. Lake Hill Farm（レークヒル・ファーム）</span><span class="ja">今日の訪問：B. レークヒル・ファーム</span></div>
+  <div class="log-sub" style="margin-bottom:6px;text-align:left;max-width:none;">
+    <span class="en"><strong>B. Lake Hill Farm レークヒル・ファーム</strong> — 127 Hanawa, Toyako, Abuta District, Hokkaido 049-5724, Japan. A hillside garden &amp; farm café above Lake Toya, with views across the lake to Mt Yotei. Paul's take: <strong>"this garden very nice."</strong></span>
+    <span class="zh"><strong>B. Lake Hill Farm（レークヒル・ファーム）</strong> — 地址：北海道虻田郡洞爺湖町花和127，邮编049-5724。位于洞爺湖畔山坡上的花园与农场咖啡馆，可眺望湖面与羊蹄山。Paul 的评价：<strong>"这个花园很漂亮。"</strong></span>
+    <span class="ja"><strong>B. レークヒル・ファーム</strong> — 〒049-5724 北海道虻田郡洞爺湖町花和127。洞爺湖を見下ろす高台の庭園・ファームカフェで、湖越しに羊蹄山を望める。Paulの感想：<strong>「この庭はとても素敵」</strong>。</span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0%2C%20127%20Hanawa%2C%20Toyako%2C%20Abuta%20District%2C%20Hokkaido%20049-5724%2C%20Japan" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>
+    <a href="https://map.baidu.com/search/%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/search?keyword=%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+
+  <div class="section-title">📔 <span class="en">Today's Log</span><span class="zh">今日日记</span><span class="ja">今日の日記</span></div>
+  <div class="log-card" id="emptyLog" style="display:none;">
+    <div class="log-icon">🌷</div>
+    <div class="log-title"><span class="en">Nothing logged yet</span><span class="zh">今天还没有日记内容</span><span class="ja">まだ記録なし</span></div>
+    <div class="log-sub"><span class="en">Send photos from Lake Hill Farm and I'll add them to this log automatically.</span><span class="zh">把Lake Hill Farm的照片发给我，我会自动加进这份日记。</span><span class="ja">レークヒル・ファームの写真を送っていただければ、自動でこの日記に追加します。</span></div>
+  </div>
+  <div class="photo-journal" id="galleryGrid"></div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <video id="lbVideo" controls playsinline style="display:none;"></video>
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<div class="map-vc" style="text-align:center;padding:6px 16px;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT10 Niseko Day 12 · Japan 2026 · paulsworld.vercel.app</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+// ── ROUTE MAP — hotel to Lake Hill Farm ──
+const stops = [
+  { name: "Torifito Hotel & Pod Niseko トリフィート・ホテル＆ポッド ニセコ", lat: 42.9007, lng: 140.7537, time: "10:00", type: "start",
+    icon: "🏠", verifiedGps: true,
+    address: "Minami 11 Jo Nishi 1-46-1, Kutchan-cho, Hokkaido 044-0045, Japan",
+    mapUrl: "https://maps.google.com/?q=42.9007,140.7537&label=Torifito+Hotel+%26+Pod+Niseko",
+    baiduUrl: "https://map.baidu.com/search/%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA",
+    amapUrl: "https://uri.amap.com/marker?position=140.7537,42.9007&name=%E5%80%B6%E7%9F%A5%E5%AE%89%E7%94%BA%E4%BD%8F%E6%89%80",
+    note: "Start of Niseko Day 12 — central Kutchan, heading south to Toyako." },
+  { name: "Lake Hill Farm レークヒル・ファーム", lat: 42.5985, lng: 140.7930, time: "10:45", type: "nature",
+    icon: "🌻", verifiedGps: false,
+    address: "127 Hanawa, Toyako, Abuta District, Hokkaido 049-5724, Japan",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0%2C%20127%20Hanawa%2C%20Toyako%2C%20Abuta%20District%2C%20Hokkaido%20049-5724%2C%20Japan",
+    baiduUrl: "https://map.baidu.com/search/%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0",
+    amapUrl: "https://uri.amap.com/search?keyword=%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0",
+    note: "Hillside garden & farm café above Lake Toya — 'this garden very nice.'" }
+];
+
+const map = L.map('map', { zoomControl: true });
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+function stopLabel(i) { return String.fromCharCode(65 + i); }
+
+const colorFor = { start: '#f85149', end: '#f85149', road: '#f0883e', nature: '#3fb950', water: '#58a6ff', food: '#f0a500', camp: '#06b6d4', church: '#a78bfa' };
+const fullLine = stops.map(s => [s.lat, s.lng]);
+let fullRoadPoints = fullLine;
+
+// ── REAL-ROAD ROUTING via OSRM — the straight dashed line is just a placeholder
+// until the actual driving route (with its turns) comes back and replaces it.
+const roadSegs = [];
+function pathCumulativeDistances(points) {
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i - 1][0];
+    const dy = points[i][1] - points[i - 1][1];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  return cum;
+}
+function pointAtFraction(seg, frac) {
+  const { points, cum } = seg;
+  const total = cum[cum.length - 1];
+  if (total === 0) return points[0];
+  const target = frac * total;
+  for (let i = 1; i < cum.length; i++) {
+    if (target <= cum[i] || i === cum.length - 1) {
+      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+      return [
+        points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac,
+        points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac
+      ];
+    }
+  }
+  return points[points.length - 1];
+}
+async function fetchRoadSegment(a, b) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok') return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  } catch (e) {}
+  return [[a.lat, a.lng], [b.lat, b.lng]];
+}
+let routeLine = L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+async function buildRoads() {
+  const allPoints = [];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const pts = await fetchRoadSegment(stops[i], stops[i + 1]);
+    roadSegs[i] = { points: pts, cum: pathCumulativeDistances(pts) };
+    allPoints.push(...pts);
+  }
+  if (allPoints.length) {
+    map.removeLayer(routeLine);
+    routeLine = L.polyline(allPoints, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+    fullRoadPoints = allPoints;
+    if (!playing) map.fitBounds(fullRoadPoints, { padding: [40, 40] });
+  }
+}
+buildRoads();
+
+function buildMapButtons(s) {
+  if (!s.mapUrl) return '';
+  const dirLabel = '🧭 Directions';
+  const dirDest = s.verifiedGps ? (s.lat + ',' + s.lng) : (s.address ? encodeURIComponent(s.name + ', ' + s.address) : (s.lat + ',' + s.lng));
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="https://www.google.com/maps/dir/?api=1&destination=' + dirDest + '&travelmode=driving" target="_blank" onclick="event.stopPropagation()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">' + dirLabel + '</a>' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    (s.baiduUrl ? '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+    (s.amapUrl ? '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+    '</div>';
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+function buildPopupHtml(s, i) {
+  const caption = s.name + (s.imgCredit ? ' (' + s.imgCredit + ')' : '');
+  const imgHtml = s.img ? '<img class="popup-photo" src="' + s.img + '" style="cursor:pointer;" data-src="' + escapeAttr(s.img) + '" data-caption="' + escapeAttr(caption) + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + (s.icon || '📍') + '</div>';
+  return '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + stopLabel(i) + '. ' + s.name + (s.verifiedGps === false ? ' ⚠️' : '') + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    (s.address ? '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' : '') +
+    buildMapButtons(s) +
+    '</div>';
+}
+
+const markerRefs = [];
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:26px;height:26px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.78rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + stopLabel(i) + '</div>',
+      className: '', iconSize: [26, 26], iconAnchor: [13, 13]
+    })
+  }).addTo(map);
+  marker.bindPopup(buildPopupHtml(s, i));
+  markerRefs.push(marker);
+});
+
+function bindPopupPhotoClick(popupEl) {
+  const photo = popupEl && popupEl.querySelector('.popup-photo');
+  if (photo) photo.onclick = function () { openLightboxSrc(photo.getAttribute('data-src'), photo.getAttribute('data-caption')); };
+}
+map.on('popupopen', function (e) { bindPopupPhotoClick(e.popup.getElement()); });
+
+map.fitBounds(fullRoadPoints, { padding: [40, 40] });
+
+const lastStop = stops[stops.length - 1];
+const waypointStops = stops.slice(0, -1);
+document.getElementById('btn-directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + (lastStop.verifiedGps ? (lastStop.lat + ',' + lastStop.lng) : encodeURIComponent(lastStop.name + ', ' + lastStop.address)) +
+  (waypointStops.length ? '&waypoints=' + waypointStops.map(s => s.verifiedGps ? (s.lat + ',' + s.lng) : encodeURIComponent(s.name + ', ' + (s.address || ''))).join('|') : '') +
+  '&travelmode=driving';
+
+function openMapFullscreen() {
+  if (window.self !== window.top) {
+    window.top.location.href = window.location.href;
+    return;
+  }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+// 🚗 mover marker — drives the route.
+const carIcon = L.divIcon({ html: '<span id="moverEmoji" style="display:inline-block;transition:transform .2s linear;">🚗</span>', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+let lastFocusedLeg = -1;
+function focusLeg(legIndex) {
+  if (legIndex === lastFocusedLeg) return;
+  lastFocusedLeg = legIndex;
+}
+
+function bearingDeg(lat1, lng1, lat2, lng2) {
+  const rad = Math.PI / 180;
+  const y = Math.sin((lng2 - lng1) * rad) * Math.cos(lat2 * rad);
+  const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos((lng2 - lng1) * rad);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function setCarHeading(bearing) {
+  const el = document.getElementById('moverEmoji');
+  if (el) el.style.transform = 'rotate(' + ((bearing + 90) % 360) + 'deg)';
+}
+if (stops.length > 1) setCarHeading(bearingDeg(stops[0].lat, stops[0].lng, stops[1].lat, stops[1].lng));
+
+function toMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+let speedMultiplier = 1;
+let playing = false;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => {
+  speedMultiplier = parseFloat(speedSlider.value);
+  speedVal.textContent = speedMultiplier + '×';
+});
+
+const statusEl = document.getElementById('status');
+const timeLabel = document.getElementById('timeLabel');
+
+let lastArrivedIndex = -1;
+function checkArrival(targetMin) {
+  for (let i = 0; i < stops.length; i++) {
+    if (targetMin >= toMinutes(stops[i].time) && i > lastArrivedIndex) {
+      lastArrivedIndex = i;
+      markerRefs[i].openPopup();
+    }
+  }
+}
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span><span class="ja">一時停止</span>';
+    requestAnimationFrame(step);
+  } else {
+    btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span><span class="ja">再生</span>';
+  }
+}
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const seg = roadSegs[i];
+      let lat, lng, bearing;
+      if (seg) {
+        const pt = pointAtFraction(seg, segP);
+        const aheadPt = pointAtFraction(seg, Math.min(segP + 0.02, 1));
+        lat = pt[0]; lng = pt[1];
+        bearing = (aheadPt[0] !== pt[0] || aheadPt[1] !== pt[1])
+          ? bearingDeg(pt[0], pt[1], aheadPt[0], aheadPt[1])
+          : bearingDeg(stops[i].lat, stops[i].lng, stops[i + 1].lat, stops[i + 1].lng);
+      } else {
+        lat = stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP;
+        lng = stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP;
+        bearing = bearingDeg(stops[i].lat, stops[i].lng, stops[i + 1].lat, stops[i + 1].lng);
+      }
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0');
+      const mm = String(curMin % 60).padStart(2, '0');
+      return { lat, lng, timeStr: `${hh}:${mm}`, bearing, legIndex: i };
+    }
+  }
+  const last = stops.length - 1;
+  const bearing = bearingDeg(stops[last - 1].lat, stops[last - 1].lng, stops[last].lat, stops[last].lng);
+  return { lat: stops[last].lat, lng: stops[last].lng, timeStr: stops[last].time, bearing, legIndex: last - 1 };
+}
+
+function step() {
+  if (!playing) return;
+  progress += 0.0016 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    setCarHeading(pos.bearing);
+    timeLabel.textContent = pos.timeStr;
+    checkArrival(endMin);
+    statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span><span class="ja">到着</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span><span class="ja">リプレイ中…</span>';
+    setTimeout(() => {
+      progress = 0;
+      lastArrivedIndex = -1;
+      lastFocusedLeg = -1;
+      map.closePopup();
+      map.flyToBounds(fullRoadPoints, { padding: [40, 40], duration: 0.7 });
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span><span class="ja">移動中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      requestAnimationFrame(step);
+    }, 1400);
+    return;
+  }
+  const pos = interpolate(progress);
+  focusLeg(pos.legIndex);
+  mover.setLatLng([pos.lat, pos.lng]);
+  setCarHeading(pos.bearing);
+  document.getElementById('timeLabel').textContent = pos.timeStr;
+  checkArrival(startMin + progress * totalMin);
+  requestAnimationFrame(step);
+}
+
+// ── DAY STATUS BANNER ──
+function updateBanner() {
+  var start = new Date('2026-07-21T00:00:00+09:00');
+  var end = new Date('2026-07-22T00:00:00+09:00');
+  var now = new Date();
+  var banner = document.getElementById('dayBanner');
+  if (now < start) {
+    var days = Math.ceil((start - now) / 86400000);
+    banner.innerHTML = '🕓 <span class="en">Niseko Day 12 is in <strong>' + days + ' day' + (days === 1 ? '' : 's') + '</strong>.</span><span class="zh">距离二世谷第十二天还有 <strong>' + days + '</strong> 天。</span><span class="ja">ニセコ12日目まであと<strong>' + days + '日</strong>。</span>';
+  } else if (now >= start && now < end) {
+    banner.innerHTML = '🟢 <span class="en"><strong>Niseko Day 12 is today!</strong> Visiting Lake Hill Farm.</span><span class="zh"><strong>今天就是二世谷第十二天！</strong>正在游览Lake Hill Farm。</span><span class="ja"><strong>今日がニセコ12日目！</strong>レークヒル・ファームを訪問中。</span>';
+    banner.style.background = 'rgba(16,185,129,0.15)';
+    banner.style.borderColor = 'rgba(16,185,129,0.4)';
+  } else {
+    banner.innerHTML = '✅ <span class="en">Niseko Day 12 is complete — see the log below.</span><span class="zh">二世谷第十二天已结束 — 请看下方日记。</span><span class="ja">ニセコ12日目は終了 — 下記の日記をご覧ください。</span>';
+    banner.style.background = 'rgba(240,165,0,0.1)';
+    banner.style.borderColor = 'rgba(240,165,0,0.3)';
+  }
+}
+updateBanner();
+
+// ── PHOTO JOURNAL DATA ──
+const galleryPhotos = [
+  { type: 'note', icon: '🌻', date: '21 Jul 2026', dateZh: '2026年7月21日', dateJa: '2026年7月21日',
+    story: '<span class="en">Visited <strong>Lake Hill Farm レークヒル・ファーム</strong> today, 127 Hanawa, Toyako. Paul\'s note: "this garden very nice" — a hillside garden &amp; farm café above Lake Toya, with views towards Mt Yotei. No photo yet — send one and it\'ll be added here.</span><span class="zh">今天游览了 <strong>Lake Hill Farm（レークヒル・ファーム）</strong>，地址：洞爺湖町花和127。Paul的评价："这个花园很漂亮" — 一座俯瞰洞爺湖、可眺望羊蹄山的山坡花园与农场咖啡馆。暂无照片 — 发一张过来就会加进这里。</span><span class="ja">今日は<strong>レークヒル・ファーム</strong>（洞爺湖町花和127）を訪問。Paulのメモ：「この庭はとても素敵」— 洞爺湖を見下ろし羊蹄山を望む高台の庭園・ファームカフェ。写真はまだなし — 送っていただければここに追加します。</span>',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0%2C%20127%20Hanawa%2C%20Toyako%2C%20Abuta%20District%2C%20Hokkaido%20049-5724%2C%20Japan',
+    baiduUrl: 'https://map.baidu.com/search/%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0',
+    amapUrl: 'https://uri.amap.com/search?keyword=%E3%83%AC%E3%83%BC%E3%82%AF%E3%83%92%E3%83%AB%E3%83%BB%E3%83%95%E3%82%A1%E3%83%BC%E3%83%A0' }
+];
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var emptyLog = document.getElementById('emptyLog');
+  grid.innerHTML = '';
+  if (galleryPhotos.length === 0) {
+    emptyLog.style.display = 'block';
+    return;
+  }
+  emptyLog.style.display = 'none';
+  galleryPhotos.forEach(function(p, i) {
+    var item = document.createElement('div');
+    item.className = 'pj-item';
+    var media = p.type === 'video'
+      ? '<video src="' + p.src + '" poster="' + (p.poster || '') + '" muted playsinline preload="metadata"></video>'
+      : p.type === 'note'
+      ? '<div class="pj-note-icon">' + (p.icon || '📝') + '</div>'
+      : '<img src="' + p.src + '" alt="" loading="lazy">';
+    var dateBadge = p.date ? '<div class="pj-date"><span class="en">' + p.date + '</span><span class="zh">' + (p.dateZh || p.date) + '</span><span class="ja">' + (p.dateJa || p.date) + '</span></div>' : '';
+    media = '<div class="pj-media' + (p.type === 'note' ? ' pj-media-note' : '') + '">' + media + dateBadge + '</div>';
+    var mapBtn = '';
+    if (p.mapUrl) {
+      mapBtn = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">' +
+        '<a href="' + p.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+        (p.baiduUrl ? '<a href="' + p.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>' : '') +
+        (p.amapUrl ? '<a href="' + p.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>' : '') +
+        '</div>';
+    }
+    item.innerHTML = media +
+      '<div class="pj-body">' +
+      '<div class="pj-num">' + (p.type === 'video' ? 'Video' : p.type === 'note' ? 'Note' : 'Photo') + ' ' + String(i + 1).padStart(2, '0') + ' of ' + galleryPhotos.length + '</div>' +
+      '<div class="pj-text">' + p.story + '</div>' +
+      mapBtn +
+      '</div>';
+    if (p.type !== 'note') item.onclick = function () { openLightbox(i); };
+    grid.appendChild(item);
+  });
+}
+renderGallery();
+
+// ── AUTO-PLAY MAP ON LOAD ──
+togglePlay();
+
+// ── LIGHTBOX (gallery) ──
+function openLightbox(i) {
+  var p = galleryPhotos[i];
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  if (p.type === 'video') {
+    img.style.display = 'none';
+    video.style.display = 'block';
+    video.poster = p.poster || '';
+    video.src = p.src;
+    video.play().catch(function () {});
+  } else {
+    video.pause();
+    video.style.display = 'none';
+    img.style.display = 'block';
+    img.src = p.src;
+  }
+  document.getElementById('lbCaption').textContent = (p.caption || '') + (p.date ? '  ·  ' + p.date : '');
+  document.getElementById('lightbox').classList.add('active');
+}
+function openLightboxSrc(src, caption) {
+  var img = document.getElementById('lbImg');
+  var video = document.getElementById('lbVideo');
+  video.pause();
+  video.style.display = 'none';
+  img.style.display = 'block';
+  img.src = src;
+  document.getElementById('lbCaption').textContent = caption || '';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lbVideo').pause();
+}
+document.getElementById('lightbox').addEventListener('click', function (e) { if (e.target === this) closeLightbox(); });
+
+// ── SHARE ──
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
