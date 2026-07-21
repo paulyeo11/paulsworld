@@ -34,7 +34,7 @@ Whenever Paul says **"update IBKR data"** (or any of the trigger phrases above),
 ## IG (Iron Condor) Cushion Watch — Log
 - **2026-07-17:** Dashboard "Share Price vs Selling Put" check flagged **NVDA** (⚠️ Tight, $202.81 vs 195P, +4.01% variance) and **QQQ** (⚠️ Tight, $695.33 vs 680P, +2.25% variance) as close to their short put strike. **AVGO** (+5.95%) and **SMH** (+8.06%) were ✅ Safe. Summary emailed as a draft to paul11ipad@gmail.com (Gmail MCP only creates drafts, not sends — Paul reviews/sends manually).
 - **2026-07-17: Started IC (Iron Condor) option position(s).** Entry date marked per Paul's request.
-- **2026-07-21: SPY 4-leg IC setup proposed** at spot $744.86 (live IBKR quote). Est. strikes (spot-based, not yet confirmed off chain): Sell 715P / Buy 705P / Sell 770C / Buy 780C, $10 wings, 30–45 DTE, target credit ~$3.00–3.50/spread (~1/3 width). Paul to confirm exact 16-delta strikes off the IBKR options chain before entry.
+- **2026-07-21: SPY 4-leg IC confirmed off IBKR chain.** Aug31'26 (41 DTE) expiry: Sell 715P / Buy 705P / Sell 770C / Buy 780C, $10 wings both sides. Credit ~$349 (mid, ~35% of width), Max Loss $647, Breakevens 711.50 / 773.50 vs spot $744.95 (4.5% cushion below, 3.8% above). IBKR ticket confirmed as valid Iron Condor before entry.
 
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
