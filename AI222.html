@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI222: Chat vs Code — Why My Website Updates Itself</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #2740b8;
+      --blue-deep: #1b2a78;
+      --blue-light: #e0e7ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .home-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 100;
+      background: var(--blue-dark); color: white; text-decoration: none;
+      font-size: 0.85em; font-weight: 600; padding: 10px 18px; border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(39,64,184,0.35); transition: transform 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    .lang-toggle { position: fixed; top: 16px; right: 16px; z-index: 100; display: flex; gap: 6px; }
+    .lang-btn {
+      padding: 8px 16px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(27,42,120,0.6); color: rgba(255,255,255,0.75); font-size: 0.8em;
+      font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(6px);
+    }
+    .lang-btn.active { background: #f4c430; border-color: #f4c430; color: #1a1a2e; }
+
+    .hero {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 50%, #4a6cf7 100%);
+      min-height: 55vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 90px 24px 60px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%);
+    }
+    .hero-dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 30px 30px; }
+    .hero-inner { position: relative; z-index: 2; max-width: 720px; }
+    .hero-tag {
+      display: inline-block; background: rgba(74,108,247,0.3); border: 1px solid rgba(255,255,255,0.4);
+      color: #c7d2fe; font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 16px;
+    }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8em, 5vw, 3em); font-weight: 900; color: white; line-height: 1.25; margin-bottom: 20px; }
+    .hero h1 span { color: #fbbf6e; }
+    .hero-sub { color: rgba(255,255,255,0.85); font-size: 1.05em; font-style: italic; max-width: 560px; margin: 0 auto 28px; }
+    .hero-meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .hero-meta span { color: rgba(255,255,255,0.75); font-size: 0.85em; }
+
+    .share-btn {
+      display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px;
+      cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem;
+      z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    .article-wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .lead {
+      background: white; border-radius: 16px; padding: 32px 36px; margin: -30px auto 40px;
+      position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.10); border-left: 5px solid var(--blue);
+      font-size: 1.1em; font-style: italic; color: var(--blue-deep); line-height: 1.9;
+    }
+
+    .section { margin-bottom: 44px; }
+    .section h2 {
+      font-family: 'Playfair Display', serif; font-size: 1.6em; color: var(--ink);
+      margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--blue-light);
+    }
+    .section p { margin-bottom: 16px; }
+
+    .pull-quote {
+      border-left: 4px solid var(--accent); padding: 16px 24px; margin: 32px 0;
+      font-family: 'Playfair Display', serif; font-size: 1.2em; font-style: italic;
+      color: var(--ink); background: #fff7f0; border-radius: 0 10px 10px 0;
+    }
+
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .compare-box { padding: 22px 20px; border-radius: 14px; border: 2px solid var(--blue-light); background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .compare-box.code { border-color: var(--blue); background: #f0f4ff; }
+    .compare-box.chat { border-color: var(--accent); background: #fff7f0; }
+    .compare-box h3 { font-family: 'Playfair Display', serif; font-size: 1.05em; margin-bottom: 10px; }
+    .compare-box.code h3 { color: var(--blue-dark); }
+    .compare-box.chat h3 { color: #c0622a; }
+    .compare-box p { font-size: 0.92em; color: #444; margin-bottom: 0; }
+    @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+
+    .session-list { list-style: none; padding: 0; margin: 20px 0; counter-reset: session; }
+    .session-list li {
+      counter-increment: session; padding: 16px 18px 16px 58px; position: relative; margin-bottom: 12px;
+      background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--blue);
+    }
+    .session-list li::before {
+      content: counter(session); position: absolute; left: 14px; top: 18px; width: 30px; height: 30px;
+      background: var(--blue); color: white; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 0.85em;
+    }
+    .session-list li strong { color: var(--blue-dark); }
+    .session-list li .tag {
+      display: inline-block; font-size: 0.72em; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+    }
+
+    .checklist { list-style: none; padding: 0; margin: 20px 0; }
+    .checklist li {
+      padding: 12px 16px 12px 44px; position: relative; margin-bottom: 10px; background: #f0fdf4;
+      border: 1.5px solid #86efac; border-radius: 10px; font-size: 0.95em; color: #14532d;
+    }
+    .checklist li::before { content: '\2713'; position: absolute; left: 16px; top: 11px; color: #16a34a; font-weight: 700; }
+
+    .pages-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .page-card {
+      background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--blue); text-decoration: none; color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s; display: block;
+    }
+    .page-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .page-card .icon { font-size: 1.4em; margin-bottom: 6px; }
+    .page-card strong { display: block; color: var(--blue-dark); font-size: 0.95em; margin-bottom: 4px; }
+    .page-card span { font-size: 0.8em; color: var(--muted); }
+
+    .closing {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 100%); color: white; border-radius: 16px;
+      padding: 36px; margin-top: 48px; text-align: center;
+    }
+    .closing h2 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-bottom: 14px; color: #fbbf6e; }
+    .closing p { color: rgba(255,255,255,0.88); line-height: 1.8; margin-bottom: 10px; }
+    .closing p:last-child { margin: 0; }
+
+    .divider { text-align: center; margin: 36px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 12px; }
+
+    footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.85em; border-top: 1px solid #e5e7eb; }
+
+    .en { display: block; }
+    .zh { display: none; }
+    span.en { display: inline; }
+    span.zh { display: none; }
+    body.lang-zh .en { display: none; }
+    body.lang-zh .zh { display: block; }
+    body.lang-zh span.en { display: none; }
+    body.lang-zh span.zh { display: inline; }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .pages-row { grid-template-columns: 1fr; }
+      .hero-meta { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a target="_blank" class="home-btn" href="https://paulsworld.vercel.app/">&#127968; Home</a>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">&#127468;&#127463; English</button>
+    <button class="lang-btn" onclick="setLang('zh')">&#127464;&#127475; &#20013;&#25991;</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">&#129302; My AI Journey &middot; Article 25</div>
+      <h1 class="en">AI222: Chat vs Code &mdash; Why <span>My Website Updates Itself</span></h1>
+      <h1 class="zh">AI222&#65306;Chat&#8203;&#20026;&#20160;&#20040;<span>&#25105;&#30340;&#32593;&#31449;&#33021;&#33258;&#25191;&#26356;&#26032;</span></h1>
+      <p class="hero-sub en">Someone asked me why my website updates itself the moment I ask, with no Vercel key, no dashboard, no copy-pasting. The answer is one word: Code.</p>
+      <p class="hero-sub zh">有人问我，为什么我的网站只要我一开口就会自己更新&mdash;&mdash;不用Vercel密钥，不用后台，也不用复制粘贴。答案就一个词：Code。</p>
+      <div class="hero-meta">
+        <span>&#9999;&#65039; Paul Yeo</span>
+        <span>&#128197; 21 Jul 2026</span>
+        <span>&#9200; 3 min read</span>
+      </div>
+      <button class="share-btn" onclick="shareThisPage()">&#128279; Share</button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">&#9989; Link copied!</div>
+
+  <div class="article-wrap">
+
+    <div class="lead">
+      <span class="en">&ldquo;Chat vs Code major difference. Code can help to update website automatically without asking for Vercel API key.&rdquo; That one line I typed to myself is the whole article. It's the difference between an AI I talk to, and an AI that actually reaches into my repo and pushes the change live.</span>
+      <span class="zh">&#8220;Chat&#21644;Code&#26377;&#20010;&#37325;&#22823;&#21306;&#21035;&#12290;Code&#33021;&#33258;&#21160;&#26356;&#26032;&#32593;&#31449;&#65292;&#26681;&#26412;&#19981;&#38656;&#35201;Vercel API&#23494;&#38053;&#12290;&#8221;&#25105;&#33258;&#24049;&#20889;&#19979;&#30340;&#36825;&#19968;&#21477;&#35805;&#65292;&#23601;&#26159;&#36825;&#31687;&#25991;&#31456;&#30340;&#20840;&#37096;&#20869;&#23481;&#12290;&#36825;&#26159;&#25105;&#32842;&#22825;&#30340;AI&#65292;&#21644;&#30495;&#27491;&#20239;&#25187;&#36827;&#25105;&#20179;&#24211;&#12289;&#25226;&#20462;&#25913;&#25512;&#19978;&#32447;&#30340;AI&#20043;&#38388;&#30340;&#21306;&#21035;&#12290;</span>
+    </div>
+
+    <div class="section">
+      <h2><span class="en">&#129300; Why I Never Have to Give a Vercel Key</span><span class="zh">&#129300; &#20026;&#20160;&#20040;&#25105;&#20174;&#26410;&#32473;&#36807;Vercel&#23494;&#38053;</span></h2>
+      <p class="en">My site, paulsworld.vercel.app, is already wired so Vercel watches my GitHub repo and re-deploys automatically the instant something new lands on the <code>main</code> branch. That connection was set up once, months ago, using my own GitHub login — never an API key sitting in chat or in a file.</p>
+      <p class="zh">我的网站paulsworld.vercel.app早就设定好，Vercel会盯着我的GitHub仓库，只要<code>main</code>分支有新内容，就会立刻自动重新部署。这个连接几个月前就用我自己的GitHub账号设置好了&mdash;&mdash;从来没有把API密钥留在聊天记录或任何文件里。</p>
+      <p class="en">So the "key" was never the missing piece. The missing piece was always: who can actually push a file into that GitHub repo in the first place?</p>
+      <p class="zh">所以&#8220;密钥&#8221;从来都不是缺的那一环。真正的关键始终是：到底谁能把文件真正推送进那个GitHub仓库？</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128172; Chat vs &#128187; Code</span><span class="zh">&#128172; Chat &#8203;&#23545;&#27604; &#128187; Code</span></h2>
+      <div class="compare">
+        <div class="compare-box chat">
+          <h3><span class="en">&#128172; Chat-only Claude</span><span class="zh">&#128172; &#32842;&#22825;&#26399; Claude</span></h3>
+          <p class="en">Lives inside claude.ai. It has no filesystem, no git, no direct line into my GitHub repo. At best it hands me code to copy-paste myself, or calls an API I've separately connected and given credentials to.</p>
+          <p class="zh">只存在于claude.ai网页里。它没有文件系统，没有git，也无法直接连到我的GitHub仓库。它顶多把代码给我，让我自己复制粘贴，或者调用我另外连接、并授权过的API。</p>
+        </div>
+        <div class="compare-box code">
+          <h3><span class="en">&#128187; Claude Code</span><span class="zh">&#128187; Claude Code</span></h3>
+          <p class="en">Runs with real access to my repo — it reads files, edits them, and pushes commits with <code>git</code>/<code>gh</code> using my own already-authenticated login. Vercel sees the push and redeploys on its own. No key ever changes hands.</p>
+          <p class="zh">对我的仓库有真实的访问权限&mdash;&mdash;能读文件、改文件，并用我自己早已登入验证过的<code>git</code>/<code>gh</code>直接推送提交。Vercel看到推送后会自动重新部署。全程没有任何密钥经手。</p>
+        </div>
+      </div>
+      <div class="pull-quote">
+        <span class="en">Chat can describe the change. Code can make it, commit it, and watch it go live.</span>
+        <span class="zh">Chat只能描述该怎么改。Code能真正动手改、提交，并且亲眼看着它上线。</span>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; What Actually Happens When I Ask for an Update</span><span class="zh">&#9989; &#25105;&#35831;&#27714;&#26356;&#26032;&#26102;&#65292;&#33267;&#24213;&#21457;&#29983;&#20102;&#20160;&#20040;</span></h2>
+      <ul class="session-list">
+        <li>
+          <div class="tag"><span class="en">Step 1</span><span class="zh">&#31532;&#19968;&#27493;</span></div>
+          <span class="en"><strong>Edit the file.</strong> Claude Code opens the real HTML/JS file in my repo and changes exactly what I asked for.</span>
+          <span class="zh"><strong>&#20462;&#25913;&#25991;&#20214;&#12290;</strong>Claude Code&#25171;&#24320;&#25105;&#20179;&#24211;&#37324;&#30495;&#23454;&#30340;HTML/JS&#25991;&#20214;&#65292;&#25353;&#25105;&#30340;&#35201;&#27714;&#20934;&#30830;&#20462;&#25913;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Step 2</span><span class="zh">&#31532;&#20108;&#27493;</span></div>
+          <span class="en"><strong>Fetch, rebase, push to main.</strong> It pulls the latest <code>main</code> first (so it never overwrites other work), then pushes the commit with <code>git</code>/<code>gh</code> — my own already-authenticated GitHub login.</span>
+          <span class="zh"><strong>&#25235;&#21462;&#12289;&#21464;&#22522;&#12289;&#25512;&#36865;&#21040;main&#12290;</strong>&#23427;&#20250;&#20808;&#25293;&#21462;&#26368;&#26032;&#30340;<code>main</code>&#65288;&#36825;&#26679;&#20174;&#19981;&#20250;&#35206;&#30422;&#21035;&#20154;&#30340;&#25104;&#26524;&#65289;&#65292;&#28982;&#21518;&#29992;&#25105;&#33258;&#24049;&#26089;&#24050;&#39564;&#35777;&#36807;&#30340;GitHub&#36134;&#21495;&#65292;&#36890;&#36807;<code>git</code>/<code>gh</code>&#25512;&#36865;&#25552;&#20132;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Step 3</span><span class="zh">&#31532;&#19977;&#27493;</span></div>
+          <span class="en"><strong>Vercel notices, not me.</strong> Vercel's GitHub integration sees the new commit on <code>main</code> and starts a fresh deploy — this part happens with zero involvement from either of us.</span>
+          <span class="zh"><strong>&#26159;Vercel&#33258;&#24049;&#27880;&#24847;&#21040;&#30340;&#65292;&#19981;&#26159;&#25105;&#12290;</strong>Vercel&#30340;GitHub&#38598;&#25104;&#20250;&#30475;&#21040;main&#19978;&#30340;&#26032;&#25552;&#20132;&#65292;&#33258;&#21160;&#24320;&#22987;&#37325;&#26032;&#37096;&#32626;&mdash;&mdash;&#36825;&#19968;&#27493;&#25105;&#20204;&#20004;&#20010;&#37117;&#19981;&#38656;&#35201;&#20851;&#24515;&#12290;</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Step 4</span><span class="zh">&#31532;&#22235;&#27493;</span></div>
+          <span class="en"><strong>I verify before I tell you it's done.</strong> I check the live URL myself before reporting back — a real confirmed link, not a guess.</span>
+          <span class="zh"><strong>&#25105;&#20250;&#20808;&#33258;&#24049;&#39564;&#35777;&#65292;&#20877;&#21578;&#35785;&#20320;&#23436;&#25104;&#12290;</strong>&#25105;&#20250;&#20808;&#26597;&#30475;&#23454;&#38469;&#30340;&#32593;&#22336;&#65292;&#20877;&#22238;&#22797;&#65292;&#32473;&#20320;&#30340;&#26159;&#30830;&#35748;&#36807;&#30340;&#30495;&#23454;&#38142;&#25509;&#65292;&#32780;&#19981;&#26159;&#29228;&#27979;&#12290;</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128161; Why This Matters to Me</span><span class="zh">&#128161; &#36825;&#23545;&#25105;&#26469;&#35828;&#20026;&#20160;&#20040;&#37325;&#35201;</span></h2>
+      <p class="en">I'm 70, retired, and I don't want to learn a Vercel dashboard or manage API keys — that's exactly the kind of fiddly setup step I asked David's team to remove from my life. Claude Code removes it completely: I ask, it edits my real files, pushes them itself, and the site is live within minutes — no key ever has to leave my head.</p>
+      <p class="zh">我今年70岁，退休了，不想去学Vercel后台或管理API密钥&mdash;&mdash;这正是我希望David团队帮我从生活中拿掉的那种繁琐设置步骤。Claude Code把它完全省掉了：我一开口，它就修改我真实的文件、自己推送上线，网站几分钟内就更新好了&mdash;&mdash;密钥根本不需要离开我的脑子。</p>
+      <p class="en">That's also exactly why the never-store-secrets rule in my own site instructions matters: the whole point of Code is that it works with my existing, already-authenticated login — it never needs, and should never be given, a raw token to carry around.</p>
+      <p class="zh">这也正是我在自己网站规则里坚持&#8220;绝不存储密钥&#8221;的原因：Code的整个意义就在于，它用的是我自己早已登入验证过的账号&mdash;&mdash;它从来不需要、也绝不该被交给一个原始的令牌来随身携带。</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Next Steps</span><span class="zh">&#9989; &#19979;&#19968;&#27497;</span></h2>
+      <ul class="checklist">
+        <li class="en">Keep asking for updates directly, in plain language — no Vercel dashboard needed</li>
+        <li class="zh">继续直接用大白话请求更新&mdash;&mdash;不需要碰Vercel后台</li>
+        <li class="en">Remember: on chat-only Claude, the same request would need a manual copy-paste or a separately connected integration</li>
+        <li class="zh">记住：如果是纯聊天版Claude，同样的请求就得靠手动复制粘贴，或另外连接的整合功能</li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128218; Related Reading</span><span class="zh">&#128218; &#30456;&#20851;&#25991;&#31456;</span></h2>
+      <div class="pages-row">
+        <a class="page-card" href="https://paulsworld.vercel.app/AI213.html">
+          <div class="icon">&#129302;</div>
+          <strong><span class="en">AI213: What is Claude Cowork?</span><span class="zh">AI213&#65306;&#20160;&#20040;&#26159;Claude Cowork&#65311;</span></strong>
+          <span class="en">The earlier piece explaining Code vs Cowork</span>
+          <span class="zh">&#26089;&#26399;&#35299;&#37322;Code&#19982;Cowork&#21306;&#21035;&#30340;&#25991;&#31456;</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI221.html">
+          <div class="icon">&#128736;&#65039;</div>
+          <strong><span class="en">AI221: AI Plans My Route</span><span class="zh">AI221&#65306;AI&#35268;&#21010;&#25105;&#30340;&#36335;&#32447;</span></strong>
+          <span class="en">Another example of Code editing real site files directly</span>
+          <span class="zh">&#21478;&#19968;&#20010;Code&#30452;&#25509;&#20462;&#25913;&#32593;&#31449;&#25991;&#20214;&#30340;&#20363;&#23376;</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="closing">
+      <h2><span class="en">One AI, Two Very Different Reaches</span><span class="zh">&#21516;&#19968;&#20010;AI&#65292;&#20004;&#31181;&#22823;&#19981;&#30456;&#21516;&#30340;&#33021;&#21147;</span></h2>
+      <p class="en">Chat and Code are the same Claude underneath, but only one of them can actually reach into my repo, edit the files, and push them live. That's the whole reason my website keeps updating itself the moment I ask — no dashboard, no key, no waiting.</p>
+      <p class="zh">Chat和Code底层是同一个Claude，但只有其中一个能真正伸手进我的仓库、修改文件、并推送上线。这正是为什么我的网站只要我一开口就会自己更新&mdash;&mdash;不用后台，不用密钥，也不用等待。</p>
+      <p style="margin-top:16px; font-style:italic; opacity:0.8;">&mdash; Paul Yeo, July 2026 &#127775;</p>
+    </div>
+
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+  <script>
+    function setLang(lang) {
+      document.body.className = lang === 'zh' ? 'lang-zh' : '';
+      document.querySelectorAll('.lang-btn').forEach(function(btn, i) {
+        btn.classList.toggle('active', (lang === 'en' && i === 0) || (lang === 'zh' && i === 1));
+      });
+    }
+    function shareThisPage() {
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function() { t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
