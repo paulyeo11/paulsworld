@@ -350,6 +350,9 @@ https://paulsworld.vercel.app/
 ### 🔗 New-Tab Navigation Rule (Standing Default — added 2026-07-19)
 Every navigation link that takes Paul AWAY from the current page — the Home button, any "back to hub" floating button (e.g. the 📈 Investment Tools shortcut), and similar nav links — must open in a **new tab** (`target="_blank"`), so he never loses the page he was reading. This applies automatically to every new page going forward. In-page controls that don't navigate away (language toggle, tabs, accordions) are unaffected. If Paul asks to retrofit this onto older existing pages site-wide, treat it as a separate bulk task — don't assume it's already done everywhere.
 
+### 🗂️ Category Breadcrumb Rule (Standing Default — added 2026-07-21)
+Every page/article must show its **category breadcrumb at the top of the page**, right below the Home button / above or inside the hero title — so Paul always sees which section he's in. Format: `[Section] › [Sub-section] › [PREFIX+Number]`, e.g. `Investment Tools › 🦅 Options & Iron Condor › T41`. Each crumb before the current page links back to that section (e.g. `/tools.html` and `/tools.html#options`); the current page's own number is shown plain (not a link), highlighted in the accent gold colour. Bilingual (en/zh) like all other text. Apply this to every new page going forward, across every category (Travel Stories, AI Journey, Health, Investment Tools, IBKR Update Log, etc. — not just Investment Tools) — Paul never needs to ask again. Reference implementation: `T41-Update-IBKR-Data-Guide.html` (`.breadcrumb` block). If Paul asks to retrofit this onto older existing pages site-wide, treat that as a separate bulk task — don't assume it's already done everywhere.
+
 ### 👁️ View Counter
 Add a visible view counter at the **end of every article, just before the footer**,
 using exactly: `<script src="/view-counter.js"></script>`
