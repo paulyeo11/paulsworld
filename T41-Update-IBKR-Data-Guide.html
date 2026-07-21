@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T41: How to Update IBKR Raw Data to the Option IC Deskboard (T29)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:580px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .pathgrid { display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:22px; }
+  .path { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:16px; }
+  .path.best { border-color:#10b981; }
+  .path .ptitle { font-weight:800; font-size:.92rem; display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .path .ptag { font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; background:rgba(16,185,129,.2); color:#86efac; padding:3px 8px; border-radius:8px; }
+  .path .ptag.alt { background:rgba(79,70,229,.25); color:#c4b5fd; }
+  .path p { font-size:.82rem; color:rgba(255,255,255,.75); line-height:1.55; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+
+  .steps { display:flex; flex-direction:column; gap:14px; }
+  .step-item { display:flex; gap:14px; }
+  .step-item .snum { flex-shrink:0; width:30px; height:30px; border-radius:50%; background:#10b981; color:#0e1330; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+  .step-item.alt .snum { background:#4f46e5; color:#fff; }
+  .step-item .sbody { flex:1; min-width:0; }
+  .step-item .stitle { font-weight:700; font-size:.88rem; margin-bottom:4px; }
+  .step-item .sdesc { color:rgba(255,255,255,.72); font-size:.8rem; line-height:1.55; }
+  .step-item code { background:#0e1330; border:1px solid #2a3158; border-radius:6px; padding:1px 6px; font-size:.78rem; font-family:'Courier New',monospace; color:#f4c869; }
+
+  table.legs { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.legs th, table.legs td { padding:9px 8px; font-size:.8rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.45; }
+  table.legs th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; }
+  table.legs td.leg-name { font-weight:800; white-space:nowrap; }
+
+  .checklist ul, .mistakes ul { list-style:none; }
+  .checklist li, .mistakes li { font-size:.85rem; color:rgba(255,255,255,.8); padding:7px 0; line-height:1.55; border-bottom:1px solid rgba(255,255,255,.06); }
+  .checklist li:last-child, .mistakes li:last-child { border-bottom:none; }
+  .checklist li b { color:#f4c869; }
+  .mistakes li b { color:#ef4444; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="ic">🍞🔄</div>
+  <h1><span class="en">T41: How to Update IBKR Raw Data to the Option IC Deskboard</span><span class="zh">T41：如何将IBKR原始数据更新到期权铁鹰仪表板（Option IC Deskboard）</span></h1>
+  <p><span class="en">Two ways to refresh <a href="options-breadboard.html" style="color:#f4c869">T29 — Option by Bang: Iron Condor Breadboard</a> with the latest positions from Interactive Brokers, depending on whether Paul is at his PC or on his phone.</span><span class="zh">两种方式可让 <a href="options-breadboard.html" style="color:#f4c869">T29 — Option by Bang：铁鹰面包板仪表板</a> 更新为盈透证券（IBKR）的最新持仓数据，取决于Paul是在电脑前还是只用手机。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is a personal operating guide for keeping Paul's own T29 dashboard in sync with his real IBKR account. Always sanity-check figures against IBKR's own statements before acting on them.</span><span class="zh"><b>非投资建议。</b>本文是Paul个人用于保持T29仪表板与真实IBKR账户同步的操作指南。采取任何行动前，请务必以IBKR官方对账单核对数据。</span>
+  </div>
+
+  <div class="pathgrid">
+    <div class="path best">
+      <div class="ptitle">💻 <span class="en">Path A — PC + IB Gateway</span><span class="zh">路径A — 电脑 ＋ IB Gateway</span><span class="ptag"><span class="en">Best / Automated</span><span class="zh">最佳／全自动</span></span></div>
+      <p><span class="en">One double-click. Pulls live positions straight from IBKR and pushes to GitHub with zero manual steps. Use this whenever the PC + IB Gateway are available.</span><span class="zh">只需双击一下。直接从IBKR拉取实时持仓并推送到GitHub，全程无需手动操作。只要电脑与IB Gateway可用，就用这个方法。</span></p>
+    </div>
+    <div class="path">
+      <div class="ptitle">📱 <span class="en">Path B — Phone Only, via Google Drive</span><span class="zh">路径B — 仅用手机，透过Google Drive</span><span class="ptag alt"><span class="en">Fallback</span><span class="zh">备用方案</span></span></div>
+      <p><span class="en">No PC needed. Paul's IBKR statement lands in a Google Drive folder (often automatically), and asking David/Claude to "update IBKR data" reads it and updates T29 directly.</span><span class="zh">无需电脑。Paul的IBKR对账单会存入Google Drive文件夹（通常是自动完成），只要请David/Claude「更新IBKR数据」，就会读取该文件并直接更新T29。</span></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Path A — Step by Step (PC + IB Gateway)</span><span class="zh">路径A — 逐步操作（电脑 ＋ IB Gateway）</span></h2>
+    <div class="steps">
+      <div class="step-item">
+        <div class="snum">1</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Double-click <code>refresh-ibkr.bat</code></span><span class="zh">双击 <code>refresh-ibkr.bat</code></span></div>
+          <div class="sdesc"><span class="en">Sits in the project folder. It first pulls the latest scripts from GitHub, then checks whether IB Gateway is already connected on port 4001.</span><span class="zh">该文件位于项目文件夹中。运行时会先从GitHub拉取最新脚本，再检查IB Gateway是否已在4001端口连接。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">2</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Log in if IB Gateway isn't running</span><span class="zh">若IB Gateway尚未运行，请登入</span></div>
+          <div class="sdesc"><span class="en">The script auto-launches the IB Gateway login window if needed. Enter your ID + password and approve 2FA on your phone — the script waits up to 3 minutes and continues automatically once connected.</span><span class="zh">如有需要，脚本会自动打开IB Gateway登入窗口。输入账号密码并在手机上批准双重验证——脚本最多等待3分钟，连接成功后会自动继续。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">3</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Script fetches positions</span><span class="zh">脚本拉取持仓数据</span></div>
+          <div class="sdesc"><span class="en"><code>ibkr_positions.py</code> pulls live positions, NAV and P&amp;L straight from IB Gateway, then writes and pushes the updated data to GitHub — no copy/paste, no manual upload.</span><span class="zh"><code>ibkr_positions.py</code> 直接从IB Gateway拉取实时持仓、资产净值与损益，然后将更新后的数据写入并推送到GitHub——无需复制粘贴，无需手动上传。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">4</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">T29 updates live</span><span class="zh">T29自动更新</span></div>
+          <div class="sdesc"><span class="en">The GitHub push triggers Vercel/Netlify's auto-deploy — <a href="options-breadboard.html" style="color:#86efac">Option IC Deskboard</a> shows the fresh numbers within a couple of minutes. No further action needed.</span><span class="zh">推送到GitHub会触发Vercel/Netlify的自动部署——<a href="options-breadboard.html" style="color:#86efac">期权铁鹰仪表板</a>会在几分钟内显示最新数据，无需其他操作。</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Path B — Step by Step (Phone Only, via Google Drive)</span><span class="zh">路径B — 逐步操作（仅用手机，透过Google Drive）</span></h2>
+    <div class="steps">
+      <div class="step-item alt">
+        <div class="snum">1</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Statement lands in the "IBKR" Drive folder</span><span class="zh">对账单存入「IBKR」Drive文件夹</span></div>
+          <div class="sdesc"><span class="en">Usually happens automatically — a Google Apps Script runs daily (~7–8pm SGT), finds IBKR emails with attachments in Gmail, and auto-saves new ones into Paul's Drive. Paul can also save/overwrite the export there himself any time — no link or attachment needs to be pasted into chat.</span><span class="zh">通常会自动完成——一个Google Apps Script每天（约新加坡时间晚上7–8点）运行，在Gmail中查找带附件的IBKR邮件，并自动将新附件存入Paul的Drive。Paul也可以随时自行在该处保存／覆盖导出文件——无需在聊天中粘贴链接或附件。</span></div>
+        </div>
+      </div>
+      <div class="step-item alt">
+        <div class="snum">2</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Say the trigger phrase</span><span class="zh">说出触发指令</span></div>
+          <div class="sdesc"><span class="en">Tell David/Claude: <b>"update IBKR data"</b> (or "update my IBKR raw data" / "check the IBKR folder in Drive") — any of these are treated the same way.</span><span class="zh">告诉David/Claude：<b>「更新IBKR数据」</b>（或「更新我的IBKR原始数据」／「查看Drive里的IBKR文件夹」）——这些说法都会以相同方式处理。</span></div>
+        </div>
+      </div>
+      <div class="step-item alt">
+        <div class="snum">3</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Claude reads the raw file &amp; cross-checks it</span><span class="zh">Claude读取原始文件并交叉核对</span></div>
+          <div class="sdesc"><span class="en">The Google Drive tools open the latest file, and every figure is checked against at least one other section that should reconcile (e.g. Account Overview NAV vs. Allocation totals vs. the monthly NAV chart) before it's written anywhere. If a number can't be confidently cross-checked, it's left unchanged rather than guessed.</span><span class="zh">Google Drive工具会打开最新文件，每个数字在被写入之前，都会与至少一个理应对得上的其他部分交叉核对（例如账户概览的资产净值 vs. 资产配置总额 vs. 月度净值图表）。若某个数字无法确认，则维持不变，绝不猜测。</span></div>
+        </div>
+      </div>
+      <div class="step-item alt">
+        <div class="snum">4</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">T29 gets updated &amp; pushed</span><span class="zh">T29获得更新并推送</span></div>
+          <div class="sdesc"><span class="en"><a href="options-breadboard.html" style="color:#c4b5fd">options-breadboard.html</a> (T29) is edited with the verified figures and pushed straight to GitHub — live on both Vercel and Netlify within minutes.</span><span class="zh"><a href="options-breadboard.html" style="color:#c4b5fd">options-breadboard.html</a>（T29）会以核实后的数字更新并直接推送到GitHub——几分钟内即在Vercel与Netlify同步上线。</span></div>
+        </div>
+      </div>
+      <div class="step-item alt">
+        <div class="snum">5</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">A dated recap article is written</span><span class="zh">生成一篇带日期的更新摘要文章</span></div>
+          <div class="sdesc"><span class="en">A new <b>IB##.html</b> entry is added summarizing what changed — Ending NAV vs. last update, unrealized P&amp;L moves, deposits and any position changes — in plain bilingual language, and linked into the IBKR Update Log section on the homepage.</span><span class="zh">系统会新增一篇 <b>IB##.html</b> 文章，以简明双语总结变化——期末资产净值对比上次更新、未实现盈亏变动、存款与持仓变化——并链接到首页的IBKR更新日志区块。</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Which Path Should Paul Use?</span><span class="zh">Paul应该使用哪种路径？</span></h2>
+    <table class="legs">
+      <thead><tr><th><span class="en">Situation</span><span class="zh">情况</span></th><th><span class="en">Use</span><span class="zh">使用</span></th></tr></thead>
+      <tbody>
+        <tr><td class="leg-name"><span class="en">At the PC, IB Gateway available</span><span class="zh">在电脑前，IB Gateway可用</span></td><td><span class="en">Path A — <code>refresh-ibkr.bat</code></span><span class="zh">路径A — <code>refresh-ibkr.bat</code></span></td></tr>
+        <tr><td class="leg-name"><span class="en">Phone only, no PC access</span><span class="zh">仅有手机，无法使用电脑</span></td><td><span class="en">Path B — Drive + "update IBKR data"</span><span class="zh">路径B — Drive ＋「更新IBKR数据」</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card checklist">
+    <h2><span class="en">✅ Good to Know</span><span class="zh">✅ 须知事项</span></h2>
+    <ul>
+      <li><b><span class="en">Data source folder</span><span class="zh">数据源文件夹</span></b> — <span class="en">the "IBKR" folder in Paul's Google Drive, owned by paul11ipad@gmail.com</span><span class="zh">Paul的Google Drive中「IBKR」文件夹，由paul11ipad@gmail.com所有</span></li>
+      <li><b><span class="en">Email automation</span><span class="zh">邮件自动化</span></b> — <span class="en">a Gmail-to-Drive Apps Script runs daily so the newest statement is normally already there before Paul even asks</span><span class="zh">一个Gmail转Drive的Apps Script每天运行，因此通常在Paul开口之前，最新对账单就已经就位</span></li>
+      <li><b><span class="en">If Drive access fails</span><span class="zh">若Drive访问失败</span></b> — <span class="en">an approval/auth error means the connector needs re-authorizing at claude.ai → Settings → Connectors → Google Drive — retrying in chat won't fix it</span><span class="zh">出现授权错误代表需在claude.ai → 设置 → 连接器 → Google Drive 重新授权——在聊天中重试无法解决</span></li>
+    </ul>
+  </div>
+
+  <div class="card mistakes">
+    <h2><span class="en">⚠️ Common Mistakes to Avoid</span><span class="zh">⚠️ 常见错误</span></h2>
+    <ul>
+      <li><b><span class="en">Trusting a single jumbled PDF number</span><span class="zh">仅凭一个杂乱PDF数字下判断</span></b> — <span class="en">PortfolioAnalyst PDF text extraction can interleave chart-axis numbers with table numbers — always cross-check against a second reconciling section first</span><span class="zh">PortfolioAnalyst PDF文本提取时，图表轴数字可能与表格数字混杂——务必先与另一个应能对得上的部分交叉核对</span></li>
+      <li><b><span class="en">Re-typing "yes" after an auth error</span><span class="zh">在授权错误后反复输入「是」</span></b> — <span class="en">a chat confirmation does not resolve a Drive connector authorization issue — only the connector settings page does</span><span class="zh">聊天中的确认无法解决Drive连接器的授权问题——只有连接器设置页面能解决</span></li>
+      <li><b><span class="en">Forgetting the dated IB## recap</span><span class="zh">忘记生成带日期的IB##摘要</span></b> — <span class="en">every "update IBKR data" run should also produce a short bilingual recap article, not just silently edit T29</span><span class="zh">每次「更新IBKR数据」都应同时生成一篇简短的双语摘要文章，而不只是默默修改T29</span></li>
+    </ul>
+  </div>
+
+  <div class="foot">
+    <span class="en">Personal operating guide · Last reviewed <span id="lastReviewedEn">21 Jul 2026</span></span><span class="zh">个人操作指南 · 最后更新于<span id="lastReviewedZh">2026年7月21日</span></span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Option IC Deskboard</span><span class="zh">T29：期权铁鹰仪表板</span></a><br>
+    <a href="T07-IBKR.html">🇺🇸 <span class="en">IBKR Portfolio Viewer</span><span class="zh">IBKR持仓查看器</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
