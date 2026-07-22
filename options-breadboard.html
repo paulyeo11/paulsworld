@@ -622,14 +622,18 @@
       <span class="live-ts" id="putVarTs"></span>
     </div>
     <table class="legs" style="margin-top:10px">
-      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
+      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num">Δ <span class="en">Delta</span><span class="zh">Delta</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
       <tbody id="putVarBody">
-        <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+        <tr><td colspan="6"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
       </tbody>
     </table>
     <div class="note" style="margin-top:12px">
       <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
       <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
+    </div>
+    <div class="note" style="margin-top:8px">
+      <span class="en"><b>Δ Delta</b> is the short put's modeled delta at entry (Black-Scholes, back-solved implied vol — same convention as the per-leg tables in the Positions tab: put deltas negative). It's a static entry snapshot, not a live/recalculated greek, since real per-leg delta isn't logged in <code>positions.json</code>.</span>
+      <span class="zh"><b>Δ Delta</b> 为卖出认沽在建仓时的建模delta（Black-Scholes模型反推隐含波动率——与「持仓」页签中各腿明细表一致的约定：认沽delta为负）。这是建仓时的静态快照，非实时重新计算的greek，因为<code>positions.json</code>未记录每条腿的真实delta。</span>
     </div>
   </div>
   </div><!-- /tab-cushion -->
@@ -1879,6 +1883,9 @@ function renderSharePrices(){
   renderPutVarianceTable();
   setLang(curLang);
 }
+// Short put delta at entry (Black-Scholes, back-solved implied vol) — same static
+// figures shown in each condor's leg table on the Positions tab (T30 convention: puts negative).
+var SHORT_PUT_DELTA = { NVDA:-0.33, QQQ:-0.34, AVGO:-0.31, SMH:-0.28, SPY:-0.22 };
 // Share Price (A) vs Selling Put strike — one row per condor
 function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
@@ -1886,8 +1893,10 @@ function renderPutVarianceTable(){
     var cfg = RAIL_CFG[sym];
     var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
     var price = s && typeof s.price==='number' ? s.price : null;
+    var delta = SHORT_PUT_DELTA[sym];
+    var deltaTxt = typeof delta==='number' ? delta.toFixed(2) : '—';
     if(price===null){
-      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">—</td></tr>';
+      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">'+deltaTxt+'</td><td class="num">—</td></tr>';
     }
     var vpct = (price - cfg.shortP) / cfg.shortP * 100;
     var vcls = vpct >= 0 ? 'pl-up' : 'pl-down';
@@ -1896,7 +1905,7 @@ function renderPutVarianceTable(){
     if(vpct <= 0) cushion = '<span class="badge cut"><span class="en">⛔ Below</span><span class="zh">⛔ 跌破</span></span>';
     else if(vpct < 5) cushion = '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
     else cushion = '<span class="badge safe"><span class="en">✅ Safe</span><span class="zh">✅ 安全</span></span>';
-    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+cushion+'</td></tr>';
+    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+deltaTxt+'</td><td class="num">'+cushion+'</td></tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
