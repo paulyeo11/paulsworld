@@ -454,6 +454,7 @@ Base: `https://raw.githubusercontent.com/paulyeo11/paulsworld/refs/heads/main/[f
 | **Health** | **h** | h01.html → h05.html (max 10). Green-teal `#10b981`, placed **between AI Journey and Achievements**. | (no number label) |
 | **Dream Journal** | **D** | D01.html → (max 10). Midnight indigo `#4f46e5`, placed **right after Health & Wellness**. Real dreams Paul had, written up bilingual, not travel stories — kept out of the AC02 travel eBook. | from title "D01:" … |
 | **IBKR Update Log** | **IB** | IB01.html → (max 10). Amber/gold `#f59e0b`, placed **right after Dream Journal**. Auto-written portfolio-update summaries — see "IBKR Update Log Rule" below. | from title "IB01:" … |
+| **AI Data Analyse** | **ADA** | ADA01.html → (max 10). Slate/graphite `#475569`, placed **right after IBKR Update Log** (added 2026-07-22). How-to / operating guides for reading, cross-checking, and feeding raw data (e.g. IBKR statements) into Paul's dashboards via AI — kept separate from the IBKR Update Log's dated result recaps and from `tools.html`'s T-series. First entry: `ADA01.html` = "How to Update IBKR Raw Data to the Option IC Deskboard" (moved from the old `T41-Update-IBKR-Data-Guide.html`). | from title "ADA01:" … |
 | Travel | travel | | |
 | Special | **SP** | SP01=Dream Destinations, SP02=Adventure List, SP03=Why Retire at 65, SP04=Dashboard | (hardcoded cards in index.html; custom card titles, no auto-number) |
 
