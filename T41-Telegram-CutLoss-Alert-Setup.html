@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T41: How I Set Up Telegram Alerts for Cut-Loss Breaches</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:580px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card ul { margin:6px 0 10px 20px; }
+  .card li { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:6px; }
+
+  .steps { display:flex; flex-direction:column; gap:14px; }
+  .step-item { display:flex; gap:14px; }
+  .step-item .snum { flex-shrink:0; width:30px; height:30px; border-radius:50%; background:#10b981; color:#0e1330; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+  .step-item .sbody { flex:1; min-width:0; }
+  .step-item .stitle { font-weight:700; font-size:.88rem; margin-bottom:4px; }
+  .step-item .sdesc { color:rgba(255,255,255,.72); font-size:.8rem; line-height:1.5; margin-bottom:0; }
+
+  .result-badge { display:inline-block; background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#86efac; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+  .warn-badge { display:inline-block; background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.45); color:#fca5a5; font-weight:700; font-size:.8rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+
+  table.legs { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.legs th, table.legs td { padding:9px 8px; font-size:.8rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.legs th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; }
+  table.legs td.leg-name { font-weight:800; white-space:nowrap; }
+  table.legs tr.sell td.leg-name { color:#86efac; }
+
+  code.inline { background:rgba(255,255,255,.08); padding:2px 6px; border-radius:5px; font-size:.82em; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T41</span><span class="zh">T41</span></span>
+  </div>
+  <div class="ic">🔔📲</div>
+  <h1><span class="en">T41: How I Set Up Telegram Alerts for Cut-Loss Breaches</span><span class="zh">T41：我如何设置Telegram来提醒止损触发</span></h1>
+  <p><span class="en">The Cut-Loss tab on T29 only tells me something when I'm actually looking at it. This is the automation that watches it for me and pings my phone the moment a price actually breaches a band.</span><span class="zh">T29的「止损」页签只有在我实际打开查看时才会提醒我。这是一套自动化流程，能替我盯盘，一旦价格真正触及止损区间就立刻通知我的手机。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is a personal setup log for my own alert automation. Bot tokens and chat IDs are kept out of this repo — stored as encrypted GitHub Actions secrets, never committed as plain text.</span><span class="zh"><b>非投资建议。</b>本文为我个人提醒自动化的设置记录。机器人令牌与聊天ID不会出现在本仓库中——它们以加密的GitHub Actions密钥形式保存，绝不会以明文提交。</span>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Why This Exists</span><span class="zh">为什么要做这个</span></h2>
+    <p><span class="en">T29's Cut-Loss tab already shows a 🟢/🟡/🔴 gap to each stock's low/high band — see <a href="T28-Cut-Loss-Alerts.html" style="color:#86efac">T28: Cut-Loss Alerts</a>. The gap is only useful the moment I open the page. A single unusually volatile day could push a price through a band while I'm asleep, traveling, or just not looking — so I built a background check that watches the same bands and messages me directly, without needing the dashboard open.</span><span class="zh">T29的「止损」页签已能显示每支股票距离上下限止损区间的🟢/🟡/🔴差距——参见 <a href="T28-Cut-Loss-Alerts.html" style="color:#86efac">T28：止损提醒</a>。但这个差距只有在我打开页面那一刻才有用。若在我睡觉、出门或没留意时刚好出现异常剧烈波动的一天，价格就可能悄悄跌破或突破区间——因此我做了一个背景检查，能自动盯着同样的区间，并直接发消息通知我，不需要打开面板。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">How It Works</span><span class="zh">运作方式</span></h2>
+    <table class="legs">
+      <thead><tr><th><span class="en">Piece</span><span class="zh">组件</span></th><th><span class="en">Role</span><span class="zh">作用</span></th></tr></thead>
+      <tbody>
+        <tr class="sell"><td class="leg-name">GitHub Actions</td><td><span class="en">Runs a scheduled check every hour, Mon–Fri, free on a public repo — no server to maintain</span><span class="zh">每小时（周一至周五）自动运行一次检查，公开仓库免费使用——无需维护服务器</span></td></tr>
+        <tr><td class="leg-name"><code class="inline">/api/td</code></td><td><span class="en">The same live-price endpoint T29 already uses (Yahoo Finance / Stooq) — one source of truth for prices</span><span class="zh">与T29相同的实时报价接口（雅虎财经／Stooq）——价格数据只有一个来源</span></td></tr>
+        <tr class="sell"><td class="leg-name"><code class="inline">cutloss-thresholds.json</code></td><td><span class="en">Mirrors T29's low/high bands for QQQ, NVDA, AVGO, SMH &amp; SPY</span><span class="zh">对应T29中QQQ、NVDA、AVGO、SMH与SPY的上下限区间</span></td></tr>
+        <tr><td class="leg-name"><code class="inline">cutloss-alert-state.json</code></td><td><span class="en">Remembers which symbols are already-alerted so I only get pinged once per breach, not every hour it stays breached</span><span class="zh">记录哪些股票已经提醒过，确保同一次止损只提醒一次，而不是每小时重复提醒</span></td></tr>
+        <tr class="sell"><td class="leg-name">Telegram Bot API</td><td><span class="en">A free bot (<code class="inline">@paulyeo_bot</code>) sends the actual message straight to my phone</span><span class="zh">一个免费机器人（<code class="inline">@paulyeo_bot</code>）直接把消息发到我的手机</span></td></tr>
+      </tbody>
+    </table>
+    <p><span class="en">Nothing here costs money, and no bot token or chat ID is ever written into this public repo — both live only as encrypted secrets in GitHub's Settings.</span><span class="zh">整套流程完全免费，机器人令牌与聊天ID也从不写入这个公开仓库——两者只以加密密钥的形式保存在GitHub设置中。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Setup Steps (One-Time)</span><span class="zh">设置步骤（一次性）</span></h2>
+    <div class="steps">
+      <div class="step-item">
+        <div class="snum">1</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Create a Telegram bot</span><span class="zh">创建Telegram机器人</span></div>
+          <div class="sdesc"><span class="en">Message <b>@BotFather</b> on Telegram → <code class="inline">/newbot</code> → choose a name and a username ending in "bot". BotFather replies with a bot token (a long string) — this is the bot's password, keep it private.</span><span class="zh">在Telegram上给<b>@BotFather</b>发消息 → <code class="inline">/newbot</code> → 设定一个名称与以「bot」结尾的用户名。BotFather会回复一个机器人令牌（一长串字符）——这相当于机器人的密码，务必保密。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">2</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Find my chat ID</span><span class="zh">找出我的聊天ID</span></div>
+          <div class="sdesc"><span class="en">Rather than fiddling with API calls, the easy way: message the public bot <b>@userinfobot</b> — it instantly replies with my numeric Telegram ID. That number is the "chat ID" the alert needs to know where to send messages.</span><span class="zh">与其手动调用API，更简单的方法是：给公开机器人<b>@userinfobot</b>发消息——它会立刻回复我的Telegram数字ID。这个数字就是提醒系统用来知道该往哪里发消息的「聊天ID」。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">3</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Add both as GitHub repo secrets</span><span class="zh">将两者添加为GitHub仓库密钥</span></div>
+          <div class="sdesc"><span class="en">Repo → Settings → Secrets and variables → Actions → New repository secret. Add <code class="inline">TELEGRAM_BOT_TOKEN</code> and <code class="inline">TELEGRAM_CHAT_ID</code>. GitHub encrypts these — nobody, including me looking at the repo later, can read the value back out.</span><span class="zh">仓库 → Settings → Secrets and variables → Actions → New repository secret。添加 <code class="inline">TELEGRAM_BOT_TOKEN</code> 与 <code class="inline">TELEGRAM_CHAT_ID</code> 两个密钥。GitHub会将其加密——包括我自己日后查看仓库时，也无法再读出原始值。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">4</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Write the check + workflow</span><span class="zh">编写检查脚本与工作流</span></div>
+          <div class="sdesc"><span class="en">A small script fetches live prices, compares them to the bands, and calls the Telegram <code class="inline">sendMessage</code> API when a new breach appears. A GitHub Actions workflow file runs that script on a schedule.</span><span class="zh">一段小脚本负责抓取实时价格、与区间比对，并在出现新的止损触发时调用Telegram的<code class="inline">sendMessage</code>接口。一个GitHub Actions工作流文件负责按排程运行该脚本。</span></div>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="snum">5</div>
+        <div class="sbody">
+          <div class="stitle"><span class="en">Test with a manual run</span><span class="zh">手动测试一次</span></div>
+          <div class="sdesc"><span class="en">The workflow has a manual "Run workflow" trigger with a checkbox to force a test message — regardless of whether anything has actually breached — so delivery could be confirmed before trusting the schedule.</span><span class="zh">该工作流设有手动的「Run workflow」触发选项，附带一个勾选框可强制发送一则测试消息——无论当下是否真的有止损触发——藉此在信任排程之前先确认消息确实能送达。</span></div>
+          <div class="result-badge">✅ <span class="en">Confirmed working — test message received on Telegram</span><span class="zh">已确认可正常运作——已在Telegram收到测试消息</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">What I Get Alerted On</span><span class="zh">我会在什么情况下收到提醒</span></h2>
+    <ul>
+      <li><span class="en">Runs automatically every hour, Monday–Friday — no need to open T29</span><span class="zh">周一至周五每小时自动运行——无需打开T29</span></li>
+      <li><span class="en">Alerts once per breach: if a symbol drops through its low band or rises through its high band, I get a message the first time — then it stays quiet while still breached</span><span class="zh">同一次止损只提醒一次：股票若跌破下限或突破上限，第一次会立即收到消息——之后即使仍处于触发状态也不会重复提醒</span></li>
+      <li><span class="en">Alerts again if the price clears the band and later breaches it a second time</span><span class="zh">若价格回到区间内后再度触及止损，会再次收到提醒</span></li>
+    </ul>
+    <div class="warn-badge">⚠️ <span class="en">This is a coarse hourly check, not real-time — a fast intraday move could breach and recover between checks without ever triggering an alert.</span><span class="zh">这是每小时一次的粗略检查，并非实时——若股价在两次检查之间快速触及又回弹，可能不会触发任何提醒。</span></div>
+  </div>
+
+  <div class="foot">
+    <span class="en">Personal setup log · <span id="lastReviewedEn">22 Jul 2026</span></span><span class="zh">个人设置记录 · <span id="lastReviewedZh">2026年7月22日</span></span><br>
+    <a href="T28-Cut-Loss-Alerts.html">🚨 <span class="en">T28: Cut-Loss Alerts</span><span class="zh">T28：止损提醒</span></a><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Option by Bang — Iron Condor Breadboard</span><span class="zh">T29：期权面包板</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/view-counter.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
