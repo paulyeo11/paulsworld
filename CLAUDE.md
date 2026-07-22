@@ -16,6 +16,7 @@
 
 ## Contacts
 - **IBKR (Interactive Brokers) help email:** help@interactivebrokers.com
+- **Caroline Koh (Phillip)** — carolinekoh@phillip.com.sg — contact for Joanne's insurance/legacy policies (Supplement Retirement Cash Flow & Legacy Planning). (Added 2026-07-22.)
 
 ## Reminders Rule (Standing Default — added 2026-07-19)
 Whenever Paul asks to be reminded of something, always create a **Google Calendar event** (via the Google Calendar MCP tools) — never use a chat-only/session-based reminder. Default reminder popup at event time unless Paul specifies otherwise. Use `Asia/Singapore` timezone unless told otherwise.
