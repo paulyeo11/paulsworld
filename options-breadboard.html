@@ -444,28 +444,6 @@
       </div>
       </div>
     </div>
-    <div class="abox">
-      <h3 class="qa-toggle" onclick="toggleQA(this)">📉 <span class="en">Q: If NVDA moves ±5% from Day 1 to Day 36 (expiry), how much premium do I collect per day?</span><span class="zh">问：若NVDA从第1天到第36天（到期）在±5%内波动，我每天能收多少权利金？</span><span class="qa-arrow">▸</span></h3>
-      <div class="qa-body" style="display:none;">
-      <div class="analysis">
-        <ul>
-          <li><span class="en">Expiry is Aug 21 '26 = <b>36 DTE</b> from entry (not 45). Current price sits near the middle of your strikes (195 short put / 230 short call), so a ±5% swing (~$201–$223) stays inside the profit zone the whole time — no breach, full $215 credit on track if held to expiry.</span><span class="zh">到期日为2026年8月21日——从建仓起算<b>36天</b>（非45天）。目前股价接近行使价中点（195认沽/230认购），±5%波动（约$201–$223）全程都在盈利区内——不会被击穿，若持有至到期可望收取全部$215权利金。</span></li>
-          <li><span class="en">Theta decay isn't linear — slow early, fast near expiry (roughly ∝ √(days left)). Modeled pace for your $215 credit:</span><span class="zh">时间价值衰减（theta）并非线性——前期慢、临近到期快（大致与剩余天数的平方根成反比）。你$215权利金的建模衰减节奏：</span></li>
-        </ul>
-        <table class="suit">
-          <tr><th><span class="en">Day range</span><span class="zh">天数区间</span></th><th><span class="en">Cumulative collected</span><span class="zh">累计收取</span></th><th><span class="en">Avg $/day</span><span class="zh">日均$</span></th></tr>
-          <tr><td>1–9</td><td>~$32</td><td>~$3.6</td></tr>
-          <tr><td>10–18</td><td>~$63 <span class="en">total</span><span class="zh">合计</span></td><td>~$3.4</td></tr>
-          <tr><td>19–27</td><td>~$103 <span class="en">total</span><span class="zh">合计</span></td><td>~$4.4</td></tr>
-          <tr><td>28–36 <span class="en">(expiry)</span><span class="zh">（到期）</span></td><td>~$215 <span class="en">total</span><span class="zh">合计</span></td><td>~$12.4</td></tr>
-        </table>
-      </div>
-      <div class="note" style="margin:10px 0 0;">
-        <span class="en"><b>Caveat:</b> this is a modeled √time approximation, not live theta — the tracker doesn't log real daily theta/IV (they're stored as <code>null</code> in <code>positions.json</code>), so actual day-to-day pace will wobble with IV changes, not just time passing.</span>
-        <span class="zh"><b>提醒：</b>以上为√时间的建模估算，非实时theta——追踪表未记录真实每日theta/IV（<code>positions.json</code>中为<code>null</code>），实际每日节奏会随隐含波动率变化而波动，不只是时间流逝。</span>
-      </div>
-      </div>
-    </div>
   </div>
 
   <!-- QQQ -->
@@ -1304,12 +1282,12 @@
         <span class="zh"><b>净Delta</b> = 该铁鹰4条腿合计的持仓delta（卖出认沽+买入认沽+卖出认购+买入认购），由建仓权利金反推隐含波动率（Black-Scholes模型）建模得出，因<code>positions.json</code>未记录真实delta/IV——请视为估算值，非IBKR实时读数。五个持仓的净Delta均接近零，符合以建仓价为中心的铁鹰特性；<b>合计</b>行为五个铁鹰加总后的组合层面数字（+0.01）。</span>
       </div>
       <div class="note" style="margin-top:12px">
-        <span class="en"><b>Max $/Day</b> = Total Credit ÷ DTE at entry — the average pace needed to collect the full premium evenly across every day to expiry. This is a benchmark, not a hard cap: real theta decay is <b>slower early, faster near expiry</b> (see the NVDA "±5% swing" Q&amp;A on the Positions tab), so the Day 1–5 pace below normally sits under this average, then overtakes it in the final days before expiry.</span>
-        <span class="zh"><b>每日最高$</b> = 总权利金 ÷ 建仓时到期天数——若要在到期前把权利金平均收完所需的节奏。这是参考基准，并非硬性上限：真实的时间价值衰减是<b>前期慢、临近到期快</b>（见「持仓」页签中NVDA的「±5%波动」问答），因此下方第1–5天的节奏通常低于此平均值，到期前最后几天则会反超。</span>
+        <span class="en"><b>Max $/Day</b> = Total Credit ÷ DTE at entry — the average pace needed to collect the full premium evenly across every day to expiry. This is a benchmark, not a hard cap: real theta decay is <b>slower early, faster near expiry</b> (see the NVDA "±5% swing" Q&amp;A below), so the Day 1–5 pace below normally sits under this average, then overtakes it in the final days before expiry.</span>
+        <span class="zh"><b>每日最高$</b> = 总权利金 ÷ 建仓时到期天数——若要在到期前把权利金平均收完所需的节奏。这是参考基准，并非硬性上限：真实的时间价值衰减是<b>前期慢、临近到期快</b>（见下方NVDA的「±5%波动」问答），因此下方第1–5天的节奏通常低于此平均值，到期前最后几天则会反超。</span>
       </div>
       <div class="note" style="margin-top:8px">
-        <span class="en">Day 1–5 figures are a <b>modeled √time approximation</b> of pure theta decay (same method as the NVDA card on the Positions tab) — not live theta from IBKR, and they ignore price movement. SPY only shows a Day 5 figure since it was entered that day. The <b>actual</b> mark-to-market Unrealized P&amp;L (which does include price movement) is currently negative for the original four — see the Positions tab — because share-price moves since entry have outweighed the modeled theta gain shown here.</span>
-        <span class="zh">第1–5天数字为纯时间价值衰减的<b>建模√时间近似值</b>（与「持仓」页签NVDA卡片方法相同）——并非来自IBKR的实时theta，也未计入股价变动。SPY因当天（第5天）才建仓，只显示第5天的数字。原本四个持仓目前<b>实际</b>按市值计价的未实现盈亏（已计入股价变动）均为负值——见「持仓」页签——因为建仓以来的股价变动已超过此处建模的theta收益。</span>
+        <span class="en">Day 1–5 figures are a <b>modeled √time approximation</b> of pure theta decay (same method as the NVDA "±5% swing" Q&amp;A below) — not live theta from IBKR, and they ignore price movement. SPY only shows a Day 5 figure since it was entered that day. The <b>actual</b> mark-to-market Unrealized P&amp;L (which does include price movement) is currently negative for the original four — see the Positions tab — because share-price moves since entry have outweighed the modeled theta gain shown here.</span>
+        <span class="zh">第1–5天数字为纯时间价值衰减的<b>建模√时间近似值</b>（与下方NVDA的「±5%波动」问答方法相同）——并非来自IBKR的实时theta，也未计入股价变动。SPY因当天（第5天）才建仓，只显示第5天的数字。原本四个持仓目前<b>实际</b>按市值计价的未实现盈亏（已计入股价变动）均为负值——见「持仓」页签——因为建仓以来的股价变动已超过此处建模的theta收益。</span>
       </div>
       <div class="abox">
         <h3 class="qa-toggle" onclick="toggleQA(this)">🧮 <span class="en">Q: What does the "Net Δ" number mean?</span><span class="zh">问：「净Delta」这个数字是什么意思？</span><span class="qa-arrow">▸</span></h3>
@@ -1339,6 +1317,28 @@
             <span class="en"><b>Bottom line:</b> Cushion/Variance + the 15-DTE rule are the two most important daily checks and already do most of the job. Delta, Theta and IV are useful context but don't need daily obsessing.</span>
             <span class="zh"><b>重点：</b>缓冲/差幅 + DTE15离场法则是每天最重要的两项检查，已经能解决大部分问题。Delta、Theta、IV是有用的参考资讯，不需要每天紧盯。</span>
           </div>
+        </div>
+        </div>
+      </div>
+      <div class="abox">
+        <h3 class="qa-toggle" onclick="toggleQA(this)">📉 <span class="en">Q: If NVDA moves ±5% from Day 1 to Day 36 (expiry), how much premium do I collect per day?</span><span class="zh">问：若NVDA从第1天到第36天（到期）在±5%内波动，我每天能收多少权利金？</span><span class="qa-arrow">▸</span></h3>
+        <div class="qa-body" style="display:none;">
+        <div class="analysis">
+          <ul>
+            <li><span class="en">Expiry is Aug 21 '26 = <b>36 DTE</b> from entry (not 45). Current price sits near the middle of your strikes (195 short put / 230 short call), so a ±5% swing (~$201–$223) stays inside the profit zone the whole time — no breach, full $215 credit on track if held to expiry.</span><span class="zh">到期日为2026年8月21日——从建仓起算<b>36天</b>（非45天）。目前股价接近行使价中点（195认沽/230认购），±5%波动（约$201–$223）全程都在盈利区内——不会被击穿，若持有至到期可望收取全部$215权利金。</span></li>
+            <li><span class="en">Theta decay isn't linear — slow early, fast near expiry (roughly ∝ √(days left)). Modeled pace for your $215 credit:</span><span class="zh">时间价值衰减（theta）并非线性——前期慢、临近到期快（大致与剩余天数的平方根成反比）。你$215权利金的建模衰减节奏：</span></li>
+          </ul>
+          <table class="suit">
+            <tr><th><span class="en">Day range</span><span class="zh">天数区间</span></th><th><span class="en">Cumulative collected</span><span class="zh">累计收取</span></th><th><span class="en">Avg $/day</span><span class="zh">日均$</span></th></tr>
+            <tr><td>1–9</td><td>~$32</td><td>~$3.6</td></tr>
+            <tr><td>10–18</td><td>~$63 <span class="en">total</span><span class="zh">合计</span></td><td>~$3.4</td></tr>
+            <tr><td>19–27</td><td>~$103 <span class="en">total</span><span class="zh">合计</span></td><td>~$4.4</td></tr>
+            <tr><td>28–36 <span class="en">(expiry)</span><span class="zh">（到期）</span></td><td>~$215 <span class="en">total</span><span class="zh">合计</span></td><td>~$12.4</td></tr>
+          </table>
+        </div>
+        <div class="note" style="margin:10px 0 0;">
+          <span class="en"><b>Caveat:</b> this is a modeled √time approximation, not live theta — the tracker doesn't log real daily theta/IV (they're stored as <code>null</code> in <code>positions.json</code>), so actual day-to-day pace will wobble with IV changes, not just time passing.</span>
+          <span class="zh"><b>提醒：</b>以上为√时间的建模估算，非实时theta——追踪表未记录真实每日theta/IV（<code>positions.json</code>中为<code>null</code>），实际每日节奏会随隐含波动率变化而波动，不只是时间流逝。</span>
         </div>
         </div>
       </div>
