@@ -622,9 +622,9 @@
       <span class="live-ts" id="putVarTs"></span>
     </div>
     <table class="legs" style="margin-top:10px">
-      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num">Δ <span class="en">Delta</span><span class="zh">Delta</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
+      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num">Δ <span class="en">Delta</span><span class="zh">Delta</span></th><th class="num"><span class="en">MTD Premium</span><span class="zh">本月权利金</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
       <tbody id="putVarBody">
-        <tr><td colspan="6"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+        <tr><td colspan="7"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
       </tbody>
     </table>
     <div class="note" style="margin-top:12px">
@@ -634,6 +634,10 @@
     <div class="note" style="margin-top:8px">
       <span class="en"><b>Δ Delta</b> is the short put's modeled delta at entry (Black-Scholes, back-solved implied vol — same convention as the per-leg tables in the Positions tab: put deltas negative). It's a static entry snapshot, not a live/recalculated greek, since real per-leg delta isn't logged in <code>positions.json</code>.</span>
       <span class="zh"><b>Δ Delta</b> 为卖出认沽在建仓时的建模delta（Black-Scholes模型反推隐含波动率——与「持仓」页签中各腿明细表一致的约定：认沽delta为负）。这是建仓时的静态快照，非实时重新计算的greek，因为<code>positions.json</code>未记录每条腿的真实delta。</span>
+    </div>
+    <div class="note" style="margin-top:8px">
+      <span class="en"><b>MTD Premium</b> = each condor's Total Credit actually collected when sold to open. All 5 were entered in Jul 2026, so month-to-date equals the full entry credit so far (NVDA/QQQ/AVGO/SMH: 17 Jul · SPY: 21 Jul). This is the real cash credited to the account, not the modeled day-by-day theta decay shown on the Premium tab.</span>
+      <span class="zh"><b>本月权利金</b> = 各铁鹰建仓卖出时实际收到的总权利金（Total Credit）。五个持仓均于2026年7月建仓（NVDA/QQQ/AVGO/SMH：7月17日 · SPY：7月21日），因此本月至今即为迄今收到的全部建仓权利金。这是账户实际入账的现金，并非「权利金」页签中按日建模的theta衰减估算值。</span>
     </div>
   </div>
   </div><!-- /tab-cushion -->
@@ -1886,6 +1890,9 @@ function renderSharePrices(){
 // Short put delta at entry (Black-Scholes, back-solved implied vol) — same static
 // figures shown in each condor's leg table on the Positions tab (T30 convention: puts negative).
 var SHORT_PUT_DELTA = { NVDA:-0.33, QQQ:-0.34, AVGO:-0.31, SMH:-0.28, SPY:-0.22 };
+// Month-to-date premium collected = Total Credit received when each condor was sold to
+// open. All 5 were entered in Jul 2026, so MTD = the full entry credit (see Premium tab).
+var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356 };
 // Share Price (A) vs Selling Put strike — one row per condor
 function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
@@ -1895,8 +1902,10 @@ function renderPutVarianceTable(){
     var price = s && typeof s.price==='number' ? s.price : null;
     var delta = SHORT_PUT_DELTA[sym];
     var deltaTxt = typeof delta==='number' ? delta.toFixed(2) : '—';
+    var mtd = MTD_PREMIUM[sym];
+    var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     if(price===null){
-      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">'+deltaTxt+'</td><td class="num">—</td></tr>';
+      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">'+deltaTxt+'</td><td class="num">'+mtdTxt+'</td><td class="num">—</td></tr>';
     }
     var vpct = (price - cfg.shortP) / cfg.shortP * 100;
     var vcls = vpct >= 0 ? 'pl-up' : 'pl-down';
@@ -1905,7 +1914,7 @@ function renderPutVarianceTable(){
     if(vpct <= 0) cushion = '<span class="badge cut"><span class="en">⛔ Below</span><span class="zh">⛔ 跌破</span></span>';
     else if(vpct < 5) cushion = '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
     else cushion = '<span class="badge safe"><span class="en">✅ Safe</span><span class="zh">✅ 安全</span></span>';
-    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+deltaTxt+'</td><td class="num">'+cushion+'</td></tr>';
+    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+deltaTxt+'</td><td class="num" style="color:#3fb950">'+mtdTxt+'</td><td class="num">'+cushion+'</td></tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
