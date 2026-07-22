@@ -735,6 +735,7 @@
     </div>
     <div id="cards"></div>
     <div class="note"><span class="en">Live price via Yahoo Finance · cut-loss levels set by Paul. Bands align with each condor's short strikes on the Positions tab.</span><span class="zh">实时价格来自雅虎财经 · 止损价位由 Paul 设定。区间与「持仓」标签中每个铁鹰的卖出行权价一致。</span></div>
+    <div class="note"><span class="en">🛡️ <b>Cushion</b> badge = the same Safe/Tight/Below status as the Cushion tab, measured against the short <b>put</b> strike specifically (not the wider cut-loss band above) — the earliest warning before put-side assignment risk.</span><span class="zh">🛡️ <b>缓冲</b>标签 = 与「缓冲」页签相同的安全/偏紧/跌破状态，专门相对卖出<b>认沽</b>行权价衡量（而非上方较宽的止损区间）——是被行权风险最早的预警信号。</span></div>
   </div><!-- /tab-cutloss -->
 
   <div id="tab-pnl" style="display:none">
@@ -1759,11 +1760,22 @@ function statusFor(price, s){
   if(nearHi<0.10) return { cls:'warn', en:'⚠️ Near high cut-loss', zh:'⚠️ 接近上限止损' };
   return { cls:'safe', en:'✅ Safe — inside band', zh:'✅ 安全 — 区间内' };
 }
+// Cushion status vs the condor's short put strike (RAIL_CFG) — same thresholds as the
+// Cushion tab's "Share Price vs Selling Put" table, so the two badges always agree.
+function cushionStatusFor(price, sym){
+  var cfg = RAIL_CFG[sym]; if(!cfg) return null;
+  if(price===null) return { cls:'wait', en:'Cushion —', zh:'缓冲 —' };
+  var vpct = (price - cfg.shortP) / cfg.shortP * 100;
+  if(vpct <= 0) return { cls:'cut', en:'🛡️ Cushion: ⛔ Below '+cfg.shortP+'P', zh:'🛡️ 缓冲：⛔ 跌破'+cfg.shortP+'P' };
+  if(vpct < 5) return { cls:'warn', en:'🛡️ Cushion: ⚠️ Tight ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：⚠️ 偏紧（'+vpct.toFixed(1)+'%）' };
+  return { cls:'safe', en:'🛡️ Cushion: ✅ Safe ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：✅ 安全（'+vpct.toFixed(1)+'%）' };
+}
 function renderCut(){
   var wrap=document.getElementById('cards'); if(!wrap) return; wrap.innerHTML='';
   STOCKS.forEach(function(s){
     var price = (typeof s.price==='number') ? s.price : null;
     var st = statusFor(price, s);
+    var cu = cushionStatusFor(price, s.sym);
     var pctPos = price===null ? 50 : Math.max(2, Math.min(98, ((price-s.low)/(s.high-s.low))*100));
     var chgHtml='';
     if(price!==null && typeof s.prev==='number' && s.prev>0){
@@ -1783,7 +1795,10 @@ function renderCut(){
     el.innerHTML=
       '<div class="st-top">'+
         '<div><div class="st-sym">'+s.sym+'</div><div class="st-name">'+s.name+'</div></div>'+
-        '<div style="text-align:center;"><span class="badge '+st.cls+'"><span class="en">'+st.en+'</span><span class="zh">'+st.zh+'</span></span></div>'+
+        '<div style="text-align:center;display:flex;flex-direction:column;gap:5px;align-items:center;">'+
+          '<span class="badge '+st.cls+'"><span class="en">'+st.en+'</span><span class="zh">'+st.zh+'</span></span>'+
+          (cu ? '<span class="badge '+cu.cls+'"><span class="en">'+cu.en+'</span><span class="zh">'+cu.zh+'</span></span>' : '')+
+        '</div>'+
         '<div class="st-price"><div class="p">'+(price===null?'—':fmt(price))+'</div>'+chgHtml+'</div>'+
       '</div>'+
       (function(){
