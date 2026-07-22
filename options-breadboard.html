@@ -628,8 +628,8 @@
       </tbody>
     </table>
     <div class="note" style="margin-top:12px">
-      <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
-      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
+      <span class="en">Variance = (Share Price − Selling Put strike) ÷ <b>Share Price</b> — same denominator convention as "Nearest cut-loss" on the Cut-Loss tab, so the two % figures now line up. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
+      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ <b>股价</b>——与「止损」页签中「最近止损」相同的分母算法，因此两者的百分比现在会一致。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
     </div>
     <div class="note" style="margin-top:8px">
       <span class="en"><b>Δ Delta</b> is the short put's modeled delta at entry (Black-Scholes, back-solved implied vol — same convention as the per-leg tables in the Positions tab: put deltas negative). It's a static entry snapshot, not a live/recalculated greek, since real per-leg delta isn't logged in <code>positions.json</code>.</span>
@@ -1765,7 +1765,7 @@ function statusFor(price, s){
 function cushionStatusFor(price, sym){
   var cfg = RAIL_CFG[sym]; if(!cfg) return null;
   if(price===null) return { cls:'wait', en:'Cushion —', zh:'缓冲 —' };
-  var vpct = (price - cfg.shortP) / cfg.shortP * 100;
+  var vpct = (price - cfg.shortP) / price * 100;
   if(vpct <= 0) return { cls:'cut', en:'🛡️ Cushion: ⛔ Below '+cfg.shortP+'P', zh:'🛡️ 缓冲：⛔ 跌破'+cfg.shortP+'P' };
   if(vpct < 5) return { cls:'warn', en:'🛡️ Cushion: ⚠️ Tight ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：⚠️ 偏紧（'+vpct.toFixed(1)+'%）' };
   return { cls:'safe', en:'🛡️ Cushion: ✅ Safe ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：✅ 安全（'+vpct.toFixed(1)+'%）' };
@@ -1922,7 +1922,7 @@ function renderPutVarianceTable(){
     if(price===null){
       return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">—</td><td class="num">'+deltaTxt+'</td><td class="num">'+mtdTxt+'</td></tr>';
     }
-    var vpct = (price - cfg.shortP) / cfg.shortP * 100;
+    var vpct = (price - cfg.shortP) / price * 100;
     var vcls = vpct >= 0 ? 'pl-up' : 'pl-down';
     var vsign = vpct >= 0 ? '+' : '';
     var cushion;
