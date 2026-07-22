@@ -225,6 +225,7 @@
     <button class="tab-btn" id="tb-accbal" onclick="setTab('accbal')">💰 <span class="en">Acc Balance</span><span class="zh">账户余额</span></button>
     <button class="tab-btn" id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">Risk</span><span class="zh">风险</span></button>
     <button class="tab-btn" id="tb-cut" onclick="setTab('cutloss')">🚨 <span class="en">Cut-Loss</span><span class="zh">止损</span></button>
+    <button class="tab-btn" id="tb-cush" onclick="setTab('cushion')">🛡️ <span class="en">Cushion</span><span class="zh">缓冲</span></button>
     <button class="tab-btn" id="tb-pnl" onclick="setTab('pnl')">📅 <span class="en">Monthly P&amp;L</span><span class="zh">月度盈亏</span></button>
     <button class="tab-btn" id="tb-ypnl" onclick="setTab('ypnl')">📆 <span class="en">Yearly P&amp;L</span><span class="zh">年度盈亏</span></button>
     <button class="tab-btn" id="tb-qpnl" onclick="setTab('qpnl')">📊 <span class="en">Quarterly P&amp;L</span><span class="zh">季度盈亏</span></button>
@@ -328,28 +329,6 @@
     <div class="note" style="margin-top:12px">
       <span class="en">Options are grouped by the year they were actually opened (from the trade list), confirmed against IBKR data. Stock purchase years aren't in the statement (no per-transaction date), so 2024 is inferred from the multi-year dividend history and the large 2024 deposits — let me know if any of FDS/POOL/ZTS was actually bought in a different year.</span>
       <span class="zh">期权按实际建仓年份分组（来自交易列表），已与IBKR数据核对。股票买入年份未在报表中列出（无逐笔交易日期），2024年是根据多年股息记录及2024年大额存款推断得出——如果FDS、POOL、ZTS中有任何一只实际是在其他年份买入的，请告诉我。</span>
-    </div>
-  </div>
-
-  <div class="condor" id="putVarianceCard" style="margin-top:16px">
-    <div class="c-head">
-      <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Share Price vs Selling Put</span><span class="zh">股价 vs 卖出认沽</span></div>
-      <div class="c-meta"><span class="en">Current price (A) vs each condor's short put strike</span><span class="zh">现价（A）vs 各铁鹰卖出认沽行权价</span></div>
-      <div></div>
-    </div>
-    <div class="refresh-row">
-      <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
-      <span class="live-ts" id="putVarTs"></span>
-    </div>
-    <table class="legs" style="margin-top:10px">
-      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
-      <tbody id="putVarBody">
-        <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
-      </tbody>
-    </table>
-    <div class="note" style="margin-top:12px">
-      <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
-      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
     </div>
   </div>
 
@@ -630,6 +609,30 @@
     <span class="zh"><b>保本点</b> — NVDA：192.85 / 232.15 · QQQ：677.41 / 747.59 · AVGO：345.25 / 434.75 · SMH：510.65 / 654.35 · SPY：711.44 / 773.56。到期时股价处于每对之间即盈利。以上权利金未扣除佣金（每组约4美元）。</span>
   </div>
   </div><!-- /tab-positions -->
+
+  <div id="tab-cushion" style="display:none">
+  <div class="condor" id="putVarianceCard" style="margin-top:16px">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Share Price vs Selling Put</span><span class="zh">股价 vs 卖出认沽</span></div>
+      <div class="c-meta"><span class="en">Current price (A) vs each condor's short put strike</span><span class="zh">现价（A）vs 各铁鹰卖出认沽行权价</span></div>
+      <div></div>
+    </div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
+      <span class="live-ts" id="putVarTs"></span>
+    </div>
+    <table class="legs" style="margin-top:10px">
+      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Put</span><span class="zh">卖出认沽</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th></tr>
+      <tbody id="putVarBody">
+        <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:12px">
+      <span class="en">Variance = (Share Price − Selling Put strike) ÷ Selling Put strike. Positive means price is above the put you actually sold — the cushion before put-side assignment risk. This is different from the "Var: A vs P" figure shown lower on each condor's rail, which compares to the long (bought) put strike. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
+      <span class="zh">差幅 =（股价 − 卖出认沽行权价）÷ 卖出认沽行权价。正值代表股价高于你实际卖出的认沽行权价——即被行权前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P」不同，那是与买入（长）认沽行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
+    </div>
+  </div>
+  </div><!-- /tab-cushion -->
 
   <div id="tab-accbal" style="display:none">
   <div class="condor" id="balancesCard" style="margin-top:16px">
@@ -1526,6 +1529,7 @@ function setTab(t){
   document.getElementById('tab-accbal').style.display = t==='accbal'?'':'none';
   document.getElementById('tab-analysis').style.display = t==='analysis'?'':'none';
   document.getElementById('tab-cutloss').style.display = t==='cutloss'?'':'none';
+  document.getElementById('tab-cushion').style.display = t==='cushion'?'':'none';
   document.getElementById('tab-pnl').style.display = t==='pnl'?'':'none';
   document.getElementById('tab-ypnl').style.display = t==='ypnl'?'':'none';
   document.getElementById('tab-qpnl').style.display = t==='qpnl'?'':'none';
@@ -1540,6 +1544,7 @@ function setTab(t){
   document.getElementById('tb-accbal').classList.toggle('active', t==='accbal');
   document.getElementById('tb-ana').classList.toggle('active', t==='analysis');
   document.getElementById('tb-cut').classList.toggle('active', t==='cutloss');
+  document.getElementById('tb-cush').classList.toggle('active', t==='cushion');
   document.getElementById('tb-pnl').classList.toggle('active', t==='pnl');
   document.getElementById('tb-ypnl').classList.toggle('active', t==='ypnl');
   document.getElementById('tb-qpnl').classList.toggle('active', t==='qpnl');
@@ -1550,7 +1555,7 @@ function setTab(t){
   document.getElementById('tb-prem').classList.toggle('active', t==='premium');
   document.getElementById('tb-perf').classList.toggle('active', t==='perf');
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='perf'||t==='tasks') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='perf'||t==='tasks'||t==='cushion') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
