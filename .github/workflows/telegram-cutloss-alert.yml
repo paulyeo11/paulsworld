@@ -1,0 +1,20 @@
+name: Cut-loss Telegram Alert
+
+on:
+  schedule:
+    - cron: '0 * * * 1-5'  # top of every hour, Mon-Fri (UTC)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check prices and alert via Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node scripts/telegram-cutloss-alert.js
