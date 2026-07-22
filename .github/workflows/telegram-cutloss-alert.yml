@@ -3,7 +3,12 @@ name: Cut-loss Telegram Alert
 on:
   schedule:
     - cron: '0 * * * 1-5'  # top of every hour, Mon-Fri (UTC)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_test_message:
+        description: 'Send a test Telegram message regardless of price breaches'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,4 +22,5 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FORCE_TEST_MESSAGE: ${{ inputs.force_test_message }}
         run: node scripts/telegram-cutloss-alert.js

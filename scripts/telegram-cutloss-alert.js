@@ -32,6 +32,12 @@ async function sendTelegram(text) {
 }
 
 async function main() {
+  if (process.env.FORCE_TEST_MESSAGE === 'true') {
+    await sendTelegram('✅ Test message from Paul\'s World cut-loss alert workflow — Telegram delivery is working.');
+    console.log('Forced test message sent.');
+    return;
+  }
+
   const quotes = await fetchQuotes(THRESHOLDS.map((s) => s.sym));
 
   const breaches = [];
