@@ -674,6 +674,29 @@
       </div>
     </div>
 
+    <!-- Insurance / Legacy Plans Box -->
+    <div style="background:var(--surface);border:1px solid rgba(244,114,182,0.35);border-radius:12px;padding:16px 18px;margin-bottom:14px;">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f472b6;font-family:'DM Mono',monospace;margin-bottom:12px;">💍 Insurance &amp; Legacy Plans (Joanne)</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Current Cash Value</div>
+          <div style="font-size:17px;font-weight:700;color:#f472b6;font-family:'Syne',sans-serif;">S$1,297,376</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">SGD · Mar 2026</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">Total Principal Paid</div>
+          <div style="font-size:17px;font-weight:700;color:#f472b6;font-family:'Syne',sans-serif;">S$1,735,303</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">across 22 policies</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:6px;">USD Equivalent</div>
+          <div style="font-size:17px;font-weight:700;color:#f472b6;font-family:'Syne',sans-serif;" id="bal-ins-usd">—</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px;">USD · live FX</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:10px;">📄 Supplement Retirement Cash Flow &amp; Legacy Planning for Ng Kah Joo Joanne · as at 03/04/2026 · 19 income/maturity policies with a stated value + 3 Etiqa Enrich Income policies not yet vested (excluded)</div>
+    </div>
+
     <!-- TOTAL ASSETS TABLE -->
     <div style="background:var(--surface);border:1px solid rgba(240,165,0,0.35);border-radius:12px;padding:16px 18px;margin-bottom:20px;">
       <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#f0a500;font-family:'DM Mono',monospace;margin-bottom:14px;">💰 Total Assets Summary</div>
@@ -715,6 +738,11 @@
             <td style="padding:9px 8px;color:#c4b5fd;font-weight:600;">🏠 Property</td>
             <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-prop-usd">—</td>
             <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-prop-sgd">S$1,200,000</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:9px 8px;color:#f472b6;font-weight:600;">💍 Insurance (Joanne)</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ins-usd">—</td>
+            <td style="text-align:right;padding:9px 8px;color:#e6edf3;font-family:'DM Mono',monospace;" id="at-ins-sgd">S$1,297,376</td>
           </tr>
           <tr style="background:rgba(240,165,0,0.06);border-top:1px solid rgba(240,165,0,0.3);">
             <td style="padding:10px 8px;color:#f0a500;font-weight:800;font-size:1.05em;">TOTAL</td>
@@ -1119,7 +1147,10 @@ async function loadData() {
     // UOB: hardcoded from last manual update (12 Jun 2026)
     const uobSGD = 32337.13;
     const uobUSD = uobSGD * sgdUsdFx;
-    const totalUSD = ibkrUSD + tigerUSD + cpfUSD + ocbcTotalUSD + uobUSD + propUSD;
+    // Insurance/Legacy Plans (Joanne): from Supplement Retirement Cash Flow & Legacy Planning, as at 03/04/2026
+    const insSGD = 1297376;
+    const insUSD = insSGD * sgdUsdFx;
+    const totalUSD = ibkrUSD + tigerUSD + cpfUSD + ocbcTotalUSD + uobUSD + propUSD + insUSD;
     const totalSGD = totalUSD * usdSgdFx;
     const fmtU = v => 'US$' + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
     const fmtS = v => 'S$'  + v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -1140,9 +1171,13 @@ async function loadData() {
     _s('at-prop-sgd',  fmtS(propSGD));
     const elPropUsd = document.getElementById('bal-prop-usd');
     if(elPropUsd) elPropUsd.textContent = fmtU(propUSD);
+    _s('at-ins-usd',   fmtU(insUSD));
+    _s('at-ins-sgd',   fmtS(insSGD));
+    const elInsUsd = document.getElementById('bal-ins-usd');
+    if(elInsUsd) elInsUsd.textContent = fmtU(insUSD);
     _s('at-total-usd', fmtU(totalUSD));
     _s('at-total-sgd', fmtS(totalSGD));
-    _s('at-note', `CPF/SGX est S$3,500 · OCBC manual 12 Jun 2026 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD`);
+    _s('at-note', `CPF/SGX est S$3,500 · OCBC manual 12 Jun 2026 · Insurance (Joanne) as at 03/04/2026 · FX: 1 USD = ${usdSgdFx.toFixed(4)} SGD`);
     renderAcctOverview(ibkrData, tigerData);
     renderIbkrBalances(ibkrData);
     renderOptions(ibkrData.options || []);
