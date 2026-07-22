@@ -1797,11 +1797,12 @@ function renderCut(){
     }
     var loGap = price===null ? null : (price-s.low)/price*100;
     var hiGap = price===null ? null : (s.high-price)/price*100;
+    function trafficBall(cls){ return cls==='ok' ? '🟢' : (cls==='mid' ? '🟡' : '🔴'); }
     function gapHtml(g, dir){
       if(g===null) return '';
-      if(g<=0) return '<span class="gap breached"><span class="en">breached</span><span class="zh">已触发</span></span>';
+      if(g<=0) return '<span class="gap breached">🔴 <span class="en">breached</span><span class="zh">已触发</span></span>';
       var cls = g<3 ? 'near' : (g<8 ? 'mid' : 'ok');
-      return '<span class="gap '+cls+'">'+dir+' '+g.toFixed(1)+'% <span class="en">to cut</span><span class="zh">距止损</span></span>';
+      return '<span class="gap '+cls+'">'+trafficBall(cls)+' '+dir+' '+g.toFixed(1)+'% <span class="en">to cut</span><span class="zh">距止损</span></span>';
     }
     var el=document.createElement('div');
     el.className='stock';
@@ -1820,7 +1821,7 @@ function renderCut(){
         var near = Math.min(loGap, hiGap);
         var nearWhich = (loGap<hiGap ? '<span class="en">to low cut</span><span class="zh">距下限止损</span>' : '<span class="en">to high cut</span><span class="zh">距上限止损</span>');
         var cls = near<3 ? 'near' : (near<8 ? 'mid' : 'ok');
-        return '<div class="neargap '+cls+'"><span class="en">Nearest cut-loss:</span><span class="zh">最近止损：</span> <b>'+near.toFixed(1)+'%</b> '+nearWhich+'</div>';
+        return '<div class="neargap '+cls+'">'+trafficBall(cls)+' <span class="en">Nearest cut-loss:</span><span class="zh">最近止损：</span> <b>'+near.toFixed(1)+'%</b> '+nearWhich+'</div>';
       })()+
       '<div class="bandbar"><div class="marker" style="left:'+pctPos+'%;"></div></div>'+
       '<div class="band-labels"><span class="lo">'+fmt(s.low)+'</span><span style="color:rgba(255,255,255,.45);"><span class="en">safe band</span><span class="zh">安全区间</span></span><span class="hi">'+fmt(s.high)+'</span></div>'+
