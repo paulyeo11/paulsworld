@@ -8,6 +8,7 @@
 - Worked at **ECO for 9 years**.
 - Holds a **Singapore driving licence** and an **International Driving Permit (IDP)** — already has both, not just planning to get one. (Added 2026-07-19.)
 - Owns a **DJI Mini 5 Pro** drone. (Added 2026-07-19.)
+- **22 July 2026** was a significant personal/anniversary date for Paul and Joanne — a major family financial disclosure between them. Specific figures kept private and out of this public repo. (Added 2026-07-23.)
 - **Index Page Rule:** the homepage must always display **"Retired at 67"** — never 70.
 - **Favourite singers/music:** Susan Wong, Julienne Taylor.
 
