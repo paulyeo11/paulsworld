@@ -239,6 +239,7 @@
     <button class="tab-btn" id="tb-fee" onclick="setTab('fee')">🧾 <span class="en">Fee</span><span class="zh">手续费</span></button>
     <button class="tab-btn" id="tb-perf" onclick="setTab('perf')">📈 <span class="en">Overall Performance</span><span class="zh">整体表现</span></button>
     <button class="tab-btn" id="tb-tasks" onclick="setTab('tasks')">✅ <span class="en">Task List</span><span class="zh">任务清单</span></button>
+    <button class="tab-btn" id="tb-refresh" onclick="setTab('refresh')">🔄 <span class="en">Refresh</span><span class="zh">刷新记录</span></button>
   </div>
 
   <div class="condor" id="acctValueCard">
@@ -1674,6 +1675,43 @@
     </div>
   </div><!-- /tab-tasks -->
 
+  <div id="tab-refresh" style="display:none">
+    <div class="summary">
+      <div class="box"><div class="k"><span class="en">Latest Statement</span><span class="zh">最新报表</span></div><div class="v amber">21 Jul 2026</div></div>
+      <div class="box"><div class="k"><span class="en">Drive File Saved</span><span class="zh">Drive文件保存时间</span></div><div class="v">9:23am SGT</div></div>
+      <div class="box"><div class="k"><span class="en">T29 Refreshed</span><span class="zh">T29刷新时间</span></div><div class="v">9:35am SGT</div></div>
+      <div class="box"><div class="k"><span class="en">Ending NAV</span><span class="zh">期末净值</span></div><div class="v amber">$54,940.59</div></div>
+    </div>
+    <div class="condor" id="refreshCard" style="margin-top:16px">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">🔄 <span class="en">IBKR Data Refresh Log</span><span class="zh">IBKR数据刷新记录</span></div>
+        <div class="c-meta"><span class="en">When each statement landed in Google Drive vs. when T29 was actually refreshed</span><span class="zh">每份报表存入Google Drive的时间 与 T29实际刷新时间的对比</span></div>
+        <div></div>
+      </div>
+      <div class="table-scroll">
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Statement Date (A)</span><span class="zh">报表日期 (A)</span></th>
+          <th><span class="en">Drive Save Time (B)</span><span class="zh">Drive保存时间 (B)</span></th>
+          <th><span class="en">T29 Refresh Time (C)</span><span class="zh">T29刷新时间 (C)</span></th>
+          <th><span class="en">Lag (C−B)</span><span class="zh">延迟 (C−B)</span></th>
+          <th class="num"><span class="en">Ending NAV</span><span class="zh">期末净值</span></th>
+          <th><span class="en">Log Entry</span><span class="zh">日志条目</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td>17 Jul 2026</td><td>21 Jul, ~6:59am SGT</td><td>22 Jul, ~9:47am SGT</td><td>~27 hrs</td><td class="num">$56,579.03</td><td><a href="IB01.html" style="color:#f59e0b">IB01</a></td></tr>
+          <tr><td>20 Jul 2026</td><td>22 Jul, ~6:12am SGT</td><td>22 Jul, ~9:47am SGT</td><td>~3.6 hrs</td><td class="num">$56,401.02</td><td><a href="IB02.html" style="color:#f59e0b">IB02</a></td></tr>
+          <tr><td>21 Jul 2026</td><td>23 Jul, ~9:23am SGT</td><td>23 Jul, ~9:35am SGT</td><td>~12 min</td><td class="num">$54,940.59</td><td><a href="IB03.html" style="color:#f59e0b">IB03</a></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <span class="en"><b>Lag (C−B) = T29 Refresh Time (C) − Drive Save Time (B).</b> Drive save times come straight from each PDF's Drive <code>createdTime</code>; T29 refresh times come from the git commit that updated this page + the matching IB log entry. The Apps Script that auto-saves IBKR email attachments to Drive typically runs ~6–7am SGT (best-evidence estimate, not Paul-confirmed) — the 21 Jul statement's 9:23am save was later than that usual window. Checked again 23 Jul ~7:19pm SGT: no newer statement in Drive since, so T29/IB03 are still current.</span>
+        <span class="zh"><b>延迟 (C−B) = T29刷新时间 (C) − Drive保存时间 (B)。</b> Drive保存时间直接来自每份PDF在Drive中的<code>createdTime</code>；T29刷新时间来自更新此页面的git提交及对应的IB日志条目。自动将IBKR邮件附件存入Drive的Apps Script通常在SGT时间约6-7am运行（这是目前证据最充分的估计，尚未经Paul确认）——7月21日报表9:23am的保存时间晚于这个通常窗口。7月23日约晚上7:19（SGT）再次检查：Drive中没有更新的报表，因此T29/IB03仍为最新数据。</span>
+      </div>
+    </div>
+  </div><!-- /tab-refresh -->
+
   <footer><span class="en">Paul's World · Options Breadboard · updated 21 Jul 2026</span><span class="zh">Paul's World · 期权面包板 · 更新于2026年7月21日</span></footer>
 </div>
 
@@ -1779,6 +1817,7 @@ function setTab(t){
   document.getElementById('tab-fee').style.display = t==='fee'?'':'none';
   document.getElementById('tab-perf').style.display = t==='perf'?'':'none';
   document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
+  document.getElementById('tab-refresh').style.display = t==='refresh'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-tic').classList.toggle('active', t==='targetic');
   document.getElementById('tb-cc').classList.toggle('active', t==='covcall');
@@ -1797,7 +1836,8 @@ function setTab(t){
   document.getElementById('tb-fee').classList.toggle('active', t==='fee');
   document.getElementById('tb-perf').classList.toggle('active', t==='perf');
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='targetic') ? 'none' : '';
+  document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
+  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='targetic'||t==='refresh') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
