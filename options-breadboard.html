@@ -1058,6 +1058,14 @@
         <div class="c-meta"><span class="en"><span class="allTradesCount">53</span> closed trades since inception · one row per position, net premium collected</span><span class="zh">自成立以来共<span class="allTradesCount">53</span>笔已平仓交易 · 每行一个持仓，显示净权利金收入</span></div>
         <div></div>
       </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="sort-btn active" id="sortBtnStock" onclick="setAllTradesSort('stock')" style="background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer">
+          <span class="en">Sort by Stock</span><span class="zh">按股票排序</span>
+        </button>
+        <button class="sort-btn" id="sortBtnEntry" onclick="setAllTradesSort('entry')" style="background:rgba(255,255,255,.08);color:#c9d1d9;border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer">
+          <span class="en">Sort by Entry Date (Est.)</span><span class="zh">按建仓日期排序（估计）</span>
+        </button>
+      </div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
           <th><span class="en">Entry (est.)</span><span class="zh">建仓（估计）</span></th>
@@ -2992,26 +3000,47 @@ var ALL_TRADES = [
   var body = document.getElementById('allTradesBody');
   if (!body) return;
   function fmtSigned2(v){ return (v>=0?'+':'-') + '$' + Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-  var total = 0;
   // Trades with more than 2 legs (the 4-leg Iron Condors — still open, not closed/realized)
   // are excluded from this list entirely, not just their premium.
   function entrySortKey(entryLabel){
     var parts = entryLabel.split(' ');
     return parseInt(parts[1], 10) * 12 + MONTH_SHORT.indexOf(parts[0]);
   }
-  var visible = ALL_TRADES.filter(function(r){ return r[3] <= 2; }).sort(function(a,b){
+  var baseVisible = ALL_TRADES.filter(function(r){ return r[3] <= 2; });
+  var visible = baseVisible.slice().sort(function(a,b){
     if (a[1] !== b[1]) return a[1] < b[1] ? -1 : 1;
     return entrySortKey(a[0]) - entrySortKey(b[0]);
   });
-  body.innerHTML = visible.map(function(r){
-    var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
-    total += prem;
-    var color = prem >= 0 ? '#3fb950' : '#f85149';
-    return '<tr><td>'+entry+'</td><td><b>'+sym+'</b></td><td>'+exp+'</td>' +
-      '<td class="num">'+legs+'</td>' +
-      '<td class="num"><span style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</span></td></tr>';
-  }).join('');
-  document.getElementById('allTradesTotal').textContent = fmtSigned2(total);
+  window.setAllTradesSort = function(mode){
+    var sorted = baseVisible.slice().sort(function(a,b){
+      if (mode === 'entry') {
+        var k = entrySortKey(a[0]) - entrySortKey(b[0]);
+        return k !== 0 ? k : (a[1] < b[1] ? -1 : (a[1] > b[1] ? 1 : 0));
+      }
+      if (a[1] !== b[1]) return a[1] < b[1] ? -1 : 1;
+      return entrySortKey(a[0]) - entrySortKey(b[0]);
+    });
+    renderAllTradesTable(sorted);
+    var stockBtn = document.getElementById('sortBtnStock'), entryBtn = document.getElementById('sortBtnEntry');
+    [stockBtn, entryBtn].forEach(function(btn){
+      btn.style.background = 'rgba(255,255,255,.08)'; btn.style.color = '#c9d1d9'; btn.style.border = '1px solid rgba(255,255,255,.15)';
+    });
+    var activeBtn = mode === 'entry' ? entryBtn : stockBtn;
+    activeBtn.style.background = '#f59e0b'; activeBtn.style.color = '#0d1117'; activeBtn.style.border = 'none';
+  };
+  function renderAllTradesTable(rows){
+    var total = 0;
+    body.innerHTML = rows.map(function(r){
+      var entry = r[0], sym = r[1], exp = r[2], legs = r[3], prem = r[4];
+      total += prem;
+      var color = prem >= 0 ? '#3fb950' : '#f85149';
+      return '<tr><td>'+entry+'</td><td><b>'+sym+'</b></td><td>'+exp+'</td>' +
+        '<td class="num">'+legs+'</td>' +
+        '<td class="num"><span style="color:'+color+';font-weight:700">'+fmtSigned2(prem)+'</span></td></tr>';
+    }).join('');
+    document.getElementById('allTradesTotal').textContent = fmtSigned2(total);
+  }
+  renderAllTradesTable(visible);
   document.querySelectorAll('.allTradesCount').forEach(function(el){ el.textContent = visible.length; });
 
   // Win Trades — same closed-trade set (<=2 legs), filtered to premium > 0, sorted biggest win first.
