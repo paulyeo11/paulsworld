@@ -111,6 +111,15 @@
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
 
+  .table-scroll { overflow-x:auto; }
+  .etable { width:100%; border-collapse:collapse; font-size:.82rem; }
+  .etable th, .etable td { padding:9px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); white-space:nowrap; }
+  .etable th { color:#8ea0ff; font-size:.66rem; text-transform:uppercase; letter-spacing:.03em; }
+  .etable td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .etable .badge-etf { color:rgba(255,255,255,.4); }
+  .etable .badge-confirmed { color:#f87171; font-weight:700; }
+  .etable .badge-unconfirmed { color:#fbbf24; font-weight:700; }
+
   .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
   .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
 </style>
@@ -136,6 +145,7 @@
   <div class="tabs">
     <button class="tab-btn active" id="tb-r1" onclick="setTab('r1')">🦅🌙 <span class="en">Round 1</span><span class="zh">第一轮</span></button>
     <button class="tab-btn" id="tb-r2" onclick="setTab('r2')">🦅🌤️ <span class="en">Round 2</span><span class="zh">第二轮</span></button>
+    <button class="tab-btn" id="tb-earn" onclick="setTab('earn')">🗓️ <span class="en">Earning Date</span><span class="zh">财报日期</span></button>
   </div>
 
   <div class="btn-row">
@@ -203,6 +213,33 @@
     </div>
   </div>
 
+  <!-- ===== Earning Date — all 8 IG (Iron Condor) candidates from both rounds ===== -->
+  <div class="tab-panel" id="panel-earn">
+    <div class="ctxbox">
+      <span class="en"><b>All 8 candidates, one view:</b> share price now + next earnings date for every Round 1 &amp; Round 2 pick. ETFs (SPY, IWM, XLF, XLE, DIA, XLU) carry no single-company earnings risk. MSFT's date is confirmed (see Cushion Watch log, 23 Jul 2026). AAPL's next earnings date isn't confirmed anywhere in your records — <b>don't guess it</b>, check IBKR's calendar or Nasdaq before opening.</span>
+      <span class="zh"><b>8个候选一次看清：</b>第一轮与第二轮每个标的的即时股价+下次财报日期。ETF（SPY、IWM、XLF、XLE、DIA、XLU）不存在单一公司财报风险。MSFT的日期已确认（见「缓冲监控」记录，2026年7月23日）。AAPL的下次财报日期在你的记录中尚未确认——<b>请勿猜测</b>，开仓前请查IBKR财报日历或Nasdaq官网。</span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="etable">
+        <thead>
+          <tr>
+            <th><span class="en">Ticker</span><span class="zh">代码</span></th>
+            <th><span class="en">Type</span><span class="zh">类型</span></th>
+            <th class="num"><span class="en">Share Price Now</span><span class="zh">现价</span></th>
+            <th><span class="en">Next Earnings Date</span><span class="zh">下次财报日期</span></th>
+          </tr>
+        </thead>
+        <tbody id="earnBody"></tbody>
+      </table>
+    </div>
+
+    <div class="warnbox" style="margin-top:18px">
+      ⚠️ <span class="en">Earnings dates shown here are only as good as what's been confirmed — this page will never fabricate a date. If a row says "not yet confirmed," verify on IBKR's option chain or Nasdaq's earnings calendar before opening a new Iron Condor on that name.</span>
+      <span class="zh">⚠️ 本页显示的财报日期仅以已确认的信息为准——绝不会自行编造日期。若某行显示「尚未确认」，请在开新的铁鹰仓位前，先到IBKR期权链或Nasdaq财报日历核实。</span>
+    </div>
+  </div>
+
   <div class="foot">
     <span class="en">Educational tool · Live prices via Yahoo Finance (delayed)</span><span class="zh">教育性工具 · 实时价格来自Yahoo Finance（有延迟）</span><br>
     <a href="options-breadboard.html">🍞 <span class="en">T29: Current 4 Iron Condors — Breadboard</span><span class="zh">T29：目前4个铁鹰持仓——面包板</span></a><br>
@@ -224,16 +261,20 @@ var ROUNDS = {
     candidates: {
       SPY: { name: 'SPDR S&amp;P 500 ETF', type: 'etf',
         enWhy: 'Deepest options market on Earth — the classic Iron Condor underlying. Broad market, low single-name risk.',
-        zhWhy: '全球最深的期权市场 — 经典的铁鹰标的。广泛市场，单一个股风险低。' },
+        zhWhy: '全球最深的期权市场 — 经典的铁鹰标的。广泛市场，单一个股风险低。',
+        earnStatus: 'etf', earnEn: 'N/A — ETF, no single-company earnings', earnZh: 'N/A——ETF，无单一公司财报' },
       IWM: { name: 'iShares Russell 2000 ETF', type: 'etf',
         enWhy: 'Small-caps — higher IV than SPY/QQQ (more premium), still very liquid. Low overlap with mega-cap semis.',
-        zhWhy: '小盘股 — IV高于SPY/QQQ（权利金更高），流动性仍很好。与大型半导体股重叠度低。' },
+        zhWhy: '小盘股 — IV高于SPY/QQQ（权利金更高），流动性仍很好。与大型半导体股重叠度低。',
+        earnStatus: 'etf', earnEn: 'N/A — ETF, no single-company earnings', earnZh: 'N/A——ETF，无单一公司财报' },
       XLF: { name: 'Financial Select Sector ETF', type: 'etf',
         enWhy: 'Banks &amp; financials — usually calmer range than tech, decent liquidity, genuinely different sector.',
-        zhWhy: '银行与金融股 — 走势通常比科技股平稳，流动性尚可，属于真正不同的行业。' },
+        zhWhy: '银行与金融股 — 走势通常比科技股平稳，流动性尚可，属于真正不同的行业。',
+        earnStatus: 'etf', earnEn: 'N/A — ETF, no single-company earnings', earnZh: 'N/A——ETF，无单一公司财报' },
       XLE: { name: 'Energy Select Sector ETF', type: 'etf',
         enWhy: 'Oil &amp; gas majors — good premium, moves with energy prices, not semiconductor/AI sentiment.',
-        zhWhy: '石油与天然气龙头股 — 权利金不错，走势与能源价格相关，而非半导体/AI情绪。' }
+        zhWhy: '石油与天然气龙头股 — 权利金不错，走势与能源价格相关，而非半导体/AI情绪。',
+        earnStatus: 'etf', earnEn: 'N/A — ETF, no single-company earnings', earnZh: 'N/A——ETF，无单一公司财报' }
     },
     fetched: false
   },
@@ -242,21 +283,25 @@ var ROUNDS = {
     candidates: {
       DIA: { name: 'SPDR Dow Jones ETF', type: 'etf',
         enWhy: 'Blue-chip index — tends to be calmer / narrower range than SPY/QQQ, still very liquid, no single-name earnings risk.',
-        zhWhy: '蓝筹股指数 — 走势通常比SPY/QQQ更平稳、区间更窄，流动性仍很好，无单一个股财报风险。' },
+        zhWhy: '蓝筹股指数 — 走势通常比SPY/QQQ更平稳、区间更窄，流动性仍很好，无单一个股财报风险。',
+        earnStatus: 'etf', earnEn: 'N/A — ETF, no single-company earnings', earnZh: 'N/A——ETF，无单一公司财报' },
       XLU: { name: 'Utilities Select Sector ETF', type: 'etf',
         enWhy: 'Defensive sector — historically the lowest-beta ETF group, genuinely different regime from tech/semis/financials/energy.',
-        zhWhy: '防御性行业 — 历史上是Beta最低的ETF板块之一，与科技/半导体/金融/能源走势截然不同。' },
+        zhWhy: '防御性行业 — 历史上是Beta最低的ETF板块之一，与科技/半导体/金融/能源走势截然不同。',
+        earnStatus: 'etf', earnEn: 'N/A — ETF, no single-company earnings', earnZh: 'N/A——ETF，无单一公司财报' },
       MSFT: { name: 'Microsoft', type: 'stock',
         enWhy: 'Steady mega-cap, usually range-bound between earnings — but a single stock, so it DOES carry earnings-gap risk. Check the calendar first.',
-        zhWhy: '稳健大型股，财报之间通常区间震荡——但属于个股，因此存在财报跳空风险，下单前请先查看财报日历。' },
+        zhWhy: '稳健大型股，财报之间通常区间震荡——但属于个股，因此存在财报跳空风险，下单前请先查看财报日历。',
+        earnStatus: 'confirmed', earnEn: 'Wed 29 Jul 2026 (after close)', earnZh: '2026年7月29日（周三，收盘后）' },
       AAPL: { name: 'Apple', type: 'stock',
         enWhy: 'Extremely liquid options chain, tight spreads even far OTM — also a single stock with earnings-gap risk, check the calendar first.',
-        zhWhy: '期权链极为活跃，即便深度虚值价差仍窄——同样属于个股，存在财报跳空风险，下单前请先查看财报日历。' }
+        zhWhy: '期权链极为活跃，即便深度虚值价差仍窄——同样属于个股，存在财报跳空风险，下单前请先查看财报日历。',
+        earnStatus: 'unconfirmed', earnEn: 'Not yet confirmed — check IBKR/Nasdaq calendar before opening', earnZh: '尚未确认——开仓前请查IBKR/Nasdaq财报日历' }
     },
     fetched: false
   }
 };
-var activeRound = 'r1';
+var activeTab = 'r1';
 
 function fmtMoney(n){
   if (n === null || n === undefined || isNaN(n)) return '--';
@@ -381,6 +426,9 @@ function renderQuote(round, symbol, data){
   }
   var v = igVerdict(rangePos);
   priceEl.innerHTML = fmtMoney(price) + pctHtml + rangeHtml + '<br><span class="verdict ' + v.cls + '"><span class="en">' + v.en + '</span><span class="zh">' + v.zh + '</span></span>';
+
+  var earnPriceEl = document.getElementById(elId(round,'eprice',symbol));
+  if(earnPriceEl) earnPriceEl.innerHTML = fmtMoney(price) + pctHtml;
 
   // Suggested strikes: 10% OTM short strikes, $5 wings, rounded to broker increment
   var inc = roundIncrement(price);
@@ -563,19 +611,51 @@ function fetchRound(round){
 }
 
 function fetchActiveRound(){
-  fetchRound(activeRound);
+  if(activeTab === 'earn'){
+    fetchRound('r1');
+    fetchRound('r2');
+  } else {
+    fetchRound(activeTab);
+  }
 }
 
-function setTab(round){
-  if(round === activeRound) return;
-  activeRound = round;
-  ['r1','r2'].forEach(function(r){
-    document.getElementById('tb-' + r).classList.toggle('active', r === round);
-    document.getElementById('panel-' + r).classList.toggle('active', r === round);
+function setTab(tab){
+  if(tab === activeTab) return;
+  activeTab = tab;
+  ['r1','r2','earn'].forEach(function(t){
+    document.getElementById('tb-' + t).classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t).classList.toggle('active', t === tab);
   });
-  if(!ROUNDS[round].fetched){
-    fetchRound(round);
+  if(tab === 'earn'){
+    if(!ROUNDS.r1.fetched) fetchRound('r1');
+    if(!ROUNDS.r2.fetched) fetchRound('r2');
+  } else if(!ROUNDS[tab].fetched){
+    fetchRound(tab);
   }
+}
+
+function buildEarningsRow(round, symbol){
+  var c = ROUNDS[round].candidates[symbol];
+  var tr = document.createElement('tr');
+  var typeHtml = c.type === 'etf'
+    ? '<span class="en">ETF</span><span class="zh">ETF</span>'
+    : '<span class="en">Stock</span><span class="zh">个股</span>';
+  var badgeClass = c.earnStatus === 'confirmed' ? 'badge-confirmed' : (c.earnStatus === 'etf' ? 'badge-etf' : 'badge-unconfirmed');
+  tr.innerHTML =
+    '<td><b>' + symbol + '</b></td>' +
+    '<td>' + typeHtml + '</td>' +
+    '<td class="num" id="' + elId(round,'eprice',symbol) + '">···</td>' +
+    '<td class="' + badgeClass + '"><span class="en">' + c.earnEn + '</span><span class="zh">' + c.earnZh + '</span></td>';
+  return tr;
+}
+
+function buildEarningsTable(){
+  var tbody = document.getElementById('earnBody');
+  ['r1','r2'].forEach(function(round){
+    ROUNDS[round].tickers.forEach(function(symbol){
+      tbody.appendChild(buildEarningsRow(round, symbol));
+    });
+  });
 }
 
 function toggleQA(h3){
@@ -609,6 +689,7 @@ function shareThisPage(){
       }
     });
   });
+  buildEarningsTable();
   fetchRound('r1');
 })();
 </script>
