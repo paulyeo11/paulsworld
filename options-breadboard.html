@@ -222,6 +222,7 @@
 
   <div class="tabs">
     <button class="tab-btn active" id="tb-pos" onclick="setTab('positions')">📊 <span class="en">Positions</span><span class="zh">持仓</span></button>
+    <button class="tab-btn" id="tb-winloss" onclick="setTab('winloss')">⚖️ <span class="en">Win/Loss Amt</span><span class="zh">盈亏金额</span></button>
     <button class="tab-btn" id="tb-tic" onclick="setTab('targetic')">🎯 <span class="en">Target IC</span><span class="zh">目标铁鹰</span></button>
     <button class="tab-btn" id="tb-cc" onclick="setTab('covcall')">📞 <span class="en">Covered Call</span><span class="zh">备兑看涨</span></button>
     <button class="tab-btn" id="tb-accbal" onclick="setTab('accbal')">💰 <span class="en">Acc Balance</span><span class="zh">账户余额</span></button>
@@ -271,28 +272,6 @@
     <div class="box"><div class="k"><span class="en">Total Max Risk</span><span class="zh">总最大风险</span></div><div class="v red">−$2,260</div></div>
     <div class="box"><div class="k"><span class="en">Realized P&amp;L</span><span class="zh">已实现盈亏</span></div><div class="v amber">$0</div></div>
     <div class="box"><div class="k"><span class="en">Unrealized P&amp;L</span><span class="zh">未实现盈亏</span></div><div class="v green">+$8</div></div>
-  </div>
-
-  <div class="condor" id="winLossCard" style="margin-top:16px">
-    <div class="c-head">
-      <div class="tkr" style="font-size:1.1rem">⚖️ <span class="en">Win vs Loss Amount</span><span class="zh">盈亏金额对比</span></div>
-      <div class="c-meta"><span class="en">Max Return (win) vs Max Loss per condor</span><span class="zh">各铁鹰的最大盈利（win）vs 最大亏损</span></div>
-      <div></div>
-    </div>
-    <table class="legs" style="margin-top:10px">
-      <tr><th><span class="en">Position</span><span class="zh">持仓</span></th><th class="num"><span class="en">Win Amt</span><span class="zh">盈利金额</span></th><th class="num"><span class="en">Lost Amt</span><span class="zh">亏损金额</span></th><th class="num"><span class="en">Ratio</span><span class="zh">比例</span></th></tr>
-      <tr><td>NVDA</td><td class="num" style="color:#3fb950">+$215</td><td class="num" style="color:#f85149">−$285</td><td class="num">1 : 1.3</td></tr>
-      <tr><td>QQQ</td><td class="num" style="color:#3fb950">+$259</td><td class="num" style="color:#f85149">−$241</td><td class="num">1 : 0.9</td></tr>
-      <tr><td>AVGO</td><td class="num" style="color:#3fb950">+$475</td><td class="num" style="color:#f85149">−$525</td><td class="num">1 : 1.1</td></tr>
-      <tr><td>SMH</td><td class="num" style="color:#3fb950">+$435</td><td class="num" style="color:#f85149">−$565</td><td class="num">1 : 1.3</td></tr>
-      <tr><td>SPY</td><td class="num" style="color:#3fb950">+$356</td><td class="num" style="color:#f85149">−$644</td><td class="num">1 : 1.8</td></tr>
-      <tr><td>XLE <span class="en" style="font-size:.68rem;color:#f59e0b">(target)</span><span class="zh" style="font-size:.68rem;color:#f59e0b">（目标）</span></td><td class="num" style="color:#3fb950">+$65</td><td class="num" style="color:#f85149">−$135</td><td class="num">1 : 2.1</td></tr>
-      <tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)"><td><span class="en">Total</span><span class="zh">合计</span></td><td class="num" style="color:#3fb950">+$1,805</td><td class="num" style="color:#f85149">−$2,395</td><td class="num">1 : 1.3</td></tr>
-    </table>
-    <div class="note" style="margin-top:10px">
-      <span class="en">Every position shows Lost Amt &gt; Win Amt — that's normal for Iron Condors, not a red flag. See the Q&amp;A on the Cut-Loss tab ("My Max Loss is bigger than my Max Return — is that ok?") for why: you collect a small capped credit often, rather than a big win rarely. <b>Ratio</b> = Lost Amt ÷ Win Amt (lower is better; XLE's 2.1x is the highest of the six because its wing is only $2 wide vs $5–10 on the others). XLE row uses the target limit price ($0.65 credit) since it hasn't filled yet — will update to the real fill once confirmed.</span>
-      <span class="zh">每个持仓的亏损金额都大于盈利金额——这对铁鹰期权来说完全正常，不是警讯。原因见「止损」页签的问答（「我的最大亏损比最大盈利还大——这样正常吗？」）：你是经常收取一笔小额、有上限的权利金，而非偶尔博一笔大的。<b>比例</b> = 亏损金额 ÷ 盈利金额（数字越低越好；XLE的2.1倍是六者中最高的，因为它的翼宽只有$2，其他持仓是$5–10）。XLE这一行使用目标限价（$0.65权利金），因为尚未成交——确认成交后会更新为实际数字。</span>
-    </div>
   </div>
 
   <div class="condor" id="unrealizedLossCard" style="margin-top:16px">
@@ -623,6 +602,30 @@
   </div>
   </div><!-- /tab-positions -->
 
+  <div id="tab-winloss" style="display:none">
+  <div class="condor" id="winLossCard">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">⚖️ <span class="en">Win vs Loss Amount</span><span class="zh">盈亏金额对比</span></div>
+      <div class="c-meta"><span class="en">Max Return (win) vs Max Loss per condor</span><span class="zh">各铁鹰的最大盈利（win）vs 最大亏损</span></div>
+      <div></div>
+    </div>
+    <table class="legs" style="margin-top:10px">
+      <tr><th><span class="en">Position</span><span class="zh">持仓</span></th><th class="num"><span class="en">Win Amt</span><span class="zh">盈利金额</span></th><th class="num"><span class="en">Lost Amt</span><span class="zh">亏损金额</span></th><th class="num"><span class="en">Ratio</span><span class="zh">比例</span></th></tr>
+      <tr><td>NVDA</td><td class="num" style="color:#3fb950">+$215</td><td class="num" style="color:#f85149">−$285</td><td class="num">1 : 1.3</td></tr>
+      <tr><td>QQQ</td><td class="num" style="color:#3fb950">+$259</td><td class="num" style="color:#f85149">−$241</td><td class="num">1 : 0.9</td></tr>
+      <tr><td>AVGO</td><td class="num" style="color:#3fb950">+$475</td><td class="num" style="color:#f85149">−$525</td><td class="num">1 : 1.1</td></tr>
+      <tr><td>SMH</td><td class="num" style="color:#3fb950">+$435</td><td class="num" style="color:#f85149">−$565</td><td class="num">1 : 1.3</td></tr>
+      <tr><td>SPY</td><td class="num" style="color:#3fb950">+$356</td><td class="num" style="color:#f85149">−$644</td><td class="num">1 : 1.8</td></tr>
+      <tr><td>XLE <span class="en" style="font-size:.68rem;color:#f59e0b">(target)</span><span class="zh" style="font-size:.68rem;color:#f59e0b">（目标）</span></td><td class="num" style="color:#3fb950">+$65</td><td class="num" style="color:#f85149">−$135</td><td class="num">1 : 2.1</td></tr>
+      <tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)"><td><span class="en">Total</span><span class="zh">合计</span></td><td class="num" style="color:#3fb950">+$1,805</td><td class="num" style="color:#f85149">−$2,395</td><td class="num">1 : 1.3</td></tr>
+    </table>
+    <div class="note" style="margin-top:10px">
+      <span class="en">Every position shows Lost Amt &gt; Win Amt — that's normal for Iron Condors, not a red flag. See the Q&amp;A on the Cut-Loss tab ("My Max Loss is bigger than my Max Return — is that ok?") for why: you collect a small capped credit often, rather than a big win rarely. <b>Ratio</b> = Lost Amt ÷ Win Amt (lower is better; XLE's 2.1x is the highest of the six because its wing is only $2 wide vs $5–10 on the others). XLE row uses the target limit price ($0.65 credit) since it hasn't filled yet — will update to the real fill once confirmed.</span>
+      <span class="zh">每个持仓的亏损金额都大于盈利金额——这对铁鹰期权来说完全正常，不是警讯。原因见「止损」页签的问答（「我的最大亏损比最大盈利还大——这样正常吗？」）：你是经常收取一笔小额、有上限的权利金，而非偶尔博一笔大的。<b>比例</b> = 亏损金额 ÷ 盈利金额（数字越低越好；XLE的2.1倍是六者中最高的，因为它的翼宽只有$2，其他持仓是$5–10）。XLE这一行使用目标限价（$0.65权利金），因为尚未成交——确认成交后会更新为实际数字。</span>
+    </div>
+  </div>
+  </div><!-- /tab-winloss -->
+
   <div id="tab-targetic" style="display:none">
   <div class="condor" id="targetIcCard">
     <div class="c-head">
@@ -674,8 +677,8 @@
     </div>
 
     <div class="note" style="margin-top:8px">
-      <span class="en">Cross-check vs the "Win vs Loss Amount" table on the Positions tab: that table currently shows XLE (target) as +$65 / −$135 (ratio 1:2.1), an earlier estimate before this order-ticket screenshot. This ticket's actual figures ($18 max return / $217 max loss, ratio ~1:12) are meaningfully different and more precise (straight from the live order ticket) — <b>flagging this discrepancy rather than silently overwriting the Positions tab</b> until confirmed. Let Paul know if the Positions tab numbers should be updated to match this ticket.</span>
-      <span class="zh">与「持仓」页签「盈亏金额对比」表格核对：该表目前显示XLE（目标）为+$65 / −$135（比例1:2.1），是在此订单单据截图之前的较早估算值。本单据的实际数字（最大盈利$18 / 最大亏损$217，比例约1:12）差异明显，且更精确（直接来自实时订单单据）——<b>先标注此差异，而非直接覆盖「持仓」页签的数字</b>，待确认后再更新。请告知是否需要将「持仓」页签的数字更新为与本单据一致。</span>
+      <span class="en">Cross-check vs the "Win vs Loss Amount" table on the Win/Loss Amt tab: that table currently shows XLE (target) as +$65 / −$135 (ratio 1:2.1), an earlier estimate before this order-ticket screenshot. This ticket's actual figures ($18 max return / $217 max loss, ratio ~1:12) are meaningfully different and more precise (straight from the live order ticket) — <b>flagging this discrepancy rather than silently overwriting the Win/Loss Amt tab</b> until confirmed. Let Paul know if the Win/Loss Amt tab numbers should be updated to match this ticket.</span>
+      <span class="zh">与「盈亏金额」页签「盈亏金额对比」表格核对：该表目前显示XLE（目标）为+$65 / −$135（比例1:2.1），是在此订单单据截图之前的较早估算值。本单据的实际数字（最大盈利$18 / 最大亏损$217，比例约1:12）差异明显，且更精确（直接来自实时订单单据）——<b>先标注此差异，而非直接覆盖「盈亏金额」页签的数字</b>，待确认后再更新。请告知是否需要将「盈亏金额」页签的数字更新为与本单据一致。</span>
     </div>
   </div>
   </div><!-- /tab-targetic -->
@@ -1826,6 +1829,7 @@ var depositsLoaded = false;
 var tasksLoaded = false;
 function setTab(t){
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
+  document.getElementById('tab-winloss').style.display = t==='winloss'?'':'none';
   document.getElementById('tab-targetic').style.display = t==='targetic'?'':'none';
   document.getElementById('tab-covcall').style.display = t==='covcall'?'':'none';
   document.getElementById('tab-accbal').style.display = t==='accbal'?'':'none';
@@ -1843,6 +1847,7 @@ function setTab(t){
   document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
   document.getElementById('tab-refresh').style.display = t==='refresh'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
+  document.getElementById('tb-winloss').classList.toggle('active', t==='winloss');
   document.getElementById('tb-tic').classList.toggle('active', t==='targetic');
   document.getElementById('tb-cc').classList.toggle('active', t==='covcall');
   document.getElementById('tb-accbal').classList.toggle('active', t==='accbal');
@@ -1859,7 +1864,7 @@ function setTab(t){
   document.getElementById('tb-perf').classList.toggle('active', t==='perf');
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='targetic'||t==='refresh') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='targetic'||t==='refresh'||t==='winloss') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
