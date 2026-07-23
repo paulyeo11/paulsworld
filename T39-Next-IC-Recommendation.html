@@ -88,6 +88,14 @@
   .why { margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.08); font-size:.78rem; color:rgba(255,255,255,.65); line-height:1.6; }
   .why b { color:rgba(255,255,255,.9); }
 
+  .abox { background:#161b22; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:15px; margin:14px 0; font-size:.82rem; }
+  .abox h3 { color:#e6edf3; font-size:.95rem; margin-bottom:8px; }
+  .qa-toggle { cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom:0; user-select:none; }
+  .qa-toggle .qa-arrow { margin-left:auto; color:#f59e0b; font-size:.85rem; transition:transform .2s ease; flex-shrink:0; }
+  .qa-toggle.open .qa-arrow { transform:rotate(90deg); }
+  .qa-body { margin-top:8px; }
+  .analysis ul { margin:6px 0 0 18px; } .analysis li { margin:5px 0; color:#c9d1d9; }
+
   .warnbox { background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.35); border-radius:12px; padding:14px 16px; margin:22px 0; font-size:.82rem; color:#a7f3d0; line-height:1.6; }
   .warnbox b { color:#34d399; }
 
@@ -315,6 +323,21 @@ function buildCard(round, symbol){
     '<div class="why">' +
       '<span class="en"><b>Why this pick:</b> ' + c.enWhy + '</span>' +
       '<span class="zh"><b>推荐理由：</b>' + c.zhWhy + '</span>' +
+    '</div>';
+  return div;
+}
+
+function buildDiaQA(){
+  var div = document.createElement('div');
+  div.className = 'abox';
+  div.innerHTML =
+    '<h3 class="qa-toggle" onclick="toggleQA(this)">❓ <span class="en">Q: Is DIA good to trade an Iron Condor tonight (23 Jul 2026)?</span><span class="zh">问：今晚（2026年7月23日）适合在DIA上开铁鹰仓位吗？</span><span class="qa-arrow">▸</span></h3>' +
+    '<div class="qa-body" style="display:none;">' +
+      '<div class="analysis"><ul>' +
+        '<li><span class="en"><b>Answer: Not tonight.</b> DIA is at $521.47 (+5.63%) and sitting at <b>89% of its 52-week range</b> — a trending market near its highs, not the range-bound behavior an Iron Condor needs.</span><span class="zh"><b>答案：今晚不建议。</b>DIA现价$521.47（+5.63%），处于52周区间的<b>89%位置</b>——属于接近高点的趋势性行情，而非铁鹰策略所需的区间震荡行情。</span></li>' +
+        '<li><span class="en">The card\'s own verdict flags this: <b>"❌ At 52w extreme — trending, riskier for a condor."</b> At an extreme, there\'s more risk of the trend pushing through the short call strike before any pullback.</span><span class="zh">卡片本身的判定已标示：<b>「❌ 处于52周极值——趋势明显，铁鹰风险较高」</b>。在极值位置，价格在回调前突破卖出认购行使价的风险更高。</span></li>' +
+        '<li><span class="en"><b>Better move:</b> wait for DIA to pull back toward the middle of its $470–$575 profit zone, or trade a name that isn\'t sitting at a 52w extreme tonight.</span><span class="zh"><b>更好的做法：</b>等DIA回调到$470–$575盈利区的中段再开仓，或今晚改选未处于52周极值的标的。</span></li>' +
+      '</ul></div>' +
     '</div>';
   return div;
 }
@@ -555,6 +578,13 @@ function setTab(round){
   }
 }
 
+function toggleQA(h3){
+  var body = h3.nextElementSibling;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  h3.classList.toggle('open', !open);
+}
+
 function shareThisPage(){
   var url=window.location.href;
   var title=document.title;
@@ -574,6 +604,9 @@ function shareThisPage(){
     var cardsWrap = document.getElementById('cards-' + round);
     ROUNDS[round].tickers.forEach(function(symbol){
       cardsWrap.appendChild(buildCard(round, symbol));
+      if(round === 'r2' && symbol === 'DIA'){
+        cardsWrap.appendChild(buildDiaQA());
+      }
     });
   });
   fetchRound('r1');
