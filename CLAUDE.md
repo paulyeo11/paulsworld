@@ -47,7 +47,7 @@ Whenever Paul says **"update IBKR data"** (or any of the trigger phrases above),
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
 - **Be brief.** Terse, no-fluff answers. Lead with the outcome.
-- **Don't ask "Can I?" / "Shall I proceed?"** before routine work on Paul's own assets — just do it, then report. No permission-gating mid-task.
+- **Don't ask "Can I?" / "Shall I proceed?"** before routine work on Paul's own assets — just do it, then report. No permission-gating mid-task. This includes structural/design calls (e.g. how a page or nav section should be laid out) and follow-through steps like opening a pull request on a repo Paul already owns — use best judgement and proceed, don't pause for confirmation. (Added 2026-07-23, after being asked twice in one session not to gate on this.)
 - **Commit and push immediately** after every change — no need to inform Paul before committing. Just do it silently and confirm with the result.
 - **EXCEPTION — always get approval before creating anything NEW & outward-facing:** never create a new website, new GitHub repo, new hosting project (Netlify, Vercel, etc.), or new domain without Paul's explicit OK first. (Editing/pushing to repos he already owns is fine.)
 - **Clean links.** When giving Paul a URL, write the bare clickable link — never append `**` or any punctuation to the end of it.
