@@ -39,6 +39,9 @@ Whenever Paul says **"update IBKR data"** (or any of the trigger phrases above),
 - **2026-07-21: SPY 4-leg IC FILLED** at 23:20 SGT. Aug31'26 (41 DTE) expiry: Sold 715P @$5.80 / Bought 705P @$4.56 / Sold 770C @$4.47 / Bought 780C @$2.15, $10 wings both sides. **Net credit ~$353** (after $3.04 commissions). Max Loss ~$647, Max Return ~$353. Breakevens 711.47 / 773.53 vs spot ~$744.95. **Close target: buy back at ~$1.76 (50% of credit) for ~$176 profit.** Consider closing/rolling around 21 DTE (~10 Aug 2026) regardless of profit level.
 - **2026-07-23: MSFT IC — flagged, NOT entered.** Paul asked about opening an MSFT Iron Condor tonight. **MSFT reports Q4 FY26 earnings after close on Wed 29 Jul 2026 — only 6 days out**, so a standard-cycle IC opened tonight would carry earnings-gap risk inside the expiration window (unlike the event-free SPY/index ICs above). Recommendation given: either wait until after the 29 Jul earnings to open a normal IC, or if doing a deliberate earnings-IV play, size small/wide and plan to close the next morning regardless of P&L. No position opened — live MSFT price/IV rank not pulled (fetches to Barchart/OptionCharts were blocked); check IV rank on IBKR before sizing if proceeding.
 
+## T29 Options Dashboard — Standing Notes (added 2026-07-23)
+- The **Account Value** card (NAV chart, $54,940.59, since-inception %, period buttons) lives only on the **Positions** tab of `options-breadboard.html`. **Do not duplicate or move it into other tabs** (e.g. the new IC Benefits tab) — Paul confirmed this explicitly when reviewing the IC Benefits tab.
+
 ## How Paul Likes Me to Work (Standing Preferences)
 These apply to ANY assistant (notebook Claude Code / phone Claude app) — please follow them.
 - **Be brief.** Terse, no-fluff answers. Lead with the outcome.
