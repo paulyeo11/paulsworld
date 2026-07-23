@@ -681,6 +681,36 @@
       <span class="zh"><b>本月权利金</b> = 各铁鹰建仓卖出时实际收到的总权利金（Total Credit）。五个持仓均于2026年7月建仓（NVDA/QQQ/AVGO/SMH：7月17日 · SPY：7月21日），因此本月至今即为迄今收到的全部建仓权利金。这是账户实际入账的现金，并非「权利金」页签中按日建模的theta衰减估算值。</span>
     </div>
   </div>
+
+  <div class="condor" id="callVarianceCard" style="margin-top:16px">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Share Price vs Selling Call</span><span class="zh">股价 vs 卖出认购</span></div>
+      <div class="c-meta"><span class="en">Current price (A) vs each condor's short call strike</span><span class="zh">现价（A）vs 各铁鹰卖出认购行权价</span></div>
+      <div></div>
+    </div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
+      <span class="live-ts" id="callVarTs"></span>
+    </div>
+    <table class="legs" style="margin-top:10px">
+      <tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><th class="num"><span class="en">Selling Call</span><span class="zh">卖出认购</span></th><th class="num"><span class="en">Variance</span><span class="zh">差幅</span></th><th class="num"><span class="en">Cushion</span><span class="zh">缓冲</span></th><th class="num">Δ <span class="en">Delta</span><span class="zh">Delta</span></th><th class="num"><span class="en">MTD Premium</span><span class="zh">本月权利金</span></th></tr>
+      <tbody id="callVarBody">
+        <tr><td colspan="7"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:12px">
+      <span class="en">Variance = (Selling Call strike − Share Price) ÷ <b>Share Price</b> — the mirror of the put-side table above. Positive means price is below the call you actually sold — the cushion before call-side assignment (being called away). Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
+      <span class="zh">差幅 =（卖出认购行权价 − 股价）÷ <b>股价</b>——与上方认沽表相反的算法。正值代表股价低于你实际卖出的认购行权价——即被行权（股票被强制卖出）前的缓冲空间。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
+    </div>
+    <div class="note" style="margin-top:8px">
+      <span class="en"><b>Δ Delta</b> is the short call's modeled delta at entry (Black-Scholes, back-solved implied vol — same convention as the per-leg tables in the Positions tab: call deltas positive). It's a static entry snapshot, not a live/recalculated greek, since real per-leg delta isn't logged in <code>positions.json</code>.</span>
+      <span class="zh"><b>Δ Delta</b> 为卖出认购在建仓时的建模delta（Black-Scholes模型反推隐含波动率——与「持仓」页签中各腿明细表一致的约定：认购delta为正）。这是建仓时的静态快照，非实时重新计算的greek，因为<code>positions.json</code>未记录每条腿的真实delta。</span>
+    </div>
+    <div class="note" style="margin-top:8px">
+      <span class="en">Breaching the call side mostly just means an early exit at max profit (the position gets called away) — it doesn't carry the same downside consequences (assignment, margin) as breaching the put side. See the Q&amp;A above the Cut-Loss tab for why the put side is usually checked first.</span>
+      <span class="zh">突破认购一侧大多只是提早以最大盈利离场（持仓被强制平仓）——不像突破认沽一侧那样有实际的下行后果（被行权、保证金问题）。为什么通常先看认沽一侧，见「止损」页签上方的问答。</span>
+    </div>
+  </div>
   </div><!-- /tab-cushion -->
 
   <div id="tab-accbal" style="display:none">
@@ -781,7 +811,7 @@
       <div class="qa-body" style="display:none;">
       <div class="analysis">
         <ul>
-          <li><span class="en">🛡️ <b>Cushion %</b> = (Share Price − Short Put Strike) ÷ Share Price. It <b>only</b> ever measures distance to the put you sold — the strike where, if price falls through it, you're at real assignment risk (could be forced to buy 100 shares at that strike). It ignores the call/upside side entirely. <b>✅ Safe</b> = 5%+ · <b>⚠️ Tight</b> = 0–5% · <b>⛔ Below</b> = price has already dropped through the strike.</span><span class="zh">🛡️ <b>缓冲%</b> = （股价 − 卖出认沽行权价）÷ 股价。它<b>只</b>衡量与你卖出的认沽期权之间的距离——若股价跌破该行权价，就有实际的被行权风险（可能被迫以该价格买入100股）。它完全不考虑认购/上涨那一侧。<b>✅ 安全</b> = 5%以上 · <b>⚠️ 偏紧</b> = 0–5% · <b>⛔ 跌破</b> = 股价已跌破行权价。</span></li>
+          <li><span class="en">🛡️ <b>Cushion %</b> = (Share Price − Short Put Strike) ÷ Share Price. It measures distance to the put you sold — the strike where, if price falls through it, you're at real assignment risk (could be forced to buy 100 shares at that strike). The Cushion tab now also has a mirror "Share Price vs Selling Call" table for the upside/call side, but the put-side table is still the one to check first (see why below). <b>✅ Safe</b> = 5%+ · <b>⚠️ Tight</b> = 0–5% · <b>⛔ Below</b> = price has already dropped through the strike.</span><span class="zh">🛡️ <b>缓冲%</b> = （股价 − 卖出认沽行权价）÷ 股价。它衡量与你卖出的认沽期权之间的距离——若股价跌破该行权价，就有实际的被行权风险（可能被迫以该价格买入100股）。「缓冲」页签现在也有一张对应的「股价 vs 卖出认购」表格，涵盖上涨一侧，但认沽一侧的表格仍应优先查看（原因见下方）。<b>✅ 安全</b> = 5%以上 · <b>⚠️ 偏紧</b> = 0–5% · <b>⛔ 跌破</b> = 股价已跌破行权价。</span></li>
           <li><span class="en">🚦 <b>Nearest cut-loss %</b> = (Share Price − nearest cut-loss level) ÷ Share Price. This checks <b>both</b> your bands (low cut and high cut) and reports whichever one you're closer to today — it can be the upside band, not just the downside. <b>🟢 8%+</b> = comfortable · <b>🟡 3–8%</b> = getting close · <b>🔴 &lt;3%</b> = danger zone.</span><span class="zh">🚦 <b>最近止损%</b> = （股价 − 最近的止损价位）÷ 股价。它会同时检查<b>两侧</b>的区间（下限止损与上限止损），并显示今天离哪一侧更近——有可能是上涨那一侧，不一定是下跌那一侧。<b>🟢 8%以上</b> = 安全 · <b>🟡 3–8%</b> = 渐渐接近 · <b>🔴 低于3%</b> = 危险区。</span></li>
           <li><span class="en"><b>Check Nearest cut-loss first</b> — it's the single "how close to trouble am I" number, covering both directions. <b>Then check Cushion</b> as the follow-up, specifically when the closer side is the downside — breaching the put strike has real consequences (assignment, margin), whereas breaching the call side mostly just means you've hit max profit early and the position gets called away.</span><span class="zh"><b>先看「最近止损」</b>——这是唯一同时涵盖上下两侧、告诉你「离麻烦有多近」的数字。<b>接着再看「缓冲」</b>作为补充，尤其是当较近的一侧是下跌方向时——跌破认沽行权价会有实际后果（被行权、保证金问题），而突破认购一侧大多只是提早达到最大盈利、持仓被强制平仓而已。</span></li>
           <li><span class="en"><b>Gotcha:</b> on some stocks (e.g. SPY) the two numbers describe <b>different sides of the trade</b> — Cushion is always the put/downside, but Nearest cut-loss might be reporting the call/upside if that's currently closer. They only line up when the downside happens to be the nearer side.</span><span class="zh"><b>注意：</b>在某些股票上（例如SPY），这两个数字讲的是<b>交易的不同侧</b>——缓冲永远是认沽/下跌方向，但「最近止损」若此刻上涨一侧更近，讲的就是那一侧。只有当下跌方向恰好是较近的一侧时，两者才会指向同一件事。</span></li>
@@ -795,7 +825,7 @@
       <div class="analysis">
         <ul>
           <li><span class="en"><b>Monitor the Cut-loss tab daily.</b> It's the single "how close to trouble am I" number, because it checks <b>both</b> sides of every position — the downside put strike and the upside call strike — and reports whichever one you're actually closer to today. Bands: <b>🟢 8%+</b> comfortable · <b>🟡 3–8%</b> getting close · <b>🔴 &lt;3%</b> danger zone.</span><span class="zh"><b>每天优先看「止损」页签。</b>它是唯一同时涵盖两侧的「离麻烦有多近」数字——同时检查下跌的认沽行权价与上涨的认购行权价，并显示今天实际较近的那一侧。区间：<b>🟢 8%以上</b> 安全 · <b>🟡 3–8%</b> 渐渐接近 · <b>🔴 低于3%</b> 危险区。</span></li>
-          <li><span class="en">The <b>Cushion tab is the follow-up check</b>, not the daily headline — it only ever measures distance to the put/downside strike and ignores the call/upside side entirely. Use it as a deeper look specifically when Cut-loss shows the downside is the closer side, since breaching a put strike carries real consequences (assignment, margin), whereas breaching the call side mostly just means early max-profit and the position gets called away.</span><span class="zh"><b>「缓冲」页签是补充检查</b>，不是每天的头条数字——它只衡量与卖出认沽行权价的距离，完全不管认购/上涨那一侧。当「止损」显示下跌一侧较近时，再用「缓冲」深入确认，因为跌破认沽行权价会有实际后果（被行权、保证金问题），而突破认购一侧大多只是提早达到最大盈利、持仓被强制平仓而已。</span></li>
+          <li><span class="en">The <b>Cushion tab is the follow-up check</b>, not the daily headline — its "Share Price vs Selling Put" table is the one to focus on, since breaching a put strike carries real consequences (assignment, margin). The tab also has a "Share Price vs Selling Call" table for the upside side, but breaching the call side mostly just means early max-profit and the position gets called away, so it's lower priority. Use the put table as a deeper look specifically when Cut-loss shows the downside is the closer side.</span><span class="zh"><b>「缓冲」页签是补充检查</b>，不是每天的头条数字——应重点看其中的「股价 vs 卖出认沽」表格，因为跌破认沽行权价会有实际后果（被行权、保证金问题）。该页签也有一张「股价 vs 卖出认购」表格涵盖上涨一侧，但突破认购一侧大多只是提早达到最大盈利、持仓被强制平仓而已，优先级较低。当「止损」显示下跌一侧较近时，可用认沽表格深入确认。</span></li>
           <li><span class="en"><b>Bottom line:</b> Cut-loss first (covers both directions), Cushion second (put-side detail). On stocks like SPY where the two can point to different sides of the trade, checking both takes seconds and avoids missing the wrong one.</span><span class="zh"><b>结论：</b>先看「止损」（涵盖两侧），再看「缓冲」（认沽一侧细节）。像SPY这类股票，两者有时指向交易的不同侧，两个都看一眼只需几秒钟，避免漏看错误的一侧。</span></li>
         </ul>
       </div>
@@ -1935,6 +1965,7 @@ function stampCut(){
   var html='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
   var el=document.getElementById('liveTs'); if(el) el.innerHTML=html;
   var el2=document.getElementById('putVarTs'); if(el2) el2.innerHTML=html;
+  var el3=document.getElementById('callVarTs'); if(el3) el3.innerHTML=html;
   setLang(curLang);
 }
 
@@ -2011,11 +2042,15 @@ function renderSharePrices(){
     if(day1) plotDay1Marker(sym, day1.p);
   });
   renderPutVarianceTable();
+  renderCallVarianceTable();
   setLang(curLang);
 }
 // Short put delta at entry (Black-Scholes, back-solved implied vol) — same static
 // figures shown in each condor's leg table on the Positions tab (T30 convention: puts negative).
 var SHORT_PUT_DELTA = { NVDA:-0.33, QQQ:-0.34, AVGO:-0.31, SMH:-0.28, SPY:-0.22 };
+// Short call delta at entry — same static figures shown in each condor's leg table
+// on the Positions tab (T30 convention: calls positive).
+var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.23, SPY:0.25 };
 // Month-to-date premium collected = Total Credit received when each condor was sold to
 // open. All 5 were entered in Jul 2026, so MTD = the full entry credit (see Premium tab).
 var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356 };
@@ -2041,6 +2076,32 @@ function renderPutVarianceTable(){
     else if(vpct < 5) cushion = '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
     else cushion = '<span class="badge safe"><span class="en">✅ Safe</span><span class="zh">✅ 安全</span></span>';
     return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+cushion+'</td><td class="num">'+deltaTxt+'</td><td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
+  });
+  body.innerHTML = rows.join('');
+  setLang(curLang);
+}
+// Share Price (A) vs Selling Call strike — mirror of renderPutVarianceTable, upside side
+function renderCallVarianceTable(){
+  var body = document.getElementById('callVarBody'); if(!body) return;
+  var rows = ['NVDA','QQQ','AVGO','SMH','SPY'].map(function(sym){
+    var cfg = RAIL_CFG[sym];
+    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
+    var price = s && typeof s.price==='number' ? s.price : null;
+    var delta = SHORT_CALL_DELTA[sym];
+    var deltaTxt = typeof delta==='number' ? '+'+delta.toFixed(2) : '—';
+    var mtd = MTD_PREMIUM[sym];
+    var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
+    if(price===null){
+      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+deltaTxt+'</td><td class="num">'+mtdTxt+'</td></tr>';
+    }
+    var vpct = (cfg.shortC - price) / price * 100;
+    var vcls = vpct >= 0 ? 'pl-up' : 'pl-down';
+    var vsign = vpct >= 0 ? '+' : '';
+    var cushion;
+    if(vpct <= 0) cushion = '<span class="badge cut"><span class="en">⛔ Above</span><span class="zh">⛔ 突破</span></span>';
+    else if(vpct < 5) cushion = '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
+    else cushion = '<span class="badge safe"><span class="en">✅ Safe</span><span class="zh">✅ 安全</span></span>';
+    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b></td><td class="num">'+cushion+'</td><td class="num">'+deltaTxt+'</td><td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
