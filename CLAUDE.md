@@ -255,6 +255,9 @@ Button style pattern:
 - **To actually verify and close this out:** ask Paul to send a screenshot of the correct Google Maps pin (or the GPS-tagged photo) — then set real `lat`/`lng`, flip `verifiedGps: true`, switch the buttons back to coordinate-based, and remove the warning banner.
 - Applies to every stop added to any day-log/route map going forward — not just this one page.
 
+## Formula Labels Rule (Standing Default — added 2026-07-23)
+Whenever a table/report shows a calculated column (variance, %, ratio, cushion, etc.), label the inputs with single letters (e.g. `Share Price (A)`) and put the formula right in the calculated column's header using those same letters (e.g. `Variance (A−B)/A`), not just in a note paragraph below the table. Keep letters consistent across the whole table (same letter = same input everywhere it's used). Apply this automatically to every new calculated-column table going forward — no need to ask each time. Reference implementation: the Cushion tab's "Share Price vs Selling Put & Call" table on `options-breadboard.html` (Share Price (A), Selling Put (B), Selling Call (C), Put Variance (A−B)/A, Call Variance (C−A)/A).
+
 ## Currency Conversion Rule (Standing Default — added 2026-07-02)
 Whenever a foreign currency amount (¥ JPY, etc.) appears anywhere on a trip page — timelines, receipts, cost breakdowns, transport fares — always show the approximate **SGD** conversion alongside it, e.g. `¥4,345 (~S$38.10)`. Use a consistent approximate rate (~¥114 = S$1 unless Paul provides a more current rate) and label it as approximate (`~S$`), not exact. Applies to both English and Chinese spans. Do this automatically going forward — no need to ask each time.
 
