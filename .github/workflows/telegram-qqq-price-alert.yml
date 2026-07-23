@@ -1,0 +1,19 @@
+name: QQQ Hourly Telegram Price Alert
+
+on:
+  schedule:
+    # Top of every hour, 13:00-21:00 UTC, Mon-Fri — covers US market hours
+    # (9:30am-4pm ET) across both EDT and EST.
+    - cron: '0 13-21 * * 1-5'
+  workflow_dispatch: {}
+
+jobs:
+  send-price:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send QQQ price to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node scripts/telegram-qqq-price-alert.js
