@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T43: Closing the QQQ Iron Condor — Cushion Hit the Danger Zone</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:580px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-btn { display:block; margin:0 auto 18px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-weight:700; padding:9px 22px; border-radius:24px; cursor:pointer; font-size:.85rem; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .verdict-badge { display:flex; align-items:center; gap:10px; background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.45); border-radius:14px; padding:14px 16px; margin-bottom:22px; }
+  .verdict-badge .vico { font-size:1.6rem; }
+  .verdict-badge .vtxt { font-weight:800; font-size:.95rem; color:#86efac; }
+  .verdict-badge .vsub { font-size:.78rem; color:rgba(255,255,255,.6); margin-top:2px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card ul { margin:6px 0 10px 20px; }
+  .card li { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:6px; }
+
+  table.facts { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.facts th, table.facts td { padding:9px 8px; font-size:.82rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.facts th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; width:38%; }
+  table.facts td b { color:#f4c869; }
+
+  .warn-badge { display:inline-block; background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.45); color:#fca5a5; font-weight:700; font-size:.8rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+  .ok-badge { display:inline-block; background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#86efac; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+
+  .opt-item { display:flex; gap:14px; margin-bottom:14px; }
+  .opt-item:last-child { margin-bottom:0; }
+  .onum { flex-shrink:0; width:26px; height:26px; border-radius:50%; background:#10b981; color:#0e1330; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+  .obody { flex:1; min-width:0; }
+  .otitle { font-weight:700; font-size:.88rem; margin-bottom:4px; }
+  .odesc { color:rgba(255,255,255,.72); font-size:.8rem; line-height:1.5; }
+
+  .shots { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+  .shots figure { margin:0; }
+  .shots img { width:100%; border-radius:10px; border:1px solid rgba(255,255,255,.1); display:block; cursor:zoom-in; }
+  .shots figcaption { font-size:.68rem; color:rgba(255,255,255,.5); text-align:center; margin-top:5px; line-height:1.4; }
+  @media(max-width:480px){ .shots{grid-template-columns:1fr;} }
+
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:9998; align-items:center; justify-content:center; padding:20px; }
+  .lightbox.open { display:flex; }
+  .lightbox img { max-width:100%; max-height:90vh; border-radius:10px; }
+  .lightbox .lbx-close { position:absolute; top:18px; right:20px; color:#fff; font-size:1.6rem; background:none; border:none; cursor:pointer; }
+
+  .fmath { font-family:'Courier New',monospace; background:#0e1330; border-radius:8px; padding:10px 12px; font-size:.82rem; color:#f4c869; margin:8px 0; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="hd">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T43</span><span class="zh">T43</span></span>
+  </div>
+  <div class="ic">🛡️🦅</div>
+  <h1><span class="en">T43: Closing the QQQ Iron Condor — Cushion Hit the Danger Zone</span><span class="zh">T43：平仓QQQ铁鹰——缓冲已进入危险区</span></h1>
+  <p><span class="en">QQQ dropped fast on 23 Jul and both my own cushion checks flashed red at once. Here's the read, the decision, and exactly how I placed the closing order.</span><span class="zh">2026年7月23日QQQ急跌，我自己设定的两个缓冲检查同时亮红灯。以下是判断过程、决定，以及我下平仓单的具体操作。</span></p>
+</div>
+
+<div class="wrap">
+  <button class="share-btn" onclick="shareThisPage()">🔗 Share</button>
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> Personal trade-log entry. Prices are a point-in-time snapshot from my IBKR mobile app on 23 Jul 2026 — always confirm live numbers on the broker before placing any trade.</span><span class="zh"><b>非投资建议。</b>本文仅为个人交易记录。所有价格均为2026年7月23日IBKR手机App的即时快照——下单前务必以券商实时数据为准。</span>
+  </div>
+
+  <div class="verdict-badge">
+    <div class="vico">✅</div>
+    <div>
+      <div class="vtxt"><span class="en">Verdict: Close now — lock in the small profit, don't wait for 50%</span><span class="zh">结论：现在平仓——先锁定小额盈利，不再等50%目标</span></div>
+      <div class="vsub"><span class="en">Both cushion checks were already in the red zone</span><span class="zh">两个缓冲检查都已进入红色危险区</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">The Position</span><span class="zh">持仓概况</span></h2>
+    <table class="facts">
+      <tbody>
+        <tr><th><span class="en">Structure</span><span class="zh">结构</span></th><td><span class="en">QQQ Aug28'26 4-leg Iron Condor</span><span class="zh">QQQ 2026年8月28日到期，4腿铁鹰</span></td></tr>
+        <tr><th><span class="en">Legs</span><span class="zh">各腿</span></th><td><span class="en">Sold 680P / Bought 675P / Sold 745C / Bought 750C</span><span class="zh">卖出680P / 买入675P / 卖出745C / 买入750C</span></td></tr>
+        <tr><th><span class="en">Entry</span><span class="zh">建仓</span></th><td><span class="en">17 Jul 2026 — net credit <b>~$256–259</b> (avg price -2.56)</span><span class="zh">2026年7月17日——净权利金 <b>约$256–259</b>（均价 -2.56）</span></td></tr>
+        <tr><th><span class="en">Breakeven (low)</span><span class="zh">保本点（下限）</span></th><td><b>$677.41</b></td></tr>
+        <tr><th><span class="en">Hard cut-loss</span><span class="zh">硬止损位</span></th><td><b>$678</b> <span class="en">(Paul's own standing level, see T29 Cushion tab)</span><span class="zh">（Paul自订止损位，见T29「缓冲」页签）</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">What Changed</span><span class="zh">发生了什么变化</span></h2>
+    <p><span class="en">On 23 Jul earlier in the day, QQQ was at $705.35 — Put Variance 3.59%, ⚠️ Tight but not urgent. By evening, QQQ had dropped to <b>$693.94</b> (−$11.41 / −1.62% that day), pulling both of my own warning checks into the red at once:</span><span class="zh">7月23日白天，QQQ为$705.35，认沽差幅3.59%——⚠️偏紧但尚不紧急。到晚间，QQQ已跌至<b>$693.94</b>（当日下跌$11.41 / -1.62%），我自订的两个预警同时进入红色区域：</span></p>
+    <div class="fmath">Put Variance (A−B)/A = (693.94−680)/693.94 = <b>2.0%</b> → 🔴 Very Tight (below 3%)</div>
+    <div class="fmath">Nearest cut-loss (A−low)/A = (693.94−678)/693.94 = <b>2.3%</b> → 🔴 danger zone (below 3%)</div>
+    <p><span class="en">Only <b>$15.94 (2.3%)</b> of room was left before the hard $678 cut-loss — and that gap had shrunk fast, confirmed by the option leg prices themselves: the short 680P and long 675P had both jumped <b>+31–32%</b> since entry, while the short 745C and long 750C had both dropped <b>−38% to −43%</b>. That's a real directional move, not just time decay.</span><span class="zh">距$678硬止损位只剩<b>$15.94（2.3%）</b>的空间——而且这个空间正在快速收窄，从期权各腿价格本身也能证实：卖出的680P与买入的675P自建仓以来均上涨<b>31–32%</b>，而卖出的745C与买入的750C均下跌<b>38%至43%</b>。这是真实的方向性走势，不只是时间衰减。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">The Tension — and the Call</span><span class="zh">矛盾之处——以及最终判断</span></h2>
+    <p><span class="en">Unrealized profit at that point was only <b>$23–24</b> — about 9% of the $259 max credit, far short of the usual 50%-of-credit take-profit target (~$130). Normally that argues for holding.</span><span class="zh">当时未实现盈利仅<b>$23–24</b>——约为$259最大权利金的9%，远低于通常50%权利金（约$130）的获利了结目标。一般来说这代表应该续持。</span></p>
+    <p><span class="en">But per my own standing rule — <b>check Nearest cut-loss first, it covers both directions</b> — a red-zone reading takes priority over the profit target. Holding for another $100+ of profit risked the full $241 max loss for a shrinking reward, with price only one more bad day from the hard stop.</span><span class="zh">但根据我自己订下的准则——<b>先看「最近止损」，它同时涵盖两侧方向</b>——红色危险区的信号应优先于获利目标。为了再赚$100多而续持，等于是用$241的最大亏损去搏一个正在缩小的回报，而股价只差一个坏交易日就会触及硬止损。</span></p>
+    <div class="ok-badge">✅ <span class="en">Take the small win now, rather than risk the cap for a bigger one that may not arrive.</span><span class="zh">先拿下这笔小额盈利，而不是冒着触及最大亏损的风险去赌一个可能等不到的更大回报。</span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">How I Placed the Closing Order</span><span class="zh">我如何下平仓单</span></h2>
+    <div class="opt-item">
+      <div class="onum">1</div>
+      <div class="obody">
+        <div class="otitle"><span class="en">Tap Buy, not Sell</span><span class="zh">点「Buy」，不是「Sell」</span></div>
+        <div class="odesc"><span class="en">This condor was opened for a <b>credit</b> (sold to open, avg price -2.56). Closing it means <b>buying it back</b> — so on the position screen, the correct button is <b>Buy</b>. Sell would open a brand-new short position, which is the opposite of what's needed.</span><span class="zh">这个铁鹰是以<b>权利金</b>方式建仓的（卖出开仓，均价-2.56）。平仓即<b>买回</b>——所以在持仓页面上，正确的按钮是<b>Buy</b>。按「Sell」会开出一个全新的卖空仓位，方向正好相反。</span></div>
+      </div>
+    </div>
+    <div class="opt-item">
+      <div class="onum">2</div>
+      <div class="obody">
+        <div class="otitle"><span class="en">Leave the pre-filled limit price</span><span class="zh">保留预填的限价</span></div>
+        <div class="odesc"><span class="en">The order ticket auto-filled Limit Price <b>-2.19</b> — the current Ask, with real size (9 contracts) behind it. In plain terms: pay about <b>$219</b> to close. That's a marketable price likely to fill fast, and it's better than the ~$232 fair-value estimate from the position snapshot — meaning the closing profit ends up a bit higher than first estimated. The "-2.19 / CREDIT" label is just the app's sign convention for this field, not a claim that money is being received.</span><span class="zh">订单自动填入限价<b>-2.19</b>——即当前卖价（Ask），且有实际挂单量（9口合约）支撑。简单说：平仓约需支付<b>$219</b>。这是一个可成交的价位，大概率能快速成交，而且比持仓快照估算的约$232公允价值更划算——代表最终获利会比最初估算的略高一些。「-2.19 / CREDIT」字样只是App对这个栏位的正负号显示惯例，不代表会收到这笔钱。</span></div>
+      </div>
+    </div>
+    <div class="opt-item">
+      <div class="onum">3</div>
+      <div class="obody">
+        <div class="otitle"><span class="en">Slide to Buy</span><span class="zh">滑动「Slide to Buy」</span></div>
+        <div class="odesc"><span class="en">Given the wide 17% spread on this combo and the cushion already in the danger zone, speed mattered more than shaving a few more cents — so the order was sent at the marketable Ask rather than walking the price toward mid.</span><span class="zh">由于这个组合单价差高达17%，加上缓冲已进入危险区，速度比再省几分钱更重要——因此按可成交的卖价（Ask）下单，而不是往中间价慢慢试。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Result</span><span class="zh">结果</span></h2>
+    <table class="facts">
+      <tbody>
+        <tr><th><span class="en">Credit received (entry)</span><span class="zh">建仓收到的权利金</span></th><td><b>~$256</b></td></tr>
+        <tr><th><span class="en">Debit paid (close)</span><span class="zh">平仓支付</span></th><td><b>~$219</b> <span class="en">(at the Ask, -2.19)</span><span class="zh">（按卖价 -2.19）</span></td></tr>
+        <tr><th><span class="en">Locked-in profit</span><span class="zh">锁定盈利</span></th><td><b style="color:#86efac">~$37</b> <span class="en">on 1 contract, before any final commission adjustment</span><span class="zh">1口合约，未计最终手续费调整</span></td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:10px"><span class="en">Small relative to the $259 max credit, but the point was avoiding the $241 max loss with price only 2.3% from the hard cut-loss — not squeezing every last dollar out of a position that had already moved against the put side.</span><span class="zh">相对于$259的最大权利金来说金额不大，但重点在于避免了$241的最大亏损——当时股价距硬止损仅2.3%——而不是在认沽一侧已经走势不利的情况下，硬要榨出最后一分钱。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Screenshots</span><span class="zh">截图</span></h2>
+    <div class="shots">
+      <figure>
+        <img src="img_T43/01-position-legs.jpg" alt="QQQ position, legs and Unrlzd $23.13" onclick="openLbx(this.src)">
+        <figcaption><span class="en">23:37 — Unrlzd $23.13, position -$232.81</span><span class="zh">23:37——未实现盈利$23.13，持仓价值-$232.81</span></figcaption>
+      </figure>
+      <figure>
+        <img src="img_T43/02-live-price-chart.jpg" alt="QQQ live price $693.94, 1-month chart" onclick="openLbx(this.src)">
+        <figcaption><span class="en">23:42 — QQQ $693.94, −1.62% on the day</span><span class="zh">23:42——QQQ $693.94，当日下跌1.62%</span></figcaption>
+      </figure>
+      <figure>
+        <img src="img_T43/03-position-legs-later.jpg" alt="QQQ position legs, Unrlzd $24.29" onclick="openLbx(this.src)">
+        <figcaption><span class="en">23:44 — Unrlzd $24.29, position -$231.65</span><span class="zh">23:44——未实现盈利$24.29，持仓价值-$231.65</span></figcaption>
+      </figure>
+      <figure>
+        <img src="img_T43/04-buy-order-ticket.jpg" alt="Buy order ticket, limit -2.19" onclick="openLbx(this.src)">
+        <figcaption><span class="en">23:46 — Buy order ticket, limit -2.19</span><span class="zh">23:46——买入平仓订单，限价-2.19</span></figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <script src="/view-counter.js"></script>
+
+  <div class="foot">
+    <span class="en">Personal trade-log entry · <span id="lastReviewedEn">23 Jul 2026</span></span><span class="zh">个人交易记录 · <span id="lastReviewedZh">2026年7月23日</span></span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Option by Bang — Iron Condor Breadboard</span><span class="zh">T29：期权面包板</span></a><br>
+    <a href="T28-Cut-Loss-Alerts.html">🚨 <span class="en">T28: Cut-Loss Alerts</span><span class="zh">T28：止损警报</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<div class="lightbox" id="lbx" onclick="closeLbx(event)">
+  <button class="lbx-close" onclick="closeLbx(event)">✕</button>
+  <img id="lbxImg" src="" alt="">
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+function openLbx(src){
+  document.getElementById('lbxImg').src = src;
+  document.getElementById('lbx').classList.add('open');
+}
+function closeLbx(e){
+  if(e) e.stopPropagation();
+  document.getElementById('lbx').classList.remove('open');
+}
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
