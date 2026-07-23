@@ -235,6 +235,7 @@
     <button class="tab-btn" id="tb-lost" onclick="setTab('lost')">📉 <span class="en">Lost Trades</span><span class="zh">亏损交易</span></button>
     <button class="tab-btn" id="tb-dep" onclick="setTab('deposits')">💰 <span class="en">Deposit/MVC</span><span class="zh">存款/市值变动</span></button>
     <button class="tab-btn" id="tb-prem" onclick="setTab('premium')">💵 <span class="en">Premium</span><span class="zh">权利金</span></button>
+    <button class="tab-btn" id="tb-fee" onclick="setTab('fee')">🧾 <span class="en">Fee</span><span class="zh">手续费</span></button>
     <button class="tab-btn" id="tb-perf" onclick="setTab('perf')">📈 <span class="en">Overall Performance</span><span class="zh">整体表现</span></button>
     <button class="tab-btn" id="tb-tasks" onclick="setTab('tasks')">✅ <span class="en">Task List</span><span class="zh">任务清单</span></button>
   </div>
@@ -1420,6 +1421,43 @@
     </div>
   </div><!-- /tab-premium -->
 
+  <div id="tab-fee" style="display:none">
+    <div class="condor" id="feeCard">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">🧾 <span class="en">Total Premium After IBKR Fee</span><span class="zh">扣除IBKR手续费后的总权利金</span></div>
+        <div class="c-meta"><span class="en">5 Iron Condors — NVDA/QQQ/AVGO/SMH entered 17 Jul, SPY entered 21 Jul</span><span class="zh">5个铁鹰持仓——NVDA/QQQ/AVGO/SMH于7月17日建仓，SPY于7月21日建仓</span></div>
+        <div></div>
+      </div>
+      <div class="table-scroll">
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Symbol</span><span class="zh">代码</span></th>
+          <th class="num"><span class="en">Total Credit (A)</span><span class="zh">总权利金 (A)</span></th>
+          <th class="num"><span class="en">Fee to IBKR (B)</span><span class="zh">IBKR手续费 (B)</span></th>
+          <th class="num"><span class="en">Net Premium (A−B)</span><span class="zh">净权利金 (A−B)</span></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><b>NVDA</b></td><td class="num">$215.00</td><td class="num">$4.00</td><td class="num">$211.00</td></tr>
+          <tr><td><b>QQQ</b></td><td class="num">$259.00</td><td class="num">$4.00</td><td class="num">$255.00</td></tr>
+          <tr><td><b>AVGO</b></td><td class="num">$475.00</td><td class="num">$4.00</td><td class="num">$471.00</td></tr>
+          <tr><td><b>SMH</b></td><td class="num">$435.00</td><td class="num">$4.00</td><td class="num">$431.00</td></tr>
+          <tr><td><b>SPY</b></td><td class="num">$356.00</td><td class="num">$3.04</td><td class="num">$352.96</td></tr>
+        </tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td><span class="en">Total</span><span class="zh">合计</span></td>
+          <td class="num">$1,740.00</td>
+          <td class="num">$19.04</td>
+          <td class="num" style="color:#3fb950">$1,720.96</td>
+        </tr></tfoot>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <span class="en"><b>Net Premium (A−B) = Total Credit (A) − Fee to IBKR (B).</b> NVDA/QQQ/AVGO/SMH fees are the page's standing estimate — the opening commission per Iron Condor (4 legs × ~$1/leg = $4/condor). IBKR's statement doesn't itemize commissions by symbol, so these four are estimates, not exact broker figures. SPY's $3.04 is the actual commission from the fill confirmation logged on 21 Jul (see IB02). Closing commissions, if any position is exited early, aren't included.</span>
+        <span class="zh"><b>净权利金 (A−B) = 总权利金 (A) − IBKR手续费 (B)。</b> NVDA/QQQ/AVGO/SMH的手续费为本页标准估算值——每个铁鹰建仓的佣金（4条腿 × 约$1/腿 = $4/组）。IBKR的报表不按代码列出手续费明细，因此这四笔为估算值，非券商精确数字。SPY的$3.04为7月21日成交确认单上的实际手续费（见IB02）。若提前平仓，平仓手续费不包含在内。</span>
+      </div>
+    </div>
+  </div><!-- /tab-fee -->
+
   <div id="tab-perf" style="display:none">
     <div class="summary">
       <div class="box"><div class="k"><span class="en">Ending NAV</span><span class="zh">期末净值</span></div><div class="v amber">$54,940.59</div></div>
@@ -1677,6 +1715,7 @@ function setTab(t){
   document.getElementById('tab-lost').style.display = t==='lost'?'':'none';
   document.getElementById('tab-deposits').style.display = t==='deposits'?'':'none';
   document.getElementById('tab-premium').style.display = t==='premium'?'':'none';
+  document.getElementById('tab-fee').style.display = t==='fee'?'':'none';
   document.getElementById('tab-perf').style.display = t==='perf'?'':'none';
   document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
@@ -1693,9 +1732,10 @@ function setTab(t){
   document.getElementById('tb-lost').classList.toggle('active', t==='lost');
   document.getElementById('tb-dep').classList.toggle('active', t==='deposits');
   document.getElementById('tb-prem').classList.toggle('active', t==='premium');
+  document.getElementById('tb-fee').classList.toggle('active', t==='fee');
   document.getElementById('tb-perf').classList.toggle('active', t==='perf');
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='ypnl'||t==='qpnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
