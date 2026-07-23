@@ -242,31 +242,6 @@
     <button class="tab-btn" id="tb-refresh" onclick="setTab('refresh')">🔄 <span class="en">Refresh</span><span class="zh">刷新记录</span></button>
   </div>
 
-  <div class="condor" id="acctValueCard">
-    <div class="c-head">
-      <div class="tkr" style="font-size:1.1rem">💼 <span class="en">Account Value</span><span class="zh">账户总值</span></div>
-      <div class="c-meta"><span class="en">IBKR total account · monthly NAV</span><span class="zh">IBKR账户总值 · 月度净值</span></div>
-      <div></div>
-    </div>
-    <div style="font-size:1.9rem;font-weight:800;margin-top:10px" id="acctVal">$54,940.59</div>
-    <div style="font-weight:700;font-size:.9rem;margin-top:2px" id="acctDelta"></div>
-    <div style="font-size:.72rem;color:#8b98a5;margin-top:3px" id="acctTwr"></div>
-    <div style="position:relative;height:180px;margin-top:14px"><canvas id="acctValueChart"></canvas></div>
-    <div class="rail-legend" style="margin-top:8px" id="acctPeriodBtns">
-      <span class="period-btn" data-p="1w" style="opacity:.4" title="Daily data not in this statement">1W</span>
-      <span class="period-btn" data-p="mtd">MTD</span>
-      <span class="period-btn" data-p="1m" style="opacity:.4" title="Daily data not in this statement">1M</span>
-      <span class="period-btn" data-p="3m">3M</span>
-      <span class="period-btn" data-p="ytd">YTD</span>
-      <span class="period-btn" data-p="1y">1Y</span>
-      <span class="period-btn active" data-p="all">All</span>
-    </div>
-    <div class="note" style="margin-top:12px">
-      <span class="en">Real monthly NAV pulled from Paul's IBKR PortfolioAnalyst statement (dated Jul 21, 2026) — Since Inception (May 2024) through Jul 2026. Tap a period to redraw the chart. <b>1W/1M are disabled</b> — the statement only gives month-end values, no daily granularity. <b>The % shown under the value is raw NAV change, which includes deposits/withdrawals</b> — not the same as investment return. Where IBKR reports an official time-weighted return (TWR) for the period, it's shown separately below in grey, since that's the number that actually reflects performance.</span>
-      <span class="zh">真实月度净值取自Paul的IBKR投资组合分析报表（截至2026年7月21日）——自成立起（2024年5月）至2026年7月。点击区间按钮可重新绘制图表。<b>1周/1个月已停用</b>——报表只提供月末数值，没有每日明细。<b>数值下方的百分比是净值原始变动，其中包含存取款</b>——并非真实投资回报。若IBKR为该区间提供官方时间加权回报率（TWR），会在下方灰色文字另行显示——那才是真正反映表现的数字。</span>
-    </div>
-  </div>
-
   <div id="tab-positions">
   <!-- IBKR Shares -->
   <div class="condor">
@@ -1835,7 +1810,6 @@ function setLang(l){
   document.getElementById('btn-en').classList.toggle('active', l==='en');
   document.getElementById('btn-zh').classList.toggle('active', l==='zh');
   document.querySelectorAll('#pnlPeriodSelect option').forEach(function(o){ o.textContent = o.getAttribute('data-'+l); });
-  if (typeof acctChart !== 'undefined' && acctChart) setAcctPeriod(curAcctPeriod);
 }
 
 // Task List
@@ -1947,7 +1921,6 @@ function setTab(t){
   document.getElementById('tb-perf').classList.toggle('active', t==='perf');
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='targetic'||t==='refresh'||t==='winloss') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
@@ -2443,75 +2416,6 @@ var tradesLabelPlugin = {
     ctx.restore();
   }
 };
-var ACCT_PERIODS = {
-  mtd: NAV_HISTORY.slice(-2),
-  '3m': NAV_HISTORY.slice(-4),
-  ytd: NAV_HISTORY.slice(-8),
-  '1y': NAV_HISTORY.slice(-12),
-  all: NAV_HISTORY
-};
-var acctChart = new Chart(document.getElementById('acctValueChart'), {
-  type: 'line',
-  data: {
-    labels: ACCT_PERIODS['all'].map(function(d){ return d.m; }),
-    datasets: [{
-      data: ACCT_PERIODS['all'].map(function(d){ return d.v; }),
-      borderColor: '#58a6ff',
-      backgroundColor: 'rgba(88,166,255,.12)',
-      fill: true,
-      tension: 0.25,
-      pointRadius: 0,
-      borderWidth: 2
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display:false }, tooltip: { enabled:false } },
-    scales: {
-      x: { ticks:{ color:'#8b98a5', font:{size:10} }, grid:{ display:false } },
-      y: {
-        grid: { color: 'rgba(255,255,255,.06)' },
-        ticks: { color:'#8b98a5', font:{size:10}, callback:function(v){ return '$'+(v/1000).toFixed(0)+'K'; } }
-      }
-    }
-  }
-});
-var ACCT_TWR = { mtd:0.41, ytd:-16.56, '1y':-13.52, all:-7.52 };
-var curAcctPeriod = 'all';
-function setAcctPeriod(p){
-  var data = ACCT_PERIODS[p]; if(!data) return;
-  curAcctPeriod = p;
-  acctChart.data.labels = data.map(function(d){ return d.m; });
-  acctChart.data.datasets[0].data = data.map(function(d){ return d.v; });
-  acctChart.update();
-  var start = data[0].v, end = data[data.length-1].v;
-  var dollarChange = end - start, pctChange = (dollarChange/start*100);
-  document.getElementById('acctVal').textContent = '$' + end.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  var deltaEl = document.getElementById('acctDelta');
-  var sign = dollarChange >= 0 ? '+' : '−';
-  deltaEl.style.color = dollarChange >= 0 ? '#3fb950' : '#f85149';
-  var labelMap = {
-    en: {mtd:'month to date', '3m':'past three months', ytd:'year to date', '1y':'past year', all:'since inception (May 2024)'},
-    zh: {mtd:'本月至今', '3m':'过去三个月', ytd:'今年至今', '1y':'过去一年', all:'自成立以来（2024年5月）'}
-  };
-  deltaEl.textContent = sign + '$' + Math.abs(dollarChange).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' (' + sign + Math.abs(pctChange).toFixed(2) + '%) ' + labelMap[curLang][p];
-  var twrEl = document.getElementById('acctTwr');
-  var twr = ACCT_TWR[p];
-  if (typeof twr === 'number') {
-    var twrLabel = curLang === 'zh' ? 'IBKR官方回报率（TWR）：' : 'IBKR official return (TWR): ';
-    twrEl.textContent = twrLabel + (twr>=0?'+':'') + twr.toFixed(2) + '%';
-  } else {
-    twrEl.textContent = curLang === 'zh' ? '（此区间无官方TWR回报率数据）' : '(no official TWR figure for this period)';
-  }
-  document.querySelectorAll('.period-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.p === p); });
-}
-document.querySelectorAll('.period-btn').forEach(function(b){
-  if(b.dataset.p === '1w' || b.dataset.p === '1m') return;
-  b.addEventListener('click', function(){ setAcctPeriod(b.dataset.p); });
-});
-setAcctPeriod('all');
-
 // Monthly P&L tab — derived from the same NAV_HISTORY above (single source of truth)
 var MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
