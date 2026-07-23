@@ -14,6 +14,7 @@
 
 ## Paul's Abbreviations (Standing Glossary)
 - **IG** = **Iron Condor** (the options strategy). When Paul says "trade IG", "IG setup", etc. he means the Iron Condor strategy — NOT the IG broker/platform or IG Group stock. (Added 2026-07-15.)
+- **IC mechanics (Paul's own words, from a webinar, 2026-07-23):** IC is an advanced 4-leg strategy — not ideal for beginners, but builds on cash-secured put logic Paul already knows. You profit whether price moves up or down, as long as it stays within the band (range) formed by the short strikes. You only risk one side (either the lower or upper breach) — price can't hit both sides at once, so max loss is capped to a single direction, never both.
 
 ## Contacts
 - **IBKR (Interactive Brokers) help email:** help@interactivebrokers.com
