@@ -1044,7 +1044,7 @@
   <div class="condor" id="dashCushionCard">
     <div class="c-head">
       <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Table 50: Share Price vs Selling Put &amp; Call</span><span class="zh">Table 50：股价 vs 卖出认沽 &amp; 认购</span></div>
-      <div class="c-meta"><span class="en">Quick glance — Share Price and Put/Call Cushion only. Full table (strikes, variance formulas, delta, MTD premium) on the <a href="#" onclick="setTab('cushion');return false" style="color:#f59e0b">Cushion tab</a>.</span><span class="zh">快速一览——只显示股价与认沽/认购缓冲。完整表格（行权价、差幅公式、Δ、本月权利金）见<a href="#" onclick="setTab('cushion');return false" style="color:#f59e0b">缓冲页签</a>。</span></div>
+      <div class="c-meta"><span class="en">Quick glance — Share Price and Put/Call Cushion only, sorted tightest Put Cushion first. Full table (strikes, variance formulas, delta, MTD premium) on the <a href="#" onclick="setTab('cushion');return false" style="color:#f59e0b">Cushion tab</a>.</span><span class="zh">快速一览——只显示股价与认沽/认购缓冲，按认沽缓冲从紧到松排序。完整表格（行权价、差幅公式、Δ、本月权利金）见<a href="#" onclick="setTab('cushion');return false" style="color:#f59e0b">缓冲页签</a>。</span></div>
       <div></div>
     </div>
     <div class="refresh-row">
@@ -1075,7 +1075,7 @@
   <div class="condor" id="putVarianceCard" style="margin-top:16px">
     <div style="display:flex;flex-direction:column;gap:4px">
       <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Table 50: Share Price vs Selling Put &amp; Call</span><span class="zh">Table 50：股价 vs 卖出认沽 &amp; 认购</span></div>
-      <div class="c-meta"><span class="en">Current price (A) vs each condor's short put AND short call strike, side by side</span><span class="zh">现价（A）同时对比各铁鹰卖出认沽与卖出认购行权价</span></div>
+      <div class="c-meta"><span class="en">Current price (A) vs each condor's short put AND short call strike, side by side — sorted tightest Put Cushion first</span><span class="zh">现价（A）同时对比各铁鹰卖出认沽与卖出认购行权价——按认沽缓冲从紧到松排序</span></div>
     </div>
     <div class="refresh-row">
       <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
@@ -1994,7 +1994,7 @@
     <div class="condor" id="varMtdCard">
       <div class="c-head">
         <div class="tkr" style="font-size:1.1rem">📐 <span class="en">Put/Call Variance &amp; MTD Premium</span><span class="zh">认沽/认购差幅 &amp; 本月权利金</span></div>
-        <div class="c-meta"><span class="en">Same live variance figures as the Cushion tab, paired with each condor's MTD premium collected</span><span class="zh">与「缓冲」页签相同的实时差幅数字，并列显示各铁鹰本月已收权利金</span></div>
+        <div class="c-meta"><span class="en">Same live variance figures as the Cushion tab, paired with each condor's MTD premium collected — sorted tightest Put Cushion first</span><span class="zh">与「缓冲」页签相同的实时差幅数字，并列显示各铁鹰本月已收权利金——按认沽缓冲从紧到松排序</span></div>
         <div></div>
       </div>
       <div class="table-scroll">
@@ -3015,10 +3015,26 @@ var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.23, SPY:0.25, IWM
 // Month-to-date premium collected = Total Credit received when each condor was sold to
 // open. All 6 were entered in Jul 2026, so MTD = the full entry credit (see Premium tab).
 var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356, IWM:214 };
+// Sort symbols by Put Cushion, tightest/riskiest first — shared by every table that
+// shows the Share Price vs Selling Put & Call cushion figures (Dashboard quick-glance,
+// Cushion tab full table, Premium tab variance+MTD table) so they stay in sync.
+function sortedByPutCushion(){
+  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'];
+  return syms.slice().sort(function(a,b){
+    var cfgA = RAIL_CFG[a], cfgB = RAIL_CFG[b];
+    var sA = STOCKS.filter(function(x){ return x.sym===a; })[0];
+    var sB = STOCKS.filter(function(x){ return x.sym===b; })[0];
+    var pA = sA && typeof sA.price==='number' ? sA.price : null;
+    var pB = sB && typeof sB.price==='number' ? sB.price : null;
+    var vA = pA===null ? Infinity : (pA - cfgA.shortP) / pA * 100;
+    var vB = pB===null ? Infinity : (pB - cfgB.shortP) / pB * 100;
+    return vA - vB;
+  });
+}
 // Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides
 function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
-  var rows = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'].map(function(sym){
+  var rows = sortedByPutCushion().map(function(sym){
     var cfg = RAIL_CFG[sym];
     var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
     var price = s && typeof s.price==='number' ? s.price : null;
@@ -3052,7 +3068,7 @@ function renderPutVarianceTable(){
 // Cushion tab's full table above, stripped down to Share Price (A) + Put/Call Cushion only.
 function renderDashCushionTable(){
   var body = document.getElementById('dashCushionBody'); if(!body) return;
-  var rows = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'].map(function(sym){
+  var rows = sortedByPutCushion().map(function(sym){
     var cfg = RAIL_CFG[sym];
     var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
     var price = s && typeof s.price==='number' ? s.price : null;
@@ -3110,8 +3126,7 @@ function renderPremiumRankTable(){
 // figures as the Cushion tab, paired with each condor's MTD premium for a quick view.
 function renderVarMtdTable(){
   var body = document.getElementById('varMtdBody'); if(!body) return;
-  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'];
-  var rows = syms.map(function(sym){
+  var rows = sortedByPutCushion().map(function(sym){
     var cfg = RAIL_CFG[sym];
     var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
     var price = s && typeof s.price==='number' ? s.price : null;
