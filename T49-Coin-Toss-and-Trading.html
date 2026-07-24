@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T49: Coin Toss & Trading — Why Small Samples Lie</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+
+  .page-menu-wrap { position:fixed; top:54px; right:12px; z-index:999; }
+  .page-menu-btn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-size:1.15rem; font-weight:800; cursor:pointer; line-height:1; }
+  .page-menu-btn:hover { background:rgba(255,255,255,.2); }
+  .page-menu-dropdown { display:none; position:absolute; top:42px; right:0; background:#161b22; border:1px solid rgba(255,255,255,.15); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:190px; overflow:hidden; }
+  .page-menu-dropdown.open { display:block; }
+  .page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:#e6edf3; text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .page-menu-dropdown button:hover { background:rgba(255,255,255,.08); }
+  .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
+  .page-menu-dropdown button.pinned { color:#f59e0b; }
+
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:640px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:720px; margin:0 auto; padding:22px 18px; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card ul { margin:6px 0 10px 20px; }
+  .card li { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:6px; }
+
+  .rule-badge { display:flex; align-items:center; gap:10px; background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.45); border-radius:14px; padding:14px 16px; margin-bottom:22px; }
+  .rule-badge .vico { font-size:1.6rem; }
+  .rule-badge .vtxt { font-weight:800; font-size:.95rem; color:#86efac; }
+  .rule-badge .vsub { font-size:.78rem; color:rgba(255,255,255,.6); margin-top:2px; }
+
+  .sim-btns { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .sim-btn { flex:1; min-width:78px; background:#161b22; border:1px solid rgba(255,255,255,.15); color:#e6edf3; font-size:.82rem; font-weight:700; padding:10px 6px; border-radius:11px; cursor:pointer; }
+  .sim-btn:hover { background:#1f2733; }
+  .sim-btn.reset { background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.4); color:#f87171; }
+  .sim-btn.reset:hover { background:rgba(239,68,68,.22); }
+
+  .stat-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+  .stat { background:#12172e; border:1px solid #2a3158; border-radius:10px; padding:10px 6px; text-align:center; }
+  .stat .slbl { font-size:.62rem; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.03em; }
+  .stat .sval { font-size:1.05rem; font-weight:800; color:#f4c869; margin-top:3px; font-variant-numeric:tabular-nums; }
+
+  .chart-title { font-size:.78rem; font-weight:800; color:#8ea0ff; margin:4px 0 8px; }
+  .chart-wrap { position:relative; height:190px; background:#12172e; border:1px solid #2a3158; border-radius:10px; margin-bottom:8px; }
+  .chart-legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; font-size:.66rem; color:rgba(255,255,255,.5); margin-bottom:6px; }
+  .chart-legend b { color:rgba(255,255,255,.85); }
+
+  .table-scroll { overflow-x:auto; }
+  table.log { width:100%; border-collapse:collapse; margin-top:4px; font-size:.78rem; }
+  table.log th, table.log td { padding:8px 7px; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); white-space:nowrap; }
+  table.log th { color:#8ea0ff; font-size:.62rem; text-transform:uppercase; letter-spacing:.03em; }
+  table.log td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  table.log tr:first-child td { color:#f4c869; font-weight:700; }
+  .log-empty { text-align:center; color:rgba(255,255,255,.35); font-size:.8rem; padding:16px; }
+
+  table.expect { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.expect th, table.expect td { padding:9px 8px; font-size:.82rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.expect th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; }
+  table.expect td b { color:#f4c869; }
+
+  .fmath { font-family:'Courier New',monospace; background:#0e1330; border-radius:8px; padding:10px 12px; font-size:.82rem; color:#f4c869; margin:8px 0; }
+  .ok-badge { display:inline-block; background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#86efac; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="page-menu-wrap">
+  <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+  <div class="page-menu-dropdown" id="pageMenuDropdown">
+    <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span></button>
+  </div>
+</div>
+
+<div class="hd">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T49</span><span class="zh">T49</span></span>
+  </div>
+  <div class="ic">🪙📈</div>
+  <h1><span class="en">T49: Coin Toss &amp; Trading — Why Small Samples Lie</span><span class="zh">T49：抛硬币与交易——为何小样本会骗人</span></h1>
+  <p><span class="en">Toss a coin a few times and it looks unfair. Toss it thousands of times and it settles at 50/50. Trading results behave exactly the same way — and the fix isn't a better win rate, it's a better payoff ratio.</span><span class="zh">抛几次硬币，结果看起来不公平；抛几千次，结果会稳定在50/50。交易的结果表现完全一样——解决办法不是提高胜率，而是提高盈亏比。</span></p>
+</div>
+
+<div class="wrap">
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="pinToast">📌 Pinned!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Educational only, not financial advice.</b> The simulator below uses your browser's random number generator — it's a teaching demo of the Law of Large Numbers, not a market model or backtest.</span><span class="zh"><b>仅供教育用途，非投资建议。</b>下方模拟器使用浏览器的随机数生成器——用于演示大数法则，并非市场模型或回测。</span>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">The Coin Toss Analogy</span><span class="zh">抛硬币的比喻</span></h2>
+    <p><span class="en">Toss a coin: heads or tails, 50/50. But toss it only 5 or 10 times and the results often look nothing like 50/50 — you might get 4 heads in a row, or 7 tails out of 10. That's not a broken coin. It's just a <b>small sample</b>.</span><span class="zh">抛一枚硬币：正面或反面，各50%。但如果只抛5次或10次，结果往往看起来完全不像50/50——你可能连续抛出4次正面，或10次里有7次反面。这不是硬币坏了，只是<b>样本太小</b>。</span></p>
+    <p><span class="en">Toss the same coin 1,000 or 10,000 times and the ratio pulls back toward 50/50, tighter every time. This is the <b>Law of Large Numbers</b>: individual outcomes are random, but the average of many outcomes converges on the true probability.</span><span class="zh">同一枚硬币抛1,000次或10,000次，比例会逐渐拉回接近50/50，且越抛越稳定。这就是<b>大数法则</b>：单次结果是随机的，但大量结果的平均值会趋近于真实概率。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Try It — Live Simulator</span><span class="zh">动手试试——实时模拟器</span></h2>
+    <div class="sim-btns">
+      <button class="sim-btn" onclick="tossCoins(10)"><span class="en">Toss 10</span><span class="zh">抛10次</span></button>
+      <button class="sim-btn" onclick="tossCoins(100)"><span class="en">Toss 100</span><span class="zh">抛100次</span></button>
+      <button class="sim-btn" onclick="tossCoins(1000)"><span class="en">Toss 1,000</span><span class="zh">抛1,000次</span></button>
+      <button class="sim-btn" onclick="tossCoins(5000)"><span class="en">Toss 5,000</span><span class="zh">抛5,000次</span></button>
+      <button class="sim-btn reset" onclick="resetSim()"><span class="en">Reset</span><span class="zh">重置</span></button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="slbl"><span class="en">Total Tosses</span><span class="zh">总次数</span></div><div class="sval" id="statTotal">0</div></div>
+      <div class="stat"><div class="slbl"><span class="en">Heads / Tails</span><span class="zh">正面／反面</span></div><div class="sval" id="statHT">0 / 0</div></div>
+      <div class="stat"><div class="slbl"><span class="en">Heads %</span><span class="zh">正面比例</span></div><div class="sval" id="statPct">--</div></div>
+    </div>
+
+    <div class="chart-title">🪙 <span class="en">Chart 1: Running Heads % vs Number of Tosses</span><span class="zh">图1：正面比例随抛掷次数变化</span></div>
+    <div class="chart-wrap"><canvas id="tossChart"></canvas></div>
+    <div class="chart-legend">
+      <span>🔵 <b><span class="en">Running heads %</span><span class="zh">累计正面比例</span></b></span>
+      <span>🟡 <b><span class="en">50% true probability</span><span class="zh">50%真实概率</span></b></span>
+    </div>
+
+    <div class="chart-title" style="margin-top:14px;">📋 <span class="en">Table 31: Sample Size vs Deviation from 50%</span><span class="zh">表31：样本大小与偏离50%的幅度</span></div>
+    <div class="table-scroll">
+      <table class="log">
+        <thead>
+          <tr>
+            <th><span class="en">Batch</span><span class="zh">批次</span></th>
+            <th class="num"><span class="en">Heads (A)</span><span class="zh">正面 (A)</span></th>
+            <th class="num"><span class="en">Total Tosses (B)</span><span class="zh">总次数 (B)</span></th>
+            <th class="num"><span class="en">Heads % (A/B)</span><span class="zh">正面比例 (A/B)</span></th>
+            <th class="num"><span class="en">Deviation |A/B−0.5|</span><span class="zh">偏差 |A/B−0.5|</span></th>
+          </tr>
+        </thead>
+        <tbody id="logBody"><tr><td colspan="5" class="log-empty"><span class="en">Tap a "Toss" button above to start</span><span class="zh">点击上方「抛硬币」按钮开始</span></td></tr></tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px;"><span class="en">Notice the deviation column shrinking as the total-toss count grows — that's the Law of Large Numbers in a table.</span><span class="zh">注意偏差栏会随总次数增加而缩小——这正是大数法则的表格版体现。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">The Trading Parallel</span><span class="zh">交易中的对照</span></h2>
+    <p><span class="en">Trading results follow the exact same shape:</span><span class="zh">交易结果的形态一模一样：</span></p>
+    <ul>
+      <li><span class="en"><b>Small sample (a handful of trades):</b> losing streaks happen even with a genuinely good strategy — 3 or 4 losses in a row can look like proof the strategy is broken, the same way 4 tails in a row doesn't mean the coin is broken.</span><span class="zh"><b>小样本（几笔交易）：</b>即使策略本身很好，连续亏损也会发生——连续3、4笔亏损看起来像是策略失效的证据，就像连续4次反面不代表硬币有问题一样。</span></li>
+      <li><span class="en"><b>Large sample (dozens/hundreds of trades):</b> the true win rate and true edge reveal themselves. A handful of open Iron Condors (Table 30) is still a small sample — no single trade, win or loss, should change the underlying rules.</span><span class="zh"><b>大样本（几十／几百笔交易）：</b>真实胜率与真实优势才会显现出来。目前持有的几个铁鹰仓位（Table 30）仍属于小样本——任何单笔交易的输赢，都不该改变原本的交易法则。</span></li>
+    </ul>
+    <p><span class="en">This is exactly why T34 ("3 Years of Options Trading") matters more as a track record than any single week's P&amp;L — 3 years is a big enough sample for the real edge to show through the noise.</span><span class="zh">这也正是为何T34（「3年期权交易记录」）作为长期记录比任一周的盈亏更重要——3年是足够大的样本，能让真实优势穿透噪音显现出来。</span></p>
+  </div>
+
+  <div class="rule-badge">
+    <div class="vico">⚖️</div>
+    <div>
+      <div class="vtxt"><span class="en">The rule that makes small-sample noise survivable</span><span class="zh">让小样本噪音也能撑过去的法则</span></div>
+      <div class="vsub"><span class="en">Keep each win bigger than each loss — do that consistently, and you can be profitable even without a high win rate</span><span class="zh">让每次盈利大于每次亏损——只要持续做到，即使胜率不高也能获利</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Why the Payoff Ratio Matters More Than Win Rate</span><span class="zh">为何盈亏比比胜率更重要</span></h2>
+    <p><span class="en">A strategy's long-run result isn't decided by win rate alone — it's decided by <b>expectancy</b>: win rate multiplied by average win, minus loss rate multiplied by average loss.</span><span class="zh">策略的长期结果并非只由胜率决定——而是由<b>期望值</b>决定：胜率乘以平均盈利，减去败率乘以平均亏损。</span></p>
+    <div class="fmath">Expectancy (E) = [Win Rate (W) × Avg Win (R)] − [(1 − W) × Avg Loss (L)]</div>
+    <table class="expect">
+      <thead><tr><th></th><th><span class="en">Scenario A</span><span class="zh">情境A</span></th><th><span class="en">Scenario B</span><span class="zh">情境B</span></th></tr></thead>
+      <tbody>
+        <tr><td><span class="en">Win Rate (W)</span><span class="zh">胜率 (W)</span></td><td>70%</td><td><b>40%</b></td></tr>
+        <tr><td><span class="en">Avg Win (R)</span><span class="zh">平均盈利 (R)</span></td><td>$1</td><td><b>$2</b></td></tr>
+        <tr><td><span class="en">Avg Loss (L)</span><span class="zh">平均亏损 (L)</span></td><td>$1</td><td><b>$1</b></td></tr>
+        <tr><td><span class="en">Expectancy (E)</span><span class="zh">期望值 (E)</span></td><td>+$0.40 <span class="en">/ trade</span><span class="zh">／笔</span></td><td><b>+$0.20</b> <span class="en">/ trade</span><span class="zh">／笔</span></td></tr>
+      </tbody>
+    </table>
+    <div class="ok-badge">✅ <span class="en">Both scenarios are profitable — a 40% win rate still wins long-run if the average win stays bigger than the average loss.</span><span class="zh">两种情境都能获利——只要平均盈利持续大于平均亏损，即使胜率只有40%，长期仍会盈利。</span></div>
+    <p style="margin-top:12px;"><span class="en">The danger case is the opposite of Scenario B: a high win rate propped up by "small wins, occasional huge loss" — a handful of quiet months can be erased by one loss that breaks the ratio. That's the exact discipline behind the DTE 15 exit rule in T31: cut a losing Iron Condor before the loss grows past what the wins can cover.</span><span class="zh">真正危险的是Scenario B的反面：靠「小赢、偶尔巨亏」撑起来的高胜率——几个月的平稳获利可能被一次打破比例的巨大亏损全部抹平。这正是T31中DTE15离场法则背后的纪律：在亏损扩大到盈利无法弥补之前，先平掉亏损的铁鹰仓位。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Takeaway</span><span class="zh">要点总结</span></h2>
+    <ul>
+      <li><span class="en">Few tosses / few trades → results look uneven, streaks feel meaningful. They usually aren't.</span><span class="zh">少量抛掷／少量交易 → 结果看起来不均衡，连胜连亏感觉很有意义。通常并非如此。</span></li>
+      <li><span class="en">Many tosses / many trades → the true probability and true edge come through.</span><span class="zh">大量抛掷／大量交易 → 真实概率与真实优势才会显现。</span></li>
+      <li><span class="en">Keep each win bigger than each loss, do it consistently, and the strategy stays profitable over time — even through the losing streaks a small sample will always contain.</span><span class="zh">让每次盈利大于每次亏损，并持续做到——即使小样本中必然出现的连续亏损也不影响策略长期获利。</span></li>
+    </ul>
+  </div>
+
+  <script src="/view-counter.js"></script>
+
+  <div class="foot">
+    <span class="en">Educational tool · Trading psychology &amp; probability</span><span class="zh">教育性工具 · 交易心理与概率</span><br>
+    <a href="T34-3-Years-of-Options-Trading.html">📉📈 <span class="en">T34: 3 Years of Options Trading — the real track record</span><span class="zh">T34：3年期权交易——真实记录</span></a><br>
+    <a href="T31-Bang-IronCondor-Training-Notes.html">🍞🦅 <span class="en">T31: 10% / $5 Wing Rule &amp; DTE 15 Exit</span><span class="zh">T31：10%／$5翼宽法则与DTE15离场</span></a><br>
+    <a href="options-breadboard.html">🍞 <span class="en">Table 30: Iron Condor Breadboard — Current Positions</span><span class="zh">Table 30：铁鹰面包板——目前持仓</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+
+// Page menu (⋮) — Share / Pin page
+function togglePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.toggle('open');
+}
+function closePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+
+// Pin page — pinned pages show as a row at the top of Investment Tools (per-browser, via localStorage)
+var PIN_KEY = 'pw_pinned_pages';
+var PAGE_URL = 'T49-Coin-Toss-and-Trading.html';
+var PAGE_TITLE = 'T49 Coin Toss & Trading';
+var PAGE_TITLE_ZH = 'T49 抛硬币与交易';
+var PAGE_ICON = '🪙';
+function getPinnedPages(){
+  try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; }
+}
+function isPagePinned(){
+  return getPinnedPages().some(function(p){ return p.url === PAGE_URL; });
+}
+function updatePinMenuItem(){
+  var el = document.getElementById('pinMenuItem');
+  var pinned = isPagePinned();
+  el.classList.toggle('pinned', pinned);
+  el.innerHTML = pinned
+    ? '📌 <span class="en">Unpin from Tools hub</span><span class="zh">取消置顶</span>'
+    : '📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span>';
+}
+function togglePinThisPage(){
+  var list = getPinnedPages();
+  var idx = list.findIndex(function(p){ return p.url === PAGE_URL; });
+  var toast = document.getElementById('pinToast');
+  if(idx >= 0){
+    list.splice(idx, 1);
+    toast.innerHTML = '<span class="en">Unpinned</span><span class="zh">已取消置顶</span>';
+  } else {
+    list.unshift({ url:PAGE_URL, title:PAGE_TITLE, titleZh:PAGE_TITLE_ZH, icon:PAGE_ICON, pinnedAt:Date.now() });
+    toast.innerHTML = '<span class="en">📌 Pinned! Shows at top of Investment Tools</span><span class="zh">📌 已置顶！将显示在投资工具中心顶部</span>';
+  }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch(e){}
+  updatePinMenuItem();
+  closePageMenu();
+  toast.style.display = 'block';
+  setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+}
+updatePinMenuItem();
+
+// ===== Coin toss simulator =====
+var totalTosses = 0, headsCount = 0;
+var chartPoints = []; // {x: totalTosses, y: heads%}
+var batchNum = 0;
+
+function fmtInt(n){ return n.toLocaleString(); }
+
+function tossCoins(n){
+  var batchHeads = 0;
+  var sampleEvery = Math.max(1, Math.floor((totalTosses + n) / 300));
+  for(var i = 1; i <= n; i++){
+    var isHeads = Math.random() < 0.5;
+    if(isHeads){ headsCount++; batchHeads++; }
+    totalTosses++;
+    if(totalTosses % sampleEvery === 0 || i === n){
+      chartPoints.push({ x: totalTosses, y: (headsCount / totalTosses) * 100 });
+    }
+  }
+  batchNum++;
+  updateStats();
+  drawChart();
+  addLogRow(n, batchHeads);
+}
+
+function resetSim(){
+  totalTosses = 0; headsCount = 0; chartPoints = []; batchNum = 0;
+  updateStats();
+  drawChart();
+  document.getElementById('logBody').innerHTML = '<tr><td colspan="5" class="log-empty"><span class="en">Tap a "Toss" button above to start</span><span class="zh">点击上方「抛硬币」按钮开始</span></td></tr>';
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent = fmtInt(totalTosses);
+  document.getElementById('statHT').textContent = fmtInt(headsCount) + ' / ' + fmtInt(totalTosses - headsCount);
+  document.getElementById('statPct').textContent = totalTosses > 0 ? ((headsCount / totalTosses) * 100).toFixed(1) + '%' : '--';
+}
+
+function addLogRow(batchSize, batchHeads){
+  var tbody = document.getElementById('logBody');
+  if(tbody.querySelector('.log-empty')) tbody.innerHTML = '';
+  var pct = headsCount / totalTosses;
+  var dev = Math.abs(pct - 0.5) * 100;
+  var tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td>#' + batchNum + ' (+' + fmtInt(batchSize) + ')</td>' +
+    '<td class="num">' + fmtInt(headsCount) + '</td>' +
+    '<td class="num">' + fmtInt(totalTosses) + '</td>' +
+    '<td class="num">' + (pct * 100).toFixed(2) + '%</td>' +
+    '<td class="num">' + dev.toFixed(2) + '%</td>';
+  tbody.insertBefore(tr, tbody.firstChild);
+  while(tbody.children.length > 12) tbody.removeChild(tbody.lastChild);
+}
+
+function drawChart(){
+  var canvas = document.getElementById('tossChart');
+  var wrap = canvas.parentElement;
+  var cssW = wrap.clientWidth, cssH = wrap.clientHeight;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  var padL = 34, padR = 12, padT = 12, padB = 20;
+  var plotW = cssW - padL - padR, plotH = cssH - padT - padB;
+
+  if(chartPoints.length < 2){
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.font = '12px Segoe UI, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('tap a "Toss" button to begin', cssW / 2, cssH / 2);
+    return;
+  }
+
+  var maxX = chartPoints[chartPoints.length - 1].x;
+  function X(x){ return padL + (x / maxX) * plotW; }
+  function Y(y){ return padT + (1 - y / 100) * plotH; }
+
+  // Y-axis labels (0/50/100)
+  ctx.strokeStyle = 'rgba(255,255,255,.12)';
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  ctx.font = '9px Segoe UI, Arial, sans-serif';
+  ctx.textAlign = 'right';
+  [0, 50, 100].forEach(function(v){
+    var y = Y(v);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+    ctx.fillText(v + '%', padL - 5, y + 3);
+  });
+
+  // 50% reference line (gold, dashed)
+  ctx.strokeStyle = '#f4c869';
+  ctx.setLineDash([4, 3]);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(padL, Y(50)); ctx.lineTo(padL + plotW, Y(50)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Running heads % line (blue)
+  ctx.strokeStyle = '#8ea0ff';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  chartPoints.forEach(function(p, i){
+    var x = X(p.x), y = Y(p.y);
+    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Live marker at the end
+  var last = chartPoints[chartPoints.length - 1];
+  ctx.fillStyle = '#8ea0ff';
+  ctx.beginPath(); ctx.arc(X(last.x), Y(last.y), 3, 0, Math.PI * 2); ctx.fill();
+
+  // X-axis label
+  ctx.fillStyle = 'rgba(255,255,255,.45)';
+  ctx.textAlign = 'right';
+  ctx.font = '9px Segoe UI, Arial, sans-serif';
+  ctx.fillText(fmtInt(maxX) + ' tosses', padL + plotW, padT + plotH + 14);
+}
+
+updateStats();
+drawChart();
+window.addEventListener('resize', drawChart);
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
