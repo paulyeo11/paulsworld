@@ -271,6 +271,12 @@ Button style pattern:
 Whenever a table/report shows a calculated column (variance, %, ratio, cushion, etc.), label the inputs with single letters (e.g. `Share Price (A)`) and put the formula right in the calculated column's header using those same letters (e.g. `Variance (A−B)/A`), not just in a note paragraph below the table. Keep letters consistent across the whole table (same letter = same input everywhere it's used). Apply this automatically to every new calculated-column table going forward — no need to ask each time. Reference implementation: the Cushion tab's "Share Price vs Selling Put & Call" table on `options-breadboard.html` (Share Price (A), Selling Put (B), Selling Call (C), Put Variance (A−B)/A, Call Variance (C−A)/A).
 - **Trigger phrase for existing/older tables:** "add formula to label" (or similar) — retrofit this same A/B/C-letter + header-formula treatment onto whichever table/report Paul is currently looking at, even if it predates this rule.
 
+## Table & Chart Numbering Rule (Standing Default — added 2026-07-24)
+Every table and every chart added anywhere on the site from now on must carry a visible number label — e.g. `Table 31`, `Chart 4` — shown right in its heading/title (not just referenced elsewhere), so it can always be uniquely pointed to. Applies to data tables and charts alike (line/bar/pie/NAV charts, comparison tables, etc.), on any page/category — not just Investment Tools.
+- **Before assigning a number:** grep the repo for existing `Table \d+` / `Chart \d+` usage (same numbering-check pattern as the `T<number>`/`S<number>` rules elsewhere in this file) and use the next unused number in that sequence — tables and charts are numbered in separate sequences (`Table N` vs `Chart N`).
+- Bilingual as always (`Table 31` / `Chart 4` stay the same in `en`/`zh` — only surrounding text translates, per existing convention e.g. `Table 30` on `options-breadboard.html`).
+- Do this automatically going forward — Paul never needs to ask each time.
+
 ## Currency Conversion Rule (Standing Default — added 2026-07-02)
 Whenever a foreign currency amount (¥ JPY, etc.) appears anywhere on a trip page — timelines, receipts, cost breakdowns, transport fares — always show the approximate **SGD** conversion alongside it, e.g. `¥4,345 (~S$38.10)`. Use a consistent approximate rate (~¥114 = S$1 unless Paul provides a more current rate) and label it as approximate (`~S$`), not exact. Applies to both English and Chinese spans. Do this automatically going forward — no need to ask each time.
 
