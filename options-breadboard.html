@@ -1885,6 +1885,35 @@
       </div>
     </div>
 
+    <div class="condor" id="varMtdCard">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">📐 <span class="en">Put/Call Variance &amp; MTD Premium</span><span class="zh">认沽/认购差幅 &amp; 本月权利金</span></div>
+        <div class="c-meta"><span class="en">Same live variance figures as the Cushion tab, paired with each condor's MTD premium collected</span><span class="zh">与「缓冲」页签相同的实时差幅数字，并列显示各铁鹰本月已收权利金</span></div>
+        <div></div>
+      </div>
+      <div class="table-scroll">
+      <table class="legs" style="margin-top:10px">
+        <thead><tr>
+          <th><span class="en">Symbol</span><span class="zh">代码</span></th>
+          <th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
+          <th class="num"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>
+          <th class="num"><span class="en">MTD Premium</span><span class="zh">本月权利金</span></th>
+        </tr></thead>
+        <tbody id="varMtdBody">
+          <tr><td colspan="4"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+        </tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td colspan="3"><span class="en">Total</span><span class="zh">合计</span></td>
+          <td class="num" style="color:#3fb950" id="varMtdTotal">+$1,954</td>
+        </tr></tfoot>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b> — identical figures to the Cushion tab (same live price feed), shown here alongside <b>MTD Premium</b> (Total Credit collected when each condor was sold to open) for a quick side-by-side view.</span>
+        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>——与「缓冲」页签数字完全一致（同一实时股价来源），并在此并列显示<b>本月权利金</b>（各铁鹰建仓卖出时收到的总权利金），方便一次查看。</span>
+      </div>
+    </div>
+
     <div class="condor" id="premiumBySharePriceCard">
       <div class="c-head">
         <div class="tkr" style="font-size:1.1rem">💰 <span class="en">4-Leg Iron Condors — Ranked by Total Premium Collected</span><span class="zh">4腿铁鹰——按总权利金排序</span></div>
@@ -2844,6 +2873,7 @@ function renderSharePrices(){
   });
   renderPutVarianceTable();
   renderPremiumRankTable();
+  renderVarMtdTable();
   setLang(curLang);
 }
 // Short put delta at entry (Black-Scholes, back-solved implied vol) — same static
@@ -2920,6 +2950,39 @@ function renderPremiumRankTable(){
   });
   body.innerHTML = rows.join('');
   var totalEl = document.getElementById('premiumRankTotal');
+  if(totalEl){
+    var total = syms.reduce(function(sum,sym){ return sum + (MTD_PREMIUM[sym]||0); }, 0);
+    totalEl.textContent = '+$'+total.toLocaleString();
+  }
+  setLang(curLang);
+}
+// Premium tab's 4-column "Put/Call Variance & MTD Premium" table — same live variance
+// figures as the Cushion tab, paired with each condor's MTD premium for a quick view.
+function renderVarMtdTable(){
+  var body = document.getElementById('varMtdBody'); if(!body) return;
+  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'];
+  var rows = syms.map(function(sym){
+    var cfg = RAIL_CFG[sym];
+    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
+    var price = s && typeof s.price==='number' ? s.price : null;
+    var mtd = MTD_PREMIUM[sym];
+    var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
+    if(price===null){
+      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">—</td><td class="num">'+mtdTxt+'</td></tr>';
+    }
+    var pVpct = (price - cfg.shortP) / price * 100;
+    var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
+    var pSign = pVpct >= 0 ? '+' : '';
+    var cVpct = (cfg.shortC - price) / price * 100;
+    var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
+    var cSign = cVpct >= 0 ? '+' : '';
+    return '<tr><td><b>'+sym+'</b></td>'+
+      '<td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b></td>'+
+      '<td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td>'+
+      '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
+  });
+  body.innerHTML = rows.join('');
+  var totalEl = document.getElementById('varMtdTotal');
   if(totalEl){
     var total = syms.reduce(function(sum,sym){ return sum + (MTD_PREMIUM[sym]||0); }, 0);
     totalEl.textContent = '+$'+total.toLocaleString();
