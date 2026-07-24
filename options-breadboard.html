@@ -1027,8 +1027,8 @@
     </table>
     </div>
     <div class="note" style="margin-top:12px">
-      <span class="en">🚦 <b>✅ Safe</b> 5%+ · <b>⚠️ Tight</b> 2–5% · <b>🔴 Very Tight</b> 0–2% · <b>⛔ Below</b> strike</span>
-      <span class="zh">🚦 <b>✅ 安全</b> 5%以上 · <b>⚠️ 偏紧</b> 2–5% · <b>🔴 非常紧</b> 0–2% · <b>⛔ 跌破</b>行权价</span>
+      <span class="en cushion-legend-en">🚦 <b>✅ Safe</b> 5%+ · <b>⚠️ Tight</b> 2–5% · <b>🔴 Very Tight</b> 0–2% · <b>⛔ Below</b> strike</span>
+      <span class="zh cushion-legend-zh">🚦 <b>✅ 安全</b> 5%以上 · <b>⚠️ 偏紧</b> 2–5% · <b>🔴 非常紧</b> 0–2% · <b>⛔ 跌破</b>行权价</span>
     </div>
     <div class="note" style="margin-top:8px">
       <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b> — same denominator convention as "Nearest cut-loss" on the Cut-Loss tab. <b>Call Variance = (C − A) ÷ A</b>, the mirror calculation for the upside. Positive means price sits inside the safe zone on that side — the cushion before assignment (put) or being called away (call). This is different from the "Var: A vs P/C" figures shown lower on each condor's rail, which compare to the long (bought) strikes. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
@@ -1899,8 +1899,8 @@
       </table>
       </div>
       <div class="note" style="margin-top:12px">
-        <span class="en">🚦 <b>✅ Safe</b> 5%+ · <b>⚠️ Tight</b> 2–5% · <b>🔴 Very Tight</b> 0–2% · <b>⛔ Below</b> strike — same thresholds as the Cushion tab.</span>
-        <span class="zh">🚦 <b>✅ 安全</b> 5%以上 · <b>⚠️ 偏紧</b> 2–5% · <b>🔴 非常紧</b> 0–2% · <b>⛔ 跌破</b>行权价——与「缓冲」页签阈值一致。</span>
+        <span class="en cushion-legend-en" data-suffix=" — same thresholds as the Cushion tab.">🚦 <b>✅ Safe</b> 5%+ · <b>⚠️ Tight</b> 2–5% · <b>🔴 Very Tight</b> 0–2% · <b>⛔ Below</b> strike — same thresholds as the Cushion tab.</span>
+        <span class="zh cushion-legend-zh" data-suffix="——与「缓冲」页签阈值一致。">🚦 <b>✅ 安全</b> 5%以上 · <b>⚠️ 偏紧</b> 2–5% · <b>🔴 非常紧</b> 0–2% · <b>⛔ 跌破</b>行权价——与「缓冲」页签阈值一致。</span>
       </div>
       <div class="note" style="margin-top:8px">
         <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike, <b>D</b> = Total Premium Collected: <b>Put Cushion = (A − B) ÷ A</b>, <b>Call Cushion = (C − A) ÷ A</b> — same convention, same live price feed, and same cushion thresholds as the Cushion tab, so a badge here always matches the Cushion tab for the same symbol. Ranking is by <b>D</b>, highest first.</span>
@@ -2508,6 +2508,24 @@ function drawRail(id, cfg){
     rail.appendChild(el);
   });
 }
+// Single global cushion-% thresholds — the ONE place that defines Very Tight / Tight / Safe.
+// Every cushion badge on the page (Cushion tab cards, Cushion tab table, Premium tab table,
+// and any future one) reads from this object, so changing a number here changes all of them
+// at once — nothing else should hardcode 2 or 5 for a cushion badge again.
+var CUSHION_THRESHOLDS = { veryTight: 2, tight: 5 };
+// Rewrites every "🚦 Safe X%+ · Tight Y–X% · Very Tight 0–Y% ..." legend line (Cushion tab
+// and Premium tab both have one) from CUSHION_THRESHOLDS, so editing the numbers above is
+// the only edit needed — no legend text goes stale.
+function renderCushionLegend(){
+  var vt = CUSHION_THRESHOLDS.veryTight, t = CUSHION_THRESHOLDS.tight;
+  document.querySelectorAll('.cushion-legend-en').forEach(function(el){
+    el.innerHTML = '🚦 <b>✅ Safe</b> '+t+'%+ · <b>⚠️ Tight</b> '+vt+'–'+t+'% · <b>🔴 Very Tight</b> 0–'+vt+'% · <b>⛔ Below</b> strike'+(el.dataset.suffix||'');
+  });
+  document.querySelectorAll('.cushion-legend-zh').forEach(function(el){
+    el.innerHTML = '🚦 <b>✅ 安全</b> '+t+'%以上 · <b>⚠️ 偏紧</b> '+vt+'–'+t+'% · <b>🔴 非常紧</b> 0–'+vt+'% · <b>⛔ 跌破</b>行权价'+(el.dataset.suffix||'');
+  });
+}
+renderCushionLegend();
 var RAIL_CFG = {
   NVDA: {lo:185, hi:240, longP:190, shortP:195, shortC:230, longC:235, beLo:192.85, beHi:232.15},
   QQQ:  {lo:670, hi:755, longP:675, shortP:680, shortC:745, longC:750, beLo:677.41, beHi:747.59},
@@ -2660,23 +2678,25 @@ function statusFor(price, s){
   if(nearHi<0.10) return { cls:'warn', en:'⚠️ Near high cut-loss', zh:'⚠️ 接近上限止损' };
   return { cls:'safe', en:'✅ Safe — inside band', zh:'✅ 安全 — 区间内' };
 }
-// Cushion status vs the condor's short put strike (RAIL_CFG) — same thresholds as the
-// Cushion tab's "Share Price vs Selling Put" table, so the two badges always agree.
+// Cushion status vs the condor's short put strike (RAIL_CFG) — reads CUSHION_THRESHOLDS,
+// the same global config the Premium tab's cushionBadge() below reads, so the two badges
+// always agree and only ever need to be changed in one place.
 function cushionStatusFor(price, sym){
   var cfg = RAIL_CFG[sym]; if(!cfg) return null;
   if(price===null) return { cls:'wait', en:'Cushion —', zh:'缓冲 —' };
   var vpct = (price - cfg.shortP) / price * 100;
   if(vpct <= 0) return { cls:'cut', en:'🛡️ Cushion: ⛔ Below '+cfg.shortP+'P', zh:'🛡️ 缓冲：⛔ 跌破'+cfg.shortP+'P' };
-  if(vpct < 2) return { cls:'cut', en:'🛡️ Cushion: 🔴 Very Tight ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：🔴 非常紧（'+vpct.toFixed(1)+'%）' };
-  if(vpct < 5) return { cls:'warn', en:'🛡️ Cushion: ⚠️ Tight ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：⚠️ 偏紧（'+vpct.toFixed(1)+'%）' };
+  if(vpct < CUSHION_THRESHOLDS.veryTight) return { cls:'cut', en:'🛡️ Cushion: 🔴 Very Tight ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：🔴 非常紧（'+vpct.toFixed(1)+'%）' };
+  if(vpct < CUSHION_THRESHOLDS.tight) return { cls:'warn', en:'🛡️ Cushion: ⚠️ Tight ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：⚠️ 偏紧（'+vpct.toFixed(1)+'%）' };
   return { cls:'safe', en:'🛡️ Cushion: ✅ Safe ('+vpct.toFixed(1)+'%)', zh:'🛡️ 缓冲：✅ 安全（'+vpct.toFixed(1)+'%）' };
 }
 // Single source of truth for cushion badges — Cushion tab, Premium tab, and any other
-// table showing a cushion % all call this so the ✅/⚠️/🔴/⛔ thresholds never drift apart.
+// table showing a cushion % all call this and all read CUSHION_THRESHOLDS, so the
+// ✅/⚠️/🔴/⛔ cutoffs never drift apart — change CUSHION_THRESHOLDS once, everything updates.
 function cushionBadge(vpct, belowLabel){
   if(vpct <= 0) return '<span class="badge cut"><span class="en">⛔ '+belowLabel.en+'</span><span class="zh">⛔ '+belowLabel.zh+'</span></span>';
-  if(vpct < 2) return '<span class="badge cut"><span class="en">🔴 Very Tight</span><span class="zh">🔴 非常紧</span></span>';
-  if(vpct < 5) return '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
+  if(vpct < CUSHION_THRESHOLDS.veryTight) return '<span class="badge cut"><span class="en">🔴 Very Tight</span><span class="zh">🔴 非常紧</span></span>';
+  if(vpct < CUSHION_THRESHOLDS.tight) return '<span class="badge warn"><span class="en">⚠️ Tight</span><span class="zh">⚠️ 偏紧</span></span>';
   return '<span class="badge safe"><span class="en">✅ Safe</span><span class="zh">✅ 安全</span></span>';
 }
 function renderCut(){
