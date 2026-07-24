@@ -1,4 +1,4 @@
-// Checks live prices against Table 30's cut-loss bands (cutloss-thresholds.json, mirrors the
+// Checks live prices against T29's cut-loss bands (cutloss-thresholds.json, mirrors the
 // STOCKS array in options-breadboard.html) and sends a Telegram message the first time a
 // symbol breaches (drops to/below its low band or rises to/above its high band). Once a
 // symbol is breached it won't alert again on every run — cutloss-alert-state.json tracks
@@ -88,7 +88,7 @@ async function main() {
   }
 
   const text =
-    `🚨 Cut-loss alert (Table 30)\n\n${newBreaches.join('\n')}\n\n` +
+    `🚨 Cut-loss alert (T29)\n\n${newBreaches.join('\n')}\n\n` +
     `Check: https://paulsworld.vercel.app/options-breadboard.html`;
   await sendTelegram(text);
   console.log('Alert sent:\n' + newBreaches.join('\n'));
