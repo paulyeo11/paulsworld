@@ -21,6 +21,7 @@
 
 ## Reminders Rule (Standing Default — added 2026-07-19)
 Whenever Paul asks to be reminded of something, always create a **Google Calendar event** (via the Google Calendar MCP tools) — never use a chat-only/session-based reminder. Default reminder popup at event time unless Paul specifies otherwise. Use `Asia/Singapore` timezone unless told otherwise.
+- **Active reminder — 10pm IBKR raw data (added 2026-07-24):** daily recurring Google Calendar event "IBKR sends raw data to Gmail" at **10:00pm SGT**, popup at event time. Ties to the "Two separate clocks" note below (IBKR usually emails the report ~8:45–9:30pm SGT, Mondays earlier ~6:10–6:20pm SGT).
 
 ## IBKR Raw Data via Google Drive (Standing Default — added 2026-07-19)
 Paul is often on phone-only (no PC/IB Gateway), so he can't always run the automated `ibkr_positions.py` / `refresh-ibkr.bat` script (which pushes straight to GitHub with zero manual steps — that's still the best option whenever his PC + IB Gateway are available).
