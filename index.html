@@ -280,6 +280,60 @@
       padding: 10px;
     }
 
+    .pinned {
+      max-width: 900px;
+      margin: 20px auto 0;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-left: 6px solid #f59e0b;
+    }
+    .pinned h2 {
+      text-align: center;
+      color: #92400e;
+      font-size: 1.3em;
+      margin-bottom: 14px;
+    }
+    .pinned-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .pinned-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1.5px solid #f59e0b;
+      border-radius: 30px;
+      padding: 9px 34px 9px 14px;
+      text-decoration: none;
+      color: #92400e;
+      font-weight: 700;
+      font-size: 0.9em;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .pinned-icon { font-size: 1.1em; }
+    .pinned-unpin {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(146,64,14,.12);
+      border: none;
+      color: #92400e;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 0.7em;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .pinned-unpin:hover { background: rgba(146,64,14,.25); }
+
     main {
       max-width: 900px;
       margin: 0 auto;
@@ -687,6 +741,11 @@
       </div>
     </div>
   </div>
+
+  <section class="pinned" id="pinnedSection" style="display:none;">
+    <h2>&#x1F4CC; <span class="en">Pinned</span><span class="zh">已置顶</span></h2>
+    <div class="pinned-grid" id="pinnedGrid"></div>
+  </section>
 
   <section class="popular">
     <h2>&#x1F3C6; <span class="en">Most Popular Stories</span><span class="zh">最受欢迎的故事</span></h2>
@@ -1505,6 +1564,30 @@
         btn.addEventListener('click', function() { setTimeout(renderEncourage, 0); });
       });
     })();
+
+    function renderPinnedPages(){
+      var list = [];
+      try { list = JSON.parse(localStorage.getItem('pw_pinned_pages')) || []; } catch(e){}
+      var section = document.getElementById('pinnedSection');
+      var grid = document.getElementById('pinnedGrid');
+      if(!list.length){ section.style.display = 'none'; return; }
+      grid.innerHTML = list.map(function(p){
+        return '<a class="pinned-card" href="' + p.url + '">' +
+          '<span class="pinned-icon">' + (p.icon || '&#x1F4CC;') + '</span>' +
+          '<span class="pinned-title"><span class="en">' + p.title + '</span><span class="zh">' + (p.titleZh || p.title) + '</span></span>' +
+          '<button class="pinned-unpin" onclick="event.preventDefault();event.stopPropagation();unpinPage(\'' + p.url + '\')" title="Unpin" aria-label="Unpin">&#x2715;</button>' +
+        '</a>';
+      }).join('');
+      section.style.display = 'block';
+    }
+    function unpinPage(url){
+      var list = [];
+      try { list = JSON.parse(localStorage.getItem('pw_pinned_pages')) || []; } catch(e){}
+      list = list.filter(function(p){ return p.url !== url; });
+      try { localStorage.setItem('pw_pinned_pages', JSON.stringify(list)); } catch(e){}
+      renderPinnedPages();
+    }
+    renderPinnedPages();
 
     async function init() {
       const hikingFiles = ['S01.html','S19.html','S20.html','S21.html','S23.html','S26.html','S27.html','S28.html','S29.html','S30.html','S31.html','h07.html'];

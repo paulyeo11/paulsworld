@@ -23,16 +23,24 @@
 
   header.hero { text-align:center; padding:70px 18px 26px; background:linear-gradient(135deg,#111827,#1e3a5f); border-bottom:1px solid rgba(255,255,255,.08); }
   header.hero h1 { font-size:1.7rem; font-weight:800; letter-spacing:.5px; }
-  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; padding:0 40px; }
   .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
   .breadcrumb a:hover { color:#fff; }
   .breadcrumb .sep { color:rgba(255,255,255,.3); }
   .breadcrumb .current { color:#f4c869; }
   header.hero .sub { color:#9fb3c8; font-size:.95rem; margin-top:6px; }
   header.hero .date { color:#f59e0b; font-weight:700; font-size:.85rem; margin-top:10px; }
-  .share-btn { display:inline-block; margin-top:16px; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; padding:9px 24px; border-radius:30px; cursor:pointer; font-size:.9rem; }
-  .share-btn:hover { background:rgba(255,255,255,.25); }
   .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; }
+
+  .page-menu-wrap { position:fixed; top:54px; right:12px; z-index:999; }
+  .page-menu-btn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.35); color:#e6edf3; font-size:1.15rem; font-weight:800; cursor:pointer; line-height:1; }
+  .page-menu-btn:hover { background:rgba(255,255,255,.2); }
+  .page-menu-dropdown { display:none; position:absolute; top:42px; right:0; background:#161b22; border:1px solid rgba(255,255,255,.15); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:180px; overflow:hidden; }
+  .page-menu-dropdown.open { display:block; }
+  .page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:#e6edf3; text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .page-menu-dropdown button:hover { background:rgba(255,255,255,.08); }
+  .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
+  .page-menu-dropdown button.pinned { color:#f59e0b; }
   .hero-refresh-btn { display:inline-block; margin-top:16px; margin-left:8px; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; padding:9px 24px; border-radius:30px; cursor:pointer; font-size:.9rem; }
   .hero-refresh-btn:hover { background:rgba(255,255,255,.25); }
   .hero-refresh-btn.spinning .refresh-icon { display:inline-block; animation:spin .8s linear; }
@@ -201,6 +209,14 @@
   <button id="btn-zh" onclick="setLang('zh')">🇨🇳 中文</button>
 </div>
 
+<div class="page-menu-wrap">
+  <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+  <div class="page-menu-dropdown" id="pageMenuDropdown">
+    <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到首页</span></button>
+  </div>
+</div>
+
 <header class="hero">
   <div class="breadcrumb">
     <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
@@ -213,9 +229,9 @@
   <div class="sub"><span class="en">IG (Iron Condor) position tracker</span><span class="zh">IG（铁鹰）持仓追踪板</span></div>
   <div class="date"><span class="en">Opened 16–23 Jul 2026 · 6 open condors</span><span class="zh">2026年7月16–23日建仓 · 6个铁鹰</span></div>
   <br>
-  <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
   <button class="hero-refresh-btn" id="heroRefreshBtn" onclick="refreshAllData()"><span class="refresh-icon">🔄</span> <span class="en">Refresh</span><span class="zh">刷新</span></button>
   <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="pinToast">📌 Pinned!</div>
   <div class="share-toast" id="refreshToast">🔄 <span class="en">Prices refreshed!</span><span class="zh">价格已刷新！</span></div>
 </header>
 
@@ -2342,6 +2358,58 @@ function shareThisPage(){
   if(navigator.share){ navigator.share({title:title,url:url}).catch(function(){}); }
   else { navigator.clipboard.writeText(url).then(function(){ var t=document.getElementById('shareToast'); t.style.display='block'; setTimeout(function(){t.style.display='none';},2200); }); }
 }
+
+// Page menu (⋮) — Share / Pin page
+function togglePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.toggle('open');
+}
+function closePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+
+// Pin page — pinned pages show as a row at the top of the Home page (per-browser, via localStorage)
+var PIN_KEY = 'pw_pinned_pages';
+var PAGE_URL = 'options-breadboard.html';
+var PAGE_TITLE = 'T29 Option by Bang';
+var PAGE_TITLE_ZH = 'T29 期权 by Bang';
+var PAGE_ICON = '🍞';
+function getPinnedPages(){
+  try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; }
+}
+function isPagePinned(){
+  return getPinnedPages().some(function(p){ return p.url === PAGE_URL; });
+}
+function updatePinMenuItem(){
+  var el = document.getElementById('pinMenuItem');
+  var pinned = isPagePinned();
+  el.classList.toggle('pinned', pinned);
+  el.innerHTML = pinned
+    ? '📌 <span class="en">Unpin from Home</span><span class="zh">取消置顶</span>'
+    : '📌 <span class="en">Pin page</span><span class="zh">置顶到首页</span>';
+  setLang(curLang);
+}
+function togglePinThisPage(){
+  var list = getPinnedPages();
+  var idx = list.findIndex(function(p){ return p.url === PAGE_URL; });
+  var toast = document.getElementById('pinToast');
+  if(idx >= 0){
+    list.splice(idx, 1);
+    toast.innerHTML = '<span class="en">Unpinned</span><span class="zh">已取消置顶</span>';
+  } else {
+    list.unshift({ url:PAGE_URL, title:PAGE_TITLE, titleZh:PAGE_TITLE_ZH, icon:PAGE_ICON, pinnedAt:Date.now() });
+    toast.innerHTML = '<span class="en">📌 Pinned! Shows at top of Home page</span><span class="zh">📌 已置顶！将显示在首页顶部</span>';
+  }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch(e){}
+  updatePinMenuItem();
+  closePageMenu();
+  setLang(curLang);
+  toast.style.display = 'block';
+  setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+}
+updatePinMenuItem();
 
 // Draw the strike rails ("breadboard")
 function drawRail(id, cfg){
