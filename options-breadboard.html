@@ -118,6 +118,17 @@
   .day1-mark { position:absolute; top:0; bottom:0; left:-1px; width:0; z-index:5; pointer-events:none; transition:left .5s ease; border-left:2px dashed #c9d1d9; }
   .day1-mark .day1-dot { position:absolute; bottom:-7px; left:1px; transform:translate(-50%,50%); width:10px; height:10px; border-radius:50%; background:#161b22; border:2px solid #c9d1d9; }
 
+  /* Gap indicator — bracket on the rail between the long-put strike and the Now price line,
+     sized proportional to the rail so its on-screen width matches the actual % cushion (Var A) */
+  .gap-ind { position:absolute; top:20px; height:0; z-index:4; pointer-events:none; transition:left .5s ease, width .5s ease; }
+  .gap-ind .gap-line { position:absolute; left:5px; right:5px; top:0; border-top:1.5px dashed currentColor; }
+  .gap-ind .gap-cap { position:absolute; top:-4px; width:0; height:0; border-top:4px solid transparent; border-bottom:4px solid transparent; }
+  .gap-ind .gap-cap.l { left:0; border-right:6px solid currentColor; }
+  .gap-ind .gap-cap.r { right:0; border-left:6px solid currentColor; }
+  .gap-ind .gap-lab { position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:.6rem; font-weight:800; white-space:nowrap; background:rgba(13,17,23,.9); padding:1px 5px; border-radius:5px; color:currentColor; }
+  .gap-ind.gap-up { color:#3fb950; }
+  .gap-ind.gap-down { color:#f85149; }
+
   /* Legs table */
   table.legs { width:100%; border-collapse:collapse; margin-top:14px; font-size:.8rem; }
   .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
@@ -2675,15 +2686,30 @@ function plotNowMarker(sym, price){
   var lab = document.getElementById('now-'+sym.toLowerCase());
   if(lab) lab.innerHTML = '🟡 <b><span class="en">Now</span><span class="zh">现价</span> '+fmt(price)+'</b>';
   // Variance % of Now share price (A) vs the Buy Put strike (P = long put) = (A − P) / P × 100
+  var vpct = (price - cfg.longP) / cfg.longP * 100;
+  var vcls = vpct >= 0 ? 'up' : 'down';
+  var vsign = vpct >= 0 ? '+' : '';
   var vEl = document.getElementById('var-'+sym.toLowerCase());
   if(vEl){
-    var vpct = (price - cfg.longP) / cfg.longP * 100;
-    var vcls = vpct >= 0 ? 'up' : 'down';
-    var vsign = vpct >= 0 ? '+' : '';
     var av = '<span class="aval">'+fmt(price)+'</span>';
     vEl.innerHTML = '📊 <span class="en">Var: A '+av+' vs P '+cfg.longP+'</span><span class="zh">差幅: A '+av+' vs P '+cfg.longP+'</span> <b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b>';
     setLang(curLang);
   }
+  // Gap indicator drawn ON the rail between the P (long put) peg and the Now line —
+  // its left/width are the same lo/hi-scaled % as the pegs, so the bracket's on-screen
+  // size is proportional to the rail (not a fixed pixel gap), with the Var A % labelled on it
+  var gLongPPct = (cfg.longP - cfg.lo) / (cfg.hi - cfg.lo) * 100;
+  var gLo = Math.min(gLongPPct, pct), gHi = Math.max(gLongPPct, pct);
+  var gInd = rail.querySelector('.gap-ind');
+  if(!gInd){
+    gInd = document.createElement('div');
+    gInd.innerHTML = '<div class="gap-line"></div><div class="gap-cap l"></div><div class="gap-cap r"></div><div class="gap-lab"></div>';
+    rail.appendChild(gInd);
+  }
+  gInd.className = 'gap-ind ' + (vpct >= 0 ? 'gap-up' : 'gap-down');
+  gInd.style.left = gLo + '%';
+  gInd.style.width = (gHi - gLo) + '%';
+  gInd.querySelector('.gap-lab').textContent = vsign + vpct.toFixed(2) + '%';
 }
 
 // Plot the entry-day (DTE Day 1) share price as a static marker on the strike rail
