@@ -14,6 +14,7 @@
 
 ## Paul's Abbreviations (Standing Glossary)
 - **IG** = **Iron Condor** (the options strategy). When Paul says "trade IG", "IG setup", etc. he means the Iron Condor strategy — NOT the IG broker/platform or IG Group stock. (Added 2026-07-15.)
+- **T50** = **Table 50** (a numbered data table per the Table & Chart Numbering Rule) — NOT the Investment Tools page-prefix `T50-*.html`. When Paul writes "T50" he means Table 50. (Added 2026-07-24.)
 
 ## Contacts
 - **IBKR (Interactive Brokers) help email:** help@interactivebrokers.com
