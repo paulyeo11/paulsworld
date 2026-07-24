@@ -124,7 +124,6 @@
   <button class="tab-btn active" data-tab="views" onclick="switchTab('views',this)">👁 Page Views</button>
   <button class="tab-btn" data-tab="content" onclick="switchTab('content',this)">📝 Content Created</button>
   <button class="tab-btn" data-tab="options" onclick="switchTab('options',this)">📈 OTM Options</button>
-  <button class="tab-btn" data-tab="cushion" onclick="switchTab('cushion',this)">🛡️ IC Cushion</button>
 </div>
 
 <!-- PAGE VIEWS TAB (v2) -->
@@ -324,43 +323,6 @@
   <div id="price-status" style="text-align:center;margin-top:12px;font-size:0.82rem;color:#6366f1;font-weight:600;">⏳ Connecting to live prices…</div>
   <div style="text-align:center;margin-top:8px;">
     <button onclick="loadLivePrices()" style="background:#6366f1;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">🔄 Refresh Live Prices</button>
-  </div>
-</div>
-</div>
-
-<!-- IC CUSHION TAB -->
-<div id="tab-cushion" class="tab-panel">
-<div class="otm-wrap">
-  <div class="otm-header">
-    <div>
-      <div class="live-dot"><span></span> Live via Yahoo Finance</div>
-      <h2>🛡️ Share Price vs Selling Put &amp; Call</h2>
-      <p>Table 29 cushion summary — Share Price (A) and put/call cushion only</p>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <span class="badge" style="background:#1a1f2e;color:#818cf8;border:1px solid #312e81;">6 Iron Condors</span>
-      <span id="ic-cushion-ts" style="font-size:0.7rem;color:#4b5563;"></span>
-    </div>
-  </div>
-
-  <div class="otm-card">
-    <div class="otm-card-hdr">
-      <h3>Share Price (A) &amp; Cushion</h3>
-      <small>Full detail (strikes, variance %, delta, MTD premium) on Table 29 → Cushion tab</small>
-    </div>
-    <div style="overflow-x:auto;">
-      <table class="otm-table">
-        <thead><tr>
-          <th>Symbol</th><th>Share Price (A)</th><th>Put Cushion</th><th>Call Cushion</th>
-        </tr></thead>
-        <tbody id="ic-cushion-tbody"><tr><td colspan="4" class="loading pulse">Loading share prices…</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="disclaimer">🚦 <strong style="color:#4b5563;">Legend:</strong> ✅ Safe 5%+ · ⚠️ Tight 2–5% · 🔴 Very Tight 0–2% · ⛔ Below strike. Live price via Yahoo Finance (~15 min delay). Full table with strikes, variance formulas, delta and MTD premium lives on <a href="options-breadboard.html#cushion" style="color:#818cf8;">Table 29 → Cushion tab</a>.</div>
-  <div style="text-align:center;margin-top:8px;">
-    <button onclick="loadIcCushionPrices()" style="background:#6366f1;color:#fff;border:none;padding:8px 22px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;">🔄 Refresh Prices</button>
   </div>
 </div>
 </div>
@@ -573,55 +535,10 @@ async function loadLivePrices(){
   }
 }
 
-/* ---- IC CUSHION TAB (Table 29 summary: Share Price (A) + Put/Call Cushion only) ---- */
-// Short put/short call strikes for each open Iron Condor — kept in sync with RAIL_CFG
-// on options-breadboard.html (Table 29 → Cushion tab). Only the strikes are needed here
-// since this tab shows cushion only, not the full variance/delta/premium breakdown.
-const IC_RAIL_CFG = {
-  NVDA: {shortP:195, shortC:230},
-  QQQ:  {shortP:680, shortC:745},
-  AVGO: {shortP:350, shortC:430},
-  SMH:  {shortP:515, shortC:650},
-  SPY:  {shortP:715, shortC:770},
-  IWM:  {shortP:282, shortC:305}
-};
-const IC_CUSHION_THRESHOLDS = { veryTight:2, tight:5 };
-function icCushionBadge(pct){
-  if(pct<=0) return '<span class="pill" style="background:#ef444422;color:#ef4444;border:1px solid #ef444444;">⛔ Below</span>';
-  if(pct<IC_CUSHION_THRESHOLDS.veryTight) return '<span class="pill" style="background:#ef444422;color:#ef4444;border:1px solid #ef444444;">🔴 Very Tight</span>';
-  if(pct<IC_CUSHION_THRESHOLDS.tight) return '<span class="pill" style="background:#eab30822;color:#eab308;border:1px solid #eab30844;">⚠️ Tight</span>';
-  return '<span class="pill" style="background:#22c55e22;color:#22c55e;border:1px solid #22c55e44;">✅ Safe</span>';
-}
-async function loadIcCushionPrices(){
-  const tbody = document.getElementById('ic-cushion-tbody');
-  const tsEl = document.getElementById('ic-cushion-ts');
-  const syms = Object.keys(IC_RAIL_CFG);
-  const prices = await Promise.all(syms.map(sym=>fetchLivePrice(sym)));
-  tbody.innerHTML = syms.map((sym,i)=>{
-    const cfg = IC_RAIL_CFG[sym];
-    const price = prices[i];
-    if(!price){
-      return '<tr><td><div class="sym-name">'+sym+'</div></td><td>—</td><td>—</td><td>—</td></tr>';
-    }
-    const putPct = (price - cfg.shortP) / price * 100;
-    const callPct = (cfg.shortC - price) / price * 100;
-    return '<tr><td><div class="sym-name">'+sym+'</div></td>'+
-      '<td>$'+price.toFixed(2)+'</td>'+
-      '<td>'+icCushionBadge(putPct)+' <span style="color:#4b5563;font-size:0.7rem;">'+putPct.toFixed(1)+'%</span></td>'+
-      '<td>'+icCushionBadge(callPct)+' <span style="color:#4b5563;font-size:0.7rem;">'+callPct.toFixed(1)+'%</span></td>'+
-      '</tr>';
-  }).join('');
-  if(tsEl){
-    const now = new Date();
-    tsEl.textContent = 'Updated '+now.toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
-  }
-}
-
 /* ---- INIT ---- */
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 updateOtmPill();updateExpiryDate();renderMain();initViews();
 loadLivePrices();
-loadIcCushionPrices();
 openTabFromHash();
 </script>
 <script src="/sw-register.js" defer></script>

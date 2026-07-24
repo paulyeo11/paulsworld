@@ -240,7 +240,8 @@
 <div class="wrap">
 
   <div class="tabs">
-    <button class="tab-btn active" id="tb-cush" onclick="setTab('cushion')">🛡️ <span class="en">Cushion</span><span class="zh">缓冲</span></button>
+    <button class="tab-btn active" id="tb-dash" onclick="setTab('dashboard')">📊 <span class="en">Dashboard</span><span class="zh">仪表板</span></button>
+    <button class="tab-btn" id="tb-cush" onclick="setTab('cushion')">🛡️ <span class="en">Cushion</span><span class="zh">缓冲</span></button>
     <button class="tab-btn" id="tb-prem" onclick="setTab('premium')">💵 <span class="en">Premium</span><span class="zh">权利金</span></button>
     <button class="tab-btn" id="tb-pos" onclick="setTab('positions')">📊 <span class="en">Positions</span><span class="zh">持仓</span></button>
     <button class="tab-btn" id="tb-riskzone" onclick="setTab('riskzone')">📐 <span class="en">Profit/Risk Zone</span><span class="zh">盈亏区间</span></button>
@@ -1002,7 +1003,38 @@
   </div>
   </div><!-- /tab-covcall -->
 
-  <div id="tab-cushion">
+  <div id="tab-dashboard">
+  <div class="condor" id="dashCushionCard">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Table 29: Share Price vs Selling Put &amp; Call</span><span class="zh">Table 29：股价 vs 卖出认沽 &amp; 认购</span></div>
+      <div class="c-meta"><span class="en">Quick glance — Share Price and Put/Call Cushion only. Full table (strikes, variance formulas, delta, MTD premium) on the <a href="#" onclick="setTab('cushion');return false" style="color:#f59e0b">Cushion tab</a>.</span><span class="zh">快速一览——只显示股价与认沽/认购缓冲。完整表格（行权价、差幅公式、Δ、本月权利金）见<a href="#" onclick="setTab('cushion');return false" style="color:#f59e0b">缓冲页签</a>。</span></div>
+      <div></div>
+    </div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
+      <span class="live-ts" id="dashCushionTs"></span>
+    </div>
+    <div class="table-scroll">
+    <table class="legs" style="margin-top:10px">
+      <tr>
+        <th><span class="en">Symbol</span><span class="zh">代码</span></th>
+        <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
+        <th class="num"><span class="en">Put Cushion</span><span class="zh">认沽缓冲</span></th>
+        <th class="num"><span class="en">Call Cushion</span><span class="zh">认购缓冲</span></th>
+      </tr>
+      <tbody id="dashCushionBody">
+        <tr><td colspan="4"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note" style="margin-top:12px">
+      <span class="en cushion-legend-en">🚦 <b>✅ Safe</b> 5%+ · <b>⚠️ Tight</b> 2–5% · <b>🔴 Very Tight</b> 0–2% · <b>⛔ Below</b> strike</span>
+      <span class="zh cushion-legend-zh">🚦 <b>✅ 安全</b> 5%以上 · <b>⚠️ 偏紧</b> 2–5% · <b>🔴 非常紧</b> 0–2% · <b>⛔ 跌破</b>行权价</span>
+    </div>
+  </div>
+  </div><!-- /tab-dashboard -->
+
+  <div id="tab-cushion" style="display:none">
   <div class="condor" id="putVarianceCard" style="margin-top:16px">
     <div style="display:flex;flex-direction:column;gap:4px">
       <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Table 29: Share Price vs Selling Put &amp; Call</span><span class="zh">Table 29：股价 vs 卖出认沽 &amp; 认购</span></div>
@@ -2408,6 +2440,7 @@ var cutLoaded = false;
 var depositsLoaded = false;
 var tasksLoaded = false;
 function setTab(t){
+  document.getElementById('tab-dashboard').style.display = t==='dashboard'?'':'none';
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
   document.getElementById('tab-riskzone').style.display = t==='riskzone'?'':'none';
   document.getElementById('tab-winloss').style.display = t==='winloss'?'':'none';
@@ -2430,6 +2463,7 @@ function setTab(t){
   document.getElementById('tab-icbenefits').style.display = t==='icbenefits'?'':'none';
   document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
   document.getElementById('tab-refresh').style.display = t==='refresh'?'':'none';
+  document.getElementById('tb-dash').classList.toggle('active', t==='dashboard');
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-riskzone').classList.toggle('active', t==='riskzone');
   document.getElementById('tb-winloss').classList.toggle('active', t==='winloss');
@@ -2452,7 +2486,7 @@ function setTab(t){
   document.getElementById('tb-icb').classList.toggle('active', t==='icbenefits');
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
-  document.getElementById('acctValueCard').style.display = (t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='winloss') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='perf'||t==='tasks'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='winloss') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
@@ -2833,6 +2867,7 @@ function stampCut(){
   var html='<span class="en">Updated '+t+'</span><span class="zh">更新于 '+t+'</span>';
   var el=document.getElementById('liveTs'); if(el) el.innerHTML=html;
   var el2=document.getElementById('putVarTs'); if(el2) el2.innerHTML=html;
+  var el3=document.getElementById('dashCushionTs'); if(el3) el3.innerHTML=html;
   setLang(curLang);
 }
 
@@ -2909,6 +2944,7 @@ function renderSharePrices(){
     if(day1) plotDay1Marker(sym, day1.p);
   });
   renderPutVarianceTable();
+  renderDashCushionTable();
   renderPremiumRankTable();
   renderVarMtdTable();
   setLang(curLang);
@@ -2951,6 +2987,26 @@ function renderPutVarianceTable(){
       '<td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(pVpct,{en:'Below',zh:'跌破'})+'</td><td class="num">'+putDeltaTxt+'</td>'+
       '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>'+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
+  });
+  body.innerHTML = rows.join('');
+  setLang(curLang);
+}
+// Dashboard tab's quick-glance table — same live price + cushionBadge() thresholds as the
+// Cushion tab's full table above, stripped down to Share Price (A) + Put/Call Cushion only.
+function renderDashCushionTable(){
+  var body = document.getElementById('dashCushionBody'); if(!body) return;
+  var rows = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'].map(function(sym){
+    var cfg = RAIL_CFG[sym];
+    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
+    var price = s && typeof s.price==='number' ? s.price : null;
+    if(price===null){
+      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+    }
+    var pVpct = (price - cfg.shortP) / price * 100;
+    var cVpct = (cfg.shortC - price) / price * 100;
+    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
+      '<td class="num">'+cushionBadge(pVpct,{en:'Below',zh:'跌破'})+'</td>'+
+      '<td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td></tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
@@ -3869,7 +3925,8 @@ else if (location.hash === '#premium') setTab('premium');
 else if (location.hash === '#dailypnl') setTab('dailypnl');
 else if (location.hash === '#icwatchlist') setTab('icwatchlist');
 else if (location.hash === '#targetic') setTab('icwatchlist');
-else setTab('cushion');
+else if (location.hash === '#cushion') setTab('cushion');
+else setTab('dashboard');
 </script>
 <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
