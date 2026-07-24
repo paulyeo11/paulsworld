@@ -48,6 +48,9 @@
     .foot a{color:rgba(255,255,255,.45);font-size:.82rem;text-decoration:none;}
     .share-btn{display:block;margin:0 auto 4px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.35);color:#fff;font-weight:700;padding:9px 22px;border-radius:24px;cursor:pointer;font-size:.85rem;}
     .share-toast{display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+    a.tool.pinned-tool{position:relative;border-color:#f59e0b;}
+    .pin-unpin{position:absolute;top:8px;right:8px;background:rgba(245,158,11,.18);border:none;color:#f59e0b;width:24px;height:24px;border-radius:50%;font-size:.75rem;cursor:pointer;line-height:1;}
+    .pin-unpin:hover{background:rgba(245,158,11,.35);}
   </style>
 </head>
 <body>
@@ -72,6 +75,12 @@
   </nav>
 
   <div class="wrap">
+
+    <!-- ===== Pinned ===== -->
+    <div id="pinnedWrap" style="display:none;">
+      <div class="sec"><span class="se">📌</span><h2>Pinned</h2></div>
+      <div id="pinnedList"></div>
+    </div>
 
     <!-- ===== Featured ===== -->
     <a class="tool" href="T20-IBKR-TIGER.html"><div class="tnum">20</div><div class="tbody"><div class="ttitle">📊 T20: Combined Portfolio</div><div class="tdesc">IBKR + Tiger + CPF/SGX + Property + Insurance · All positions in SGD</div></div><div class="arr">→</div></a>
@@ -162,6 +171,31 @@
     var el = document.getElementById('siteAddress');
     if (el && window.location.host) el.textContent = window.location.host;
   })();
+
+  function renderPinned(){
+    var list = [];
+    try { list = JSON.parse(localStorage.getItem('pw_pinned_pages')) || []; } catch(e){}
+    var wrap = document.getElementById('pinnedWrap');
+    var container = document.getElementById('pinnedList');
+    if(!list.length){ wrap.style.display='none'; return; }
+    container.innerHTML = list.map(function(p){
+      return '<a class="tool pinned-tool" href="'+p.url+'">'+
+        '<div class="tnum" style="background:#f59e0b">'+(p.icon||'📌')+'</div>'+
+        '<div class="tbody"><div class="ttitle">'+p.title+'</div></div>'+
+        '<div class="arr">→</div>'+
+        '<button class="pin-unpin" onclick="event.preventDefault();event.stopPropagation();unpinPage(\''+p.url+'\')" title="Unpin" aria-label="Unpin">✕</button>'+
+      '</a>';
+    }).join('');
+    wrap.style.display='block';
+  }
+  function unpinPage(url){
+    var list = [];
+    try { list = JSON.parse(localStorage.getItem('pw_pinned_pages')) || []; } catch(e){}
+    list = list.filter(function(p){ return p.url !== url; });
+    try { localStorage.setItem('pw_pinned_pages', JSON.stringify(list)); } catch(e){}
+    renderPinned();
+  }
+  renderPinned();
   </script>
   <script src="/view-counter.js"></script>
 <script src="/sw-register.js" defer></script>
