@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T48: GOOGL Iron Condor — 15% vs 10% Gap Comparison</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+
+  .page-menu-wrap { position:fixed; top:54px; right:12px; z-index:999; }
+  .page-menu-btn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-size:1.15rem; font-weight:800; cursor:pointer; line-height:1; }
+  .page-menu-btn:hover { background:rgba(255,255,255,.2); }
+  .page-menu-dropdown { display:none; position:absolute; top:42px; right:0; background:#161b22; border:1px solid rgba(255,255,255,.15); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:190px; overflow:hidden; }
+  .page-menu-dropdown.open { display:block; }
+  .page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:#e6edf3; text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .page-menu-dropdown button:hover { background:rgba(255,255,255,.08); }
+  .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
+  .page-menu-dropdown button.pinned { color:#f59e0b; }
+
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:640px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:720px; margin:0 auto; padding:22px 18px; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .verdict-badge { display:flex; align-items:center; gap:10px; background:rgba(245,158,11,.14); border:1px solid rgba(245,158,11,.45); border-radius:14px; padding:14px 16px; margin-bottom:22px; }
+  .verdict-badge .vico { font-size:1.6rem; }
+  .verdict-badge .vtxt { font-weight:800; font-size:.95rem; color:#fcd34d; }
+  .verdict-badge .vsub { font-size:.78rem; color:rgba(255,255,255,.6); margin-top:2px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card ul { margin:6px 0 10px 20px; }
+  .card li { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:6px; }
+
+  table.facts { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.facts th, table.facts td { padding:9px 8px; font-size:.82rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.facts th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; width:38%; }
+  table.facts td b { color:#f4c869; }
+
+  table.cmp { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.cmp th, table.cmp td { padding:9px 8px; font-size:.8rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.cmp th { color:#8ea0ff; font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; }
+  table.cmp td b { color:#f4c869; }
+
+  .ok-badge { display:inline-block; background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#86efac; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+  .warn-badge { display:inline-block; background:rgba(244,165,0,.16); border:1px solid rgba(244,165,0,.5); color:#ffd97a; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+
+  .fmath { font-family:'Courier New',monospace; background:#0e1330; border-radius:8px; padding:10px 12px; font-size:.82rem; color:#f4c869; margin:8px 0; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="page-menu-wrap">
+  <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+  <div class="page-menu-dropdown" id="pageMenuDropdown">
+    <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span></button>
+  </div>
+</div>
+
+<div class="hd">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T48</span><span class="zh">T48</span></span>
+  </div>
+  <div class="ic">🅶🦅</div>
+  <h1><span class="en">T48: GOOGL Iron Condor — 15% vs 10% Gap Comparison</span><span class="zh">T48：GOOGL铁鹰策略——15%与10%缓冲比较</span></h1>
+  <p><span class="en">Two proposed condor widths on GOOGL after this week's post-earnings dip — a safer 15%-gap version and a higher-credit 10%-gap version, side by side.</span><span class="zh">本周财报后回调背景下，GOOGL的两种建议铁鹰宽度——更安全的15%缓冲版本与权利金更高的10%缓冲版本并列比较。</span></p>
+</div>
+
+<div class="wrap">
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="pinToast">📌 Pinned!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> These are suggested settings only — no position has been placed. Strikes and premiums shown are model estimates, not live IBKR quotes. Confirm the actual bid/ask on IBKR before sizing/entering any trade.</span><span class="zh"><b>非投资建议。</b>本页仅为建议设置——尚未实际下单。所示行使价与权利金为模型估算值，并非IBKR实时报价。下单前请务必在IBKR确认实际买卖价。</span>
+  </div>
+
+  <div class="verdict-badge">
+    <div class="vico">💡</div>
+    <div>
+      <div class="vtxt"><span class="en">Two options prepared — not yet filled</span><span class="zh">已备好两种方案——尚未成交</span></div>
+      <div class="vsub"><span class="en">24 Jul 2026 · spot ~$319.88, 2 days after Q2 earnings · expiry Aug 28 '26 (~35 DTE)</span><span class="zh">2026年7月24日 · 现价约$319.88，Q2财报公布后2天 · 到期日2026年8月28日（约35天）</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Option A — 15% Gap (Safer)</span><span class="zh">方案A——15%缓冲（更安全）</span></h2>
+    <table class="facts">
+      <tbody>
+        <tr><th><span class="en">Spot (A)</span><span class="zh">现价 (A)</span></th><td><b>$319.88</b></td></tr>
+        <tr><th><span class="en">Gap % (B)</span><span class="zh">缓冲比例 (B)</span></th><td><b>15%</b></td></tr>
+        <tr><th><span class="en">Lower strike A×(1−B)</span><span class="zh">下方行使价 A×(1−B)</span></th><td><div class="fmath">319.88×0.85 = 271.90 → <b>$270 Short Put</b></div></td></tr>
+        <tr><th><span class="en">Upper strike A×(1+B)</span><span class="zh">上方行使价 A×(1+B)</span></th><td><div class="fmath">319.88×1.15 = 367.86 → <b>$370 Short Call</b></div></td></tr>
+        <tr><th><span class="en">Wings</span><span class="zh">翼宽</span></th><td>$5 <span class="en">(Long Put 265 / Long Call 375)</span><span class="zh">（买入认沽265／买入认购375）</span></td></tr>
+        <tr><th><span class="en">Est. net credit</span><span class="zh">预估净权利金</span></th><td><b>~$105</b> <span class="en">per contract</span><span class="zh">每张合约</span></td></tr>
+        <tr><th><span class="en">Max loss</span><span class="zh">最大亏损</span></th><td><b>~$395</b></td></tr>
+        <tr><th><span class="en">Breakevens</span><span class="zh">盈亏平衡点</span></th><td>~$268.95 / ~$371.05</td></tr>
+        <tr><th><span class="en">Close target (50%)</span><span class="zh">平仓目标（50%）</span></th><td><span class="en">Buy back at ~$0.53 for ~$52 profit</span><span class="zh">以约$0.53买回，获利约$52</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Option B — 10% Gap (Higher Credit)</span><span class="zh">方案B——10%缓冲（权利金更高）</span></h2>
+    <table class="facts">
+      <tbody>
+        <tr><th><span class="en">Spot (A)</span><span class="zh">现价 (A)</span></th><td><b>$319.88</b></td></tr>
+        <tr><th><span class="en">Gap % (B)</span><span class="zh">缓冲比例 (B)</span></th><td><b>10%</b></td></tr>
+        <tr><th><span class="en">Lower strike A×(1−B)</span><span class="zh">下方行使价 A×(1−B)</span></th><td><div class="fmath">319.88×0.90 = 287.89 → <b>$290 Short Put</b></div></td></tr>
+        <tr><th><span class="en">Upper strike A×(1+B)</span><span class="zh">上方行使价 A×(1+B)</span></th><td><div class="fmath">319.88×1.10 = 351.87 → <b>$350 Short Call</b></div></td></tr>
+        <tr><th><span class="en">Wings</span><span class="zh">翼宽</span></th><td>$5 <span class="en">(Long Put 285 / Long Call 355)</span><span class="zh">（买入认沽285／买入认购355）</span></td></tr>
+        <tr><th><span class="en">Est. net credit</span><span class="zh">预估净权利金</span></th><td><b>~$225</b> <span class="en">per contract</span><span class="zh">每张合约</span></td></tr>
+        <tr><th><span class="en">Max loss</span><span class="zh">最大亏损</span></th><td><b>~$275</b></td></tr>
+        <tr><th><span class="en">Breakevens</span><span class="zh">盈亏平衡点</span></th><td>~$287.75 / ~$352.25</td></tr>
+        <tr><th><span class="en">Close target (50%)</span><span class="zh">平仓目标（50%）</span></th><td><span class="en">Buy back at ~$1.13 for ~$113 profit</span><span class="zh">以约$1.13买回，获利约$113</span></td></tr>
+      </tbody>
+    </table>
+    <div class="warn-badge">⚠️ <span class="en">Meaningfully smaller price cushion than Option A — higher chance GOOGL's post-earnings volatility tests one side before Aug 28.</span><span class="zh">相比方案A缓冲空间明显更小——GOOGL财报后波动在8月28日前触及任一边界的概率更高。</span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Side by Side</span><span class="zh">并排比较</span></h2>
+    <table class="cmp">
+      <thead><tr><th></th><th><span class="en">Option A (15%)</span><span class="zh">方案A（15%）</span></th><th><span class="en">Option B (10%)</span><span class="zh">方案B（10%）</span></th></tr></thead>
+      <tbody>
+        <tr><td><span class="en">Strikes</span><span class="zh">行使价</span></td><td>270P / 370C</td><td>290P / 350C</td></tr>
+        <tr><td><span class="en">Cushion each side</span><span class="zh">每边缓冲</span></td><td>~15.6%</td><td>~9.4–9.7%</td></tr>
+        <tr><td><span class="en">Est. credit</span><span class="zh">预估权利金</span></td><td><b>~$105</b></td><td><b>~$225</b></td></tr>
+        <tr><td><span class="en">Max loss</span><span class="zh">最大亏损</span></td><td>~$395</td><td>~$275</td></tr>
+        <tr><td><span class="en">Return on risk</span><span class="zh">风险回报率</span></td><td>~27%</td><td>~82%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Why Now</span><span class="zh">为何此时</span></h2>
+    <p><span class="en">Alphabet reported Q2 earnings this week — that report, plus Tesla's, drove the broad Mag7/AI-spending selloff on 23 Jul. Because the report already happened, a standard 30–45 DTE condor now carries <b>zero single-company earnings-gap risk</b> (next report ~Oct '26), unlike the MSFT case flagged and skipped on 23 Jul.</span><span class="zh">Alphabet本周公布了Q2财报——该财报连同特斯拉的财报，共同引发了7月23日Mag7／AI支出板块的抛售。由于财报已经公布，标准30–45天到期的铁鹰目前<b>不存在单一公司财报跳空风险</b>（下次财报约在2026年10月），不同于7月23日被标记并放弃的MSFT情况。</span></p>
+    <p><span class="en">Post-selloff IV is elevated (IV rank ~70 as of late Jun, likely higher now), which is what's inflating both estimates' credit above what a calm market would pay. The one live event risk in the window is the <b>FOMC meeting, 28–29 Jul</b> — a scheduled, non-earnings event, but still capable of moving the index/mega-cap complex.</span><span class="zh">抛售后隐含波动率处于高位（截至6月底IV排名约70，目前可能更高），这也是两种方案权利金高于平静市场水平的原因。此窗口内唯一的实时事件风险是<b>7月28–29日的联储议息会议（FOMC）</b>——属于已排定的非财报事件，但仍可能带动大盘／科技龙头股波动。</span></p>
+  </div>
+
+  <script src="/view-counter.js"></script>
+
+  <div class="foot">
+    <span class="en">Personal trade-log entry · <span id="lastReviewedEn">24 Jul 2026</span></span><span class="zh">个人交易记录 · <span id="lastReviewedZh">2026年7月24日</span></span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">Table 29: Option by Bang — Iron Condor Breadboard</span><span class="zh">Table 29：期权面包板</span></a><br>
+    <a href="T47-GOOGL-Put-Setting.html">🅶🦅 <span class="en">T47: Selling GOOGL Put — Suggested Setting</span><span class="zh">T47：卖出GOOGL认沽期权建议设置</span></a><br>
+    <a href="T39-Next-IC-Recommendation.html">🦅 <span class="en">T39: Next Iron Condor Candidates</span><span class="zh">T39：下一批铁鹰候选标的</span></a><br>
+    <a href="T31-Bang-IronCondor-Training-Notes.html">🍞🦅 <span class="en">T31: 10% / $5 Wing Rule &amp; DTE 15 Exit</span><span class="zh">T31：10%／$5翼宽法则与DTE15离场</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+
+// Page menu (⋮) — Share / Pin page
+function togglePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.toggle('open');
+}
+function closePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+
+// Pin page — pinned pages show as a row at the top of Investment Tools (per-browser, via localStorage)
+var PIN_KEY = 'pw_pinned_pages';
+var PAGE_URL = 'T48-GOOGL-IC-Gap-Comparison.html';
+var PAGE_TITLE = 'T48 GOOGL IC Gap Comparison';
+var PAGE_TITLE_ZH = 'T48 GOOGL铁鹰缓冲比较';
+var PAGE_ICON = '🅶';
+function getPinnedPages(){
+  try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; }
+}
+function isPagePinned(){
+  return getPinnedPages().some(function(p){ return p.url === PAGE_URL; });
+}
+function updatePinMenuItem(){
+  var el = document.getElementById('pinMenuItem');
+  var pinned = isPagePinned();
+  el.classList.toggle('pinned', pinned);
+  el.innerHTML = pinned
+    ? '📌 <span class="en">Unpin from Tools hub</span><span class="zh">取消置顶</span>'
+    : '📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span>';
+}
+function togglePinThisPage(){
+  var list = getPinnedPages();
+  var idx = list.findIndex(function(p){ return p.url === PAGE_URL; });
+  var toast = document.getElementById('pinToast');
+  if(idx >= 0){
+    list.splice(idx, 1);
+    toast.innerHTML = '<span class="en">Unpinned</span><span class="zh">已取消置顶</span>';
+  } else {
+    list.unshift({ url:PAGE_URL, title:PAGE_TITLE, titleZh:PAGE_TITLE_ZH, icon:PAGE_ICON, pinnedAt:Date.now() });
+    toast.innerHTML = '<span class="en">📌 Pinned! Shows at top of Investment Tools</span><span class="zh">📌 已置顶！将显示在投资工具中心顶部</span>';
+  }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch(e){}
+  updatePinMenuItem();
+  closePageMenu();
+  toast.style.display = 'block';
+  setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+}
+updatePinMenuItem();
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
