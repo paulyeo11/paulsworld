@@ -153,8 +153,8 @@
   #table30-cushion { min-width:920px; }
   /* Cushion tab (Table 60) — Put/Call Cushion badge pills match the Dashboard tab's
      centered, fixed-width look instead of the default right-aligned/natural-width badge. */
-  #table30-cushion th:nth-child(5), #table30-cushion td:nth-child(5),
-  #table30-cushion th:nth-child(9), #table30-cushion td:nth-child(9) { text-align:center; }
+  #table30-cushion th:nth-child(7), #table30-cushion td:nth-child(7),
+  #table30-cushion th:nth-child(11), #table30-cushion td:nth-child(11) { text-align:center; }
   #table30-cushion .badge { display:inline-block; width:74px; text-align:center; }
 
   /* iOS landscape — fit Table 60 (11 core + 2 toggleable Cut Lost columns) on one screen with no horizontal scroll,
@@ -1149,6 +1149,8 @@
     <table class="legs table30-eq" id="table30-cushion" style="margin-top:10px">
       <tr>
         <th><span class="en">Symbol</span><span class="zh">代码</span></th>
+        <th class="num tbl60-extra"><span class="en">Cut Lost PUT<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span><span class="zh">止损认沽<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span></th>
+        <th class="num tbl60-extra"><span class="en">Cut Lost CALL<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span><span class="zh">止损认购<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span></th>
         <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
         <th class="num"><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th>
         <th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
@@ -1159,8 +1161,6 @@
         <th class="num"><span class="en">Call Cushion</span><span class="zh">认购缓冲</span></th>
         <th class="num"><span class="en">Call Δ</span><span class="zh">认购Δ</span></th>
         <th class="num"><span class="en">MTD Premium</span><span class="zh">本月权利金</span></th>
-        <th class="num tbl60-extra"><span class="en">Cut Lost PUT<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span><span class="zh">止损认沽<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span></th>
-        <th class="num tbl60-extra"><span class="en">Cut Lost CALL<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span><span class="zh">止损认购<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span></th>
       </tr>
       <tbody id="putVarBody">
         <tr><td colspan="13"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
@@ -3235,10 +3235,10 @@ function renderPutVarianceTable(){
     var cutLostCallTxt = hasLongCall ? fmt((cfg.shortC + cfg.longC) / 2) : '—';
     var cutLostCells = '<td class="num tbl60-extra">'+cutLostPutTxt+'</td><td class="num tbl60-extra">'+cutLostCallTxt+'</td>';
     if(price===null){
-      return '<tr><td>'+symTag+'</td><td class="num">—</td>'+
+      return '<tr><td>'+symTag+'</td>'+cutLostCells+'<td class="num">—</td>'+
         '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+(hasPut?putDeltaTxt:'—')+'</td>'+
         '<td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+callDeltaTxt+'</td>'+
-        '<td class="num">'+mtdTxt+'</td>'+cutLostCells+'</tr>';
+        '<td class="num">'+mtdTxt+'</td></tr>';
     }
     var putCells = hasPut ? (function(){
       var pVpct = (price - cfg.shortP) / price * 100;
@@ -3249,10 +3249,10 @@ function renderPutVarianceTable(){
     var cVpct = (cfg.shortC - price) / price * 100;
     var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
     var cSign = cVpct >= 0 ? '+' : '';
-    return '<tr><td>'+symTag+'</td><td class="num">'+fmt(price)+'</td>'+
+    return '<tr><td>'+symTag+'</td>'+cutLostCells+'<td class="num">'+fmt(price)+'</td>'+
       putCells+
       '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>'+
-      '<td class="num" style="color:#3fb950">'+mtdTxt+'</td>'+cutLostCells+'</tr>';
+      '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
