@@ -736,6 +736,10 @@
       <div class="c-meta"><span class="en">By position · cost basis vs current value</span><span class="zh">按持仓 · 成本与现值对比</span></div>
       <div></div>
     </div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadShares()">🔄 <span class="en">Refresh share price</span><span class="zh">刷新股价</span></button>
+      <span class="live-ts" id="unrealTs"></span>
+    </div>
     <table class="legs" style="margin-top:10px">
       <thead><tr>
         <th><span class="en">Position</span><span class="zh">持仓</span></th>
@@ -3946,7 +3950,7 @@ function refreshAllData(){
     }),
     fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
       SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
-      renderShares(); renderSharePrices();
+      renderShares(); renderSharePrices(); renderUnrealizedTable();
     })
   ]).catch(function(){}).then(function(){
     btn.classList.remove('spinning');
@@ -4340,7 +4344,7 @@ function renderUnrealizedTable(){
 function loadShares(){
   fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
     SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
-    renderShares(); renderSharePrices(); renderUnrealizedTable();
+    renderShares(); renderSharePrices(); renderUnrealizedTable(); stampCut();
   }).catch(function(){ renderShares(); });
 }
 loadShares();
@@ -4456,6 +4460,7 @@ function stampCut(){
   var el=document.getElementById('liveTs'); if(el) el.innerHTML=html;
   var el2=document.getElementById('putVarTs'); if(el2) el2.innerHTML=html;
   var el3=document.getElementById('dashCushionTs'); if(el3) el3.innerHTML=html;
+  var el4=document.getElementById('unrealTs'); if(el4) el4.innerHTML=html;
   setLang(curLang);
 }
 
