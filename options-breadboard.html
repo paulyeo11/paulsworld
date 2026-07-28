@@ -1477,9 +1477,17 @@
         <div></div>
       </div>
       <div class="rail-legend" id="pnlYearBtns" style="margin-top:10px"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span style="font-size:.72rem;color:#8b98a5"><span class="en">Trades filter:</span><span class="zh">交易筛选：</span></span>
+        <div class="rail-legend" id="pnlTradeFilterBtns" style="margin-top:0"></div>
+      </div>
       <div style="position:relative;height:180px;margin-top:14px"><canvas id="pnlChart"></canvas></div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.72rem;color:#8b98a5">
-        <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f4c869"></span><span class="en">Number of options traded that month (right axis)</span><span class="zh">当月交易的期权笔数（右侧坐标轴）</span>
+        <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:#f4c869"></span><span class="en" id="pnlTradesLegendEn">Number of options traded that month (right axis)</span><span class="zh" id="pnlTradesLegendZh">当月交易的期权笔数（右侧坐标轴）</span>
+      </div>
+      <div class="note" id="pnlSharesNote" style="margin-top:8px;display:none">
+        <span class="en">IBKR's statement data doesn't include per-transaction dates for stock buys/sells (FDS, POOL, ZTS, and the closed CELH/ELV/LULU/TSM positions), so a month-by-month share trade count isn't available yet — showing 0 until real dates are confirmed.</span>
+        <span class="zh">IBKR报表数据不包含股票买卖的逐笔交易日期（FDS、POOL、ZTS，以及已平仓的CELH/ELV/LULU/TSM），因此暂无法按月统计股票交易笔数——在确认真实日期前显示为0。</span>
       </div>
       <table class="legs" style="margin-top:10px">
         <thead><tr>
@@ -1487,7 +1495,7 @@
           <th style="text-align:right"><span class="en">NAV (EOM)</span><span class="zh">月末净值</span></th>
           <th style="text-align:right"><span class="en">$ Change</span><span class="zh">金额变动</span></th>
           <th style="text-align:right"><span class="en">% Change</span><span class="zh">百分比变动</span></th>
-          <th style="text-align:right"><span class="en"># Trades</span><span class="zh">交易笔数</span></th>
+          <th style="text-align:right"><span class="en" id="pnlTradesHeaderEn"># Trades</span><span class="zh" id="pnlTradesHeaderZh">交易笔数</span></th>
         </tr></thead>
         <tbody id="pnlTableBody"></tbody>
         <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
@@ -1498,8 +1506,8 @@
         </tr></tfoot>
       </table>
       <div class="note" style="margin-top:12px">
-        <span class="en"><b>NAV (EOM)</b> = Net Asset Value at End of Month — your portfolio's total value on the last day of that month. Same monthly NAV data as the Account Value chart on the Positions tab — $/% Change is raw NAV change (includes deposits/withdrawals), not investment return. IBKR's official YTD time-weighted return (TWR) is shown there.</span>
-        <span class="zh"><b>月末净值 (NAV EOM)</b> = 当月最后一天的账户总值。与「持仓」页签账户总值图表使用相同的月度净值数据——金额/百分比变动是净值原始变动（含存取款），并非真实投资回报。IBKR官方年初至今时间加权回报率（TWR）显示在该图表处。</span>
+        <span class="en"><b>NAV (EOM)</b> = Net Asset Value at End of Month — your portfolio's total value on the last day of that month. Same monthly NAV data as the Account Value chart on the Positions tab — $/% Change is raw NAV change (includes deposits/withdrawals), not investment return. IBKR's official YTD time-weighted return (TWR) is shown there. The trades filter only changes the # Trades column and right-axis line — $/% Change always reflects total account NAV.</span>
+        <span class="zh"><b>月末净值 (NAV EOM)</b> = 当月最后一天的账户总值。与「持仓」页签账户总值图表使用相同的月度净值数据——金额/百分比变动是净值原始变动（含存取款），并非真实投资回报。IBKR官方年初至今时间加权回报率（TWR）显示在该图表处。交易筛选仅改变「交易笔数」列与右侧坐标轴折线——金额/百分比变动始终反映账户整体净值。</span>
       </div>
     </div>
     </div><!-- /pnlpanel-monthly -->
@@ -3457,6 +3465,16 @@ var TRADE_COUNTS = {
   'Apr 26': 2, 'May 26': 1, 'Jun 26': 2, 'Jul 26': 7
 };
 function tradeCountForMonth(m){ return TRADE_COUNTS[m] || 0; }
+// Share/stock trade counts by month — IBKR's statement has no per-transaction dates for stock
+// buys/sells (FDS, POOL, ZTS, and the closed CELH/ELV/LULU/TSM positions), so this stays empty
+// until real dated share-trade data is confirmed. Table 70's "Shares" filter shows 0 for every
+// month rather than guessing.
+var SHARE_TRADE_COUNTS = {};
+function tradeCountForMonthByFilter(m, filter){
+  if (filter === 'options') return TRADE_COUNTS[m] || 0;
+  if (filter === 'shares') return SHARE_TRADE_COUNTS[m] || 0;
+  return (TRADE_COUNTS[m] || 0) + (SHARE_TRADE_COUNTS[m] || 0);
+}
 // Headroom for the right-hand "Options Traded" axis so the trade-count label never collides
 // with the $ value label plugin sitting at the top of the tallest bar.
 function tradesSuggestedMax(arr){
@@ -3580,6 +3598,41 @@ function setPnlYear(yr){
   renderPnlTable(yr);
 }
 
+// Trades filter (Table 70) — All / Options / Shares. Only changes the # Trades column and the
+// chart's right-axis line; $/% Change always reflects total account NAV (see note under table).
+var PNL_TRADE_FILTER_LABELS = {
+  all:     { en:'All',     zh:'全部' },
+  options: { en:'Options', zh:'期权' },
+  shares:  { en:'Shares',  zh:'股票' }
+};
+var curPnlTradeFilter = 'all';
+function renderPnlTradeFilterButtons(){
+  document.getElementById('pnlTradeFilterBtns').innerHTML = ['all','options','shares'].map(function(f){
+    var lbl = PNL_TRADE_FILTER_LABELS[f];
+    return '<span class="period-btn'+(f===curPnlTradeFilter?' active':'')+'" onclick="setPnlTradeFilter(\''+f+'\')">'+
+      '<span class="en">'+lbl.en+'</span><span class="zh">'+lbl.zh+'</span></span>';
+  }).join('');
+}
+function setPnlTradeFilter(f){
+  curPnlTradeFilter = f;
+  renderPnlTradeFilterButtons();
+  setLang(curLang);
+  updatePnlTradeLabels();
+  renderPnlTable(curPnlYear);
+}
+function updatePnlTradeLabels(){
+  var legendEn = { all:'Number of trades that month (right axis)', options:'Number of options traded that month (right axis)', shares:'Number of share trades that month (right axis)' };
+  var legendZh = { all:'当月交易笔数（右侧坐标轴）', options:'当月交易的期权笔数（右侧坐标轴）', shares:'当月股票交易笔数（右侧坐标轴）' };
+  var headerEn = { all:'# Trades', options:'# Option Trades', shares:'# Share Trades' };
+  var headerZh = { all:'交易笔数', options:'期权交易笔数', shares:'股票交易笔数' };
+  document.getElementById('pnlTradesLegendEn').textContent = legendEn[curPnlTradeFilter];
+  document.getElementById('pnlTradesLegendZh').textContent = legendZh[curPnlTradeFilter];
+  document.getElementById('pnlTradesHeaderEn').textContent = headerEn[curPnlTradeFilter];
+  document.getElementById('pnlTradesHeaderZh').textContent = headerZh[curPnlTradeFilter];
+  document.getElementById('pnlSharesNote').style.display = curPnlTradeFilter === 'shares' ? 'block' : 'none';
+  pnlChart.options.scales.y1.title.text = { all:'Trades', options:'Options Traded', shares:'Share Trades' }[curPnlTradeFilter];
+}
+
 var pnlChart = new Chart(document.getElementById('pnlChart'), {
   type: 'bar',
   data: { labels: [], datasets: [
@@ -3592,7 +3645,7 @@ var pnlChart = new Chart(document.getElementById('pnlChart'), {
     maintainAspectRatio: false,
     plugins: { legend: { display:false }, tooltip: {
       callbacks: { label: function(ctx){
-        if (ctx.datasetIndex === 1) return (curLang==='zh' ? '交易笔数: ' : 'Options traded: ') + ctx.parsed.y;
+        if (ctx.datasetIndex === 1) return (curLang==='zh' ? '交易笔数: ' : 'Trades: ') + ctx.parsed.y;
         return fmtChangeUSD(ctx.parsed.y);
       } }
     } },
@@ -3636,7 +3689,7 @@ function renderPnlTable(year){
     if (k===0 && !hasBaseline) tag = ' <span style="font-size:.62rem;font-weight:700;color:#8b98a5;background:rgba(139,152,168,.15);padding:1px 6px;border-radius:8px;">since inception</span>';
     else if (isLast && !isDec) tag = ' <span style="font-size:.62rem;font-weight:700;color:#f0a500;background:rgba(240,165,0,.12);padding:1px 6px;border-radius:8px;">partial</span>';
     var color = chg==null ? '' : (chg>=0 ? '#3fb950' : '#f85149');
-    var trades = tradeCountForMonth(d.m);
+    var trades = tradeCountForMonthByFilter(d.m, curPnlTradeFilter);
     rows += '<tr><td>'+MONTH_FULL[monIdx]+tag+'</td>' +
       '<td class="num">'+fmtUSD(d.v)+'</td>' +
       '<td class="num" style="color:'+color+';font-weight:700">'+(chg==null?'—':fmtChangeUSD(chg))+'</td>' +
@@ -3677,7 +3730,10 @@ function renderPnlTable(year){
   document.getElementById('pnlTotalTrades').textContent = totalTrades;
 }
 renderPnlYearButtons();
+renderPnlTradeFilterButtons();
+updatePnlTradeLabels();
 renderPnlTable();
+setLang(curLang);
 
 // Yearly P&L tab — also derived from NAV_HISTORY (year-end / latest-available rollup)
 function renderYearlyPnlTable(){
