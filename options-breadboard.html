@@ -245,6 +245,17 @@
   .tbl60-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
   .tbl60-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
   .tbl60-filter-btn:active { transform:scale(.96); }
+  /* Table 60 — compact view: when activated, hide every column except Symbol, Share Price (A),
+     Put Cushion, Call Cushion (columns 1, 4, 7, 11 in the header's fixed left-to-right order). */
+  #table30-cushion.compact-mode th:nth-child(2), #table30-cushion.compact-mode td:nth-child(2),
+  #table30-cushion.compact-mode th:nth-child(3), #table30-cushion.compact-mode td:nth-child(3),
+  #table30-cushion.compact-mode th:nth-child(5), #table30-cushion.compact-mode td:nth-child(5),
+  #table30-cushion.compact-mode th:nth-child(6), #table30-cushion.compact-mode td:nth-child(6),
+  #table30-cushion.compact-mode th:nth-child(8), #table30-cushion.compact-mode td:nth-child(8),
+  #table30-cushion.compact-mode th:nth-child(9), #table30-cushion.compact-mode td:nth-child(9),
+  #table30-cushion.compact-mode th:nth-child(10), #table30-cushion.compact-mode td:nth-child(10),
+  #table30-cushion.compact-mode th:nth-child(12), #table30-cushion.compact-mode td:nth-child(12),
+  #table30-cushion.compact-mode th:nth-child(13), #table30-cushion.compact-mode td:nth-child(13) { display:none; }
   .stock { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:16px; margin-bottom:14px; }
   .st-top { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; }
   .st-sym { font-size:1.05rem; font-weight:800; }
@@ -1144,6 +1155,7 @@
     <div class="cushion-filter-row" id="cushionFilterRow-cushion"></div>
     <div class="cushion-filter-row" style="margin-top:0">
       <button class="tbl60-filter-btn" id="tbl60FilterBtn" onclick="toggleTable60Extra()">👁️ <span class="en">Hide Cut Lost PUT/CALL columns</span><span class="zh">隐藏「止损认沽/认购」栏</span></button>
+      <button class="tbl60-filter-btn" id="tbl60CompactBtn" onclick="toggleTable60Compact()">🔎 <span class="en">Compact view (Symbol/Price/Cushion only)</span><span class="zh">精简视图（仅代码/股价/缓冲）</span></button>
     </div>
     <div class="table-scroll" id="cushionTableScroll">
     <table class="legs table30-eq" id="table30-cushion" style="margin-top:10px">
@@ -3257,6 +3269,14 @@ function toggleTable60Extra(){
   var btn = document.getElementById('tbl60FilterBtn');
   var hidden = t.classList.toggle('hide-extra');
   if(btn) btn.classList.toggle('active', hidden);
+}
+// Table 60 — compact view: hide every column except Symbol, Share Price (A), Put Cushion,
+// Call Cushion (mirrors the Dashboard tab's quick-glance table), via the nth-child CSS above.
+function toggleTable60Compact(){
+  var t = document.getElementById('table30-cushion'); if(!t) return;
+  var btn = document.getElementById('tbl60CompactBtn');
+  var on = t.classList.toggle('compact-mode');
+  if(btn) btn.classList.toggle('active', on);
 }
 // Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides.
 // Call-only positions (CALL_ONLY_CFG, e.g. FDS Covered Call) have no Selling Put strike, so
