@@ -245,6 +245,11 @@
   .tbl60-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
   .tbl60-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
   .tbl60-filter-btn:active { transform:scale(.96); }
+  /* Task List — Outstanding/Done filter, same pill toggle pattern */
+  .task-filter-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:14px 0 0; }
+  .task-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
+  .task-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
+  .task-filter-btn:active { transform:scale(.96); }
   /* Table 60 — compact view: when activated, hide every column except Symbol, Share Price (A),
      Put Cushion, Call Cushion (columns 1, 4, 7, 11 in the header's fixed left-to-right order). */
   #table30-cushion.compact-mode th:nth-child(2), #table30-cushion.compact-mode td:nth-child(2),
@@ -2627,6 +2632,11 @@
         <input id="taskInput" type="text" placeholder="Add a task…" style="flex:1;background:#0d1117;border:1px solid rgba(255,255,255,.15);color:#e6edf3;border-radius:9px;padding:10px 12px;font-size:.88rem" onkeydown="if(event.key==='Enter')addTask()">
         <button onclick="addTask()" style="background:#f59e0b;color:#0d1117;border:none;border-radius:9px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.85rem">+ <span class="en">Add</span><span class="zh">添加</span></button>
       </div>
+      <div class="task-filter-row">
+        <button class="task-filter-btn active" id="taskFilter-all" onclick="setTaskFilter('all')"><span class="en">All</span><span class="zh">全部</span></button>
+        <button class="task-filter-btn" id="taskFilter-outstanding" onclick="setTaskFilter('outstanding')">⏳ <span class="en">Outstanding</span><span class="zh">未完成</span></button>
+        <button class="task-filter-btn" id="taskFilter-done" onclick="setTaskFilter('done')">✅ <span class="en">Done</span><span class="zh">已完成</span></button>
+      </div>
       <ul id="taskListUl" style="list-style:none;padding:0;margin:16px 0 0"></ul>
       <div class="note" style="margin-top:12px">
         <span class="en">Saved on this device only (browser local storage) — tasks won't sync across phone/notebook.</span>
@@ -2702,15 +2712,29 @@ function getTasks(){
   return seeded;
 }
 function saveTasks(tasks){ localStorage.setItem(TASKS_KEY, JSON.stringify(tasks)); }
+var taskFilter = 'all';
+function setTaskFilter(f){
+  taskFilter = f;
+  ['all','outstanding','done'].forEach(function(k){
+    document.getElementById('taskFilter-'+k).classList.toggle('active', k===f);
+  });
+  renderTasks();
+}
 function renderTasks(){
   var tasks = getTasks();
+  var visible = tasks.filter(function(t){
+    if(taskFilter==='outstanding') return !t.done;
+    if(taskFilter==='done') return t.done;
+    return true;
+  });
   var ul = document.getElementById('taskListUl');
   ul.innerHTML = '';
-  if(!tasks.length){
-    ul.innerHTML = '<li style="color:#8b98a5;font-size:.85rem;padding:8px 0">No tasks yet.</li>';
+  if(!visible.length){
+    var msg = taskFilter==='outstanding' ? 'No outstanding tasks.' : (taskFilter==='done' ? 'No completed tasks yet.' : 'No tasks yet.');
+    ul.innerHTML = '<li style="color:#8b98a5;font-size:.85rem;padding:8px 0">'+msg+'</li>';
     return;
   }
-  tasks.forEach(function(t){
+  visible.forEach(function(t){
     var li = document.createElement('li');
     li.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)';
     var cb = document.createElement('input');
