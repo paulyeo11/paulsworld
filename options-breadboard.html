@@ -895,9 +895,28 @@
     </div>
   </div>
 
+  <!-- FDS Covered Call -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">FDS <small><span class="en">COVERED CALL</span><span class="zh">备兑看涨</span></small></div>
+      <div class="c-meta"><span class="en">Exp Aug 21 '26 · 31 DTE</span><span class="zh">到期 2026年8月21日 · 31天</span><br><span class="strat"><span class="en">IG · Covered Call</span><span class="zh">IG · 备兑看涨期权</span> · Table 1101</span></div>
+      <div class="pill open">● OPEN</div>
+    </div>
+    <div class="sp-row" id="sp-fds"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
+    <div class="rail-var" id="var-fds">📊 <span class="en">Var: A — vs C —</span><span class="zh">差幅: A — vs C —</span> <b>—</b></div>
+    <div class="rail-wrap"><div class="rail" id="rail-fds"></div>
+      <div class="rail-legend"><span>🟠 <b><span class="en">Short call (sell)</span><span class="zh">卖出看涨</span></b></span><span>🟩 <b><span class="en">Keep shares zone</span><span class="zh">保留股票区</span></b></span><span>❘ <b><span class="en">Avg cost</span><span class="zh">平均成本</span></b></span><span class="now-leg" id="now-fds">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="day1-fds">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+      <div class="rail-var" id="var2-fds">📊 <span class="en">Var: B — vs C —</span><span class="zh">差幅: B — vs C —</span> <b>—</b></div>
+    </div>
+    <div class="note" style="margin-top:8px">
+      <span class="en">Covered call, not a 4-leg condor — only the short 300 Call strike (🟠) and average cost basis ($343.24, dashed line) are shown. Below the strike the shares stay yours plus the premium; above it, shares get called away at $300. <b>Var: A/B = (C−A)/A</b>, the same Call Variance formula as the Cushion tab's Table 60.</span>
+      <span class="zh">备兑看涨期权，非4腿铁鹰——仅显示卖出的300行权价看涨期权（🟠）与平均成本（$343.24，虚线）。股价低于行权价时股票与权利金都保留；高于行权价则股票将以$300被买走。<b>差幅 A/B = (C−A)/A</b>，与「缓冲」页签Table 60相同的认购差幅公式。</span>
+    </div>
+  </div>
+
   <div class="note">
-    <span class="en"><b>Break-evens</b> — NVDA: 192.85 / 232.15 · QQQ: 677.41 / 747.59 · AVGO: 345.25 / 434.75 · SMH: 510.65 / 654.35 · SPY: 711.44 / 773.56 · IWM: 279.89 / 307.11 · XLE: 53.35 / 63.65 (target, pending fill). Between each pair the position is profitable at expiry. Commissions (~$4/leg set) are not deducted from the credit figures above (IWM/SPY use their actual logged commissions instead).</span>
-    <span class="zh"><b>保本点</b> — NVDA：192.85 / 232.15 · QQQ：677.41 / 747.59 · AVGO：345.25 / 434.75 · SMH：510.65 / 654.35 · SPY：711.44 / 773.56 · IWM：279.89 / 307.11 · XLE：53.35 / 63.65（目标，待成交）。到期时股价处于每对之间即盈利。以上权利金未扣除佣金（每组约4美元，IWM/SPY使用各自实际记录的手续费）。</span>
+    <span class="en"><b>Break-evens</b> — NVDA: 192.85 / 232.15 · QQQ: 677.41 / 747.59 · AVGO: 345.25 / 434.75 · SMH: 510.65 / 654.35 · SPY: 711.44 / 773.56 · IWM: 279.89 / 307.11 · XLE: 53.35 / 63.65 (target, pending fill). FDS: no lower break-even shown here — see the Covered Call tab for its downside cost-basis math. Between each pair the position is profitable at expiry. Commissions (~$4/leg set) are not deducted from the credit figures above (IWM/SPY use their actual logged commissions instead).</span>
+    <span class="zh"><b>保本点</b> — NVDA：192.85 / 232.15 · QQQ：677.41 / 747.59 · AVGO：345.25 / 434.75 · SMH：510.65 / 654.35 · SPY：711.44 / 773.56 · IWM：279.89 / 307.11 · XLE：53.35 / 63.65（目标，待成交）。FDS：此处不显示保本点——详见「备兑看涨」页签的成本保本计算。到期时股价处于每对之间即盈利。以上权利金未扣除佣金（每组约4美元，IWM/SPY使用各自实际记录的手续费）。</span>
   </div>
   </div><!-- /tab-riskzone -->
 
@@ -3901,8 +3920,8 @@ function refreshAllData(){
       renderCut(); stampCut(); renderSharePrices();
     }),
     fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
-      SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number') s.price=q.price; });
-      renderShares();
+      SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
+      renderShares(); renderSharePrices();
     })
   ]).catch(function(){}).then(function(){
     btn.classList.remove('spinning');
@@ -4069,8 +4088,82 @@ var RAIL_CFG = {
 Object.keys(RAIL_CFG).forEach(function(sym){ drawRail('rail-'+sym.toLowerCase(), RAIL_CFG[sym]); });
 // Call-only positions (covered calls sold against shares held — no short/long put leg,
 // so no strike rail to draw) shown on Table 60 / Premium tab alongside the 4-leg condors above.
-var CALL_ONLY_CFG = { FDS: {shortC:300} };
+// lo/hi/avgCost are only used by the single-strike rail below (drawCallOnlyRail) — the
+// Table 60 / Premium tab formulas above only ever read cfg.shortC.
+var CALL_ONLY_CFG = { FDS: {shortC:300, avgCost:343.24, lo:280, hi:355} };
 renderCushionFilterRow();
+
+// Single-strike "breadboard" for a covered call (no put leg, no long call — just the
+// short call strike vs. share price and cost basis). Table 1101.
+function drawCallOnlyRail(id, cfg){
+  var rail = document.getElementById(id); if(!rail) return;
+  var lo = cfg.lo, hi = cfg.hi, span = hi - lo;
+  function pct(v){ return ((v - lo) / span * 100); }
+  var zone = document.createElement('div');
+  zone.className = 'zone';
+  zone.style.left = '0%';
+  zone.style.width = pct(cfg.shortC) + '%';
+  zone.innerHTML = '<div class="zlab">KEEP SHARES</div>';
+  rail.appendChild(zone);
+  var b = document.createElement('div'); b.className='be'; b.style.left = pct(cfg.avgCost)+'%';
+  b.innerHTML = '<div class="belab">'+cfg.avgCost+'</div>'; rail.appendChild(b);
+  var el = document.createElement('div'); el.className='peg short'; el.style.left = pct(cfg.shortC)+'%';
+  el.innerHTML = '<div class="lab">'+cfg.shortC+'C</div><div class="dot"></div><div class="sub">sell</div>';
+  rail.appendChild(el);
+}
+Object.keys(CALL_ONLY_CFG).forEach(function(sym){ drawCallOnlyRail('rail-'+sym.toLowerCase(), CALL_ONLY_CFG[sym]); });
+
+// Now/Day1 markers for the covered-call rail — same visual language as plotNowMarker/
+// plotDay1Marker, but variance is (C − A)/A vs the short call strike (Formula Labels
+// convention, same as Table 60's Call Variance), since there's no long put/call to compare against.
+function plotCallOnlyNowMarker(sym, price){
+  var cfg = CALL_ONLY_CFG[sym]; if(!cfg || typeof price!=='number') return;
+  var rail = document.getElementById('rail-'+sym.toLowerCase()); if(!rail) return;
+  var pct = Math.max(0, Math.min(100, (price - cfg.lo) / (cfg.hi - cfg.lo) * 100));
+  var mark = rail.querySelector('.now-mark');
+  if(!mark){
+    mark = document.createElement('div');
+    mark.className = 'now-mark';
+    mark.innerHTML = '<div class="now-arrow"></div><div class="now-line"></div>';
+    rail.appendChild(mark);
+  }
+  mark.style.left = pct + '%';
+  var lab = document.getElementById('now-'+sym.toLowerCase());
+  if(lab) lab.innerHTML = '🟡 <b><span class="en">Now</span><span class="zh">现价</span> '+fmt(price)+'</b>';
+  var vpct = (cfg.shortC - price) / price * 100;
+  var vcls = vpct >= 0 ? 'up' : 'down';
+  var vsign = vpct >= 0 ? '+' : '';
+  var vEl = document.getElementById('var-'+sym.toLowerCase());
+  if(vEl){
+    var av = '<span class="aval">'+fmt(price)+'</span>';
+    vEl.innerHTML = '📊 <span class="en">Var: A '+av+' vs C '+cfg.shortC+'</span><span class="zh">差幅: A '+av+' vs C '+cfg.shortC+'</span> <b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b>';
+    setLang(curLang);
+  }
+}
+function plotCallOnlyDay1Marker(sym, price){
+  var cfg = CALL_ONLY_CFG[sym]; if(!cfg || typeof price!=='number') return;
+  var rail = document.getElementById('rail-'+sym.toLowerCase()); if(!rail) return;
+  var pct = Math.max(0, Math.min(100, (price - cfg.lo) / (cfg.hi - cfg.lo) * 100));
+  var mark = rail.querySelector('.day1-mark');
+  if(!mark){
+    mark = document.createElement('div');
+    mark.className = 'day1-mark';
+    mark.innerHTML = '<div class="day1-dot"></div>';
+    rail.appendChild(mark);
+  }
+  mark.style.left = pct + '%';
+  var lab = document.getElementById('day1-'+sym.toLowerCase());
+  if(lab) lab.innerHTML = '⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> '+fmt(price)+'</b>';
+  var v2El = document.getElementById('var2-'+sym.toLowerCase());
+  if(v2El){
+    var v2pct = (cfg.shortC - price) / price * 100;
+    var v2cls = v2pct >= 0 ? 'up' : 'down';
+    var v2sign = v2pct >= 0 ? '+' : '';
+    var bv = '<span class="bval">'+fmt(price)+'</span>';
+    v2El.innerHTML = '📊 <span class="en">Var: B '+bv+' vs C '+cfg.shortC+'</span><span class="zh">差幅: B '+bv+' vs C '+cfg.shortC+'</span> <b class="'+v2cls+'">'+v2sign+v2pct.toFixed(2)+'%</b>';
+    setLang(curLang);
+  }
+}
 
 // Plot the live share price as a marker line on the strike rail ("chart")
 function plotNowMarker(sym, price){
@@ -4192,8 +4285,8 @@ function renderShares(){
 }
 function loadShares(){
   fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
-    SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number') s.price=q.price; });
-    renderShares();
+    SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
+    renderShares(); renderSharePrices();
   }).catch(function(){ renderShares(); });
 }
 loadShares();
@@ -4314,7 +4407,7 @@ function stampCut(){
 
 // ===== Share Price history (Positions tab — old + new, never overwritten) =====
 var SP_HIST_KEY = 'T29_sharePriceHist_v1';
-var SP_ROW_ID = { QQQ:'sp-qqq', NVDA:'sp-nvda', AVGO:'sp-avgo', SMH:'sp-smh', SPY:'sp-spy', IWM:'sp-iwm', XLE:'sp-xle' };
+var SP_ROW_ID = { QQQ:'sp-qqq', NVDA:'sp-nvda', AVGO:'sp-avgo', SMH:'sp-smh', SPY:'sp-spy', IWM:'sp-iwm', XLE:'sp-xle', FDS:'sp-fds' };
 function loadSpHist(){
   try{ return JSON.parse(localStorage.getItem(SP_HIST_KEY)) || {}; }catch(e){ return {}; }
 }
@@ -4381,8 +4474,13 @@ function renderSharePrices(){
       html += '<span class="sp-old"><span class="en">first capture</span><span class="zh">首次记录</span></span>';
     }
     el.innerHTML = html;
-    plotNowMarker(sym, latest.p);
-    if(day1) plotDay1Marker(sym, day1.p);
+    if(CALL_ONLY_CFG[sym]){
+      plotCallOnlyNowMarker(sym, latest.p);
+      if(day1) plotCallOnlyDay1Marker(sym, day1.p);
+    } else {
+      plotNowMarker(sym, latest.p);
+      if(day1) plotDay1Marker(sym, day1.p);
+    }
   });
   renderPutVarianceTable();
   renderDashCushionTable();
@@ -4665,7 +4763,7 @@ fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
 }).catch(function(){});
 // Auto-refresh every 5 min while the page stays open — Yahoo's own data is ~15 min
 // delayed, so refreshing faster than that wouldn't show anything new.
-setInterval(loadAll, 5*60*1000);
+setInterval(function(){ loadAll(); loadShares(); }, 5*60*1000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
