@@ -1115,7 +1115,7 @@
   <div class="condor" id="putVarianceCard" style="margin-top:16px">
     <div style="display:flex;flex-direction:column;gap:4px">
       <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Table 60: Share Price vs Selling Put &amp; Call</span><span class="zh">Table 60：股价 vs 卖出认沽 &amp; 认购</span></div>
-      <div class="c-meta"><span class="en">Current price (A) vs each condor's short put AND short call strike, side by side — sorted tightest Put Cushion first</span><span class="zh">现价（A）同时对比各铁鹰卖出认沽与卖出认购行权价——按认沽缓冲从紧到松排序</span></div>
+      <div class="c-meta"><span class="en">Current price (A) vs each position's short put AND/or short call strike, side by side — sorted tightest Put Cushion first, call-only positions (e.g. FDS Covered Call) last</span><span class="zh">现价（A）同时对比各持仓卖出认沽与／或卖出认购行权价——按认沽缓冲从紧到松排序，仅有认购的持仓（如FDS备兑看涨）排在最后</span></div>
     </div>
     <div class="refresh-row">
       <button class="refresh-btn" onclick="loadAll()">🔄 <span class="en">Refresh prices</span><span class="zh">刷新价格</span></button>
@@ -2035,7 +2035,7 @@
     <div class="condor" id="varMtdCard">
       <div class="c-head">
         <div class="tkr" style="font-size:1.1rem">📐 <span class="en">Put/Call Variance &amp; MTD Premium</span><span class="zh">认沽/认购差幅 &amp; 本月权利金</span></div>
-        <div class="c-meta"><span class="en">Same live variance figures as the Cushion tab, paired with each condor's MTD premium collected — sorted tightest Put Cushion first</span><span class="zh">与「缓冲」页签相同的实时差幅数字，并列显示各铁鹰本月已收权利金——按认沽缓冲从紧到松排序</span></div>
+        <div class="c-meta"><span class="en">Same live variance figures as the Cushion tab, paired with each position's MTD premium collected — sorted tightest Put Cushion first, call-only positions (e.g. FDS Covered Call) last</span><span class="zh">与「缓冲」页签相同的实时差幅数字，并列显示各持仓本月已收权利金——按认沽缓冲从紧到松排序，仅有认购的持仓（如FDS备兑看涨）排在最后</span></div>
         <div></div>
       </div>
       <div class="table-scroll">
@@ -2051,7 +2051,7 @@
         </tbody>
         <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
           <td colspan="3"><span class="en">Total</span><span class="zh">合计</span></td>
-          <td class="num" style="color:#3fb950" id="varMtdTotal">+$1,954</td>
+          <td class="num" style="color:#3fb950" id="varMtdTotal">+$2,164</td>
         </tr></tfoot>
       </table>
       </div>
@@ -2063,8 +2063,8 @@
 
     <div class="condor" id="premiumBySharePriceCard">
       <div class="c-head">
-        <div class="tkr" style="font-size:1.1rem">💰 <span class="en">4-Leg Iron Condors — Ranked by Total Premium Collected</span><span class="zh">4腿铁鹰——按总权利金排序</span></div>
-        <div class="c-meta"><span class="en">All 6 open Iron Condor positions, highest premium first · share price vs strike relationship shown alongside</span><span class="zh">全部6个持仓中的铁鹰持仓，权利金由高到低排列 · 同时显示股价与行权价的关系</span></div>
+        <div class="tkr" style="font-size:1.1rem">💰 <span class="en">Options — Ranked by Total Premium Collected</span><span class="zh">期权持仓——按总权利金排序</span></div>
+        <div class="c-meta"><span class="en">All 6 open Iron Condors + the FDS Covered Call, highest premium first · share price vs strike relationship shown alongside</span><span class="zh">全部6个铁鹰持仓 + FDS备兑看涨，权利金由高到低排列 · 同时显示股价与行权价的关系</span></div>
         <div></div>
       </div>
       <div class="table-scroll">
@@ -2083,7 +2083,7 @@
         </tbody>
         <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
           <td colspan="6"><span class="en">Total</span><span class="zh">合计</span></td>
-          <td class="num" style="color:#3fb950" id="premiumRankTotal">+$1,954</td>
+          <td class="num" style="color:#3fb950" id="premiumRankTotal">+$2,164</td>
         </tr></tfoot>
       </table>
       </div>
@@ -2742,6 +2742,9 @@ var RAIL_CFG = {
   XLE:  {lo:50, hi:67, longP:52, shortP:54, shortC:63, longC:65, beLo:53.35, beHi:63.65}
 };
 Object.keys(RAIL_CFG).forEach(function(sym){ drawRail('rail-'+sym.toLowerCase(), RAIL_CFG[sym]); });
+// Call-only positions (covered calls sold against shares held — no short/long put leg,
+// so no strike rail to draw) shown on Table 60 / Premium tab alongside the 4-leg condors above.
+var CALL_ONLY_CFG = { FDS: {shortC:300} };
 
 // Plot the live share price as a marker line on the strike rail ("chart")
 function plotNowMarker(sym, price){
@@ -3067,32 +3070,46 @@ var SHORT_PUT_DELTA = { NVDA:-0.33, QQQ:-0.34, AVGO:-0.31, SMH:-0.28, SPY:-0.22,
 // Short call delta at entry — same static figures shown in each condor's leg table
 // on the Positions tab (T30 convention: calls positive).
 var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.23, SPY:0.25, IWM:0.21 };
-// Month-to-date premium collected = Total Credit received when each condor was sold to
-// open. All 6 were entered in Jul 2026, so MTD = the full entry credit (see Premium tab).
-var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356, IWM:214 };
+// Month-to-date premium collected = Total Credit received when each condor (or, for FDS,
+// the covered call) was sold to open. All were entered in Jul 2026, so MTD = the full entry credit
+// (see Premium tab). FDS is the 300 Covered Call sold 21 Jul 2026 for $2.10 (+$210) — see Covered Call tab.
+var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356, IWM:214, FDS:210 };
+// Live price lookup shared by Table 60 / Premium tab — checks the Iron Condor price feed
+// (STOCKS) first, then falls back to the IBKR Shares price feed (SHARES) for symbols like
+// FDS that are a stock holding/covered call, not one of the 6 tracked Iron Condors.
+function getLivePrice(sym){
+  var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
+  if(s && typeof s.price==='number') return s.price;
+  var h = SHARES.filter(function(x){ return x.symbol===sym; })[0];
+  if(h && typeof h.price==='number') return h.price;
+  return null;
+}
 // Sort symbols by Put Cushion, tightest/riskiest first — shared by every table that
 // shows the Share Price vs Selling Put & Call cushion figures (Dashboard quick-glance,
 // Cushion tab full table, Premium tab variance+MTD table) so they stay in sync.
 function sortedByPutCushion(){
   var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'];
-  return syms.slice().sort(function(a,b){
+  var sorted = syms.slice().sort(function(a,b){
     var cfgA = RAIL_CFG[a], cfgB = RAIL_CFG[b];
-    var sA = STOCKS.filter(function(x){ return x.sym===a; })[0];
-    var sB = STOCKS.filter(function(x){ return x.sym===b; })[0];
-    var pA = sA && typeof sA.price==='number' ? sA.price : null;
-    var pB = sB && typeof sB.price==='number' ? sB.price : null;
+    var pA = getLivePrice(a);
+    var pB = getLivePrice(b);
     var vA = pA===null ? Infinity : (pA - cfgA.shortP) / pA * 100;
     var vB = pB===null ? Infinity : (pB - cfgB.shortP) / pB * 100;
     return vA - vB;
   });
+  // Call-only positions (e.g. FDS Covered Call) have no put cushion to sort by — list them
+  // after the 4-leg condors, in the order they appear in CALL_ONLY_CFG.
+  return sorted.concat(Object.keys(CALL_ONLY_CFG));
 }
-// Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides
+// Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides.
+// Call-only positions (CALL_ONLY_CFG, e.g. FDS Covered Call) have no Selling Put strike, so
+// their Put columns show "—" instead of a value.
 function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
   var rows = sortedByPutCushion().map(function(sym){
-    var cfg = RAIL_CFG[sym];
-    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
-    var price = s && typeof s.price==='number' ? s.price : null;
+    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var hasPut = typeof cfg.shortP === 'number';
+    var price = getLivePrice(sym);
     var putDelta = SHORT_PUT_DELTA[sym];
     var putDeltaTxt = typeof putDelta==='number' ? putDelta.toFixed(2) : '—';
     var callDelta = SHORT_CALL_DELTA[sym];
@@ -3101,18 +3118,21 @@ function renderPutVarianceTable(){
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     if(price===null){
       return '<tr><td><b>'+sym+'</b></td><td class="num">—</td>'+
-        '<td class="num">'+cfg.shortP+'P</td><td class="num">—</td><td class="num">—</td><td class="num">'+putDeltaTxt+'</td>'+
+        '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+(hasPut?putDeltaTxt:'—')+'</td>'+
         '<td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+callDeltaTxt+'</td>'+
         '<td class="num">'+mtdTxt+'</td></tr>';
     }
-    var pVpct = (price - cfg.shortP) / price * 100;
-    var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
-    var pSign = pVpct >= 0 ? '+' : '';
+    var putCells = hasPut ? (function(){
+      var pVpct = (price - cfg.shortP) / price * 100;
+      var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
+      var pSign = pVpct >= 0 ? '+' : '';
+      return '<td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(pVpct,{en:'Below',zh:'跌破'})+'</td><td class="num">'+putDeltaTxt+'</td>';
+    })() : '<td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>';
     var cVpct = (cfg.shortC - price) / price * 100;
     var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
     var cSign = cVpct >= 0 ? '+' : '';
     return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
-      '<td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(pVpct,{en:'Below',zh:'跌破'})+'</td><td class="num">'+putDeltaTxt+'</td>'+
+      putCells+
       '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>'+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
   });
@@ -3124,16 +3144,16 @@ function renderPutVarianceTable(){
 function renderDashCushionTable(){
   var body = document.getElementById('dashCushionBody'); if(!body) return;
   var rows = sortedByPutCushion().map(function(sym){
-    var cfg = RAIL_CFG[sym];
-    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
-    var price = s && typeof s.price==='number' ? s.price : null;
+    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var hasPut = typeof cfg.shortP === 'number';
+    var price = getLivePrice(sym);
     if(price===null){
       return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
     }
-    var pVpct = (price - cfg.shortP) / price * 100;
+    var pCushionHtml = hasPut ? cushionBadge((price - cfg.shortP) / price * 100, {en:'Below',zh:'跌破'}) : '—';
     var cVpct = (cfg.shortC - price) / price * 100;
     return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
-      '<td class="num">'+cushionBadge(pVpct,{en:'Below',zh:'跌破'})+'</td>'+
+      '<td class="num">'+pCushionHtml+'</td>'+
       '<td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td></tr>';
   });
   body.innerHTML = rows.join('');
@@ -3146,26 +3166,30 @@ function renderPremiumRankTable(){
   var body = document.getElementById('premiumRankBody'); if(!body) return;
   var syms = Object.keys(MTD_PREMIUM).sort(function(a,b){ return MTD_PREMIUM[b]-MTD_PREMIUM[a]; });
   var rows = syms.map(function(sym){
-    var cfg = RAIL_CFG[sym];
-    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
-    var price = s && typeof s.price==='number' ? s.price : null;
+    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var hasPut = typeof cfg.shortP === 'number';
+    var price = getLivePrice(sym);
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     if(price===null){
       return '<tr><td><b>'+sym+'</b></td><td class="num">—</td>'+
-        '<td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td>'+
+        '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+cfg.shortC+'C</td>'+
         '<td class="num">—</td><td class="num">—</td>'+
         '<td class="num" style="color:#3fb950"><b>'+mtdTxt+'</b></td></tr>';
     }
-    var pVpct = (price - cfg.shortP) / price * 100;
-    var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
-    var pSign = pVpct >= 0 ? '+' : '';
+    var putHtml = '—';
+    if(hasPut){
+      var pVpct = (price - cfg.shortP) / price * 100;
+      var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
+      var pSign = pVpct >= 0 ? '+' : '';
+      putHtml = '<b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b> '+cushionBadge(pVpct,{en:'Below',zh:'跌破'});
+    }
     var cVpct = (cfg.shortC - price) / price * 100;
     var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
     var cSign = cVpct >= 0 ? '+' : '';
     return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
-      '<td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td>'+
-      '<td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b> '+cushionBadge(pVpct,{en:'Below',zh:'跌破'})+'</td>'+
+      '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+cfg.shortC+'C</td>'+
+      '<td class="num">'+putHtml+'</td>'+
       '<td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b> '+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td>'+
       '<td class="num" style="color:#3fb950"><b>'+mtdTxt+'</b></td></tr>';
   });
@@ -3182,29 +3206,33 @@ function renderPremiumRankTable(){
 function renderVarMtdTable(){
   var body = document.getElementById('varMtdBody'); if(!body) return;
   var rows = sortedByPutCushion().map(function(sym){
-    var cfg = RAIL_CFG[sym];
-    var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
-    var price = s && typeof s.price==='number' ? s.price : null;
+    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var hasPut = typeof cfg.shortP === 'number';
+    var price = getLivePrice(sym);
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     if(price===null){
       return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">—</td><td class="num">'+mtdTxt+'</td></tr>';
     }
-    var pVpct = (price - cfg.shortP) / price * 100;
-    var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
-    var pSign = pVpct >= 0 ? '+' : '';
+    var putHtml = '—';
+    if(hasPut){
+      var pVpct = (price - cfg.shortP) / price * 100;
+      var pCls = pVpct >= 0 ? 'pl-up' : 'pl-down';
+      var pSign = pVpct >= 0 ? '+' : '';
+      putHtml = '<b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b>';
+    }
     var cVpct = (cfg.shortC - price) / price * 100;
     var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
     var cSign = cVpct >= 0 ? '+' : '';
     return '<tr><td><b>'+sym+'</b></td>'+
-      '<td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b></td>'+
+      '<td class="num">'+putHtml+'</td>'+
       '<td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td>'+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
   });
   body.innerHTML = rows.join('');
   var totalEl = document.getElementById('varMtdTotal');
   if(totalEl){
-    var total = syms.reduce(function(sum,sym){ return sum + (MTD_PREMIUM[sym]||0); }, 0);
+    var total = Object.keys(MTD_PREMIUM).reduce(function(sum,sym){ return sum + (MTD_PREMIUM[sym]||0); }, 0);
     totalEl.textContent = '+$'+total.toLocaleString();
   }
   setLang(curLang);
