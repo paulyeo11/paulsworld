@@ -157,7 +157,7 @@
   #table30-cushion th:nth-child(9), #table30-cushion td:nth-child(9) { text-align:center; }
   #table30-cushion .badge { display:inline-block; width:74px; text-align:center; }
 
-  /* iOS landscape — fit Table 60 (11 columns) on one screen with no horizontal scroll,
+  /* iOS landscape — fit Table 60 (11 core + 2 toggleable Cut Lost columns) on one screen with no horizontal scroll,
      mirroring the .table-fit treatment used for the Dashboard tab's smaller table. */
   @media (orientation:landscape){
     #cushionTableScroll { overflow-x:visible; }
@@ -240,6 +240,11 @@
   .tbl40-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
   .tbl40-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
   .tbl40-filter-btn:active { transform:scale(.96); }
+  /* Table 60 — hide/show the Cut Lost PUT / Cut Lost CALL columns */
+  #table30-cushion.hide-extra .tbl60-extra { display:none; }
+  .tbl60-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
+  .tbl60-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
+  .tbl60-filter-btn:active { transform:scale(.96); }
   .stock { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:16px; margin-bottom:14px; }
   .st-top { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; }
   .st-sym { font-size:1.05rem; font-weight:800; }
@@ -1137,6 +1142,9 @@
       <span class="auto-refresh-badge"><span class="auto-refresh-dot"></span><span class="en">Auto-refresh ON · every 5 min</span><span class="zh">自动刷新 开启 · 每5分钟</span></span>
     </div>
     <div class="cushion-filter-row" id="cushionFilterRow-cushion"></div>
+    <div class="cushion-filter-row" style="margin-top:0">
+      <button class="tbl60-filter-btn" id="tbl60FilterBtn" onclick="toggleTable60Extra()">👁️ <span class="en">Hide Cut Lost PUT/CALL columns</span><span class="zh">隐藏「止损认沽/认购」栏</span></button>
+    </div>
     <div class="table-scroll" id="cushionTableScroll">
     <table class="legs table30-eq" id="table30-cushion" style="margin-top:10px">
       <tr>
@@ -1151,9 +1159,11 @@
         <th class="num"><span class="en">Call Cushion</span><span class="zh">认购缓冲</span></th>
         <th class="num"><span class="en">Call Δ</span><span class="zh">认购Δ</span></th>
         <th class="num"><span class="en">MTD Premium</span><span class="zh">本月权利金</span></th>
+        <th class="num tbl60-extra"><span class="en">Cut Lost PUT<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span><span class="zh">止损认沽<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span></th>
+        <th class="num tbl60-extra"><span class="en">Cut Lost CALL<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span><span class="zh">止损认购<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span></th>
       </tr>
       <tbody id="putVarBody">
-        <tr><td colspan="11"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+        <tr><td colspan="13"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
       </tbody>
     </table>
     </div>
@@ -1195,6 +1205,10 @@
     <div class="note" style="margin-top:8px">
       <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b> — same denominator convention as "Nearest cut-loss" on the Cut-Loss tab. <b>Call Variance = (C − A) ÷ A</b>, the mirror calculation for the upside. Positive means price sits inside the safe zone on that side — the cushion before assignment (put) or being called away (call). This is different from the "Var: A vs P/C" figures shown lower on each condor's rail, which compare to the long (bought) strikes. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
       <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>——与「止损」页签中「最近止损」相同的分母算法。<b>认购差幅 = (C − A) ÷ A</b>，为上涨一侧的对应算法。正值代表股价位于该侧的安全区间内——即被行权（认沽）或被强制卖出（认购）前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P/C」不同，那是与买入（长）行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
+    </div>
+    <div class="note" style="margin-top:8px">
+      <span class="en">With <b>D</b> = Buy Put strike (long put) and <b>E</b> = Buy Call strike (long call): <b>Cut Lost PUT = (B + D) ÷ 2</b>, the midpoint between the sold put (B) and the bought put (D). <b>Cut Lost CALL = (C + E) ÷ 2</b>, the midpoint between the sold call (C) and the bought call (E). These mark a halfway loss-cut level between the short strike and its protective long wing on each side. Tap "Hide Cut Lost PUT/CALL columns" above to hide/show these two columns.</span>
+      <span class="zh">设 <b>D</b> = 买入认沽行权价（长认沽），<b>E</b> = 买入认购行权价（长认购）：<b>止损认沽 = (B + D) ÷ 2</b>，为卖出认沽（B）与买入认沽（D）之间的中点。<b>止损认购 = (C + E) ÷ 2</b>，为卖出认购（C）与买入认购（E）之间的中点。此两值标示各侧卖出行权价与其保护性买入翼腿之间的半程止损水平。点击上方「隐藏「止损认沽/认购」栏」可隐藏/显示这两栏。</span>
     </div>
     <div class="note" style="margin-top:8px">
       <span class="en"><b>Put Δ / Call Δ</b> are each short leg's modeled delta at entry (Black-Scholes, back-solved implied vol — same convention as the per-leg tables in the Positions tab: put deltas negative, call deltas positive). Static entry snapshots, not live/recalculated greeks, since real per-leg delta isn't logged in <code>positions.json</code>.</span>
@@ -3183,6 +3197,16 @@ function toggleTable40Extra(){
   var hidden = t.classList.toggle('hide-extra');
   if(btn) btn.classList.toggle('active', hidden);
 }
+// Table 60 — hide/show the Cut Lost PUT / Cut Lost CALL columns (midpoint between each
+// short strike and its protective long wing). Hidden by default matches the visible-by-default
+// convention of Table 40's toggle, but here the columns start visible since Paul asked for
+// them added directly to the table — this button just lets him declutter if he wants to.
+function toggleTable60Extra(){
+  var t = document.getElementById('table30-cushion'); if(!t) return;
+  var btn = document.getElementById('tbl60FilterBtn');
+  var hidden = t.classList.toggle('hide-extra');
+  if(btn) btn.classList.toggle('active', hidden);
+}
 // Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides.
 // Call-only positions (CALL_ONLY_CFG, e.g. FDS Covered Call) have no Selling Put strike, so
 // their Put columns show "—" instead of a value.
@@ -3190,13 +3214,15 @@ function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
   var syms = filterByCushionStatus(sortedByPutCushion());
   if(syms.length === 0){
-    body.innerHTML = '<tr><td colspan="11"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
+    body.innerHTML = '<tr><td colspan="13"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
     setLang(curLang);
     return;
   }
   var rows = syms.map(function(sym){
     var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
     var hasPut = typeof cfg.shortP === 'number';
+    var hasLongPut = typeof cfg.longP === 'number';
+    var hasLongCall = typeof cfg.longC === 'number';
     var price = getLivePrice(sym);
     var putDelta = SHORT_PUT_DELTA[sym];
     var putDeltaTxt = typeof putDelta==='number' ? putDelta.toFixed(2) : '—';
@@ -3205,11 +3231,14 @@ function renderPutVarianceTable(){
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     var symTag = '<b>'+sym+'</b>'+statusTag(sym);
+    var cutLostPutTxt = (hasPut && hasLongPut) ? fmt((cfg.shortP + cfg.longP) / 2) : '—';
+    var cutLostCallTxt = hasLongCall ? fmt((cfg.shortC + cfg.longC) / 2) : '—';
+    var cutLostCells = '<td class="num tbl60-extra">'+cutLostPutTxt+'</td><td class="num tbl60-extra">'+cutLostCallTxt+'</td>';
     if(price===null){
       return '<tr><td>'+symTag+'</td><td class="num">—</td>'+
         '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+(hasPut?putDeltaTxt:'—')+'</td>'+
         '<td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+callDeltaTxt+'</td>'+
-        '<td class="num">'+mtdTxt+'</td></tr>';
+        '<td class="num">'+mtdTxt+'</td>'+cutLostCells+'</tr>';
     }
     var putCells = hasPut ? (function(){
       var pVpct = (price - cfg.shortP) / price * 100;
@@ -3223,7 +3252,7 @@ function renderPutVarianceTable(){
     return '<tr><td>'+symTag+'</td><td class="num">'+fmt(price)+'</td>'+
       putCells+
       '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>'+
-      '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
+      '<td class="num" style="color:#3fb950">'+mtdTxt+'</td>'+cutLostCells+'</tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
