@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IB09: IBKR Update — Real Unrealized P&L for SMH, AVGO, SPY, IWM</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --bg: #0d0f1a;
+  --card: #151826;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --gold: #f59e0b;
+  --red: #f85149;
+  --green: #3fb950;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; font-size: 1.05rem; }
+
+.hero {
+  background: linear-gradient(135deg, #060310 0%, #1a1206 40%, #24190a 75%, #0d0f1a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 20px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(245,158,11,0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 40%, rgba(244,129,63,0.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  color: var(--gold);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 720px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 560px;
+  margin: 0 auto 8px; line-height: 1.6;
+}
+.meta { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; margin-top: 10px; }
+
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); color: var(--gold); }
+
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.share-btn { display:inline-block; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; letter-spacing:.04em; padding:10px 26px; border-radius:30px; cursor:pointer; font-size:0.95rem; font-family:'Source Serif 4',Georgia,serif; transition:background .2s; }
+.share-btn:hover { background:rgba(255,255,255,.25); }
+.share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+.content { max-width: 760px; margin: 0 auto; padding: 52px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead { font-size: 1.15rem; color: #f0f1f8; }
+.content h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; margin: 2em 0 0.7em; color: #fff; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:1.5em 0; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.stat-box .sk { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; font-family: 'Source Serif 4', serif; }
+.stat-box .sv { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+.stat-box .sv.red { color: var(--red); }
+.stat-box .sv.green { color: var(--green); }
+.stat-box .ss { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+@media(max-width:520px){ .stats-grid{grid-template-columns:1fr;} }
+
+.tl-link { display:inline-block; margin-top:6px; color: var(--gold); text-decoration:none; font-weight:700; border-bottom: 1px solid rgba(245,158,11,0.4); }
+.tl-link:hover { border-bottom-color: var(--gold); }
+
+.tips-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 14px;
+  padding: 24px 22px;
+  margin: 2em 0;
+}
+.tips-box h3 { margin-top: 0; font-family: 'Playfair Display', Georgia, serif; }
+.tips-list { list-style: none; }
+.tips-list li { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 0; font-size: 0.95rem; color: #d0d4e8; }
+.tip-bullet { color: var(--gold); font-weight: 700; }
+
+.trade-box {
+  background: rgba(63,185,80,0.06);
+  border: 1px solid rgba(63,185,80,0.25);
+  border-radius: 14px;
+  padding: 22px 22px;
+  margin: 1.5em 0;
+}
+.trade-box h3 { margin: 0 0 10px; font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; color: #fff; }
+.trade-box .tmeta { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.trade-box ul { margin: 0 0 0 20px; }
+.trade-box li { margin: 5px 0; font-size: 0.92rem; color: #d0d4e8; }
+
+.note-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 1.5em 0;
+  font-size: 0.9rem;
+  color: #d0d4e8;
+}
+.note-box.warn { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.3); }
+
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 60px;
+}
+footer a { color: var(--blue); text-decoration: none; }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">← <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+
+  <div class="label">
+    <span class="en">IBKR Update Log · IB09</span>
+    <span class="zh">IBKR更新日志 · IB09</span>
+  </div>
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#ibklog" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/ibkr-update-log.html" target="_blank"><span class="en">IBKR Update Log</span><span class="zh">IBKR更新日志</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">IB09</span><span class="zh">IB09</span></span>
+  </div>
+  <h1>
+    <span class="en">IB09: Real Unrealized P&amp;L — <span>SMH, AVGO, SPY, IWM</span></span>
+    <span class="zh">IB09：真实未实现盈亏 — <span>SMH、AVGO、SPY、IWM</span></span>
+  </h1>
+  <p class="hero-sub">
+    <span class="en">Paul asked why IWM's Bang Trade Analysis P&amp;L showed $0.00 — turned out to be a stale placeholder. Re-pulled the 27 Jul IBKR statement and swapped it, and the other three open condors' modeled/stale numbers, for real Unrealized P&amp;L.</span>
+    <span class="zh">Paul问为什么IWM在「Bang交易分析」中的盈亏显示$0.00——原来是一个未更新的占位数字。重新提取了7月27日的IBKR报表，将该数字连同其余三个持仓的建模/过期数字，一并换成了真实未实现盈亏。</span>
+  </p>
+  <p class="meta">
+    <span class="en">Source: IBKR PortfolioAnalyst (Since_Inception_Detailed_11_20260727.pdf), Open Position Summary · downloaded from Google Drive IBKR folder</span>
+    <span class="zh">数据来源：IBKR投资组合分析报表（Since_Inception_Detailed_11_20260727.pdf），持仓摘要 · 从Google Drive IBKR文件夹下载</span>
+  </p>
+  <div class="hero-btns">
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<div class="content">
+
+  <p class="lead">
+    <span class="en">Paul spotted IWM's P&amp;L sitting at a flat $0.00 on T29's Bang Trade Analysis Summary tab and asked why. The answer: that $0.00 was never a real reading — it was a placeholder typed in when the IWM card was first built (23 Jul), styled in neutral grey like the page's other "no data yet" values, and it had just never been refreshed. The fix was to pull the actual numbers from IBKR rather than patch one field.</span>
+    <span class="zh">Paul发现T29「Bang交易分析」总览页签中IWM的盈亏显示为持平的$0.00，问是怎么回事。答案是：这个$0.00从来都不是真实读数——它是IWM卡片初建时（7月23日）随手填入的占位数字，样式与页面上其他「暂无数据」的数字一样呈灰色，之后就一直没有更新过。解决方法是从IBKR取得真实数字，而不是只修补这一个字段。</span>
+  </p>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="sk"><span class="en">IWM Unrealized P&amp;L</span><span class="zh">IWM未实现盈亏</span></div>
+      <div class="sv green">+$3.48</div>
+      <div class="ss"><span class="en">was showing a stale $0.00 placeholder</span><span class="zh">此前显示过期占位数字$0.00</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">SPY Unrealized P&amp;L</span><span class="zh">SPY未实现盈亏</span></div>
+      <div class="sv green">+$73.50</div>
+      <div class="ss"><span class="en">was showing an older snapshot of +$30.96</span><span class="zh">此前显示较旧快照+$30.96</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">SMH Unrealized P&amp;L</span><span class="zh">SMH未实现盈亏</span></div>
+      <div class="sv green">+$42.42</div>
+      <div class="ss"><span class="en">was a $569-share-price model estimate of +$71.82</span><span class="zh">此前为以股价$569建模的估算+$71.82</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">AVGO Unrealized P&amp;L</span><span class="zh">AVGO未实现盈亏</span></div>
+      <div class="sv green">+$63.48</div>
+      <div class="ss"><span class="en">was a $397-share-price model estimate of +$63.69 — barely moved</span><span class="zh">此前为以股价$397建模的估算+$63.69——变化很小</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2><span class="en">What Actually Happened</span><span class="zh">实际发生了什么</span></h2>
+
+  <p>
+    <span class="en">T29's Bang Trade Analysis tab had been mixing three different kinds of numbers for its "still open" positions: SMH and AVGO used a modeled theta-decay estimate pegged to a reference share price ($569 and $397), while SPY and IWM used a real Positions-tab snapshot — except IWM's snapshot had never actually been filled in with a live figure. None of these were wrong on purpose, but none of them were as good as just reading the real numbers off the latest IBKR statement.</span>
+    <span class="zh">T29的「Bang交易分析」页签此前对「仍持仓」的仓位混用了三种不同的数字：SMH和AVGO使用锚定参考股价（$569与$397）的建模theta衰减估算；SPY和IWM则使用「持仓」页签的真实快照——只是IWM的快照其实从未真正填入过实时数字。这些做法都不是故意出错，但都比不上直接从最新IBKR报表读取真实数字。</span>
+  </p>
+
+  <p>
+    <span class="en">The 27 Jul PortfolioAnalyst statement's Open Position Summary lists Unrealized P&amp;L per option leg. Summing the 4 legs for each symbol — and cross-checking against the statement's own Options-section total (−$14.53 across all open legs, which matched exactly) — gives a verified, real number for each position: SMH +$42.42, AVGO +$63.48, SPY +$73.50, IWM +$3.48. These now replace the mixed modeled/stale figures throughout the SMH, AVGO, SPY, and IWM sub-tabs (Table 420/470/510/550 and their timelines) and the Table 900 Summary.</span>
+    <span class="zh">7月27日投资组合分析报表的「持仓摘要」列出了每条期权腿的未实现盈亏。将每个代码的4条腿相加——并与报表本身「期权」章节的合计数（所有持仓腿合计−$14.53，完全吻合）核对——即可得出每个持仓经过核实的真实数字：SMH +$42.42、AVGO +$63.48、SPY +$73.50、IWM +$3.48。这些数字已取代SMH、AVGO、SPY、IWM各页签（表420/470/510/550及其时间线）与表900总览中原先混用的建模/过期数字。</span>
+  </p>
+
+  <div class="trade-box">
+    <h3><span class="en">📊 Table 900 Summary — Before / After</span><span class="zh">📊 表900总览 — 更新前／后</span></h3>
+    <div class="tmeta"><span class="en">27 Jul 2026 IBKR statement, Open Position Summary</span><span class="zh">2026年7月27日IBKR报表，持仓摘要</span></div>
+    <ul>
+      <li><span class="en">SMH: +$71.82 (modeled, $569 ref.) → <b>+$42.42</b> (real)</span><span class="zh">SMH：+$71.82（建模，$569参考价）→ <b>+$42.42</b>（真实）</span></li>
+      <li><span class="en">AVGO: +$63.69 (modeled, $397 ref.) → <b>+$63.48</b> (real)</span><span class="zh">AVGO：+$63.69（建模，$397参考价）→ <b>+$63.48</b>（真实）</span></li>
+      <li><span class="en">SPY: +$30.96 (older snapshot) → <b>+$73.50</b> (real)</span><span class="zh">SPY：+$30.96（较旧快照）→ <b>+$73.50</b>（真实）</span></li>
+      <li><span class="en">IWM: $0.00 (stale placeholder) → <b>+$3.48</b> (real)</span><span class="zh">IWM：$0.00（过期占位数字）→ <b>+$3.48</b>（真实）</span></li>
+      <li><span class="en">Six-position total: +$139.00 → <b>+$155.41</b> (6.64% of $2,340.00 premium collected)</span><span class="zh">六个持仓合计：+$139.00 → <b>+$155.41</b>（占收取权利金$2,340.00的6.64%）</span></li>
+    </ul>
+  </div>
+
+  <div class="note-box">
+    <span class="en">ℹ️ <b>Data note:</b> this statement is dated 27 Jul 2026, one day before NVDA's put combo was manually closed on 28 Jul (see the Bang Trade Analysis NVDA tab, Table 570-600) — so NVDA's row in Table 900 still reflects that separate, more recent event, not this statement. QQQ isn't listed here either since it's already fully closed and confirmed off this same statement (see IB08).</span>
+    <span class="zh">ℹ️ <b>数据说明：</b>此报表日期为2026年7月27日，早于NVDA认沽组合于7月28日的手动平仓（详见「Bang交易分析」NVDA页签，表570-600）——因此表900中NVDA一行仍反映的是那笔更晚发生的独立事件，而非本报表。QQQ也未列在此处，因为它已通过同一份报表确认完全平仓（详见IB08）。</span>
+  </div>
+
+  <div class="tips-box">
+    <h3><span class="en">Bottom Line</span><span class="zh">总结</span></h3>
+    <ul class="tips-list">
+      <li><span class="tip-bullet">①</span><span class="en">IWM was never actually flat — it's sitting on a small real +$3.48 unrealized profit. The $0.00 was an unrefreshed placeholder, not a live reading.</span><span class="zh">IWM从来都不是真的持平——它有小额真实未实现盈利+$3.48。此前的$0.00只是未更新的占位数字，并非实时读数。</span></li>
+      <li><span class="tip-bullet">②</span><span class="en">SPY moved the most (+$30.96 → +$73.50) — that older snapshot was noticeably behind the current statement.</span><span class="zh">SPY变化最大（+$30.96 → +$73.50）——旧快照与最新报表相比明显滞后。</span></li>
+      <li><span class="tip-bullet">③</span><span class="en">SMH and AVGO's real numbers landed close to their earlier modeled estimates — a good sign the theta-decay model (Table 40) is tracking reasonably well, at least for these two.</span><span class="zh">SMH与AVGO的真实数字与此前的建模估算相当接近——说明theta衰减模型（表40）的追踪效果不错，至少对这两个持仓而言如此。</span></li>
+    </ul>
+  </div>
+
+  <p>
+    <a class="tl-link" href="options-breadboard.html#bang-summary" target="_blank"><span class="en">→ Full detail on T29: Option by Bang — Bang Trade Analysis, Summary tab (Table 900)</span><span class="zh">→ 查看T29完整详情：期权面包板 — Bang交易分析，总览页签（表900）</span></a>
+  </p>
+
+  <script src="/view-counter.js"></script>
+
+</div>
+
+<footer>
+  <p>
+    <span class="en">IB09: IBKR Update — Real Unrealized P&amp;L for SMH, AVGO, SPY, IWM &nbsp;·&nbsp; Paul's World &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+    <span class="zh">IB09：IBKR更新 — SMH、AVGO、SPY、IWM真实未实现盈亏 &nbsp;·&nbsp; Paul的世界 &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+  </p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === 'zh' ? 'lang-zh' : '';
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.includes(lang === 'zh' ? '中文' : 'English'));
+  });
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if(navigator.share){
+    navigator.share({title:title, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
