@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IB08: IBKR Update — QQQ Iron Condor Closed</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --bg: #0d0f1a;
+  --card: #151826;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --gold: #f59e0b;
+  --red: #f85149;
+  --green: #3fb950;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; font-size: 1.05rem; }
+
+.hero {
+  background: linear-gradient(135deg, #060310 0%, #1a1206 40%, #24190a 75%, #0d0f1a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 20px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(245,158,11,0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 40%, rgba(244,129,63,0.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  color: var(--gold);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 720px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 560px;
+  margin: 0 auto 8px; line-height: 1.6;
+}
+.meta { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; margin-top: 10px; }
+
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); color: var(--gold); }
+
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.share-btn { display:inline-block; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; letter-spacing:.04em; padding:10px 26px; border-radius:30px; cursor:pointer; font-size:0.95rem; font-family:'Source Serif 4',Georgia,serif; transition:background .2s; }
+.share-btn:hover { background:rgba(255,255,255,.25); }
+.share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+.content { max-width: 760px; margin: 0 auto; padding: 52px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead { font-size: 1.15rem; color: #f0f1f8; }
+.content h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; margin: 2em 0 0.7em; color: #fff; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:1.5em 0; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.stat-box .sk { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; font-family: 'Source Serif 4', serif; }
+.stat-box .sv { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+.stat-box .sv.red { color: var(--red); }
+.stat-box .sv.green { color: var(--green); }
+.stat-box .ss { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+@media(max-width:520px){ .stats-grid{grid-template-columns:1fr;} }
+
+.tl-link { display:inline-block; margin-top:6px; color: var(--gold); text-decoration:none; font-weight:700; border-bottom: 1px solid rgba(245,158,11,0.4); }
+.tl-link:hover { border-bottom-color: var(--gold); }
+
+.tips-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 14px;
+  padding: 24px 22px;
+  margin: 2em 0;
+}
+.tips-box h3 { margin-top: 0; font-family: 'Playfair Display', Georgia, serif; }
+.tips-list { list-style: none; }
+.tips-list li { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 0; font-size: 0.95rem; color: #d0d4e8; }
+.tip-bullet { color: var(--gold); font-weight: 700; }
+
+.trade-box {
+  background: rgba(63,185,80,0.06);
+  border: 1px solid rgba(63,185,80,0.25);
+  border-radius: 14px;
+  padding: 22px 22px;
+  margin: 1.5em 0;
+}
+.trade-box h3 { margin: 0 0 10px; font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; color: #fff; }
+.trade-box .tmeta { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.trade-box ul { margin: 0 0 0 20px; }
+.trade-box li { margin: 5px 0; font-size: 0.92rem; color: #d0d4e8; }
+
+.note-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 1.5em 0;
+  font-size: 0.9rem;
+  color: #d0d4e8;
+}
+.note-box.warn { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.3); }
+
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 60px;
+}
+footer a { color: var(--blue); text-decoration: none; }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">← <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+
+  <div class="label">
+    <span class="en">IBKR Update Log · IB08</span>
+    <span class="zh">IBKR更新日志 · IB08</span>
+  </div>
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#ibklog" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/ibkr-update-log.html" target="_blank"><span class="en">IBKR Update Log</span><span class="zh">IBKR更新日志</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">IB08</span><span class="zh">IB08</span></span>
+  </div>
+  <h1>
+    <span class="en">IB08: QQQ Iron Condor — <span>Closed</span></span>
+    <span class="zh">IB08：QQQ铁鹰组合 — <span>已平仓</span></span>
+  </h1>
+  <p class="hero-sub">
+    <span class="en">The QQQ condor is fully closed — confirmed via the 27 Jul IBKR statement's per-symbol Realized P&amp;L. Final result: +$42.53, all realized, nothing left at risk.</span>
+    <span class="zh">QQQ铁鹰组合已完全平仓——已通过7月27日IBKR报表的逐代码已实现盈亏核实。最终结果：+$42.53，全部已实现，已无任何风险敞口。</span>
+  </p>
+  <p class="meta">
+    <span class="en">Source: IBKR PortfolioAnalyst (Since_Inception_Detailed_11_20260727.pdf) · synced via Gmail → Google Drive automation</span>
+    <span class="zh">数据来源：IBKR投资组合分析报表（Since_Inception_Detailed_11_20260727.pdf）· 通过Gmail → Google Drive自动同步</span>
+  </p>
+  <div class="hero-btns">
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<div class="content">
+
+  <p class="lead">
+    <span class="en">Paul flagged that he'd already exited the QQQ Iron Condor — but the dashboard was still showing Phase 2 as "open" with an unrealized gain, because the last data pull predated the exit. Re-checked the 27 Jul 2026 IBKR statement in the Drive folder to confirm: the position is gone from the Open Position Summary, and the statement's Performance-by-Symbol section gives the exact final numbers.</span>
+    <span class="zh">Paul提到他已经平掉了QQQ铁鹰组合——但仪表板上仍显示第二阶段为「持仓中」，还带着未实现盈利，原因是上一次抓取的数据早于平仓时间。重新查看了Drive文件夹中2026年7月27日的IBKR报表进行核实：该持仓已不在「持仓摘要」中，报表的「按代码划分的表现」章节给出了确切的最终数字。</span>
+  </p>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="sk"><span class="en">QQQ Condor Status</span><span class="zh">QQQ铁鹰组合状态</span></div>
+      <div class="sv green"><span class="en">Fully Closed</span><span class="zh">已完全平仓</span></div>
+      <div class="ss"><span class="en">confirmed off the 27 Jul Open Position Summary</span><span class="zh">已确认不在7月27日持仓摘要中</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Phase 2 Final P&amp;L (24→27 Jul, 2 lots)</span><span class="zh">第二阶段最终盈亏（7月24–27日，2口）</span></div>
+      <div class="sv green">+$10.53</div>
+      <div class="ss"><span class="en">was showing +$11 unrealized (mark-to-market) — now the real closed number</span><span class="zh">此前显示未实现+$11（按市值计价）— 现为真实平仓数字</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Phase 1 P&amp;L (17→23 Jul, 1 lot)</span><span class="zh">第一阶段盈亏（7月17–23日，1口）</span></div>
+      <div class="sv green">+$32.00</div>
+      <div class="ss"><span class="en">unchanged — already closed and realized</span><span class="zh">不变 — 早已平仓并实现</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Total QQQ IC P&amp;L — Fully Realized</span><span class="zh">QQQ铁鹰总盈亏 — 已全部实现</span></div>
+      <div class="sv green">+$42.53</div>
+      <div class="ss"><span class="en">on $729 premium collected across both opens</span><span class="zh">两次建仓合计收取权利金$729</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2><span class="en">What Actually Happened</span><span class="zh">实际发生了什么</span></h2>
+
+  <p>
+    <span class="en">Phase 2 (the 24 Jul re-open, 2 lots at the same 680P/675P/745C/750C strikes, 28 Aug expiry) collected $470 in premium up front. By the time it closed, QQQ had moved enough that buying back the short legs and selling out of the long legs cost a net $451 — leaving only <b>$10.53</b> of that $470 as real profit, once actual commissions are counted. The 27 Jul statement's per-leg Realized P&amp;L confirms it: 745C +$910.89, 750C −$775.07, 675P +$822.86, 680P −$948.15, netting to +$10.53 for the whole 2-lot condor.</span>
+    <span class="zh">第二阶段（7月24日重新建仓，2口，行权价仍为680P/675P/745C/750C，8月28日到期）建仓时收取了$470权利金。到平仓时，QQQ的走势已使买回空头腿、卖出多头腿的净成本达到$451——计入实际佣金后，$470权利金中只剩下<b>$10.53</b>的真实利润。7月27日报表逐条腿的已实现盈亏也印证了这一点：745C +$910.89、750C −$775.07、675P +$822.86、680P −$948.15，整个2口铁鹰净盈亏为+$10.53。</span>
+  </p>
+
+  <p>
+    <span class="en">This doesn't change Phase 1's result — that trade (1 lot, 17→23 Jul) was already closed and banked +$32 well before this update, using real fill confirmations at the time. Combining both phases, the whole QQQ Iron Condor trade is now finished: <b>+$42.53 total, 100% realized</b>, with no further exposure to QQQ's price between now and 28 Aug.</span>
+    <span class="zh">这不会改变第一阶段的结果——那笔交易（1口，7月17→23日）早在本次更新前就已平仓并入袋+$32，当时用的是真实成交确认数据。两个阶段合计，整笔QQQ铁鹰交易现已结束：<b>共+$42.53，100%已实现</b>，此后QQQ的价格走势与该仓位再无关系，直到8月28日也不例外。</span>
+  </p>
+
+  <div class="trade-box">
+    <h3><span class="en">📉 QQQ Iron Condor — Final Tally</span><span class="zh">📉 QQQ铁鹰组合 — 最终结算</span></h3>
+    <div class="tmeta"><span class="en">Both phases now closed</span><span class="zh">两个阶段均已平仓</span></div>
+    <ul>
+      <li><span class="en">Phase 1: 17 Jul open (1 lot) → 23 Jul close → <b>+$32.00</b></span><span class="zh">第一阶段：7月17日建仓（1口）→ 7月23日平仓 → <b>+$32.00</b></span></li>
+      <li><span class="en">Phase 2: 24 Jul re-open (2 lots) → closed by 27 Jul → <b>+$10.53</b></span><span class="zh">第二阶段：7月24日重新建仓（2口）→ 7月27日前平仓 → <b>+$10.53</b></span></li>
+      <li><span class="en">Total premium collected across both opens: $729.00</span><span class="zh">两次建仓合计收取权利金：$729.00</span></li>
+      <li><span class="en">Total realized profit: <b>+$42.53</b> — fully banked, no open QQQ position remaining</span><span class="zh">合计已实现利润：<b>+$42.53</b> — 已全部入袋，无剩余QQQ持仓</span></li>
+    </ul>
+  </div>
+
+  <div class="note-box">
+    <span class="en">ℹ️ <b>Data note:</b> the exact intraday date/time of the Phase 2 close isn't shown on the PortfolioAnalyst statement — only the cumulative Trade Summary and per-leg Realized P&amp;L for the analysis period. Average closing prices used above (680P ~19.18, 745C ~1.65, 675P ~17.32, 750C ~1.25) are back-solved from that cumulative summary and cross-checked against the official Realized P&amp;L column, which matched to within the expected commission difference (~$1.03/contract). If Paul has the actual fill confirmation, the exact close timestamp can be added here.</span>
+    <span class="zh">ℹ️ <b>数据说明：</b>PortfolioAnalyst报表未显示第二阶段平仓的具体日期/时间——只有该分析周期内的累计交易汇总与逐条腿已实现盈亏。上方使用的平均平仓价格（680P约19.18、745C约1.65、675P约17.32、750C约1.25）是从该累计汇总反推得出，并已与官方已实现盈亏一栏核对一致（差异在预期佣金范围内，约每张合约$1.03）。如Paul有实际成交确认单，可在此补充准确的平仓时间。</span>
+  </div>
+
+  <div class="tips-box">
+    <h3><span class="en">Bottom Line</span><span class="zh">总结</span></h3>
+    <ul class="tips-list">
+      <li><span class="tip-bullet">①</span><span class="en">QQQ Iron Condor is fully closed — confirmed off the 27 Jul statement's Open Position Summary.</span><span class="zh">QQQ铁鹰组合已完全平仓——已通过7月27日报表的持仓摘要确认。</span></li>
+      <li><span class="tip-bullet">②</span><span class="en">Total result: +$42.53, 100% realized ($32.00 Phase 1 + $10.53 Phase 2) — small but real profit, no more risk on this position.</span><span class="zh">总结果：+$42.53，100%已实现（第一阶段$32.00 + 第二阶段$10.53）——利润不大但真实，该仓位已无任何风险。</span></li>
+      <li><span class="tip-bullet">③</span><span class="en">Phase 2 came in much thinner than the $470 collected because QQQ moved against the position before the close — a reminder that mark-to-market gains shown mid-trade can shrink fast if price moves before you exit.</span><span class="zh">第二阶段的实际收益远低于当初收取的$470，因为平仓前QQQ的走势不利——提醒我们：交易中途显示的按市值计价盈利，若在平仓前价格发生变动，可能会迅速缩水。</span></li>
+    </ul>
+  </div>
+
+  <p>
+    <a class="tl-link" href="options-breadboard.html" target="_blank"><span class="en">→ Full detail on T29: Option by Bang — Iron Condor Breadboard (QQQ tab, Table 300/310/320/350)</span><span class="zh">→ 查看T29完整详情：期权面包板 — 铁鹰追踪表（QQQ页签，表300/310/320/350）</span></a>
+  </p>
+
+  <script src="/view-counter.js"></script>
+
+</div>
+
+<footer>
+  <p>
+    <span class="en">IB08: IBKR Update — QQQ Iron Condor Closed &nbsp;·&nbsp; Paul's World &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+    <span class="zh">IB08：IBKR更新 — QQQ铁鹰组合已平仓 &nbsp;·&nbsp; Paul的世界 &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+  </p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === 'zh' ? 'lang-zh' : '';
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.includes(lang === 'zh' ? '中文' : 'English'));
+  });
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if(navigator.share){
+    navigator.share({title:title, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
