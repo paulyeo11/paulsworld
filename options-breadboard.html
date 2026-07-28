@@ -230,6 +230,11 @@
   .auto-refresh-badge { display:inline-flex; align-items:center; gap:5px; font-size:.7rem; font-weight:700; color:#3fb950; background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); border-radius:14px; padding:4px 10px; }
   .auto-refresh-dot { width:6px; height:6px; border-radius:50%; background:#3fb950; box-shadow:0 0 0 0 rgba(63,185,80,.6); animation:autoRefreshPulse 2s infinite; }
   @keyframes autoRefreshPulse { 0%{box-shadow:0 0 0 0 rgba(63,185,80,.6);} 70%{box-shadow:0 0 0 6px rgba(63,185,80,0);} 100%{box-shadow:0 0 0 0 rgba(63,185,80,0);} }
+  /* Table 60 Open/Closed filter — pill toggle group, gold active state matches .tab-btn.active */
+  .cushion-filter-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:2px 0 12px; }
+  .cushion-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
+  .cushion-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
+  .cushion-filter-btn:active { transform:scale(.96); }
   .stock { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:16px; margin-bottom:14px; }
   .st-top { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; }
   .st-sym { font-size:1.05rem; font-weight:800; }
@@ -1094,6 +1099,7 @@
       <span class="live-ts" id="dashCushionTs"></span>
       <span class="auto-refresh-badge"><span class="auto-refresh-dot"></span><span class="en">Auto-refresh ON · every 5 min</span><span class="zh">自动刷新 开启 · 每5分钟</span></span>
     </div>
+    <div class="cushion-filter-row" id="cushionFilterRow-dashboard"></div>
     <div class="table-scroll table-fit">
     <table class="legs table30-eq" id="table30-dashboard" style="margin-top:10px">
       <tr>
@@ -1125,6 +1131,7 @@
       <span class="live-ts" id="putVarTs"></span>
       <span class="auto-refresh-badge"><span class="auto-refresh-dot"></span><span class="en">Auto-refresh ON · every 5 min</span><span class="zh">自动刷新 开启 · 每5分钟</span></span>
     </div>
+    <div class="cushion-filter-row" id="cushionFilterRow-cushion"></div>
     <div class="table-scroll" id="cushionTableScroll">
     <table class="legs table30-eq" id="table30-cushion" style="margin-top:10px">
       <tr>
@@ -2769,6 +2776,7 @@ Object.keys(RAIL_CFG).forEach(function(sym){ drawRail('rail-'+sym.toLowerCase(),
 // Call-only positions (covered calls sold against shares held — no short/long put leg,
 // so no strike rail to draw) shown on Table 60 / Premium tab alongside the 4-leg condors above.
 var CALL_ONLY_CFG = { FDS: {shortC:300} };
+renderCushionFilterRow();
 
 // Plot the live share price as a marker line on the strike rail ("chart")
 function plotNowMarker(sym, price){
@@ -3125,12 +3133,51 @@ function sortedByPutCushion(){
   // after the 4-leg condors, in the order they appear in CALL_ONLY_CFG.
   return sorted.concat(Object.keys(CALL_ONLY_CFG));
 }
+// Open/closed status per symbol, for the Table 60 Open/Closed filter — 'closed' once the
+// condor/covered call has actually been closed out (e.g. QQQ, see T43 case study, closed
+// 23 Jul 2026). Anything not listed here defaults to 'open'. Update this when a position closes.
+var POSITION_STATUS = { NVDA:'open', QQQ:'closed', AVGO:'open', SMH:'open', SPY:'open', IWM:'open', FDS:'open' };
+// Table 60's Open/Closed filter state: 'all' | 'open' | 'closed'. Shared by both places
+// Table 60 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
+var cushionFilter = 'all';
+function filterByCushionStatus(syms){
+  if(cushionFilter === 'all') return syms;
+  return syms.filter(function(sym){ return (POSITION_STATUS[sym] || 'open') === cushionFilter; });
+}
+function setCushionFilter(val){
+  cushionFilter = val;
+  renderCushionFilterRow();
+  renderPutVarianceTable();
+  renderDashCushionTable();
+}
+function renderCushionFilterRow(){
+  var opts = [
+    {v:'all', en:'All', zh:'全部'},
+    {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+  ];
+  var html = opts.map(function(o){
+    var active = cushionFilter === o.v ? ' active' : '';
+    return '<button class="cushion-filter-btn'+active+'" onclick="setCushionFilter(\''+o.v+'\')"><span class="en">'+o.en+'</span><span class="zh">'+o.zh+'</span></button>';
+  }).join('');
+  ['cushionFilterRow-dashboard','cushionFilterRow-cushion'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = html;
+  });
+  setLang(curLang);
+}
 // Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides.
 // Call-only positions (CALL_ONLY_CFG, e.g. FDS Covered Call) have no Selling Put strike, so
 // their Put columns show "—" instead of a value.
 function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
-  var rows = sortedByPutCushion().map(function(sym){
+  var syms = filterByCushionStatus(sortedByPutCushion());
+  if(syms.length === 0){
+    body.innerHTML = '<tr><td colspan="11"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
+    setLang(curLang);
+    return;
+  }
+  var rows = syms.map(function(sym){
     var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
     var hasPut = typeof cfg.shortP === 'number';
     var price = getLivePrice(sym);
@@ -3140,8 +3187,9 @@ function renderPutVarianceTable(){
     var callDeltaTxt = typeof callDelta==='number' ? '+'+callDelta.toFixed(2) : '—';
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
+    var symTag = '<b>'+sym+'</b>'+statusTag(sym);
     if(price===null){
-      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td>'+
+      return '<tr><td>'+symTag+'</td><td class="num">—</td>'+
         '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+(hasPut?putDeltaTxt:'—')+'</td>'+
         '<td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+callDeltaTxt+'</td>'+
         '<td class="num">'+mtdTxt+'</td></tr>';
@@ -3155,7 +3203,7 @@ function renderPutVarianceTable(){
     var cVpct = (cfg.shortC - price) / price * 100;
     var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
     var cSign = cVpct >= 0 ? '+' : '';
-    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
+    return '<tr><td>'+symTag+'</td><td class="num">'+fmt(price)+'</td>'+
       putCells+
       '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>'+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
@@ -3163,20 +3211,35 @@ function renderPutVarianceTable(){
   body.innerHTML = rows.join('');
   setLang(curLang);
 }
+// Small inline badge next to a Table 60 symbol showing whether the position is open or
+// closed, from POSITION_STATUS. Blank for open positions (the common case) to avoid clutter.
+function statusTag(sym){
+  if((POSITION_STATUS[sym] || 'open') === 'closed'){
+    return ' <span style="font-size:.62rem;font-weight:700;color:#ff6b6b;background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.35);border-radius:8px;padding:1px 6px;white-space:nowrap"><span class="en">Closed</span><span class="zh">已平仓</span></span>';
+  }
+  return '';
+}
 // Dashboard tab's quick-glance table — same live price + cushionBadge() thresholds as the
 // Cushion tab's full table above, stripped down to Share Price (A) + Put/Call Cushion only.
 function renderDashCushionTable(){
   var body = document.getElementById('dashCushionBody'); if(!body) return;
-  var rows = sortedByPutCushion().map(function(sym){
+  var syms = filterByCushionStatus(sortedByPutCushion());
+  if(syms.length === 0){
+    body.innerHTML = '<tr><td colspan="4"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
+    setLang(curLang);
+    return;
+  }
+  var rows = syms.map(function(sym){
     var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
     var hasPut = typeof cfg.shortP === 'number';
     var price = getLivePrice(sym);
+    var symTag = '<b>'+sym+'</b>'+statusTag(sym);
     if(price===null){
-      return '<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
+      return '<tr><td>'+symTag+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>';
     }
     var pCushionHtml = hasPut ? cushionBadge((price - cfg.shortP) / price * 100, {en:'Below',zh:'跌破'}) : '—';
     var cVpct = (cfg.shortC - price) / price * 100;
-    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
+    return '<tr><td>'+symTag+'</td><td class="num">'+fmt(price)+'</td>'+
       '<td class="num">'+pCushionHtml+'</td>'+
       '<td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td></tr>';
   });
