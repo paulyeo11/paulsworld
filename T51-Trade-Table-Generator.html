@@ -95,6 +95,13 @@
 
   .note { font-size:.72rem; color:#8b98a5; margin:14px 0 0; padding:12px; background:#0d1117; border-radius:10px; border:1px solid rgba(255,255,255,.06); }
 
+  .badge { display:inline-block; font-size:.7rem; font-weight:800; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+  .badge.safe { background:rgba(63,185,80,.16); color:#34d399; border:1px solid rgba(63,185,80,.5); }
+  .badge.vsafe { background:rgba(45,212,191,.18); color:#2dd4bf; border:1px solid rgba(45,212,191,.55); }
+  .badge.warn { background:rgba(244,165,0,.18); color:#fbbf24; border:1px solid rgba(244,165,0,.5); }
+  .badge.cut  { background:rgba(248,81,73,.2); color:#f87171; border:1px solid rgba(248,81,73,.55); }
+  .badge.wait { background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); border:1px solid rgba(255,255,255,.2); }
+
   .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; padding:0 14px; }
   .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
 </style>
@@ -269,6 +276,19 @@ function fmtSpTime(ts){
   return d.toLocaleDateString('en-SG',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
+// Same thresholds/labels as T29's Cushion tab, so a badge here always matches the one there for the same symbol.
+var CUSHION_THRESHOLDS = { vvTight: 1, veryTight: 2, tight: 5, verySafe: 10 };
+function cushionBadgeHtml(vpct){
+  var b;
+  if(vpct <= 0) b = { cls:'cut', en:'⛔ <-'+CUSHION_THRESHOLDS.veryTight+'%', zh:'⛔ <-'+CUSHION_THRESHOLDS.veryTight+'%' };
+  else if(vpct < CUSHION_THRESHOLDS.vvTight) b = { cls:'cut', en:'🔴 0-1%', zh:'🔴 0-1%' };
+  else if(vpct < CUSHION_THRESHOLDS.veryTight) b = { cls:'cut', en:'⚡ <1-2%', zh:'⚡ <1-2%' };
+  else if(vpct < CUSHION_THRESHOLDS.tight) b = { cls:'warn', en:'⚠️ 2-5%', zh:'⚠️ 2-5%' };
+  else if(vpct < CUSHION_THRESHOLDS.verySafe) b = { cls:'safe', en:'✅ >5-10%', zh:'✅ >5-10%' };
+  else b = { cls:'vsafe', en:'💎 >10%', zh:'💎 >10%' };
+  return '<span class="badge '+b.cls+'"><span class="en">'+b.en+'</span><span class="zh">'+b.zh+'</span></span>';
+}
+
 function generateTable(){
   var sym = document.getElementById('symInput').value.trim().toUpperCase();
   var area = document.getElementById('resultArea');
@@ -317,24 +337,66 @@ function generateTable(){
   // 4-leg classic Iron Condor metrics (2 puts + 2 calls) — Max Loss / Profit Zone / Return-Risk
   var puts = legs.filter(function(o){ return o.right==='P'; });
   var calls = legs.filter(function(o){ return o.right==='C'; });
+  var shortPut = puts.filter(function(o){return o.qty<0;})[0], longPut = puts.filter(function(o){return o.qty>0;})[0];
+  var shortCall = calls.filter(function(o){return o.qty<0;})[0], longCall = calls.filter(function(o){return o.qty>0;})[0];
+  var isClassicIC = puts.length===2 && calls.length===2 && shortPut && longPut && shortCall && longCall;
   var metricsHtml = '';
-  if(puts.length===2 && calls.length===2){
-    var shortPut = puts.filter(function(o){return o.qty<0;})[0], longPut = puts.filter(function(o){return o.qty>0;})[0];
-    var shortCall = calls.filter(function(o){return o.qty<0;})[0], longCall = calls.filter(function(o){return o.qty>0;})[0];
-    if(shortPut && longPut && shortCall && longCall){
-      var putWing = Math.abs(shortPut.strike - longPut.strike);
-      var callWing = Math.abs(longCall.strike - shortCall.strike);
-      var lots = Math.abs(shortPut.qty);
-      var maxLoss = Math.max(putWing, callWing) * 100 * lots - netCredit;
-      var retRisk = maxLoss > 0 ? (netCredit / maxLoss * 100) : null;
-      metricsHtml =
-        '<div class="metrics">'+
-          '<div class="m"><div class="mk"><span class="en">Net Credit (A)</span><span class="zh">净收权利金 (A)</span></div><div class="mv '+(netCredit>=0?'green':'red')+'">'+fmtMoney(netCredit)+'</div></div>'+
-          '<div class="m"><div class="mk"><span class="en">Max Loss (B)</span><span class="zh">最大亏损 (B)</span></div><div class="mv red">−'+fmtMoney(Math.abs(maxLoss)).replace('−','')+'</div></div>'+
-          '<div class="m"><div class="mk"><span class="en">Profit Zone</span><span class="zh">盈利区</span></div><div class="mv">'+shortPut.strike+'–'+shortCall.strike+'</div></div>'+
-          '<div class="m"><div class="mk"><span class="en">Return/Risk (A/B)</span><span class="zh">收益/风险 (A/B)</span></div><div class="mv amber">'+(retRisk!==null?retRisk.toFixed(0)+'%':'—')+'</div></div>'+
-        '</div>';
-    }
+  var cushionHtml = '';
+  if(isClassicIC){
+    var cutLostPut = (shortPut.strike + longPut.strike) / 2;
+    var cutLostCall = (shortCall.strike + longCall.strike) / 2;
+    var putDeltaTxt = (typeof shortPut.delta === 'number') ? shortPut.delta.toFixed(2) : '—';
+    var callDeltaTxt = (typeof shortCall.delta === 'number') ? shortCall.delta.toFixed(2) : '—';
+    cushionHtml =
+      '<div class="table-scroll">'+
+      '<table class="legs" id="cushRow">'+
+        '<tr>'+
+          '<th><span class="en">Symbol</span><span class="zh">代码</span></th>'+
+          '<th class="num"><span class="en">Cut Lost Put<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span><span class="zh">止损认沽<br><small style="opacity:.6;font-weight:400">(B+D)/2</small></span></th>'+
+          '<th class="num"><span class="en">Cut Lost Call<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span><span class="zh">止损认购<br><small style="opacity:.6;font-weight:400">(C+E)/2</small></span></th>'+
+          '<th class="num"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span></th>'+
+          '<th class="num"><span class="en">Selling Put (B)</span><span class="zh">卖出认沽 (B)</span></th>'+
+          '<th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>'+
+          '<th><span class="en">Put Cushion</span><span class="zh">认沽缓冲</span></th>'+
+          '<th class="num"><span class="en">Put Δ</span><span class="zh">认沽Δ</span></th>'+
+          '<th class="num"><span class="en">Selling Call (C)</span><span class="zh">卖出认购 (C)</span></th>'+
+          '<th class="num"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>'+
+          '<th><span class="en">Call Cushion</span><span class="zh">认购缓冲</span></th>'+
+          '<th class="num"><span class="en">Call Δ</span><span class="zh">认购Δ</span></th>'+
+          '<th class="num"><span class="en">MTD Premium</span><span class="zh">本月权利金</span></th>'+
+        '</tr>'+
+        '<tr>'+
+          '<td><b>'+sym+'</b></td>'+
+          '<td class="num">$'+cutLostPut.toFixed(2)+'</td>'+
+          '<td class="num">$'+cutLostCall.toFixed(2)+'</td>'+
+          '<td class="num" id="cush-price">—</td>'+
+          '<td class="num">'+shortPut.strike+'P</td>'+
+          '<td class="num" id="cush-putvar">—</td>'+
+          '<td id="cush-putcush"><span class="badge wait">—</span></td>'+
+          '<td class="num">'+putDeltaTxt+'</td>'+
+          '<td class="num">'+shortCall.strike+'C</td>'+
+          '<td class="num" id="cush-callvar">—</td>'+
+          '<td id="cush-callcush"><span class="badge wait">—</span></td>'+
+          '<td class="num">'+callDeltaTxt+'</td>'+
+          '<td class="num">'+fmtSignedMoney(netCredit)+'</td>'+
+        '</tr>'+
+      '</table>'+
+      '</div>';
+  }
+  var maxLoss = null;
+  if(isClassicIC){
+    var putWing = Math.abs(shortPut.strike - longPut.strike);
+    var callWing = Math.abs(longCall.strike - shortCall.strike);
+    var lots = Math.abs(shortPut.qty);
+    maxLoss = Math.max(putWing, callWing) * 100 * lots - netCredit;
+    var retRisk = maxLoss > 0 ? (netCredit / maxLoss * 100) : null;
+    metricsHtml =
+      '<div class="metrics">'+
+        '<div class="m"><div class="mk"><span class="en">Net Credit (A)</span><span class="zh">净收权利金 (A)</span></div><div class="mv '+(netCredit>=0?'green':'red')+'">'+fmtMoney(netCredit)+'</div></div>'+
+        '<div class="m"><div class="mk"><span class="en">Max Loss (B)</span><span class="zh">最大亏损 (B)</span></div><div class="mv red">−'+fmtMoney(Math.abs(maxLoss)).replace('−','')+'</div></div>'+
+        '<div class="m"><div class="mk"><span class="en">Profit Zone</span><span class="zh">盈利区</span></div><div class="mv">'+shortPut.strike+'–'+shortCall.strike+'</div></div>'+
+        '<div class="m"><div class="mk"><span class="en">Return/Risk (A/B)</span><span class="zh">收益/风险 (A/B)</span></div><div class="mv amber">'+(retRisk!==null?retRisk.toFixed(0)+'%':'—')+'</div></div>'+
+      '</div>';
   } else {
     metricsHtml =
       '<div class="metrics" style="grid-template-columns:1fr;">'+
@@ -361,7 +423,20 @@ function generateTable(){
         '<span class="en">Fill, Amount &amp; Δ Delta come straight from <code>positions.json</code> (delta is the real IBKR per-leg reading when logged, otherwise shown as — rather than guessed). <b>Price</b> and <b>Net Price</b> (the cost to close today) need a live per-leg option quote that <code>positions.json</code> does not carry, so they show as — here — see T29’s Bang Trade Analysis tab where those are filled in manually from a trade-close alert.</span>'+
         '<span class="zh">成交价、金额与Δ Delta均直接取自<code>positions.json</code>（有记录时Delta为IBKR真实读数，否则显示—，不做猜测）。<b>平仓价</b>与<b>净价</b>（今日平仓成本）需要每条腿的实时期权报价，而<code>positions.json</code>不含此数据，因此此处显示为———可参考T29的「Bang交易分析」页签，那里是根据平仓提醒手动填入的。</span>'+
       '</div>'+
-    '</div>';
+    '</div>'+
+    (isClassicIC ?
+    '<div class="condor">'+
+      '<div class="c-head">'+
+        '<div class="tkr" style="font-size:1.1rem">📐 Table 1322: '+sym+' <small>Share Price vs Selling Put &amp; Call</small></div>'+
+        '<div class="c-meta"><span class="en">Live share price (A) vs this position’s short put/call strike, same cushion convention as T29’s Cushion tab</span><span class="zh">实时股价 (A) 对比该持仓的卖出认沽/认购行权价——与T29「缓冲」页签相同的换算方式</span></div>'+
+        '<div></div>'+
+      '</div>'+
+      cushionHtml+
+      '<div class="note">'+
+        '<span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>D</b> = Buy Put strike, <b>C</b> = Selling Call strike, <b>E</b> = Buy Call strike: <b>Put Variance = (A−B)/A</b>, <b>Call Variance = (C−A)/A</b>. Cushion badges: 🚦 <b>💎 &gt;'+CUSHION_THRESHOLDS.verySafe+'%</b> · <b>✅ &gt;'+CUSHION_THRESHOLDS.tight+'-'+CUSHION_THRESHOLDS.verySafe+'%</b> · <b>⚠️ '+CUSHION_THRESHOLDS.veryTight+'-'+CUSHION_THRESHOLDS.tight+'%</b> · <b>⚡ &lt;'+CUSHION_THRESHOLDS.vvTight+'-'+CUSHION_THRESHOLDS.veryTight+'%</b> · <b>🔴 0-'+CUSHION_THRESHOLDS.vvTight+'%</b> · <b>⛔ below strike</b> — same thresholds as T29’s Cushion tab.</span>'+
+        '<span class="zh">其中 <b>A</b>=股价，<b>B</b>=卖出认沽行权价，<b>D</b>=买入认沽行权价，<b>C</b>=卖出认购行权价，<b>E</b>=买入认购行权价：<b>认沽差幅 = (A−B)/A</b>，<b>认购差幅 = (C−A)/A</b>。缓冲徽章：🚦 <b>💎 &gt;'+CUSHION_THRESHOLDS.verySafe+'%</b> · <b>✅ &gt;'+CUSHION_THRESHOLDS.tight+'-'+CUSHION_THRESHOLDS.verySafe+'%</b> · <b>⚠️ '+CUSHION_THRESHOLDS.veryTight+'-'+CUSHION_THRESHOLDS.tight+'%</b> · <b>⚡ &lt;'+CUSHION_THRESHOLDS.vvTight+'-'+CUSHION_THRESHOLDS.veryTight+'%</b> · <b>🔴 0-'+CUSHION_THRESHOLDS.vvTight+'%</b> · <b>⛔ 跌破行权价</b>——与T29「缓冲」页签阈值相同。</span>'+
+      '</div>'+
+    '</div>' : '');
   setLang(curLang);
 
   fetchQuote(sym).then(function(data){
@@ -375,6 +450,16 @@ function generateTable(){
       var diff = q.price - day1.p, pct = day1.p ? (diff/day1.p*100) : 0, up = diff >= 0;
       html += '<span class="sp-change"><span class="en">Price change (Now vs Day 1)</span><span class="zh">价格变化（现价 vs 第1天）</span> <b class="'+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</b></span>';
       el.innerHTML = html;
+      if(isClassicIC){
+        var price = q.price;
+        var putVar = (price - shortPut.strike) / price * 100;
+        var callVar = (shortCall.strike - price) / price * 100;
+        var pEl = document.getElementById('cush-price'); if(pEl) pEl.textContent = '$'+price.toFixed(2);
+        var pvEl = document.getElementById('cush-putvar'); if(pvEl){ pvEl.textContent = (putVar>=0?'+':'')+putVar.toFixed(2)+'%'; pvEl.style.color = putVar>=0 ? '#3fb950' : '#f85149'; }
+        var cvEl = document.getElementById('cush-callvar'); if(cvEl){ cvEl.textContent = (callVar>=0?'+':'')+callVar.toFixed(2)+'%'; cvEl.style.color = callVar>=0 ? '#3fb950' : '#f85149'; }
+        var pcEl = document.getElementById('cush-putcush'); if(pcEl) pcEl.innerHTML = cushionBadgeHtml(putVar);
+        var ccEl = document.getElementById('cush-callcush'); if(ccEl) ccEl.innerHTML = cushionBadgeHtml(callVar);
+      }
     } else {
       el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>';
     }
