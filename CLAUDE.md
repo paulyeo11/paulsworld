@@ -134,6 +134,10 @@ Whenever a video is added to a photo journal (`galleryPhotos` array or equivalen
 ## GitHub Auto-Push Rule
 - Whenever an HTML file is created or updated, push it directly to `main` automatically
   (via gh/git) — no need to ask Paul, never ask him to copy/paste or upload manually.
+- **Explicitly applies to Filtec dashboard pages too** (`filtec-sales-dashboard.html` and any
+  other `filtec-*.html` files) — confirmed 2026-07-29 after Paul said "Always remember push to
+  Filtec." Same commit-and-push-to-`main`-immediately workflow as every other page on the site,
+  nothing Filtec-specific about the mechanics.
 - After every successful push, confirm with the **file name and commit SHA**.
 - **ALWAYS fetch + rebase before pushing** — never push cold. Every push must follow:
   `git fetch origin main && git rebase origin/main && git push -u origin main`
