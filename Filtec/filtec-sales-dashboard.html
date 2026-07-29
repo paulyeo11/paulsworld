@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filtec Sales Dashboard — Brand</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --bg: #0d0f1a;
+  --card: #151826;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --gold: #f59e0b;
+  --red: #f85149;
+  --green: #3fb950;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; font-size: 1.05rem; }
+
+.hero {
+  background: linear-gradient(135deg, #060310 0%, #0a1a2e 40%, #0a2419 75%, #0d0f1a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 20px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(74,108,247,0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 40%, rgba(63,185,80,0.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(74,108,247,0.12);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 720px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 560px;
+  margin: 0 auto 8px; line-height: 1.6;
+}
+.meta { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; margin-top: 10px; }
+
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(74,108,247,0.15); border-color: rgba(74,108,247,0.5); color: var(--blue); }
+
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+.share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+.page-menu-wrap { position:absolute; top:58px; right:18px; z-index:5; }
+.page-menu-btn { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.25); color:var(--text); font-size:1.1rem; font-weight:800; cursor:pointer; line-height:1; font-family:'Source Serif 4',serif; }
+.page-menu-btn:hover { background:rgba(255,255,255,.18); }
+.page-menu-dropdown { display:none; position:absolute; top:38px; right:0; background:var(--card); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.5); min-width:180px; overflow:hidden; text-align:left; }
+.page-menu-dropdown.open { display:block; }
+.page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:var(--text); text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; font-family:'Source Serif 4',serif; }
+.page-menu-dropdown button:hover { background:rgba(255,255,255,.06); }
+
+.content { max-width: 760px; margin: 0 auto; padding: 40px 22px 20px; }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+
+/* Page tabs */
+.tabs-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  max-width: 760px; margin: 0 auto; padding: 0 22px;
+  position: sticky; top: 0; z-index: 50;
+  background: var(--bg);
+  padding-top: 18px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Source Serif 4', serif;
+  font-size: 0.85rem; font-weight: 700;
+  padding: 9px 16px; border-radius: 20px;
+  cursor: pointer; text-align: center;
+  transition: all 0.2s;
+  line-height: 1.3;
+}
+.tab-btn.active { background: rgba(74,108,247,0.15); border-color: rgba(74,108,247,0.5); color: var(--blue); }
+.tab-btn:hover:not(.active) { border-color: rgba(255,255,255,0.25); color: var(--text); }
+
+.page-panel { display: none; }
+.page-panel.active { display: block; }
+.page-head {
+  font-size: 0.78rem; color: var(--muted); letter-spacing: 0.04em;
+  margin-bottom: 4px; text-transform: uppercase; font-weight: 600;
+}
+
+/* Chart card */
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 22px 16px; margin: 1.2em 0; }
+.caveat {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: rgba(217,89,38,0.08); border: 1px solid rgba(217,89,38,0.3);
+  border-radius: 10px; padding: 12px 14px; font-size: 0.85rem;
+  color: #d0d4e8; margin-bottom: 20px; line-height: 1.55;
+}
+.caveat strong { color: #fff; }
+.legend { display: flex; gap: 18px; margin-bottom: 16px; font-size: 0.85rem; color: var(--muted); flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.chart { display: flex; flex-direction: column; gap: 18px; margin-bottom: 8px; }
+.bar-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; font-size: 0.88rem; gap: 8px; flex-wrap: wrap; }
+.bar-name { font-weight: 700; color: #fff; }
+.bar-value { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.8rem; }
+.track { background: rgba(255,255,255,0.06); border-radius: 4px; height: 34px; width: 100%; overflow: hidden; }
+.fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 12px; color: #fff; font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: default; transition: filter 0.15s; }
+.fill:hover { filter: brightness(1.12); }
+.fill.s1 { background: var(--series-1); }
+.fill.s2 { background: var(--series-2); }
+.baseline-axis { border-top: 1px solid rgba(255,255,255,0.15); margin-top: 4px; padding-top: 6px; font-size: 0.74rem; color: var(--muted); }
+.foot-note { font-size: 0.78rem; color: var(--muted); margin-top: 18px; line-height: 1.5; }
+.toggle-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; font-weight: 700; padding: 6px 14px; border-radius: 20px; cursor: pointer; margin-top: 18px; font-family: 'Source Serif 4', serif; }
+.toggle-btn:hover { border-color: var(--muted); color: var(--text); }
+table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.85rem; display: none; }
+table.show { display: table; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+td.name { font-weight: 700; color: #fff; }
+
+.fill.s3 { background: #64748b; }
+.key-pill { display:inline-block; font-size:0.66rem; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:8px; background:rgba(74,108,247,0.18); color:var(--blue); }
+.flag-overdue { color:#f85149; font-weight:600; font-size:0.82rem; }
+.flag-ok { color:var(--muted); font-size:0.82rem; }
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+.stat-mini { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.stat-mini .sv { font-size: 1.25rem; font-weight: 700; color: #fff; }
+.stat-mini .sl { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.stat-mini .sb { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+.insight-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px 22px 18px; margin-top: 20px; }
+.insight-card h3 { font-size: 1.02rem; color: var(--blue); margin-bottom: 6px; }
+.insight-list { list-style: none; }
+.insight-list li { display:grid; grid-template-columns:auto 1fr; gap:10px; padding:10px 0; font-size:0.9rem; color:var(--text); border-top:1px solid var(--border); }
+.insight-list li:first-child { border-top:none; }
+.insight-num { color: var(--blue); font-weight: 700; }
+
+.neg { color: var(--red); font-weight: 700; }
+.pos { color: var(--green); }
+.fill.s4 { background: var(--red); }
+.heat-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.heat-cell { flex: 1 1 76px; min-width: 76px; border-radius: 8px; padding: 10px 6px; text-align: center; }
+.heat-cell .hm { font-size: 0.66rem; color: rgba(255,255,255,0.85); font-weight: 700; letter-spacing: 0.03em; }
+.heat-cell .hp { font-size: 0.92rem; font-weight: 800; margin-top: 4px; color: #fff; }
+.heat-cell .hi { font-size: 0.62rem; color: rgba(255,255,255,0.7); margin-top: 2px; }
+.heat-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); margin: 10px 0 4px; }
+.heat-legend span { display: flex; align-items: center; gap: 5px; }
+.heat-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+footer { text-align: center; padding: 40px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; margin-top: 60px; }
+footer a { color: var(--blue); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">← <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+
+  <div class="page-menu-wrap">
+    <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+    <div class="page-menu-dropdown" id="pageMenuDropdown">
+      <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    </div>
+  </div>
+
+  <div class="label">
+    <span class="en">Filtec · Sales Dashboard</span>
+    <span class="zh">Filtec · 销售仪表板</span>
+  </div>
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">Filtec Sales Dashboard</span><span class="zh">Filtec销售仪表板</span></span>
+  </div>
+  <h1>
+    <span class="en">Filtec Sales <span>Dashboard</span></span>
+    <span class="zh">Filtec 销售<span>仪表板</span></span>
+  </h1>
+  <p class="hero-sub">
+    <span class="en">Sales performance views for PT. Filtec, pulled live from ERPNext — tap a tab to switch views</span>
+    <span class="zh">PT. Filtec的销售业绩视图，实时来自ERPNext系统 — 点击下方标签切换视图</span>
+  </p>
+  <p class="meta">
+    <span class="en">Source: ERPNext (Filtec) · Submitted Sales Invoices</span>
+    <span class="zh">数据来源：ERPNext（Filtec）· 已提交的销售发票</span>
+  </p>
+</div>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" id="tab-1" onclick="setPage(1)"><span class="en">Brand</span><span class="zh">品牌</span></button>
+  <button class="tab-btn" id="tab-2" onclick="setPage(2)"><span class="en">Key Accounts</span><span class="zh">重点客户</span></button>
+  <button class="tab-btn" id="tab-3" onclick="setPage(3)"><span class="en">GP %</span><span class="zh">毛利率</span></button>
+</div>
+
+<div class="content">
+
+  <!-- ============ TAB 1 : Brand ============ -->
+  <div class="page-panel active" id="page-1">
+    <div class="page-head">
+      <span class="en">Sales by Brand</span><span class="zh">按品牌划分的销售额</span>
+    </div>
+
+    <p>
+      <span class="en">Total sales grouped by the brand tagged on each item, across all submitted Sales Invoices. Amounts in IDR.</span>
+      <span class="zh">按每个商品所标记的品牌汇总的总销售额，涵盖所有已提交的销售发票。金额单位为印尼盾（IDR）。</span>
+    </p>
+
+    <div class="chart-card">
+      <div class="caveat">
+        <span aria-hidden="true">⚠️</span>
+        <span>
+          <span class="en"><strong>Data quality note:</strong> only one brand ("Boll &amp; Kirch") is currently tagged in the Item master (17 of 75 items). The remaining 78.9% of sales — Rp 4,869,082,874 across 157 invoices — come from items with no brand assigned, shown here as "Unbranded" so the chart isn't misleading. Tag brands on more items in ERPNext for a fuller breakdown.</strong></span>
+          <span class="zh"><strong>数据质量提示：</strong>目前商品主数据中只有一个品牌被标记（"Boll &amp; Kirch"，75个商品中的17个）。其余78.9%的销售额——157笔发票共Rp 4,869,082,874——来自未标记品牌的商品，本图中标记为"未标记品牌"以避免误导。如需更完整的品牌拆分，请在ERPNext中为更多商品标记品牌。</span>
+        </span>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:var(--series-2)"></span><span class="en">Unbranded</span><span class="zh">未标记品牌</span></span>
+        <span class="legend-item"><span class="swatch" style="background:var(--series-1)"></span>Boll &amp; Kirch</span>
+      </div>
+
+      <div class="chart">
+        <div class="bar-row">
+          <div class="bar-label-row">
+            <span class="bar-name"><span class="en">Unbranded</span><span class="zh">未标记品牌</span></span>
+            <span class="bar-value">Rp 4,869,082,874 · <span class="en">157 invoices</span><span class="zh">157笔发票</span></span>
+          </div>
+          <div class="track">
+            <div class="fill s2" style="width:100%" title="Unbranded: Rp 4,869,082,874 across 157 invoices">Rp 4.87B</div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row">
+            <span class="bar-name">Boll &amp; Kirch</span>
+            <span class="bar-value">Rp 1,302,481,000 · <span class="en">11 invoices</span><span class="zh">11笔发票</span></span>
+          </div>
+          <div class="track">
+            <div class="fill s1" style="width:26.75%" title="Boll & Kirch: Rp 1,302,481,000 across 11 invoices">Rp 1.30B</div>
+          </div>
+        </div>
+      </div>
+      <div class="baseline-axis"><span class="en">0 — scaled to Rp 4,869,082,874</span><span class="zh">0 — 以Rp 4,869,082,874为基准</span></div>
+
+      <button class="toggle-btn" id="toggleTable" onclick="toggleTable()"><span class="en">Show as table</span><span class="zh">以表格显示</span></button>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th><span class="en">Brand</span><span class="zh">品牌</span></th>
+            <th><span class="en">Total Sales (IDR)</span><span class="zh">总销售额（IDR）</span></th>
+            <th><span class="en"># Invoices</span><span class="zh">发票数</span></th>
+            <th><span class="en">Share</span><span class="zh">占比</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name"><span class="en">Unbranded</span><span class="zh">未标记品牌</span></td><td class="num">Rp 4,869,082,874</td><td class="num">157</td><td class="num">78.9%</td></tr>
+          <tr><td class="name">Boll &amp; Kirch</td><td class="num">Rp 1,302,481,000</td><td class="num">11</td><td class="num">21.1%</td></tr>
+        </tbody>
+      </table>
+
+      <p class="foot-note">
+        <span class="en">Source: Sales Invoice Item × Item.brand, submitted invoices only (docstatus = 1). Total across both groups: Rp 6,171,563,874 across 168 invoices.</span>
+        <span class="zh">数据来源：销售发票明细 × 商品品牌字段，仅统计已提交的发票（docstatus = 1）。两组合计：168笔发票，共Rp 6,171,563,874。</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 : Key Accounts ============ -->
+  <div class="page-panel" id="page-2">
+    <div class="page-head">
+      <span class="en">Key Accounts</span><span class="zh">重点客户</span>
+    </div>
+
+    <p>
+      <span class="en">Top customers by sales, and how to grow more of them.</span>
+      <span class="zh">按销售额排列的重点客户，以及如何培养更多这样的客户。</span>
+    </p>
+
+    <div class="chart-card">
+      <div class="caveat">
+        <span aria-hidden="true">⚠️</span>
+        <span>
+          <span class="en"><strong>Data quality note:</strong> built from the 40 most recent submitted invoices already loaded on the Filtec dashboard (26 May – 22 Jul 2026), not full all-time customer history — the live ERPNext customer-level query is currently blocked pending a connector approval issue. Treat this as directional, refresh once that's resolved.</span>
+          <span class="zh"><strong>数据质量提示：</strong>本页基于Filtec仪表板上已有的40笔最新已提交发票（2026年5月26日至7月22日）汇总而成，并非完整的历史客户数据 —— 目前ERPNext的实时客户级查询因连接器授权问题而受阻。请将此视为方向性参考，待问题解决后再更新。</span>
+        </span>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-mini">
+          <div class="sv">Rp 2,499,535,236</div>
+          <div class="sl"><span class="en">Revenue from Top 6 Accounts</span><span class="zh">前6大客户贡献的收入</span></div>
+          <div class="sb"><span class="en">82.1% of this sample's Rp 3,044,423,167</span><span class="zh">占本样本Rp 3,044,423,167的82.1%</span></div>
+        </div>
+        <div class="stat-mini">
+          <div class="sv">Rp 675,392,820</div>
+          <div class="sl"><span class="en">Overdue Among Top 6</span><span class="zh">前6大客户中的逾期金额</span></div>
+          <div class="sb"><span class="en">Harlyn Energi + Oil Terminal Karimun</span><span class="zh">Harlyn Energi + Oil Terminal Karimun</span></div>
+        </div>
+        <div class="stat-mini">
+          <div class="sv">8</div>
+          <div class="sl"><span class="en">Repeat Customers (2+ invoices)</span><span class="zh">重复下单客户（2笔以上发票）</span></div>
+          <div class="sb"><span class="en">out of 28 unique customers in this sample</span><span class="zh">本样本共28个独立客户中的8个</span></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:var(--series-1)"></span><span class="en">Top 6 (Key Account)</span><span class="zh">前6名（重点客户）</span></span>
+        <span class="legend-item"><span class="swatch" style="background:#64748b"></span><span class="en">Other top 10</span><span class="zh">其余前10名</span></span>
+      </div>
+
+      <div class="chart">
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">PLN Indonesia Power (UBP Bali)</span><span class="bar-value">Rp 826,430,016 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s1" style="width:100%">Rp 826.4M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">Harlyn Energi Indonesia</span><span class="bar-value">Rp 471,783,300 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s1" style="width:57.1%">Rp 471.8M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">PLN Nusantara Power (Indramayu)</span><span class="bar-value">Rp 452,880,000 · <span class="en">2 invoices</span><span class="zh">2笔发票</span></span></div>
+          <div class="track"><div class="fill s1" style="width:54.8%">Rp 452.9M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">PLN Indonesia Power (UBP Priok)</span><span class="bar-value">Rp 306,182,400 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s1" style="width:37.1%">Rp 306.2M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">PLTGU Muara Tawar</span><span class="bar-value">Rp 238,650,000 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s1" style="width:28.9%">Rp 238.7M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">Oil Terminal Karimun</span><span class="bar-value">Rp 203,609,520 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s1" style="width:24.6%">Rp 203.6M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">Unilever Indonesia</span><span class="bar-value">Rp 179,820,000 · <span class="en">3 invoices</span><span class="zh">3笔发票</span></span></div>
+          <div class="track"><div class="fill s3" style="width:21.8%">Rp 179.8M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">Valmet Technology Center</span><span class="bar-value">Rp 58,275,000 · <span class="en">2 invoices</span><span class="zh">2笔发票</span></span></div>
+          <div class="track"><div class="fill s3" style="width:7.1%">Rp 58.3M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">CV Mitra Andalan Sukses</span><span class="bar-value">Rp 49,950,000 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s3" style="width:6.0%">Rp 50.0M</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row"><span class="bar-name">Euroasiatic Heat &amp; Power Systems</span><span class="bar-value">Rp 36,630,000 · <span class="en">1 invoice</span><span class="zh">1笔发票</span></span></div>
+          <div class="track"><div class="fill s3" style="width:4.4%">Rp 36.6M</div></div>
+        </div>
+      </div>
+      <div class="baseline-axis"><span class="en">0 — scaled to Rp 826,430,016 (top account)</span><span class="zh">0 — 以Rp 826,430,016（最高客户）为基准</span></div>
+
+      <button class="toggle-btn" id="toggleKaTable" onclick="toggleKaTable()"><span class="en">Show as table</span><span class="zh">以表格显示</span></button>
+      <table id="kaDataTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><span class="en">Customer</span><span class="zh">客户</span></th>
+            <th><span class="en">Sales</span><span class="zh">销售额</span></th>
+            <th><span class="en">Invoices</span><span class="zh">发票数</span></th>
+            <th><span class="en">Cumulative %</span><span class="zh">累计占比</span></th>
+            <th><span class="en">Status</span><span class="zh">状态</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td class="name">PLN Indonesia Power (UBP Bali)<span class="key-pill">KEY</span></td><td class="num">Rp 826,430,016</td><td class="num">1</td><td class="num">27.2%</td><td class="flag-ok"><span class="en">Paid</span><span class="zh">已付款</span></td></tr>
+          <tr><td>2</td><td class="name">Harlyn Energi Indonesia<span class="key-pill">KEY</span></td><td class="num">Rp 471,783,300</td><td class="num">1</td><td class="num">42.6%</td><td class="flag-overdue"><span class="en">Overdue</span><span class="zh">已逾期</span></td></tr>
+          <tr><td>3</td><td class="name">PLN Nusantara Power (Indramayu)<span class="key-pill">KEY</span></td><td class="num">Rp 452,880,000</td><td class="num">2</td><td class="num">57.5%</td><td class="flag-ok"><span class="en">Paid</span><span class="zh">已付款</span></td></tr>
+          <tr><td>4</td><td class="name">PLN Indonesia Power (UBP Priok)<span class="key-pill">KEY</span></td><td class="num">Rp 306,182,400</td><td class="num">1</td><td class="num">67.6%</td><td class="flag-overdue"><span class="en">Partly Paid</span><span class="zh">部分付款</span></td></tr>
+          <tr><td>5</td><td class="name">PLTGU Muara Tawar<span class="key-pill">KEY</span></td><td class="num">Rp 238,650,000</td><td class="num">1</td><td class="num">75.4%</td><td class="flag-ok"><span class="en">Unpaid</span><span class="zh">未付款</span></td></tr>
+          <tr><td>6</td><td class="name">Oil Terminal Karimun<span class="key-pill">KEY</span></td><td class="num">Rp 203,609,520</td><td class="num">1</td><td class="num">82.1%</td><td class="flag-overdue"><span class="en">Overdue</span><span class="zh">已逾期</span></td></tr>
+          <tr><td>7</td><td class="name">Unilever Indonesia</td><td class="num">Rp 179,820,000</td><td class="num">3</td><td class="num">88.0%</td><td class="flag-overdue"><span class="en">Has Overdue</span><span class="zh">含逾期</span></td></tr>
+          <tr><td>8</td><td class="name">Valmet Technology Center</td><td class="num">Rp 58,275,000</td><td class="num">2</td><td class="num">89.9%</td><td class="flag-overdue"><span class="en">Has Overdue</span><span class="zh">含逾期</span></td></tr>
+          <tr><td>9</td><td class="name">CV Mitra Andalan Sukses</td><td class="num">Rp 49,950,000</td><td class="num">1</td><td class="num">91.6%</td><td class="flag-ok"><span class="en">Paid</span><span class="zh">已付款</span></td></tr>
+          <tr><td>10</td><td class="name">Euroasiatic Heat &amp; Power Systems</td><td class="num">Rp 36,630,000</td><td class="num">1</td><td class="num">92.8%</td><td class="flag-ok"><span class="en">Paid</span><span class="zh">已付款</span></td></tr>
+        </tbody>
+      </table>
+
+      <p class="foot-note">
+        <span class="en">Source: recentInvoices sample (40 most recent submitted invoices), aggregated client-side by customer. Grand total this sample: Rp 3,044,423,167 across 40 invoices, 28 unique customers.</span>
+        <span class="zh">数据来源：40笔最新已提交发票样本，按客户在前端汇总。本样本合计：40笔发票共Rp 3,044,423,167，涉及28个独立客户。</span>
+      </p>
+    </div>
+
+    <div class="insight-card">
+      <h3><span class="en">How to Build More Key Accounts</span><span class="zh">如何培养更多重点客户</span></h3>
+      <ul class="insight-list">
+        <li><span class="insight-num">1</span><span>
+          <span class="en"><strong>Protect the concentrated base first.</strong> Just 6 customers make up 82% of sales in this sample, and 4 of them are power-utility plants (PLN Indonesia Power UBP Bali, PLN Nusantara Power PLTU Indramayu, PLN Indonesia Power UBP Priok, PLTGU Muara Tawar). Losing any one is a large hit — give these dedicated account contacts and proactive maintenance/reorder reminders before chasing new logos.</span>
+          <span class="zh"><strong>优先保住集中的核心客户群。</strong>本样本中仅6个客户就贡献了82%的销售额，其中4个是电力公司（PLN Indonesia Power UBP Bali、PLN Nusantara Power PLTU Indramayu、PLN Indonesia Power UBP Priok、PLTGU Muara Tawar）。失去其中任何一个都是重大损失——在开发新客户之前，应先为这些客户安排专属对接人及主动的维护/补货提醒。</span>
+        </span></li>
+        <li><span class="insight-num">2</span><span>
+          <span class="en"><strong>Chase the overdue key accounts first.</strong> Harlyn Energi Indonesia (Rp 471.8M) and Oil Terminal Karimun (Rp 203.6M) — both top-6 accounts — are Overdue, and Unilever and Valmet (both repeat buyers just outside the top 6) also carry overdue invoices. That's real cash sitting at risk inside your best relationships; clearing it protects both cash flow and the account before you try to grow it.</span>
+          <span class="zh"><strong>优先催收逾期的重点客户欠款。</strong>Harlyn Energi Indonesia（Rp 471.8M）和Oil Terminal Karimun（Rp 203.6M）——均为前6大客户——已逾期，而Unilever和Valmet（紧随前6名之后的重复购买客户）也有逾期发票。这些真金白银的风险就藏在你最重要的客户关系中；先清收欠款，才能在扩大合作规模前保护好现金流和客户关系。</span>
+        </span></li>
+        <li><span class="insight-num">3</span><span>
+          <span class="en"><strong>Convert repeat buyers into contracts.</strong> Unilever, Cubic Indonesia, Fumira, and Tripper Nature each placed 3 orders in this 2-month window; Tsuchiya, Valmet, PLN Nusantara Power, and Nissin Foods placed 2. Repeat ad-hoc buying is the strongest signal of a graduating key account — move them onto an annual spare-parts/maintenance contract to lock in the recurring revenue and raise switching cost.</span>
+          <span class="zh"><strong>将重复购买客户转化为合同客户。</strong>Unilever、Cubic Indonesia、Fumira和Tripper Nature在这两个月内各下了3笔订单；Tsuchiya、Valmet、PLN Nusantara Power和Nissin Foods各下了2笔。重复的临时性采购是客户正在成长为重点客户的最强信号——应将他们转为年度备件/维护合同，锁定持续收入并提高更换供应商的成本。</span>
+        </span></li>
+        <li><span class="insight-num">4</span><span>
+          <span class="en"><strong>Diversify beyond power-utility.</strong> The largest single tickets right now all sit in the power sector. Growing the F&amp;B/manufacturing repeat accounts (Unilever, Nissin Foods, Fumira, Cubic) into bigger standing orders would reduce reliance on a handful of utility-plant deals and smooth revenue month to month.</span>
+          <span class="zh"><strong>向电力行业以外拓展客户。</strong>目前最大的几笔订单都集中在电力行业。将食品饮料/制造业的重复客户（Unilever、Nissin Foods、Fumira、Cubic）培养成更大的常态化订单，能够降低对少数电力项目的依赖，使各月收入更加平稳。</span>
+        </span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3 : GP % ============ -->
+  <div class="page-panel" id="page-3">
+    <div class="page-head">
+      <span class="en">Gross Profit %</span><span class="zh">毛利率</span>
+    </div>
+
+    <p>
+      <span class="en">Revenue vs. cost of goods sold (COGS) across all 164 submitted invoices, and where to focus to raise the margin.</span>
+      <span class="zh">全部164笔已提交发票的收入与销货成本（COGS）对比，以及应从哪里入手提升利润率。</span>
+    </p>
+
+    <div class="chart-card">
+      <div class="caveat">
+        <span aria-hidden="true">⚠️</span>
+        <span>
+          <span class="en"><strong>Data quality note:</strong> ERPNext has no recorded item cost (incoming rate) for Rp 2,688,846,574 of revenue — 43.8%, across 89 invoice lines, mostly Aug 2025 and Jul 2026. Those lines are treated as Rp 0 cost below, so the blended 29.2% GP% is likely overstated. For the 56.2% of revenue where cost <em>is</em> recorded, GP is actually negative (-26.0%) — see Table 1312. Get valuation/incoming rates posted for every item before trusting either number as final.</span>
+          <span class="zh"><strong>数据质量提示：</strong>ERPNext中有Rp 2,688,846,574的收入（占43.8%，共89笔发票明细，主要在2025年8月和2026年7月）没有记录商品成本（进货单价）。下方计算将这些明细的成本按Rp 0处理，因此综合毛利率29.2%可能被高估。而在已记录成本的56.2%收入中，实际毛利为负（-26.0%）——见表1312。建议先为所有商品补齐库存计价/进货单价，再采信任一数字。</span>
+        </span>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-mini">
+          <div class="sv">Rp 6,139,939,624</div>
+          <div class="sl"><span class="en">Revenue (A)</span><span class="zh">收入 (A)</span></div>
+          <div class="sb"><span class="en">164 submitted invoices</span><span class="zh">164笔已提交发票</span></div>
+        </div>
+        <div class="stat-mini">
+          <div class="sv">Rp 4,346,716,128</div>
+          <div class="sl"><span class="en">Cost of Goods Sold (B)</span><span class="zh">销货成本 (B)</span></div>
+          <div class="sb"><span class="en">Sum of incoming rate × qty</span><span class="zh">进货单价 × 数量之和</span></div>
+        </div>
+        <div class="stat-mini">
+          <div class="sv">Rp 1,793,223,496</div>
+          <div class="sl"><span class="en">Gross Profit (A−B)</span><span class="zh">毛利 (A−B)</span></div>
+          <div class="sb"><span class="en">Revenue minus COGS</span><span class="zh">收入减去销货成本</span></div>
+        </div>
+        <div class="stat-mini">
+          <div class="sv">29.2%</div>
+          <div class="sl"><span class="en">GP % (A−B)/A</span><span class="zh">毛利率 (A−B)/A</span></div>
+          <div class="sb"><span class="en">Blended, all invoices — see caveat</span><span class="zh">综合数值，含所有发票——见上方提示</span></div>
+        </div>
+      </div>
+
+      <div class="page-head" style="margin-top:4px"><span class="en">Chart 2: Revenue by Cost-Data Coverage</span><span class="zh">图表2：收入按成本数据覆盖情况划分</span></div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:var(--series-1)"></span><span class="en">Cost recorded</span><span class="zh">已记录成本</span></span>
+        <span class="legend-item"><span class="swatch" style="background:var(--red)"></span><span class="en">No cost recorded</span><span class="zh">未记录成本</span></span>
+      </div>
+      <div class="chart">
+        <div class="bar-row">
+          <div class="bar-label-row">
+            <span class="bar-name"><span class="en">Cost recorded</span><span class="zh">已记录成本</span></span>
+            <span class="bar-value">Rp 3,451,093,050 · 56.2% · <span class="en">183 lines</span><span class="zh">183条明细</span></span>
+          </div>
+          <div class="track"><div class="fill s1" style="width:100%">Rp 3.45B</div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label-row">
+            <span class="bar-name"><span class="en">No cost recorded</span><span class="zh">未记录成本</span></span>
+            <span class="bar-value">Rp 2,688,846,574 · 43.8% · <span class="en">89 lines</span><span class="zh">89条明细</span></span>
+          </div>
+          <div class="track"><div class="fill s4" style="width:77.9%">Rp 2.69B</div></div>
+        </div>
+      </div>
+      <div class="baseline-axis"><span class="en">0 — scaled to Rp 3,451,093,050 (cost-recorded revenue)</span><span class="zh">0 — 以已记录成本的收入Rp 3,451,093,050为基准</span></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="page-head"><span class="en">Chart 3: GP % by Month (A−B)/A</span><span class="zh">图表3：按月毛利率 (A−B)/A</span></div>
+      <p class="foot-note" style="margin-top:0 0 10px">
+        <span class="en">Grey cells = no cost data recorded that month (see caveat above), not a real 100% margin.</span>
+        <span class="zh">灰色格子 = 当月无成本数据（见上方提示），并非真实的100%利润率。</span>
+      </p>
+      <div class="heat-strip">
+        <div class="heat-cell" style="background:rgba(139,143,168,0.18)"><div class="hm">Aug '25</div><div class="hp">—</div><div class="hi"><span class="en">no cost data</span><span class="zh">无成本数据</span></div></div>
+        <div class="heat-cell" style="background:rgba(63,185,80,0.32)"><div class="hm">Sep '25</div><div class="hp">70.8%</div><div class="hi">2 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(248,81,73,0.18)"><div class="hm">Oct '25</div><div class="hp">-6.2%</div><div class="hi">19 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(248,81,73,0.55)"><div class="hm">Nov '25</div><div class="hp">-306.4%</div><div class="hi">14 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(248,81,73,0.18)"><div class="hm">Dec '25</div><div class="hp">-5.2%</div><div class="hi">10 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(63,185,80,0.32)"><div class="hm">Jan '26</div><div class="hp">72.0%</div><div class="hi">14 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(248,81,73,0.45)"><div class="hm">Feb '26</div><div class="hp">-169.1%</div><div class="hi">13 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(248,81,73,0.3)"><div class="hm">Mar '26</div><div class="hp">-73.4%</div><div class="hi">16 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(63,185,80,0.4)"><div class="hm">Apr '26</div><div class="hp">89.4%</div><div class="hi">13 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(245,158,11,0.2)"><div class="hm">May '26</div><div class="hp">6.7%</div><div class="hi">16 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(63,185,80,0.38)"><div class="hm">Jun '26</div><div class="hp">79.8%</div><div class="hi">25 <span class="en">inv</span><span class="zh">笔</span></div></div>
+        <div class="heat-cell" style="background:rgba(139,143,168,0.18)"><div class="hm">Jul '26</div><div class="hp">—</div><div class="hi"><span class="en">no cost data</span><span class="zh">无成本数据</span></div></div>
+      </div>
+      <div class="heat-legend">
+        <span><i style="background:rgba(63,185,80,0.6)"></i><span class="en">Healthy GP %</span><span class="zh">健康毛利率</span></span>
+        <span><i style="background:rgba(245,158,11,0.6)"></i><span class="en">Thin GP %</span><span class="zh">薄利</span></span>
+        <span><i style="background:rgba(248,81,73,0.6)"></i><span class="en">Negative GP %</span><span class="zh">负毛利</span></span>
+        <span><i style="background:rgba(139,143,168,0.5)"></i><span class="en">No cost data</span><span class="zh">无成本数据</span></span>
+      </div>
+
+      <div class="page-head" style="margin-top:16px"><span class="en">Table 1311: GP % by Month (Detail)</span><span class="zh">表1311：按月毛利率明细</span></div>
+      <button class="toggle-btn" id="toggleGpMonthTable" onclick="toggleGpMonthTable()"><span class="en">Show as table</span><span class="zh">以表格显示</span></button>
+      <table id="gpMonthTable">
+        <thead>
+          <tr>
+            <th><span class="en">Month</span><span class="zh">月份</span></th>
+            <th><span class="en">Revenue (A)</span><span class="zh">收入 (A)</span></th>
+            <th><span class="en">COGS (B)</span><span class="zh">销货成本 (B)</span></th>
+            <th><span class="en">Gross Profit (A−B)</span><span class="zh">毛利 (A−B)</span></th>
+            <th><span class="en">GP % (A−B)/A</span><span class="zh">毛利率 (A−B)/A</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Aug '25</td><td class="num">Rp 167,000,000</td><td class="num">Rp 0</td><td class="num">Rp 167,000,000</td><td class="num"><span class="en">n/a — no cost data</span><span class="zh">无 — 无成本数据</span></td></tr>
+          <tr><td class="name">Sep '25</td><td class="num">Rp 337,075,000</td><td class="num">Rp 98,324,429</td><td class="num pos">Rp 238,750,571</td><td class="num pos">70.8%</td></tr>
+          <tr><td class="name">Oct '25</td><td class="num">Rp 247,509,600</td><td class="num">Rp 262,860,685</td><td class="num neg">-Rp 15,351,085</td><td class="num neg">-6.2%</td></tr>
+          <tr><td class="name">Nov '25</td><td class="num">Rp 401,238,000</td><td class="num">Rp 1,630,656,974</td><td class="num neg">-Rp 1,229,418,974</td><td class="num neg">-306.4%</td></tr>
+          <tr><td class="name">Dec '25</td><td class="num">Rp 173,754,200</td><td class="num">Rp 182,758,394</td><td class="num neg">-Rp 9,004,194</td><td class="num neg">-5.2%</td></tr>
+          <tr><td class="name">Jan '26</td><td class="num">Rp 318,290,500</td><td class="num">Rp 88,967,247</td><td class="num pos">Rp 229,323,253</td><td class="num pos">72.0%</td></tr>
+          <tr><td class="name">Feb '26</td><td class="num">Rp 300,897,000</td><td class="num">Rp 809,685,823</td><td class="num neg">-Rp 508,788,823</td><td class="num neg">-169.1%</td></tr>
+          <tr><td class="name">Mar '26</td><td class="num">Rp 465,573,000</td><td class="num">Rp 807,104,835</td><td class="num neg">-Rp 341,531,835</td><td class="num neg">-73.4%</td></tr>
+          <tr><td class="name">Apr '26</td><td class="num">Rp 785,658,000</td><td class="num">Rp 83,513,549</td><td class="num pos">Rp 702,144,451</td><td class="num pos">89.4%</td></tr>
+          <tr><td class="name">May '26</td><td class="num">Rp 215,150,750</td><td class="num">Rp 200,715,151</td><td class="num pos">Rp 14,435,599</td><td class="num pos">6.7%</td></tr>
+          <tr><td class="name">Jun '26</td><td class="num">Rp 900,538,628</td><td class="num">Rp 182,129,042</td><td class="num pos">Rp 718,409,586</td><td class="num pos">79.8%</td></tr>
+          <tr><td class="name">Jul '26</td><td class="num">Rp 1,827,254,946</td><td class="num">Rp 0</td><td class="num">Rp 1,827,254,946</td><td class="num"><span class="en">n/a — no cost data</span><span class="zh">无 — 无成本数据</span></td></tr>
+        </tbody>
+      </table>
+      <p class="foot-note">
+        <span class="en">Source: Sales Invoice Item (base_net_amount) × incoming_rate, submitted invoices only (docstatus = 1), both Filtec companies combined, grouped by posting month.</span>
+        <span class="zh">数据来源：销售发票明细（base_net_amount）× 进货单价，仅统计已提交发票（docstatus = 1），合并两家Filtec公司数据，按开票月份汇总。</span>
+      </p>
+    </div>
+
+    <div class="chart-card">
+      <div class="page-head"><span class="en">Table 1312: Gross Profit by Item</span><span class="zh">表1312：按商品划分的毛利</span></div>
+      <p>
+        <span class="en">Top 15 items by revenue, cost-tracked only (incoming rate &gt; 0) — this is the reliable 56.2% slice of revenue from the caveat above.</span>
+        <span class="zh">按收入排名前15的商品，仅含已记录成本的商品（进货单价&gt;0）——即上方提示中可信的56.2%收入部分。</span>
+      </p>
+      <table class="show">
+        <thead>
+          <tr>
+            <th><span class="en">Item</span><span class="zh">商品</span></th>
+            <th><span class="en">Revenue (A)</span><span class="zh">收入 (A)</span></th>
+            <th><span class="en">COGS (B)</span><span class="zh">销货成本 (B)</span></th>
+            <th><span class="en">Gross Profit (A−B)</span><span class="zh">毛利 (A−B)</span></th>
+            <th><span class="en">GP % (A−B)/A</span><span class="zh">毛利率 (A−B)/A</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">BK-SP-FilterElement</td><td class="num">Rp 2,134,275,000</td><td class="num">Rp 2,916,090,328</td><td class="num neg">-Rp 781,815,328</td><td class="num neg">-36.6%</td></tr>
+          <tr><td class="name">FE-FE</td><td class="num">Rp 476,232,750</td><td class="num">Rp 95,561,013</td><td class="num pos">Rp 380,671,737</td><td class="num pos">79.9%</td></tr>
+          <tr><td class="name">HVAC-MF</td><td class="num">Rp 178,972,500</td><td class="num">Rp 100,962,500</td><td class="num pos">Rp 78,010,000</td><td class="num pos">43.6%</td></tr>
+          <tr><td class="name">BK-SP-StarPleated</td><td class="num">Rp 115,000,000</td><td class="num">Rp 82,461,569</td><td class="num pos">Rp 32,538,432</td><td class="num pos">28.3%</td></tr>
+          <tr><td class="name">WT-FC</td><td class="num">Rp 90,288,400</td><td class="num">Rp 137,261,938</td><td class="num neg">-Rp 46,973,538</td><td class="num neg">-52.0%</td></tr>
+          <tr><td class="name">BK-SP-DPI</td><td class="num">Rp 71,750,000</td><td class="num">Rp 23,042,203</td><td class="num pos">Rp 48,707,797</td><td class="num pos">67.9%</td></tr>
+          <tr><td class="name">COMP-AF</td><td class="num">Rp 50,489,000</td><td class="num">Rp 16,553,333</td><td class="num pos">Rp 33,935,667</td><td class="num pos">67.2%</td></tr>
+          <tr><td class="name">HVAC-PF</td><td class="num">Rp 48,720,000</td><td class="num">Rp 111,248,179</td><td class="num neg">-Rp 62,528,179</td><td class="num neg">-128.4%</td></tr>
+          <tr><td class="name">BK-SP-ORing</td><td class="num">Rp 43,946,400</td><td class="num">Rp 20,764,620</td><td class="num pos">Rp 23,181,780</td><td class="num pos">52.8%</td></tr>
+          <tr><td class="name">WT-FC2</td><td class="num">Rp 37,500,000</td><td class="num">Rp 550,000,000</td><td class="num neg">-Rp 512,500,000</td><td class="num neg">-1366.7%</td></tr>
+          <tr><td class="name">WT-MRO</td><td class="num">Rp 36,000,000</td><td class="num">Rp 30,600,000</td><td class="num pos">Rp 5,400,000</td><td class="num pos">15.0%</td></tr>
+          <tr><td class="name">HVAC-HF</td><td class="num">Rp 35,570,000</td><td class="num">Rp 21,250,000</td><td class="num pos">Rp 14,320,000</td><td class="num pos">40.3%</td></tr>
+          <tr><td class="name">WT-FC1</td><td class="num">Rp 20,790,000</td><td class="num">Rp 8,653,750</td><td class="num pos">Rp 12,136,250</td><td class="num pos">58.4%</td></tr>
+          <tr><td class="name">DC-BF</td><td class="num">Rp 16,028,000</td><td class="num">Rp 19,320,800</td><td class="num neg">-Rp 3,292,800</td><td class="num neg">-20.5%</td></tr>
+          <tr><td class="name">MESH-WM-EA</td><td class="num">Rp 15,556,000</td><td class="num">Rp 6,025,070</td><td class="num pos">Rp 9,530,930</td><td class="num pos">61.3%</td></tr>
+        </tbody>
+      </table>
+      <p class="foot-note">
+        <span class="en">Source: Sales Invoice Item grouped by item_code, submitted invoices only, incoming_rate &gt; 0. Remaining smaller cost-tracked items (below top 15) add ~Rp 80.0M more revenue not shown here.</span>
+        <span class="zh">数据来源：销售发票明细按商品编码汇总，仅统计已提交发票，且进货单价&gt;0。未列出的其余小额已记录成本商品还有约Rp 80.0M收入。</span>
+      </p>
+    </div>
+
+    <div class="insight-card">
+      <h3><span class="en">How to Increase GP %</span><span class="zh">如何提升毛利率</span></h3>
+      <ul class="insight-list">
+        <li><span class="insight-num">1</span><span>
+          <span class="en"><strong>Fix cost data capture first.</strong> 43.8% of revenue (Rp 2.69B, 89 lines) has no recorded item cost — mostly Aug 2025 and Jul 2026. Until every stock item has a valuation/incoming rate (Purchase Receipt posted before the matching Sales Invoice), neither the 29.2% blended figure nor the -26.0% cost-tracked figure can be trusted as the "real" GP%. This is the prerequisite to everything below.</span>
+          <span class="zh"><strong>优先补齐成本数据。</strong>43.8%的收入（Rp 2.69B，89条明细）没有记录商品成本——主要集中在2025年8月和2026年7月。在所有库存商品都补齐库存计价/进货单价（即采购收货单需在对应销售发票之前过账）之前，无论是29.2%的综合数字还是-26.0%的已记录成本数字都不能视为"真实"毛利率。这是下面所有措施的前提。</span>
+        </span></li>
+        <li><span class="insight-num">2</span><span>
+          <span class="en"><strong>Investigate BK-SP-FilterElement's costing.</strong> It's your #1 revenue item (Rp 2.13B) but also the single biggest loss (-Rp 781.8M, -36.6%). Its recorded unit cost swings from Rp 0 to over Rp 101,000,000 per unit across different invoices for what should be the same item — that's a valuation/costing error, not necessarily a real pricing problem. One bad invoice (UBP Bali, Nov 2025) alone accounts for -Rp 1.0B of that swing and is most of why Nov 2025 shows -306.4% GP%. Correcting this item's costing could flip the whole company's GP% picture.</span>
+          <span class="zh"><strong>核查BK-SP-FilterElement的成本。</strong>该商品是收入第一名（Rp 2.13B），但也是最大的亏损来源（-Rp 781.8M，-36.6%）。同一商品在不同发票中的记录单价从Rp 0到超过Rp 101,000,000不等——这更像是库存计价/成本录入错误，而非真实的定价问题。仅UBP Bali一笔发票（2025年11月）就造成了-Rp 1.0B的偏差，也是2025年11月毛利率-306.4%的主因。修正该商品的成本核算，可能会扭转公司整体毛利率的局面。</span>
+        </span></li>
+        <li><span class="insight-num">3</span><span>
+          <span class="en"><strong>Grow the proven high-margin items.</strong> FE-FE (79.9% margin, Rp 476.2M revenue), BK-SP-DPI (67.9%), COMP-AF (67.2%), MESH-WM-EA (61.3%) and HVAC-MF (43.6%) are comfortably profitable. Push these into the sales mix with existing Key Accounts before chasing new lower-margin business.</span>
+          <span class="zh"><strong>扩大已验证的高毛利商品销量。</strong>FE-FE（79.9%毛利率，Rp 476.2M收入）、BK-SP-DPI（67.9%）、COMP-AF（67.2%）、MESH-WM-EA（61.3%）和HVAC-MF（43.6%）都有稳健的盈利能力。应优先向现有重点客户推广这些商品，而非急于拓展利润更薄的新业务。</span>
+        </span></li>
+        <li><span class="insight-num">4</span><span>
+          <span class="en"><strong>Re-price or renegotiate the chronic loss items.</strong> WT-FC (-52.0%), HVAC-PF (-128.4%), DC-BF (-20.5%) and WT-FC2 (-1,366.7% on a single Rp 37.5M line) are consistently sold below cost. Either raise the sale price, negotiate a lower purchase cost from the supplier, or stop stocking them — each sale currently destroys margin instead of building it.</span>
+          <span class="zh"><strong>对长期亏损商品重新定价或议价。</strong>WT-FC（-52.0%）、HVAC-PF（-128.4%）、DC-BF（-20.5%）以及WT-FC2（单笔Rp 37.5M发票即-1,366.7%）长期低于成本销售。应提高售价、向供应商争取更低的采购成本，或干脆停止备货——目前每一笔销售都在侵蚀而非创造利润。</span>
+        </span></li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="/view-counter.js"></script>
+
+</div>
+
+<footer>
+  <p>
+    <span class="en">Filtec Sales Dashboard &nbsp;·&nbsp; Paul's World &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+    <span class="zh">Filtec销售仪表板 &nbsp;·&nbsp; Paul的世界 &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+  </p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === 'zh' ? 'lang-zh' : '';
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.includes(lang === 'zh' ? '中文' : 'English'));
+  });
+}
+function setPage(n) {
+  [1, 2, 3].forEach(function(i) {
+    document.getElementById('page-' + i).classList.toggle('active', i === n);
+    document.getElementById('tab-' + i).classList.toggle('active', i === n);
+  });
+  window.scrollTo({ top: document.querySelector('.tabs-bar').offsetTop, behavior: 'smooth' });
+}
+function toggleTable(){
+  var t = document.getElementById('dataTable');
+  var b = document.getElementById('toggleTable');
+  var showing = t.classList.toggle('show');
+  b.innerHTML = showing
+    ? '<span class="en">Hide table</span><span class="zh">隐藏表格</span>'
+    : '<span class="en">Show as table</span><span class="zh">以表格显示</span>';
+}
+function toggleKaTable(){
+  var t = document.getElementById('kaDataTable');
+  var b = document.getElementById('toggleKaTable');
+  var showing = t.classList.toggle('show');
+  b.innerHTML = showing
+    ? '<span class="en">Hide table</span><span class="zh">隐藏表格</span>'
+    : '<span class="en">Show as table</span><span class="zh">以表格显示</span>';
+}
+function toggleGpMonthTable(){
+  var t = document.getElementById('gpMonthTable');
+  var b = document.getElementById('toggleGpMonthTable');
+  var showing = t.classList.toggle('show');
+  b.innerHTML = showing
+    ? '<span class="en">Hide table</span><span class="zh">隐藏表格</span>'
+    : '<span class="en">Show as table</span><span class="zh">以表格显示</span>';
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if(navigator.share){
+    navigator.share({title:title, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+function togglePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.toggle('open');
+}
+function closePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
