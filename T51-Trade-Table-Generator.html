@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T51: Iron Condor Trade Table Generator</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { overflow-x:hidden; max-width:100%; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0d1117; color:#e6edf3; font-size:16px; line-height:1.5; padding-bottom:60px; }
+
+  .home-btn { position:fixed; top:12px; left:12px; z-index:999; background:rgba(255,255,255,.1); border:1.5px solid #f59e0b; color:#f59e0b; font-weight:700; font-size:.85rem; padding:7px 14px; border-radius:20px; text-decoration:none; }
+  .home-btn:hover { background:#f59e0b; color:#0d1117; }
+
+  .lang-toggle { position:fixed; top:12px; right:56px; z-index:999; display:flex; gap:4px; }
+  .lang-toggle button { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:#e6edf3; font-size:.72rem; font-weight:700; padding:6px 11px; border-radius:20px; cursor:pointer; }
+  .lang-toggle button.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
+
+  .page-menu-wrap { position:fixed; top:12px; right:12px; z-index:999; }
+  .page-menu-btn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.35); color:#e6edf3; font-size:1.15rem; font-weight:800; cursor:pointer; line-height:1; }
+  .page-menu-btn:hover { background:rgba(255,255,255,.2); }
+  .page-menu-dropdown { display:none; position:absolute; top:42px; right:0; background:#161b22; border:1px solid rgba(255,255,255,.15); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:190px; overflow:hidden; }
+  .page-menu-dropdown.open { display:block; }
+  .page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:#e6edf3; text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .page-menu-dropdown button:hover { background:rgba(255,255,255,.08); }
+  .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
+  .page-menu-dropdown button.pinned { color:#f59e0b; }
+
+  header.hero { text-align:center; padding:70px 18px 26px; background:linear-gradient(135deg,#111827,#1e3a5f); border-bottom:1px solid rgba(255,255,255,.08); }
+  header.hero h1 { font-size:1.5rem; font-weight:800; letter-spacing:.5px; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; padding:0 40px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  header.hero .sub { color:#9fb3c8; font-size:.92rem; margin-top:8px; max-width:600px; margin-left:auto; margin-right:auto; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; }
+
+  .wrap { max-width:760px; margin:0 auto; padding:0 14px; }
+
+  /* Search box */
+  .search-card { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:18px 16px; margin:22px 0 16px; }
+  .search-row { display:flex; gap:8px; }
+  .search-row input { flex:1; background:#0d1117; border:1.5px solid rgba(255,255,255,.15); color:#e6edf3; font-size:1rem; font-weight:700; letter-spacing:.03em; padding:11px 14px; border-radius:10px; text-transform:uppercase; }
+  .search-row input:focus { outline:none; border-color:#f59e0b; }
+  .search-row button { background:#f59e0b; color:#0d1117; border:none; font-weight:800; font-size:.88rem; padding:0 20px; border-radius:10px; cursor:pointer; white-space:nowrap; }
+  .search-row button:hover { background:#ffb733; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+  .chip { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); color:#c9d1d9; font-size:.76rem; font-weight:700; padding:6px 13px; border-radius:20px; cursor:pointer; }
+  .chip:hover { background:rgba(245,158,11,.18); border-color:#f59e0b; color:#f59e0b; }
+  .chip-label { font-size:.66rem; color:#8b98a5; text-transform:uppercase; letter-spacing:.04em; margin-top:2px; width:100%; }
+
+  .msg-box { text-align:center; color:#8b98a5; font-size:.85rem; padding:24px 12px; }
+  .msg-box.err { color:#f85149; }
+
+  /* Condor card (reused from T29 style) */
+  .condor { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:18px 16px; margin:16px 0; }
+  .c-head { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; }
+  .tkr { font-size:1.3rem; font-weight:800; }
+  .tkr small { font-size:.6rem; color:#8b98a5; font-weight:600; vertical-align:top; margin-left:4px; }
+  .c-meta { font-size:.78rem; color:#9fb3c8; }
+  @media(max-width:640px){ .c-head { grid-template-columns:1fr; } }
+  .pill { font-size:.65rem; font-weight:800; padding:5px 11px; border-radius:20px; letter-spacing:.05em; background:rgba(63,185,80,.15); color:#3fb950; border:1px solid rgba(63,185,80,.4); white-space:nowrap; }
+
+  .sp-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:7px; margin-top:10px; padding:9px 11px; background:#0d1117; border:1px solid rgba(255,255,255,.07); border-radius:9px; font-size:.76rem; }
+  .sp-label { color:#8b98a5; font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+  .sp-new { color:#f5c869; font-weight:800; font-size:.92rem; }
+  .sp-time { color:#8b98a5; font-size:.66rem; }
+  .sp-old { color:#8b98a5; font-size:.7rem; flex-basis:100%; }
+  .sp-old b { color:#c9d1d9; font-weight:700; }
+  .sp-change { flex-basis:100%; font-size:.72rem; color:#8b98a5; margin-top:2px; }
+  .sp-change b { font-weight:800; font-size:.82rem; }
+  .sp-change .up { color:#3fb950; }
+  .sp-change .down { color:#f85149; }
+  .sp-loading { color:#8b98a5; font-size:.72rem; }
+
+  .table-scroll { overflow-x:auto; }
+  table.legs { width:100%; border-collapse:collapse; margin-top:14px; font-size:.8rem; min-width:560px; }
+  table.legs th { text-align:left; color:#8b98a5; font-size:.64rem; text-transform:uppercase; letter-spacing:.04em; padding:6px 6px; border-bottom:1px solid rgba(255,255,255,.08); }
+  table.legs td { padding:7px 6px; border-bottom:1px solid rgba(255,255,255,.05); }
+  table.legs td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .buy { color:#58a6ff; font-weight:700; } .sell { color:#f85149; font-weight:700; }
+
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px; }
+  .metrics .m { background:#0d1117; border:1px solid rgba(255,255,255,.07); border-radius:9px; padding:9px 6px; text-align:center; }
+  .metrics .m .mk { font-size:.58rem; color:#8b98a5; text-transform:uppercase; }
+  .metrics .m .mv { font-size:.95rem; font-weight:800; margin-top:3px; }
+  .mv.green { color:#3fb950; } .mv.red { color:#f85149; } .mv.amber { color:#f59e0b; }
+  @media(max-width:560px){ .metrics{grid-template-columns:repeat(2,1fr);} }
+
+  .note { font-size:.72rem; color:#8b98a5; margin:14px 0 0; padding:12px; background:#0d1117; border-radius:10px; border:1px solid rgba(255,255,255,.06); }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; padding:0 14px; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 <span class="en">Home</span><span class="zh">首页</span></a>
+
+<div class="lang-toggle">
+  <button id="btn-en" class="active" onclick="setLang('en')">🇬🇧 English</button>
+  <button id="btn-zh" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<div class="page-menu-wrap">
+  <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+  <div class="page-menu-dropdown" id="pageMenuDropdown">
+    <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span></button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T51</span><span class="zh">T51</span></span>
+  </div>
+  <h1><span class="en">🧮 T51: Iron Condor Trade Table Generator</span><span class="zh">🧮 T51：铁鹰交易表生成器</span></h1>
+  <p class="sub"><span class="en">Type any share name/ticker you're currently holding an option position in — this looks it up straight from <code>positions.json</code> (the same live data T29 uses) and generates its trade table automatically.</span><span class="zh">输入任意持有期权仓位的股票代码——本工具直接从<code>positions.json</code>（与T29相同的实时数据）查找，并自动生成该持仓的交易表。</span></p>
+</header>
+
+<div class="wrap">
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="pinToast">📌 Pinned!</div>
+
+  <div class="search-card">
+    <div class="search-row">
+      <input type="text" id="symInput" placeholder="e.g. NVDA" maxlength="10" autocapitalize="characters" autocomplete="off">
+      <button onclick="generateTable()"><span class="en">Generate</span><span class="zh">生成</span></button>
+    </div>
+    <div class="chip-label"><span class="en">Symbols currently in positions.json — tap to load</span><span class="zh">positions.json中现有的代码——点击加载</span></div>
+    <div class="chips" id="chipRow"></div>
+  </div>
+
+  <div id="resultArea"></div>
+
+  <div class="foot">
+    <span class="en">Auto-generated from live IBKR positions data</span><span class="zh">根据IBKR实时持仓数据自动生成</span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Iron Condor Breadboard — Current Positions</span><span class="zh">T29：铁鹰面包板——目前持仓</span></a><br>
+    <a href="T46-Update-IBKR-Data-Guide.html">🍞🔄 <span class="en">T46: How to Update IBKR Raw Data</span><span class="zh">T46：如何更新IBKR原始数据</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+
+  <script src="/view-counter.js"></script>
+</div>
+
+<script>
+var curLang = 'en';
+function setLang(l){
+  curLang = l;
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.getElementById('btn-zh').classList.toggle('active', l==='zh');
+  document.querySelectorAll('.en').forEach(function(e){ e.style.display = (l==='en') ? '' : 'none'; });
+  document.querySelectorAll('.zh').forEach(function(e){ e.style.display = (l==='zh') ? '' : 'none'; });
+}
+setLang('en');
+
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+function togglePageMenu(){ document.getElementById('pageMenuDropdown').classList.toggle('open'); }
+function closePageMenu(){ document.getElementById('pageMenuDropdown').classList.remove('open'); }
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+
+var PIN_KEY = 'pw_pinned_pages';
+var PAGE_URL = 'T51-Trade-Table-Generator.html';
+var PAGE_TITLE = 'T51 Iron Condor Table Generator';
+var PAGE_TITLE_ZH = 'T51 铁鹰交易表生成器';
+var PAGE_ICON = '🧮';
+function getPinnedPages(){ try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; } }
+function isPagePinned(){ return getPinnedPages().some(function(p){ return p.url === PAGE_URL; }); }
+function updatePinMenuItem(){
+  var el = document.getElementById('pinMenuItem');
+  var pinned = isPagePinned();
+  el.classList.toggle('pinned', pinned);
+  el.innerHTML = pinned
+    ? '📌 <span class="en">Unpin from Tools hub</span><span class="zh">取消置顶</span>'
+    : '📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span>';
+}
+function togglePinThisPage(){
+  var list = getPinnedPages();
+  var idx = list.findIndex(function(p){ return p.url === PAGE_URL; });
+  var toast = document.getElementById('pinToast');
+  if(idx >= 0){
+    list.splice(idx, 1);
+    toast.innerHTML = '<span class="en">Unpinned</span><span class="zh">已取消置顶</span>';
+  } else {
+    list.unshift({ url:PAGE_URL, title:PAGE_TITLE, titleZh:PAGE_TITLE_ZH, icon:PAGE_ICON, pinnedAt:Date.now() });
+    toast.innerHTML = '<span class="en">📌 Pinned! Shows at top of Investment Tools</span><span class="zh">📌 已置顶！将显示在投资工具中心顶部</span>';
+  }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch(e){}
+  updatePinMenuItem();
+  closePageMenu();
+  toast.style.display = 'block';
+  setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+}
+updatePinMenuItem();
+
+// ===== Core data =====
+var positionsData = null;
+function loadPositions(){
+  return fetch('/positions.json').then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); });
+}
+function buildChips(){
+  if(!positionsData || !positionsData.options) return;
+  var syms = [];
+  positionsData.options.forEach(function(o){ if(syms.indexOf(o.underlying) === -1) syms.push(o.underlying); });
+  var row = document.getElementById('chipRow');
+  row.innerHTML = '';
+  syms.forEach(function(s){
+    var b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = s;
+    b.onclick = function(){ document.getElementById('symInput').value = s; generateTable(); };
+    row.appendChild(b);
+  });
+}
+loadPositions().then(function(d){ positionsData = d; buildChips(); }).catch(function(){});
+
+document.getElementById('symInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') generateTable();
+});
+
+function fmtMoney(n){
+  var sign = n < 0 ? '−' : '';
+  return sign + '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtSignedMoney(n){
+  return (n >= 0 ? '+' : '') + fmtMoney(n);
+}
+function daysBetween(a, b){ return Math.round((b - a) / 86400000); }
+
+// Reuse the /api/td live-quote proxy (same one T29 uses) so this works for any ticker, not just the fixed T29 symbols.
+function fetchQuote(sym){
+  return fetch('/api/td?symbols=' + encodeURIComponent(sym)).then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); });
+}
+
+var SP_DAY1_KEY = 'T51_sharePriceDay1_v1';
+function loadDay1(){ try{ return JSON.parse(localStorage.getItem(SP_DAY1_KEY)) || {}; }catch(e){ return {}; } }
+function saveDay1(d){ localStorage.setItem(SP_DAY1_KEY, JSON.stringify(d)); }
+function recordDay1IfMissing(sym, price){
+  var d = loadDay1();
+  if(!d[sym]){ d[sym] = { p:price, t:Date.now() }; saveDay1(d); }
+  return d[sym];
+}
+function fmtSpTime(ts){
+  var d = new Date(ts);
+  return d.toLocaleDateString('en-SG',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+function generateTable(){
+  var sym = document.getElementById('symInput').value.trim().toUpperCase();
+  var area = document.getElementById('resultArea');
+  if(!sym){ return; }
+  if(!positionsData){
+    area.innerHTML = '<div class="msg-box"><span class="en">Loading positions.json…</span><span class="zh">正在加载positions.json…</span></div>';
+    loadPositions().then(function(d){ positionsData = d; buildChips(); generateTable(); }).catch(function(){
+      area.innerHTML = '<div class="msg-box err"><span class="en">Could not load positions.json.</span><span class="zh">无法加载positions.json。</span></div>';
+    });
+    return;
+  }
+  var legs = positionsData.options.filter(function(o){ return o.underlying === sym; });
+  if(!legs.length){
+    area.innerHTML = '<div class="msg-box err"><span class="en">No open option position found for <b>'+sym+'</b> in positions.json. Try one of the symbols above.</span><span class="zh">在positions.json中未找到<b>'+sym+'</b>的期权持仓。请从上方选择已有的代码。</span></div>';
+    setLang(curLang);
+    return;
+  }
+  // Order: Puts before Calls; within each, SELL (qty<0) before BUY (qty>0) — matches T29's convention.
+  legs = legs.slice().sort(function(a,b){
+    if(a.right !== b.right) return a.right === 'P' ? -1 : 1;
+    return a.qty - b.qty;
+  });
+
+  var expiry = legs[0].expiry;
+  var expDate = new Date(expiry + 'T00:00:00Z');
+  var dte = daysBetween(new Date(), expDate);
+  var expLabel = expDate.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'2-digit',timeZone:'UTC'});
+
+  var netCredit = 0;
+  var rowsHtml = legs.map(function(o){
+    var action = o.qty < 0 ? 'SELL' : 'BUY';
+    var amount = (o.qty < 0 ? 1 : -1) * Math.abs(o.qty) * o.fillPrice * 100;
+    netCredit += amount;
+    var deltaTxt = (typeof o.delta === 'number') ? o.delta.toFixed(3) : '<span style="color:#8b98a5">—</span>';
+    return '<tr>'+
+      '<td class="'+(action==='SELL'?'sell':'buy')+'">'+action+'</td>'+
+      '<td>'+o.strike+' '+(o.right==='P'?'Put':'Call')+'</td>'+
+      '<td class="num">$'+o.fillPrice.toFixed(2)+'</td>'+
+      '<td class="num">'+fmtSignedMoney(amount)+'</td>'+
+      '<td class="num">'+deltaTxt+'</td>'+
+      '<td class="num" style="color:#8b98a5">—</td>'+
+      '<td class="num" style="color:#8b98a5">—</td>'+
+    '</tr>';
+  }).join('');
+
+  // 4-leg classic Iron Condor metrics (2 puts + 2 calls) — Max Loss / Profit Zone / Return-Risk
+  var puts = legs.filter(function(o){ return o.right==='P'; });
+  var calls = legs.filter(function(o){ return o.right==='C'; });
+  var metricsHtml = '';
+  if(puts.length===2 && calls.length===2){
+    var shortPut = puts.filter(function(o){return o.qty<0;})[0], longPut = puts.filter(function(o){return o.qty>0;})[0];
+    var shortCall = calls.filter(function(o){return o.qty<0;})[0], longCall = calls.filter(function(o){return o.qty>0;})[0];
+    if(shortPut && longPut && shortCall && longCall){
+      var putWing = Math.abs(shortPut.strike - longPut.strike);
+      var callWing = Math.abs(longCall.strike - shortCall.strike);
+      var lots = Math.abs(shortPut.qty);
+      var maxLoss = Math.max(putWing, callWing) * 100 * lots - netCredit;
+      var retRisk = maxLoss > 0 ? (netCredit / maxLoss * 100) : null;
+      metricsHtml =
+        '<div class="metrics">'+
+          '<div class="m"><div class="mk"><span class="en">Net Credit (A)</span><span class="zh">净收权利金 (A)</span></div><div class="mv '+(netCredit>=0?'green':'red')+'">'+fmtMoney(netCredit)+'</div></div>'+
+          '<div class="m"><div class="mk"><span class="en">Max Loss (B)</span><span class="zh">最大亏损 (B)</span></div><div class="mv red">−'+fmtMoney(Math.abs(maxLoss)).replace('−','')+'</div></div>'+
+          '<div class="m"><div class="mk"><span class="en">Profit Zone</span><span class="zh">盈利区</span></div><div class="mv">'+shortPut.strike+'–'+shortCall.strike+'</div></div>'+
+          '<div class="m"><div class="mk"><span class="en">Return/Risk (A/B)</span><span class="zh">收益/风险 (A/B)</span></div><div class="mv amber">'+(retRisk!==null?retRisk.toFixed(0)+'%':'—')+'</div></div>'+
+        '</div>';
+    }
+  } else {
+    metricsHtml =
+      '<div class="metrics" style="grid-template-columns:1fr;">'+
+        '<div class="m"><div class="mk"><span class="en">Net Credit/Debit (A) — sum of Amount column</span><span class="zh">净收/付权利金 (A)——金额栏合计</span></div><div class="mv '+(netCredit>=0?'green':'red')+'">'+fmtMoney(netCredit)+'</div></div>'+
+      '</div>';
+  }
+
+  area.innerHTML =
+    '<div class="condor">'+
+      '<div class="c-head">'+
+        '<div class="tkr">Table 1321: '+sym+' <small>from positions.json</small></div>'+
+        '<div class="c-meta"><span class="en">Exp '+expLabel+' · '+dte+' DTE</span><span class="zh">到期 '+expLabel+' · '+dte+'天</span><br><span class="strat" style="display:inline-block;background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid rgba(245,158,11,.35);font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:6px;margin-top:6px;">IG · Iron Condor</span></div>'+
+        '<div class="pill">● OPEN</div>'+
+      '</div>'+
+      '<div class="sp-row" id="sp-dyn"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>'+
+      '<div class="table-scroll">'+
+      '<table class="legs">'+
+        '<tr><th><span class="en">Action</span><span class="zh">操作</span></th><th><span class="en">Leg</span><span class="zh">腿</span></th><th class="num"><span class="en">Fill</span><span class="zh">成交</span></th><th class="num"><span class="en">Amount</span><span class="zh">金额</span></th><th class="num"><span class="en">Δ Delta</span><span class="zh">Δ Delta</span></th><th class="num"><span class="en">Price</span><span class="zh">平仓价</span></th><th class="num"><span class="en">Net Price</span><span class="zh">净价</span></th></tr>'+
+        rowsHtml+
+      '</table>'+
+      '</div>'+
+      metricsHtml+
+      '<div class="note">'+
+        '<span class="en">Fill, Amount &amp; Δ Delta come straight from <code>positions.json</code> (delta is the real IBKR per-leg reading when logged, otherwise shown as — rather than guessed). <b>Price</b> and <b>Net Price</b> (the cost to close today) need a live per-leg option quote that <code>positions.json</code> does not carry, so they show as — here — see T29’s Bang Trade Analysis tab where those are filled in manually from a trade-close alert.</span>'+
+        '<span class="zh">成交价、金额与Δ Delta均直接取自<code>positions.json</code>（有记录时Delta为IBKR真实读数，否则显示—，不做猜测）。<b>平仓价</b>与<b>净价</b>（今日平仓成本）需要每条腿的实时期权报价，而<code>positions.json</code>不含此数据，因此此处显示为———可参考T29的「Bang交易分析」页签，那里是根据平仓提醒手动填入的。</span>'+
+      '</div>'+
+    '</div>';
+  setLang(curLang);
+
+  fetchQuote(sym).then(function(data){
+    var q = data && data[sym];
+    var el = document.getElementById('sp-dyn');
+    if(!el) return;
+    if(q && typeof q.price === 'number'){
+      var day1 = recordDay1IfMissing(sym, q.price);
+      var html = '<span class="sp-label">SHARE PRICE</span> <span class="sp-new">$'+q.price.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+      html += '<span class="sp-old"><b>'+'</b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> <b>$'+day1.p.toFixed(2)+'</b> · '+fmtSpTime(day1.t)+'</span>';
+      var diff = q.price - day1.p, pct = day1.p ? (diff/day1.p*100) : 0, up = diff >= 0;
+      html += '<span class="sp-change"><span class="en">Price change (Now vs Day 1)</span><span class="zh">价格变化（现价 vs 第1天）</span> <b class="'+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</b></span>';
+      el.innerHTML = html;
+    } else {
+      el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>';
+    }
+    setLang(curLang);
+  }).catch(function(){
+    var el = document.getElementById('sp-dyn');
+    if(el) el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>';
+    setLang(curLang);
+  });
+}
+</script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
