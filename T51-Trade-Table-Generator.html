@@ -449,6 +449,14 @@ function generateTable(){
       html += '<span class="sp-old"><b>'+'</b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> <b>$'+day1.p.toFixed(2)+'</b> · '+fmtSpTime(day1.t)+'</span>';
       var diff = q.price - day1.p, pct = day1.p ? (diff/day1.p*100) : 0, up = diff >= 0;
       html += '<span class="sp-change"><span class="en">Price change (Now vs Day 1)</span><span class="zh">价格变化（现价 vs 第1天）</span> <b class="'+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</b></span>';
+      if(shortPut){
+        var spVar = (q.price - shortPut.strike) / q.price * 100, spUp = spVar >= 0;
+        html += '<span class="sp-change"><span class="en">Share Price vs Put Strike (A−B)/A</span><span class="zh">股价 vs 认沽行权价 (A−B)/A</span> '+shortPut.strike+'P <b class="'+(spUp?'up':'down')+'">'+(spUp?'+':'')+spVar.toFixed(2)+'%</b></span>';
+      }
+      if(shortCall){
+        var scVar = (shortCall.strike - q.price) / q.price * 100, scUp = scVar >= 0;
+        html += '<span class="sp-change"><span class="en">Share Price vs Call Strike (C−A)/A</span><span class="zh">股价 vs 认购行权价 (C−A)/A</span> '+shortCall.strike+'C <b class="'+(scUp?'up':'down')+'">'+(scUp?'+':'')+scVar.toFixed(2)+'%</b></span>';
+      }
       el.innerHTML = html;
       if(isClassicIC){
         var price = q.price;
