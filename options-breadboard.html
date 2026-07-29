@@ -3256,6 +3256,51 @@
 
   <div id="tab-nvda" style="display:none">
 
+    <!-- Copied from IC Setup tab -->
+    <div class="condor">
+      <div class="c-head">
+        <div class="tkr">Table 1301: NVDA <small>CBOE</small></div>
+        <div class="c-meta"><span class="en">Exp Aug 21 '26 · 36 DTE</span><span class="zh">到期 2026年8月21日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
+        <div class="pill open">● OPEN</div>
+      </div>
+      <div class="sp-row" id="sp-nvda-bang"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
+      <table class="legs">
+        <tr><th><span class="en">Action</span><span class="zh">操作</span></th><th><span class="en">Leg</span><span class="zh">腿</span></th><th class="num"><span class="en">Fill</span><span class="zh">成交</span></th><th class="num"><span class="en">Amount</span><span class="zh">金额</span></th><th class="num"><span class="en">Δ Delta</span><span class="zh">Δ Delta</span></th></tr>
+        <tr><td class="sell">SELL</td><td>195 Put</td><td class="num">$5.06</td><td class="num">+$506</td><td class="num">−0.33</td></tr>
+        <tr><td class="buy">BUY</td><td>190 Put</td><td class="num">$3.75</td><td class="num">−$375</td><td class="num">−0.25</td></tr>
+        <tr><td class="sell">SELL</td><td>230 Call</td><td class="num">$3.21</td><td class="num">+$321</td><td class="num">+0.21</td></tr>
+        <tr><td class="buy">BUY</td><td>235 Call</td><td class="num">$2.37</td><td class="num">−$237</td><td class="num">+0.17</td></tr>
+      </table>
+      <div class="note" style="margin-top:8px">
+        <span class="en">Delta is modeled from the entry premium (Black-Scholes, back-solved implied vol) since real per-leg delta/IV isn't logged in <code>positions.json</code> — treat as an estimate, not a live IBKR reading. Convention per T30: put deltas negative, call deltas positive.</span>
+        <span class="zh">Delta 由建仓权利金反推隐含波动率（Black-Scholes模型）建模得出，因<code>positions.json</code>未记录每条腿的真实delta/IV——请视为估算值，非IBKR实时读数。符号约定见T30：认沽delta为负，认购delta为正。</span>
+      </div>
+      <div class="metrics">
+        <div class="m"><div class="mk"><span class="en">Net Credit</span><span class="zh">净收权利金</span></div><div class="mv green">+$215</div></div>
+        <div class="m"><div class="mk"><span class="en">Max Loss</span><span class="zh">最大亏损</span></div><div class="mv red">−$285</div></div>
+        <div class="m"><div class="mk"><span class="en">Profit Zone</span><span class="zh">盈利区</span></div><div class="mv">195–230</div></div>
+        <div class="m"><div class="mk"><span class="en">Return/Risk</span><span class="zh">收益/风险</span></div><div class="mv amber">75%</div></div>
+        <div class="m"><div class="mk"><span class="en">Unrealized P&amp;L</span><span class="zh">未实现盈亏</span></div><div class="mv green">+$13.95</div></div>
+      </div>
+      <div class="abox">
+        <h3 class="qa-toggle" onclick="toggleQA(this)">🧮 <span class="en">Q: NVDA drops to $0 — max loss if I close the next day?</span><span class="zh">问：若NVDA跌至$0——次日平仓最大亏损是多少？</span><span class="qa-arrow">▸</span></h3>
+        <div class="qa-body" style="display:none;">
+        <div class="analysis">
+          <ul>
+            <li><span class="en"><b>Answer: −$285</b> — the same as the stated Max Loss above. A crash to $0 doesn't create extra risk beyond that cap; it just gets realized almost immediately instead of waiting for expiry.</span><span class="zh"><b>答案：−$285</b>——与上面标示的最大亏损相同。跌至$0不会带来超出该上限的额外风险，只是提前（而非等到到期日）就把亏损兑现了。</span></li>
+            <li><span class="en"><b>Put side (195/190):</b> at $0 both puts are deep ITM (delta ≈ 1, ~zero time value left), so the spread is already worth its full $5.00 width (−$500) even with 35 DTE remaining — no cushion from time left on the clock.</span><span class="zh"><b>认沽腿（195/190）：</b>股价为$0时两腿均深度价内（delta≈1，几乎无时间价值），价差已达到其最大宽度$5.00（−$500）——即使还剩35天到期，也没有时间价值缓冲。</span></li>
+            <li><span class="en"><b>Call side (230/235):</b> at $0 both calls are worthless — nothing owed to close that side.</span><span class="zh"><b>认购腿（230/235）：</b>股价为$0时两腿均一文不值——平仓这一边无需支付。</span></li>
+            <li><span class="en">Cost to close ≈ $500, minus the $215 credit received = <b>−$285</b>. Same number whether you close the next day or hold to expiry.</span><span class="zh">平仓成本约$500，减去已收取的$215权利金 = <b>−$285</b>。无论是次日平仓还是持有至到期，数字相同。</span></li>
+          </ul>
+        </div>
+        <div class="note" style="margin:10px 0 0;">
+          <span class="en">If instead "drop zero" meant NVDA closes <b>flat</b> (no price change) today: no loss at all — you'd just be sitting on the mark-to-market credit near your $215 entry, minus a night of theta decay.</span>
+          <span class="zh">若「跌零」是指NVDA今日<b>持平</b>（价格无变化）：则完全没有亏损——只是持仓浮动盈亏仍接近入场时的$215权利金，扣除一晚的时间价值衰减（theta）。</span>
+        </div>
+        </div>
+      </div>
+    </div>
+
     <div class="condor" id="nvdaFeeCard">
       <div class="c-head">
         <div class="tkr" style="font-size:1.1rem">🔴 <span class="en">Table 570: NVDA Trade Fee — Put Combo Closed Today</span><span class="zh">表570：NVDA交易手续费——认沽组合今日平仓</span></div>
@@ -4599,6 +4644,7 @@ function renderSharePrices(){
       html += '<span class="sp-old"><span class="en">first capture</span><span class="zh">首次记录</span></span>';
     }
     el.innerHTML = html;
+    if(sym==='NVDA'){ var elBang=document.getElementById('sp-nvda-bang'); if(elBang) elBang.innerHTML = html; }
     if(CALL_ONLY_CFG[sym]){
       plotCallOnlyNowMarker(sym, latest.p);
       if(day1) plotCallOnlyDay1Marker(sym, day1.p);
