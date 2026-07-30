@@ -282,7 +282,7 @@ function cushionBadgeHtml(vpct){
 
 // Holds context for the current symbol so the 5%/10%/Live simulate buttons
 // (defined once in the rendered markup) can recompute without re-fetching.
-var SIM = { shortPut:null, shortCall:null, livePrice:null, day1:null, isClassicIC:false, legs:[] };
+var SIM = { sym:null, shortPut:null, shortCall:null, livePrice:null, day1:null, isClassicIC:false, legs:[] };
 
 // Table 1321's Price/Net Price columns — modeled from delta (Price ≈ Fill + Delta × (given
 // share price − Day 1 share price)), same "estimate, not a live IBKR reading" caveat as the
@@ -353,7 +353,7 @@ function simulateVariance(pct){
 }
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
-  var html = '<span class="sp-label">SHARE PRICE</span> <span class="sp-new">$'+SIM.livePrice.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+  var html = '<span class="sp-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+SIM.sym+'</span> <span class="sp-new">$'+SIM.livePrice.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
   html += varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
   el.innerHTML = html;
   setLang(curLang);
@@ -413,7 +413,7 @@ function generateTable(){
   var shortCall = calls.filter(function(o){return o.qty<0;})[0], longCall = calls.filter(function(o){return o.qty>0;})[0];
   var isClassicIC = puts.length===2 && calls.length===2 && shortPut && longPut && shortCall && longCall;
   var metricsHtml = '';
-  SIM = { shortPut: shortPut, shortCall: shortCall, livePrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
+  SIM = { sym: sym, shortPut: shortPut, shortCall: shortCall, livePrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
 
   var cushionHtml = '';
   if(isClassicIC){
@@ -484,7 +484,7 @@ function generateTable(){
 
   area.innerHTML =
     '<div class="condor">'+
-      '<div class="sp-row" id="sp-dyn" style="display:none"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>'+
+      '<div class="sp-row" id="sp-dyn"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>'+
       '<div class="table-scroll">'+
       '<table class="legs">'+
         '<tr><th><span class="en">Action</span><span class="zh">操作</span></th><th><span class="en">Leg</span><span class="zh">腿</span></th><th class="num"><span class="en">Fill</span><span class="zh">成交</span></th><th class="num"><span class="en">Amount</span><span class="zh">金额</span></th><th class="num"><span class="en">Δ Delta</span><span class="zh">Δ Delta</span></th><th class="num"><span class="en">Price</span><span class="zh">平仓价</span></th><th class="num"><span class="en">Net Price</span><span class="zh">净价</span></th></tr>'+
@@ -520,7 +520,7 @@ function generateTable(){
       var day1 = recordDay1IfMissing(sym, q.price);
       SIM.livePrice = q.price;
       SIM.day1 = day1;
-      var html = '<span class="sp-label">SHARE PRICE</span> <span class="sp-new">$'+q.price.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+      var html = '<span class="sp-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+sym+'</span> <span class="sp-new">$'+q.price.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
       html += varianceLinesHtml(q.price) + simButtonsHtml(null);
       el.innerHTML = html;
       updateCushionTable(q.price, false);
