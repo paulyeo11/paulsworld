@@ -3682,6 +3682,7 @@
         <div class="c-meta"><span class="en">Side-by-side comparison of all seven Bang Trade Analysis positions</span><span class="zh">Bang交易分析七个持仓的并列比较</span></div>
         <div></div>
       </div>
+      <div class="cushion-filter-row" id="table900FilterRow"></div>
       <div class="table-scroll table-fit">
       <table class="legs compact-rows" id="table900-summary" style="margin-top:10px">
         <colgroup><col style="width:16%"><col style="width:28%"><col style="width:20%"><col style="width:18%"><col style="width:18%"></colgroup>
@@ -3692,50 +3693,50 @@
           <th class="num"><span class="en">P&amp;L (B)</span><span class="zh">盈亏（B）</span></th>
           <th class="num"><span class="en">% of Premium<br><small style="opacity:.6;font-weight:400">(B/A)</small></span><span class="zh">占权利金比例<br><small style="opacity:.6;font-weight:400">(B/A)</small></span></th>
         </tr></thead>
-        <tbody>
-          <tr>
+        <tbody id="table900Body">
+          <tr data-sym="QQQ">
             <td>🟦 <b>QQQ</b></td>
             <td>✅ <span class="en">Closed — 100% realized</span><span class="zh">已平仓——100%已实现</span></td>
             <td class="num">$729.00</td>
             <td class="num" style="color:#3fb950;font-weight:700">+$42.53</td>
             <td class="num" style="color:#3fb950;font-weight:700">5.83%</td>
           </tr>
-          <tr>
+          <tr data-sym="SMH">
             <td>🟩 <b>SMH</b></td>
             <td>✅ <span class="en">Closed 29 Jul — 100% realized</span><span class="zh">7月29日已平仓——100%已实现</span></td>
             <td class="num">$435.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$76.19</td>
             <td class="num" style="color:#f85149;font-weight:700">−17.52%</td>
           </tr>
-          <tr>
+          <tr data-sym="AVGO">
             <td>🟧 <b>AVGO</b></td>
             <td>🔷 <span class="en">Open — real IBKR unrealized (29 Jul stmt)</span><span class="zh">持仓中——真实IBKR未实现（7月29日报表）</span></td>
             <td class="num">$475.00</td>
             <td class="num" style="color:#3fb950;font-weight:700">+$68.80</td>
             <td class="num" style="color:#3fb950;font-weight:700">14.48%</td>
           </tr>
-          <tr>
+          <tr data-sym="SPY">
             <td>🔷 <b>SPY</b></td>
             <td>🔷 <span class="en">Open — real IBKR unrealized (29 Jul stmt)</span><span class="zh">持仓中——真实IBKR未实现（7月29日报表）</span></td>
             <td class="num">$356.00</td>
             <td class="num" style="color:#3fb950;font-weight:700">+$74.46</td>
             <td class="num" style="color:#3fb950;font-weight:700">20.92%</td>
           </tr>
-          <tr>
+          <tr data-sym="IWM">
             <td>🟪 <b>IWM</b></td>
             <td>🔷 <span class="en">Open — real IBKR unrealized (29 Jul stmt)</span><span class="zh">持仓中——真实IBKR未实现（7月29日报表）</span></td>
             <td class="num">$214.00</td>
             <td class="num" style="color:#3fb950;font-weight:700">+$16.98</td>
             <td class="num" style="color:#3fb950;font-weight:700">7.93%</td>
           </tr>
-          <tr>
+          <tr data-sym="NVDA">
             <td>🔴 <b>NVDA</b></td>
             <td>✅ <span class="en">Closed 29 Jul — 100% realized</span><span class="zh">7月29日已平仓——100%已实现</span></td>
             <td class="num">$215.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$3.39</td>
             <td class="num" style="color:#f85149;font-weight:700">−1.58%</td>
           </tr>
-          <tr>
+          <tr data-sym="GOOGL">
             <td>🟡 <b>GOOGL</b></td>
             <td>🔷 <span class="en">Open — no IBKR mark yet<sup>‡</sup></span><span class="zh">持仓中——尚无IBKR市值<sup>‡</sup></span></td>
             <td class="num">$443.00</td>
@@ -4999,6 +5000,37 @@ function toggleTable60Compact(){
   if(scroll) scroll.classList.toggle('compact-fit', on);
   if(btn) btn.classList.toggle('active', on);
 }
+// Table 900 — Open/Closed filter, reusing the same POSITION_STATUS map and pill style as
+// Table 60's filter above so "closed" stays in sync across both tables from one source of truth.
+var table900Filter = 'all';
+function setTable900Filter(val){
+  table900Filter = val;
+  renderTable900FilterRow();
+  filterTable900Rows();
+}
+function renderTable900FilterRow(){
+  var opts = [
+    {v:'all', en:'All', zh:'全部'},
+    {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+  ];
+  var html = opts.map(function(o){
+    var active = table900Filter === o.v ? ' active' : '';
+    return '<button class="cushion-filter-btn'+active+'" onclick="setTable900Filter(\''+o.v+'\')"><span class="en">'+o.en+'</span><span class="zh">'+o.zh+'</span></button>';
+  }).join('');
+  var el = document.getElementById('table900FilterRow');
+  if(el) el.innerHTML = html;
+  setLang(curLang);
+}
+function filterTable900Rows(){
+  var body = document.getElementById('table900Body'); if(!body) return;
+  Array.prototype.forEach.call(body.querySelectorAll('tr[data-sym]'), function(tr){
+    var status = POSITION_STATUS[tr.getAttribute('data-sym')] || 'open';
+    var show = table900Filter === 'all' || table900Filter === status;
+    tr.style.display = show ? '' : 'none';
+  });
+}
+renderTable900FilterRow();
 // Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides.
 // Call-only positions (CALL_ONLY_CFG, e.g. FDS Covered Call) have no Selling Put strike, so
 // their Put columns show "—" instead of a value.
