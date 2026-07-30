@@ -336,7 +336,15 @@ function varianceLinesHtml(price){
   return '';
 }
 function simButtonsHtml(activePct){
-  return '';
+  if(!SIM.shortPut) return '';
+  function btn(label, pct){
+    var active = activePct === pct;
+    return '<button class="chip" style="'+(active?'background:#f59e0b;border-color:#f59e0b;color:#0d1117;':'')+'" onclick="simulateVariance('+(pct===null?'null':pct)+')">'+label+'</button>';
+  }
+  return '<span class="sp-change" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'+
+    '<span class="en">🎯 Simulate Put Strike Variance:</span><span class="zh">🎯 模拟认沽行权价差幅：</span> '+
+    btn('5%', 5) + btn('10%', 10) + (SIM.livePrice!==null ? btn('<span class="en">↩ Live</span><span class="zh">↩ 实时</span>', null) : '') +
+  '</span>';
 }
 function simulateVariance(pct){
   var el = document.getElementById('sp-dyn'); if(!el || !SIM.shortPut) return;
@@ -345,7 +353,7 @@ function simulateVariance(pct){
     return;
   }
   var price = SIM.shortPut.strike / (1 - pct/100);
-  el.innerHTML = '<span class="sp-label">SIMULATED SHARE PRICE</span> <span class="sp-new">$'+price.toFixed(2)+'</span>'+
+  el.innerHTML = '<span class="sp-label"><span class="en">Simulated Share Price</span><span class="zh">模拟股价</span></span> <span class="sp-new">$'+price.toFixed(2)+'</span>'+
     varianceLinesHtml(price) + simButtonsHtml(pct);
   setLang(curLang);
   updateCushionTable(price, true);
