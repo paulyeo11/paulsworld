@@ -289,6 +289,57 @@ function cushionBadgeHtml(vpct){
   return '<span class="badge '+b.cls+'"><span class="en">'+b.en+'</span><span class="zh">'+b.zh+'</span></span>';
 }
 
+// Holds context for the current symbol so the 5%/10%/Live simulate buttons
+// (defined once in the rendered markup) can recompute without re-fetching.
+var SIM = { shortPut:null, shortCall:null, putGapLine:'', livePrice:null, day1:null };
+
+function varianceLinesHtml(price){
+  var out = '';
+  if(SIM.shortPut){
+    var spVar = (price - SIM.shortPut.strike) / price * 100, spUp = spVar >= 0;
+    out += '<span class="sp-change"><span class="en">Share Price vs Put Strike (A−B)/A</span><span class="zh">股价 vs 认沽行权价 (A−B)/A</span> '+SIM.shortPut.strike+'P <b class="'+(spUp?'up':'down')+'">'+(spUp?'+':'')+spVar.toFixed(2)+'%</b></span>';
+  }
+  if(SIM.shortCall){
+    var scVar = (SIM.shortCall.strike - price) / price * 100, scUp = scVar >= 0;
+    out += '<span class="sp-change"><span class="en">Share Price vs Call Strike (C−A)/A</span><span class="zh">股价 vs 认购行权价 (C−A)/A</span> '+SIM.shortCall.strike+'C <b class="'+(scUp?'up':'down')+'">'+(scUp?'+':'')+scVar.toFixed(2)+'%</b></span>';
+  }
+  out += SIM.putGapLine;
+  return out;
+}
+function simButtonsHtml(activePct){
+  if(!SIM.shortPut) return '';
+  function btn(label, pct){
+    var active = activePct === pct;
+    return '<button class="chip" style="'+(active?'background:#f59e0b;border-color:#f59e0b;color:#0d1117;':'')+'" onclick="simulateVariance('+(pct===null?'null':pct)+')">'+label+'</button>';
+  }
+  return '<span class="sp-change" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'+
+    '<span class="en">🎯 Simulate Put Strike Variance:</span><span class="zh">🎯 模拟认沽行权价差幅：</span> '+
+    btn('5%', 5) + btn('10%', 10) + (SIM.livePrice!==null ? btn('↩ Live', null) : '') +
+  '</span>';
+}
+function simulateVariance(pct){
+  var el = document.getElementById('sp-dyn'); if(!el || !SIM.shortPut) return;
+  if(pct === null){
+    renderLivePriceBox();
+    return;
+  }
+  var price = SIM.shortPut.strike / (1 - pct/100);
+  el.innerHTML = '<span class="sp-label">SIMULATED SHARE PRICE</span> <span class="sp-new">$'+price.toFixed(2)+'</span> <span class="sp-time"><span class="en">what-if: Put Strike Variance = '+pct+'%</span><span class="zh">假设：认沽行权价差幅 = '+pct+'%</span></span>'+
+    varianceLinesHtml(price) + simButtonsHtml(pct);
+  setLang(curLang);
+}
+function renderLivePriceBox(){
+  var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
+  var day1 = SIM.day1;
+  var html = '<span class="sp-label">SHARE PRICE</span> <span class="sp-new">$'+SIM.livePrice.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+  html += '<span class="sp-old"><b>'+'</b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> <b>$'+day1.p.toFixed(2)+'</b> · '+fmtSpTime(day1.t)+'</span>';
+  var diff = SIM.livePrice - day1.p, pct = day1.p ? (diff/day1.p*100) : 0, up = diff >= 0;
+  html += '<span class="sp-change"><span class="en">Price change (Now vs Day 1)</span><span class="zh">价格变化（现价 vs 第1天）</span> <b class="'+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</b></span>';
+  html += varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
+  el.innerHTML = html;
+  setLang(curLang);
+}
+
 function generateTable(){
   var sym = document.getElementById('symInput').value.trim().toUpperCase();
   var area = document.getElementById('resultArea');
@@ -346,6 +397,7 @@ function generateTable(){
     var putGap = Math.abs(shortPut.strike - longPut.strike);
     putGapLine = '<span class="sp-change"><span class="en">Selling Put vs Buying Put Gap (B−D)</span><span class="zh">卖出认沽 vs 买入认沽价差 (B−D)</span> = <b>$'+putGap.toFixed(2)+'</b></span>';
   }
+  SIM = { shortPut: shortPut, shortCall: shortCall, putGapLine: putGapLine, livePrice: null, day1: null };
 
   var cushionHtml = '';
   if(isClassicIC){
@@ -451,19 +503,13 @@ function generateTable(){
     if(!el) return;
     if(q && typeof q.price === 'number'){
       var day1 = recordDay1IfMissing(sym, q.price);
+      SIM.livePrice = q.price;
+      SIM.day1 = day1;
       var html = '<span class="sp-label">SHARE PRICE</span> <span class="sp-new">$'+q.price.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
       html += '<span class="sp-old"><b>'+'</b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> <b>$'+day1.p.toFixed(2)+'</b> · '+fmtSpTime(day1.t)+'</span>';
       var diff = q.price - day1.p, pct = day1.p ? (diff/day1.p*100) : 0, up = diff >= 0;
       html += '<span class="sp-change"><span class="en">Price change (Now vs Day 1)</span><span class="zh">价格变化（现价 vs 第1天）</span> <b class="'+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</b></span>';
-      if(shortPut){
-        var spVar = (q.price - shortPut.strike) / q.price * 100, spUp = spVar >= 0;
-        html += '<span class="sp-change"><span class="en">Share Price vs Put Strike (A−B)/A</span><span class="zh">股价 vs 认沽行权价 (A−B)/A</span> '+shortPut.strike+'P <b class="'+(spUp?'up':'down')+'">'+(spUp?'+':'')+spVar.toFixed(2)+'%</b></span>';
-      }
-      if(shortCall){
-        var scVar = (shortCall.strike - q.price) / q.price * 100, scUp = scVar >= 0;
-        html += '<span class="sp-change"><span class="en">Share Price vs Call Strike (C−A)/A</span><span class="zh">股价 vs 认购行权价 (C−A)/A</span> '+shortCall.strike+'C <b class="'+(scUp?'up':'down')+'">'+(scUp?'+':'')+scVar.toFixed(2)+'%</b></span>';
-      }
-      html += putGapLine;
+      html += varianceLinesHtml(q.price) + simButtonsHtml(null);
       el.innerHTML = html;
       if(isClassicIC){
         var price = q.price;
