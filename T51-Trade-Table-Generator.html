@@ -354,6 +354,13 @@ function livePriceLineHtml(){
 function simulatedPriceLineHtml(price, pct){
   return '<span class="sp-old" style="flex-basis:100%;font-size:1.5rem;"><span class="en">Share Price X '+pct+'%</span><span class="zh">股价 X '+pct+'%</span> <b style="color:#f59e0b;font-size:1.5rem;font-weight:900;">$'+price.toFixed(2)+'</b></span>';
 }
+// Suggested Put Strike (B): B = A×0.90 when A>$300, else A×0.95 — recomputed from whichever
+// price (live or simulated 5%/10%/-5%/-10%) is currently showing.
+function suggestedStrikeLineHtml(price){
+  var mult = price > 300 ? 0.90 : 0.95;
+  var b = price * mult;
+  return '<span class="sp-old" style="flex-basis:100%;"><span class="en">Suggested Put Strike (B): A&gt;$300 → A×0.90, else A×0.95</span><span class="zh">建议认沽行权价 (B)：A&gt;$300 → A×0.90，否则 A×0.95</span> <b style="color:#3fb950;">$'+b.toFixed(2)+'</b></span>';
+}
 function simulateVariance(pct){
   var el = document.getElementById('sp-dyn'); if(!el || !SIM.shortPut) return;
   if(pct === null){
@@ -362,6 +369,7 @@ function simulateVariance(pct){
   }
   var price = SIM.shortPut.strike / (1 - pct/100);
   el.innerHTML = livePriceLineHtml() + simulatedPriceLineHtml(price, pct) +
+    suggestedStrikeLineHtml(price) +
     varianceLinesHtml(price) + simButtonsHtml(pct);
   setLang(curLang);
   updateCushionTable(price, true);
@@ -370,7 +378,7 @@ function simulateVariance(pct){
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
   var html = livePriceLineHtml();
-  html += varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
+  html += suggestedStrikeLineHtml(SIM.livePrice) + varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
   el.innerHTML = html;
   setLang(curLang);
   updateCushionTable(SIM.livePrice, false);
@@ -537,7 +545,7 @@ function generateTable(){
       SIM.livePrice = q.price;
       SIM.day1 = day1;
       var html = livePriceLineHtml();
-      html += varianceLinesHtml(q.price) + simButtonsHtml(null);
+      html += suggestedStrikeLineHtml(q.price) + varianceLinesHtml(q.price) + simButtonsHtml(null);
       el.innerHTML = html;
       updateCushionTable(q.price, false);
       updateLegPrices(q.price, false);
