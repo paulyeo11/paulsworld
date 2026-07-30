@@ -346,6 +346,14 @@ function simButtonsHtml(activePct){
     btn('5%', 5) + btn('10%', 10) + (SIM.livePrice!==null ? btn('<span class="en">↩ Live</span><span class="zh">↩ 实时</span>', null) : '') +
   '</span>';
 }
+// Share Price (A) always shows the real live quote — it never changes when the 5%/10%
+// buttons are pressed. The simulated what-if price renders as its own separate line below it.
+function livePriceLineHtml(){
+  return '<span class="sp-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+SIM.sym+'</span> <span class="sp-new">$'+SIM.livePrice.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+}
+function simulatedPriceLineHtml(price){
+  return '<span class="sp-old" style="flex-basis:100%;"><span class="en">Simulated Share Price</span><span class="zh">模拟股价</span> <b style="color:#f59e0b;">$'+price.toFixed(2)+'</b></span>';
+}
 function simulateVariance(pct){
   var el = document.getElementById('sp-dyn'); if(!el || !SIM.shortPut) return;
   if(pct === null){
@@ -353,7 +361,7 @@ function simulateVariance(pct){
     return;
   }
   var price = SIM.shortPut.strike / (1 - pct/100);
-  el.innerHTML = '<span class="sp-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+SIM.sym+'</span> <span class="sp-new">$'+price.toFixed(2)+'</span> <span class="sp-time"><span class="en">simulated</span><span class="zh">模拟</span></span>'+
+  el.innerHTML = livePriceLineHtml() + simulatedPriceLineHtml(price) +
     varianceLinesHtml(price) + simButtonsHtml(pct);
   setLang(curLang);
   updateCushionTable(price, true);
@@ -361,7 +369,7 @@ function simulateVariance(pct){
 }
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
-  var html = '<span class="sp-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+SIM.sym+'</span> <span class="sp-new">$'+SIM.livePrice.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+  var html = livePriceLineHtml();
   html += varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
   el.innerHTML = html;
   setLang(curLang);
@@ -528,7 +536,7 @@ function generateTable(){
       var day1 = recordDay1IfMissing(sym, q.price);
       SIM.livePrice = q.price;
       SIM.day1 = day1;
-      var html = '<span class="sp-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+sym+'</span> <span class="sp-new">$'+q.price.toFixed(2)+'</span> <span class="sp-time">'+fmtSpTime(Date.now())+'</span>';
+      var html = livePriceLineHtml();
       html += varianceLinesHtml(q.price) + simButtonsHtml(null);
       el.innerHTML = html;
       updateCushionTable(q.price, false);
