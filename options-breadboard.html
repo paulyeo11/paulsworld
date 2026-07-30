@@ -4295,6 +4295,13 @@ Object.keys(RAIL_CFG).forEach(function(sym){ drawRail('rail-'+sym.toLowerCase(),
 // lo/hi/avgCost are only used by the single-strike rail below (drawCallOnlyRail) — the
 // Table 60 / Premium tab formulas above only ever read cfg.shortC.
 var CALL_ONLY_CFG = { FDS: {shortC:300, avgCost:343.24, lo:280, hi:355} };
+// Put-only positions (cash-secured puts sold with no covering call/wings — e.g. GOOGL) shown
+// on Table 60 alongside the 4-leg condors and CALL_ONLY_CFG. Only cfg.shortP is read by the
+// Table 60 / Premium tab formulas; there is no shortC, so those cells render as "—".
+var PUT_ONLY_CFG = { GOOGL: {shortP:305} };
+// Combined lookup for any Table 60 position, across all three shapes (4-leg condor,
+// call-only, put-only) — used everywhere Table 60 previously did `RAIL_CFG[sym] || CALL_ONLY_CFG[sym]`.
+function cfgFor(sym){ return RAIL_CFG[sym] || CALL_ONLY_CFG[sym] || PUT_ONLY_CFG[sym]; }
 renderCushionFilterRow();
 
 // Single-strike "breadboard" for a covered call (no put leg, no long call — just the
@@ -4541,6 +4548,11 @@ var STOCKS = [
   // other positions; adjust once Paul sets a real cut-loss band for this one.
   { sym:'XLE',  name:'Energy Select Sector SPDR Fund', low:53, high:64 }
 ];
+// Live price feed for PUT_ONLY_CFG symbols (cash-secured puts, no cut-loss band since there's
+// no 4-leg condor here) — fetched the same way as STOCKS/SHARES, just without a cut-loss row.
+var PUT_ONLY_STOCKS = [
+  { sym:'GOOGL', name:'Alphabet Inc.' }
+];
 function fmt(n){ return '$' + n.toFixed(2); }
 function fetchQuotes(symbols){
   return fetch('/api/td?symbols='+encodeURIComponent(symbols.join(','))).then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); });
@@ -4732,7 +4744,9 @@ var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.23, SPY:0.25, IWM
 // Month-to-date premium collected = Total Credit received when each condor (or, for FDS,
 // the covered call) was sold to open. All were entered in Jul 2026, so MTD = the full entry credit
 // (see Premium tab). FDS is the 300 Covered Call sold 21 Jul 2026 for $2.10 (+$210) — see Covered Call tab.
-var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356, IWM:214, FDS:210 };
+// GOOGL: cash-secured 305 Put sold 30 Jul 2026 for $4.43 (Net Amount $443 per the fill) — gross
+// premium before the $1.14 commission, same convention as the other entries above.
+var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356, IWM:214, FDS:210, GOOGL:443 };
 // Table 60's P&L Amt column — realized P&L for closed positions (QQQ, SMH, NVDA), else the real
 // IBKR Unrealized P&L from the latest PortfolioAnalyst statement (29 Jul 2026), per the
 // Bang Trade Analysis reconciliation (Table 350/590/420/470/510/550). NVDA's call combo
@@ -4765,15 +4779,24 @@ function getLivePrice(sym){
   if(s && typeof s.price==='number') return s.price;
   var h = SHARES.filter(function(x){ return x.symbol===sym; })[0];
   if(h && typeof h.price==='number') return h.price;
+  var p = PUT_ONLY_STOCKS.filter(function(x){ return x.sym===sym; })[0];
+  if(p && typeof p.price==='number') return p.price;
   return null;
 }
+function loadPutOnlyStocks(){
+  fetchQuotes(PUT_ONLY_STOCKS.map(function(s){return s.sym;})).then(function(data){
+    PUT_ONLY_STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; recordSharePrice(s.sym, q.price); } });
+    renderSharePrices();
+  }).catch(function(){});
+}
+loadPutOnlyStocks();
 // Sort symbols by Put Cushion, tightest/riskiest first — shared by every table that
 // shows the Share Price vs Selling Put & Call cushion figures (Dashboard quick-glance,
 // Cushion tab full table, Premium tab variance+MTD table) so they stay in sync.
 function sortedByPutCushion(){
-  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'];
+  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'].concat(Object.keys(PUT_ONLY_CFG));
   var sorted = syms.slice().sort(function(a,b){
-    var cfgA = RAIL_CFG[a], cfgB = RAIL_CFG[b];
+    var cfgA = cfgFor(a), cfgB = cfgFor(b);
     var pA = getLivePrice(a);
     var pB = getLivePrice(b);
     var vA = pA===null ? Infinity : (pA - cfgA.shortP) / pA * 100;
@@ -4781,7 +4804,8 @@ function sortedByPutCushion(){
     return vA - vB;
   });
   // Call-only positions (e.g. FDS Covered Call) have no put cushion to sort by — list them
-  // after the 4-leg condors, in the order they appear in CALL_ONLY_CFG.
+  // after everything with a put cushion (4-leg condors + put-only positions like GOOGL),
+  // in the order they appear in CALL_ONLY_CFG.
   return sorted.concat(Object.keys(CALL_ONLY_CFG));
 }
 // Open/closed status per symbol, for the Table 60 Open/Closed filter — 'closed' once the
@@ -4789,7 +4813,7 @@ function sortedByPutCushion(){
 // 23 Jul 2026; SMH closed 29 Jul 2026, real fills, −$76.19; NVDA confirmed fully closed
 // 30 Jul 2026 — see PNL_AMT note below on why its P&L Amt still shows the put-combo-only
 // figure). Anything not listed here defaults to 'open'. Update this when a position closes.
-var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', FDS:'open' };
+var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', FDS:'open', GOOGL:'open' };
 // Table 60's Open/Closed filter state: 'all' | 'open' | 'closed'. Shared by both places
 // Table 60 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'all';
@@ -4857,8 +4881,9 @@ function renderPutVarianceTable(){
     return;
   }
   var rows = syms.map(function(sym){
-    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var cfg = cfgFor(sym);
     var hasPut = typeof cfg.shortP === 'number';
+    var hasCall = typeof cfg.shortC === 'number';
     var hasLongPut = typeof cfg.longP === 'number';
     var hasLongCall = typeof cfg.longC === 'number';
     var price = getLivePrice(sym);
@@ -4870,12 +4895,12 @@ function renderPutVarianceTable(){
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     var symTag = '<b>'+sym+'</b>'+statusTag(sym);
     var cutLostPutTxt = (hasPut && hasLongPut) ? fmt((cfg.shortP + cfg.longP) / 2) : '—';
-    var cutLostCallTxt = hasLongCall ? fmt((cfg.shortC + cfg.longC) / 2) : '—';
+    var cutLostCallTxt = (hasCall && hasLongCall) ? fmt((cfg.shortC + cfg.longC) / 2) : '—';
     var cutLostCells = '<td class="num tbl60-extra">'+cutLostPutTxt+'</td><td class="num tbl60-extra">'+cutLostCallTxt+'</td>';
     if(price===null){
       return '<tr><td>'+symTag+'</td>'+cutLostCells+'<td class="num">—</td>'+
         '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+(hasPut?putDeltaTxt:'—')+'</td>'+
-        '<td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+callDeltaTxt+'</td>'+
+        '<td class="num">'+(hasCall?cfg.shortC+'C':'—')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+(hasCall?callDeltaTxt:'—')+'</td>'+
         '<td class="num">'+mtdTxt+'</td>'+pnlAmtCell(sym)+'</tr>';
     }
     var putCells = hasPut ? (function(){
@@ -4884,12 +4909,14 @@ function renderPutVarianceTable(){
       var pSign = pVpct >= 0 ? '+' : '';
       return '<td class="num">'+cfg.shortP+'P</td><td class="num"><b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'})+'</td><td class="num">'+putDeltaTxt+'</td>';
     })() : '<td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>';
-    var cVpct = (cfg.shortC - price) / price * 100;
-    var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
-    var cSign = cVpct >= 0 ? '+' : '';
+    var callCells = hasCall ? (function(){
+      var cVpct = (cfg.shortC - price) / price * 100;
+      var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
+      var cSign = cVpct >= 0 ? '+' : '';
+      return '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>';
+    })() : '<td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>';
     return '<tr><td>'+symTag+'</td>'+cutLostCells+'<td class="num">'+fmt(price)+'</td>'+
-      putCells+
-      '<td class="num">'+cfg.shortC+'C</td><td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>'+
+      putCells+callCells+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td>'+pnlAmtCell(sym)+'</tr>';
   });
   body.innerHTML = rows.join('');
@@ -4914,18 +4941,19 @@ function renderDashCushionTable(){
     return;
   }
   var rows = syms.map(function(sym){
-    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var cfg = cfgFor(sym);
     var hasPut = typeof cfg.shortP === 'number';
+    var hasCall = typeof cfg.shortC === 'number';
     var price = getLivePrice(sym);
     var symTag = '<b>'+sym+'</b>'+statusTag(sym);
     if(price===null){
       return '<tr><td>'+symTag+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>'+pnlAmtCell(sym)+'</tr>';
     }
     var pCushionHtml = hasPut ? cushionBadge((price - cfg.shortP) / price * 100, {en:'<-2%',zh:'<-2%'}) : '—';
-    var cVpct = (cfg.shortC - price) / price * 100;
+    var cCushionHtml = hasCall ? cushionBadge((cfg.shortC - price) / price * 100, {en:'Above',zh:'突破'}) : '—';
     return '<tr><td>'+symTag+'</td><td class="num">'+fmt(price)+'</td>'+
       '<td class="num">'+pCushionHtml+'</td>'+
-      '<td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td>'+pnlAmtCell(sym)+'</tr>';
+      '<td class="num">'+cCushionHtml+'</td>'+pnlAmtCell(sym)+'</tr>';
   });
   body.innerHTML = rows.join('');
   setLang(curLang);
@@ -4937,14 +4965,15 @@ function renderPremiumRankTable(){
   var body = document.getElementById('premiumRankBody'); if(!body) return;
   var syms = Object.keys(MTD_PREMIUM).sort(function(a,b){ return MTD_PREMIUM[b]-MTD_PREMIUM[a]; });
   var rows = syms.map(function(sym){
-    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var cfg = cfgFor(sym);
     var hasPut = typeof cfg.shortP === 'number';
+    var hasCall = typeof cfg.shortC === 'number';
     var price = getLivePrice(sym);
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
     if(price===null){
       return '<tr><td><b>'+sym+'</b></td><td class="num">—</td>'+
-        '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+cfg.shortC+'C</td>'+
+        '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+(hasCall?cfg.shortC+'C':'—')+'</td>'+
         '<td class="num">—</td><td class="num">—</td>'+
         '<td class="num" style="color:#3fb950"><b>'+mtdTxt+'</b></td></tr>';
     }
@@ -4955,13 +4984,17 @@ function renderPremiumRankTable(){
       var pSign = pVpct >= 0 ? '+' : '';
       putHtml = '<b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b> '+cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
     }
-    var cVpct = (cfg.shortC - price) / price * 100;
-    var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
-    var cSign = cVpct >= 0 ? '+' : '';
+    var callHtml = '—';
+    if(hasCall){
+      var cVpct = (cfg.shortC - price) / price * 100;
+      var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
+      var cSign = cVpct >= 0 ? '+' : '';
+      callHtml = '<b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b> '+cushionBadge(cVpct,{en:'Above',zh:'突破'});
+    }
     return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
-      '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+cfg.shortC+'C</td>'+
+      '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+(hasCall?cfg.shortC+'C':'—')+'</td>'+
       '<td class="num">'+putHtml+'</td>'+
-      '<td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b> '+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td>'+
+      '<td class="num">'+callHtml+'</td>'+
       '<td class="num" style="color:#3fb950"><b>'+mtdTxt+'</b></td></tr>';
   });
   body.innerHTML = rows.join('');
@@ -4977,8 +5010,9 @@ function renderPremiumRankTable(){
 function renderVarMtdTable(){
   var body = document.getElementById('varMtdBody'); if(!body) return;
   var rows = sortedByPutCushion().map(function(sym){
-    var cfg = RAIL_CFG[sym] || CALL_ONLY_CFG[sym];
+    var cfg = cfgFor(sym);
     var hasPut = typeof cfg.shortP === 'number';
+    var hasCall = typeof cfg.shortC === 'number';
     var price = getLivePrice(sym);
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
@@ -4992,12 +5026,16 @@ function renderVarMtdTable(){
       var pSign = pVpct >= 0 ? '+' : '';
       putHtml = '<b class="'+pCls+'">'+pSign+pVpct.toFixed(2)+'%</b>';
     }
-    var cVpct = (cfg.shortC - price) / price * 100;
-    var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
-    var cSign = cVpct >= 0 ? '+' : '';
+    var callHtml = '—';
+    if(hasCall){
+      var cVpct = (cfg.shortC - price) / price * 100;
+      var cCls = cVpct >= 0 ? 'pl-up' : 'pl-down';
+      var cSign = cVpct >= 0 ? '+' : '';
+      callHtml = '<b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b>';
+    }
     return '<tr><td><b>'+sym+'</b></td>'+
       '<td class="num">'+putHtml+'</td>'+
-      '<td class="num"><b class="'+cCls+'">'+cSign+cVpct.toFixed(2)+'%</b></td>'+
+      '<td class="num">'+callHtml+'</td>'+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td></tr>';
   });
   body.innerHTML = rows.join('');
