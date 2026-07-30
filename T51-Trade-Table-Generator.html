@@ -360,10 +360,19 @@ function simulatedPriceLineHtml(price, pct){
 }
 // Suggested Put Strike (B): B = A×0.90 when A>$300, else A×0.95 — recomputed from whichever
 // price (live or simulated 5%/10%/-5%/-10%) is currently showing.
-function suggestedStrikeLineHtml(price){
+function suggestedStrikeValue(price){
   var mult = price > 300 ? 0.90 : 0.95;
-  var b = price * mult;
+  return price * mult;
+}
+function suggestedStrikeLineHtml(price){
+  var b = suggestedStrikeValue(price);
   return '<span class="sp-old" style="flex-basis:100%;"><span class="en">Suggested Put Strike (B): A&gt;$300 → A×0.90, else A×0.95</span><span class="zh">建议认沽行权价 (B)：A&gt;$300 → A×0.90，否则 A×0.95</span> <b style="color:#3fb950;">$'+b.toFixed(2)+'</b></span>';
+}
+// Fills the SELL Put row's strike cell (C) with the Suggested Put Strike (B) value above,
+// so the leg table reflects the same what-if price as the rest of the card.
+function updateShortPutStrikeCell(price){
+  var cell = document.getElementById('leg-strike-shortput');
+  if(cell) cell.textContent = suggestedStrikeValue(price).toFixed(2);
 }
 function simulateVariance(pct){
   var el = document.getElementById('sp-dyn'); if(!el || !SIM.shortPut) return;
@@ -379,6 +388,7 @@ function simulateVariance(pct){
   setLang(curLang);
   updateCushionTable(price, true);
   updateLegPrices(price, true);
+  updateShortPutStrikeCell(price);
 }
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
@@ -388,6 +398,7 @@ function renderLivePriceBox(){
   setLang(curLang);
   updateCushionTable(SIM.livePrice, false);
   updateLegPrices(SIM.livePrice, false);
+  updateShortPutStrikeCell(SIM.livePrice);
 }
 
 function generateTable(){
@@ -424,9 +435,11 @@ function generateTable(){
     var amount = (o.qty < 0 ? 1 : -1) * Math.abs(o.qty) * o.fillPrice * 100;
     netCredit += amount;
     var deltaTxt = (typeof o.delta === 'number') ? o.delta.toFixed(3) : '<span style="color:#8b98a5">—</span>';
+    var isShortPut = (o.right==='P' && o.qty<0);
+    var strikeTxt = isShortPut ? '<span id="leg-strike-shortput">'+o.strike+'</span>' : o.strike;
     return '<tr>'+
       '<td class="'+(action==='SELL'?'sell':'buy')+'">'+action+'</td>'+
-      '<td>'+o.strike+' '+(o.right==='P'?'Put':'Call')+'</td>'+
+      '<td>'+strikeTxt+' '+(o.right==='P'?'Put':'Call')+'</td>'+
       '<td class="num">$'+o.fillPrice.toFixed(2)+'</td>'+
       '<td class="num">'+fmtSignedMoney(amount)+'</td>'+
       '<td class="num">'+deltaTxt+'</td>'+
@@ -554,6 +567,7 @@ function generateTable(){
       el.innerHTML = html;
       updateCushionTable(q.price, false);
       updateLegPrices(q.price, false);
+      updateShortPutStrikeCell(q.price);
     } else {
       el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>';
     }
