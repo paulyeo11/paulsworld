@@ -4720,12 +4720,13 @@ var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.23, SPY:0.25, IWM
 var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:435, SPY:356, IWM:214, FDS:210 };
 // Table 60's P&L Amt column — realized P&L for closed positions (QQQ, SMH), else the real
 // IBKR Unrealized P&L from the latest PortfolioAnalyst statement (28 Jul 2026), per the
-// Bang Trade Analysis reconciliation (Table 350/590/420/470/510/550). NVDA is the closed
-// put-combo only (−$70.00, realized) — its separate still-open call combo (230C/235C) shows
-// +$62–63 unrealized per Tiger app and is deliberately NOT folded in here (two different
-// data sources, can't be confidently combined into one live number). FDS has no entry —
-// its Covered Call P&L hasn't been cross-checked against a single statement figure yet, so
-// it renders as "—" rather than a guess.
+// Bang Trade Analysis reconciliation (Table 350/590/420/470/510/550). NVDA is confirmed
+// fully closed (30 Jul 2026) but this figure (−$70.00) is still only the put-combo close —
+// the call combo (230C/235C, last seen +$62–63 unrealized per Tiger app) hasn't had its
+// actual closing fill confirmed yet, so it's deliberately NOT folded in (would be a guess).
+// Update PNL_AMT.NVDA to the true combined realized total once the call combo's real close
+// price/date is confirmed. FDS has no entry — its Covered Call P&L hasn't been cross-checked
+// against a single statement figure yet, so it renders as "—" rather than a guess.
 var PNL_AMT = { NVDA:-70.00, QQQ:42.53, AVGO:13.81, SMH:-76.19, SPY:73.96, IWM:6.80 };
 function pnlAmtCell(sym){
   var v = PNL_AMT[sym];
@@ -4763,9 +4764,10 @@ function sortedByPutCushion(){
 }
 // Open/closed status per symbol, for the Table 60 Open/Closed filter — 'closed' once the
 // condor/covered call has actually been closed out (e.g. QQQ, see T43 case study, closed
-// 23 Jul 2026; SMH closed 29 Jul 2026, real fills, −$76.19). Anything not listed here defaults
-// to 'open'. Update this when a position closes.
-var POSITION_STATUS = { NVDA:'open', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', FDS:'open' };
+// 23 Jul 2026; SMH closed 29 Jul 2026, real fills, −$76.19; NVDA confirmed fully closed
+// 30 Jul 2026 — see PNL_AMT note below on why its P&L Amt still shows the put-combo-only
+// figure). Anything not listed here defaults to 'open'. Update this when a position closes.
+var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', FDS:'open' };
 // Table 60's Open/Closed filter state: 'all' | 'open' | 'closed'. Shared by both places
 // Table 60 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'all';
