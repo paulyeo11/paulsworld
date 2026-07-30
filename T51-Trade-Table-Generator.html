@@ -291,7 +291,38 @@ function cushionBadgeHtml(vpct){
 
 // Holds context for the current symbol so the 5%/10%/Live simulate buttons
 // (defined once in the rendered markup) can recompute without re-fetching.
-var SIM = { shortPut:null, shortCall:null, putGapLine:'', livePrice:null, day1:null, isClassicIC:false };
+var SIM = { shortPut:null, shortCall:null, putGapLine:'', livePrice:null, day1:null, isClassicIC:false, legs:[] };
+
+// Table 1321's Price/Net Price columns — modeled from delta (Price ≈ Fill + Delta × (given
+// share price − Day 1 share price)), same "estimate, not a live IBKR reading" caveat as the
+// Δ Delta column already carries. Shared by the live-fetch path and the simulate buttons so
+// both keep this table in sync with whatever price is showing (live or simulated).
+function updateLegPrices(price, simulated){
+  if(!SIM.day1 || !SIM.legs.length) return;
+  var day1p = SIM.day1.p;
+  var netToClose = 0, allKnown = true;
+  SIM.legs.forEach(function(o, i){
+    var cell = document.getElementById('leg-price-'+i);
+    if(typeof o.delta === 'number'){
+      var est = Math.max(0, o.fillPrice + o.delta * (price - day1p));
+      if(cell) cell.textContent = '$'+est.toFixed(2)+(simulated?' *':'');
+      netToClose += (o.qty < 0 ? 1 : -1) * est;
+    } else {
+      if(cell) cell.textContent = '—';
+      allKnown = false;
+    }
+  });
+  var npCell = document.getElementById('net-price-cell');
+  if(npCell){
+    if(allKnown){
+      var isDebit = netToClose >= 0;
+      npCell.innerHTML = '$'+Math.abs(netToClose).toFixed(2)+(simulated?' *':'')+'<br><span class="en">'+(isDebit?'DEBIT':'CREDIT')+'</span><span class="zh">'+(isDebit?'借记':'贷记')+'</span>';
+    } else {
+      npCell.textContent = '—';
+    }
+  }
+  setLang(curLang);
+}
 
 // Table 1322 (Share Price vs Selling Put & Call) — shared by the live-fetch path and the
 // 5%/10%/Revert simulate buttons, so both keep that table in sync with whatever price is showing.
@@ -346,6 +377,7 @@ function simulateVariance(pct){
     varianceLinesHtml(price) + simButtonsHtml(pct);
   setLang(curLang);
   updateCushionTable(price, true);
+  updateLegPrices(price, true);
 }
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
@@ -358,6 +390,7 @@ function renderLivePriceBox(){
   el.innerHTML = html;
   setLang(curLang);
   updateCushionTable(SIM.livePrice, false);
+  updateLegPrices(SIM.livePrice, false);
 }
 
 function generateTable(){
@@ -389,7 +422,7 @@ function generateTable(){
   var expLabel = expDate.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'2-digit',timeZone:'UTC'});
 
   var netCredit = 0;
-  var rowsHtml = legs.map(function(o){
+  var rowsHtml = legs.map(function(o, i){
     var action = o.qty < 0 ? 'SELL' : 'BUY';
     var amount = (o.qty < 0 ? 1 : -1) * Math.abs(o.qty) * o.fillPrice * 100;
     netCredit += amount;
@@ -400,8 +433,8 @@ function generateTable(){
       '<td class="num">$'+o.fillPrice.toFixed(2)+'</td>'+
       '<td class="num">'+fmtSignedMoney(amount)+'</td>'+
       '<td class="num">'+deltaTxt+'</td>'+
-      '<td class="num" style="color:#8b98a5">—</td>'+
-      '<td class="num" style="color:#8b98a5">—</td>'+
+      '<td class="num" id="leg-price-'+i+'" style="color:#8b98a5">—</td>'+
+      (i===0 ? '<td class="num" id="net-price-cell" rowspan="'+legs.length+'" style="vertical-align:middle;color:#8b98a5">—</td>' : '')+
     '</tr>';
   }).join('');
 
@@ -417,7 +450,7 @@ function generateTable(){
     var putGap = Math.abs(shortPut.strike - longPut.strike);
     putGapLine = '<span class="sp-change"><span class="en">Selling Put vs Buying Put Gap (B−D)</span><span class="zh">卖出认沽 vs 买入认沽价差 (B−D)</span> = <b>$'+putGap.toFixed(2)+'</b></span>';
   }
-  SIM = { shortPut: shortPut, shortCall: shortCall, putGapLine: putGapLine, livePrice: null, day1: null, isClassicIC: isClassicIC };
+  SIM = { shortPut: shortPut, shortCall: shortCall, putGapLine: putGapLine, livePrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
 
   var cushionHtml = '';
   if(isClassicIC){
@@ -502,8 +535,8 @@ function generateTable(){
       '</div>'+
       metricsHtml+
       '<div class="note">'+
-        '<span class="en">Fill, Amount &amp; Δ Delta come straight from <code>positions.json</code> (delta is the real IBKR per-leg reading when logged, otherwise shown as — rather than guessed). <b>Price</b> and <b>Net Price</b> (the cost to close today) need a live per-leg option quote that <code>positions.json</code> does not carry, so they show as — here — see T29’s Bang Trade Analysis tab where those are filled in manually from a trade-close alert.</span>'+
-        '<span class="zh">成交价、金额与Δ Delta均直接取自<code>positions.json</code>（有记录时Delta为IBKR真实读数，否则显示—，不做猜测）。<b>平仓价</b>与<b>净价</b>（今日平仓成本）需要每条腿的实时期权报价，而<code>positions.json</code>不含此数据，因此此处显示为———可参考T29的「Bang交易分析」页签，那里是根据平仓提醒手动填入的。</span>'+
+        '<span class="en">Fill, Amount &amp; Δ Delta come straight from <code>positions.json</code> (delta is the real IBKR per-leg reading when logged, otherwise shown as — rather than guessed). <b>Price</b> and <b>Net Price</b> (the cost to close) are <b>modeled from delta</b> — Price ≈ Fill + Delta × (share price − Day 1 share price) — since <code>positions.json</code> doesn’t carry a live per-leg option quote; they update with the live price and with the 5%/10% simulate buttons (marked <b>*</b> when simulated), and show — for any leg missing a delta rather than guessing. Treat as an estimate, not a live IBKR reading — see T29’s Bang Trade Analysis tab for real trade-close-alert fills.</span>'+
+        '<span class="zh">成交价、金额与Δ Delta均直接取自<code>positions.json</code>（有记录时Delta为IBKR真实读数，否则显示—，不做猜测）。<b>平仓价</b>与<b>净价</b>是<b>根据Delta建模估算</b>——平仓价 ≈ 成交价 + Delta × (股价 − DTE第1天股价)——因<code>positions.json</code>不含每条腿的实时期权报价；会随实时股价与5%/10%模拟按钮更新（模拟时标注<b>*</b>），若某条腿缺少Delta则显示—，不做猜测。请视为估算值，非IBKR实时读数——真实平仓成交价请参考T29的「Bang交易分析」页签。</span>'+
       '</div>'+
     '</div>'+
     (isClassicIC ?
@@ -536,6 +569,7 @@ function generateTable(){
       html += varianceLinesHtml(q.price) + simButtonsHtml(null);
       el.innerHTML = html;
       updateCushionTable(q.price, false);
+      updateLegPrices(q.price, false);
     } else {
       el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>'+putGapLine;
     }
