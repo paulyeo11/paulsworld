@@ -282,7 +282,7 @@ function cushionBadgeHtml(vpct){
 
 // Holds context for the current symbol so the 5%/10%/Live simulate buttons
 // (defined once in the rendered markup) can recompute without re-fetching.
-var SIM = { sym:null, shortPut:null, shortCall:null, livePrice:null, day1:null, isClassicIC:false, legs:[] };
+var SIM = { sym:null, shortPut:null, shortCall:null, livePrice:null, lastPrice:null, day1:null, isClassicIC:false, legs:[] };
 
 // Table 1321's Price/Net Price columns — modeled from delta (Price ≈ Fill + Delta × (given
 // share price − Day 1 share price)), same "estimate, not a live IBKR reading" caveat as the
@@ -358,21 +358,38 @@ function simulatedPriceLineHtml(price, pct){
   var lbl = SIM_BTN_LABELS[pct] !== undefined ? SIM_BTN_LABELS[pct] : (pct+'%');
   return '<span class="sp-old" style="flex-basis:100%;font-size:1.5rem;"><span class="en">Share Price X '+lbl+'</span><span class="zh">股价 X '+lbl+'</span> <b style="color:#f59e0b;font-size:1.5rem;font-weight:900;">$'+price.toFixed(2)+'</b></span>';
 }
-// Suggested Put Strike (B): B = A×0.90 when A>$300, else A×0.95 — recomputed from whichever
-// price (live or simulated 5%/10%/-5%/-10%) is currently showing.
+// Suggested Put Strike (B): B = A×0.90 when A>threshold, else A×0.95 — recomputed from
+// whichever price (live or simulated 0.9/0.95/5%/10%) is currently showing. The threshold
+// defaults to $300 but Paul can edit it in the input rendered by suggestedStrikeLineHtml().
+var STRIKE_THRESHOLD = 300;
 function suggestedStrikeValue(price){
-  var mult = price > 300 ? 0.90 : 0.95;
+  var mult = price > STRIKE_THRESHOLD ? 0.90 : 0.95;
   return price * mult;
 }
 function suggestedStrikeLineHtml(price){
   var b = suggestedStrikeValue(price);
-  return '<span class="sp-old" style="flex-basis:100%;"><span class="en">Suggested Put Strike (B): A&gt;$300 → A×0.90, else A×0.95</span><span class="zh">建议认沽行权价 (B)：A&gt;$300 → A×0.90，否则 A×0.95</span> <b style="color:#3fb950;">$'+b.toFixed(2)+'</b></span>';
+  return '<span class="sp-old" style="flex-basis:100%;">'+
+    '<span class="en">Suggested Put Strike (B): A&gt;$</span><span class="zh">建议认沽行权价 (B)：A&gt;$</span>'+
+    '<input type="number" id="strikeThresholdInput" value="'+STRIKE_THRESHOLD+'" oninput="onThresholdChange(this.value)" style="width:56px;background:#0d1117;border:1px solid rgba(255,255,255,.25);color:#e6edf3;border-radius:6px;padding:2px 5px;font-size:.7rem;">'+
+    ' <span class="en">→ A×0.90, else A×0.95</span><span class="zh">→ A×0.90，否则 A×0.95</span>'+
+    ' <b id="suggested-strike-value" style="color:#3fb950;">$'+b.toFixed(2)+'</b></span>';
 }
 // Fills the SELL Put row's strike cell (C) with the Suggested Put Strike (B) value above,
 // so the leg table reflects the same what-if price as the rest of the card.
 function updateShortPutStrikeCell(price){
   var cell = document.getElementById('leg-strike-shortput');
   if(cell) cell.textContent = Math.round(suggestedStrikeValue(price));
+}
+// Editing the threshold input only patches the two derived values in place (not a full
+// innerHTML rebuild), so the input keeps focus/cursor position while Paul is still typing.
+function onThresholdChange(val){
+  var n = parseFloat(val);
+  if(isNaN(n) || SIM.lastPrice == null) return;
+  STRIKE_THRESHOLD = n;
+  var b = suggestedStrikeValue(SIM.lastPrice);
+  var valEl = document.getElementById('suggested-strike-value');
+  if(valEl) valEl.textContent = '$'+b.toFixed(2);
+  updateShortPutStrikeCell(SIM.lastPrice);
 }
 function simulateVariance(pct){
   var el = document.getElementById('sp-dyn'); if(!el || !SIM.shortPut) return;
@@ -382,6 +399,7 @@ function simulateVariance(pct){
   }
   // Result = Share Price (A) × (1 + pct/100) — e.g. the "0.9" button (pct=-10) gives A×0.9.
   var price = SIM.livePrice * (1 + pct/100);
+  SIM.lastPrice = price;
   el.innerHTML = livePriceLineHtml() + simulatedPriceLineHtml(price, pct) +
     suggestedStrikeLineHtml(price) +
     varianceLinesHtml(price) + simButtonsHtml(pct);
@@ -392,6 +410,7 @@ function simulateVariance(pct){
 }
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
+  SIM.lastPrice = SIM.livePrice;
   var html = livePriceLineHtml();
   html += suggestedStrikeLineHtml(SIM.livePrice) + varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
   el.innerHTML = html;
@@ -455,7 +474,7 @@ function generateTable(){
   var shortCall = calls.filter(function(o){return o.qty<0;})[0], longCall = calls.filter(function(o){return o.qty>0;})[0];
   var isClassicIC = puts.length===2 && calls.length===2 && shortPut && longPut && shortCall && longCall;
   var metricsHtml = '';
-  SIM = { sym: sym, shortPut: shortPut, shortCall: shortCall, livePrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
+  SIM = { sym: sym, shortPut: shortPut, shortCall: shortCall, livePrice: null, lastPrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
 
   var cushionHtml = '';
   if(isClassicIC){
@@ -561,6 +580,7 @@ function generateTable(){
     if(q && typeof q.price === 'number'){
       var day1 = recordDay1IfMissing(sym, q.price);
       SIM.livePrice = q.price;
+      SIM.lastPrice = q.price;
       SIM.day1 = day1;
       var html = livePriceLineHtml();
       html += suggestedStrikeLineHtml(q.price) + varianceLinesHtml(q.price) + simButtonsHtml(null);
