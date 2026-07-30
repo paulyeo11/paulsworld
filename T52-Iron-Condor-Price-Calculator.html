@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T52: Iron Condor Price Calculator</title>
+<link rel="apple-touch-icon" href="/ic-icon-t51.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/ic-icon-t51.png">
+<link rel="icon" type="image/png" href="/ic-icon-t51.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="T52 IC Calculator">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { overflow-x:hidden; max-width:100%; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0d1117; color:#e6edf3; font-size:16px; line-height:1.5; padding-bottom:60px; }
+
+  .home-btn { position:fixed; top:12px; left:12px; z-index:999; background:rgba(255,255,255,.1); border:1.5px solid #f59e0b; color:#f59e0b; font-weight:700; font-size:.85rem; padding:7px 14px; border-radius:20px; text-decoration:none; }
+  .home-btn:hover { background:#f59e0b; color:#0d1117; }
+
+  .lang-toggle { position:fixed; top:12px; right:56px; z-index:999; display:flex; gap:4px; }
+  .lang-toggle button { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:#e6edf3; font-size:.72rem; font-weight:700; padding:6px 11px; border-radius:20px; cursor:pointer; }
+  .lang-toggle button.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
+
+  .page-menu-wrap { position:fixed; top:12px; right:12px; z-index:999; }
+  .page-menu-btn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.35); color:#e6edf3; font-size:1.15rem; font-weight:800; cursor:pointer; line-height:1; }
+  .page-menu-btn:hover { background:rgba(255,255,255,.2); }
+  .page-menu-dropdown { display:none; position:absolute; top:42px; right:0; background:#161b22; border:1px solid rgba(255,255,255,.15); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:190px; overflow:hidden; }
+  .page-menu-dropdown.open { display:block; }
+  .page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:#e6edf3; text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .page-menu-dropdown button:hover { background:rgba(255,255,255,.08); }
+  .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
+  .page-menu-dropdown button.pinned { color:#f59e0b; }
+
+  header.hero { text-align:center; padding:70px 18px 22px; background:linear-gradient(135deg,#111827,#1e3a5f); border-bottom:1px solid rgba(255,255,255,.08); }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; padding:0 40px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  header.hero .ic { font-size:2.2rem; }
+  header.hero h1 { font-size:1.4rem; font-weight:800; letter-spacing:.3px; margin-top:8px; }
+  header.hero .sub { color:#9fb3c8; font-size:.88rem; margin-top:8px; max-width:600px; margin-left:auto; margin-right:auto; }
+
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; }
+
+  .wrap { max-width:760px; margin:0 auto; padding:0 14px; }
+
+  .card { background:#161b22; border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:18px 16px; margin:18px 0; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; margin-bottom:12px; }
+
+  .search-row { display:flex; gap:8px; }
+  .search-row input { flex:1; background:#0d1117; border:1.5px solid rgba(255,255,255,.15); color:#e6edf3; font-size:1rem; font-weight:700; letter-spacing:.03em; padding:11px 14px; border-radius:10px; text-transform:uppercase; }
+  .search-row input:focus { outline:none; border-color:#f59e0b; }
+  .search-row button { background:#f59e0b; color:#0d1117; border:none; font-weight:800; font-size:.88rem; padding:0 20px; border-radius:10px; cursor:pointer; white-space:nowrap; }
+  .search-row button:hover { background:#ffb733; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+  .chip { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); color:#c9d1d9; font-size:.76rem; font-weight:700; padding:6px 13px; border-radius:20px; cursor:pointer; }
+  .chip:hover { background:rgba(245,158,11,.18); border-color:#f59e0b; color:#f59e0b; }
+
+  .msg-box { text-align:center; color:#8b98a5; font-size:.85rem; padding:16px 12px; }
+  .msg-box.err { color:#f85149; }
+
+  .price-row { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:12px; padding:12px; background:#0d1117; border:1px solid rgba(255,255,255,.07); border-radius:10px; }
+  .price-label { font-size:.7rem; color:#8b98a5; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+  .price-val { font-size:1.5rem; font-weight:900; color:#f5c869; }
+  .price-time { font-size:.68rem; color:#8b98a5; }
+  .price-manual { display:flex; align-items:center; gap:6px; margin-top:8px; flex-basis:100%; }
+  .price-manual input { width:110px; background:#161b22; border:1px solid rgba(255,255,255,.2); color:#e6edf3; padding:6px 9px; border-radius:8px; font-size:.85rem; }
+  .price-manual label { font-size:.72rem; color:#8b98a5; }
+
+  .case-badge { display:inline-block; font-size:.72rem; font-weight:800; padding:5px 12px; border-radius:20px; letter-spacing:.03em; margin-top:10px; }
+  .case-badge.c1 { background:rgba(63,185,80,.16); color:#3fb950; border:1px solid rgba(63,185,80,.5); }
+  .case-badge.c2 { background:rgba(88,166,255,.16); color:#58a6ff; border:1px solid rgba(88,166,255,.5); }
+
+  .settings-toggle { background:none; border:1px solid rgba(255,255,255,.2); color:#9fb3c8; font-size:.78rem; font-weight:700; padding:7px 14px; border-radius:20px; cursor:pointer; margin-top:14px; }
+  .settings-toggle:hover { border-color:#f59e0b; color:#f59e0b; }
+  .settings-body { display:none; margin-top:14px; }
+  .settings-body.open { display:block; }
+  .set-grp { margin-bottom:14px; }
+  .set-grp .grp-title { font-size:.76rem; font-weight:800; color:#c9d1d9; margin-bottom:8px; }
+  .set-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; font-size:.8rem; flex-wrap:wrap; }
+  .set-row label { flex:1; min-width:140px; color:#9fb3c8; }
+  .set-row input { width:90px; background:#0d1117; border:1px solid rgba(255,255,255,.2); color:#e6edf3; padding:6px 9px; border-radius:8px; font-size:.85rem; }
+  .reset-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); color:#c9d1d9; font-size:.74rem; font-weight:700; padding:6px 14px; border-radius:18px; cursor:pointer; }
+  .reset-btn:hover { border-color:#f59e0b; color:#f59e0b; }
+
+  .table-scroll { overflow-x:auto; }
+  table.legs { width:100%; border-collapse:collapse; margin-top:6px; font-size:.78rem; }
+  table.legs th { text-align:left; color:#8b98a5; font-size:.62rem; text-transform:uppercase; letter-spacing:.03em; padding:7px 5px; border-bottom:1px solid rgba(255,255,255,.08); }
+  table.legs td { padding:9px 5px; border-bottom:1px solid rgba(255,255,255,.05); }
+  table.legs td.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+  .buy { color:#58a6ff; font-weight:700; } .sell { color:#f85149; font-weight:700; }
+  .leg-badge { display:inline-block; width:22px; height:22px; line-height:22px; text-align:center; border-radius:50%; background:#0d1117; border:1px solid rgba(255,255,255,.2); font-size:.72rem; font-weight:800; }
+
+  .formula-note { font-size:.72rem; color:#8b98a5; margin-top:14px; padding:12px; background:#0d1117; border-radius:10px; border:1px solid rgba(255,255,255,.06); line-height:1.7; }
+  .formula-note b { color:#c9d1d9; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; padding:0 14px; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 <span class="en">Home</span><span class="zh">首页</span></a>
+
+<div class="lang-toggle">
+  <button id="btn-en" class="active" onclick="setLang('en')">🇬🇧 English</button>
+  <button id="btn-zh" onclick="setLang('zh')">🇨🇳 中文</button>
+</div>
+
+<div class="page-menu-wrap">
+  <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+  <div class="page-menu-dropdown" id="pageMenuDropdown">
+    <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span></button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T52</span><span class="zh">T52</span></span>
+  </div>
+  <div class="ic">🦅🧮</div>
+  <h1><span class="en">T52: Iron Condor Price Calculator</span><span class="zh">T52：铁鹰价格计算器</span></h1>
+  <div class="sub"><span class="en">Enter a ticker → get its live share price → auto-picks a Case by price threshold → computes all 4 Iron Condor legs. Threshold, gaps &amp; multipliers are all adjustable.</span><span class="zh">输入股票代码→获取实时股价→按价格门槛自动判断案例→计算铁鹰策略的全部4条腿。门槛、间距与倍数均可自行调整。</span></div>
+</header>
+
+<div class="wrap">
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="pinToast">📌 Pinned!</div>
+
+  <div class="card">
+    <h2><span class="en">1. Enter Ticker</span><span class="zh">1. 输入股票代码</span></h2>
+    <div class="search-row">
+      <input type="text" id="symInput" placeholder="e.g. QQQ" maxlength="10" autocapitalize="characters" autocomplete="off" value="QQQ">
+      <button onclick="runCalc()"><span class="en">Calculate</span><span class="zh">计算</span></button>
+    </div>
+    <div class="chips">
+      <button class="chip" onclick="loadSym('QQQ')">QQQ</button>
+      <button class="chip" onclick="loadSym('NVDA')">NVDA</button>
+      <button class="chip" onclick="loadSym('SPY')">SPY</button>
+      <button class="chip" onclick="loadSym('IWM')">IWM</button>
+      <button class="chip" onclick="loadSym('AVGO')">AVGO</button>
+    </div>
+
+    <div id="priceArea">
+      <div class="msg-box"><span class="en">Enter a ticker and tap Calculate.</span><span class="zh">输入代码并点击「计算」。</span></div>
+    </div>
+
+    <button class="settings-toggle" onclick="toggleSettings()">⚙️ <span class="en" id="setToggleLabelEn">Show Advanced Settings (Threshold, Gap, Time)</span><span class="zh" id="setToggleLabelZh">显示高级设置（门槛、间距、倍数）</span></button>
+    <div class="settings-body" id="settingsBody">
+      <div class="set-grp">
+        <div class="grp-title"><span class="en">Case Threshold</span><span class="zh">案例判断门槛</span></div>
+        <div class="set-row">
+          <label><span class="en">Share Price Threshold</span><span class="zh">股价门槛</span></label>
+          <input type="number" id="inThreshold" value="300" oninput="runCalc()">
+        </div>
+      </div>
+      <div class="set-grp">
+        <div class="grp-title"><span class="en">Case (1) — Share Price &gt; Threshold</span><span class="zh">案例(1) — 股价 &gt; 门槛</span></div>
+        <div class="set-row"><label><span class="en">Gap (G)</span><span class="zh">间距 (G)</span></label><input type="number" id="inGap" value="10" oninput="runCalc()"></div>
+        <div class="set-row"><label><span class="en">Time (T) — Selling Put multiplier</span><span class="zh">Time (T) — 卖出认沽倍数</span></label><input type="number" step="0.01" id="inTime" value="0.9" oninput="runCalc()"></div>
+        <div class="set-row"><label><span class="en">Time1 (T1) — Selling Call multiplier</span><span class="zh">Time1 (T1) — 卖出认购倍数</span></label><input type="number" step="0.01" id="inTime1" value="1.1" oninput="runCalc()"></div>
+      </div>
+      <div class="set-grp">
+        <div class="grp-title"><span class="en">Case (2) — Share Price &le; Threshold</span><span class="zh">案例(2) — 股价 &le; 门槛</span></div>
+        <div class="set-row"><label><span class="en">Gap1 (G1)</span><span class="zh">间距1 (G1)</span></label><input type="number" id="inGap1" value="5" oninput="runCalc()"></div>
+        <div class="set-row"><label><span class="en">Time3 (T3) — Selling Put multiplier</span><span class="zh">Time3 (T3) — 卖出认沽倍数</span></label><input type="number" step="0.01" id="inTime3" value="0.95" oninput="runCalc()"></div>
+        <div class="set-row"><label><span class="en">Time4 (T4) — Selling Call multiplier</span><span class="zh">Time4 (T4) — 卖出认购倍数</span></label><input type="number" step="0.01" id="inTime4" value="1.05" oninput="runCalc()"></div>
+      </div>
+      <button class="reset-btn" onclick="resetDefaults()">↺ <span class="en">Reset to Defaults</span><span class="zh">恢复默认值</span></button>
+    </div>
+  </div>
+
+  <div id="resultArea"></div>
+
+  <div class="foot">
+    <span class="en">Educational calculator — strikes are computed from the formulas above, not live option-chain data. Always confirm actual strikes/premium on your broker before trading.</span><span class="zh">教育性计算工具——行权价由上方公式计算得出，并非期权链实时数据。交易前请务必在券商平台核实实际行权价与权利金。</span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Iron Condor Breadboard — Current Positions</span><span class="zh">T29：铁鹰面包板——目前持仓</span></a><br>
+    <a href="T51-Trade-Table-Generator.html">🧮 <span class="en">T51: Iron Condor Trade Table Generator</span><span class="zh">T51：铁鹰交易表生成器</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+
+  <script src="/view-counter.js"></script>
+</div>
+
+<script>
+var curLang = 'en';
+function setLang(l){
+  curLang = l;
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.getElementById('btn-zh').classList.toggle('active', l==='zh');
+  document.querySelectorAll('.en').forEach(function(e){ e.style.display = (l==='en') ? '' : 'none'; });
+  document.querySelectorAll('.zh').forEach(function(e){ e.style.display = (l==='zh') ? '' : 'none'; });
+}
+setLang('en');
+
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+function togglePageMenu(){ document.getElementById('pageMenuDropdown').classList.toggle('open'); }
+function closePageMenu(){ document.getElementById('pageMenuDropdown').classList.remove('open'); }
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+
+var PIN_KEY = 'pw_pinned_pages';
+var PAGE_URL = 'T52-Iron-Condor-Price-Calculator.html';
+var PAGE_TITLE = 'T52 Iron Condor Price Calculator';
+var PAGE_TITLE_ZH = 'T52 铁鹰价格计算器';
+var PAGE_ICON = '🧮';
+function getPinnedPages(){ try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; } }
+function isPagePinned(){ return getPinnedPages().some(function(p){ return p.url === PAGE_URL; }); }
+function updatePinMenuItem(){
+  var el = document.getElementById('pinMenuItem');
+  var pinned = isPagePinned();
+  el.classList.toggle('pinned', pinned);
+  el.innerHTML = pinned
+    ? '📌 <span class="en">Unpin from Tools hub</span><span class="zh">取消置顶</span>'
+    : '📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span>';
+}
+function togglePinThisPage(){
+  var list = getPinnedPages();
+  var idx = list.findIndex(function(p){ return p.url === PAGE_URL; });
+  var toast = document.getElementById('pinToast');
+  if(idx >= 0){
+    list.splice(idx, 1);
+    toast.innerHTML = '<span class="en">Unpinned</span><span class="zh">已取消置顶</span>';
+  } else {
+    list.unshift({ url:PAGE_URL, title:PAGE_TITLE, titleZh:PAGE_TITLE_ZH, icon:PAGE_ICON, pinnedAt:Date.now() });
+    toast.innerHTML = '<span class="en">📌 Pinned! Shows at top of Investment Tools</span><span class="zh">📌 已置顶！将显示在投资工具中心顶部</span>';
+  }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch(e){}
+  updatePinMenuItem();
+  closePageMenu();
+  toast.style.display = 'block';
+  setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+}
+updatePinMenuItem();
+
+function toggleSettings(){
+  document.getElementById('settingsBody').classList.toggle('open');
+}
+function resetDefaults(){
+  document.getElementById('inThreshold').value = 300;
+  document.getElementById('inGap').value = 10;
+  document.getElementById('inTime').value = 0.9;
+  document.getElementById('inTime1').value = 1.1;
+  document.getElementById('inGap1').value = 5;
+  document.getElementById('inTime3').value = 0.95;
+  document.getElementById('inTime4').value = 1.05;
+  runCalc();
+}
+
+function loadSym(s){
+  document.getElementById('symInput').value = s;
+  runCalc();
+}
+document.getElementById('symInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter') runCalc();
+});
+
+// Reuse the /api/td live-quote proxy (same one T29/T51 use) so this works for any ticker.
+function fetchQuote(sym){
+  return fetch('/api/td?symbols=' + encodeURIComponent(sym)).then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); });
+}
+
+var LAST = { sym:null, price:null };
+
+function runCalc(){
+  var sym = document.getElementById('symInput').value.trim().toUpperCase();
+  var priceArea = document.getElementById('priceArea');
+  var resultArea = document.getElementById('resultArea');
+  if(!sym){ return; }
+
+  if(LAST.sym !== sym){
+    LAST = { sym:sym, price:null };
+    priceArea.innerHTML = '<div class="msg-box"><span class="en">Loading live price for <b>'+sym+'</b>…</span><span class="zh">正在获取 <b>'+sym+'</b> 的实时股价…</span></div>';
+    resultArea.innerHTML = '';
+    setLang(curLang);
+    fetchQuote(sym).then(function(data){
+      var q = data && data[sym];
+      if(q && typeof q.price === 'number'){
+        LAST.price = q.price;
+      } else {
+        LAST.price = null;
+      }
+      renderPriceBox(sym);
+      computeAndRender(sym);
+    }).catch(function(){
+      LAST.price = null;
+      renderPriceBox(sym);
+      computeAndRender(sym);
+    });
+    return;
+  }
+  renderPriceBox(sym);
+  computeAndRender(sym);
+}
+
+function renderPriceBox(sym){
+  var priceArea = document.getElementById('priceArea');
+  var stamp = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  var manualVal = document.getElementById('manualPriceInput') ? document.getElementById('manualPriceInput').value : '';
+  var html = '<div class="price-row">';
+  if(LAST.price !== null){
+    html += '<span class="price-label"><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span> · '+sym+'</span> <span class="price-val" id="livePriceVal">$'+LAST.price.toFixed(2)+'</span> <span class="price-time">'+stamp+'</span>';
+  } else {
+    html += '<span class="msg-box err" style="padding:0;"><span class="en">Live price unavailable for '+sym+' — enter it manually below.</span><span class="zh">无法获取 '+sym+' 的实时股价——请在下方手动输入。</span></span>';
+  }
+  html += '<div class="price-manual"><label><span class="en">Manual override (A)</span><span class="zh">手动输入 (A)</span></label><input type="number" step="0.01" id="manualPriceInput" placeholder="e.g. 600" value="'+(manualVal||'')+'" oninput="onManualPrice()"></div>';
+  html += '</div>';
+  priceArea.innerHTML = html;
+  setLang(curLang);
+}
+
+function onManualPrice(){
+  var v = parseFloat(document.getElementById('manualPriceInput').value);
+  if(!isNaN(v) && v > 0){
+    LAST.price = v;
+    var el = document.getElementById('livePriceVal');
+    computeAndRender(LAST.sym);
+  } else {
+    computeAndRender(LAST.sym);
+  }
+}
+
+function fmt(n){ return '$'+n.toFixed(2); }
+
+function computeAndRender(sym){
+  var resultArea = document.getElementById('resultArea');
+  var manualEl = document.getElementById('manualPriceInput');
+  var manualVal = manualEl ? parseFloat(manualEl.value) : NaN;
+  var A = !isNaN(manualVal) && manualVal > 0 ? manualVal : LAST.price;
+
+  if(A === null || A === undefined || isNaN(A)){
+    resultArea.innerHTML = '';
+    return;
+  }
+
+  var threshold = parseFloat(document.getElementById('inThreshold').value) || 300;
+  var G = parseFloat(document.getElementById('inGap').value) || 0;
+  var T = parseFloat(document.getElementById('inTime').value) || 0;
+  var T1 = parseFloat(document.getElementById('inTime1').value) || 0;
+  var G1 = parseFloat(document.getElementById('inGap1').value) || 0;
+  var T3 = parseFloat(document.getElementById('inTime3').value) || 0;
+  var T4 = parseFloat(document.getElementById('inTime4').value) || 0;
+
+  var isCase1 = A > threshold;
+  var B, D, C, E, gap, tPut, tCall;
+  if(isCase1){
+    gap = G; tPut = T; tCall = T1;
+  } else {
+    gap = G1; tPut = T3; tCall = T4;
+  }
+  B = A * tPut;          // Selling Put
+  D = B + gap;           // Buying Put
+  C = A * tCall;         // Selling Call
+  E = C + gap;           // Buying Call
+
+  var caseLabel = isCase1
+    ? '<span class="case-badge c1"><span class="en">Case (1): Share Price (A) &gt; Threshold ($'+threshold.toFixed(0)+')</span><span class="zh">案例(1)：股价 (A) &gt; 门槛 ($'+threshold.toFixed(0)+')</span></span>'
+    : '<span class="case-badge c2"><span class="en">Case (2): Share Price (A) ≤ Threshold ($'+threshold.toFixed(0)+')</span><span class="zh">案例(2)：股价 (A) ≤ 门槛 ($'+threshold.toFixed(0)+')</span></span>';
+
+  var gapLbl = isCase1 ? 'G' : 'G1';
+  var tPutLbl = isCase1 ? 'T' : 'T3';
+  var tCallLbl = isCase1 ? 'T1' : 'T4';
+
+  var html = '<div class="card">';
+  html += '<h2><span class="en">2. Result — '+sym+'</span><span class="zh">2. 计算结果 — '+sym+'</span></h2>';
+  html += caseLabel;
+  html += '<div class="table-scroll"><table class="legs" id="legsTable">';
+  html += '<tr><th colspan="4"><span class="en">Table 1323: 4-Leg Iron Condor Strikes</span><span class="zh">表1323：铁鹰策略四条腿行权价</span></th></tr>';
+  html += '<tr><th><span class="en">Leg</span><span class="zh">腿</span></th><th><span class="en">Action</span><span class="zh">操作</span></th><th><span class="en">Formula</span><span class="zh">公式</span></th><th class="num"><span class="en">Strike</span><span class="zh">行权价</span></th></tr>';
+  html += legRow(1, 'BUY', 'Put', 'D = B + '+gapLbl, D);
+  html += legRow(2, 'SELL', 'Put', 'B = A × '+tPutLbl, B);
+  html += legRow(3, 'SELL', 'Call', 'C = A × '+tCallLbl, C);
+  html += legRow(4, 'BUY', 'Call', 'E = C + '+gapLbl, E);
+  html += '</table></div>';
+
+  html += '<div class="formula-note">';
+  html += '<span class="en">With <b>A</b> = Share Price ($'+A.toFixed(2)+'), <b>'+gapLbl+'</b> = Gap ($'+gap.toFixed(2)+'), <b>'+tPutLbl+'</b> = Put multiplier ('+tPut.toFixed(2)+'), <b>'+tCallLbl+'</b> = Call multiplier ('+tCall.toFixed(2)+'): '+
+    '<b>Selling Put (B) = A × '+tPutLbl+' = '+fmt(A)+' × '+tPut.toFixed(2)+' = '+fmt(B)+'</b> · '+
+    '<b>Buying Put (D) = B + '+gapLbl+' = '+fmt(B)+' + '+fmt(gap)+' = '+fmt(D)+'</b> · '+
+    '<b>Selling Call (C) = A × '+tCallLbl+' = '+fmt(A)+' × '+tCall.toFixed(2)+' = '+fmt(C)+'</b> · '+
+    '<b>Buying Call (E) = C + '+gapLbl+' = '+fmt(C)+' + '+fmt(gap)+' = '+fmt(E)+'</b>.</span>';
+  html += '<span class="zh">其中 <b>A</b> = 股价 ($'+A.toFixed(2)+')，<b>'+gapLbl+'</b> = 间距 ($'+gap.toFixed(2)+')，<b>'+tPutLbl+'</b> = 认沽倍数 ('+tPut.toFixed(2)+')，<b>'+tCallLbl+'</b> = 认购倍数 ('+tCall.toFixed(2)+')：'+
+    '<b>卖出认沽 (B) = A × '+tPutLbl+' = '+fmt(A)+' × '+tPut.toFixed(2)+' = '+fmt(B)+'</b> · '+
+    '<b>买入认沽 (D) = B + '+gapLbl+' = '+fmt(B)+' + '+fmt(gap)+' = '+fmt(D)+'</b> · '+
+    '<b>卖出认购 (C) = A × '+tCallLbl+' = '+fmt(A)+' × '+tCall.toFixed(2)+' = '+fmt(C)+'</b> · '+
+    '<b>买入认购 (E) = C + '+gapLbl+' = '+fmt(C)+' + '+fmt(gap)+' = '+fmt(E)+'</b>。</span>';
+  html += '</div>';
+  html += '</div>';
+
+  resultArea.innerHTML = html;
+  setLang(curLang);
+}
+
+function legRow(n, action, type, formula, strike){
+  return '<tr><td><span class="leg-badge">'+n+'</span></td>'+
+    '<td class="'+(action==='SELL'?'sell':'buy')+'">'+action+' '+type+'</td>'+
+    '<td>'+formula+'</td>'+
+    '<td class="num">'+fmt(strike)+'</td></tr>';
+}
+
+runCalc();
+</script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
