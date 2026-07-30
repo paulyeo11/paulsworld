@@ -291,7 +291,24 @@ function cushionBadgeHtml(vpct){
 
 // Holds context for the current symbol so the 5%/10%/Live simulate buttons
 // (defined once in the rendered markup) can recompute without re-fetching.
-var SIM = { shortPut:null, shortCall:null, putGapLine:'', livePrice:null, day1:null };
+var SIM = { shortPut:null, shortCall:null, putGapLine:'', livePrice:null, day1:null, isClassicIC:false };
+
+// Table 1322 (Share Price vs Selling Put & Call) — shared by the live-fetch path and the
+// 5%/10%/Revert simulate buttons, so both keep that table in sync with whatever price is showing.
+function updateCushionTable(price, simulated){
+  if(!SIM.isClassicIC) return;
+  var putVar = (price - SIM.shortPut.strike) / price * 100;
+  var callVar = (SIM.shortCall.strike - price) / price * 100;
+  var pEl = document.getElementById('cush-price');
+  if(pEl){ pEl.innerHTML = '$'+price.toFixed(2)+(simulated?' <span style="color:#f59e0b;font-weight:800;">*</span>':''); }
+  var pvEl = document.getElementById('cush-putvar'); if(pvEl){ pvEl.textContent = (putVar>=0?'+':'')+putVar.toFixed(2)+'%'; pvEl.style.color = putVar>=0 ? '#3fb950' : '#f85149'; }
+  var cvEl = document.getElementById('cush-callvar'); if(cvEl){ cvEl.textContent = (callVar>=0?'+':'')+callVar.toFixed(2)+'%'; cvEl.style.color = callVar>=0 ? '#3fb950' : '#f85149'; }
+  var pcEl = document.getElementById('cush-putcush'); if(pcEl) pcEl.innerHTML = cushionBadgeHtml(putVar);
+  var ccEl = document.getElementById('cush-callcush'); if(ccEl) ccEl.innerHTML = cushionBadgeHtml(callVar);
+  var noteEl = document.getElementById('cush-sim-note');
+  if(noteEl) noteEl.style.display = simulated ? '' : 'none';
+  setLang(curLang);
+}
 
 function varianceLinesHtml(price){
   var out = '';
@@ -328,6 +345,7 @@ function simulateVariance(pct){
   el.innerHTML = '<span class="sp-label">SIMULATED SHARE PRICE</span> <span class="sp-new">$'+price.toFixed(2)+'</span> <span class="sp-time"><span class="en">what-if: Put Strike Variance = '+pct+'%</span><span class="zh">假设：认沽行权价差幅 = '+pct+'%</span></span>'+
     varianceLinesHtml(price) + simButtonsHtml(pct);
   setLang(curLang);
+  updateCushionTable(price, true);
 }
 function renderLivePriceBox(){
   var el = document.getElementById('sp-dyn'); if(!el || SIM.livePrice===null) return;
@@ -339,6 +357,7 @@ function renderLivePriceBox(){
   html += varianceLinesHtml(SIM.livePrice) + simButtonsHtml(null);
   el.innerHTML = html;
   setLang(curLang);
+  updateCushionTable(SIM.livePrice, false);
 }
 
 function generateTable(){
@@ -398,7 +417,7 @@ function generateTable(){
     var putGap = Math.abs(shortPut.strike - longPut.strike);
     putGapLine = '<span class="sp-change"><span class="en">Selling Put vs Buying Put Gap (B−D)</span><span class="zh">卖出认沽 vs 买入认沽价差 (B−D)</span> = <b>$'+putGap.toFixed(2)+'</b></span>';
   }
-  SIM = { shortPut: shortPut, shortCall: shortCall, putGapLine: putGapLine, livePrice: null, day1: null };
+  SIM = { shortPut: shortPut, shortCall: shortCall, putGapLine: putGapLine, livePrice: null, day1: null, isClassicIC: isClassicIC };
 
   var cushionHtml = '';
   if(isClassicIC){
@@ -440,6 +459,10 @@ function generateTable(){
           '<td class="num">'+fmtSignedMoney(netCredit)+'</td>'+
         '</tr>'+
       '</table>'+
+      '</div>'+
+      '<div class="note" id="cush-sim-note" style="display:none;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35)">'+
+        '<span class="en">🎯 <b>*</b> Share Price (A), the variance columns and cushion badges above are showing the <b>simulated</b> price from the 5%/10% buttons, not the live quote — tap "Revert to Real Price" to go back.</span>'+
+        '<span class="zh">🎯 <b>*</b> 上方的股价 (A)、差幅栏与缓冲徽章目前显示的是5%/10%按钮的<b>模拟</b>股价，并非实时报价——点击「恢复实际股价」可返回实时数据。</span>'+
       '</div>';
   }
   var maxLoss = null;
@@ -512,16 +535,7 @@ function generateTable(){
       html += '<span class="sp-change"><span class="en">Price change (Now vs Day 1)</span><span class="zh">价格变化（现价 vs 第1天）</span> <b class="'+(up?'up':'down')+'">'+(up?'▲ +':'▼ ')+pct.toFixed(2)+'%</b></span>';
       html += varianceLinesHtml(q.price) + simButtonsHtml(null);
       el.innerHTML = html;
-      if(isClassicIC){
-        var price = q.price;
-        var putVar = (price - shortPut.strike) / price * 100;
-        var callVar = (shortCall.strike - price) / price * 100;
-        var pEl = document.getElementById('cush-price'); if(pEl) pEl.textContent = '$'+price.toFixed(2);
-        var pvEl = document.getElementById('cush-putvar'); if(pvEl){ pvEl.textContent = (putVar>=0?'+':'')+putVar.toFixed(2)+'%'; pvEl.style.color = putVar>=0 ? '#3fb950' : '#f85149'; }
-        var cvEl = document.getElementById('cush-callvar'); if(cvEl){ cvEl.textContent = (callVar>=0?'+':'')+callVar.toFixed(2)+'%'; cvEl.style.color = callVar>=0 ? '#3fb950' : '#f85149'; }
-        var pcEl = document.getElementById('cush-putcush'); if(pcEl) pcEl.innerHTML = cushionBadgeHtml(putVar);
-        var ccEl = document.getElementById('cush-callcush'); if(ccEl) ccEl.innerHTML = cushionBadgeHtml(callVar);
-      }
+      updateCushionTable(q.price, false);
     } else {
       el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>'+putGapLine;
     }
