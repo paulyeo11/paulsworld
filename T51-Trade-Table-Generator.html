@@ -291,7 +291,7 @@ function cushionBadgeHtml(vpct){
 
 // Holds context for the current symbol so the 5%/10%/Live simulate buttons
 // (defined once in the rendered markup) can recompute without re-fetching.
-var SIM = { shortPut:null, shortCall:null, putGapLine:'', livePrice:null, day1:null, isClassicIC:false, legs:[] };
+var SIM = { shortPut:null, shortCall:null, livePrice:null, day1:null, isClassicIC:false, legs:[] };
 
 // Table 1321's Price/Net Price columns — modeled from delta (Price ≈ Fill + Delta × (given
 // share price − Day 1 share price)), same "estimate, not a live IBKR reading" caveat as the
@@ -342,17 +342,7 @@ function updateCushionTable(price, simulated){
 }
 
 function varianceLinesHtml(price){
-  var out = '';
-  if(SIM.shortPut){
-    var spVar = (price - SIM.shortPut.strike) / price * 100, spUp = spVar >= 0;
-    out += '<span class="sp-change"><span class="en">Share Price vs Put Strike (A−B)/A</span><span class="zh">股价 vs 认沽行权价 (A−B)/A</span> '+SIM.shortPut.strike+'P <b class="'+(spUp?'up':'down')+'">'+(spUp?'+':'')+spVar.toFixed(2)+'%</b></span>';
-  }
-  if(SIM.shortCall){
-    var scVar = (SIM.shortCall.strike - price) / price * 100, scUp = scVar >= 0;
-    out += '<span class="sp-change"><span class="en">Share Price vs Call Strike (C−A)/A</span><span class="zh">股价 vs 认购行权价 (C−A)/A</span> '+SIM.shortCall.strike+'C <b class="'+(scUp?'up':'down')+'">'+(scUp?'+':'')+scVar.toFixed(2)+'%</b></span>';
-  }
-  out += SIM.putGapLine;
-  return out;
+  return '';
 }
 function simButtonsHtml(activePct){
   if(!SIM.shortPut) return '';
@@ -373,7 +363,7 @@ function simulateVariance(pct){
     return;
   }
   var price = SIM.shortPut.strike / (1 - pct/100);
-  el.innerHTML = '<span class="sp-label">SIMULATED SHARE PRICE</span> <span class="sp-new">$'+price.toFixed(2)+'</span> <span class="sp-time"><span class="en">what-if: Put Strike Variance = '+pct+'%</span><span class="zh">假设：认沽行权价差幅 = '+pct+'%</span></span>'+
+  el.innerHTML = '<span class="sp-label">SIMULATED SHARE PRICE</span> <span class="sp-new">$'+price.toFixed(2)+'</span>'+
     varianceLinesHtml(price) + simButtonsHtml(pct);
   setLang(curLang);
   updateCushionTable(price, true);
@@ -441,12 +431,7 @@ function generateTable(){
   var shortCall = calls.filter(function(o){return o.qty<0;})[0], longCall = calls.filter(function(o){return o.qty>0;})[0];
   var isClassicIC = puts.length===2 && calls.length===2 && shortPut && longPut && shortCall && longCall;
   var metricsHtml = '';
-  var putGapLine = '';
-  if(shortPut && longPut){
-    var putGap = Math.abs(shortPut.strike - longPut.strike);
-    putGapLine = '<span class="sp-change"><span class="en">Selling Put vs Buying Put Gap (B−D)</span><span class="zh">卖出认沽 vs 买入认沽价差 (B−D)</span> = <b>$'+putGap.toFixed(2)+'</b></span>';
-  }
-  SIM = { shortPut: shortPut, shortCall: shortCall, putGapLine: putGapLine, livePrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
+  SIM = { shortPut: shortPut, shortCall: shortCall, livePrice: null, day1: null, isClassicIC: isClassicIC, legs: legs };
 
   var cushionHtml = '';
   if(isClassicIC){
@@ -522,7 +507,7 @@ function generateTable(){
         '<div class="c-meta"><span class="en">Exp '+expLabel+' · '+dte+' DTE</span><span class="zh">到期 '+expLabel+' · '+dte+'天</span><br><span class="strat" style="display:inline-block;background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid rgba(245,158,11,.35);font-size:.66rem;font-weight:700;padding:3px 9px;border-radius:6px;margin-top:6px;">IG · Iron Condor</span></div>'+
         '<div class="pill">● OPEN</div>'+
       '</div>'+
-      '<div class="sp-row" id="sp-dyn"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span>'+putGapLine+'</div>'+
+      '<div class="sp-row" id="sp-dyn"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>'+
       '<div class="table-scroll">'+
       '<table class="legs">'+
         '<tr><th><span class="en">Action</span><span class="zh">操作</span></th><th><span class="en">Leg</span><span class="zh">腿</span></th><th class="num"><span class="en">Fill</span><span class="zh">成交</span></th><th class="num"><span class="en">Amount</span><span class="zh">金额</span></th><th class="num"><span class="en">Δ Delta</span><span class="zh">Δ Delta</span></th><th class="num"><span class="en">Price</span><span class="zh">平仓价</span></th><th class="num"><span class="en">Net Price</span><span class="zh">净价</span></th></tr>'+
@@ -564,12 +549,12 @@ function generateTable(){
       updateCushionTable(q.price, false);
       updateLegPrices(q.price, false);
     } else {
-      el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>'+putGapLine;
+      el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>';
     }
     setLang(curLang);
   }).catch(function(){
     var el = document.getElementById('sp-dyn');
-    if(el) el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>'+putGapLine;
+    if(el) el.innerHTML = '<span class="sp-loading"><span class="en">Live price unavailable right now.</span><span class="zh">暂时无法获取实时股价。</span></span>';
     setLang(curLang);
   });
 }
