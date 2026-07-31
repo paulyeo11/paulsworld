@@ -1353,8 +1353,8 @@
       <span class="zh cushion-legend-zh">🚦 <b>💎 >10%</b> · <b>✅ >5-10%</b> · <b>⚠️ 2-5%</b> · <b>⚡ <1-2%</b> · <b>🔴 0-1%</b> · <b>⛔ <-2%</b>跌破行权价</span>
     </div>
     <div class="note" style="margin-top:8px">
-      <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b> — same denominator convention as "Nearest cut-loss" on the Cut-Loss tab. <b>Call Variance = (C − A) ÷ A</b>, the mirror calculation for the upside. Positive means price sits inside the safe zone on that side — the cushion before assignment (put) or being called away (call). This is different from the "Var: A vs P/C" figures shown lower on each condor's rail, which compare to the long (bought) strikes. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 5 min while this page is open — or tap "Refresh prices" any time.</span>
-      <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>——与「止损」页签中「最近止损」相同的分母算法。<b>认购差幅 = (C − A) ÷ A</b>，为上涨一侧的对应算法。正值代表股价位于该侧的安全区间内——即被行权（认沽）或被强制卖出（认购）前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P/C」不同，那是与买入（长）行权价的比较。实时价格来自雅虎财经（约延迟15分钟），此页面打开时每5分钟自动刷新一次——也可随时点击「刷新价格」。</span>
+      <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b> — same denominator convention as "Nearest cut-loss" on the Cut-Loss tab. <b>Call Variance = (C − A) ÷ A</b>, the mirror calculation for the upside. Positive means price sits inside the safe zone on that side — the cushion before assignment (put) or being called away (call). This is different from the "Var: A vs P/C" figures shown lower on each condor's rail, which compare to the long (bought) strikes. Live price via Yahoo Finance (~15 min delay), auto-refreshes every 1 min during US market hours (9:30am–4:00pm ET) and every 5 min outside them — or tap 🔄 Refresh in the ⋮ menu any time.</span>
+      <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>——与「止损」页签中「最近止损」相同的分母算法。<b>认购差幅 = (C − A) ÷ A</b>，为上涨一侧的对应算法。正值代表股价位于该侧的安全区间内——即被行权（认沽）或被强制卖出（认购）前的缓冲空间。这与下方每个铁鹰导轨上显示的「Var: A vs P/C」不同，那是与买入（长）行权价的比较。实时价格来自雅虎财经（约延迟15分钟），美股交易时段（美东时间9:30am–4:00pm）每1分钟自动刷新一次，非交易时段每5分钟刷新一次——也可随时点击⋮菜单中的🔄刷新。</span>
     </div>
     <div class="note" style="margin-top:8px">
       <span class="en">With <b>D</b> = Buy Put strike (long put) and <b>E</b> = Buy Call strike (long call): <b>Cut Lost PUT = (B + D) ÷ 2</b>, the midpoint between the sold put (B) and the bought put (D). <b>Cut Lost CALL = (C + E) ÷ 2</b>, the midpoint between the sold call (C) and the bought call (E). These mark a halfway loss-cut level between the short strike and its protective long wing on each side. Tap "Hide Cut Lost PUT/CALL columns" above to hide/show these two columns.</span>
@@ -5579,9 +5579,27 @@ fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
   STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; s.prev=q.prevClose; recordSharePrice(s.sym, q.price); } });
   renderSharePrices(); stampCut();
 }).catch(function(){});
-// Auto-refresh every 5 min while the page stays open — Yahoo's own data is ~15 min
-// delayed, so refreshing faster than that wouldn't show anything new.
-setInterval(function(){ loadAll(); loadShares(); loadPutOnlyStocks(); }, 5*60*1000);
+// Auto-refresh cadence: every 1 min during US market trading hours (9:30am-4:00pm ET,
+// Mon-Fri), every 5 min outside trading hours since prices aren't moving then.
+function isUSMarketHours(){
+  var parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York', hour12: false,
+    weekday: 'short', hour: '2-digit', minute: '2-digit'
+  }).formatToParts(new Date());
+  var map = {};
+  parts.forEach(function(p){ map[p.type] = p.value; });
+  if(map.weekday === 'Sat' || map.weekday === 'Sun') return false;
+  var mins = parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10);
+  return mins >= (9 * 60 + 30) && mins < 16 * 60;
+}
+function scheduleAutoRefresh(){
+  var interval = isUSMarketHours() ? 60 * 1000 : 5 * 60 * 1000;
+  setTimeout(function(){
+    loadAll(); loadShares(); loadPutOnlyStocks();
+    scheduleAutoRefresh();
+  }, interval);
+}
+scheduleAutoRefresh();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
