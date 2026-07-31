@@ -4467,6 +4467,10 @@ function refreshAllData(){
     fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
       SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
       renderShares(); renderSharePrices(); renderUnrealizedTable();
+    }),
+    fetchQuotes(PUT_ONLY_STOCKS.map(function(s){return s.sym;})).then(function(data){
+      PUT_ONLY_STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; recordSharePrice(s.sym, q.price); } });
+      renderSharePrices();
     })
   ]).catch(function(){}).then(function(){
     btn.classList.remove('spinning');
@@ -5577,7 +5581,7 @@ fetchQuotes(STOCKS.map(function(s){return s.sym;})).then(function(data){
 }).catch(function(){});
 // Auto-refresh every 5 min while the page stays open — Yahoo's own data is ~15 min
 // delayed, so refreshing faster than that wouldn't show anything new.
-setInterval(function(){ loadAll(); loadShares(); }, 5*60*1000);
+setInterval(function(){ loadAll(); loadShares(); loadPutOnlyStocks(); }, 5*60*1000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
