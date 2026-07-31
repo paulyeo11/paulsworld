@@ -4166,12 +4166,20 @@ function deleteTask(id){
 
 // Option Today — separate task list for today's option trade actions
 var OPTION_TODAY_KEY = 'T29_optionTodayTasks';
+var OPTION_TODAY_DEFAULTS = [
+  {text:'GOOGL: buy protective put leg (Sep 11\'26 expiry) to cap downside risk', added:'31 Jul 2026'},
+  {text:'GOOGL: trade Iron Condor (IC) tonight', added:'31 Jul 2026'}
+];
 function getOptionTodayTasks(){
   var raw = localStorage.getItem(OPTION_TODAY_KEY);
-  if(raw) return JSON.parse(raw);
-  var seeded = [{id:Date.now(), text:'GOOGL: buy protective put leg (Sep 11\'26 expiry) to cap downside risk', done:false, added:'31 Jul 2026'}];
-  localStorage.setItem(OPTION_TODAY_KEY, JSON.stringify(seeded));
-  return seeded;
+  var tasks = raw ? JSON.parse(raw) : [];
+  var changed = !raw;
+  OPTION_TODAY_DEFAULTS.forEach(function(d, i){
+    var exists = tasks.some(function(t){ return t.text === d.text; });
+    if(!exists){ tasks.push({id:Date.now()+i, text:d.text, done:false, added:d.added}); changed = true; }
+  });
+  if(changed) localStorage.setItem(OPTION_TODAY_KEY, JSON.stringify(tasks));
+  return tasks;
 }
 function saveOptionTodayTasks(tasks){ localStorage.setItem(OPTION_TODAY_KEY, JSON.stringify(tasks)); }
 var optionTodayFilter = 'all';
