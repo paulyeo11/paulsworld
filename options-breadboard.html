@@ -3691,7 +3691,10 @@
       <div class="c-head">
         <div class="tkr" style="font-size:1.1rem">📊 <span class="en">Table 900: P&amp;L Summary — QQQ / SMH / AVGO / SPY / IWM / NVDA / GOOGL</span><span class="zh">表900：盈亏总览——QQQ / SMH / AVGO / SPY / IWM / NVDA / GOOGL</span></div>
         <div class="c-meta"><span class="en">Side-by-side comparison of all seven Bang Trade Analysis positions</span><span class="zh">Bang交易分析七个持仓的并列比较</span></div>
-        <div></div>
+        <div style="display:flex;gap:6px">
+          <button class="cushion-filter-btn" onclick="refreshTable900()"><span class="en">🔄 Refresh</span><span class="zh">🔄 刷新</span></button>
+          <button class="cushion-filter-btn" onclick="shareBangLink('summary')"><span class="en">🔗 Share</span><span class="zh">🔗 分享</span></button>
+        </div>
       </div>
       <div class="cushion-filter-row" id="table900FilterRow"></div>
       <div class="table-scroll table-fit">
@@ -4444,7 +4447,7 @@ function closeBangMenu(){
 document.addEventListener('click', function(e){
   if(!document.querySelector('.local-menu-wrap').contains(e.target)) closeBangMenu();
 });
-var BANG_SYM_LABEL = { qqq:'QQQ', smh:'SMH', avgo:'AVGO', spy:'SPY', iwm:'IWM', nvda:'NVDA', googl:'GOOGL' };
+var BANG_SYM_LABEL = { qqq:'QQQ', smh:'SMH', avgo:'AVGO', spy:'SPY', iwm:'IWM', nvda:'NVDA', googl:'GOOGL', summary:'Summary (Table 900)' };
 function shareBangLink(sym){
   var url = window.location.origin + window.location.pathname + '#bang-' + sym;
   var title = 'T29: Option by Bang — ' + BANG_SYM_LABEL[sym];
@@ -5242,6 +5245,20 @@ function renderTable900Days(){
   });
 }
 renderTable900Days();
+// Refresh button — re-runs Days Held + filter/total recompute without a full page reload,
+// so Paul can pull in "today"'s day count on a still-open page without navigating away.
+function refreshTable900(){
+  renderTable900Days();
+  filterTable900Rows();
+  var t = document.getElementById('shareToast');
+  if(t){
+    var origHtml = t.innerHTML;
+    t.innerHTML = '<span class="en">🔄 Refreshed</span><span class="zh">🔄 已刷新</span>';
+    setLang(curLang);
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; t.innerHTML = origHtml; setLang(curLang); }, 1500);
+  }
+}
 // Share Price (A) vs Selling Put AND Selling Call strike — one row per condor, both sides.
 // Call-only positions (CALL_ONLY_CFG, e.g. FDS Covered Call) have no Selling Put strike, so
 // their Put columns show "—" instead of a value.
