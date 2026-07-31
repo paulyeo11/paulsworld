@@ -271,8 +271,22 @@
   .tbl60-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
   .tbl60-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
   .tbl60-filter-btn:active { transform:scale(.96); }
-  /* T6 dashboard quick-glance — hide/show the P&L / Unrlzd P&L columns */
+  /* T6 dashboard quick-glance — hide/show the P&L / Unrlzd P&L columns. When hidden, the
+     remaining 5 columns switch to a fixed % layout (same technique as the Cushion tab's
+     compact-fit) so they fit one phone screen with no horizontal scroll. */
   #table30-dashboard.hide-pnl .dash-pnl-col { display:none; }
+  #dashCushionTableScroll.compact-fit { overflow-x:visible; }
+  #table30-dashboard.hide-pnl { min-width:0; width:100%; table-layout:fixed; }
+  #table30-dashboard.hide-pnl th:nth-child(1), #table30-dashboard.hide-pnl td:nth-child(1) { width:16% !important; }
+  #table30-dashboard.hide-pnl th:nth-child(2), #table30-dashboard.hide-pnl td:nth-child(2) { width:21% !important; }
+  #table30-dashboard.hide-pnl th:nth-child(3), #table30-dashboard.hide-pnl td:nth-child(3) { width:21% !important; }
+  #table30-dashboard.hide-pnl th:nth-child(4), #table30-dashboard.hide-pnl td:nth-child(4) { width:21% !important; }
+  #table30-dashboard.hide-pnl th:nth-child(7), #table30-dashboard.hide-pnl td:nth-child(7) { width:21% !important; }
+  @media(max-width:400px){
+    #table30-dashboard.hide-pnl { font-size:.7rem; }
+    #table30-dashboard.hide-pnl th { font-size:.56rem; padding:6px 3px; }
+    #table30-dashboard.hide-pnl .badge { width:auto; min-width:0; padding:3px 6px; font-size:.62rem; }
+  }
   /* Task List — Outstanding/Done filter, same pill toggle pattern */
   .task-filter-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:14px 0 0; }
   .task-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
@@ -5254,8 +5268,10 @@ function toggleTable40Extra(){
 // request to declutter the Dashboard tab's quick-glance table).
 function toggleDashPnlColumns(){
   var t = document.getElementById('table30-dashboard'); if(!t) return;
+  var scroll = document.getElementById('dashCushionTableScroll');
   var btn = document.getElementById('tblDashPnlBtn');
   var hidden = t.classList.toggle('hide-pnl');
+  if(scroll) scroll.classList.toggle('compact-fit', hidden);
   if(btn) btn.classList.toggle('active', hidden);
 }
 function toggleTable60Extra(){
