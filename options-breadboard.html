@@ -3721,31 +3721,32 @@
         <div class="c-meta"><span class="en">All eight Bang Trade Analysis positions — total premium collected per symbol</span><span class="zh">Bang交易分析全部八个持仓——各标的收取权利金合计</span></div>
         <div></div>
       </div>
+      <div class="cushion-filter-row" id="premiumFilterRow" style="margin-top:8px"></div>
       <div class="table-scroll table-fit">
       <table class="legs compact-rows" id="table1326-premium" style="margin-top:10px">
         <thead><tr>
           <th><span class="en">Symbol</span><span class="zh">代码</span></th>
           <th class="num"><span class="en">Premium Collected</span><span class="zh">收取权利金</span></th>
         </tr></thead>
-        <tbody>
-          <tr><td>🟦 <b>QQQ</b></td><td class="num">$729.00</td></tr>
-          <tr><td>🟩 <b>SMH</b></td><td class="num">$435.00</td></tr>
-          <tr><td>🟧 <b>AVGO</b></td><td class="num">$475.00</td></tr>
-          <tr><td>🔷 <b>SPY</b></td><td class="num">$356.00</td></tr>
-          <tr><td>🟪 <b>IWM</b></td><td class="num">$214.00</td></tr>
-          <tr><td>🔴 <b>NVDA</b></td><td class="num">$215.00</td></tr>
-          <tr><td>🟡 <b>GOOGL</b></td><td class="num">$443.00</td></tr>
-          <tr><td>🟫 <b>FDS</b> <span class="en" style="font-weight:400;opacity:.7">(Cov. Call)</span><span class="zh" style="font-weight:400;opacity:.7">（备兑看涨）</span></td><td class="num">$210.00</td></tr>
+        <tbody id="table1326Body">
+          <tr data-sym="QQQ"><td>🟦 <b>QQQ</b></td><td class="num">$729.00</td></tr>
+          <tr data-sym="SMH"><td>🟩 <b>SMH</b></td><td class="num">$435.00</td></tr>
+          <tr data-sym="AVGO"><td>🟧 <b>AVGO</b></td><td class="num">$475.00</td></tr>
+          <tr data-sym="SPY"><td>🔷 <b>SPY</b></td><td class="num">$356.00</td></tr>
+          <tr data-sym="IWM"><td>🟪 <b>IWM</b></td><td class="num">$214.00</td></tr>
+          <tr data-sym="NVDA"><td>🔴 <b>NVDA</b></td><td class="num">$215.00</td></tr>
+          <tr data-sym="GOOGL"><td>🟡 <b>GOOGL</b></td><td class="num">$443.00</td></tr>
+          <tr data-sym="FDS"><td>🟫 <b>FDS</b> <span class="en" style="font-weight:400;opacity:.7">(Cov. Call)</span><span class="zh" style="font-weight:400;opacity:.7">（备兑看涨）</span></td><td class="num">$210.00</td></tr>
         </tbody>
         <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
           <td><span class="en">Total</span><span class="zh">合计</span></td>
-          <td class="num">$3,077.00</td>
+          <td class="num" id="table1326TotalPremium">$3,077.00</td>
         </tr></tfoot>
       </table>
       </div>
       <div class="note" style="margin-top:12px">
-        <span class="en">Same premium-collected figures as Table 900's "Premium Collected (A)" column (QQQ's $729 reflects its two Iron Condor entries — 17 Jul and the 24 Jul re-open — not just the original $259 opening credit).</span>
-        <span class="zh">与表900「收取权利金（A）」列数字一致（QQQ的$729反映其两笔铁鹰建仓——7月17日与7月24日重新建仓——而非仅$259的初始建仓权利金）。</span>
+        <span class="en">Same premium-collected figures as Table 900's "Premium Collected (A)" column (QQQ's $729 reflects its two Iron Condor entries — 17 Jul and the 24 Jul re-open — not just the original $259 opening credit). <b>💥 Bang</b> filters to Paul's 4 flagship Iron Condors (QQQ, NVDA, SMH, AVGO), same set as the T6 Cushion tab and Table 705's Bang filter.</span>
+        <span class="zh">与表900「收取权利金（A）」列数字一致（QQQ的$729反映其两笔铁鹰建仓——7月17日与7月24日重新建仓——而非仅$259的初始建仓权利金）。<b>💥 Bang</b>筛选出Paul的4个旗舰铁鹰持仓（QQQ、NVDA、SMH、AVGO），与T6持仓垫页签及表705的Bang筛选使用同一组标的。</span>
       </div>
     </div>
   </div><!-- /tab-bangpremium -->
@@ -5442,6 +5443,44 @@ function renderTable900Total(premiumTotal, pnlTotal, pnlDenom, hasUnmarked, visi
 }
 renderTable900FilterRow();
 filterTable900Rows();
+// Table 1326 Premium Collected by Symbol — Bang filter, reusing BANG_4_SYMS (Paul's 4
+// flagship IC trades: QQQ, NVDA, SMH, AVGO) as the shared source of truth, same as the
+// T6 Cushion tab's and Table 705's "💥 Bang" filters above.
+var premiumFilter = 'all';
+function setPremiumFilter(val){
+  premiumFilter = val;
+  renderPremiumFilterRow();
+  filterPremiumRows();
+}
+function renderPremiumFilterRow(){
+  var opts = [
+    {v:'all', en:'All', zh:'全部'},
+    {v:'bang', en:'💥 Bang', zh:'💥 Bang精选'}
+  ];
+  var html = opts.map(function(o){
+    var active = premiumFilter === o.v ? ' active' : '';
+    return '<button class="cushion-filter-btn'+active+'" onclick="setPremiumFilter(\''+o.v+'\')"><span class="en">'+o.en+'</span><span class="zh">'+o.zh+'</span></button>';
+  }).join('');
+  var el = document.getElementById('premiumFilterRow');
+  if(el) el.innerHTML = html;
+  setLang(curLang);
+}
+function filterPremiumRows(){
+  var body = document.getElementById('table1326Body'); if(!body) return;
+  var total = 0;
+  Array.prototype.forEach.call(body.querySelectorAll('tr[data-sym]'), function(tr){
+    var sym = tr.getAttribute('data-sym');
+    var show = premiumFilter === 'all' || BANG_4_SYMS.indexOf(sym) !== -1;
+    tr.style.display = show ? '' : 'none';
+    if(!show) return;
+    var amt = parseFloat(tr.children[1].textContent.replace(/[^0-9.-]/g,''));
+    if(!isNaN(amt)) total += amt;
+  });
+  var totalEl = document.getElementById('table1326TotalPremium');
+  if(totalEl) totalEl.textContent = '$'+total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+renderPremiumFilterRow();
+filterPremiumRows();
 // T9 — Hide Dates toggle. Hides the Entry/Exit/Days th+td cells AND their <col>
 // (colgroup <col> width applies regardless of cell display:none, so the col itself must
 // be hidden too) so the remaining columns naturally reclaim that width.
