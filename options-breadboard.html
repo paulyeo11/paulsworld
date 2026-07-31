@@ -271,6 +271,8 @@
   .tbl60-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
   .tbl60-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
   .tbl60-filter-btn:active { transform:scale(.96); }
+  /* T6 dashboard quick-glance — hide/show the P&L / Unrlzd P&L columns */
+  #table30-dashboard.hide-pnl .dash-pnl-col { display:none; }
   /* Task List — Outstanding/Done filter, same pill toggle pattern */
   .task-filter-row { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; margin:14px 0 0; }
   .task-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
@@ -1235,6 +1237,9 @@
       <span class="auto-refresh-badge"><span class="auto-refresh-dot"></span><span class="en">Auto-refresh ON · every 5 min</span><span class="zh">自动刷新 开启 · 每5分钟</span></span>
     </div>
     <div class="cushion-filter-row" id="cushionFilterRow-dashboard"></div>
+    <div class="cushion-filter-row" style="margin-top:0">
+      <button class="tbl60-filter-btn" id="tblDashPnlBtn" onclick="toggleDashPnlColumns()">👁️ <span class="en">Hide P&amp;L columns</span><span class="zh">隐藏「盈亏」栏</span></button>
+    </div>
     <div class="table-scroll" id="dashCushionTableScroll">
     <table class="legs table30-eq" id="table30-dashboard" style="margin-top:10px;min-width:700px">
       <tr>
@@ -1242,8 +1247,8 @@
         <th class="num" style="width:15%"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
         <th class="num" style="width:15%"><span class="en">Put Cushion</span><span class="zh">认沽缓冲</span></th>
         <th class="num" style="width:15%"><span class="en">Call Cushion</span><span class="zh">认购缓冲</span></th>
-        <th class="num" style="width:14%"><span class="en">P&amp;L</span><span class="zh">盈亏</span></th>
-        <th class="num" style="width:14%"><span class="en">Unrlzd P&amp;L</span><span class="zh">未实现盈亏</span></th>
+        <th class="num dash-pnl-col" style="width:14%"><span class="en">P&amp;L</span><span class="zh">盈亏</span></th>
+        <th class="num dash-pnl-col" style="width:14%"><span class="en">Unrlzd P&amp;L</span><span class="zh">未实现盈亏</span></th>
         <th class="num" style="width:14%"><span class="en">P&amp;L Amt</span><span class="zh">盈亏金额</span></th>
       </tr>
       <tbody id="dashCushionBody">
@@ -1254,8 +1259,8 @@
         <td class="num">—</td>
         <td class="num">—</td>
         <td class="num">—</td>
-        <td class="num" id="dashDailyPnlTotal">—</td>
-        <td class="num" id="dashUnrlzdPnlTotal">—</td>
+        <td class="num dash-pnl-col" id="dashDailyPnlTotal">—</td>
+        <td class="num dash-pnl-col" id="dashUnrlzdPnlTotal">—</td>
         <td class="num" id="dashCushionPnlTotal">—</td>
       </tr></tfoot>
     </table>
@@ -5129,11 +5134,11 @@ var DAILY_PNL = { AVGO:46.65, IWM:-2.38, SPY:1.63, GOOGL:175.81, FDS:55.01 };
 var UNRLZD_PNL = { AVGO:66.46, IWM:34.10, SPY:104.78, GOOGL:216.28, FDS:-15.69 };
 function genericPnlCell(map, sym){
   var v = map[sym];
-  if(typeof v !== 'number') return '<td class="num">—</td>';
+  if(typeof v !== 'number') return '<td class="num dash-pnl-col">—</td>';
   var cls = v >= 0 ? 'pl-up' : 'pl-down';
   var sign = v >= 0 ? '+' : '−';
   var amt = sign+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
-  return '<td class="num"><b class="'+cls+'">'+amt+'</b></td>';
+  return '<td class="num dash-pnl-col"><b class="'+cls+'">'+amt+'</b></td>';
 }
 function dailyPnlCell(sym){ return genericPnlCell(DAILY_PNL, sym); }
 function unrlzdPnlCell(sym){ return genericPnlCell(UNRLZD_PNL, sym); }
@@ -5245,6 +5250,14 @@ function toggleTable40Extra(){
 // short strike and its protective long wing). Hidden by default matches the visible-by-default
 // convention of Table 40's toggle, but here the columns start visible since Paul asked for
 // them added directly to the table — this button just lets him declutter if he wants to.
+// T6 dashboard quick-glance — hide/show the P&L / Unrlzd P&L columns (added per Paul's
+// request to declutter the Dashboard tab's quick-glance table).
+function toggleDashPnlColumns(){
+  var t = document.getElementById('table30-dashboard'); if(!t) return;
+  var btn = document.getElementById('tblDashPnlBtn');
+  var hidden = t.classList.toggle('hide-pnl');
+  if(btn) btn.classList.toggle('active', hidden);
+}
 function toggleTable60Extra(){
   var t = document.getElementById('table30-cushion'); if(!t) return;
   var btn = document.getElementById('tbl60FilterBtn');
