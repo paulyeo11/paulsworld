@@ -1241,16 +1241,20 @@
         <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
         <th class="num"><span class="en">Put Cushion</span><span class="zh">认沽缓冲</span></th>
         <th class="num"><span class="en">Call Cushion</span><span class="zh">认购缓冲</span></th>
+        <th class="num"><span class="en">P&amp;L</span><span class="zh">盈亏</span></th>
+        <th class="num"><span class="en">Unrlzd P&amp;L</span><span class="zh">未实现盈亏</span></th>
         <th class="num"><span class="en">P&amp;L Amt</span><span class="zh">盈亏金额</span></th>
       </tr>
       <tbody id="dashCushionBody">
-        <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
+        <tr><td colspan="7"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
       </tbody>
       <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
         <td><span class="en">Total</span><span class="zh">合计</span></td>
         <td class="num">—</td>
         <td class="num">—</td>
         <td class="num">—</td>
+        <td class="num" id="dashDailyPnlTotal">—</td>
+        <td class="num" id="dashUnrlzdPnlTotal">—</td>
         <td class="num" id="dashCushionPnlTotal">—</td>
       </tr></tfoot>
     </table>
@@ -1259,8 +1263,8 @@
       <span class="en cushion-legend-en">🚦 <b>💎 >10%</b> · <b>✅ >5-10%</b> · <b>⚠️ 2-5%</b> · <b>⚡ <1-2%</b> · <b>🔴 0-1%</b> · <b>⛔ <-2%</b> below strike</span>
       <span class="zh cushion-legend-zh">🚦 <b>💎 >10%</b> · <b>✅ >5-10%</b> · <b>⚠️ 2-5%</b> · <b>⚡ <1-2%</b> · <b>🔴 0-1%</b> · <b>⛔ <-2%</b>跌破行权价</span>
       <div style="margin-top:8px">
-        <span class="en"><b>P&amp;L Amt</b> — realized P&amp;L for closed positions (QQQ, SMH, NVDA), else real IBKR Unrealized P&amp;L from the latest statement (29 Jul 2026). <b>NVDA Closed</b> — the condor is now fully closed with a confirmed combined total: the put combo's real −$70.00 plus the call combo's (230C/235C) now-confirmed +$66.61 (per the 29 Jul statement's Performance by Symbol), for a final <b>−$3.39</b>. AVGO/SPY/IWM unrealized marks refreshed to the same 29 Jul statement. FDS Covered Call P&amp;L isn't shown yet — not confidently cross-checked against a single statement figure.</span>
-        <span class="zh"><b>盈亏金额</b>——已平仓持仓（QQQ、SMH、NVDA）显示已实现盈亏，其余为最新报表（2026年7月29日）的真实IBKR未实现盈亏。<b>NVDA已平仓</b>——铁鹰现已全部平仓，合计数字已确认：认沽组合的真实−$70.00，加上认购组合（230C/235C）现已确认的+$66.61（取自7月29日报表的按代码表现），最终为<b>−$3.39</b>。AVGO/SPY/IWM的未实现市值同步更新为7月29日报表数据。FDS备兑看涨的盈亏暂未显示——尚无法与单一报表数字可靠核对。</span>
+        <span class="en"><b>P&amp;L</b> (today's daily P&amp;L) and <b>Unrlzd P&amp;L</b> (live unrealized P&amp;L) are read straight from the IBKR mobile app's Portfolio → Positions screen (31 Jul 2026, 22:15 SGT) for AVGO, IWM, SPY, GOOGL and FDS — anything not on that screen shows "—" rather than a guess. <b>P&amp;L Amt</b> — realized P&amp;L for closed positions (QQQ, SMH, NVDA), else real IBKR Unrealized P&amp;L from the latest statement (29 Jul 2026). <b>NVDA Closed</b> — the condor is now fully closed with a confirmed combined total: the put combo's real −$70.00 plus the call combo's (230C/235C) now-confirmed +$66.61 (per the 29 Jul statement's Performance by Symbol), for a final <b>−$3.39</b>. AVGO/SPY/IWM unrealized marks refreshed to the same 29 Jul statement. FDS Covered Call P&amp;L Amt isn't shown yet — not confidently cross-checked against a single statement figure.</span>
+        <span class="zh"><b>盈亏</b>（当日盈亏）与<b>未实现盈亏</b>（实时未实现盈亏）直接取自IBKR手机应用「持仓组合→持仓」页面（2026年7月31日22:15新加坡时间），涵盖AVGO、IWM、SPY、GOOGL与FDS——该页面未显示的标的以"—"表示，而非猜测。<b>盈亏金额</b>——已平仓持仓（QQQ、SMH、NVDA）显示已实现盈亏，其余为最新报表（2026年7月29日）的真实IBKR未实现盈亏。<b>NVDA已平仓</b>——铁鹰现已全部平仓，合计数字已确认：认沽组合的真实−$70.00，加上认购组合（230C/235C）现已确认的+$66.61（取自7月29日报表的按代码表现），最终为<b>−$3.39</b>。AVGO/SPY/IWM的未实现市值同步更新为7月29日报表数据。FDS备兑看涨的盈亏金额暂未显示——尚无法与单一报表数字可靠核对。</span>
       </div>
     </div>
   </div>
@@ -5111,6 +5115,23 @@ var PNL_AMT = { NVDA:-3.39, QQQ:42.53, AVGO:68.80, SMH:-76.19, SPY:74.46, IWM:16
 // Symbols whose PNL_AMT is confirmed closed but only a partial figure (missing leg(s) not
 // yet confirmed) — none currently; NVDA's combined total above is now final.
 var PNL_AMT_PARTIAL = {};
+// Dashboard tab T6's "P&L" (today's daily P&L) and "Unrlzd P&L" (live unrealized P&L)
+// columns — real figures read directly from the IBKR mobile app's Portfolio > Positions
+// screen (31 Jul 2026, 22:15 SGT), not modeled/statement figures like PNL_AMT above.
+// Only symbols visible on that screen are included; anything else renders as "—" rather
+// than guessing (No-Guessed-Coordinates-style rule).
+var DAILY_PNL = { AVGO:46.65, IWM:-2.38, SPY:1.63, GOOGL:175.81, FDS:55.01 };
+var UNRLZD_PNL = { AVGO:66.46, IWM:34.10, SPY:104.78, GOOGL:216.28, FDS:-15.69 };
+function genericPnlCell(map, sym){
+  var v = map[sym];
+  if(typeof v !== 'number') return '<td class="num">—</td>';
+  var cls = v >= 0 ? 'pl-up' : 'pl-down';
+  var sign = v >= 0 ? '+' : '−';
+  var amt = sign+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
+  return '<td class="num"><b class="'+cls+'">'+amt+'</b></td>';
+}
+function dailyPnlCell(sym){ return genericPnlCell(DAILY_PNL, sym); }
+function unrlzdPnlCell(sym){ return genericPnlCell(UNRLZD_PNL, sym); }
 function pnlAmtCell(sym){
   var v = PNL_AMT[sym];
   if(typeof v !== 'number') return '<td class="num">—</td>';
@@ -5122,13 +5143,13 @@ function pnlAmtCell(sym){
   }
   return '<td class="num"><b class="'+cls+'">'+amt+'</b></td>';
 }
-// Total row for T6's P&L Amt column — sums only symbols with a real numeric PNL_AMT
-// (skips FDS/anything not yet cross-checked, same "leave it out rather than guess" rule
-// pnlAmtCell follows). Shared by both places T6 shows P&L Amt (Dashboard + Cushion tab).
-function pnlAmtTotalHtml(syms){
+// Total row helper — sums only symbols with a real numeric value in the given map (skips
+// anything not yet cross-checked, same "leave it out rather than guess" rule cell renderers
+// follow). Shared by every P&L-style total T6 shows (Dashboard + Cushion tab).
+function genericPnlTotalHtml(map, syms){
   var total = 0, any = false;
   syms.forEach(function(sym){
-    var v = PNL_AMT[sym];
+    var v = map[sym];
     if(typeof v === 'number'){ total += v; any = true; }
   });
   if(!any) return '—';
@@ -5136,6 +5157,7 @@ function pnlAmtTotalHtml(syms){
   var sign = total >= 0 ? '+' : '−';
   return '<b class="'+cls+'">'+sign+'$'+Math.round(Math.abs(total)).toLocaleString('en-US')+'</b>';
 }
+function pnlAmtTotalHtml(syms){ return genericPnlTotalHtml(PNL_AMT, syms); }
 // Live price lookup shared by T6 / Premium tab — checks the Iron Condor price feed
 // (STOCKS) first, then falls back to the IBKR Shares price feed (SHARES) for symbols like
 // FDS that are a stock holding/covered call, not one of the 6 tracked Iron Condors.
@@ -5452,9 +5474,13 @@ function renderDashCushionTable(){
   var body = document.getElementById('dashCushionBody'); if(!body) return;
   var syms = filterByCushionStatus(sortedByPutCushion());
   var totalEl = document.getElementById('dashCushionPnlTotal');
+  var dailyTotalEl = document.getElementById('dashDailyPnlTotal');
+  var unrlzdTotalEl = document.getElementById('dashUnrlzdPnlTotal');
   if(syms.length === 0){
-    body.innerHTML = '<tr><td colspan="5"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
+    body.innerHTML = '<tr><td colspan="7"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
     if(totalEl) totalEl.innerHTML = '—';
+    if(dailyTotalEl) dailyTotalEl.innerHTML = '—';
+    if(unrlzdTotalEl) unrlzdTotalEl.innerHTML = '—';
     setLang(curLang);
     return;
   }
@@ -5465,16 +5491,18 @@ function renderDashCushionTable(){
     var price = getLivePrice(sym);
     var symTag = '<b>'+sym+'</b>'+statusTag(sym);
     if(price===null){
-      return '<tr><td>'+symTag+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>'+pnlAmtCell(sym)+'</tr>';
+      return '<tr><td>'+symTag+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>'+dailyPnlCell(sym)+unrlzdPnlCell(sym)+pnlAmtCell(sym)+'</tr>';
     }
     var pCushionHtml = hasPut ? cushionBadge((price - cfg.shortP) / price * 100, {en:'<-2%',zh:'<-2%'}) : '—';
     var cCushionHtml = hasCall ? cushionBadge((cfg.shortC - price) / price * 100, {en:'Above',zh:'突破'}) : '—';
     return '<tr><td>'+symTag+'</td><td class="num">'+fmtWhole(price)+'</td>'+
       '<td class="num">'+pCushionHtml+'</td>'+
-      '<td class="num">'+cCushionHtml+'</td>'+pnlAmtCell(sym)+'</tr>';
+      '<td class="num">'+cCushionHtml+'</td>'+dailyPnlCell(sym)+unrlzdPnlCell(sym)+pnlAmtCell(sym)+'</tr>';
   });
   body.innerHTML = rows.join('');
   if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
+  if(dailyTotalEl) dailyTotalEl.innerHTML = genericPnlTotalHtml(DAILY_PNL, syms);
+  if(unrlzdTotalEl) unrlzdTotalEl.innerHTML = genericPnlTotalHtml(UNRLZD_PNL, syms);
   setLang(curLang);
 }
 // Premium tab's "Ranked by Total Premium Collected" table — Put/Call Cushion columns use
