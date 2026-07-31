@@ -5225,11 +5225,14 @@ function sortedByPutCushion(){
 // 30 Jul 2026 — see PNL_AMT note below on why its P&L Amt still shows the put-combo-only
 // figure). Anything not listed here defaults to 'open'. Update this when a position closes.
 var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', FDS:'open', GOOGL:'open' };
-// T6's Open/Closed filter state: 'all' | 'open' | 'closed'. Shared by both places
+// Paul's 4 flagship IC trades (circled on the T6 screenshot 2026-07-31) — QQQ, NVDA, SMH, AVGO.
+var BANG_4_SYMS = ['QQQ','NVDA','SMH','AVGO'];
+// T6's Open/Closed filter state: 'all' | 'open' | 'closed' | 'bang'. Shared by both places
 // T6 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'open';
 function filterByCushionStatus(syms){
   if(cushionFilter === 'all') return syms;
+  if(cushionFilter === 'bang') return syms.filter(function(sym){ return BANG_4_SYMS.indexOf(sym) !== -1; });
   return syms.filter(function(sym){ return (POSITION_STATUS[sym] || 'open') === cushionFilter; });
 }
 function setCushionFilter(val){
@@ -5242,7 +5245,8 @@ function renderCushionFilterRow(){
   var opts = [
     {v:'all', en:'All', zh:'全部'},
     {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
-    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'},
+    {v:'bang', en:'💥 Bang', zh:'💥 Bang精选'}
   ];
   var html = opts.map(function(o){
     var active = cushionFilter === o.v ? ' active' : '';
