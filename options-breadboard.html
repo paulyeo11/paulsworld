@@ -1246,6 +1246,10 @@
       <tbody id="dashCushionBody">
         <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
       </tbody>
+      <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+        <td colspan="4"><span class="en">Total P&amp;L Amt</span><span class="zh">合计盈亏金额</span></td>
+        <td class="num" id="dashCushionPnlTotal">—</td>
+      </tr></tfoot>
     </table>
     </div>
     <div class="note" style="margin-top:12px">
@@ -1294,6 +1298,10 @@
       <tbody id="putVarBody">
         <tr><td colspan="12"><span class="sp-loading"><span class="en">Loading share prices…</span><span class="zh">股价加载中…</span></span></td></tr>
       </tbody>
+      <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+        <td colspan="11"><span class="en">Total P&amp;L Amt</span><span class="zh">合计盈亏金额</span></td>
+        <td class="num" id="cushionPnlTotal">—</td>
+      </tr></tfoot>
     </table>
     </div>
     <div class="condor" id="tradingRulesCard" style="margin-top:16px">
@@ -5097,6 +5105,20 @@ function pnlAmtCell(sym){
   }
   return '<td class="num"><b class="'+cls+'">'+amt+'</b></td>';
 }
+// Total row for T6's P&L Amt column — sums only symbols with a real numeric PNL_AMT
+// (skips FDS/anything not yet cross-checked, same "leave it out rather than guess" rule
+// pnlAmtCell follows). Shared by both places T6 shows P&L Amt (Dashboard + Cushion tab).
+function pnlAmtTotalHtml(syms){
+  var total = 0, any = false;
+  syms.forEach(function(sym){
+    var v = PNL_AMT[sym];
+    if(typeof v === 'number'){ total += v; any = true; }
+  });
+  if(!any) return '—';
+  var cls = total >= 0 ? 'pl-up' : 'pl-down';
+  var sign = total >= 0 ? '+' : '−';
+  return '<b class="'+cls+'">'+sign+'$'+Math.round(Math.abs(total)).toLocaleString('en-US')+'</b>';
+}
 // Live price lookup shared by T6 / Premium tab — checks the Iron Condor price feed
 // (STOCKS) first, then falls back to the IBKR Shares price feed (SHARES) for symbols like
 // FDS that are a stock holding/covered call, not one of the 6 tracked Iron Condors.
@@ -5353,8 +5375,10 @@ function refreshTable900(){
 function renderPutVarianceTable(){
   var body = document.getElementById('putVarBody'); if(!body) return;
   var syms = filterByCushionStatus(sortedByPutCushion());
+  var totalEl = document.getElementById('cushionPnlTotal');
   if(syms.length === 0){
     body.innerHTML = '<tr><td colspan="12"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
+    if(totalEl) totalEl.innerHTML = '—';
     setLang(curLang);
     return;
   }
@@ -5394,6 +5418,7 @@ function renderPutVarianceTable(){
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td>'+pnlAmtCell(sym)+'</tr>';
   });
   body.innerHTML = rows.join('');
+  if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
   setLang(curLang);
 }
 // Small inline badge next to a T6 symbol showing whether the position is open or
@@ -5409,8 +5434,10 @@ function statusTag(sym){
 function renderDashCushionTable(){
   var body = document.getElementById('dashCushionBody'); if(!body) return;
   var syms = filterByCushionStatus(sortedByPutCushion());
+  var totalEl = document.getElementById('dashCushionPnlTotal');
   if(syms.length === 0){
     body.innerHTML = '<tr><td colspan="5"><span class="en">No positions match this filter.</span><span class="zh">没有符合此筛选条件的持仓。</span></td></tr>';
+    if(totalEl) totalEl.innerHTML = '—';
     setLang(curLang);
     return;
   }
@@ -5430,6 +5457,7 @@ function renderDashCushionTable(){
       '<td class="num">'+cCushionHtml+'</td>'+pnlAmtCell(sym)+'</tr>';
   });
   body.innerHTML = rows.join('');
+  if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
   setLang(curLang);
 }
 // Premium tab's "Ranked by Total Premium Collected" table — Put/Call Cushion columns use
