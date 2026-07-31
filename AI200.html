@@ -301,6 +301,18 @@
   .breadcrumb a:hover { color:#fff; }
   .breadcrumb .sep { color:rgba(255,255,255,.3); }
   .breadcrumb .current { color:#f4c869; }
+  .share-btn {
+    display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4);
+    color: #fff; font-weight: 700; letter-spacing: .04em; padding: 10px 26px; border-radius: 30px;
+    cursor: pointer; font-size: .95rem; font-family: 'Source Serif 4', Georgia, serif;
+    margin-top: 18px; transition: background .2s;
+  }
+  .share-btn:hover { background: rgba(255,255,255,.25); }
+  .share-toast {
+    display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem;
+    z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  }
 </style>
 <script src="/bilingual.js"></script>
 </head>
@@ -328,7 +340,9 @@
     <h1>AI3: How I Built My Own Website at 70 &mdash; Using Only My iPhone and Claude AI</h1>
     <p class="hero-sub"><span class="en">No laptop. No coding experience. No technical background. Just an iPhone, Claude AI, and a determination to keep learning.</span><span class="zh">没有笔记本，没有编程经验，没有技术背景。只有一部iPhone、Claude AI，以及一股永不停学的劲头。</span></p>
     <p class="hero-meta"><span class="en">By Paul Yeo &nbsp;&middot;&nbsp; Singapore &#127480;&#127468; &nbsp;&middot;&nbsp; 2025</span><span class="zh">杨汉忠 · 新加坡 🇸🇬 · 2025年</span></p>
+    <button class="share-btn" onclick="shareThisPage()">&#128279; <span class="en">Share</span><span class="zh">分享</span></button>
   </div>
+  <div class="share-toast" id="shareToast">&#9989; <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
 
   <div class="article">
 
@@ -468,7 +482,21 @@
 
   <script src="/view-counter.js"></script>
 
-
+  <script>
+    function shareThisPage() {
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function() { t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
 
 <script src="/sw-register.js" defer></script>
 </body>
