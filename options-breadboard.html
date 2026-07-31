@@ -4875,6 +4875,10 @@ var PUT_ONLY_STOCKS = [
   { sym:'GOOGL', name:'Alphabet Inc.' }
 ];
 function fmt(n){ return '$' + n.toFixed(2); }
+// Share Price (A) display on the Cushion tab, Dashboard quick table, and Premium Rank
+// table — whole dollars only, rounded (e.g. $741.69 -> $742). Other fmt() uses (cut-loss
+// bands, avg cost, deposits) keep 2 decimals.
+function fmtWhole(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
 function fetchQuotes(symbols){
   return fetch('/api/td?symbols='+encodeURIComponent(symbols.join(','))).then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); });
 }
@@ -5386,7 +5390,7 @@ function renderPutVarianceTable(){
       var cVpct = (cfg.shortC - price) / price * 100;
       return '<td class="num">'+cfg.shortC+'C</td><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td><td class="num">'+callDeltaTxt+'</td>';
     })() : '<td class="num">—</td><td class="num">—</td><td class="num">—</td>';
-    return '<tr><td>'+symTag+'</td>'+cutLostCells+'<td class="num">'+fmt(price)+'</td>'+
+    return '<tr><td>'+symTag+'</td>'+cutLostCells+'<td class="num">'+fmtWhole(price)+'</td>'+
       putCells+callCells+
       '<td class="num" style="color:#3fb950">'+mtdTxt+'</td>'+pnlAmtCell(sym)+'</tr>';
   });
@@ -5422,7 +5426,7 @@ function renderDashCushionTable(){
     }
     var pCushionHtml = hasPut ? cushionBadge((price - cfg.shortP) / price * 100, {en:'<-2%',zh:'<-2%'}) : '—';
     var cCushionHtml = hasCall ? cushionBadge((cfg.shortC - price) / price * 100, {en:'Above',zh:'突破'}) : '—';
-    return '<tr><td>'+symTag+'</td><td class="num">'+fmt(price)+'</td>'+
+    return '<tr><td>'+symTag+'</td><td class="num">'+fmtWhole(price)+'</td>'+
       '<td class="num">'+pCushionHtml+'</td>'+
       '<td class="num">'+cCushionHtml+'</td>'+pnlAmtCell(sym)+'</tr>';
   });
@@ -5462,7 +5466,7 @@ function renderPremiumRankTable(){
       var cSign = cVpct >= 0 ? '+' : '';
       callHtml = '<b class="'+cCls+'">'+cSign+cVpct.toFixed(1)+'%</b> '+cushionBadge(cVpct,{en:'Above',zh:'突破'});
     }
-    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td>'+
+    return '<tr><td><b>'+sym+'</b></td><td class="num">'+fmtWhole(price)+'</td>'+
       '<td class="num">'+(hasPut?cfg.shortP+'P':'—')+'</td><td class="num">'+(hasCall?cfg.shortC+'C':'—')+'</td>'+
       '<td class="num">'+putHtml+'</td>'+
       '<td class="num">'+callHtml+'</td>'+
