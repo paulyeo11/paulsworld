@@ -5697,10 +5697,18 @@ function renderPutVarianceTable(){
 // same live price + formula as the Cushion tab's T6. Two layouts, same data, both ONE
 // continuous table (not 4 stacked per-symbol tables): a vertical Symbol/Field/Value table
 // (Symbol cell uses rowspan across each symbol's 5 rows), and a horizontal one-row-per-symbol table.
+// Toggle for the Share Price (A) / Put Variance / Call Variance rows in Table 10's
+// vertical layout — persisted so the choice survives a refresh. Hidden rows are left
+// OUT of the generated HTML (not just CSS-hidden) so the Symbol cell's rowspan always
+// matches the actual row count — mixing rowspan with display:none misaligns the label.
+var SVC_HIDE_KEY = 'T29_gapVarHideSvc';
+function svcRowsHidden(){ return localStorage.getItem(SVC_HIDE_KEY) === '1'; }
 function renderNvdaGapVarTable(){
   var body = document.getElementById('nvdaGapVarBody');
   var bodyH = document.getElementById('nvdaGapVarBodyH');
   if(!body && !bodyH) return;
+  var hideSvc = svcRowsHidden();
+  var rowspan = hideSvc ? 3 : 6;
   var vRows = [], hRows = [];
   BANG_4_SYMS.forEach(function(sym){
     var cfg = cfgFor(sym);
@@ -5708,54 +5716,45 @@ function renderNvdaGapVarTable(){
     var spreadPct = (cfg.shortC - cfg.shortP) / cfg.shortP * 100;
     var spreadTxt = '<span style="font-size:1.1rem;font-weight:800">+'+spreadPct.toFixed(1)+'%</span>';
     if(price===null){
-      vRows.push('<tr><td rowspan="6"><b>'+sym+'</b></td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'+
-        '<tr class="svc-row"><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num"><span class="en">Loading…</span><span class="zh">加载中…</span></td></tr>'+
-        '<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>'+
-        '<tr class="svc-row"><td><span class="en">Put Variance</span><span class="zh">认沽差幅</span></td><td class="num">—</td></tr>'+
-        '<tr class="svc-row"><td><span class="en">Call Variance</span><span class="zh">认购差幅</span></td><td class="num">—</td></tr>'+
-        '<tr><td><span class="en">B/C Spread <small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差 <small style="opacity:.6;font-weight:400">(C−B)/B</small></span></td><td class="num">'+spreadTxt+'</td></tr>');
-      hRows.push('<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td><td class="num">'+spreadTxt+'</td></tr>');
-      return;
+      var priceTxt = '<span class="en">Loading…</span><span class="zh">加载中…</span>';
+      var putBadgeL = '—', callBadgeL = '—';
+    } else {
+      var pVpct = (price - cfg.shortP) / price * 100;
+      var cVpct = (cfg.shortC - price) / price * 100;
+      var priceTxt = fmt(price);
+      var putBadgeL = cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
+      var callBadgeL = cushionBadge(cVpct,{en:'Above',zh:'突破'});
     }
-    var pVpct = (price - cfg.shortP) / price * 100;
-    var cVpct = (cfg.shortC - price) / price * 100;
-    var putBadge = cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
-    var callBadge = cushionBadge(cVpct,{en:'Above',zh:'突破'});
-    vRows.push(
-      '<tr><td rowspan="6"><b>'+sym+'</b></td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'+
-      '<tr class="svc-row"><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+fmt(price)+'</td></tr>'+
-      '<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>'+
-      '<tr class="svc-row"><td><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></td><td class="num">'+putBadge+'</td></tr>'+
-      '<tr class="svc-row"><td><span class="en">Call Variance <small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅 <small style="opacity:.6;font-weight:400">(C−A)/A</small></span></td><td class="num">'+callBadge+'</td></tr>'+
-      '<tr><td><span class="en">B/C Spread <small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差 <small style="opacity:.6;font-weight:400">(C−B)/B</small></span></td><td class="num">'+spreadTxt+'</td></tr>'
-    );
-    hRows.push(
-      '<tr><td><b>'+sym+'</b></td><td class="num">'+fmt(price)+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num">'+putBadge+'</td><td class="num">'+callBadge+'</td><td class="num">'+spreadTxt+'</td></tr>'
-    );
+    var rows = [
+      '<tr><td rowspan="'+rowspan+'"><b>'+sym+'</b></td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'
+    ];
+    if(!hideSvc) rows.push('<tr><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+priceTxt+'</td></tr>');
+    rows.push('<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>');
+    if(!hideSvc){
+      rows.push('<tr><td><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></td><td class="num">'+putBadgeL+'</td></tr>');
+      rows.push('<tr><td><span class="en">Call Variance <small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅 <small style="opacity:.6;font-weight:400">(C−A)/A</small></span></td><td class="num">'+callBadgeL+'</td></tr>');
+    }
+    rows.push('<tr><td><span class="en">B/C Spread <small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差 <small style="opacity:.6;font-weight:400">(C−B)/B</small></span></td><td class="num">'+spreadTxt+'</td></tr>');
+    vRows.push(rows.join(''));
+    hRows.push('<tr><td><b>'+sym+'</b></td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num">'+putBadgeL+'</td><td class="num">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
   });
   if(body) body.innerHTML = vRows.join('');
   if(bodyH) bodyH.innerHTML = hRows.join('');
-  applySvcRowVisibility();
+  updateSvcToggleBtn();
   setLang(curLang);
 }
-// Toggle for the Share Price (A) / Put Variance / Call Variance rows in Table 10's
-// vertical layout — persisted so the choice survives a refresh.
-var SVC_HIDE_KEY = 'T29_gapVarHideSvc';
-function svcRowsHidden(){ return localStorage.getItem(SVC_HIDE_KEY) === '1'; }
-function applySvcRowVisibility(){
-  var hidden = svcRowsHidden();
-  document.querySelectorAll('.svc-row').forEach(function(tr){ tr.style.display = hidden ? 'none' : ''; });
+function updateSvcToggleBtn(){
   var btn = document.getElementById('svcRowToggleBtn');
-  if(btn){
-    btn.innerHTML = hidden
-      ? '👁️ <span class="en">Show Share Price / Put Variance / Call Variance rows</span><span class="zh">显示股价/认沽差幅/认购差幅行</span>'
-      : '🙈 <span class="en">Hide Share Price / Put Variance / Call Variance rows</span><span class="zh">隐藏股价/认沽差幅/认购差幅行</span>';
-    setLang(curLang);
-  }
+  if(!btn) return;
+  var hidden = svcRowsHidden();
+  btn.innerHTML = hidden
+    ? '👁️ <span class="en">Show Share Price / Put Variance / Call Variance rows</span><span class="zh">显示股价/认沽差幅/认购差幅行</span>'
+    : '🙈 <span class="en">Hide Share Price / Put Variance / Call Variance rows</span><span class="zh">隐藏股价/认沽差幅/认购差幅行</span>';
+  setLang(curLang);
 }
 function toggleSvcRows(){
   localStorage.setItem(SVC_HIDE_KEY, svcRowsHidden() ? '0' : '1');
-  applySvcRowVisibility();
+  renderNvdaGapVarTable();
 }
 // Small inline badge next to a T6 symbol showing whether the position is open or
 // closed, from POSITION_STATUS. Blank for open positions (the common case) to avoid clutter.
