@@ -5386,7 +5386,8 @@ function renderTable900FilterRow(){
   var opts = [
     {v:'all', en:'All', zh:'全部'},
     {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
-    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'},
+    {v:'bang', en:'💥 Bang', zh:'💥 Bang精选'}
   ];
   var html = opts.map(function(o){
     var active = table900Filter === o.v ? ' active' : '';
@@ -5400,8 +5401,9 @@ function filterTable900Rows(){
   var body = document.getElementById('table900Body'); if(!body) return;
   var premiumTotal = 0, pnlTotal = 0, pnlDenom = 0, hasUnmarked = false, visibleCount = 0;
   Array.prototype.forEach.call(body.querySelectorAll('tr[data-sym]'), function(tr){
-    var status = POSITION_STATUS[tr.getAttribute('data-sym')] || 'open';
-    var show = table900Filter === 'all' || table900Filter === status;
+    var sym = tr.getAttribute('data-sym');
+    var status = POSITION_STATUS[sym] || 'open';
+    var show = table900Filter === 'all' || table900Filter === status || (table900Filter === 'bang' && BANG_4_SYMS.indexOf(sym) !== -1);
     tr.style.display = show ? '' : 'none';
     if(!show) return;
     visibleCount++;
