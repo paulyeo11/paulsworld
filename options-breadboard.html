@@ -1521,6 +1521,25 @@
         <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike (195), <b>C</b> = Selling Call strike (230): <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b> — same convention and same live price feed as the Cushion tab's T6 table for NVDA.</span>
         <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价（195），<b>C</b> = 卖出认购行权价（230）：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>——算法与实时股价来源与「缓冲」页签T6表格的NVDA一致。</span>
       </div>
+      <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 21: Sell Put &amp; Sell Call Variance</span><span class="zh">表21：卖出认沽 &amp; 卖出认购差幅</span></div>
+      <div class="table-scroll" style="margin-top:8px">
+      <table class="legs">
+        <thead><tr>
+          <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
+          <th class="num"><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th>
+          <th class="num"><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></th>
+          <th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
+          <th class="num"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>
+        </tr></thead>
+        <tbody id="nvdaGapVarBodyH">
+          <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:8px">
+        <span class="en">Same figures as Table 10 above, laid out horizontally.</span>
+        <span class="zh">与上方表10数字相同，横向排列。</span>
+      </div>
     </div>
   </div>
 
@@ -5668,21 +5687,33 @@ function renderPutVarianceTable(){
 // Table 10 (Gap tab, Table 11: NVDA C card) — Sell Put & Sell Call Variance for NVDA's
 // actual sold strikes (195P/230C), same live price + formula as the Cushion tab's T6.
 function renderNvdaGapVarTable(){
-  var body = document.getElementById('nvdaGapVarBody'); if(!body) return;
+  var body = document.getElementById('nvdaGapVarBody');
+  var bodyH = document.getElementById('nvdaGapVarBodyH');
+  if(!body && !bodyH) return;
   var cfg = cfgFor('NVDA');
   var price = getLivePrice('NVDA');
   if(price===null){
-    body.innerHTML = '<tr><td colspan="2"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
+    if(body) body.innerHTML = '<tr><td colspan="2"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
+    if(bodyH) bodyH.innerHTML = '<tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
     return;
   }
   var pVpct = (price - cfg.shortP) / price * 100;
   var cVpct = (cfg.shortC - price) / price * 100;
-  body.innerHTML =
+  var putBadge = cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
+  var callBadge = cushionBadge(cVpct,{en:'Above',zh:'突破'});
+  if(body) body.innerHTML =
     '<tr><th><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><td class="num">'+fmt(price)+'</td></tr>'+
     '<tr><th><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th><td class="num">'+cfg.shortP+'P</td></tr>'+
     '<tr><th><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></th><td class="num">'+cfg.shortC+'C</td></tr>'+
-    '<tr><th><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th><td class="num">'+cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'})+'</td></tr>'+
-    '<tr><th><span class="en">Call Variance <small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅 <small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th><td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td></tr>';
+    '<tr><th><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th><td class="num">'+putBadge+'</td></tr>'+
+    '<tr><th><span class="en">Call Variance <small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅 <small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th><td class="num">'+callBadge+'</td></tr>';
+  if(bodyH) bodyH.innerHTML = '<tr>'+
+    '<td class="num">'+fmt(price)+'</td>'+
+    '<td class="num">'+cfg.shortP+'P</td>'+
+    '<td class="num">'+cfg.shortC+'C</td>'+
+    '<td class="num">'+putBadge+'</td>'+
+    '<td class="num">'+callBadge+'</td>'+
+    '</tr>';
   setLang(curLang);
 }
 // Small inline badge next to a T6 symbol showing whether the position is open or
