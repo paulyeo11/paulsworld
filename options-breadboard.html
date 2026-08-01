@@ -394,6 +394,7 @@
   <div class="share-toast" id="shareToast">✅ Link copied!</div>
   <div class="share-toast" id="pinToast">📌 Pinned!</div>
   <div class="share-toast" id="refreshToast">🔄 <span class="en">Prices refreshed!</span><span class="zh">价格已刷新！</span></div>
+  <div class="share-toast" id="errToast" style="background:#7f1d1d;"></div>
 </header>
 
 <div class="wrap">
@@ -4536,28 +4537,52 @@ function setTab(t){
   window.scrollTo(0,0);
 }
 
+// Visible error toast — so a broken tap shows a message Paul can screenshot,
+// instead of silently doing nothing with no way to tell what failed.
+function showErrToast(msg){
+  var t = document.getElementById('errToast');
+  if(!t) { alert(msg); return; }
+  t.textContent = '⚠️ ' + msg;
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display = 'none'; }, 6000);
+}
+function setDisp(id, show){
+  var el = document.getElementById(id);
+  if(!el) throw new Error('Missing element #' + id);
+  el.style.display = show ? '' : 'none';
+}
+function setActive(id, on){
+  var el = document.getElementById(id);
+  if(!el) throw new Error('Missing element #' + id);
+  el.classList.toggle('active', on);
+}
+
 // Bang Trade Analysis tab — sub-tab switches between QQQ / SMH pages
 function setBangSubTab(sub){
-  document.getElementById('tab-qqq').style.display = sub==='qqq'?'':'none';
-  document.getElementById('tab-smh').style.display = sub==='smh'?'':'none';
-  document.getElementById('tab-avgo').style.display = sub==='avgo'?'':'none';
-  document.getElementById('tab-spy').style.display = sub==='spy'?'':'none';
-  document.getElementById('tab-iwm').style.display = sub==='iwm'?'':'none';
-  document.getElementById('tab-nvda').style.display = sub==='nvda'?'':'none';
-  document.getElementById('tab-googl').style.display = sub==='googl'?'':'none';
-  document.getElementById('tab-summary').style.display = sub==='summary'?'':'none';
-  document.getElementById('tab-bangpremium').style.display = sub==='premium'?'':'none';
-  document.getElementById('tab-bang-gap').style.display = sub==='gap'?'':'none';
-  document.getElementById('bangtb-qqq').classList.toggle('active', sub==='qqq');
-  document.getElementById('bangtb-smh').classList.toggle('active', sub==='smh');
-  document.getElementById('bangtb-avgo').classList.toggle('active', sub==='avgo');
-  document.getElementById('bangtb-spy').classList.toggle('active', sub==='spy');
-  document.getElementById('bangtb-iwm').classList.toggle('active', sub==='iwm');
-  document.getElementById('bangtb-nvda').classList.toggle('active', sub==='nvda');
-  document.getElementById('bangtb-googl').classList.toggle('active', sub==='googl');
-  document.getElementById('bangtb-summary').classList.toggle('active', sub==='summary');
-  document.getElementById('bangtb-premium').classList.toggle('active', sub==='premium');
-  document.getElementById('bangtb-gap').classList.toggle('active', sub==='gap');
+  try {
+    setDisp('tab-qqq', sub==='qqq');
+    setDisp('tab-smh', sub==='smh');
+    setDisp('tab-avgo', sub==='avgo');
+    setDisp('tab-spy', sub==='spy');
+    setDisp('tab-iwm', sub==='iwm');
+    setDisp('tab-nvda', sub==='nvda');
+    setDisp('tab-googl', sub==='googl');
+    setDisp('tab-summary', sub==='summary');
+    setDisp('tab-bangpremium', sub==='premium');
+    setDisp('tab-bang-gap', sub==='gap');
+    setActive('bangtb-qqq', sub==='qqq');
+    setActive('bangtb-smh', sub==='smh');
+    setActive('bangtb-avgo', sub==='avgo');
+    setActive('bangtb-spy', sub==='spy');
+    setActive('bangtb-iwm', sub==='iwm');
+    setActive('bangtb-nvda', sub==='nvda');
+    setActive('bangtb-googl', sub==='googl');
+    setActive('bangtb-summary', sub==='summary');
+    setActive('bangtb-premium', sub==='premium');
+    setActive('bangtb-gap', sub==='gap');
+  } catch(e) {
+    showErrToast('Bang tab switch failed: ' + e.message);
+  }
 }
 
 // P&L tab — dropdown switches between Monthly / Yearly / Quarterly views
