@@ -1509,6 +1509,26 @@
         <div class="m"><div class="mk"><span class="en">Return/Risk</span><span class="zh">收益/风险</span></div><div class="mv amber">75%</div></div>
         <div class="m"><div class="mk"><span class="en">Unrealized P&amp;L</span><span class="zh">未实现盈亏</span></div><div class="mv green">+$13.95</div></div>
       </div>
+      <div class="table-scroll" style="margin-top:12px">
+      <table class="legs">
+        <thead><tr>
+          <th colspan="5" style="font-weight:800"><span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></th>
+        </tr><tr>
+          <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
+          <th class="num"><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th>
+          <th class="num"><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></th>
+          <th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
+          <th class="num"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>
+        </tr></thead>
+        <tbody id="nvdaGapVarBody">
+          <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:8px">
+        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike (195), <b>C</b> = Selling Call strike (230): <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b> — same convention and same live price feed as the Cushion tab's T6 table for NVDA.</span>
+        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价（195），<b>C</b> = 卖出认购行权价（230）：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>——算法与实时股价来源与「缓冲」页签T6表格的NVDA一致。</span>
+      </div>
     </div>
   </div>
 
@@ -5185,6 +5205,7 @@ function renderSharePrices(){
   renderPremiumRankTable();
   renderVarMtdTable();
   renderTable900Cushion();
+  renderNvdaGapVarTable();
   setLang(curLang);
 }
 // Short put delta at entry (Black-Scholes, back-solved implied vol) — same static
@@ -5650,6 +5671,27 @@ function renderPutVarianceTable(){
   });
   body.innerHTML = rows.join('');
   if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
+  setLang(curLang);
+}
+// Table 10 (Gap tab, Table 11: NVDA C card) — Sell Put & Sell Call Variance for NVDA's
+// actual sold strikes (195P/230C), same live price + formula as the Cushion tab's T6.
+function renderNvdaGapVarTable(){
+  var body = document.getElementById('nvdaGapVarBody'); if(!body) return;
+  var cfg = cfgFor('NVDA');
+  var price = getLivePrice('NVDA');
+  if(price===null){
+    body.innerHTML = '<tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
+    return;
+  }
+  var pVpct = (price - cfg.shortP) / price * 100;
+  var cVpct = (cfg.shortC - price) / price * 100;
+  body.innerHTML = '<tr>'+
+    '<td class="num">'+fmt(price)+'</td>'+
+    '<td class="num">'+cfg.shortP+'P</td>'+
+    '<td class="num">'+cfg.shortC+'C</td>'+
+    '<td class="num">'+cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'})+'</td>'+
+    '<td class="num">'+cushionBadge(cVpct,{en:'Above',zh:'突破'})+'</td>'+
+    '</tr>';
   setLang(curLang);
 }
 // Small inline badge next to a T6 symbol showing whether the position is open or
