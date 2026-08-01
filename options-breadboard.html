@@ -1512,8 +1512,13 @@
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
       <div class="table-scroll" style="margin-top:8px">
       <table class="legs">
+        <thead><tr>
+          <th><span class="en">Symbol</span><span class="zh">代码</span></th>
+          <th><span class="en">Field</span><span class="zh">项目</span></th>
+          <th class="num"><span class="en">Value</span><span class="zh">数值</span></th>
+        </tr></thead>
         <tbody id="nvdaGapVarBody">
-          <tr><td colspan="2"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>
+          <tr><td colspan="3"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>
         </tbody>
       </table>
       </div>
@@ -5687,10 +5692,9 @@ function renderPutVarianceTable(){
 }
 // Table 10 (Gap tab, Table 11: NVDA C card) — Sell Put & Sell Call Variance for all 4
 // flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO — same BANG_4_SYMS set as Table 7/8/900),
-// same live price + formula as the Cushion tab's T6. Two layouts, same data: a vertical
-// block per symbol, and a horizontal one-row-per-symbol table.
-// The vertical table's label cells use <td> not <th> — a <th> as the first cell of a
-// tbody row (no thead) rendered blank; <td> matches the working Account Balance table.
+// same live price + formula as the Cushion tab's T6. Two layouts, same data, both ONE
+// continuous table (not 4 stacked per-symbol tables): a vertical Symbol/Field/Value table
+// (Symbol cell uses rowspan across each symbol's 5 rows), and a horizontal one-row-per-symbol table.
 function renderNvdaGapVarTable(){
   var body = document.getElementById('nvdaGapVarBody');
   var bodyH = document.getElementById('nvdaGapVarBodyH');
@@ -5700,7 +5704,11 @@ function renderNvdaGapVarTable(){
     var cfg = cfgFor(sym);
     var price = getLivePrice(sym);
     if(price===null){
-      vRows.push('<tr><td colspan="2"><b>'+sym+'</b> <span class="en">— loading…</span><span class="zh">——加载中…</span></td></tr>');
+      vRows.push('<tr><td rowspan="5"><b>'+sym+'</b></td><td colspan="2"><span class="en">Loading…</span><span class="zh">加载中…</span></td></tr>'+
+        '<tr><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'+
+        '<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>'+
+        '<tr><td><span class="en">Put Variance</span><span class="zh">认沽差幅</span></td><td class="num">—</td></tr>'+
+        '<tr><td><span class="en">Call Variance</span><span class="zh">认购差幅</span></td><td class="num">—</td></tr>');
       hRows.push('<tr><td><b>'+sym+'</b></td><td class="num">—</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num">—</td><td class="num">—</td></tr>');
       return;
     }
@@ -5709,8 +5717,7 @@ function renderNvdaGapVarTable(){
     var putBadge = cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
     var callBadge = cushionBadge(cVpct,{en:'Above',zh:'突破'});
     vRows.push(
-      '<tr><td colspan="2" style="padding-top:14px"><b style="font-size:.9rem">'+sym+'</b></td></tr>'+
-      '<tr><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+fmt(price)+'</td></tr>'+
+      '<tr><td rowspan="5"><b>'+sym+'</b></td><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+fmt(price)+'</td></tr>'+
       '<tr><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'+
       '<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>'+
       '<tr><td><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></td><td class="num">'+putBadge+'</td></tr>'+
