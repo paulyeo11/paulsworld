@@ -167,6 +167,7 @@
   table.legs.compact-rows th, table.legs.compact-rows td { padding:4px 3px; line-height:1.25; }
   table.legs.compact-rows th { font-size:.56rem; }
   table.legs.compact-rows td:last-child { font-size:.64rem; color:#c9d1d9; }
+  #gapVarTableH.hide-var-cols .hcol-var { display:none; }
   table.legs th { text-align:left; color:#8b98a5; font-size:.64rem; text-transform:uppercase; letter-spacing:.04em; padding:6px 6px; border-bottom:1px solid rgba(255,255,255,.08); }
   table.legs td { padding:7px 6px; border-bottom:1px solid rgba(255,255,255,.05); }
   .buy { color:#58a6ff; font-weight:700; } .sell { color:#f85149; font-weight:700; }
@@ -1528,15 +1529,16 @@
         <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖全部4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO）。</span>
       </div>
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
+      <button id="varColToggleBtn" onclick="toggleVarCols()" style="margin-top:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f5c869;font-size:.72rem;font-weight:700;padding:6px 12px;border-radius:16px;cursor:pointer">👁️ <span class="en">Hide Put Variance / Call Variance columns</span><span class="zh">隐藏认沽差幅/认购差幅列</span></button>
       <div class="table-scroll table-fit" style="margin-top:8px">
-      <table class="legs compact-rows">
+      <table class="legs compact-rows" id="gapVarTableH">
         <thead><tr>
           <th><span class="en">Symbol</span><span class="zh">代码</span></th>
           <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
           <th class="num"><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th>
           <th class="num"><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></th>
-          <th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
-          <th class="num"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>
+          <th class="num hcol-var"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
+          <th class="num hcol-var"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>
           <th class="num"><span class="en">B/C Spread<br><small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差<br><small style="opacity:.6;font-weight:400">(C−B)/B</small></span></th>
         </tr></thead>
         <tbody id="nvdaGapVarBodyH">
@@ -5736,11 +5738,12 @@ function renderNvdaGapVarTable(){
     }
     rows.push('<tr><td><span class="en">B/C Spread <small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差 <small style="opacity:.6;font-weight:400">(C−B)/B</small></span></td><td class="num">'+spreadTxt+'</td></tr>');
     vRows.push(rows.join(''));
-    hRows.push('<tr><td><b>'+sym+'</b></td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num">'+putBadgeL+'</td><td class="num">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
+    hRows.push('<tr><td><b>'+sym+'</b></td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num hcol-var">'+putBadgeL+'</td><td class="num hcol-var">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
   });
   if(body) body.innerHTML = vRows.join('');
   if(bodyH) bodyH.innerHTML = hRows.join('');
   updateSvcToggleBtn();
+  applyVarColVisibility();
   setLang(curLang);
 }
 function updateSvcToggleBtn(){
@@ -5755,6 +5758,26 @@ function updateSvcToggleBtn(){
 function toggleSvcRows(){
   localStorage.setItem(SVC_HIDE_KEY, svcRowsHidden() ? '0' : '1');
   renderNvdaGapVarTable();
+}
+// Toggle for the horizontal Table 10's Put Variance / Call Variance columns — pure CSS
+// column hiding (no rowspan involved here, unlike the vertical table's row toggle above).
+var VAR_COL_HIDE_KEY = 'T29_gapVarHideCols';
+function varColsHidden(){ return localStorage.getItem(VAR_COL_HIDE_KEY) === '1'; }
+function applyVarColVisibility(){
+  var table = document.getElementById('gapVarTableH');
+  var hidden = varColsHidden();
+  if(table) table.classList.toggle('hide-var-cols', hidden);
+  var btn = document.getElementById('varColToggleBtn');
+  if(btn){
+    btn.innerHTML = hidden
+      ? '👁️ <span class="en">Show Put Variance / Call Variance columns</span><span class="zh">显示认沽差幅/认购差幅列</span>'
+      : '🙈 <span class="en">Hide Put Variance / Call Variance columns</span><span class="zh">隐藏认沽差幅/认购差幅列</span>';
+    setLang(curLang);
+  }
+}
+function toggleVarCols(){
+  localStorage.setItem(VAR_COL_HIDE_KEY, varColsHidden() ? '0' : '1');
+  applyVarColVisibility();
 }
 // Small inline badge next to a T6 symbol showing whether the position is open or
 // closed, from POSITION_STATUS. Blank for open positions (the common case) to avoid clutter.
