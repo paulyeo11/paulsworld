@@ -1524,21 +1524,14 @@
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 21: Sell Put &amp; Sell Call Variance</span><span class="zh">表21：卖出认沽 &amp; 卖出认购差幅</span></div>
       <div class="table-scroll" style="margin-top:8px">
       <table class="legs">
-        <thead><tr>
-          <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
-          <th class="num"><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th>
-          <th class="num"><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></th>
-          <th class="num"><span class="en">Put Variance<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅<br><small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th>
-          <th class="num"><span class="en">Call Variance<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅<br><small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th>
-        </tr></thead>
         <tbody id="nvdaGapVarBodyH">
-          <tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>
+          <tr><td colspan="2"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>
         </tbody>
       </table>
       </div>
       <div class="note" style="margin-top:8px">
-        <span class="en">Same figures as Table 10 above, laid out horizontally.</span>
-        <span class="zh">与上方表10数字相同，横向排列。</span>
+        <span class="en">Same figures as Table 10 above.</span>
+        <span class="zh">与上方表10数字相同。</span>
       </div>
     </div>
   </div>
@@ -5684,8 +5677,10 @@ function renderPutVarianceTable(){
   if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
   setLang(curLang);
 }
-// Table 10 (Gap tab, Table 11: NVDA C card) — Sell Put & Sell Call Variance for NVDA's
-// actual sold strikes (195P/230C), same live price + formula as the Cushion tab's T6.
+// Table 10 & Table 21 (Gap tab, Table 11: NVDA C card) — Sell Put & Sell Call Variance for
+// NVDA's actual sold strikes (195P/230C), same live price + formula as the Cushion tab's T6.
+// Both tables render the same vertical label/value rows (matches the working Account
+// Balance table pattern — a <th> as the first cell of a tbody row rendered blank).
 function renderNvdaGapVarTable(){
   var body = document.getElementById('nvdaGapVarBody');
   var bodyH = document.getElementById('nvdaGapVarBodyH');
@@ -5694,26 +5689,21 @@ function renderNvdaGapVarTable(){
   var price = getLivePrice('NVDA');
   if(price===null){
     if(body) body.innerHTML = '<tr><td colspan="2"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
-    if(bodyH) bodyH.innerHTML = '<tr><td colspan="5"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
+    if(bodyH) bodyH.innerHTML = '<tr><td colspan="2"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></td></tr>';
     return;
   }
   var pVpct = (price - cfg.shortP) / price * 100;
   var cVpct = (cfg.shortC - price) / price * 100;
   var putBadge = cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
   var callBadge = cushionBadge(cVpct,{en:'Above',zh:'突破'});
-  if(body) body.innerHTML =
-    '<tr><th><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th><td class="num">'+fmt(price)+'</td></tr>'+
-    '<tr><th><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></th><td class="num">'+cfg.shortP+'P</td></tr>'+
-    '<tr><th><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></th><td class="num">'+cfg.shortC+'C</td></tr>'+
-    '<tr><th><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></th><td class="num">'+putBadge+'</td></tr>'+
-    '<tr><th><span class="en">Call Variance <small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅 <small style="opacity:.6;font-weight:400">(C−A)/A</small></span></th><td class="num">'+callBadge+'</td></tr>';
-  if(bodyH) bodyH.innerHTML = '<tr>'+
-    '<td class="num">'+fmt(price)+'</td>'+
-    '<td class="num">'+cfg.shortP+'P</td>'+
-    '<td class="num">'+cfg.shortC+'C</td>'+
-    '<td class="num">'+putBadge+'</td>'+
-    '<td class="num">'+callBadge+'</td>'+
-    '</tr>';
+  var rowsHtml =
+    '<tr><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+fmt(price)+'</td></tr>'+
+    '<tr><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'+
+    '<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>'+
+    '<tr><td><span class="en">Put Variance <small style="opacity:.6;font-weight:400">(A−B)/A</small></span><span class="zh">认沽差幅 <small style="opacity:.6;font-weight:400">(A−B)/A</small></span></td><td class="num">'+putBadge+'</td></tr>'+
+    '<tr><td><span class="en">Call Variance <small style="opacity:.6;font-weight:400">(C−A)/A</small></span><span class="zh">认购差幅 <small style="opacity:.6;font-weight:400">(C−A)/A</small></span></td><td class="num">'+callBadge+'</td></tr>';
+  if(body) body.innerHTML = rowsHtml;
+  if(bodyH) bodyH.innerHTML = rowsHtml;
   setLang(curLang);
 }
 // Small inline badge next to a T6 symbol showing whether the position is open or
