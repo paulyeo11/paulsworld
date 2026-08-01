@@ -429,6 +429,7 @@
         <button id="tb-icb" onclick="setTab('icbenefits')">🎁 <span class="en">IC Benefits</span><span class="zh">铁鹰优势</span></button>
         <button id="tb-fee" onclick="setTab('fee')">🧾 <span class="en">Fee</span><span class="zh">手续费</span></button>
         <button id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">IC4Leg</span><span class="zh">IC4Leg</span></button>
+        <button id="tb-gap" onclick="setTab('gap')">🕳️ <span class="en">Gap</span><span class="zh">跳空</span></button>
       </div>
     </div>
   </div>
@@ -1479,6 +1480,37 @@
     </div>
   </div>
   </div><!-- /tab-accbal -->
+
+  <div id="tab-gap" style="display:none">
+
+    <!-- Copied from IC Setup tab -->
+    <div class="condor">
+      <div class="c-head">
+        <div class="tkr">Table 1301: NVDA <small>CBOE</small></div>
+        <div class="c-meta"><span class="en">Exp Aug 21 '26 · 36 DTE</span><span class="zh">到期 2026年8月21日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
+        <div class="pill open">● OPEN</div>
+      </div>
+      <div class="sp-row" id="sp-nvda-gap"><span class="sp-loading"><span class="en">Loading share price…</span><span class="zh">股价加载中…</span></span></div>
+      <table class="legs">
+        <tr><th><span class="en">Action</span><span class="zh">操作</span></th><th><span class="en">Leg</span><span class="zh">腿</span></th><th class="num"><span class="en">Fill</span><span class="zh">成交</span></th><th class="num"><span class="en">Amount</span><span class="zh">金额</span></th><th class="num"><span class="en">Δ Delta</span><span class="zh">Δ Delta</span></th><th class="num"><span class="en">Price</span><span class="zh">平仓价</span></th><th class="num"><span class="en">Net Price</span><span class="zh">净价</span></th></tr>
+        <tr><td class="sell">SELL</td><td>195 Put</td><td class="num">$5.06</td><td class="num">+$506</td><td class="num">−0.33</td><td class="num">$8.89</td><td class="num" rowspan="4" style="vertical-align:middle">$2.47<br><span class="en">DEBIT</span><span class="zh">借记</span></td></tr>
+        <tr><td class="buy">BUY</td><td>190 Put</td><td class="num">$3.75</td><td class="num">−$375</td><td class="num">−0.25</td><td class="num">$6.54</td></tr>
+        <tr><td class="sell">SELL</td><td>230 Call</td><td class="num">$3.21</td><td class="num">+$321</td><td class="num">+0.21</td><td class="num">$0.43</td></tr>
+        <tr><td class="buy">BUY</td><td>235 Call</td><td class="num">$2.37</td><td class="num">−$237</td><td class="num">+0.17</td><td class="num">$0.31</td></tr>
+      </table>
+      <div class="note" style="margin-top:8px">
+        <span class="en">Delta is modeled from the entry premium (Black-Scholes, back-solved implied vol) since real per-leg delta/IV isn't logged in <code>positions.json</code> — treat as an estimate, not a live IBKR reading. Convention per T30: put deltas negative, call deltas positive. <b>Net Price $2.47 DEBIT</b> is from a shared trade-close alert (29 Jul 2026, 23:12 SGT) for the same strikes/expiry — 3 contracts closed, ≈$90 loss. Reference only; doesn't change the OPEN status/Unrealized P&amp;L above unless Paul confirms this position was actually closed.</span>
+        <span class="zh">Delta 由建仓权利金反推隐含波动率（Black-Scholes模型）建模得出，因<code>positions.json</code>未记录每条腿的真实delta/IV——请视为估算值，非IBKR实时读数。符号约定见T30：认沽delta为负，认购delta为正。<b>净价$2.47借记</b>取自一则分享的平仓提醒（2026年7月29日23:12新加坡时间），行权价/到期日相同——3口合约平仓，约亏$90。仅供参考；除非Paul确认此仓位确实已平仓，否则不改变上方的OPEN状态或未实现盈亏。</span>
+      </div>
+      <div class="metrics">
+        <div class="m"><div class="mk"><span class="en">Net Credit</span><span class="zh">净收权利金</span></div><div class="mv green">+$215</div></div>
+        <div class="m"><div class="mk"><span class="en">Max Loss</span><span class="zh">最大亏损</span></div><div class="mv red">−$285</div></div>
+        <div class="m"><div class="mk"><span class="en">Profit Zone</span><span class="zh">盈利区</span></div><div class="mv">195–230</div></div>
+        <div class="m"><div class="mk"><span class="en">Return/Risk</span><span class="zh">收益/风险</span></div><div class="mv amber">75%</div></div>
+        <div class="m"><div class="mk"><span class="en">Unrealized P&amp;L</span><span class="zh">未实现盈亏</span></div><div class="mv green">+$13.95</div></div>
+      </div>
+    </div>
+  </div>
 
   <div id="tab-analysis" class="analysis" style="display:none">
 
@@ -4445,6 +4477,7 @@ function setTab(t){
   document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
   document.getElementById('tab-optiontoday').style.display = t==='optiontoday'?'':'none';
   document.getElementById('tab-refresh').style.display = t==='refresh'?'':'none';
+  document.getElementById('tab-gap').style.display = t==='gap'?'':'none';
   document.getElementById('tb-dash').classList.toggle('active', t==='dashboard');
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-pospnl').classList.toggle('active', t==='pospnl');
@@ -4473,9 +4506,10 @@ function setTab(t){
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
   document.getElementById('tb-optiontoday').classList.toggle('active', t==='optiontoday');
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
-  document.getElementById('tb-more').classList.toggle('active', t==='fee'||t==='analysis'||t==='riskzone'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions');
+  document.getElementById('tb-gap').classList.toggle('active', t==='gap');
+  document.getElementById('tb-more').classList.toggle('active', t==='fee'||t==='analysis'||t==='riskzone'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='gap');
   closeMoreTab();
-  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl'||t==='gap') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
@@ -5137,7 +5171,7 @@ function renderSharePrices(){
       html += '<span class="sp-old"><span class="en">first capture</span><span class="zh">首次记录</span></span>';
     }
     el.innerHTML = html;
-    if(sym==='NVDA'){ var elBang=document.getElementById('sp-nvda-bang'); if(elBang) elBang.innerHTML = html; }
+    if(sym==='NVDA'){ var elBang=document.getElementById('sp-nvda-bang'); if(elBang) elBang.innerHTML = html; var elGap=document.getElementById('sp-nvda-gap'); if(elGap) elGap.innerHTML = html; }
     if(CALL_ONLY_CFG[sym]){
       plotCallOnlyNowMarker(sym, latest.p);
       if(day1) plotCallOnlyDay1Marker(sym, day1.p);
