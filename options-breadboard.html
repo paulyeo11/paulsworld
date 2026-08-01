@@ -431,6 +431,7 @@
         <button id="tb-icb" onclick="setTab('icbenefits')">🎁 <span class="en">IC Benefits</span><span class="zh">铁鹰优势</span></button>
         <button id="tb-fee" onclick="setTab('fee')">🧾 <span class="en">Fee</span><span class="zh">手续费</span></button>
         <button id="tb-ana" onclick="setTab('analysis')">⚠️ <span class="en">IC4Leg</span><span class="zh">IC4Leg</span></button>
+        <button id="tb-app" onclick="setTab('app')">🧮 <span class="en">App</span><span class="zh">计算器</span></button>
       </div>
     </div>
   </div>
@@ -2426,6 +2427,47 @@
       </div>
     </div>
   </div><!-- /tab-fee -->
+
+  <div id="tab-app" style="display:none">
+    <div class="condor" id="appCalcCard">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">🧮 <span class="en">Strike % Calculator</span><span class="zh">行权价百分比计算器</span></div>
+        <div class="c-meta"><span class="en">Enter share price and strike price to instantly see the variance % — independent tool, not tied to any saved position</span><span class="zh">输入股价与行权价，立即计算百分比差——独立工具，不与任何已保存持仓绑定</span></div>
+        <div></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin:14px 0">
+        <button class="tab-btn active" id="appTypePut" style="flex:1" onclick="setAppCalcType('put')">🔻 <span class="en">Put</span><span class="zh">认沽</span></button>
+        <button class="tab-btn" id="appTypeCall" style="flex:1" onclick="setAppCalcType('call')">🔺 <span class="en">Call</span><span class="zh">认购</span></button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:6px">
+        <label style="font-size:.8rem;color:#9fb3c8;font-weight:700">
+          <span class="en">Share Price (A)</span><span class="zh">股价 (A)</span>
+          <input type="number" id="appSharePrice" inputmode="decimal" step="0.01" placeholder="e.g. 744.95" oninput="calcAppStrikePct()" style="width:100%;margin-top:4px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:#161b22;color:#e6edf3;font-size:1rem">
+        </label>
+        <label style="font-size:.8rem;color:#9fb3c8;font-weight:700" id="appStrikeLabelWrap">
+          <span id="appStrikeLabel"><span class="en">Selling Put Strike (B)</span><span class="zh">卖出认沽行权价 (B)</span></span>
+          <input type="number" id="appStrikePrice" inputmode="decimal" step="0.01" placeholder="e.g. 715" oninput="calcAppStrikePct()" style="width:100%;margin-top:4px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:#161b22;color:#e6edf3;font-size:1rem">
+        </label>
+      </div>
+
+      <div class="table-scroll">
+        <table class="legs" style="margin-top:10px">
+          <thead><tr>
+            <th><span class="en">Field</span><span class="zh">项目</span> <small style="opacity:.6;font-weight:400">(Table 1326)</small></th>
+            <th class="num"><span class="en">Value</span><span class="zh">数值</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td><span class="en">Share Price (A)</span><span class="zh">股价 (A)</span></td><td class="num" id="appOutA">–</td></tr>
+            <tr><td id="appOutStrikeLabel"><span class="en">Selling Put Strike (B)</span><span class="zh">卖出认沽行权价 (B)</span></td><td class="num" id="appOutB">–</td></tr>
+            <tr><td id="appOutFormulaLabel"><span class="en">Put Variance (A−B)/A</span><span class="zh">认沽百分比差 (A−B)/A</span></td><td class="num" id="appOutPct" style="font-weight:800;color:#f59e0b">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note" id="appCushionMsg" style="margin-top:12px;font-weight:700"></div>
+    </div>
+  </div><!-- /tab-app -->
 
   <!-- ============ BANG TRADE ANALYSIS TAB (wraps QQQ + SMH sub-pages) ============ -->
   <div id="tab-bang" style="display:none">
@@ -4498,6 +4540,7 @@ function setTab(t){
   document.getElementById('tab-tasks').style.display = t==='tasks'?'':'none';
   document.getElementById('tab-optiontoday').style.display = t==='optiontoday'?'':'none';
   document.getElementById('tab-refresh').style.display = t==='refresh'?'':'none';
+  document.getElementById('tab-app').style.display = t==='app'?'':'none';
   document.getElementById('tb-dash').classList.toggle('active', t==='dashboard');
   document.getElementById('tb-pos').classList.toggle('active', t==='positions');
   document.getElementById('tb-pospnl').classList.toggle('active', t==='pospnl');
@@ -4526,15 +4569,78 @@ function setTab(t){
   document.getElementById('tb-tasks').classList.toggle('active', t==='tasks');
   document.getElementById('tb-optiontoday').classList.toggle('active', t==='optiontoday');
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
-  document.getElementById('tb-more').classList.toggle('active', t==='fee'||t==='analysis'||t==='riskzone'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions');
+  document.getElementById('tb-app').classList.toggle('active', t==='app');
+  document.getElementById('tb-more').classList.toggle('active', t==='fee'||t==='analysis'||t==='riskzone'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app');
   closeMoreTab();
-  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl'||t==='app') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
   if(t==='optiontoday' && !optionTodayLoaded){ optionTodayLoaded = true; renderOptionTodayTasks(); }
   if(t==='pnl') resizePnlChart();
   window.scrollTo(0,0);
+}
+
+var appCalcType = 'put';
+function applyLangTo(el){
+  el.querySelectorAll('.en').forEach(function(e){e.style.display = curLang==='en'?'':'none';});
+  el.querySelectorAll('.zh').forEach(function(e){e.style.display = curLang==='zh'?'':'none';});
+}
+function setAppCalcType(type){
+  appCalcType = type;
+  document.getElementById('appTypePut').classList.toggle('active', type==='put');
+  document.getElementById('appTypeCall').classList.toggle('active', type==='call');
+  var lbl = document.getElementById('appStrikeLabel');
+  lbl.innerHTML = type==='put'
+    ? '<span class="en">Selling Put Strike (B)</span><span class="zh">卖出认沽行权价 (B)</span>'
+    : '<span class="en">Selling Call Strike (B)</span><span class="zh">卖出认购行权价 (B)</span>';
+  applyLangTo(lbl);
+  calcAppStrikePct();
+}
+function calcAppStrikePct(){
+  var a = parseFloat(document.getElementById('appSharePrice').value);
+  var b = parseFloat(document.getElementById('appStrikePrice').value);
+  var outA = document.getElementById('appOutA');
+  var outB = document.getElementById('appOutB');
+  var outPct = document.getElementById('appOutPct');
+  var outFormula = document.getElementById('appOutFormulaLabel');
+  var outStrikeLbl = document.getElementById('appOutStrikeLabel');
+  var msg = document.getElementById('appCushionMsg');
+  outStrikeLbl.innerHTML = appCalcType==='put'
+    ? '<span class="en">Selling Put Strike (B)</span><span class="zh">卖出认沽行权价 (B)</span>'
+    : '<span class="en">Selling Call Strike (B)</span><span class="zh">卖出认购行权价 (B)</span>';
+  applyLangTo(outStrikeLbl);
+  if(isNaN(a) || isNaN(b) || a===0){
+    outA.textContent = '–'; outB.textContent = '–'; outPct.textContent = '–';
+    msg.textContent = '';
+    return;
+  }
+  outA.textContent = '$' + a.toFixed(2);
+  outB.textContent = '$' + b.toFixed(2);
+  var pct;
+  if(appCalcType==='put'){
+    pct = (a-b)/a*100;
+    outFormula.innerHTML = '<span class="en">Put Variance (A−B)/A</span><span class="zh">认沽百分比差 (A−B)/A</span>';
+  } else {
+    pct = (b-a)/a*100;
+    outFormula.innerHTML = '<span class="en">Call Variance (B−A)/A</span><span class="zh">认购百分比差 (B−A)/A</span>';
+  }
+  applyLangTo(outFormula);
+  outPct.textContent = pct.toFixed(2) + '%';
+  outPct.style.color = pct >= 0 ? '#3fb950' : '#ff6b6b';
+  if(pct < 0){
+    msg.innerHTML = appCalcType==='put'
+      ? '<span class="en">⚠️ Share price is BELOW the put strike — already breached.</span><span class="zh">⚠️ 股价已跌破认沽行权价——已被突破。</span>'
+      : '<span class="en">⚠️ Share price is ABOVE the call strike — already breached.</span><span class="zh">⚠️ 股价已突破认购行权价——已被突破。</span>';
+    msg.style.color = '#ff6b6b';
+  } else if(pct < 3){
+    msg.innerHTML = '<span class="en">⚠️ Tight — within 3% of strike.</span><span class="zh">⚠️ 较紧——距行权价3%以内。</span>';
+    msg.style.color = '#f59e0b';
+  } else {
+    msg.innerHTML = '<span class="en">✅ Safe cushion.</span><span class="zh">✅ 缓冲安全。</span>';
+    msg.style.color = '#3fb950';
+  }
+  applyLangTo(msg);
 }
 
 // Visible error toast — so a broken tap shows a message Paul can screenshot,
