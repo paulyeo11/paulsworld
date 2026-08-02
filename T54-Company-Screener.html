@@ -173,10 +173,10 @@
 
   <div class="card">
     <h2><span class="en">📋 Table 1328: IC Coy Screener Results</span><span class="zh">📋 表1328：IC公司筛选结果</span></h2>
-    <button class="chip" id="t54ColBtn" onclick="toggleT54Columns()" style="margin-bottom:12px;">👁️ <span class="en">Hide Company/Segment/Revenue/Size cols</span><span class="zh">隐藏公司／板块／营收／规模栏</span></button>
+    <button class="chip active" id="t54ColBtn" onclick="toggleT54Columns()" style="margin-bottom:12px;">👁️ <span class="en">Hide Company/Segment/Revenue/Size cols</span><span class="zh">隐藏公司／板块／营收／规模栏</span></button>
     <div class="result-count" id="resultCount"></div>
-    <div class="table-scroll" id="t54TableScroll">
-      <table class="scr" id="t54Table">
+    <div class="table-scroll compact-fit" id="t54TableScroll">
+      <table class="scr hide-cols" id="t54Table">
         <thead>
           <tr>
             <th><span class="en">Symbol</span><span class="zh">代号</span></th>
@@ -431,13 +431,18 @@ document.getElementById('priceMax').addEventListener('input', function(){
   render();
 });
 
-function toggleT54Columns(){
+var DEFAULT_HIDE_COLS = true; // Company/Segment/Revenue/Size hidden by default
+function setT54Columns(hidden){
   var t = document.getElementById('t54Table'); if(!t) return;
   var scroll = document.getElementById('t54TableScroll');
   var btn = document.getElementById('t54ColBtn');
-  var hidden = t.classList.toggle('hide-cols');
+  t.classList.toggle('hide-cols', hidden);
   if(scroll) scroll.classList.toggle('compact-fit', hidden);
   if(btn) btn.classList.toggle('active', hidden);
+}
+function toggleT54Columns(){
+  var t = document.getElementById('t54Table'); if(!t) return;
+  setT54Columns(!t.classList.contains('hide-cols'));
 }
 
 function resetFilters(){
@@ -450,6 +455,7 @@ function resetFilters(){
   document.getElementById('priceMin').value = '';
   document.getElementById('priceMax').value = '';
   buildSegmentRow(); buildSizeRow(); buildHistRow(); buildVarLevelRow();
+  setT54Columns(DEFAULT_HIDE_COLS);
   render();
 }
 
