@@ -7,8 +7,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/company-screener-icon-180.png">
 <link rel="icon" type="image/png" href="/company-screener-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Company Screener">
-<title>T54: Company Screener — Segment, Price &amp; Revenue Size Filter</title>
+<meta name="apple-mobile-web-app-title" content="IC Coy Screener">
+<title>T54: IC Coy Screener — Segment, Price &amp; Revenue Size Filter</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
@@ -82,6 +82,7 @@
   .chip.lvl3.active { background:#fde047; border-color:#fde047; color:#0e1330; }
   .chip.lvl4.active { background:#4ade80; border-color:#4ade80; color:#0e1330; }
   .chip.lvl5.active { background:#10b981; border-color:#10b981; color:#0e1330; }
+  table.scr.hide-cols .t54-hide-col { display:none; }
 
   .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
   .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
@@ -108,7 +109,7 @@
     <span class="current"><span class="en">T54</span><span class="zh">T54</span></span>
   </div>
   <div class="ic">🔍📊</div>
-  <h1><span class="en">T54: Company Screener</span><span class="zh">T54：公司筛选器</span></h1>
+  <h1><span class="en">T54: IC Coy Screener</span><span class="zh">T54：IC公司筛选器</span></h1>
   <p><span class="en">Filter companies by segment, live share price range, company size by last year's revenue, and price momentum vs a historical price. Both the Revenue period and the Historical Price (B) period are switchable.</span><span class="zh">按行业板块、实时股价区间、去年营收计算的公司规模、以及相对历史股价的涨跌动能筛选。营收期间与历史股价（B）期间皆可切换。</span></p>
 </div>
 
@@ -117,7 +118,7 @@
   <div class="share-toast" id="pinToast">📌 Pinned!</div>
 
   <div class="disclaimer">
-    ⚠️ <span class="en"><b>Educational only, not financial advice.</b> Revenue figures are manually verified against each company's SEC filings / investor-relations releases (as of 2 Aug 2026) — not live data, and not updated automatically. Share Price (A) refreshes live from the same free quote feed used on T29. Fiscal year-ends differ by company (e.g. Apple/Microsoft/Nvidia/Broadcom don't end in December) — the Revenue period selector picks each company's own most-recent, 1-year-prior, or 2-years-prior fiscal year, shown under the figure. Share Price (B) and Variance % (C) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/Year" are approximate trading-day lookbacks (≈5 / 21 / 63 / 252 trading days ago), not exact calendar dates. If a company doesn't have enough price history for a lookback, (B) and (C) show "—" rather than a guessed value.</span><span class="zh"><b>仅供教育用途，非投资建议。</b>营收数字已对照各公司SEC文件／投资者关系公告人工核实（截至2026年8月2日）——非实时数据，也不会自动更新。股价（A）透过T29使用的同一个免费报价源实时刷新。各公司财年结束日不同（例如苹果、微软、英伟达、博通均非12月结束）——营收期间选择器会选取各公司自己的最近、前一年或前两年财年，并在数字下方标示。股价（B）与涨跌幅（C）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／去年」为约略交易日回溯（约5／21／63／252个交易日前），并非精确日历日期。若某公司历史价格数据不足以计算该期间，（B）与（C）会显示「—」，不会用猜测值填补。</span>
+    ⚠️ <span class="en">Share Price (B) and Variance % (C) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/Year" are approximate trading-day lookbacks (≈5 / 21 / 63 / 252 trading days ago), not exact calendar dates. If a company doesn't have enough price history for a lookback, (B) and (C) show "—" rather than a guessed value.</span><span class="zh">股价（B）与涨跌幅（C）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／去年」为约略交易日回溯（约5／21／63／252个交易日前），并非精确日历日期。若某公司历史价格数据不足以计算该期间，（B）与（C）会显示「—」，不会用猜测值填补。</span>
   </div>
 
   <div class="card">
@@ -161,20 +162,21 @@
   </div>
 
   <div class="card">
-    <h2><span class="en">📋 Table 1328: Company Screener Results</span><span class="zh">📋 表1328：公司筛选结果</span></h2>
+    <h2><span class="en">📋 Table 1328: IC Coy Screener Results</span><span class="zh">📋 表1328：IC公司筛选结果</span></h2>
+    <button class="chip" id="t54ColBtn" onclick="toggleT54Columns()" style="margin-bottom:12px;">👁️ <span class="en">Hide Company/Segment/Revenue/Size cols</span><span class="zh">隐藏公司／板块／营收／规模栏</span></button>
     <div class="result-count" id="resultCount"></div>
     <div class="table-scroll">
-      <table class="scr">
+      <table class="scr" id="t54Table">
         <thead>
           <tr>
             <th><span class="en">Symbol</span><span class="zh">代号</span></th>
-            <th><span class="en">Company</span><span class="zh">公司</span></th>
-            <th><span class="en">Segment</span><span class="zh">板块</span></th>
+            <th class="t54-hide-col"><span class="en">Company</span><span class="zh">公司</span></th>
+            <th class="t54-hide-col"><span class="en">Segment</span><span class="zh">板块</span></th>
             <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
             <th class="num" id="histColHead"><span class="en">Share Price (B)</span><span class="zh">股价（B）</span></th>
             <th class="num"><span class="en">Variance (C) (A−B)/B</span><span class="zh">涨跌幅（C）(A−B)/B</span></th>
-            <th class="num" id="revColHead"><span class="en">Revenue</span><span class="zh">营收</span></th>
-            <th><span class="en">Size</span><span class="zh">规模</span></th>
+            <th class="num t54-hide-col" id="revColHead"><span class="en">Revenue</span><span class="zh">营收</span></th>
+            <th class="t54-hide-col"><span class="en">Size</span><span class="zh">规模</span></th>
           </tr>
         </thead>
         <tbody id="scrBody"><tr><td colspan="8" class="empty-row"><span class="en">Loading…</span><span class="zh">载入中…</span></td></tr></tbody>
@@ -185,7 +187,7 @@
   <script src="/view-counter.js"></script>
 
   <div class="foot">
-    <span class="en">Company screener · Segment, price &amp; revenue-size filters</span><span class="zh">公司筛选器 · 行业板块、股价与营收规模筛选</span><br>
+    <span class="en">IC Coy screener · Segment, price &amp; revenue-size filters</span><span class="zh">IC公司筛选器 · 行业板块、股价与营收规模筛选</span><br>
     <a href="T24-Stock-Screener-Criteria.html">🎯 <span class="en">T24: My Stock Screener Criteria</span><span class="zh">T24：我的选股筛选条件</span></a><br>
     <a href="options-breadboard.html">🍞 <span class="en">T29: Iron Condor Breadboard — Current Positions</span><span class="zh">T29：铁鹰面包板——目前持仓</span></a><br>
     <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
@@ -221,8 +223,8 @@ document.addEventListener('click', function(e){
 // Pin page — pinned pages show as a row at the top of Investment Tools (per-browser, via localStorage)
 var PIN_KEY = 'pw_pinned_pages';
 var PAGE_URL = 'T54-Company-Screener.html';
-var PAGE_TITLE = 'T54 Company Screener';
-var PAGE_TITLE_ZH = 'T54 公司筛选器';
+var PAGE_TITLE = 'T54 IC Coy Screener';
+var PAGE_TITLE_ZH = 'T54 IC公司筛选器';
 var PAGE_ICON = '🔍';
 function getPinnedPages(){
   try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; }
@@ -427,6 +429,13 @@ document.getElementById('priceMax').addEventListener('input', function(){
   render();
 });
 
+function toggleT54Columns(){
+  var t = document.getElementById('t54Table'); if(!t) return;
+  var btn = document.getElementById('t54ColBtn');
+  var hidden = t.classList.toggle('hide-cols');
+  if(btn) btn.classList.toggle('active', hidden);
+}
+
 function resetFilters(){
   state.period = 0;
   state.histPeriod = 0;
@@ -507,13 +516,13 @@ function render(){
     }
     return '<tr>' +
       '<td class="sym">' + c.sym + '</td>' +
-      '<td>' + c.name + '</td>' +
-      '<td><span class="en">' + c.segment + '</span><span class="zh">' + SEGMENTS_ZH[c.segment] + '</span></td>' +
+      '<td class="t54-hide-col">' + c.name + '</td>' +
+      '<td class="t54-hide-col"><span class="en">' + c.segment + '</span><span class="zh">' + SEGMENTS_ZH[c.segment] + '</span></td>' +
       '<td class="num">' + fmtPrice(c.price) + '</td>' +
       '<td class="num">' + bCell + '</td>' +
       '<td class="num">' + cCell + '</td>' +
-      '<td class="num">' + fmtRev(revEntry.v) + '<span class="fy">' + revEntry.l + '</span></td>' +
-      '<td><span class="sizepill ' + c.size + '"><span class="en">' + c.size + '</span><span class="zh">' + SIZES_ZH[c.size] + '</span></span></td>' +
+      '<td class="num t54-hide-col">' + fmtRev(revEntry.v) + '<span class="fy">' + revEntry.l + '</span></td>' +
+      '<td class="t54-hide-col"><span class="sizepill ' + c.size + '"><span class="en">' + c.size + '</span><span class="zh">' + SIZES_ZH[c.size] + '</span></span></td>' +
       '</tr>';
   }).join('');
 }
