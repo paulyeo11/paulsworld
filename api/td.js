@@ -27,7 +27,7 @@ async function getCrumb() {
 // (chart-history) path below, since Yahoo's crumb auth is frequently blocked from cloud/
 // server IPs (Vercel included), which is why the site's live prices went dark. Only handles
 // plain US-listed tickers (".us" suffix); HK tickers and FX pairs still go through Yahoo.
-async function fetchStooqDaily(symbol) {
+async function fetchStooqDaily(symbol, closesWanted) {
   const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol.toLowerCase())}.us&i=d`;
   const r = await fetch(url, { headers: { 'User-Agent': UA } });
   if (!r.ok) throw new Error('stooq_bad_response');
@@ -42,7 +42,7 @@ async function fetchStooqDaily(symbol) {
     prevClose: closes[closes.length - 2],
     fiftyTwoWeekHigh: Math.max.apply(null, recent),
     fiftyTwoWeekLow: Math.min.apply(null, recent),
-    closes: closes.slice(-135),
+    closes: closes.slice(-closesWanted),
   };
 }
 
@@ -62,14 +62,17 @@ export default async function handler(req, res) {
   const out = {};
 
   // full=1&range=6mo etc — 52-week range + historical daily closes for a price chart
-  // (e.g. T39's Profit Zone chart).
+  // (e.g. T39's Profit Zone chart). Optional &days=N controls how many trailing daily
+  // closes come back from the Stooq path (default 135, matches the original chart use;
+  // T54's week/month/quarter/year-ago lookback requests days=260 to cover ~1 trading year).
   if (req.query.full === '1') {
     const range = String(req.query.range || '6mo');
+    const closesWanted = Math.min(400, Math.max(30, parseInt(req.query.days, 10) || 135));
     await Promise.all(symbols.map(async (sym) => {
       // Plain US ticker (no exchange suffix / FX marker) — try Stooq first.
       if (!/[.=]/.test(sym)) {
         try {
-          const s = await fetchStooqDaily(sym);
+          const s = await fetchStooqDaily(sym, closesWanted);
           out[sym] = { price: s.price, prevClose: s.prevClose, fiftyTwoWeekHigh: s.fiftyTwoWeekHigh, fiftyTwoWeekLow: s.fiftyTwoWeekLow, currency: 'USD', closes: s.closes, _src: 'stooq' };
           return;
         } catch (_) { /* fall through to Yahoo below */ }

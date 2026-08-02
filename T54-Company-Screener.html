@@ -70,6 +70,18 @@
   .sizepill.Large { background:rgba(244,165,0,.2); color:#f4c869; }
   .sizepill.Mega { background:rgba(239,68,68,.2); color:#fca5a5; }
   .empty-row { text-align:center; color:rgba(255,255,255,.35); font-size:.82rem; padding:22px 0; }
+  .tlpill { display:inline-flex; align-items:center; gap:4px; font-size:.66rem; font-weight:800; padding:3px 9px; border-radius:10px; white-space:nowrap; }
+  .tlpill.lvl1 { background:rgba(239,68,68,.22); color:#fca5a5; }
+  .tlpill.lvl2 { background:rgba(249,115,22,.22); color:#fdba74; }
+  .tlpill.lvl3 { background:rgba(234,179,8,.22); color:#fde68a; }
+  .tlpill.lvl4 { background:rgba(52,211,153,.22); color:#6ee7b7; }
+  .tlpill.lvl5 { background:rgba(16,185,129,.3); color:#34d399; }
+  .tlpill.lvlna { background:rgba(148,163,184,.15); color:rgba(255,255,255,.4); }
+  .chip.lvl1.active { background:#f87171; border-color:#f87171; color:#0e1330; }
+  .chip.lvl2.active { background:#fb923c; border-color:#fb923c; color:#0e1330; }
+  .chip.lvl3.active { background:#fde047; border-color:#fde047; color:#0e1330; }
+  .chip.lvl4.active { background:#4ade80; border-color:#4ade80; color:#0e1330; }
+  .chip.lvl5.active { background:#10b981; border-color:#10b981; color:#0e1330; }
 
   .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
   .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
@@ -97,7 +109,7 @@
   </div>
   <div class="ic">🔍📊</div>
   <h1><span class="en">T54: Company Screener</span><span class="zh">T54：公司筛选器</span></h1>
-  <p><span class="en">Filter companies by segment, live share price range, and company size by last year's revenue. The revenue column's period is switchable — pick which fiscal year to display.</span><span class="zh">按行业板块、实时股价区间、以及去年营收计算的公司规模筛选。营收栏的期间可切换——自行选择要显示哪一财年。</span></p>
+  <p><span class="en">Filter companies by segment, live share price range, company size by last year's revenue, and price momentum vs a historical price. Both the Revenue period and the Historical Price (B) period are switchable.</span><span class="zh">按行业板块、实时股价区间、去年营收计算的公司规模、以及相对历史股价的涨跌动能筛选。营收期间与历史股价（B）期间皆可切换。</span></p>
 </div>
 
 <div class="wrap">
@@ -105,7 +117,7 @@
   <div class="share-toast" id="pinToast">📌 Pinned!</div>
 
   <div class="disclaimer">
-    ⚠️ <span class="en"><b>Educational only, not financial advice.</b> Revenue figures are manually verified against each company's SEC filings / investor-relations releases (as of 2 Aug 2026) — not live data, and not updated automatically. Share price refreshes live from the same free quote feed used on T29. Fiscal year-ends differ by company (e.g. Apple/Microsoft/Nvidia/Broadcom don't end in December) — the period selector picks each company's own most-recent, 1-year-prior, or 2-years-prior fiscal year, shown under the figure.</span><span class="zh"><b>仅供教育用途，非投资建议。</b>营收数字已对照各公司SEC文件／投资者关系公告人工核实（截至2026年8月2日）——非实时数据，也不会自动更新。股价则透过T29使用的同一个免费报价源实时刷新。各公司财年结束日不同（例如苹果、微软、英伟达、博通均非12月结束）——期间选择器会选取各公司自己的最近、前一年或前两年财年，并在数字下方标示。</span>
+    ⚠️ <span class="en"><b>Educational only, not financial advice.</b> Revenue figures are manually verified against each company's SEC filings / investor-relations releases (as of 2 Aug 2026) — not live data, and not updated automatically. Share Price (A) refreshes live from the same free quote feed used on T29. Fiscal year-ends differ by company (e.g. Apple/Microsoft/Nvidia/Broadcom don't end in December) — the Revenue period selector picks each company's own most-recent, 1-year-prior, or 2-years-prior fiscal year, shown under the figure. Share Price (B) and Variance % (C) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/Year" are approximate trading-day lookbacks (≈5 / 21 / 63 / 252 trading days ago), not exact calendar dates. If a company doesn't have enough price history for a lookback, (B) and (C) show "—" rather than a guessed value.</span><span class="zh"><b>仅供教育用途，非投资建议。</b>营收数字已对照各公司SEC文件／投资者关系公告人工核实（截至2026年8月2日）——非实时数据，也不会自动更新。股价（A）透过T29使用的同一个免费报价源实时刷新。各公司财年结束日不同（例如苹果、微软、英伟达、博通均非12月结束）——营收期间选择器会选取各公司自己的最近、前一年或前两年财年，并在数字下方标示。股价（B）与涨跌幅（C）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／去年」为约略交易日回溯（约5／21／63／252个交易日前），并非精确日历日期。若某公司历史价格数据不足以计算该期间，（B）与（C）会显示「—」，不会用猜测值填补。</span>
   </div>
 
   <div class="card">
@@ -122,7 +134,7 @@
     </div>
 
     <div class="filt-block">
-      <div class="filt-lbl"><span class="en">Share Price Range (live, USD)</span><span class="zh">股价区间（实时，美元）</span></div>
+      <div class="filt-lbl"><span class="en">Share Price Range — Current (A), live USD</span><span class="zh">股价区间 — 现价（A），实时美元</span></div>
       <div class="price-row">
         <input type="number" id="priceMin" placeholder="Min" min="0">
         <span class="to">–</span>
@@ -133,6 +145,16 @@
     <div class="filt-block">
       <div class="filt-lbl"><span class="en">Company Size (by last year's revenue)</span><span class="zh">公司规模（按去年营收）</span></div>
       <div class="chip-row" id="sizeRow"></div>
+    </div>
+
+    <div class="filt-block">
+      <div class="filt-lbl"><span class="en">Historical Price (B) Period</span><span class="zh">历史股价（B）期间</span></div>
+      <div class="period-row" id="histRow"></div>
+    </div>
+
+    <div class="filt-block">
+      <div class="filt-lbl"><span class="en">Variance (C) Traffic Light</span><span class="zh">涨跌幅（C）红绿灯</span></div>
+      <div class="chip-row" id="varLevelRow"></div>
     </div>
 
     <button class="reset-btn" onclick="resetFilters()"><span class="en">Reset all filters</span><span class="zh">重置所有筛选</span></button>
@@ -148,12 +170,14 @@
             <th><span class="en">Symbol</span><span class="zh">代号</span></th>
             <th><span class="en">Company</span><span class="zh">公司</span></th>
             <th><span class="en">Segment</span><span class="zh">板块</span></th>
-            <th class="num"><span class="en">Share Price</span><span class="zh">股价</span></th>
+            <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
+            <th class="num" id="histColHead"><span class="en">Share Price (B)</span><span class="zh">股价（B）</span></th>
+            <th class="num"><span class="en">Variance (C) (A−B)/B</span><span class="zh">涨跌幅（C）(A−B)/B</span></th>
             <th class="num" id="revColHead"><span class="en">Revenue</span><span class="zh">营收</span></th>
             <th><span class="en">Size</span><span class="zh">规模</span></th>
           </tr>
         </thead>
-        <tbody id="scrBody"><tr><td colspan="6" class="empty-row"><span class="en">Loading…</span><span class="zh">载入中…</span></td></tr></tbody>
+        <tbody id="scrBody"><tr><td colspan="8" class="empty-row"><span class="en">Loading…</span><span class="zh">载入中…</span></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -285,6 +309,7 @@ COMPANIES.forEach(function(c){
   c.lastYrRev = c.rev[c.rev.length - 1].v;
   c.size = sizeBucket(c.lastYrRev);
   c.price = null; // filled live via /api/td
+  c.closes = null; // filled once via /api/td?full=1 — ascending daily closes, oldest -> newest
 });
 
 // ===== Filter state =====
@@ -293,10 +318,33 @@ var PERIOD_OPTS = [
   { idxFromEnd:1, en:'1 Yr Prior', zh:'前一年' },
   { idxFromEnd:2, en:'2 Yrs Prior', zh:'前两年' }
 ];
+// Approximate trading-day lookbacks (not calendar days) — see disclaimer.
+var HIST_OPTS = [
+  { days:5,   en:'Last Week',    zh:'上週' },
+  { days:21,  en:'Last Month',   zh:'上個月' },
+  { days:63,  en:'Last Quarter', zh:'上季度' },
+  { days:252, en:'Last Year',    zh:'去年' }
+];
+// 5-level traffic light for Variance (C) = (A-B)/B — ranges are [min, max).
+var LEVELS = [
+  { key:'lvl1', min:-Infinity, max:-15, icon:'🔴', en:'Big Drop',  zh:'大跌', rng:'≤ -15%' },
+  { key:'lvl2', min:-15,       max:-5,  icon:'🟠', en:'Drop',      zh:'下跌', rng:'-15% ~ -5%' },
+  { key:'lvl3', min:-5,        max:5,   icon:'🟡', en:'Flat',      zh:'持平', rng:'-5% ~ +5%' },
+  { key:'lvl4', min:5,         max:15,  icon:'🟢', en:'Gain',      zh:'上涨', rng:'+5% ~ +15%' },
+  { key:'lvl5', min:15,        max:Infinity, icon:'💚', en:'Big Gain', zh:'大涨', rng:'≥ +15%' }
+];
+function trafficLevel(variance){
+  for(var i = 0; i < LEVELS.length; i++){
+    if(variance >= LEVELS[i].min && variance < LEVELS[i].max) return LEVELS[i];
+  }
+  return LEVELS[LEVELS.length - 1];
+}
 var state = {
   period: 0, // index into PERIOD_OPTS
+  histPeriod: 0, // index into HIST_OPTS
   segments: new Set(SEGMENTS),
   sizes: new Set(SIZES),
+  varLevels: new Set(LEVELS.map(function(l){ return l.key; })),
   priceMin: null,
   priceMax: null
 };
@@ -343,6 +391,33 @@ function buildSizeRow(){
   });
 }
 
+function buildHistRow(){
+  var row = document.getElementById('histRow');
+  row.innerHTML = '';
+  HIST_OPTS.forEach(function(h, i){
+    var btn = document.createElement('button');
+    btn.className = 'period-btn' + (state.histPeriod === i ? ' active' : '');
+    btn.innerHTML = '<span class="en">' + h.en + '</span><span class="zh">' + h.zh + '</span>';
+    btn.onclick = function(){ state.histPeriod = i; buildHistRow(); render(); };
+    row.appendChild(btn);
+  });
+}
+
+function buildVarLevelRow(){
+  var row = document.getElementById('varLevelRow');
+  row.innerHTML = '';
+  LEVELS.forEach(function(L){
+    var chip = document.createElement('button');
+    chip.className = 'chip ' + L.key + (state.varLevels.has(L.key) ? ' active' : '');
+    chip.innerHTML = L.icon + ' <span class="en">' + L.en + ' ' + L.rng + '</span><span class="zh">' + L.zh + ' ' + L.rng + '</span>';
+    chip.onclick = function(){
+      if(state.varLevels.has(L.key)) state.varLevels.delete(L.key); else state.varLevels.add(L.key);
+      buildVarLevelRow(); render();
+    };
+    row.appendChild(chip);
+  });
+}
+
 document.getElementById('priceMin').addEventListener('input', function(){
   state.priceMin = this.value === '' ? null : parseFloat(this.value);
   render();
@@ -354,13 +429,15 @@ document.getElementById('priceMax').addEventListener('input', function(){
 
 function resetFilters(){
   state.period = 0;
+  state.histPeriod = 0;
   state.segments = new Set(SEGMENTS);
   state.sizes = new Set(SIZES);
+  state.varLevels = new Set(LEVELS.map(function(l){ return l.key; }));
   state.priceMin = null;
   state.priceMax = null;
   document.getElementById('priceMin').value = '';
   document.getElementById('priceMax').value = '';
-  buildPeriodRow(); buildSegmentRow(); buildSizeRow();
+  buildPeriodRow(); buildSegmentRow(); buildSizeRow(); buildHistRow(); buildVarLevelRow();
   render();
 }
 
@@ -370,17 +447,39 @@ function fmtRev(v){
 function fmtPrice(p){
   return p === null ? '—' : '$' + p.toFixed(2);
 }
+function fmtVariance(v){
+  return (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+}
+
+// Historical price (B) for the selected lookback, and variance (C) vs current price (A).
+// Returns { priceB:number|null, variance:number|null, level:object|null }.
+function histFor(c){
+  var histOpt = HIST_OPTS[state.histPeriod];
+  if(!c.closes || c.price === null) return { priceB:null, variance:null, level:null };
+  var idx = c.closes.length - 1 - histOpt.days;
+  if(idx < 0) return { priceB:null, variance:null, level:null };
+  var priceB = c.closes[idx];
+  if(typeof priceB !== 'number' || priceB <= 0) return { priceB:null, variance:null, level:null };
+  var variance = (c.price - priceB) / priceB * 100;
+  return { priceB:priceB, variance:variance, level:trafficLevel(variance) };
+}
 
 function render(){
   var periodOpt = PERIOD_OPTS[state.period];
   var headEl = document.getElementById('revColHead');
   headEl.innerHTML = '<span class="en">Revenue — ' + periodOpt.en + '</span><span class="zh">营收 — ' + periodOpt.zh + '</span>';
 
+  var histOpt = HIST_OPTS[state.histPeriod];
+  var histHeadEl = document.getElementById('histColHead');
+  histHeadEl.innerHTML = '<span class="en">Share Price (B) — ' + histOpt.en + '</span><span class="zh">股价（B）— ' + histOpt.zh + '</span>';
+
   var rows = COMPANIES.filter(function(c){
     if(!state.segments.has(c.segment)) return false;
     if(!state.sizes.has(c.size)) return false;
     if(state.priceMin !== null && (c.price === null || c.price < state.priceMin)) return false;
     if(state.priceMax !== null && (c.price === null || c.price > state.priceMax)) return false;
+    var h = histFor(c);
+    if(h.level !== null && !state.varLevels.has(h.level.key)) return false;
     return true;
   });
 
@@ -390,7 +489,7 @@ function render(){
 
   var tbody = document.getElementById('scrBody');
   if(rows.length === 0){
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-row"><span class="en">No companies match these filters</span><span class="zh">没有公司符合这些筛选条件</span></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-row"><span class="en">No companies match these filters</span><span class="zh">没有公司符合这些筛选条件</span></td></tr>';
     return;
   }
 
@@ -398,11 +497,21 @@ function render(){
     var idx = c.rev.length - 1 - periodOpt.idxFromEnd;
     idx = Math.max(0, Math.min(c.rev.length - 1, idx));
     var revEntry = c.rev[idx];
+    var h = histFor(c);
+    var bCell = h.priceB === null ? '—' : fmtPrice(h.priceB);
+    var cCell;
+    if(h.level === null){
+      cCell = '<span class="tlpill lvlna">— <span class="en">No data</span><span class="zh">无数据</span></span>';
+    } else {
+      cCell = '<span class="tlpill ' + h.level.key + '">' + h.level.icon + ' ' + fmtVariance(h.variance) + '</span>';
+    }
     return '<tr>' +
       '<td class="sym">' + c.sym + '</td>' +
       '<td>' + c.name + '</td>' +
       '<td><span class="en">' + c.segment + '</span><span class="zh">' + SEGMENTS_ZH[c.segment] + '</span></td>' +
       '<td class="num">' + fmtPrice(c.price) + '</td>' +
+      '<td class="num">' + bCell + '</td>' +
+      '<td class="num">' + cCell + '</td>' +
       '<td class="num">' + fmtRev(revEntry.v) + '<span class="fy">' + revEntry.l + '</span></td>' +
       '<td><span class="sizepill ' + c.size + '"><span class="en">' + c.size + '</span><span class="zh">' + SIZES_ZH[c.size] + '</span></span></td>' +
       '</tr>';
@@ -426,6 +535,23 @@ function loadPrices(){
   }).catch(function(){ /* keep last known prices, or blank on first failed load */ });
 }
 
+// Daily closing-price history for Share Price (B) / Variance (C) — fetched once per page
+// load (not on the 1-min live-price cadence, since daily closes don't move intraday).
+// days=260 covers the ~252-trading-day "Last Year" lookback with a small buffer.
+function loadHistory(){
+  var symbols = COMPANIES.map(function(c){ return c.sym; });
+  fetch('/api/td?symbols=' + encodeURIComponent(symbols.join(',')) + '&full=1&range=1y&days=260')
+    .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+    .then(function(data){
+      COMPANIES.forEach(function(c){
+        var q = data[c.sym];
+        if(q && Array.isArray(q.closes) && q.closes.length) c.closes = q.closes;
+      });
+      render();
+    })
+    .catch(function(){ /* leave closes null — (B)/(C) show "—" rather than a guess */ });
+}
+
 // Standing cadence: 1 min during US market hours (9:30am-4:00pm ET, Mon-Fri), else 5 min.
 function isUSMarketHours(){
   var now = new Date();
@@ -443,8 +569,11 @@ function scheduleRefresh(){
 buildPeriodRow();
 buildSegmentRow();
 buildSizeRow();
+buildHistRow();
+buildVarLevelRow();
 render();
 scheduleRefresh();
+loadHistory();
 </script>
 
 <script src="/bilingual.js"></script>
