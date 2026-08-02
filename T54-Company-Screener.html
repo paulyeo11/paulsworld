@@ -74,6 +74,11 @@
   .tlpill.lvl4 { background:rgba(52,211,153,.22); color:#6ee7b7; }
   .tlpill.lvl5 { background:rgba(16,185,129,.3); color:#34d399; }
   .tlpill.lvlna { background:rgba(148,163,184,.15); color:rgba(255,255,255,.4); }
+  .tlpill.dlvl1 { background:rgba(52,211,153,.22); color:#6ee7b7; }
+  .tlpill.dlvl2 { background:rgba(234,179,8,.22); color:#fde68a; }
+  .tlpill.dlvl3 { background:rgba(249,115,22,.22); color:#fdba74; }
+  .tlpill.dlvl4 { background:rgba(239,68,68,.22); color:#fca5a5; }
+  .tlpill.dlvl5 { background:rgba(168,85,247,.25); color:#d8b4fe; }
   .chip.lvl1.active { background:#f87171; border-color:#f87171; color:#0e1330; }
   .chip.lvl2.active { background:#fb923c; border-color:#fb923c; color:#0e1330; }
   .chip.lvl3.active { background:#fde047; border-color:#fde047; color:#0e1330; }
@@ -131,7 +136,7 @@
   <div class="share-toast" id="pinToast">📌 Pinned!</div>
 
   <div class="disclaimer">
-    ⚠️ <span class="en">Share Price (B), Variance % (C), and Price Movement % (D) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/2 Qtr Ago/3 Qtr Ago/4 Qtr Ago" are approximate trading-day lookbacks (≈5 / 21 / 63 / 126 / 189 / 252 trading days ago), not exact calendar dates. Variance (C) compares today's price (A) to the selected period's price (B). Price Movement (D) is different — it's the move <b>within</b> that period only, from an earlier marker (E, one period further back — e.g. for "Last Quarter" E is the 2 Qtr Ago point) to (B). If a company doesn't have enough price history for a lookback, (B), (C), and (D) show "—" rather than a guessed value.</span><span class="zh">股价（B）、涨跌幅（C）与期间涨跌（D）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／2季度前／3季度前／4季度前」为约略交易日回溯（约5／21／63／126／189／252个交易日前），并非精确日历日期。涨跌幅（C）比较今天股价（A）与所选期间的股价（B）。期间涨跌（D）不同——只计算<b>该期间内</b>的变动，从更早的标记点（E，再往前一个期间的点，例如「上季度」的E即为「2季度前」的点）到（B）。若某公司历史价格数据不足以计算该期间，（B）、（C）与（D）会显示「—」，不会用猜测值填补。</span>
+    ⚠️ <span class="en">Share Price (B), Variance % (C), and Price Movement % (D) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/2 Qtr Ago/3 Qtr Ago/4 Qtr Ago" are approximate trading-day lookbacks (≈5 / 21 / 63 / 126 / 189 / 252 trading days ago), not exact calendar dates. Variance (C) compares today's price (A) to the selected period's price (B). Price Movement (D) is different — it's the high-low swing from (B)'s point through today: F = the highest close in that window, G = the lowest, D = (F−G)/F (e.g. high $100 / low $80 → 20%). If a company doesn't have enough price history for a lookback, (B), (C), and (D) show "—" rather than a guessed value.</span><span class="zh">股价（B）、涨跌幅（C）与股价波动（D）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／2季度前／3季度前／4季度前」为约略交易日回溯（约5／21／63／126／189／252个交易日前），并非精确日历日期。涨跌幅（C）比较今天股价（A）与所选期间的股价（B）。股价波动（D）不同——计算从（B）的时间点到今天之间的最高最低价波动：F为该区间内最高收盘价，G为最低收盘价，D=(F−G)/F（例如最高$100／最低$80 → 20%）。若某公司历史价格数据不足以计算该期间，（B）、（C）与（D）会显示「—」，不会用猜测值填补。</span>
   </div>
 
   <div class="card">
@@ -174,7 +179,7 @@
             <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
             <th class="num" id="histColHead"><span class="en">Share Price (B)</span><span class="zh">股价（B）</span></th>
             <th class="num"><span class="en">Variance (C) (A−B)/B</span><span class="zh">涨跌幅（C）(A−B)/B</span></th>
-            <th class="num" id="moveColHead"><span class="en">Price Movement (D) (B−E)/E</span><span class="zh">期间涨跌（D）(B−E)/E</span></th>
+            <th class="num" id="moveColHead"><span class="en">Price Movement (D) (F−G)/F</span><span class="zh">股价波动（D）(F−G)/F</span></th>
             <th class="num t54-hide-col" id="revColHead"><span class="en">Revenue</span><span class="zh">营收</span></th>
             <th class="t54-hide-col"><span class="en">Size</span><span class="zh">规模</span></th>
           </tr>
@@ -344,6 +349,21 @@ function trafficLevel(variance){
   }
   return LEVELS[LEVELS.length - 1];
 }
+// 5-level traffic light for Price Movement (D) — a high-low swing %, always >= 0, so this
+// is a magnitude scale (calm -> extreme), not the directional drop/gain scale LEVELS uses.
+var DLEVELS = [
+  { key:'dlvl1', min:0,  max:5,        icon:'🟢', en:'Low Swing',      zh:'低波动',  rng:'< 5%' },
+  { key:'dlvl2', min:5,  max:10,       icon:'🟡', en:'Moderate Swing', zh:'中等波动', rng:'5% ~ 10%' },
+  { key:'dlvl3', min:10, max:20,       icon:'🟠', en:'Elevated Swing', zh:'偏高波动', rng:'10% ~ 20%' },
+  { key:'dlvl4', min:20, max:35,       icon:'🔴', en:'High Swing',     zh:'高波动',  rng:'20% ~ 35%' },
+  { key:'dlvl5', min:35, max:Infinity, icon:'🟣', en:'Extreme Swing',  zh:'剧烈波动', rng:'≥ 35%' }
+];
+function dTrafficLevel(movement){
+  for(var i = 0; i < DLEVELS.length; i++){
+    if(movement >= DLEVELS[i].min && movement < DLEVELS[i].max) return DLEVELS[i];
+  }
+  return DLEVELS[DLEVELS.length - 1];
+}
 // Revenue Column Period filter was removed from the UI (2026-08) — the Revenue column
 // still displays, pinned to Latest FY (index 0 of PERIOD_OPTS), just no longer switchable.
 var DEFAULT_HIST_PERIOD = 1; // HIST_OPTS[1] = Last Month
@@ -446,6 +466,9 @@ function fmtPrice(p){
 function fmtVariance(v){
   return (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
 }
+function fmtSwing(v){
+  return v.toFixed(1) + '%';
+}
 
 // Historical price (B) for the selected lookback, and variance (C) vs current price (A).
 // Returns { priceB:number|null, variance:number|null, level:object|null }.
@@ -460,23 +483,21 @@ function histFor(c){
   return { priceB:priceB, variance:variance, level:trafficLevel(variance) };
 }
 
-// Price Movement (D) — the move WITHIN the selected period itself, not vs today.
-// B (this option's own lookback point) is the period's end; E (the next option's lookback
-// point — one step further back, e.g. Last Quarter's E = the 2 Qtr Ago point) is the period's
-// start. D = (B-E)/E. The last option (4 Qtr Ago) has no next entry, so E extends one more
-// quarter (63 trading days) further back.
+// Price Movement (D) — the high-low swing from the selected period's start (B's lookback
+// point) through today, as a % of the high. F = highest close in that window, G = lowest
+// close in that window. D = (F-G)/F. E.g. high $100, low $80 -> (100-80)/100 = 20%.
 function movementFor(c){
-  var i = state.histPeriod;
-  var endDays = HIST_OPTS[i].days;
-  var startDays = (i + 1 < HIST_OPTS.length) ? HIST_OPTS[i + 1].days : endDays + 63;
-  if(!c.closes) return { movement:null, level:null };
-  var endIdx = c.closes.length - 1 - endDays;
-  var startIdx = c.closes.length - 1 - startDays;
-  if(endIdx < 0 || startIdx < 0) return { movement:null, level:null };
-  var priceEnd = c.closes[endIdx], priceStart = c.closes[startIdx];
-  if(typeof priceEnd !== 'number' || typeof priceStart !== 'number' || priceStart <= 0) return { movement:null, level:null };
-  var movement = (priceEnd - priceStart) / priceStart * 100;
-  return { movement:movement, level:trafficLevel(movement) };
+  var histOpt = HIST_OPTS[state.histPeriod];
+  if(!c.closes) return { high:null, low:null, movement:null, level:null };
+  var startIdx = c.closes.length - 1 - histOpt.days;
+  if(startIdx < 0) return { high:null, low:null, movement:null, level:null };
+  var window = c.closes.slice(startIdx).filter(function(v){ return typeof v === 'number'; });
+  if(!window.length) return { high:null, low:null, movement:null, level:null };
+  var high = Math.max.apply(null, window);
+  var low = Math.min.apply(null, window);
+  if(high <= 0) return { high:null, low:null, movement:null, level:null };
+  var movement = (high - low) / high * 100;
+  return { high:high, low:low, movement:movement, level:dTrafficLevel(movement) };
 }
 
 function render(){
@@ -489,7 +510,7 @@ function render(){
   histHeadEl.innerHTML = '<span class="en">Share Price (B) — ' + histOpt.en + '</span><span class="zh">股价（B）— ' + histOpt.zh + '</span>';
 
   var moveHeadEl = document.getElementById('moveColHead');
-  moveHeadEl.innerHTML = '<span class="en">Price Movement (D) — ' + histOpt.en + '</span><span class="zh">期间涨跌（D）— ' + histOpt.zh + '</span>';
+  moveHeadEl.innerHTML = '<span class="en">Price Movement (D) — ' + histOpt.en + ' to Now</span><span class="zh">股价波动（D）— ' + histOpt.zh + '至今</span>';
 
   var rows = COMPANIES.filter(function(c){
     if(!state.segments.has(c.segment)) return false;
@@ -526,7 +547,7 @@ function render(){
     if(m.level === null){
       dCell = '<span class="tlpill lvlna">— <span class="en">No data</span><span class="zh">无数据</span></span>';
     } else {
-      dCell = '<span class="tlpill ' + m.level.key + '">' + m.level.icon + ' ' + fmtVariance(m.movement) + '</span>';
+      dCell = '<span class="tlpill ' + m.level.key + '">' + m.level.icon + ' ' + fmtSwing(m.movement) + '</span>';
     }
     return '<tr>' +
       '<td class="sym">' + c.sym + '</td>' +
@@ -561,11 +582,11 @@ function loadPrices(){
 
 // Daily closing-price history for Share Price (B) / Variance (C) / Price Movement (D) —
 // fetched once per page load (not on the 1-min live-price cadence, since daily closes don't
-// move intraday). days=330 covers Price Movement (D)'s deepest lookback — "4 Qtr Ago"'s
-// start point (E) sits 315 trading days back — with a small buffer.
+// move intraday). days=260 covers the deepest lookback, "4 Qtr Ago" at 252 trading days
+// back, with a small buffer (D's high/low window never reaches further back than B itself).
 function loadHistory(){
   var symbols = COMPANIES.map(function(c){ return c.sym; });
-  fetch('/api/td?symbols=' + encodeURIComponent(symbols.join(',')) + '&full=1&range=2y&days=330')
+  fetch('/api/td?symbols=' + encodeURIComponent(symbols.join(',')) + '&full=1&range=1y&days=260')
     .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
     .then(function(data){
       COMPANIES.forEach(function(c){
