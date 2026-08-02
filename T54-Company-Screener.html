@@ -141,7 +141,7 @@
   <div class="share-toast" id="pinToast">📌 Pinned!</div>
 
   <div class="disclaimer">
-    ⚠️ <span class="en">Share Price (B), Variance % (C), and Price Swing % (D) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/2 Qtr Ago/3 Qtr Ago/4 Qtr Ago" are approximate trading-day lookbacks (≈5 / 21 / 63 / 126 / 189 / 252 trading days ago), not exact calendar dates. Variance (C) compares today's price (A) to the selected period's price (B). Price Swing (D) is different — it's the high-low swing from (B)'s point through today: F = the highest close in that window, G = the lowest, D = (F−G)/F (e.g. high $100 / low $80 → 20%). If a company doesn't have enough price history for a lookback, (B), (C), and (D) show "—" rather than a guessed value.</span><span class="zh">股价（B）、涨跌幅（C）与股价波动（D）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／2季度前／3季度前／4季度前」为约略交易日回溯（约5／21／63／126／189／252个交易日前），并非精确日历日期。涨跌幅（C）比较今天股价（A）与所选期间的股价（B）。股价波动（D）不同——计算从（B）的时间点到今天之间的最高最低价波动：F为该区间内最高收盘价，G为最低收盘价，D=(F−G)/F（例如最高$100／最低$80 → 20%）。若某公司历史价格数据不足以计算该期间，（B）、（C）与（D）会显示「—」，不会用猜测值填补。</span>
+    ⚠️ <span class="en">Share Price (B), Price Swing % (D), and Variance % (C) use daily closing prices fetched once per page load (Stooq/Yahoo daily feed) — "Last Week/Month/Quarter/2 Qtr Ago/3 Qtr Ago/4 Qtr Ago" are approximate trading-day lookbacks (≈5 / 21 / 63 / 126 / 189 / 252 trading days ago), not exact calendar dates. Price Swing (D) is the high-low swing from (B)'s point through today: F = the highest close in that window, G = the lowest, D = (F−G)/F (e.g. high $100 / low $80 → 20%). Variance (C) is different — it compares today's price (A) to the selected period's price (B) directly. If a company doesn't have enough price history for a lookback, (B), (C), and (D) show "—" rather than a guessed value.</span><span class="zh">股价（B）、股价波动（D）与涨跌幅（C）使用每次载入页面时抓取一次的每日收盘价（Stooq／Yahoo每日数据源）——「上週／上月／上季／2季度前／3季度前／4季度前」为约略交易日回溯（约5／21／63／126／189／252个交易日前），并非精确日历日期。股价波动（D）计算从（B）的时间点到今天之间的最高最低价波动：F为该区间内最高收盘价，G为最低收盘价，D=(F−G)/F（例如最高$100／最低$80 → 20%）。涨跌幅（C）不同——直接比较今天股价（A）与所选期间的股价（B）。若某公司历史价格数据不足以计算该期间，（B）、（C）与（D）会显示「—」，不会用猜测值填补。</span>
   </div>
 
   <div class="card">
@@ -163,13 +163,13 @@
     </div>
 
     <div class="filt-block">
-      <div class="filt-lbl"><span class="en">Variance (C) Traffic Light</span><span class="zh">涨跌幅（C）红绿灯</span></div>
-      <div class="chip-row" id="varLevelRow"></div>
+      <div class="filt-lbl"><span class="en">Price Swing (D) Traffic Light</span><span class="zh">股价波动（D）红绿灯</span></div>
+      <div class="chip-row" id="dLevelRow"></div>
     </div>
 
     <div class="filt-block">
-      <div class="filt-lbl"><span class="en">Price Swing (D) Traffic Light</span><span class="zh">股价波动（D）红绿灯</span></div>
-      <div class="chip-row" id="dLevelRow"></div>
+      <div class="filt-lbl"><span class="en">Variance (C) Traffic Light</span><span class="zh">涨跌幅（C）红绿灯</span></div>
+      <div class="chip-row" id="varLevelRow"></div>
     </div>
 
     <button class="reset-btn" onclick="resetFilters()"><span class="en">Reset all filters</span><span class="zh">重置所有筛选</span></button>
@@ -188,8 +188,8 @@
             <th class="t54-hide-col"><span class="en">Segment</span><span class="zh">板块</span></th>
             <th class="num"><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></th>
             <th class="num" id="histColHead"><span class="en">Share Price (B)</span><span class="zh">股价（B）</span></th>
-            <th class="num"><span class="en">Variance (C) (A−B)/B</span><span class="zh">涨跌幅（C）(A−B)/B</span></th>
             <th class="num" id="moveColHead"><span class="en">Price Swing (D) (F−G)/F</span><span class="zh">股价波动（D）(F−G)/F</span></th>
+            <th class="num"><span class="en">Variance (C) (A−B)/B</span><span class="zh">涨跌幅（C）(A−B)/B</span></th>
             <th class="num t54-hide-col" id="revColHead"><span class="en">Revenue</span><span class="zh">营收</span></th>
             <th class="t54-hide-col"><span class="en">Size</span><span class="zh">规模</span></th>
           </tr>
@@ -378,7 +378,7 @@ function dTrafficLevel(movement){
 // still displays, pinned to Latest FY (index 0 of PERIOD_OPTS), just no longer switchable.
 var DEFAULT_HIST_PERIOD = 1; // HIST_OPTS[1] = Last Month
 var DEFAULT_VAR_LEVELS = ['lvl3']; // Flat -5% ~ +5% only
-var DEFAULT_D_LEVELS = DLEVELS.map(function(l){ return l.key; }); // all swing levels shown
+var DEFAULT_D_LEVELS = ['dlvl1', 'dlvl2']; // Low Swing + Moderate Swing only
 var state = {
   period: 0, // fixed — Revenue period selector removed, always Latest FY
   histPeriod: DEFAULT_HIST_PERIOD,
@@ -585,8 +585,8 @@ function render(){
       '<td class="t54-hide-col"><span class="en">' + c.segment + '</span><span class="zh">' + SEGMENTS_ZH[c.segment] + '</span></td>' +
       '<td class="num">' + fmtPrice(c.price) + '</td>' +
       '<td class="num">' + bCell + '</td>' +
-      '<td class="num">' + cCell + '</td>' +
       '<td class="num">' + dCell + '</td>' +
+      '<td class="num">' + cCell + '</td>' +
       '<td class="num t54-hide-col">' + fmtRev(revEntry.v) + '<span class="fy">' + revEntry.l + '</span></td>' +
       '<td class="t54-hide-col"><span class="sizepill ' + c.size + '"><span class="en">' + c.size + '</span><span class="zh">' + SIZES_ZH[c.size] + '</span></span></td>' +
       '</tr>';
