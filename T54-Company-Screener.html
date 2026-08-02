@@ -83,6 +83,21 @@
   .chip.lvl4.active { background:#4ade80; border-color:#4ade80; color:#0e1330; }
   .chip.lvl5.active { background:#10b981; border-color:#10b981; color:#0e1330; }
   table.scr.hide-cols .t54-hide-col { display:none; }
+  /* Hidden-columns view — Symbol, Share Price (A), Share Price (B), Variance (C) all
+     fit on one screen with no horizontal scroll (Table & Chart Numbering Rule's
+     column-fit rule for 2-5 column reports). */
+  #t54TableScroll.compact-fit { overflow-x:visible; }
+  table.scr.hide-cols { table-layout:fixed; width:100%; min-width:0 !important; }
+  table.scr.hide-cols th:nth-child(1), table.scr.hide-cols td:nth-child(1) { width:22%; white-space:normal; }
+  table.scr.hide-cols th:nth-child(4), table.scr.hide-cols td:nth-child(4),
+  table.scr.hide-cols th:nth-child(5), table.scr.hide-cols td:nth-child(5),
+  table.scr.hide-cols th:nth-child(6), table.scr.hide-cols td:nth-child(6) { width:26%; white-space:normal; }
+  @media(max-width:400px){
+    table.scr.hide-cols { font-size:.7rem; }
+    table.scr.hide-cols th { font-size:.56rem; padding:6px 3px; }
+    table.scr.hide-cols td { padding:8px 4px; }
+    table.scr.hide-cols .tlpill { font-size:.6rem; padding:2px 6px; }
+  }
 
   .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
   .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
@@ -125,11 +140,6 @@
     <h2><span class="en">Filters</span><span class="zh">筛选条件</span></h2>
 
     <div class="filt-block">
-      <div class="filt-lbl"><span class="en">Revenue Column Period</span><span class="zh">营收栏期间</span></div>
-      <div class="period-row" id="periodRow"></div>
-    </div>
-
-    <div class="filt-block">
       <div class="filt-lbl"><span class="en">Segment</span><span class="zh">行业板块</span></div>
       <div class="chip-row" id="segmentRow"></div>
     </div>
@@ -165,7 +175,7 @@
     <h2><span class="en">📋 Table 1328: IC Coy Screener Results</span><span class="zh">📋 表1328：IC公司筛选结果</span></h2>
     <button class="chip" id="t54ColBtn" onclick="toggleT54Columns()" style="margin-bottom:12px;">👁️ <span class="en">Hide Company/Segment/Revenue/Size cols</span><span class="zh">隐藏公司／板块／营收／规模栏</span></button>
     <div class="result-count" id="resultCount"></div>
-    <div class="table-scroll">
+    <div class="table-scroll" id="t54TableScroll">
       <table class="scr" id="t54Table">
         <thead>
           <tr>
@@ -341,27 +351,19 @@ function trafficLevel(variance){
   }
   return LEVELS[LEVELS.length - 1];
 }
+// Revenue Column Period filter was removed from the UI (2026-08) — the Revenue column
+// still displays, pinned to Latest FY (index 0 of PERIOD_OPTS), just no longer switchable.
+var DEFAULT_HIST_PERIOD = 1; // HIST_OPTS[1] = Last Month
+var DEFAULT_VAR_LEVELS = ['lvl3']; // Flat -5% ~ +5% only
 var state = {
-  period: 0, // index into PERIOD_OPTS
-  histPeriod: 0, // index into HIST_OPTS
+  period: 0, // fixed — Revenue period selector removed, always Latest FY
+  histPeriod: DEFAULT_HIST_PERIOD,
   segments: new Set(SEGMENTS),
   sizes: new Set(SIZES),
-  varLevels: new Set(LEVELS.map(function(l){ return l.key; })),
+  varLevels: new Set(DEFAULT_VAR_LEVELS),
   priceMin: null,
   priceMax: null
 };
-
-function buildPeriodRow(){
-  var row = document.getElementById('periodRow');
-  row.innerHTML = '';
-  PERIOD_OPTS.forEach(function(p, i){
-    var btn = document.createElement('button');
-    btn.className = 'period-btn' + (state.period === i ? ' active' : '');
-    btn.innerHTML = '<span class="en">' + p.en + '</span><span class="zh">' + p.zh + '</span>';
-    btn.onclick = function(){ state.period = i; buildPeriodRow(); render(); };
-    row.appendChild(btn);
-  });
-}
 
 function buildSegmentRow(){
   var row = document.getElementById('segmentRow');
@@ -431,22 +433,23 @@ document.getElementById('priceMax').addEventListener('input', function(){
 
 function toggleT54Columns(){
   var t = document.getElementById('t54Table'); if(!t) return;
+  var scroll = document.getElementById('t54TableScroll');
   var btn = document.getElementById('t54ColBtn');
   var hidden = t.classList.toggle('hide-cols');
+  if(scroll) scroll.classList.toggle('compact-fit', hidden);
   if(btn) btn.classList.toggle('active', hidden);
 }
 
 function resetFilters(){
-  state.period = 0;
-  state.histPeriod = 0;
+  state.histPeriod = DEFAULT_HIST_PERIOD;
   state.segments = new Set(SEGMENTS);
   state.sizes = new Set(SIZES);
-  state.varLevels = new Set(LEVELS.map(function(l){ return l.key; }));
+  state.varLevels = new Set(DEFAULT_VAR_LEVELS);
   state.priceMin = null;
   state.priceMax = null;
   document.getElementById('priceMin').value = '';
   document.getElementById('priceMax').value = '';
-  buildPeriodRow(); buildSegmentRow(); buildSizeRow(); buildHistRow(); buildVarLevelRow();
+  buildSegmentRow(); buildSizeRow(); buildHistRow(); buildVarLevelRow();
   render();
 }
 
@@ -575,7 +578,6 @@ function scheduleRefresh(){
   setTimeout(scheduleRefresh, isUSMarketHours() ? 60000 : 300000);
 }
 
-buildPeriodRow();
 buildSegmentRow();
 buildSizeRow();
 buildHistRow();
