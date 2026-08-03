@@ -174,6 +174,7 @@
   .gauge-wrap { margin:6px 0 0; text-align:center; }
   .gauge-svg { width:100%; max-width:360px; height:auto; }
   .gauge-tick-label { font-size:9px; fill:#8b98a5; font-weight:700; font-family:inherit; }
+  .gauge-cushion-icon { font-size:15px; }
   .gauge-hub { fill:#161b22; stroke:#f5c869; stroke-width:2; }
   .gauge-needle-day1 { stroke:#c9d1d9; stroke-width:2; stroke-dasharray:3,2; }
   .gauge-needle-now { stroke:#f5c869; stroke-width:3; }
@@ -5265,6 +5266,13 @@ function buildGauge(sym, cfg){
     var t = gaugeSvgEl('text', { x:tp.x.toFixed(2), y:tp.y.toFixed(2), 'text-anchor':anchor, class:'gauge-tick-label' });
     t.textContent = p.lab;
     svg.appendChild(t);
+    // Put/Call Cushion icon (✅/⚠️/⚡/🔴/⛔/💎) at the short strikes — visible even in Hide
+    // Label mode, where the full cushion badge row is hidden.
+    if(p.v === cfg.shortP || p.v === cfg.shortC){
+      var ip = gaugePolar(GAUGE_R_TICK + 16, a);
+      var icon = gaugeSvgEl('text', { x:ip.x.toFixed(2), y:ip.y.toFixed(2), 'text-anchor':anchor, class:'gauge-cushion-icon', id:'gcushicon-'+(p.v===cfg.shortP?'put':'call')+'-'+sym.toLowerCase() });
+      svg.appendChild(icon);
+    }
   });
   [cfg.beLo, cfg.beHi].forEach(function(be){
     var a = gaugeAngleFor(be, cfg.lo, cfg.hi);
@@ -5299,6 +5307,8 @@ function buildCallOnlyGauge(sym, cfg){
   var t = gaugeSvgEl('text', { x:tp.x.toFixed(2), y:tp.y.toFixed(2), 'text-anchor':anchor, class:'gauge-tick-label' });
   t.textContent = cfg.shortC+'C';
   svg.appendChild(t);
+  var ip = gaugePolar(GAUGE_R_TICK + 16, a);
+  svg.appendChild(gaugeSvgEl('text', { x:ip.x.toFixed(2), y:ip.y.toFixed(2), 'text-anchor':anchor, class:'gauge-cushion-icon', id:'gcushicon-call-'+sym.toLowerCase() }));
   var ac = gaugeAngleFor(cfg.avgCost, cfg.lo, cfg.hi);
   var b0 = gaugePolar(GAUGE_R_INNER - 4, ac), b1 = gaugePolar(GAUGE_R_OUTER + 4, ac);
   svg.appendChild(gaugeSvgEl('line', { x1:b0.x.toFixed(2), y1:b0.y.toFixed(2), x2:b1.x.toFixed(2), y2:b1.y.toFixed(2), class:'gauge-be-line', stroke:'#f85149', 'stroke-width':1.5, 'stroke-dasharray':'3,2' }));
@@ -5331,6 +5341,8 @@ function buildPutOnlyGauge(sym, cfg){
   var t = gaugeSvgEl('text', { x:tp.x.toFixed(2), y:tp.y.toFixed(2), 'text-anchor':anchor, class:'gauge-tick-label' });
   t.textContent = cfg.shortP+'P';
   svg.appendChild(t);
+  var ip = gaugePolar(GAUGE_R_TICK + 16, a);
+  svg.appendChild(gaugeSvgEl('text', { x:ip.x.toFixed(2), y:ip.y.toFixed(2), 'text-anchor':anchor, class:'gauge-cushion-icon', id:'gcushicon-put-'+sym.toLowerCase() }));
   var be = gaugeAngleFor(cfg.breakeven, cfg.lo, cfg.hi);
   var b0 = gaugePolar(GAUGE_R_INNER - 4, be), b1 = gaugePolar(GAUGE_R_OUTER + 4, be);
   svg.appendChild(gaugeSvgEl('line', { x1:b0.x.toFixed(2), y1:b0.y.toFixed(2), x2:b1.x.toFixed(2), y2:b1.y.toFixed(2), class:'gauge-be-line', stroke:'#f85149', 'stroke-width':1.5, 'stroke-dasharray':'3,2' }));
@@ -5440,6 +5452,8 @@ function plotCallOnlyNowMarker(sym, price){
   if(gCushEl){ gCushEl.innerHTML = cushionBadge(vpct, {en:'Above', zh:'突破'}); setLang(curLang); }
   var gCushValEl = document.getElementById('gcallcush-val-'+sym.toLowerCase());
   if(gCushValEl){ gCushValEl.textContent = '('+cfg.shortC+'−'+price.toFixed(2)+')/'+price.toFixed(2); }
+  var gCushIconEl = document.getElementById('gcushicon-call-'+sym.toLowerCase());
+  if(gCushIconEl){ gCushIconEl.textContent = cushionIcon(vpct); }
 }
 function plotCallOnlyDay1Marker(sym, price){
   var cfg = CALL_ONLY_CFG[sym]; if(!cfg || typeof price!=='number') return;
@@ -5523,10 +5537,14 @@ function plotNowMarker(sym, price){
   if(gPutCushEl){ gPutCushEl.innerHTML = cushionBadge((price - cfg.shortP) / price * 100, {en:'<-2%', zh:'<-2%'}); }
   var gPutCushValEl = document.getElementById('gputcush-val-'+sym.toLowerCase());
   if(gPutCushValEl){ gPutCushValEl.textContent = '('+price.toFixed(2)+'−'+cfg.shortP+')/'+price.toFixed(2); }
+  var gPutCushIconEl = document.getElementById('gcushicon-put-'+sym.toLowerCase());
+  if(gPutCushIconEl){ gPutCushIconEl.textContent = cushionIcon((price - cfg.shortP) / price * 100); }
   var gCallCushEl = document.getElementById('gcallcush-'+sym.toLowerCase());
   if(gCallCushEl){ gCallCushEl.innerHTML = cushionBadge((cfg.shortC - price) / price * 100, {en:'Above', zh:'突破'}); }
   var gCallCushValEl = document.getElementById('gcallcush-val-'+sym.toLowerCase());
   if(gCallCushValEl){ gCallCushValEl.textContent = '('+cfg.shortC+'−'+price.toFixed(2)+')/'+price.toFixed(2); }
+  var gCallCushIconEl = document.getElementById('gcushicon-call-'+sym.toLowerCase());
+  if(gCallCushIconEl){ gCallCushIconEl.textContent = cushionIcon((cfg.shortC - price) / price * 100); }
   setLang(curLang);
 }
 
@@ -5723,6 +5741,16 @@ function cushionBadge(vpct, belowLabel){
   if(vpct < CUSHION_THRESHOLDS.tight) return '<span class="badge warn"><span class="en">⚠️ '+pctTxt+'</span><span class="zh">⚠️ '+pctTxt+'</span></span>';
   if(vpct < CUSHION_THRESHOLDS.verySafe) return '<span class="badge safe"><span class="en">✅ '+pctTxt+'</span><span class="zh">✅ '+pctTxt+'</span></span>';
   return '<span class="badge vsafe"><span class="en">💎 '+pctTxt+'</span><span class="zh">💎 '+pctTxt+'</span></span>';
+}
+// Just the icon (no %, no badge markup) from the same CUSHION_THRESHOLDS cutoffs as
+// cushionBadge() — used for the compact cushion icon drawn directly on the Gauge tab's SVG.
+function cushionIcon(vpct){
+  if(vpct <= 0) return '⛔';
+  if(vpct < CUSHION_THRESHOLDS.vvTight) return '🔴';
+  if(vpct < CUSHION_THRESHOLDS.veryTight) return '⚡';
+  if(vpct < CUSHION_THRESHOLDS.tight) return '⚠️';
+  if(vpct < CUSHION_THRESHOLDS.verySafe) return '✅';
+  return '💎';
 }
 function renderCut(){
   var wrap=document.getElementById('cards'); if(!wrap) return; wrap.innerHTML='';
@@ -5968,6 +5996,8 @@ function plotPutOnlyNowMarker(sym, price){
   if(gPutCushEl){ gPutCushEl.innerHTML = cushionBadge(vpct, {en:'<-2%', zh:'<-2%'}); }
   var gPutCushValEl = document.getElementById('gputcush-val-'+sym.toLowerCase());
   if(gPutCushValEl){ gPutCushValEl.textContent = '('+price.toFixed(2)+'−'+cfg.shortP+')/'+price.toFixed(2); }
+  var gPutCushIconEl = document.getElementById('gcushicon-put-'+sym.toLowerCase());
+  if(gPutCushIconEl){ gPutCushIconEl.textContent = cushionIcon(vpct); }
   setLang(curLang);
 }
 function loadPutOnlyStocks(){
