@@ -1051,6 +1051,7 @@
   <div class="cushion-filter-row" id="cushionFilterRow-gauge"></div>
   <div class="cushion-filter-row" style="margin-top:0">
     <button class="cushion-filter-btn" id="gaugeHideLabelBtn" onclick="toggleGaugeLabels()">🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span></button>
+    <button class="cushion-filter-btn" onclick="shareGaugeLink()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
   </div>
 
   <div class="gauge-grid" id="gaugeGrid">
@@ -5099,6 +5100,20 @@ function closeBangMenu(){
 document.addEventListener('click', function(e){
   if(!document.querySelector('.local-menu-wrap').contains(e.target)) closeBangMenu();
 });
+// Gauge tab — Share link (deep-links straight to the Gauge tab via #gauge, same
+// pattern as shareBangLink()'s #bang-<sym> hash routes below)
+function shareGaugeLink(){
+  var url = window.location.origin + window.location.pathname + '#gauge';
+  var title = 'T29: Option by Bang — Gauge';
+  if(navigator.share){ navigator.share({title:title,url:url}).catch(function(){}); }
+  else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
 var BANG_SYM_LABEL = { qqq:'QQQ', smh:'SMH', avgo:'AVGO', spy:'SPY', iwm:'IWM', nvda:'NVDA', googl:'GOOGL', summary:'Summary (T9)' };
 function shareBangLink(sym){
   var url = window.location.origin + window.location.pathname + '#bang-' + sym;
@@ -7619,6 +7634,7 @@ else if (location.hash === '#dailypnl') setTab('dailypnl');
 else if (location.hash === '#icwatchlist') setTab('icwatchlist');
 else if (location.hash === '#targetic') setTab('icwatchlist');
 else if (location.hash === '#cushion') setTab('cushion');
+else if (location.hash === '#gauge') setTab('gauge');
 else if (location.hash === '#icsetup') setTab('icsetup');
 else if (location.hash === '#icsetup-spy') { setTab('icsetup'); setTimeout(function(){ var el=document.getElementById('icsetupSpyCard'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 60); }
 else if (location.hash === '#bang-qqq') { setTab('bang'); setBangSubTab('qqq'); }
