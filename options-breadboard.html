@@ -139,6 +139,11 @@
   /* Gauge chart (Chart 9–16) — semicircle speedometer view of the same strike-rail data */
   .gauge-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px; align-items:start; }
   .gauge-grid .condor { margin:0; }
+  /* Hide Label mode — collapses the legend/cushion/Var text block under each gauge so more
+     cards fit on one screen; the gauge visual, header, and status pill stay visible. */
+  #gaugeGrid.hide-labels .gauge-details { display:none; }
+  #gaugeGrid.hide-labels .condor { padding-bottom:14px; }
+  #gaugeGrid.hide-labels { gap:12px; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
   .gauge-chart-num { font-size:.62rem; color:#8b98a5; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-top:14px; }
   .gauge-wrap { margin:6px 0 0; text-align:center; }
   .gauge-svg { width:100%; max-width:360px; height:auto; }
@@ -1012,8 +1017,11 @@
   </div>
 
   <div class="cushion-filter-row" id="cushionFilterRow-gauge"></div>
+  <div class="cushion-filter-row" style="margin-top:0">
+    <button class="cushion-filter-btn" id="gaugeHideLabelBtn" onclick="toggleGaugeLabels()">🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span></button>
+  </div>
 
-  <div class="gauge-grid">
+  <div class="gauge-grid" id="gaugeGrid">
   <!-- NVDA -->
   <div class="condor" data-sym="NVDA">
     <div class="c-head">
@@ -1023,11 +1031,13 @@
     </div>
     <div class="gauge-chart-num">Chart 9</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-nvda" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-nvda">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-nvda">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-nvda">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-nvda">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-nvda">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-nvda">—</div></span></div>
     <div class="gauge-readout" id="gvar-nvda">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-nvda">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-nvda">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- QQQ -->
@@ -1039,11 +1049,13 @@
     </div>
     <div class="gauge-chart-num">Chart 10</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-qqq" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-qqq">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-qqq">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-qqq">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-qqq">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-qqq">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-qqq">—</div></span></div>
     <div class="gauge-readout" id="gvar-qqq">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-qqq">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-qqq">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- AVGO -->
@@ -1055,11 +1067,13 @@
     </div>
     <div class="gauge-chart-num">Chart 11</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-avgo" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-avgo">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-avgo">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-avgo">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-avgo">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-avgo">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-avgo">—</div></span></div>
     <div class="gauge-readout" id="gvar-avgo">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-avgo">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-avgo">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- SMH -->
@@ -1071,11 +1085,13 @@
     </div>
     <div class="gauge-chart-num">Chart 12</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-smh" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-smh">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-smh">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-smh">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-smh">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-smh">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-smh">—</div></span></div>
     <div class="gauge-readout" id="gvar-smh">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-smh">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-smh">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- SPY -->
@@ -1087,11 +1103,13 @@
     </div>
     <div class="gauge-chart-num">Chart 13</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-spy" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-spy">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-spy">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-spy">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-spy">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-spy">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-spy">—</div></span></div>
     <div class="gauge-readout" id="gvar-spy">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-spy">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-spy">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- IWM -->
@@ -1103,11 +1121,13 @@
     </div>
     <div class="gauge-chart-num">Chart 14</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-iwm" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-iwm">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-iwm">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-iwm">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-iwm">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-iwm">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-iwm">—</div></span></div>
     <div class="gauge-readout" id="gvar-iwm">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-iwm">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-iwm">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- XLE -->
@@ -1119,11 +1139,13 @@
     </div>
     <div class="gauge-chart-num">Chart 15</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-xle" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-xle">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-xle">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-xle">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-xle">—</div></span><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-xle">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-xle">—</div></span></div>
     <div class="gauge-readout" id="gvar-xle">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-xle">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar3-xle">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
   </div>
 
   <!-- FDS Covered Call -->
@@ -1135,10 +1157,12 @@
     </div>
     <div class="gauge-chart-num">Chart 16</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-fds" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🟠 <b><span class="en">Short call (sell)</span><span class="zh">卖出看涨</span></b></span><span>🟩 <b><span class="en">Keep shares zone</span><span class="zh">保留股票区</span></b></span><span>❘ <b><span class="en">Avg cost</span><span class="zh">平均成本</span></b></span><span class="now-leg" id="gnow-fds">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-fds">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Call Cushion</span><span class="zh">认购缓冲</span> <span id="gcallcush-fds">—</span><div class="gauge-cushion-formula">(C−A)/A</div><div class="gauge-cushion-value" id="gcallcush-val-fds">—</div></span></div>
     <div class="gauge-readout" id="gvar-fds">📊 <span class="en">Var: A — vs C —</span><span class="zh">差幅: A — vs C —</span> <b>—</b></div>
     <div class="gauge-readout" id="gvar2-fds">📊 <span class="en">Var: B — vs C —</span><span class="zh">差幅: B — vs C —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
     <div class="note" style="margin-top:8px">
       <span class="en">Covered call, not a 4-leg condor — only the short 300 Call strike (🟠) and average cost basis ($343.24, dashed) are shown on the gauge. Below the strike the shares stay yours plus the premium; above it, shares get called away at $300.</span>
       <span class="zh">备兑看涨期权，非4腿铁鹰——仪表盘上仅显示卖出的300行权价看涨期权（🟠）与平均成本（$343.24，虚线）。股价低于行权价时股票与权利金都保留；高于行权价则股票将以$300被买走。</span>
@@ -1154,9 +1178,11 @@
     </div>
     <div class="gauge-chart-num">Chart 17</div>
     <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-googl" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-details">
     <div class="gauge-legend"><span>🟠 <b><span class="en">Short put (sell)</span><span class="zh">卖出认沽</span></b></span><span>🟩 <b><span class="en">Safe zone (stay above)</span><span class="zh">安全区（维持高于行权价）</span></b></span><span>❘ <b><span class="en">Breakeven</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-googl">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span></div>
     <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-googl">—</span><div class="gauge-cushion-formula">(A−B)/A</div><div class="gauge-cushion-value" id="gputcush-val-googl">—</div></span></div>
     <div class="gauge-readout" id="gvar-googl">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    </div><!-- /gauge-details -->
     <div class="note" style="margin-top:8px">
       <span class="en">Single-leg cash-secured put, not a 4-leg condor — only the short 305 Put strike (🟠) and breakeven ($300.57 = strike − $4.43 premium, dashed) are shown on the gauge. Above the strike the full premium stays yours; below it you're assigned the shares at $305. No DTE Day 1 needle yet — entry-day share price isn't tracked for this position.</span>
       <span class="zh">单腿现金担保认沽期权，非4腿铁鹰——仪表盘上仅显示卖出的305行权价认沽期权（🟠）与保本点（$300.57 = 行权价 − $4.43权利金，虚线）。股价高于行权价时全部权利金归你所有；低于行权价则以$305被行权买入股票。此持仓暂无DTE第1天指针——尚未记录建仓当日股价。</span>
@@ -6002,6 +6028,31 @@ function renderGaugeCardFilter(){
 }
 renderCushionFilterRow();
 renderGaugeCardFilter();
+// Hide Label toggle — collapses every gauge card's legend/cushion/Var text block so more
+// cards fit on one screen. Persisted per-browser via localStorage, same pattern as pinned pages.
+var GAUGE_HIDE_LABELS_KEY = 'pw_gauge_hide_labels';
+function renderGaugeHideLabelBtn(){
+  var btn = document.getElementById('gaugeHideLabelBtn'); if(!btn) return;
+  var hidden = document.getElementById('gaugeGrid').classList.contains('hide-labels');
+  btn.innerHTML = hidden
+    ? '👁️ <span class="en">Show Label</span><span class="zh">显示标签</span>'
+    : '🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span>';
+  btn.classList.toggle('active', hidden);
+  setLang(curLang);
+}
+function toggleGaugeLabels(){
+  var grid = document.getElementById('gaugeGrid'); if(!grid) return;
+  var hidden = grid.classList.toggle('hide-labels');
+  try { localStorage.setItem(GAUGE_HIDE_LABELS_KEY, hidden ? '1' : '0'); } catch(e){}
+  renderGaugeHideLabelBtn();
+}
+(function(){
+  var grid = document.getElementById('gaugeGrid'); if(!grid) return;
+  var saved;
+  try { saved = localStorage.getItem(GAUGE_HIDE_LABELS_KEY); } catch(e){}
+  if(saved === '1') grid.classList.add('hide-labels');
+  renderGaugeHideLabelBtn();
+})();
 // Table 7 Win vs Loss Amount — Bang filter, reusing BANG_4_SYMS (Paul's 4 flagship
 // IC trades circled on the T6 screenshot: QQQ, NVDA, SMH, AVGO) as the shared source of
 // truth, same as the T6 Cushion tab's "💥 Bang" filter above.
