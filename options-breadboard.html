@@ -136,6 +136,25 @@
   .gap-ind.gap-up { color:#3fb950; }
   .gap-ind.gap-down { color:#f85149; }
 
+  /* Gauge chart (Chart 9–16) — semicircle speedometer view of the same strike-rail data */
+  .gauge-chart-num { font-size:.62rem; color:#8b98a5; font-weight:700; letter-spacing:.04em; text-transform:uppercase; margin-top:14px; }
+  .gauge-wrap { margin:6px 0 0; text-align:center; }
+  .gauge-svg { width:100%; max-width:360px; height:auto; }
+  .gauge-tick-label { font-size:9px; fill:#8b98a5; font-weight:700; font-family:inherit; }
+  .gauge-hub { fill:#161b22; stroke:#f5c869; stroke-width:2; }
+  .gauge-needle-day1 { stroke:#c9d1d9; stroke-width:2; stroke-dasharray:3,2; }
+  .gauge-needle-now { stroke:#f5c869; stroke-width:3; }
+  .gauge-legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:.62rem; color:#8b98a5; }
+  .gauge-legend span b { color:#c9d1d9; }
+  .gauge-legend .now-leg b { color:#f5c869; }
+  .gauge-legend .day1-leg b { color:#c9d1d9; }
+  .gauge-readout { text-align:center; margin-top:10px; font-size:.72rem; color:#8b98a5; }
+  .gauge-readout b { font-weight:800; font-size:.86rem; }
+  .gauge-readout .up { color:#3fb950; }
+  .gauge-readout .down { color:#f85149; }
+  .gauge-readout .aval { color:#f5c869; font-weight:800; }
+  .gauge-readout .bval { color:#c9d1d9; font-weight:800; }
+
   /* Legs table */
   table.legs { width:100%; border-collapse:collapse; margin-top:14px; font-size:.8rem; }
   .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
@@ -418,6 +437,7 @@
         <button id="tb-earn" onclick="setTab('earndate')">📅 <span class="en">Earning Date</span><span class="zh">财报日期</span></button>
         <button id="tb-refresh" onclick="setTab('refresh')">🔄 <span class="en">Refresh</span><span class="zh">刷新记录</span></button>
         <button id="tb-riskzone" onclick="setTab('riskzone')">📐 <span class="en">Profit/Risk Zone</span><span class="zh">盈亏区间</span></button>
+        <button id="tb-gauge" onclick="setTab('gauge')">🎯 <span class="en">Gauge</span><span class="zh">仪表</span></button>
         <button id="tb-unreal" onclick="setTab('unrealized')">📉 <span class="en">Unrealized Loss</span><span class="zh">未实现亏损</span></button>
         <button id="tb-cc" onclick="setTab('covcall')">📞 <span class="en">Covered Call</span><span class="zh">备兑看涨</span></button>
         <button id="tb-accbal" onclick="setTab('accbal')">💰 <span class="en">Acc Balance</span><span class="zh">账户余额</span></button>
@@ -974,6 +994,142 @@
     <span class="zh"><b>保本点</b> — NVDA：192.85 / 232.15 · QQQ：677.41 / 747.59 · AVGO：345.25 / 434.75 · SMH：510.65 / 654.35 · SPY：711.44 / 773.56 · IWM：279.89 / 307.11 · XLE：53.35 / 63.65（目标，待成交）。FDS：此处不显示保本点——详见「备兑看涨」页签的成本保本计算。到期时股价处于每对之间即盈利。以上权利金未扣除佣金（每组约4美元，IWM/SPY使用各自实际记录的手续费）。</span>
   </div>
   </div><!-- /tab-riskzone -->
+
+
+  <div id="tab-gauge" style="display:none">
+  <div class="note">
+    <span class="en">Same data as the <b>Profit/Risk Zone</b> tab, shown as a <b>gauge (speedometer) chart</b> instead of a horizontal strike bar — the needle points to where the live price sits between the long-put and long-call strikes. 🟡 gold needle = live price now, ⚪ dashed grey needle = price on DTE Day 1 (entry).</span>
+    <span class="zh">与「盈亏区间」页签相同的数据，改以<b>仪表盘（速度表）图表</b>呈现——指针指向现价在买入认沽与买入认购行权价之间的位置。🟡 金色指针 = 当前实时价格，⚪ 灰色虚线指针 = DTE第1天（建仓当日）价格。</span>
+  </div>
+
+  <!-- NVDA -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">NVDA <small>CBOE</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 21 '26 · 36 DTE</span><span class="zh">到期 2026年8月21日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
+      <div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>
+    </div>
+    <div class="gauge-chart-num">Chart 9</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-nvda" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-nvda">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-nvda">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-nvda">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-nvda">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-nvda">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- QQQ -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">QQQ <small>CBOE2</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 28 '26 · 43 DTE</span><span class="zh">到期 2026年8月28日 · 43天</span><br><span class="strat">IG · Iron Condor</span></div>
+      <div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>
+    </div>
+    <div class="gauge-chart-num">Chart 10</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-qqq" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-qqq">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-qqq">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-qqq">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-qqq">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-qqq">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- AVGO -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">AVGO <small>EDGX</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 28 '26 · 43 DTE</span><span class="zh">到期 2026年8月28日 · 43天</span><br><span class="strat">IG · Iron Condor · Table 1100</span></div>
+      <div class="pill open">● OPEN</div>
+    </div>
+    <div class="gauge-chart-num">Chart 11</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-avgo" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-avgo">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-avgo">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-avgo">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-avgo">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-avgo">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- SMH -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">SMH <small>MERCURY</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 21 '26 · 36 DTE</span><span class="zh">到期 2026年8月21日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
+      <div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>
+    </div>
+    <div class="gauge-chart-num">Chart 12</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-smh" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-smh">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-smh">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-smh">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-smh">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-smh">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- SPY -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">SPY <small>CBOE2</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 31 '26 · 41 DTE</span><span class="zh">到期 2026年8月31日 · 41天</span><br><span class="strat">IG · Iron Condor</span></div>
+      <div class="pill open">● OPEN</div>
+    </div>
+    <div class="gauge-chart-num">Chart 13</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-spy" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-spy">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-spy">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-spy">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-spy">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-spy">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- IWM -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">IWM <small>CBOE2</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 28 '26 · 36 DTE</span><span class="zh">到期 2026年8月28日 · 36天</span><br><span class="strat">IG · Iron Condor</span></div>
+      <div class="pill open">● OPEN</div>
+    </div>
+    <div class="gauge-chart-num">Chart 14</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-iwm" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-iwm">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-iwm">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-iwm">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-iwm">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-iwm">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- XLE -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">XLE <small>ARCA</small></div>
+      <div class="c-meta"><span class="en">Exp Aug 28 '26 · 37 DTE</span><span class="zh">到期 2026年8月28日 · 37天</span><br><span class="strat">IG · Iron Condor</span></div>
+      <div class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.4)">⏳ <span class="en">PENDING FILL</span><span class="zh">待成交</span></div>
+    </div>
+    <div class="gauge-chart-num">Chart 15</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-xle" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-xle">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-xle">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-xle">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-xle">📊 <span class="en">Var: B — vs P —</span><span class="zh">差幅: B — vs P —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar3-xle">📊 <span class="en">Var: C — vs C —</span><span class="zh">差幅: C — vs C —</span> <b>—</b></div>
+  </div>
+
+  <!-- FDS Covered Call -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">FDS <small><span class="en">COVERED CALL</span><span class="zh">备兑看涨</span></small></div>
+      <div class="c-meta"><span class="en">Exp Aug 21 '26 · 31 DTE</span><span class="zh">到期 2026年8月21日 · 31天</span><br><span class="strat"><span class="en">IG · Covered Call</span><span class="zh">IG · 备兑看涨期权</span> · Table 1101</span></div>
+      <div class="pill open">● OPEN</div>
+    </div>
+    <div class="gauge-chart-num">Chart 16</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-fds" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🟠 <b><span class="en">Short call (sell)</span><span class="zh">卖出看涨</span></b></span><span>🟩 <b><span class="en">Keep shares zone</span><span class="zh">保留股票区</span></b></span><span>❘ <b><span class="en">Avg cost</span><span class="zh">平均成本</span></b></span><span class="now-leg" id="gnow-fds">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-fds">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
+    <div class="gauge-readout" id="gvar-fds">📊 <span class="en">Var: A — vs C —</span><span class="zh">差幅: A — vs C —</span> <b>—</b></div>
+    <div class="gauge-readout" id="gvar2-fds">📊 <span class="en">Var: B — vs C —</span><span class="zh">差幅: B — vs C —</span> <b>—</b></div>
+    <div class="note" style="margin-top:8px">
+      <span class="en">Covered call, not a 4-leg condor — only the short 300 Call strike (🟠) and average cost basis ($343.24, dashed) are shown on the gauge. Below the strike the shares stay yours plus the premium; above it, shares get called away at $300.</span>
+      <span class="zh">备兑看涨期权，非4腿铁鹰——仪表盘上仅显示卖出的300行权价看涨期权（🟠）与平均成本（$343.24，虚线）。股价低于行权价时股票与权利金都保留；高于行权价则股票将以$300被买走。</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="en">Zone colours match the Profit/Risk Zone tab: 🟩 green = profit zone (between the short strikes), 🟠 orange = between long and short strikes on each side, 🔴 red = beyond the long strikes (max loss). ❘ red dashed tick = break-even.</span>
+    <span class="zh">区块颜色与「盈亏区间」页签一致：🟩 绿色 = 盈利区（卖出行权价之间），🟠 橙色 = 两侧买入与卖出行权价之间，🔴 红色 = 超出买入行权价（最大亏损）。❘ 红色虚线刻度 = 保本点。</span>
+  </div>
+  </div><!-- /tab-gauge -->
 
 
   <div id="tab-icwatchlist" style="display:none">
@@ -4587,6 +4743,7 @@ function setTab(t){
   document.getElementById('tab-icsetup').style.display = t==='icsetup'?'':'none';
   document.getElementById('tab-shareavgcost').style.display = t==='shareavgcost'?'':'none';
   document.getElementById('tab-riskzone').style.display = t==='riskzone'?'':'none';
+  document.getElementById('tab-gauge').style.display = t==='gauge'?'':'none';
   document.getElementById('tab-unrealized').style.display = t==='unrealized'?'':'none';
   document.getElementById('tab-icwatchlist').style.display = t==='icwatchlist'?'':'none';
   document.getElementById('tab-earndate').style.display = t==='earndate'?'':'none';
@@ -4618,6 +4775,7 @@ function setTab(t){
   document.getElementById('tb-icsetup').classList.toggle('active', t==='icsetup');
   document.getElementById('tb-shareavgcost').classList.toggle('active', t==='shareavgcost');
   document.getElementById('tb-riskzone').classList.toggle('active', t==='riskzone');
+  document.getElementById('tb-gauge').classList.toggle('active', t==='gauge');
   document.getElementById('tb-unreal').classList.toggle('active', t==='unrealized');
   document.getElementById('tb-tic').classList.toggle('active', t==='icwatchlist');
   document.getElementById('tb-earn').classList.toggle('active', t==='earndate');
@@ -4643,7 +4801,7 @@ function setTab(t){
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
   document.getElementById('tb-app').classList.toggle('active', t==='app');
   document.getElementById('tb-new').classList.toggle('active', t==='new');
-  document.getElementById('tb-more').classList.toggle('active', t==='fee'||t==='analysis'||t==='riskzone'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
+  document.getElementById('tb-more').classList.toggle('active', t==='fee'||t==='analysis'||t==='riskzone'||t==='gauge'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
   closeMoreTab();
   document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
@@ -4960,6 +5118,114 @@ var RAIL_CFG = {
   XLE:  {lo:50, hi:67, longP:52, shortP:54, shortC:63, longC:65, beLo:53.35, beHi:63.65}
 };
 Object.keys(RAIL_CFG).forEach(function(sym){ drawRail('rail-'+sym.toLowerCase(), RAIL_CFG[sym]); });
+
+// ===== Gauge tab (Chart 9–16) — semicircle speedometer view of the same RAIL_CFG/CALL_ONLY_CFG data =====
+var GAUGE_CX = 170, GAUGE_CY = 180, GAUGE_R_OUTER = 125, GAUGE_R_INNER = 92, GAUGE_R_NEEDLE = 134, GAUGE_R_TICK = 139;
+function gaugePolar(r, angleDeg){
+  var rad = angleDeg * Math.PI / 180;
+  return { x: GAUGE_CX + r * Math.cos(rad), y: GAUGE_CY - r * Math.sin(rad) };
+}
+function gaugeArcPath(r, startAngle, endAngle){
+  var s = gaugePolar(r, startAngle), e = gaugePolar(r, endAngle);
+  var largeArc = (startAngle - endAngle) > 180 ? 1 : 0;
+  return 'M '+s.x.toFixed(2)+' '+s.y.toFixed(2)+' A '+r+' '+r+' 0 '+largeArc+' 1 '+e.x.toFixed(2)+' '+e.y.toFixed(2);
+}
+function gaugeAngleFor(v, lo, hi){
+  var pct = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+  return 180 - pct * 180;
+}
+function gaugeSvgEl(tag, attrs){
+  var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.keys(attrs).forEach(function(k){ el.setAttribute(k, attrs[k]); });
+  return el;
+}
+// Draw the static ring (5 colour zones), strike tick labels, and break-even ticks for a 4-leg condor gauge.
+// Needle elements are also created here (hidden) so updateGaugeNeedle() only has to move them.
+function buildGauge(sym, cfg){
+  var svg = document.getElementById('gauge-'+sym.toLowerCase()); if(!svg) return;
+  svg.innerHTML = '';
+  var ringWidth = GAUGE_R_OUTER - GAUGE_R_INNER;
+  var rMid = (GAUGE_R_OUTER + GAUGE_R_INNER) / 2;
+  var zones = [
+    { from:cfg.lo, to:cfg.longP, color:'#f85149' },
+    { from:cfg.longP, to:cfg.shortP, color:'#f59e0b' },
+    { from:cfg.shortP, to:cfg.shortC, color:'#3fb950' },
+    { from:cfg.shortC, to:cfg.longC, color:'#f59e0b' },
+    { from:cfg.longC, to:cfg.hi, color:'#f85149' }
+  ];
+  zones.forEach(function(z){
+    var a0 = gaugeAngleFor(z.from, cfg.lo, cfg.hi), a1 = gaugeAngleFor(z.to, cfg.lo, cfg.hi);
+    if(a0 === a1) return;
+    svg.appendChild(gaugeSvgEl('path', { d:gaugeArcPath(rMid, a0, a1), fill:'none', stroke:z.color, 'stroke-width':ringWidth, 'stroke-opacity':.85 }));
+  });
+  var pegs = [
+    { v:cfg.longP, lab:cfg.longP+'P' },
+    { v:cfg.shortP, lab:cfg.shortP+'P' },
+    { v:cfg.shortC, lab:cfg.shortC+'C' },
+    { v:cfg.longC, lab:cfg.longC+'C' }
+  ];
+  pegs.forEach(function(p){
+    var a = gaugeAngleFor(p.v, cfg.lo, cfg.hi);
+    var t0 = gaugePolar(GAUGE_R_OUTER, a), t1 = gaugePolar(GAUGE_R_OUTER + 8, a);
+    svg.appendChild(gaugeSvgEl('line', { x1:t0.x.toFixed(2), y1:t0.y.toFixed(2), x2:t1.x.toFixed(2), y2:t1.y.toFixed(2), stroke:'#c9d1d9', 'stroke-width':1.5 }));
+    var tp = gaugePolar(GAUGE_R_TICK, a);
+    var anchor = a > 165 ? 'start' : (a < 15 ? 'end' : 'middle');
+    var t = gaugeSvgEl('text', { x:tp.x.toFixed(2), y:tp.y.toFixed(2), 'text-anchor':anchor, class:'gauge-tick-label' });
+    t.textContent = p.lab;
+    svg.appendChild(t);
+  });
+  [cfg.beLo, cfg.beHi].forEach(function(be){
+    var a = gaugeAngleFor(be, cfg.lo, cfg.hi);
+    var b0 = gaugePolar(GAUGE_R_INNER - 4, a), b1 = gaugePolar(GAUGE_R_OUTER + 4, a);
+    svg.appendChild(gaugeSvgEl('line', { x1:b0.x.toFixed(2), y1:b0.y.toFixed(2), x2:b1.x.toFixed(2), y2:b1.y.toFixed(2), class:'gauge-be-line', stroke:'#f85149', 'stroke-width':1.5, 'stroke-dasharray':'3,2' }));
+  });
+  var topPt = gaugePolar(GAUGE_R_NEEDLE, 90);
+  svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-day1', id:'gneedle-day1-'+sym.toLowerCase(), style:'display:none' }));
+  svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
+  svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
+}
+// Single-strike gauge for a covered call (Table 1101 shape — no put leg, no long call).
+function buildCallOnlyGauge(sym, cfg){
+  var svg = document.getElementById('gauge-'+sym.toLowerCase()); if(!svg) return;
+  svg.innerHTML = '';
+  var ringWidth = GAUGE_R_OUTER - GAUGE_R_INNER;
+  var rMid = (GAUGE_R_OUTER + GAUGE_R_INNER) / 2;
+  var zones = [
+    { from:cfg.lo, to:cfg.shortC, color:'#3fb950' },
+    { from:cfg.shortC, to:cfg.hi, color:'#f85149' }
+  ];
+  zones.forEach(function(z){
+    var a0 = gaugeAngleFor(z.from, cfg.lo, cfg.hi), a1 = gaugeAngleFor(z.to, cfg.lo, cfg.hi);
+    if(a0 === a1) return;
+    svg.appendChild(gaugeSvgEl('path', { d:gaugeArcPath(rMid, a0, a1), fill:'none', stroke:z.color, 'stroke-width':ringWidth, 'stroke-opacity':.85 }));
+  });
+  var a = gaugeAngleFor(cfg.shortC, cfg.lo, cfg.hi);
+  var t0 = gaugePolar(GAUGE_R_OUTER, a), t1 = gaugePolar(GAUGE_R_OUTER + 8, a);
+  svg.appendChild(gaugeSvgEl('line', { x1:t0.x.toFixed(2), y1:t0.y.toFixed(2), x2:t1.x.toFixed(2), y2:t1.y.toFixed(2), stroke:'#c9d1d9', 'stroke-width':1.5 }));
+  var tp = gaugePolar(GAUGE_R_TICK, a);
+  var anchor = a > 165 ? 'start' : (a < 15 ? 'end' : 'middle');
+  var t = gaugeSvgEl('text', { x:tp.x.toFixed(2), y:tp.y.toFixed(2), 'text-anchor':anchor, class:'gauge-tick-label' });
+  t.textContent = cfg.shortC+'C';
+  svg.appendChild(t);
+  var ac = gaugeAngleFor(cfg.avgCost, cfg.lo, cfg.hi);
+  var b0 = gaugePolar(GAUGE_R_INNER - 4, ac), b1 = gaugePolar(GAUGE_R_OUTER + 4, ac);
+  svg.appendChild(gaugeSvgEl('line', { x1:b0.x.toFixed(2), y1:b0.y.toFixed(2), x2:b1.x.toFixed(2), y2:b1.y.toFixed(2), class:'gauge-be-line', stroke:'#f85149', 'stroke-width':1.5, 'stroke-dasharray':'3,2' }));
+  var topPt = gaugePolar(GAUGE_R_NEEDLE, 90);
+  svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-day1', id:'gneedle-day1-'+sym.toLowerCase(), style:'display:none' }));
+  svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
+  svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
+}
+// Move a gauge's needle to the angle for `price` within [lo, hi]. kind is 'now' or 'day1'.
+function updateGaugeNeedle(sym, kind, price, lo, hi){
+  var needle = document.getElementById('gneedle-'+kind+'-'+sym.toLowerCase()); if(!needle) return;
+  var a = gaugeAngleFor(price, lo, hi);
+  var tip = gaugePolar(GAUGE_R_NEEDLE, a);
+  needle.setAttribute('x2', tip.x.toFixed(2));
+  needle.setAttribute('y2', tip.y.toFixed(2));
+  needle.style.display = '';
+}
+Object.keys(RAIL_CFG).forEach(function(sym){ buildGauge(sym, RAIL_CFG[sym]); });
+
 // Call-only positions (covered calls sold against shares held — no short/long put leg,
 // so no strike rail to draw) shown on T6 / Premium tab alongside the 4-leg condors above.
 // lo/hi/avgCost are only used by the single-strike rail below (drawCallOnlyRail) — the
@@ -4992,7 +5258,7 @@ function drawCallOnlyRail(id, cfg){
   el.innerHTML = '<div class="lab">'+cfg.shortC+'C</div><div class="dot"></div><div class="sub">sell</div>';
   rail.appendChild(el);
 }
-Object.keys(CALL_ONLY_CFG).forEach(function(sym){ drawCallOnlyRail('rail-'+sym.toLowerCase(), CALL_ONLY_CFG[sym]); });
+Object.keys(CALL_ONLY_CFG).forEach(function(sym){ drawCallOnlyRail('rail-'+sym.toLowerCase(), CALL_ONLY_CFG[sym]); buildCallOnlyGauge(sym, CALL_ONLY_CFG[sym]); });
 
 // Now/Day1 markers for the covered-call rail — same visual language as plotNowMarker/
 // plotDay1Marker, but variance is (C − A)/A vs the short call strike (Formula Labels
@@ -5020,6 +5286,12 @@ function plotCallOnlyNowMarker(sym, price){
     vEl.innerHTML = '📊 <span class="en">Var: A '+av+' vs C '+cfg.shortC+'</span><span class="zh">差幅: A '+av+' vs C '+cfg.shortC+'</span> <b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b>';
     setLang(curLang);
   }
+  // Mirror onto the Gauge tab
+  updateGaugeNeedle(sym, 'now', price, cfg.lo, cfg.hi);
+  var glab = document.getElementById('gnow-'+sym.toLowerCase());
+  if(glab) glab.innerHTML = '🟡 <b><span class="en">Now</span><span class="zh">现价</span> '+fmt(price)+'</b>';
+  var gvEl = document.getElementById('gvar-'+sym.toLowerCase());
+  if(gvEl){ gvEl.innerHTML = vEl.innerHTML; setLang(curLang); }
 }
 function plotCallOnlyDay1Marker(sym, price){
   var cfg = CALL_ONLY_CFG[sym]; if(!cfg || typeof price!=='number') return;
@@ -5044,6 +5316,12 @@ function plotCallOnlyDay1Marker(sym, price){
     v2El.innerHTML = '📊 <span class="en">Var: B '+bv+' vs C '+cfg.shortC+'</span><span class="zh">差幅: B '+bv+' vs C '+cfg.shortC+'</span> <b class="'+v2cls+'">'+v2sign+v2pct.toFixed(2)+'%</b>';
     setLang(curLang);
   }
+  // Mirror onto the Gauge tab
+  updateGaugeNeedle(sym, 'day1', price, cfg.lo, cfg.hi);
+  var glab = document.getElementById('gday1-'+sym.toLowerCase());
+  if(glab) glab.innerHTML = '⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> '+fmt(price)+'</b>';
+  var gv2El = document.getElementById('gvar2-'+sym.toLowerCase());
+  if(gv2El && v2El){ gv2El.innerHTML = v2El.innerHTML; setLang(curLang); }
 }
 
 // Plot the live share price as a marker line on the strike rail ("chart")
@@ -5086,6 +5364,12 @@ function plotNowMarker(sym, price){
   gInd.style.left = gLo + '%';
   gInd.style.width = (gHi - gLo) + '%';
   gInd.querySelector('.gap-lab').textContent = vsign + vpct.toFixed(2) + '%';
+  // Mirror onto the Gauge tab
+  updateGaugeNeedle(sym, 'now', price, cfg.lo, cfg.hi);
+  var glab = document.getElementById('gnow-'+sym.toLowerCase());
+  if(glab) glab.innerHTML = '🟡 <b><span class="en">Now</span><span class="zh">现价</span> '+fmt(price)+'</b>';
+  var gvEl = document.getElementById('gvar-'+sym.toLowerCase());
+  if(gvEl && vEl){ gvEl.innerHTML = vEl.innerHTML; setLang(curLang); }
 }
 
 // Plot the entry-day (DTE Day 1) share price as a static marker on the strike rail
@@ -5123,6 +5407,14 @@ function plotDay1Marker(sym, price){
     v3El.innerHTML = '📊 <span class="en">Var: C '+cv+' vs C '+cfg.longC+'</span><span class="zh">差幅: C '+cv+' vs C '+cfg.longC+'</span> <b class="'+v3cls+'">'+v3sign+v3pct.toFixed(2)+'%</b>';
     setLang(curLang);
   }
+  // Mirror onto the Gauge tab
+  updateGaugeNeedle(sym, 'day1', price, cfg.lo, cfg.hi);
+  var glab = document.getElementById('gday1-'+sym.toLowerCase());
+  if(glab) glab.innerHTML = '⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> '+fmt(price)+'</b>';
+  var gv2El = document.getElementById('gvar2-'+sym.toLowerCase());
+  if(gv2El && v2El){ gv2El.innerHTML = v2El.innerHTML; setLang(curLang); }
+  var gv3El = document.getElementById('gvar3-'+sym.toLowerCase());
+  if(gv3El && v3El){ gv3El.innerHTML = v3El.innerHTML; setLang(curLang); }
 }
 
 // ===== IBKR Shares (owned stock, not options) =====
