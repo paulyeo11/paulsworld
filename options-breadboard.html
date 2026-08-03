@@ -144,6 +144,9 @@
   .gauge-hub { fill:#161b22; stroke:#f5c869; stroke-width:2; }
   .gauge-needle-day1 { stroke:#c9d1d9; stroke-width:2; stroke-dasharray:3,2; }
   .gauge-needle-now { stroke:#f5c869; stroke-width:3; }
+  .gauge-needle-val { font-size:14px; font-weight:800; font-family:inherit; }
+  .gauge-needle-val-now { fill:#f5c869; }
+  .gauge-needle-val-day1 { fill:#c9d1d9; }
   .gauge-legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:.62rem; color:#8b98a5; }
   .gauge-legend span b { color:#c9d1d9; }
   .gauge-legend .now-leg b { color:#f5c869; }
@@ -5218,11 +5221,28 @@ function buildCallOnlyGauge(sym, cfg){
 // Move a gauge's needle to the angle for `price` within [lo, hi]. kind is 'now' or 'day1'.
 function updateGaugeNeedle(sym, kind, price, lo, hi){
   var needle = document.getElementById('gneedle-'+kind+'-'+sym.toLowerCase()); if(!needle) return;
+  var svg = document.getElementById('gauge-'+sym.toLowerCase());
   var a = gaugeAngleFor(price, lo, hi);
   var tip = gaugePolar(GAUGE_R_NEEDLE, a);
   needle.setAttribute('x2', tip.x.toFixed(2));
   needle.setAttribute('y2', tip.y.toFixed(2));
   needle.style.display = '';
+  // Whole-dollar value label at the needle tip (no decimal point), per Paul's annotated screenshot
+  var labelId = 'gneedle-val-'+kind+'-'+sym.toLowerCase();
+  var label = document.getElementById(labelId);
+  if(!label && svg){
+    label = gaugeSvgEl('text', { id:labelId, class:'gauge-needle-val gauge-needle-val-'+kind });
+    svg.appendChild(label);
+  }
+  if(label){
+    var lp = gaugePolar(GAUGE_R_NEEDLE + 15, a);
+    var anchor = a > 165 ? 'start' : (a < 15 ? 'end' : 'middle');
+    label.setAttribute('x', lp.x.toFixed(2));
+    label.setAttribute('y', lp.y.toFixed(2));
+    label.setAttribute('text-anchor', anchor);
+    label.textContent = Math.round(price);
+    label.style.display = '';
+  }
 }
 Object.keys(RAIL_CFG).forEach(function(sym){ buildGauge(sym, RAIL_CFG[sym]); });
 
