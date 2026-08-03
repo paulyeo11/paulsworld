@@ -5470,16 +5470,6 @@ function plotNowMarker(sym, price){
   if(gCallCushEl){ gCallCushEl.innerHTML = cushionBadge((cfg.shortC - price) / price * 100, {en:'Above', zh:'突破'}); }
   var gCallCushValEl = document.getElementById('gcallcush-val-'+sym.toLowerCase());
   if(gCallCushValEl){ gCallCushValEl.textContent = '('+cfg.shortC+'−'+price.toFixed(2)+')/'+price.toFixed(2); }
-  // Gauge tab's Var C — live Now price (A) vs the Buy Call strike (C = long call), not the
-  // Day 1 price used by the Profit/Risk Zone tab's Var C. Formula is (C − A)/C, the mirror of
-  // Var A's (A − P)/P, so staying on the safe side (price below the long call) reads as a
-  // positive %, matching its always-green colour instead of showing a negative number in green.
-  var gv3El = document.getElementById('gvar3-'+sym.toLowerCase());
-  if(gv3El){
-    var v3pctNow = (cfg.longC - price) / cfg.longC * 100;
-    var av3 = '<span class="aval">'+fmt(price)+'</span>';
-    gv3El.innerHTML = '📊 <span class="en">Var: C '+av3+' vs C '+cfg.longC+'</span><span class="zh">差幅: C '+av3+' vs C '+cfg.longC+'</span> <b class="up">'+(v3pctNow>=0?'+':'')+v3pctNow.toFixed(2)+'%</b>';
-  }
   setLang(curLang);
 }
 
@@ -5524,8 +5514,16 @@ function plotDay1Marker(sym, price){
   if(glab) glab.innerHTML = '⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> '+fmt(price)+'</b>';
   var gv2El = document.getElementById('gvar2-'+sym.toLowerCase());
   if(gv2El && v2El){ gv2El.innerHTML = v2El.innerHTML; setLang(curLang); }
-  // gvar3 (Gauge tab's Var C) is no longer mirrored from here — see plotNowMarker, which
-  // drives it off the live Now price instead of this Day 1 price.
+  // Gauge tab's Var C — back to the Day 1 price (B), same as Var B and the Profit/Risk Zone
+  // tab's Var C, but with the formula flipped to (C − B)/C (mirror of Var B's (B − P)/P) so
+  // staying on the safe side (price below the long call) reads as a positive %, always green.
+  var gv3El = document.getElementById('gvar3-'+sym.toLowerCase());
+  if(gv3El){
+    var v3pctNew = (cfg.longC - price) / cfg.longC * 100;
+    var bv3 = '<span class="bval">'+fmt(price)+'</span>';
+    gv3El.innerHTML = '📊 <span class="en">Var: C '+bv3+' vs C '+cfg.longC+'</span><span class="zh">差幅: C '+bv3+' vs C '+cfg.longC+'</span> <b class="up">'+(v3pctNew>=0?'+':'')+v3pctNew.toFixed(2)+'%</b>';
+    setLang(curLang);
+  }
 }
 
 // ===== IBKR Shares (owned stock, not options) =====
