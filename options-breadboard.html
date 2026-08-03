@@ -1139,6 +1139,24 @@
     </div>
   </div>
 
+  <!-- GOOGL cash-secured put -->
+  <div class="condor">
+    <div class="c-head">
+      <div class="tkr">Table 1509: GOOGL <small><span class="en">SELLING PUT</span><span class="zh">卖出认沽</span></small></div>
+      <div class="c-meta"><span class="en">Exp Sep 11 '26 · 305 Put sold 29 Jul</span><span class="zh">到期2026年9月11日 · 7月29日卖出305认沽</span><br><span class="strat"><span class="en">IG · Cash-Secured Put</span><span class="zh">IG · 现金担保认沽期权</span></span></div>
+      <div class="pill open">● OPEN</div>
+    </div>
+    <div class="gauge-chart-num">Chart 17</div>
+    <div class="gauge-wrap"><svg class="gauge-svg" id="gauge-googl" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-legend"><span>🟠 <b><span class="en">Short put (sell)</span><span class="zh">卖出认沽</span></b></span><span>🟩 <b><span class="en">Safe zone (stay above)</span><span class="zh">安全区（维持高于行权价）</span></b></span><span>❘ <b><span class="en">Breakeven</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-googl">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span></div>
+    <div class="gauge-cushion-row"><span class="gauge-cushion-item">🛡️ <span class="en">Put Cushion</span><span class="zh">认沽缓冲</span> <span id="gputcush-googl">—</span><div class="gauge-cushion-formula">(A−B)/A</div></span></div>
+    <div class="gauge-readout" id="gvar-googl">📊 <span class="en">Var: A — vs P —</span><span class="zh">差幅: A — vs P —</span> <b>—</b></div>
+    <div class="note" style="margin-top:8px">
+      <span class="en">Single-leg cash-secured put, not a 4-leg condor — only the short 305 Put strike (🟠) and breakeven ($300.57 = strike − $4.43 premium, dashed) are shown on the gauge. Above the strike the full premium stays yours; below it you're assigned the shares at $305. No DTE Day 1 needle yet — entry-day share price isn't tracked for this position.</span>
+      <span class="zh">单腿现金担保认沽期权，非4腿铁鹰——仪表盘上仅显示卖出的305行权价认沽期权（🟠）与保本点（$300.57 = 行权价 − $4.43权利金，虚线）。股价高于行权价时全部权利金归你所有；低于行权价则以$305被行权买入股票。此持仓暂无DTE第1天指针——尚未记录建仓当日股价。</span>
+    </div>
+  </div>
+
   <div class="note">
     <span class="en">Zone colours match the Profit/Risk Zone tab: 🟩 green = profit zone (between the short strikes), 🟠 orange = between long and short strikes on each side, 🔴 red = beyond the long strikes (max loss). ❘ red dashed tick = break-even.</span>
     <span class="zh">区块颜色与「盈亏区间」页签一致：🟩 绿色 = 盈利区（卖出行权价之间），🟠 橙色 = 两侧买入与卖出行权价之间，🔴 红色 = 超出买入行权价（最大亏损）。❘ 红色虚线刻度 = 保本点。</span>
@@ -5229,6 +5247,37 @@ function buildCallOnlyGauge(sym, cfg){
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
 }
+// Single-strike gauge for a cash-secured put (e.g. GOOGL) — mirror of buildCallOnlyGauge:
+// red below the strike (assigned), green above it (keep the premium, stays cash-secured).
+function buildPutOnlyGauge(sym, cfg){
+  var svg = document.getElementById('gauge-'+sym.toLowerCase()); if(!svg) return;
+  svg.innerHTML = '';
+  var ringWidth = GAUGE_R_OUTER - GAUGE_R_INNER;
+  var rMid = (GAUGE_R_OUTER + GAUGE_R_INNER) / 2;
+  var zones = [
+    { from:cfg.lo, to:cfg.shortP, color:'#f85149' },
+    { from:cfg.shortP, to:cfg.hi, color:'#3fb950' }
+  ];
+  zones.forEach(function(z){
+    var a0 = gaugeAngleFor(z.from, cfg.lo, cfg.hi), a1 = gaugeAngleFor(z.to, cfg.lo, cfg.hi);
+    if(a0 === a1) return;
+    svg.appendChild(gaugeSvgEl('path', { d:gaugeArcPath(rMid, a0, a1), fill:'none', stroke:z.color, 'stroke-width':ringWidth, 'stroke-opacity':.85 }));
+  });
+  var a = gaugeAngleFor(cfg.shortP, cfg.lo, cfg.hi);
+  var t0 = gaugePolar(GAUGE_R_OUTER, a), t1 = gaugePolar(GAUGE_R_OUTER + 8, a);
+  svg.appendChild(gaugeSvgEl('line', { x1:t0.x.toFixed(2), y1:t0.y.toFixed(2), x2:t1.x.toFixed(2), y2:t1.y.toFixed(2), stroke:'#c9d1d9', 'stroke-width':1.5 }));
+  var tp = gaugePolar(GAUGE_R_TICK, a);
+  var anchor = a > 165 ? 'start' : (a < 15 ? 'end' : 'middle');
+  var t = gaugeSvgEl('text', { x:tp.x.toFixed(2), y:tp.y.toFixed(2), 'text-anchor':anchor, class:'gauge-tick-label' });
+  t.textContent = cfg.shortP+'P';
+  svg.appendChild(t);
+  var be = gaugeAngleFor(cfg.breakeven, cfg.lo, cfg.hi);
+  var b0 = gaugePolar(GAUGE_R_INNER - 4, be), b1 = gaugePolar(GAUGE_R_OUTER + 4, be);
+  svg.appendChild(gaugeSvgEl('line', { x1:b0.x.toFixed(2), y1:b0.y.toFixed(2), x2:b1.x.toFixed(2), y2:b1.y.toFixed(2), class:'gauge-be-line', stroke:'#f85149', 'stroke-width':1.5, 'stroke-dasharray':'3,2' }));
+  var topPt = gaugePolar(GAUGE_R_NEEDLE, 90);
+  svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
+  svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
+}
 // Move a gauge's needle to the angle for `price` within [lo, hi]. kind is 'now' or 'day1'.
 function updateGaugeNeedle(sym, kind, price, lo, hi){
   var needle = document.getElementById('gneedle-'+kind+'-'+sym.toLowerCase()); if(!needle) return;
@@ -5265,10 +5314,13 @@ var CALL_ONLY_CFG = { FDS: {shortC:300, avgCost:343.24, lo:280, hi:355} };
 // Put-only positions (cash-secured puts sold with no covering call/wings — e.g. GOOGL) shown
 // on T6 alongside the 4-leg condors and CALL_ONLY_CFG. Only cfg.shortP is read by the
 // T6 / Premium tab formulas; there is no shortC, so those cells render as "—".
-var PUT_ONLY_CFG = { GOOGL: {shortP:305} };
+// lo/hi/breakeven are only used by the Gauge tab (buildPutOnlyGauge) — breakeven = strike −
+// premium received ($305 − $4.43 = $300.57, per the 29 Jul 2026 22:48:30 SGT fill).
+var PUT_ONLY_CFG = { GOOGL: {shortP:305, lo:270, hi:400, breakeven:300.57} };
 // Combined lookup for any T6 position, across all three shapes (4-leg condor,
 // call-only, put-only) — used everywhere T6 previously did `RAIL_CFG[sym] || CALL_ONLY_CFG[sym]`.
 function cfgFor(sym){ return RAIL_CFG[sym] || CALL_ONLY_CFG[sym] || PUT_ONLY_CFG[sym]; }
+Object.keys(PUT_ONLY_CFG).forEach(function(sym){ buildPutOnlyGauge(sym, PUT_ONLY_CFG[sym]); });
 renderCushionFilterRow();
 
 // Single-strike "breadboard" for a covered call (no put leg, no long call — just the
@@ -5823,9 +5875,31 @@ function getLivePrice(sym){
   if(p && typeof p.price==='number') return p.price;
   return null;
 }
+// Gauge tab needle + Put Cushion badge for a cash-secured put (e.g. GOOGL) — no Day1 needle
+// since entry-day share price isn't tracked for this position (see PUT_ONLY_CFG note above).
+function plotPutOnlyNowMarker(sym, price){
+  var cfg = PUT_ONLY_CFG[sym]; if(!cfg || typeof price!=='number') return;
+  updateGaugeNeedle(sym, 'now', price, cfg.lo, cfg.hi);
+  var glab = document.getElementById('gnow-'+sym.toLowerCase());
+  if(glab) glab.innerHTML = '🟡 <b><span class="en">Now</span><span class="zh">现价</span> '+fmt(price)+'</b>';
+  var vpct = (price - cfg.shortP) / price * 100;
+  var vcls = vpct >= 0 ? 'up' : 'down';
+  var vsign = vpct >= 0 ? '+' : '';
+  var gvEl = document.getElementById('gvar-'+sym.toLowerCase());
+  if(gvEl){
+    var av = '<span class="aval">'+fmt(price)+'</span>';
+    gvEl.innerHTML = '📊 <span class="en">Var: A '+av+' vs P '+cfg.shortP+'</span><span class="zh">差幅: A '+av+' vs P '+cfg.shortP+'</span> <b class="'+vcls+'">'+vsign+vpct.toFixed(2)+'%</b>';
+  }
+  var gPutCushEl = document.getElementById('gputcush-'+sym.toLowerCase());
+  if(gPutCushEl){ gPutCushEl.innerHTML = cushionBadge(vpct, {en:'<-2%', zh:'<-2%'}); }
+  setLang(curLang);
+}
 function loadPutOnlyStocks(){
   fetchQuotes(PUT_ONLY_STOCKS.map(function(s){return s.sym;})).then(function(data){
-    PUT_ONLY_STOCKS.forEach(function(s){ var q=data&&data[s.sym]; if(q&&typeof q.price==='number'){ s.price=q.price; recordSharePrice(s.sym, q.price); } });
+    PUT_ONLY_STOCKS.forEach(function(s){
+      var q=data&&data[s.sym];
+      if(q&&typeof q.price==='number'){ s.price=q.price; recordSharePrice(s.sym, q.price); plotPutOnlyNowMarker(s.sym, q.price); }
+    });
     renderSharePrices();
   }).catch(function(){});
 }
