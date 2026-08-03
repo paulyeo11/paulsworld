@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI224: One Token Budget, One Gauge Chart — Watching My Iron Condors Turn Red</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <style>
+    :root {
+      --blue: #4a6cf7;
+      --blue-dark: #2740b8;
+      --blue-deep: #1b2a78;
+      --blue-light: #e0e7ff;
+      --ink: #1a1a2e;
+      --warm: #f9f7f4;
+      --accent: #f4813f;
+      --text: #2c2c3e;
+      --muted: #6b7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--warm);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .home-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 100;
+      background: var(--blue-dark); color: white; text-decoration: none;
+      font-size: 0.85em; font-weight: 600; padding: 10px 18px; border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(39,64,184,0.35); transition: transform 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .home-btn:hover { transform: translateY(-2px); }
+
+    .lang-toggle { position: fixed; top: 16px; right: 16px; z-index: 100; display: flex; gap: 6px; }
+    .lang-btn {
+      padding: 8px 16px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(27,42,120,0.6); color: rgba(255,255,255,0.75); font-size: 0.8em;
+      font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(6px);
+    }
+    .lang-btn.active { background: #f4c430; border-color: #f4c430; color: #1a1a2e; }
+
+    .hero {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 50%, #4a6cf7 100%);
+      min-height: 55vh; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 90px 24px 60px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(74,108,247,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 70%, rgba(244,129,63,0.18) 0%, transparent 60%);
+    }
+    .hero-dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 30px 30px; }
+    .hero-inner { position: relative; z-index: 2; max-width: 720px; }
+    .hero-tag {
+      display: inline-block; background: rgba(74,108,247,0.3); border: 1px solid rgba(255,255,255,0.4);
+      color: #c7d2fe; font-size: 0.8em; letter-spacing: 2px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 16px;
+    }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8em, 5vw, 3em); font-weight: 900; color: white; line-height: 1.25; margin-bottom: 20px; }
+    .hero h1 span { color: #fbbf6e; }
+    .hero-sub { color: rgba(255,255,255,0.85); font-size: 1.05em; font-style: italic; max-width: 560px; margin: 0 auto 28px; }
+    .hero-meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+    .hero-meta span { color: rgba(255,255,255,0.75); font-size: 0.85em; }
+
+    .share-btn {
+      display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px;
+      cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; transition: background .2s;
+    }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast {
+      display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem;
+      z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+    }
+
+    .article-wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .lead {
+      background: white; border-radius: 16px; padding: 32px 36px; margin: -30px auto 40px;
+      position: relative; box-shadow: 0 8px 30px rgba(0,0,0,0.10); border-left: 5px solid var(--blue);
+      font-size: 1.1em; font-style: italic; color: var(--blue-deep); line-height: 1.9;
+    }
+
+    .section { margin-bottom: 44px; }
+    .section h2 {
+      font-family: 'Playfair Display', serif; font-size: 1.6em; color: var(--ink);
+      margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--blue-light);
+    }
+    .section p { margin-bottom: 16px; }
+
+    .pull-quote {
+      border-left: 4px solid var(--accent); padding: 16px 24px; margin: 32px 0;
+      font-family: 'Playfair Display', serif; font-size: 1.2em; font-style: italic;
+      color: var(--ink); background: #fff7f0; border-radius: 0 10px 10px 0;
+    }
+
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .compare-box { padding: 22px 20px; border-radius: 14px; border: 2px solid var(--blue-light); background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+    .compare-box.code { border-color: var(--blue); background: #f0f4ff; }
+    .compare-box.chat { border-color: var(--accent); background: #fff7f0; }
+    .compare-box h3 { font-family: 'Playfair Display', serif; font-size: 1.05em; margin-bottom: 10px; }
+    .compare-box.code h3 { color: var(--blue-dark); }
+    .compare-box.chat h3 { color: #c0622a; }
+    .compare-box p { font-size: 0.92em; color: #444; margin-bottom: 0; }
+    @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+
+    .session-list { list-style: none; padding: 0; margin: 20px 0; counter-reset: session; }
+    .session-list li {
+      counter-increment: session; padding: 16px 18px 16px 58px; position: relative; margin-bottom: 12px;
+      background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--blue);
+    }
+    .session-list li::before {
+      content: counter(session); position: absolute; left: 14px; top: 18px; width: 30px; height: 30px;
+      background: var(--blue); color: white; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 0.85em;
+    }
+    .session-list li strong { color: var(--blue-dark); }
+    .session-list li .tag {
+      display: inline-block; font-size: 0.72em; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+    }
+
+    .checklist { list-style: none; padding: 0; margin: 20px 0; }
+    .checklist li {
+      padding: 12px 16px 12px 44px; position: relative; margin-bottom: 10px; background: #f0fdf4;
+      border: 1.5px solid #86efac; border-radius: 10px; font-size: 0.95em; color: #14532d;
+    }
+    .checklist li::before { content: '\2713'; position: absolute; left: 16px; top: 11px; color: #16a34a; font-weight: 700; }
+
+    .pages-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .page-card {
+      background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--blue); text-decoration: none; color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s; display: block;
+    }
+    .page-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .page-card .icon { font-size: 1.4em; margin-bottom: 6px; }
+    .page-card strong { display: block; color: var(--blue-dark); font-size: 0.95em; margin-bottom: 4px; }
+    .page-card span { font-size: 0.8em; color: var(--muted); }
+
+    .gauge-demo { display: flex; justify-content: center; margin: 24px 0; }
+    .gauge-demo svg { width: 100%; max-width: 320px; height: auto; }
+    .gauge-legend-mini { display: flex; justify-content: center; gap: 18px; font-size: 0.82em; color: var(--muted); margin-top: 4px; flex-wrap: wrap; }
+    .gauge-legend-mini span { display: flex; align-items: center; gap: 5px; }
+    .gauge-legend-mini i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+
+    .closing {
+      background: linear-gradient(135deg, #1b2a78 0%, #2740b8 100%); color: white; border-radius: 16px;
+      padding: 36px; margin-top: 48px; text-align: center;
+    }
+    .closing h2 { font-family: 'Playfair Display', serif; font-size: 1.5em; margin-bottom: 14px; color: #fbbf6e; }
+    .closing p { color: rgba(255,255,255,0.88); line-height: 1.8; margin-bottom: 10px; }
+    .closing p:last-child { margin: 0; }
+
+    .divider { text-align: center; margin: 36px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 12px; }
+
+    footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.85em; border-top: 1px solid #e5e7eb; }
+
+    .en { display: block; }
+    .zh { display: none; }
+    span.en { display: inline; }
+    span.zh { display: none; }
+    body.lang-zh .en { display: none; }
+    body.lang-zh .zh { display: block; }
+    body.lang-zh span.en { display: none; }
+    body.lang-zh span.zh { display: inline; }
+
+    @media (max-width: 600px) {
+      .lead { padding: 22px 20px; }
+      .pages-row { grid-template-columns: 1fr; }
+      .hero-meta { gap: 12px; }
+    }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+</style>
+</head>
+<body>
+
+  <a target="_blank" class="home-btn" href="https://paulsworld.vercel.app/">&#127968; Home</a>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">&#127468;&#127463; English</button>
+    <button class="lang-btn" onclick="setLang('zh')">&#127464;&#127475; &#20013;&#25991;</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-dots"></div>
+    <div class="hero-inner">
+      <div class="hero-tag">&#129302; My AI Journey &middot; Article 27</div>
+      <div class="breadcrumb">
+        <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+        <span class="sep">›</span>
+        <a href="/index.html#ai" target="_blank"><span class="en">My AI Journey</span><span class="zh">我的AI之旅</span></a>
+        <span class="sep">›</span>
+        <span class="current"><span class="en">AI224</span><span class="zh">AI224</span></span>
+      </div>
+      <h1 class="en">AI224: One Token Budget, One Gauge Chart &mdash; <span>Watching My Iron Condors Turn Red</span></h1>
+      <h1 class="zh">AI224&#65306;&#19968;&#31572;token&#65292;&#19968;&#20010;&#20202;&#34920;&#30424;&mdash;&mdash;<span>&#30475;&#30528;&#25105;&#30340;&#38081;&#40497;&#31574;&#30053;&#21464;&#32418;</span></h1>
+      <p class="hero-sub en">I didn't ask for a chart. I asked for a way to know when to close a trade. One AI session, one set of tokens, and my Iron Condor cushions turned from a wall of percentages into a needle I can read in half a second — green, orange, or red.</p>
+      <p class="hero-sub zh">我要的从来不是一张图表，而是一个能让我知道&#8220;该平仓了&#8221;的方法。一次AI对话，一笔token预算，我的铁鹰策略安全垫从一整排百分比数字，变成了一根我半秒钟就能看懂的指针&mdash;&mdash;绿色、橙色，或红色。</p>
+      <div class="hero-meta">
+        <span>&#9999;&#65039; Paul Yeo</span>
+        <span>&#128197; 3 Aug 2026</span>
+        <span>&#9200; 4 min read</span>
+      </div>
+      <button class="share-btn" onclick="shareThisPage()">&#128279; Share</button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">&#9989; Link copied!</div>
+
+  <div class="article-wrap">
+
+    <div class="lead">
+      <span class="en">Every Iron Condor I run lives or dies on one question: how close is the share price to the strike I sold? I already had that number on a table — Put Cushion, Call Cushion, both as percentages. What I didn't have was a way to feel the danger at a glance, the way a car's fuel gauge tells you to find a petrol station before you read the actual litres left. So I asked for a gauge chart. One session. One set of tokens. By the end of it, "cushion turning red" wasn't a number I had to calculate — it was a colour I could see.</span>
+      <span class="zh">我做的每一笔铁鹰策略，成败都取决于同一个问题：股价离我卖出的履约价还有多近？这个数字我原本就有一张表格可以查&mdash;&mdash;Put Cushion（认沽安全垫）、Call Cushion（认购安全垫），都用百分比表示。我缺的是一种能&#8220;一眼感受到危险&#8221;的方式&mdash;&mdash;就像汽车油表提醒你该去加油了，而不是要你自己读出还剩多少公升。于是我要了一个仪表盘图表。一次对话，一笔token预算。到最后，&#8220;安全垫变红&#8221;不再是一个我得自己算出来的数字&mdash;&mdash;而是我一眼就能看到的颜色。</span>
+    </div>
+
+    <div class="section">
+      <h2><span class="en">&#128202; The Problem With a Table Full of Percentages</span><span class="zh">&#128202; 一整排百分比数字的问题</span></h2>
+      <p class="en">My Cushion tab already told me the truth: "+5.6%", "+1.6%", "-2.3%". Everything I needed was right there. But a table doesn't grab you. When I'm checking my phone between meetings, I don't want to read eight rows of numbers and mentally sort them into "fine" and "close this now" — I want the one that's in trouble to jump out at me before I've even finished scrolling.</p>
+      <p class="zh">我的「缓冲」页签本来就诚实地告诉我一切：&#8220;+5.6%&#8221;、&#8220;+1.6%&#8221;、&#8220;-2.3%&#8221;。我需要的信息全都在那里。但表格不会主动抓住你的注意力。当我在开会间隙看手机时，我不想读八行数字，还得在脑子里自己分类哪些&#8220;没事&#8221;、哪些&#8220;该马上平仓&#8221;&mdash;&mdash;我要的是，那个出问题的仓位，在我还没滑完屏幕之前，就自己跳出来。</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#127919; What One Session Actually Built</span><span class="zh">&#127919; 一次对话，到底做出了什么</span></h2>
+      <div class="gauge-demo">
+        <svg viewBox="0 0 340 210" aria-label="Gauge chart example">
+          <path d="M 25 180 A 145 145 0 0 1 90.87 61.87" fill="none" stroke="#f85149" stroke-width="33" stroke-opacity="0.85"/>
+          <path d="M 90.87 61.87 A 145 145 0 0 1 141.5 27.9" fill="none" stroke="#f59e0b" stroke-width="33" stroke-opacity="0.85"/>
+          <path d="M 141.5 27.9 A 145 145 0 0 1 198.5 27.9" fill="none" stroke="#3fb950" stroke-width="33" stroke-opacity="0.85"/>
+          <path d="M 198.5 27.9 A 145 145 0 0 1 249.13 61.87" fill="none" stroke="#f59e0b" stroke-width="33" stroke-opacity="0.85"/>
+          <path d="M 249.13 61.87 A 145 145 0 0 1 315 180" fill="none" stroke="#f85149" stroke-width="33" stroke-opacity="0.85"/>
+          <line x1="170" y1="180" x2="205" y2="55" stroke="#f5c869" stroke-width="4"/>
+          <circle cx="170" cy="180" r="9" fill="#161b22" stroke="#f5c869" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="gauge-legend-mini">
+        <span><i style="background:#3fb950"></i><span class="en">Safe — hold</span><span class="zh">安全&mdash;&mdash;继续持有</span></span>
+        <span><i style="background:#f59e0b"></i><span class="en">Watch it</span><span class="zh">留意观察</span></span>
+        <span><i style="background:#f85149"></i><span class="en">Close it</span><span class="zh">该平仓了</span></span>
+      </div>
+      <p class="en">This is what came out of one continuous session on Paul's World's options dashboard (T29): a semicircle speedometer, one per Iron Condor, with the needle showing exactly where the live share price sits between my strikes. Green is the profit zone. Orange is the warning band. Red means the price has broken through — time to close or roll.</p>
+      <p class="zh">这就是在Paul's World期权仪表板（T29）上，一次连续对话做出来的成果：一个半圆形速度表，每个铁鹰策略一个，指针精确显示现价落在我的行权价之间的哪个位置。绿色是盈利区，橙色是警戒区，红色代表股价已经突破&mdash;&mdash;该平仓或展期了。</p>
+      <p class="en">It didn't stop at the chart. Inside the same token budget, the gauge grew a live needle-tip price label, the exact same Put/Call Cushion badges from my table (so the colour and the number always agree), the formula spelled out with real numbers plugged in so I can check the maths, a "Hide Label" mode that shrinks nine positions down to one screen, a 3x3 layout for when I turn my phone sideways, and a Share button that drops anyone straight onto this tab.</p>
+      <p class="zh">而且不只是做出一张图表。在同一笔token预算内，仪表盘还长出了指针尖端的即时价格标签、和表格里一模一样的认沽/认购安全垫徽章（确保颜色和数字永远一致）、把真实数字代入后的完整公式（方便我自己核对算法）、一个能把九个持仓缩到一屏显示的&#8220;隐藏标签&#8221;模式、手机横放时自动切换的3x3排列，还有一个能让任何人直接跳到这个页面的分享按钮。</p>
+      <div class="pull-quote">
+        <span class="en">I never once asked for a "chart." I asked "how do I know when to close this?" — and a needle that turns red was AI's answer.</span>
+        <span class="zh">我从来没要求过&#8220;图表&#8221;。我问的是&#8220;我怎么知道该平仓了？&#8221;&mdash;&mdash;而一根会变红的指针，就是AI给出的答案。</span>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128172; One Session, Built by Just Talking</span><span class="zh">&#128172; 一次对话，靠聊天就做出来了</span></h2>
+      <div class="compare">
+        <div class="compare-box chat">
+          <h3><span class="en">&#128221; What I Actually Typed</span><span class="zh">&#128221; 我实际上打的字</span></h3>
+          <p class="en">"Convert this to a gauge chart." Then, one screenshot with a circle at a time: "add the cushion icon here," "make the number positive," "let me hide the labels," "fit 9 on one screen." No code, no design brief — just what I wanted to see next.</p>
+          <p class="zh">&#8220;把这个转换成仪表盘图表。&#8221;然后，每次拍一张截图并圈出一个地方：&#8220;这里加个安全垫图标&#8221;、&#8220;把数字改成正数&#8221;、&#8220;让我能隐藏标签&#8221;、&#8220;9个都塞进一屏&#8221;。没有写代码，没有设计说明书&mdash;&mdash;只是我接下来想看到什么。</p>
+        </div>
+        <div class="compare-box code">
+          <h3><span class="en">&#129302; What Came Back Each Time</span><span class="zh">&#129302; 每一次AI回应了什么</span></h3>
+          <p class="en">A working change, tested in a headless browser with a real screenshot before it ever reached me, then pushed live automatically. I never opened an editor. I just looked at the next screenshot and said what still needed fixing.</p>
+          <p class="zh">一次真正可用的修改，在发给我之前先用无头浏览器测试并截图确认，然后自动推送上线。我从头到尾没打开过任何编辑器。我只是看着下一张截图，说出还有什么需要修正。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128269; The Round Trip, Screenshot by Screenshot</span><span class="zh">&#128269; 一轮一轮的截图往返</span></h2>
+      <ul class="session-list">
+        <li>
+          <div class="tag"><span class="en">Round 1</span><span class="zh">第一轮</span></div>
+          <span class="en"><strong>The base gauge.</strong> I pointed at a stock gauge-chart template and asked for the same idea using my real Iron Condor strikes. It appeared as a new tab on T29, needle and all, using the exact numbers already sitting in my data.</span>
+          <span class="zh"><strong>基础仪表盘。</strong>我指着一张股票仪表盘图表模板，要求用我真实的铁鹰行权价做出同样的效果。它出现在T29的新页签里，指针一应俱全，用的都是我数据里原本就有的真实数字。</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Round 2</span><span class="zh">第二轮</span></div>
+          <span class="en"><strong>Making it trustworthy.</strong> A circle on a screenshot said "put the cushion badge here." Another said "show the real formula, not just letters." By the end, every colour on the gauge could be traced back to a number I could check myself.</span>
+          <span class="zh"><strong>让它值得信任。</strong>截图上圈一下就说&#8220;把安全垫徽章放这里&#8221;。再圈一下说&#8220;显示真实公式，别只给字母&#8221;。到最后，仪表盘上的每一种颜色，我都能自己往回追溯到一个可以核对的数字。</span>
+        </li>
+        <li>
+          <div class="tag"><span class="en">Round 3</span><span class="zh">第三轮</span></div>
+          <span class="en"><strong>Making it usable on my phone.</strong> Nine gauges was too much scrolling. "Hide Label," a 2-column layout, and an automatic 3x3 grid when I turn my phone sideways — each one just a sentence, no design meeting required.</span>
+          <span class="zh"><strong>让手机上也好用。</strong>九个仪表盘要滑太久了。&#8220;隐藏标签&#8221;、双栏排列，还有手机横放时自动切换的3x3网格&mdash;&mdash;每一个都只是一句话，不需要开设计会议。</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Why This Matters to Me</span><span class="zh">&#9989; 这对我来说为什么重要</span></h2>
+      <p class="en">I'm 70, retired, and I trade Iron Condors for income — not excitement. The whole point of the strategy is that I collect a small, steady credit and I'm not supposed to be glued to the screen. But that only works if I can trust a five-second glance to tell me the truth. A percentage in a table asks me to do arithmetic under pressure. A red gauge just tells me.</p>
+      <p class="zh">我70岁了，退休了，做铁鹰策略是为了赚取稳定收入&mdash;&mdash;不是为了刺激。这个策略的核心，就是我收取一笔小额、稳定的权利金，而不该一直盯着屏幕。但这只有在我能信任&#8220;看五秒就知道真相&#8221;的时候才成立。表格里的百分比，是要求我在有压力的时候做算术。而一个变红的仪表盘，只是直接告诉我。</p>
+      <p class="en">And it all came out of one session, one token budget — not a multi-day build, not a developer I had to brief and wait for. That's the part that still doesn't feel normal to me, even after all these articles.</p>
+      <p class="zh">而这一切都来自一次对话、一笔token预算&mdash;&mdash;不是花几天做出来的项目，也不需要找工程师说明需求再等待。这一点，即便写了这么多篇文章，我到现在还是觉得不太真实。</p>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#9989; Next Steps</span><span class="zh">&#9989; 下一步</span></h2>
+      <ul class="checklist">
+        <li class="en">Check the Gauge tab before every close-or-hold decision — red means it's time to act, not think</li>
+        <li class="zh">每次决定要平仓还是继续持有前，先看仪表盘页签&mdash;&mdash;变红代表该行动，不是该再想一想</li>
+        <li class="en">Keep describing the next problem in plain words, one screenshot and one circle at a time</li>
+        <li class="zh">继续用大白话描述下一个问题，一次一张截图、一次圈一个地方</li>
+      </ul>
+    </div>
+
+    <div class="divider">&middot; &middot; &middot;</div>
+
+    <div class="section">
+      <h2><span class="en">&#128218; Related Reading</span><span class="zh">&#128218; 相关文章</span></h2>
+      <div class="pages-row">
+        <a class="page-card" href="https://paulsworld.vercel.app/AI205.html">
+          <div class="icon">&#128202;</div>
+          <strong><span class="en">AI205: Building My Options Trading Dashboard</span><span class="zh">AI205&#65306;&#25105;&#22914;&#20309;&#29992;AI&#25645;&#24314;&#26399;&#26435;&#20132;&#26131;&#20202;&#34920;&#26495;</span></strong>
+          <span class="en">Where the whole T29 dashboard this gauge lives on began</span>
+          <span class="zh">这个仪表盘所在的T29仪表板是怎么开始的</span>
+        </a>
+        <a class="page-card" href="https://paulsworld.vercel.app/AI223.html">
+          <div class="icon">&#129302;</div>
+          <strong><span class="en">AI223: From Charts to Conversations</span><span class="zh">AI223&#65306;&#20174;&#22270;&#34920;&#21040;&#23545;&#35805;</span></strong>
+          <span class="en">Why I stopped building charts and started asking questions</span>
+          <span class="zh">为什么我不再自己做图表，而是开始直接提问</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="closing">
+      <h2><span class="en">One Colour Tells Me What a Table Couldn't</span><span class="zh">一种颜色，说出了表格说不出的话</span></h2>
+      <p class="en">The numbers were always right there. What I was missing was a way to feel them without reading them. One session, one set of tokens, and now my Iron Condor cushions don't just report a percentage — they tell me, in red, orange, or green, exactly what to do next.</p>
+      <p class="zh">数字其实一直都在那里。我缺的，是一种不用逐字读就能感受到它们的方式。一次对话，一笔token预算，现在我的铁鹰安全垫不再只是回报一个百分比&mdash;&mdash;它用红、橙、绿，直接告诉我接下来该做什么。</p>
+      <p style="margin-top:16px; font-style:italic; opacity:0.8;">&mdash; Paul Yeo, August 2026 &#127775;</p>
+    </div>
+
+    <div style="text-align:center; margin:48px 0 20px;">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/" style="color:#4a6cf7;">Paul's World</a>
+  </footer>
+
+  <script>
+    function setLang(lang) {
+      document.body.className = lang === 'zh' ? 'lang-zh' : '';
+      document.querySelectorAll('.lang-btn').forEach(function(btn, i) {
+        btn.classList.toggle('active', (lang === 'en' && i === 0) || (lang === 'zh' && i === 1));
+      });
+    }
+    function shareThisPage() {
+      var url = window.location.href;
+      var title = document.title;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function() { t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
