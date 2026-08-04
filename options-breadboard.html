@@ -4294,8 +4294,8 @@
       </table>
       </div>
       <div class="note" style="margin-top:8px">
-        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY, IWM, and XLE — same 7 condors as the IC Setup tab. XLE is tagged <b>⏳ Pending</b> since it hasn't filled yet.</span>
-        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO），以及SPY、IWM、XLE——与「铁鹰设置」页签相同的7个铁鹰。XLE因尚未成交标记为<b>⏳ 待成交</b>。</span>
+        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY, IWM, and XLE — the same 7 condors as the IC Setup tab — plus <b>NVDA (Sep18)</b>, a second, staged NVDA condor (Sep18'26 185/220) tracked only here since it's still just an order preview and not yet added to the IC Setup tab. XLE and NVDA (Sep18) are both tagged <b>⏳ Pending</b> since neither has filled yet.</span>
+        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO），以及SPY、IWM、XLE——与「铁鹰设置」页签相同的7个铁鹰——再加上<b>NVDA (Sep18)</b>，第二个仍处于订单预览阶段、尚未加入「铁鹰设置」页签的NVDA铁鹰（Sep18'26 185/220）。XLE与NVDA (Sep18)均因尚未成交标记为<b>⏳ 待成交</b>。</span>
       </div>
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
       <button id="varColToggleBtn" onclick="toggleVarCols()" style="margin-top:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f5c869;font-size:.72rem;font-weight:700;padding:6px 12px;border-radius:16px;cursor:pointer">👁️ <span class="en">Hide Put Variance / Call Variance columns</span><span class="zh">隐藏认沽差幅/认购差幅列</span></button>
@@ -5447,9 +5447,22 @@ var CALL_ONLY_CFG = { FDS: {shortC:300, avgCost:343.24, lo:280, hi:355} };
 // lo/hi/breakeven are only used by the Gauge tab (buildPutOnlyGauge) — breakeven = strike −
 // premium received ($305 − $4.43 = $300.57, per the 29 Jul 2026 22:48:30 SGT fill).
 var PUT_ONLY_CFG = { GOOGL: {shortP:305, lo:270, hi:400, breakeven:300.57} };
+// Table 10 (Gap tab) only — condors that aren't full T6 positions (no rail/gauge card
+// elsewhere on the page), so they live in their own map instead of RAIL_CFG. Deliberately
+// NOT added to RAIL_CFG: RAIL_CFG's keys are iterated by drawRail() at page load expecting
+// a matching #rail-<sym> element on the Cushion tab, which these don't have — adding a key
+// here without one would crash that loop. quoteSym maps to the real ticker for live price
+// lookups (getLivePrice) since these staged/second positions share the same underlying stock
+// as an existing symbol; label is the display text used in Table 10 instead of the raw key.
+// NVDA2 — a second NVDA Iron Condor (Sep18'26 185/220, $5 wings), staged 4 Aug 2026, not yet
+// filled ("Slide to Buy" not yet tapped) — separate from the existing Aug21'26 195/230 NVDA
+// condor in RAIL_CFG (already closed). Breakevens 182.59/222.41 are real, from the order ticket.
+var GAP_TABLE10_EXTRA = {
+  NVDA2: { shortP:185, shortC:220, beLo:182.59, beHi:222.41, quoteSym:'NVDA', label:'NVDA (Sep18)' }
+};
 // Combined lookup for any T6 position, across all three shapes (4-leg condor,
 // call-only, put-only) — used everywhere T6 previously did `RAIL_CFG[sym] || CALL_ONLY_CFG[sym]`.
-function cfgFor(sym){ return RAIL_CFG[sym] || CALL_ONLY_CFG[sym] || PUT_ONLY_CFG[sym]; }
+function cfgFor(sym){ return RAIL_CFG[sym] || CALL_ONLY_CFG[sym] || PUT_ONLY_CFG[sym] || GAP_TABLE10_EXTRA[sym]; }
 Object.keys(PUT_ONLY_CFG).forEach(function(sym){ buildPutOnlyGauge(sym, PUT_ONLY_CFG[sym]); });
 renderCushionFilterRow();
 
@@ -6124,14 +6137,15 @@ function sortedByPutCushion(){
 // 23 Jul 2026; SMH closed 29 Jul 2026, real fills, −$76.19; NVDA confirmed fully closed
 // 30 Jul 2026 — see PNL_AMT note below on why its P&L Amt still shows the put-combo-only
 // figure). Anything not listed here defaults to 'open'. Update this when a position closes.
-var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', XLE:'pending', FDS:'open', GOOGL:'open' };
+var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', XLE:'pending', NVDA2:'pending', FDS:'open', GOOGL:'open' };
 // Paul's 4 flagship IC trades (circled on the T6 screenshot 2026-07-31) — QQQ, NVDA, SMH, AVGO.
 var BANG_4_SYMS = ['QQQ','NVDA','SMH','AVGO'];
-// Table 10 (Gap tab) only — the 4 flagship Bang symbols plus SPY, IWM, and XLE (the
-// pending one, tracked as a preview/pending row) — every IC Setup tab condor. Table
-// 7/8/900 keep BANG_4_SYMS as-is; don't fold these into that shared set since those
+// Table 10 (Gap tab) only — the 4 flagship Bang symbols plus SPY, IWM, and XLE (every IC
+// Setup tab condor), plus NVDA2 (a second, staged NVDA condor — see GAP_TABLE10_EXTRA —
+// tracked here only, not on the IC Setup tab, since it's just an order preview so far).
+// Table 7/8/900 keep BANG_4_SYMS as-is; don't fold these into that shared set since those
 // tables are scoped strictly to the 4 flagship trades.
-var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['SPY','IWM','XLE']);
+var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['SPY','IWM','XLE','NVDA2']);
 // T6's Open/Closed filter state: 'all' | 'open' | 'closed' | 'bang'. Shared by both places
 // T6 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'open';
@@ -6552,6 +6566,13 @@ function joinWithAmp(arr){
   if(arr.length===1) return arr[0];
   return arr.slice(0,-1).join(', ') + ' & ' + arr[arr.length-1];
 }
+// Display label for a Table 10 row — GAP_TABLE10_EXTRA's label (e.g. "NVDA (Sep18)" for
+// NVDA2) if set, otherwise the raw symbol key. Keeps the ticker-lookup key (used for
+// getLivePrice/POSITION_STATUS/statusTag) separate from what's shown on screen.
+function gapTable10Label(sym){
+  var extra = GAP_TABLE10_EXTRA[sym];
+  return (extra && extra.label) || sym;
+}
 // Table 10's subtitle, generated from GAP_TABLE10_SYMS/BANG_4_SYMS/POSITION_STATUS instead
 // of hardcoded prose — so it can never go stale again the way it did on 2026-08-04 (added
 // SPY/IWM/XLE to the table's data but left an old "All 4 flagship..." subtitle in place).
@@ -6564,8 +6585,8 @@ function renderGapTable10Meta(){
   var bangEn = BANG_4_SYMS.join(', '), bangZh = BANG_4_SYMS.join('、');
   var enHtml, zhHtml;
   if(extras.length){
-    enHtml = BANG_4_SYMS.length+' flagship Bang Iron Condors ('+bangEn+') plus '+joinWithAmp(extras.map(function(s){ return s+pendingTagEn(s); }));
-    zhHtml = BANG_4_SYMS.length+'个旗舰Bang铁鹰（'+bangZh+'）以及'+extras.map(function(s){ return s+pendingTagZh(s); }).join('、');
+    enHtml = BANG_4_SYMS.length+' flagship Bang Iron Condors ('+bangEn+') plus '+joinWithAmp(extras.map(function(s){ return gapTable10Label(s)+pendingTagEn(s); }));
+    zhHtml = BANG_4_SYMS.length+'个旗舰Bang铁鹰（'+bangZh+'）以及'+extras.map(function(s){ return gapTable10Label(s)+pendingTagZh(s); }).join('、');
   } else {
     enHtml = 'All '+BANG_4_SYMS.length+' flagship Bang Iron Condors — '+bangEn;
     zhHtml = '全部'+BANG_4_SYMS.length+'个旗舰Bang铁鹰——'+bangZh;
@@ -6581,7 +6602,9 @@ function renderNvdaGapVarTable(){
   var vRows = [], hRows = [];
   GAP_TABLE10_SYMS.forEach(function(sym){
     var cfg = cfgFor(sym);
-    var price = getLivePrice(sym);
+    var extra = GAP_TABLE10_EXTRA[sym];
+    var price = getLivePrice(extra ? extra.quoteSym : sym);
+    var dispSym = gapTable10Label(sym);
     var spreadPct = (cfg.shortC - cfg.shortP) / cfg.shortP * 100;
     var spreadTxt = '<span style="font-size:1.1rem;font-weight:800">+'+spreadPct.toFixed(1)+'%</span>';
     if(price===null){
@@ -6596,7 +6619,7 @@ function renderNvdaGapVarTable(){
     }
     var symTag = statusTag(sym);
     var rows = [
-      '<tr><td rowspan="'+rowspan+'"><b>'+sym+'</b>'+symTag+'</td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'
+      '<tr><td rowspan="'+rowspan+'"><b>'+dispSym+'</b>'+symTag+'</td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'
     ];
     if(!hideSvc) rows.push('<tr><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+priceTxt+'</td></tr>');
     rows.push('<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>');
@@ -6606,7 +6629,7 @@ function renderNvdaGapVarTable(){
     }
     rows.push('<tr><td><span class="en">B/C Spread <small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差 <small style="opacity:.6;font-weight:400">(C−B)/B</small></span></td><td class="num">'+spreadTxt+'</td></tr>');
     vRows.push(rows.join(''));
-    hRows.push('<tr><td><b>'+sym+'</b>'+symTag+'</td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num hcol-var">'+putBadgeL+'</td><td class="num hcol-var">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
+    hRows.push('<tr><td><b>'+dispSym+'</b>'+symTag+'</td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num hcol-var">'+putBadgeL+'</td><td class="num hcol-var">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
   });
   if(body) body.innerHTML = vRows.join('');
   if(bodyH) bodyH.innerHTML = hRows.join('');
