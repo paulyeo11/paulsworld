@@ -370,6 +370,7 @@
   <button class="tab-btn" onclick="switchTab('walk')">🚶 Walk</button>
   <button class="tab-btn" onclick="switchTab('ticket')">✈️ Air Ticket</button>
   <button class="tab-btn" onclick="switchTab('rental')">🚗 Car Rental</button>
+  <button class="tab-btn" onclick="switchTab('money')">💰 Money</button>
 </div>
 
 <div class="legend-bar" id="legend-bar">
@@ -1837,7 +1838,7 @@ renderBudget();
 // ── TAB SWITCH ───────────────────────────────────────────────────
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-  const tabs = ['map','stops','itin','mustsee','tips','budget','tasks','walk','ticket','rental'];
+  const tabs = ['map','stops','itin','mustsee','tips','budget','tasks','walk','ticket','rental','money'];
     b.classList.toggle('active', tabs[i] === tab);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -2494,6 +2495,63 @@ renderTasks();
 <div id="rental-lightbox" onclick="closeRentalLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;align-items:center;justify-content:center;padding:20px;">
   <img id="rental-lightbox-img" src="" style="max-width:100%;max-height:100%;border-radius:8px;">
   <div style="position:absolute;top:16px;right:20px;color:#fff;font-size:1.8em;cursor:pointer;">✕</div>
+</div>`;
+
+  document.currentScript.insertAdjacentHTML('afterend', html);
+})();
+
+// ── MONEY PANEL (injected) ───────────────────────────────────────
+(function(){
+  var html = `
+<div id="panel-money" class="panel">
+  <div style="background:#0d1117;overflow-y:auto;flex:1;padding:16px 16px 32px;">
+
+    <div style="max-width:480px;margin:0 auto;">
+
+      <!-- Total transferred summary -->
+      <div style="background:linear-gradient(135deg,#1a2a1a,#112211);border:1px solid rgba(26,188,156,0.35);border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:0.75em;color:#8b949e;margin-bottom:2px;"><span class="en">Total Transferred to China</span><span class="zh" style="display:none">已汇至中国总额</span></div>
+          <div style="font-size:1.55em;font-weight:900;color:#fff;">¥1,190 <span style="font-size:0.55em;color:#8b949e;font-weight:600;">(~S$220)</span></div>
+        </div>
+        <div style="background:#1abc9c;color:#0d1117;font-size:0.8em;font-weight:800;padding:5px 13px;border-radius:20px;white-space:nowrap;">✅ <span class="en">Paid</span><span class="zh" style="display:none">已付</span></div>
+      </div>
+
+      <!-- Transfer log -->
+      <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:0.9em;font-weight:800;color:#fff;margin-bottom:12px;"><span class="en">💸 Transfer Log</span><span class="zh" style="display:none">💸 汇款记录</span></div>
+
+        <div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+            <div>
+              <div style="color:#fff;font-weight:800;font-size:0.95em;"><span class="en">Car Rental Down Payment</span><span class="zh" style="display:none">租车定金</span></div>
+              <div style="color:#8b949e;font-size:0.78em;margin-top:2px;"><span class="en">Tue 4 Aug 2026</span><span class="zh" style="display:none">2026年8月4日 周二</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:#f0a500;font-weight:900;font-size:1.1em;">¥1,190</div>
+              <div style="color:#8b949e;font-size:0.72em;">(~S$220)</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.82em;border-top:1px dashed rgba(255,255,255,0.1);padding-top:8px;">
+            <span style="color:#8b949e;"><span class="en">By</span><span class="zh" style="display:none">付款人</span></span>
+            <span style="color:#e6edf3;">Paul</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.82em;margin-top:4px;">
+            <span style="color:#8b949e;"><span class="en">For</span><span class="zh" style="display:none">用途</span></span>
+            <span style="color:#e6edf3;"><span class="en">🚗 North Xinjiang charter car — down payment</span><span class="zh" style="display:none">🚗 北疆包车 — 定金</span></span>
+          </div>
+        </div>
+
+        <div style="font-size:0.72em;color:#6e7681;margin-top:12px;"><span class="en">SGD amount is approximate, using ~S$1 = ¥5.4 (same rate as the 🚗 Car Rental tab).</span><span class="zh" style="display:none">SGD金额为约数，按约¥5.4 = S$1换算（与🚗租车标签同一汇率）。</span></div>
+      </div>
+
+      <!-- Reconciliation note -->
+      <div style="background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.2);border-radius:8px;padding:9px 13px;font-size:0.8em;color:#f0a500;">
+        ℹ️ <span class="en">The 🚗 Car Rental tab's Cost Breakdown estimates a 10% down payment of ¥819 — this actual transfer (¥1,190) is higher than that estimate. Final settlement happens against the total ¥8,190 rental cost once the contract's blank fields are filled in.</span><span class="zh" style="display:none">ℹ️ 🚗租车标签的费用明细预估10%定金为¥819——本次实际汇款（¥1,190）高于该预估。最终结算将在合同空白项填写完成后，按总租车费¥8,190核对。</span>
+      </div>
+
+    </div>
+  </div>
 </div>`;
 
   document.currentScript.insertAdjacentHTML('afterend', html);
