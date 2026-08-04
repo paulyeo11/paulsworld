@@ -6244,9 +6244,27 @@ var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['SPY','IWM','XLE','NVDA2','META']);
 // T6's Open/Closed filter state: 'all' | 'open' | 'closed' | 'bang'. Shared by both places
 // T6 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'open';
+// Rule 1 (T50: Trading Rules) trigger — Put Variance or Call Variance drops to 0–2%
+// (the ⚡ <1-2% / 🔴 0-1% bands, same CUSHION_THRESHOLDS.veryTight cutoff as cushionBadge()/
+// cushionIcon()). Used by the 'tight' filter option below so All/Open/Closed/Pending/Bang/
+// Tight stay one shared list across Dashboard, Cushion and Gauge tabs.
+function isTightVariance(sym){
+  var cfg = cfgFor(sym); if(!cfg) return false;
+  var price = getLivePrice(sym); if(price===null) return false;
+  if(typeof cfg.shortP === 'number'){
+    var pVpct = (price - cfg.shortP) / price * 100;
+    if(pVpct >= 0 && pVpct < CUSHION_THRESHOLDS.veryTight) return true;
+  }
+  if(typeof cfg.shortC === 'number'){
+    var cVpct = (cfg.shortC - price) / price * 100;
+    if(cVpct >= 0 && cVpct < CUSHION_THRESHOLDS.veryTight) return true;
+  }
+  return false;
+}
 function filterByCushionStatus(syms){
   if(cushionFilter === 'all') return syms;
   if(cushionFilter === 'bang') return syms.filter(function(sym){ return BANG_4_SYMS.indexOf(sym) !== -1; });
+  if(cushionFilter === 'tight') return syms.filter(isTightVariance);
   return syms.filter(function(sym){ return (POSITION_STATUS[sym] || 'open') === cushionFilter; });
 }
 function setCushionFilter(val){
@@ -6262,7 +6280,8 @@ function renderCushionFilterRow(){
     {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
     {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'},
     {v:'pending', en:'⏳ Pending Only', zh:'⏳ 仅待成交'},
-    {v:'bang', en:'💥 Bang', zh:'💥 Bang精选'}
+    {v:'bang', en:'💥 Bang', zh:'💥 Bang精选'},
+    {v:'tight', en:'⚡ Tight 0-2%', zh:'⚡ 紧绷 0-2%'}
   ];
   var html = opts.map(function(o){
     var active = cushionFilter === o.v ? ' active' : '';
@@ -6285,7 +6304,9 @@ function renderGaugeCardFilter(){
       ? true
       : cushionFilter === 'bang'
         ? BANG_4_SYMS.indexOf(sym) !== -1
-        : (POSITION_STATUS[sym] || 'open') === cushionFilter;
+        : cushionFilter === 'tight'
+          ? isTightVariance(sym)
+          : (POSITION_STATUS[sym] || 'open') === cushionFilter;
     card.style.display = show ? '' : 'none';
   });
 }
