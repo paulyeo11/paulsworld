@@ -6202,7 +6202,9 @@ function genericPnlTotalHtml(map, syms){
 function pnlAmtTotalHtml(syms){ return genericPnlTotalHtml(PNL_AMT, syms); }
 // Live price lookup shared by T6 / Premium tab — checks the Iron Condor price feed
 // (STOCKS) first, then falls back to the IBKR Shares price feed (SHARES) for symbols like
-// FDS that are a stock holding/covered call, not one of the 6 tracked Iron Condors.
+// FDS that are a stock holding/covered call, not one of the 6 tracked Iron Condors. Finally
+// falls back to a GAP_TABLE10_EXTRA position's quoteSym (e.g. NVDA2 → NVDA) since a second
+// condor on the same underlying isn't its own tradeable ticker.
 function getLivePrice(sym){
   var s = STOCKS.filter(function(x){ return x.sym===sym; })[0];
   if(s && typeof s.price==='number') return s.price;
@@ -6210,6 +6212,8 @@ function getLivePrice(sym){
   if(h && typeof h.price==='number') return h.price;
   var p = PUT_ONLY_STOCKS.filter(function(x){ return x.sym===sym; })[0];
   if(p && typeof p.price==='number') return p.price;
+  var extra = GAP_TABLE10_EXTRA[sym];
+  if(extra && extra.quoteSym && extra.quoteSym !== sym) return getLivePrice(extra.quoteSym);
   return null;
 }
 // Gauge tab needle + Put Cushion badge for a cash-secured put (e.g. GOOGL) — no Day1 needle
@@ -6249,9 +6253,12 @@ function loadPutOnlyStocks(){
 loadPutOnlyStocks();
 // Sort symbols by Put Cushion, tightest/riskiest first — shared by every table that
 // shows the Share Price vs Selling Put & Call cushion figures (Dashboard quick-glance,
-// Cushion tab full table, Premium tab variance+MTD table) so they stay in sync.
+// Cushion tab full table, Premium tab variance+MTD table) so they stay in sync. NVDA2
+// (the second NVDA condor, filled 4 Aug 2026 — see GAP_TABLE10_EXTRA) is included here too
+// as of 4 Aug 2026 so it shows up in these T6 tables, not just the Gauge/Gap tabs — display
+// label resolves via gapTable10Label(), live price via getLivePrice()'s quoteSym fallback.
 function sortedByPutCushion(){
-  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM'].concat(Object.keys(PUT_ONLY_CFG));
+  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM','NVDA2'].concat(Object.keys(PUT_ONLY_CFG));
   var sorted = syms.slice().sort(function(a,b){
     var cfgA = cfgFor(a), cfgB = cfgFor(b);
     var pA = getLivePrice(a);
@@ -6701,7 +6708,7 @@ function renderPutVarianceTable(){
     var callDeltaTxt = typeof callDelta==='number' ? '+'+callDelta.toFixed(2) : '—';
     var mtd = MTD_PREMIUM[sym];
     var mtdTxt = typeof mtd==='number' ? '+$'+mtd : '—';
-    var symTag = '<b>'+sym+'</b>'+statusTag(sym);
+    var symTag = '<b>'+gapTable10Label(sym)+'</b>'+statusTag(sym);
     var cutLostPutTxt = (hasPut && hasLongPut) ? fmt((cfg.shortP + cfg.longP) / 2) : '—';
     var cutLostCallTxt = (hasCall && hasLongCall) ? fmt((cfg.shortC + cfg.longC) / 2) : '—';
     var cutLostCells = '<td class="num tbl60-extra">'+cutLostPutTxt+'</td><td class="num tbl60-extra">'+cutLostCallTxt+'</td>';
@@ -6940,7 +6947,7 @@ function renderDashCushionTable(){
     var hasPut = typeof cfg.shortP === 'number';
     var hasCall = typeof cfg.shortC === 'number';
     var price = getLivePrice(sym);
-    var symTag = '<b>'+sym+'</b>'+statusTag(sym);
+    var symTag = '<b>'+gapTable10Label(sym)+'</b>'+statusTag(sym);
     if(price===null){
       return '<tr><td>'+symTag+'</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>'+dailyPnlCell(sym)+unrlzdPnlCell(sym)+pnlAmtCell(sym)+'</tr>';
     }
