@@ -4294,8 +4294,8 @@
       </table>
       </div>
       <div class="note" style="margin-top:8px">
-        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY, IWM, and XLE — the same 7 condors as the IC Setup tab — plus <b>NVDA (Sep18)</b>, a second, staged NVDA condor (Sep18'26 185/220) tracked only here since it's still just an order preview and not yet added to the IC Setup tab. XLE and NVDA (Sep18) are both tagged <b>⏳ Pending</b> since neither has filled yet.</span>
-        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO），以及SPY、IWM、XLE——与「铁鹰设置」页签相同的7个铁鹰——再加上<b>NVDA (Sep18)</b>，第二个仍处于订单预览阶段、尚未加入「铁鹰设置」页签的NVDA铁鹰（Sep18'26 185/220）。XLE与NVDA (Sep18)均因尚未成交标记为<b>⏳ 待成交</b>。</span>
+        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. <span id="gapTable10CoverageEn"></span></span>
+        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。<span id="gapTable10CoverageZh"></span></span>
       </div>
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
       <button id="varColToggleBtn" onclick="toggleVarCols()" style="margin-top:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f5c869;font-size:.72rem;font-weight:700;padding:6px 12px;border-radius:16px;cursor:pointer">👁️ <span class="en">Hide Put Variance / Call Variance columns</span><span class="zh">隐藏认沽差幅/认购差幅列</span></button>
@@ -5457,8 +5457,13 @@ var PUT_ONLY_CFG = { GOOGL: {shortP:305, lo:270, hi:400, breakeven:300.57} };
 // NVDA2 — a second NVDA Iron Condor (Sep18'26 185/220, $5 wings), staged 4 Aug 2026, not yet
 // filled ("Slide to Buy" not yet tapped) — separate from the existing Aug21'26 195/230 NVDA
 // condor in RAIL_CFG (already closed). Breakevens 182.59/222.41 are real, from the order ticket.
+// META — Sep18'26 495/505 600/610 Iron Condor ($10 wings), staged 4 Aug 2026, not yet filled.
+// quoteSym is its own ticker (added to PUT_ONLY_STOCKS above purely for a live price feed,
+// no cut-loss band). Breakevens 501.93/603.07 are real, from the order ticket; also logged in
+// Table 900 (P&L Summary) using the same target Max Loss $689 / Max Return $305 figures.
 var GAP_TABLE10_EXTRA = {
-  NVDA2: { shortP:185, shortC:220, beLo:182.59, beHi:222.41, quoteSym:'NVDA', label:'NVDA (Sep18)' }
+  NVDA2: { shortP:185, shortC:220, beLo:182.59, beHi:222.41, quoteSym:'NVDA', label:'NVDA (Sep18)' },
+  META:  { shortP:505, shortC:600, beLo:501.93, beHi:603.07, quoteSym:'META', label:'META' }
 };
 // Combined lookup for any T6 position, across all three shapes (4-leg condor,
 // call-only, put-only) — used everywhere T6 previously did `RAIL_CFG[sym] || CALL_ONLY_CFG[sym]`.
@@ -5773,8 +5778,11 @@ var STOCKS = [
 ];
 // Live price feed for PUT_ONLY_CFG symbols (cash-secured puts, no cut-loss band since there's
 // no 4-leg condor here) — fetched the same way as STOCKS/SHARES, just without a cut-loss row.
+// Also doubles as the live-price source for GAP_TABLE10_EXTRA symbols that aren't a full T6
+// position (e.g. META below) — same reasoning, no cut-loss band needed just for Table 10.
 var PUT_ONLY_STOCKS = [
-  { sym:'GOOGL', name:'Alphabet Inc.' }
+  { sym:'GOOGL', name:'Alphabet Inc.' },
+  { sym:'META', name:'Meta Platforms, Inc.' }
 ];
 function fmt(n){ return '$' + n.toFixed(2); }
 // Share Price (A) display on the Cushion tab, Dashboard quick table, and Premium Rank
@@ -6137,7 +6145,7 @@ function sortedByPutCushion(){
 // 23 Jul 2026; SMH closed 29 Jul 2026, real fills, −$76.19; NVDA confirmed fully closed
 // 30 Jul 2026 — see PNL_AMT note below on why its P&L Amt still shows the put-combo-only
 // figure). Anything not listed here defaults to 'open'. Update this when a position closes.
-var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', XLE:'pending', NVDA2:'pending', FDS:'open', GOOGL:'open' };
+var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', XLE:'pending', NVDA2:'pending', META:'pending', FDS:'open', GOOGL:'open' };
 // Paul's 4 flagship IC trades (circled on the T6 screenshot 2026-07-31) — QQQ, NVDA, SMH, AVGO.
 var BANG_4_SYMS = ['QQQ','NVDA','SMH','AVGO'];
 // Table 10 (Gap tab) only — the 4 flagship Bang symbols plus SPY, IWM, and XLE (every IC
@@ -6145,7 +6153,7 @@ var BANG_4_SYMS = ['QQQ','NVDA','SMH','AVGO'];
 // tracked here only, not on the IC Setup tab, since it's just an order preview so far).
 // Table 7/8/900 keep BANG_4_SYMS as-is; don't fold these into that shared set since those
 // tables are scoped strictly to the 4 flagship trades.
-var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['SPY','IWM','XLE','NVDA2']);
+var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['SPY','IWM','XLE','NVDA2','META']);
 // T6's Open/Closed filter state: 'all' | 'open' | 'closed' | 'bang'. Shared by both places
 // T6 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'open';
@@ -6573,25 +6581,41 @@ function gapTable10Label(sym){
   var extra = GAP_TABLE10_EXTRA[sym];
   return (extra && extra.label) || sym;
 }
-// Table 10's subtitle, generated from GAP_TABLE10_SYMS/BANG_4_SYMS/POSITION_STATUS instead
-// of hardcoded prose — so it can never go stale again the way it did on 2026-08-04 (added
-// SPY/IWM/XLE to the table's data but left an old "All 4 flagship..." subtitle in place).
-// Any future change to those arrays updates this line automatically.
+function gapTable10PendingTagEn(s){ return (POSITION_STATUS[s]||'open')==='pending' ? ' (⏳ Pending)' : ''; }
+function gapTable10PendingTagZh(s){ return (POSITION_STATUS[s]||'open')==='pending' ? '（⏳待成交）' : ''; }
+// Table 10's subtitle AND the longer formula-note coverage sentence, both generated from
+// GAP_TABLE10_SYMS/BANG_4_SYMS/POSITION_STATUS instead of hardcoded prose — so neither can go
+// stale again the way the subtitle did on 2026-08-04 (added SPY/IWM/XLE to the table's data
+// but left an old "All 4 flagship..." subtitle in place), or the note did minutes later (added
+// NVDA2 but left the note's "same 7 condors as the IC Setup tab" claim uncorrected). Any future
+// change to GAP_TABLE10_SYMS/GAP_TABLE10_EXTRA/POSITION_STATUS updates both lines automatically.
 function renderGapTable10Meta(){
-  var el = document.getElementById('gapTable10Meta'); if(!el) return;
   var extras = GAP_TABLE10_SYMS.filter(function(s){ return BANG_4_SYMS.indexOf(s)===-1; });
-  var pendingTagEn = function(s){ return (POSITION_STATUS[s]||'open')==='pending' ? ' (⏳ Pending)' : ''; };
-  var pendingTagZh = function(s){ return (POSITION_STATUS[s]||'open')==='pending' ? '（⏳待成交）' : ''; };
   var bangEn = BANG_4_SYMS.join(', '), bangZh = BANG_4_SYMS.join('、');
-  var enHtml, zhHtml;
-  if(extras.length){
-    enHtml = BANG_4_SYMS.length+' flagship Bang Iron Condors ('+bangEn+') plus '+joinWithAmp(extras.map(function(s){ return gapTable10Label(s)+pendingTagEn(s); }));
-    zhHtml = BANG_4_SYMS.length+'个旗舰Bang铁鹰（'+bangZh+'）以及'+extras.map(function(s){ return gapTable10Label(s)+pendingTagZh(s); }).join('、');
-  } else {
-    enHtml = 'All '+BANG_4_SYMS.length+' flagship Bang Iron Condors — '+bangEn;
-    zhHtml = '全部'+BANG_4_SYMS.length+'个旗舰Bang铁鹰——'+bangZh;
+  var el = document.getElementById('gapTable10Meta');
+  if(el){
+    var enHtml, zhHtml;
+    if(extras.length){
+      enHtml = BANG_4_SYMS.length+' flagship Bang Iron Condors ('+bangEn+') plus '+joinWithAmp(extras.map(function(s){ return gapTable10Label(s)+gapTable10PendingTagEn(s); }));
+      zhHtml = BANG_4_SYMS.length+'个旗舰Bang铁鹰（'+bangZh+'）以及'+extras.map(function(s){ return gapTable10Label(s)+gapTable10PendingTagZh(s); }).join('、');
+    } else {
+      enHtml = 'All '+BANG_4_SYMS.length+' flagship Bang Iron Condors — '+bangEn;
+      zhHtml = '全部'+BANG_4_SYMS.length+'个旗舰Bang铁鹰——'+bangZh;
+    }
+    el.innerHTML = '<span class="en">'+enHtml+'</span><span class="zh">'+zhHtml+'</span>';
   }
-  el.innerHTML = '<span class="en">'+enHtml+'</span><span class="zh">'+zhHtml+'</span>';
+  var covEn = document.getElementById('gapTable10CoverageEn');
+  var covZh = document.getElementById('gapTable10CoverageZh');
+  if(covEn){
+    covEn.textContent = extras.length
+      ? 'Covers the '+BANG_4_SYMS.length+' flagship Bang Iron Condors ('+bangEn+') plus '+joinWithAmp(extras.map(function(s){ return gapTable10Label(s)+gapTable10PendingTagEn(s); }))+'.'
+      : 'Covers all '+BANG_4_SYMS.length+' flagship Bang Iron Condors — '+bangEn+'.';
+  }
+  if(covZh){
+    covZh.textContent = extras.length
+      ? '涵盖'+BANG_4_SYMS.length+'个旗舰Bang铁鹰（'+bangZh+'），以及'+extras.map(function(s){ return gapTable10Label(s)+gapTable10PendingTagZh(s); }).join('、')+'。'
+      : '涵盖全部'+BANG_4_SYMS.length+'个旗舰Bang铁鹰——'+bangZh+'。';
+  }
 }
 function renderNvdaGapVarTable(){
   var body = document.getElementById('nvdaGapVarBody');
