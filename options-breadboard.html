@@ -4294,8 +4294,8 @@
       </table>
       </div>
       <div class="note" style="margin-top:8px">
-        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus XLE, tagged <b>⏳ Pending</b> since it hasn't filled yet.</span>
-        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO）以及XLE，因尚未成交标记为<b>⏳ 待成交</b>。</span>
+        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY, IWM, and XLE — same 7 condors as the IC Setup tab. XLE is tagged <b>⏳ Pending</b> since it hasn't filled yet.</span>
+        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO），以及SPY、IWM、XLE——与「铁鹰设置」页签相同的7个铁鹰。XLE因尚未成交标记为<b>⏳ 待成交</b>。</span>
       </div>
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
       <button id="varColToggleBtn" onclick="toggleVarCols()" style="margin-top:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f5c869;font-size:.72rem;font-weight:700;padding:6px 12px;border-radius:16px;cursor:pointer">👁️ <span class="en">Hide Put Variance / Call Variance columns</span><span class="zh">隐藏认沽差幅/认购差幅列</span></button>
@@ -6127,10 +6127,11 @@ function sortedByPutCushion(){
 var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', XLE:'pending', FDS:'open', GOOGL:'open' };
 // Paul's 4 flagship IC trades (circled on the T6 screenshot 2026-07-31) — QQQ, NVDA, SMH, AVGO.
 var BANG_4_SYMS = ['QQQ','NVDA','SMH','AVGO'];
-// Table 10 (Gap tab) only — the 4 flagship Bang symbols plus XLE (not yet filled, tracked
-// there as a preview/pending row). Table 7/8/900 keep BANG_4_SYMS as-is; don't fold XLE
-// into that shared set since those tables are scoped strictly to the 4 flagship trades.
-var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['XLE']);
+// Table 10 (Gap tab) only — the 4 flagship Bang symbols plus SPY, IWM, and XLE (the
+// pending one, tracked as a preview/pending row) — every IC Setup tab condor. Table
+// 7/8/900 keep BANG_4_SYMS as-is; don't fold these into that shared set since those
+// tables are scoped strictly to the 4 flagship trades.
+var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['SPY','IWM','XLE']);
 // T6's Open/Closed filter state: 'all' | 'open' | 'closed' | 'bang'. Shared by both places
 // T6 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'open';
@@ -6530,10 +6531,11 @@ function renderPutVarianceTable(){
   if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
   setLang(curLang);
 }
-// Table 10 (Bang tab's Gap sub-tab) — Sell Put & Sell Call Variance for the 4
-// flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus XLE (pending fill, tagged with
-// the ⏳ Pending badge from statusTag()) — GAP_TABLE10_SYMS, not the shared BANG_4_SYMS
-// set Table 7/8/900 use, since XLE isn't one of Paul's 4 flagship trades.
+// Table 10 (Bang tab's Gap sub-tab) — Sell Put & Sell Call Variance for all 7 IC
+// Setup tab condors: the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY,
+// IWM, and XLE (pending fill, tagged with the ⏳ Pending badge from statusTag()) —
+// GAP_TABLE10_SYMS, not the shared BANG_4_SYMS set Table 7/8/900 use, since SPY/IWM/XLE
+// aren't among Paul's 4 flagship trades.
 // Same live price + formula as the Cushion tab's T6. Two layouts, same data, both ONE
 // continuous table (not 4 stacked per-symbol tables): a vertical Symbol/Field/Value table
 // (Symbol cell uses rowspan across each symbol's 5 rows), and a horizontal one-row-per-symbol table.
