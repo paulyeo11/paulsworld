@@ -4294,8 +4294,8 @@
       </table>
       </div>
       <div class="note" style="margin-top:8px">
-        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers all 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO).</span>
-        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖全部4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO）。</span>
+        <span class="en">With <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike: <b>Put Variance = (A − B) ÷ A</b>, <b>Call Variance = (C − A) ÷ A</b>, <b>B/C Spread = (C − B) ÷ B</b> — same convention and same live price feed as the Cushion tab's T6 table. Covers the 4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus XLE, tagged <b>⏳ Pending</b> since it hasn't filled yet.</span>
+        <span class="zh">设 <b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价：<b>认沽差幅 = (A − B) ÷ A</b>，<b>认购差幅 = (C − A) ÷ A</b>，<b>B/C价差 = (C − B) ÷ B</b>——算法与实时股价来源与「缓冲」页签T6表格一致。涵盖4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO）以及XLE，因尚未成交标记为<b>⏳ 待成交</b>。</span>
       </div>
       <div class="tkr" style="font-size:1.1rem;margin-top:14px">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
       <button id="varColToggleBtn" onclick="toggleVarCols()" style="margin-top:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f5c869;font-size:.72rem;font-weight:700;padding:6px 12px;border-radius:16px;cursor:pointer">👁️ <span class="en">Hide Put Variance / Call Variance columns</span><span class="zh">隐藏认沽差幅/认购差幅列</span></button>
@@ -6124,9 +6124,13 @@ function sortedByPutCushion(){
 // 23 Jul 2026; SMH closed 29 Jul 2026, real fills, −$76.19; NVDA confirmed fully closed
 // 30 Jul 2026 — see PNL_AMT note below on why its P&L Amt still shows the put-combo-only
 // figure). Anything not listed here defaults to 'open'. Update this when a position closes.
-var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', FDS:'open', GOOGL:'open' };
+var POSITION_STATUS = { NVDA:'closed', QQQ:'closed', AVGO:'open', SMH:'closed', SPY:'open', IWM:'open', XLE:'pending', FDS:'open', GOOGL:'open' };
 // Paul's 4 flagship IC trades (circled on the T6 screenshot 2026-07-31) — QQQ, NVDA, SMH, AVGO.
 var BANG_4_SYMS = ['QQQ','NVDA','SMH','AVGO'];
+// Table 10 (Gap tab) only — the 4 flagship Bang symbols plus XLE (not yet filled, tracked
+// there as a preview/pending row). Table 7/8/900 keep BANG_4_SYMS as-is; don't fold XLE
+// into that shared set since those tables are scoped strictly to the 4 flagship trades.
+var GAP_TABLE10_SYMS = BANG_4_SYMS.concat(['XLE']);
 // T6's Open/Closed filter state: 'all' | 'open' | 'closed' | 'bang'. Shared by both places
 // T6 is shown (Dashboard quick-glance + Cushion tab full table) so they stay in sync.
 var cushionFilter = 'open';
@@ -6526,9 +6530,11 @@ function renderPutVarianceTable(){
   if(totalEl) totalEl.innerHTML = pnlAmtTotalHtml(syms);
   setLang(curLang);
 }
-// Table 10 (Bang tab's Gap sub-tab) — Sell Put & Sell Call Variance for all 4
-// flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO — same BANG_4_SYMS set as Table 7/8/900),
-// same live price + formula as the Cushion tab's T6. Two layouts, same data, both ONE
+// Table 10 (Bang tab's Gap sub-tab) — Sell Put & Sell Call Variance for the 4
+// flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus XLE (pending fill, tagged with
+// the ⏳ Pending badge from statusTag()) — GAP_TABLE10_SYMS, not the shared BANG_4_SYMS
+// set Table 7/8/900 use, since XLE isn't one of Paul's 4 flagship trades.
+// Same live price + formula as the Cushion tab's T6. Two layouts, same data, both ONE
 // continuous table (not 4 stacked per-symbol tables): a vertical Symbol/Field/Value table
 // (Symbol cell uses rowspan across each symbol's 5 rows), and a horizontal one-row-per-symbol table.
 // Toggle for the Share Price (A) / Put Variance / Call Variance rows in Table 10's
@@ -6544,7 +6550,7 @@ function renderNvdaGapVarTable(){
   var hideSvc = svcRowsHidden();
   var rowspan = hideSvc ? 3 : 6;
   var vRows = [], hRows = [];
-  BANG_4_SYMS.forEach(function(sym){
+  GAP_TABLE10_SYMS.forEach(function(sym){
     var cfg = cfgFor(sym);
     var price = getLivePrice(sym);
     var spreadPct = (cfg.shortC - cfg.shortP) / cfg.shortP * 100;
@@ -6559,8 +6565,9 @@ function renderNvdaGapVarTable(){
       var putBadgeL = cushionBadge(pVpct,{en:'<-2%',zh:'<-2%'});
       var callBadgeL = cushionBadge(cVpct,{en:'Above',zh:'突破'});
     }
+    var symTag = statusTag(sym);
     var rows = [
-      '<tr><td rowspan="'+rowspan+'"><b>'+sym+'</b></td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'
+      '<tr><td rowspan="'+rowspan+'"><b>'+sym+'</b>'+symTag+'</td><td><span class="en">Selling Put (B)</span><span class="zh">卖出认沽（B）</span></td><td class="num">'+cfg.shortP+'P</td></tr>'
     ];
     if(!hideSvc) rows.push('<tr><td><span class="en">Share Price (A)</span><span class="zh">股价（A）</span></td><td class="num">'+priceTxt+'</td></tr>');
     rows.push('<tr><td><span class="en">Selling Call (C)</span><span class="zh">卖出认购（C）</span></td><td class="num">'+cfg.shortC+'C</td></tr>');
@@ -6570,7 +6577,7 @@ function renderNvdaGapVarTable(){
     }
     rows.push('<tr><td><span class="en">B/C Spread <small style="opacity:.6;font-weight:400">(C−B)/B</small></span><span class="zh">B/C价差 <small style="opacity:.6;font-weight:400">(C−B)/B</small></span></td><td class="num">'+spreadTxt+'</td></tr>');
     vRows.push(rows.join(''));
-    hRows.push('<tr><td><b>'+sym+'</b></td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num hcol-var">'+putBadgeL+'</td><td class="num hcol-var">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
+    hRows.push('<tr><td><b>'+sym+'</b>'+symTag+'</td><td class="num">'+priceTxt+'</td><td class="num">'+cfg.shortP+'P</td><td class="num">'+cfg.shortC+'C</td><td class="num hcol-var">'+putBadgeL+'</td><td class="num hcol-var">'+callBadgeL+'</td><td class="num">'+spreadTxt+'</td></tr>');
   });
   if(body) body.innerHTML = vRows.join('');
   if(bodyH) bodyH.innerHTML = hRows.join('');
@@ -6611,11 +6618,16 @@ function toggleVarCols(){
   localStorage.setItem(VAR_COL_HIDE_KEY, varColsHidden() ? '0' : '1');
   applyVarColVisibility();
 }
-// Small inline badge next to a T6 symbol showing whether the position is open or
-// closed, from POSITION_STATUS. Blank for open positions (the common case) to avoid clutter.
+// Small inline badge next to a T6 symbol showing whether the position is open,
+// closed, or pending fill, from POSITION_STATUS. Blank for open positions (the
+// common case) to avoid clutter.
 function statusTag(sym){
-  if((POSITION_STATUS[sym] || 'open') === 'closed'){
+  var status = POSITION_STATUS[sym] || 'open';
+  if(status === 'closed'){
     return ' <span style="font-size:.62rem;font-weight:700;color:#ff6b6b;background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.35);border-radius:8px;padding:1px 6px;white-space:nowrap"><span class="en">Closed</span><span class="zh">已平仓</span></span>';
+  }
+  if(status === 'pending'){
+    return ' <span style="font-size:.62rem;font-weight:700;color:#f5c869;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:8px;padding:1px 6px;white-space:nowrap"><span class="en">⏳ Pending</span><span class="zh">⏳ 待成交</span></span>';
   }
   return '';
 }
