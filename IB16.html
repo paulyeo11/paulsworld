@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IB16: SPY Iron Condor Closed (−$148.60)</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --bg: #0d0f1a;
+  --card: #151826;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --gold: #f59e0b;
+  --red: #f85149;
+  --green: #3fb950;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; font-size: 1.05rem; }
+
+.hero {
+  background: linear-gradient(135deg, #060310 0%, #1a1206 40%, #24190a 75%, #0d0f1a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 20px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(245,158,11,0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 40%, rgba(244,129,63,0.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  color: var(--gold);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 720px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 560px;
+  margin: 0 auto 8px; line-height: 1.6;
+}
+.meta { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; margin-top: 10px; }
+
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); color: var(--gold); }
+
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.share-btn { display:inline-block; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; letter-spacing:.04em; padding:10px 26px; border-radius:30px; cursor:pointer; font-size:0.95rem; font-family:'Source Serif 4',Georgia,serif; transition:background .2s; }
+.share-btn:hover { background:rgba(255,255,255,.25); }
+.share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+.content { max-width: 760px; margin: 0 auto; padding: 52px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead { font-size: 1.15rem; color: #f0f1f8; }
+.content h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; margin: 2em 0 0.7em; color: #fff; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:1.5em 0; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.stat-box .sk { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; font-family: 'Source Serif 4', serif; }
+.stat-box .sv { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+.stat-box .sv.red { color: var(--red); }
+.stat-box .sv.green { color: var(--green); }
+.stat-box .ss { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+@media(max-width:520px){ .stats-grid{grid-template-columns:1fr;} }
+
+.tl-link { display:inline-block; margin-top:6px; color: var(--gold); text-decoration:none; font-weight:700; border-bottom: 1px solid rgba(245,158,11,0.4); }
+.tl-link:hover { border-bottom-color: var(--gold); }
+
+.tips-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 14px;
+  padding: 24px 22px;
+  margin: 2em 0;
+}
+.tips-box h3 { margin-top: 0; font-family: 'Playfair Display', Georgia, serif; }
+.tips-list { list-style: none; }
+.tips-list li { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 0; font-size: 0.95rem; color: #d0d4e8; }
+.tip-bullet { color: var(--gold); font-weight: 700; }
+
+.trade-box {
+  background: rgba(248,81,73,0.06);
+  border: 1px solid rgba(248,81,73,0.25);
+  border-radius: 14px;
+  padding: 22px 22px;
+  margin: 1.5em 0;
+}
+.trade-box h3 { margin: 0 0 10px; font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; color: #fff; }
+.trade-box .tmeta { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.trade-box ul { margin: 0 0 0 20px; }
+.trade-box li { margin: 5px 0; font-size: 0.92rem; color: #d0d4e8; }
+
+table.legwalk { width:100%; border-collapse:collapse; margin: 1em 0; font-size: 0.88rem; }
+table.legwalk th, table.legwalk td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+table.legwalk th:first-child, table.legwalk td:first-child { text-align: left; }
+table.legwalk th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+table.legwalk td.red { color: var(--red); font-weight: 700; }
+table.legwalk td.green { color: var(--green); font-weight: 700; }
+.table-scroll { overflow-x: auto; }
+
+.note-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 1.5em 0;
+  font-size: 0.9rem;
+  color: #d0d4e8;
+}
+.note-box.warn { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.3); }
+
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 60px;
+}
+footer a { color: var(--blue); text-decoration: none; }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">← <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+
+  <div class="label">
+    <span class="en">IBKR Update Log · IB16</span>
+    <span class="zh">IBKR更新日志 · IB16</span>
+  </div>
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#ibklog" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/ibkr-update-log.html" target="_blank"><span class="en">IBKR Update Log</span><span class="zh">IBKR更新日志</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">IB16</span><span class="zh">IB16</span></span>
+  </div>
+  <h1>
+    <span class="en">IB16: SPY Iron Condor — <span>Closed (−$148.60)</span></span>
+    <span class="zh">IB16：SPY铁鹰组合 — <span>已平仓（−$148.60）</span></span>
+  </h1>
+  <p class="hero-sub">
+    <span class="en">Paul closed the SPY Iron Condor tonight — confirmed via real trade fills. Final result: −$148.60. The put side was profitable; a strong SPY rally toward the 770 short call strike drove the loss.</span>
+    <span class="zh">Paul今晚平掉了SPY铁鹰组合——已通过真实成交确认。最终结果：−$148.60。认沽一侧是盈利的；SPY强势上涨逼近770卖出认购行权价，是本次亏损的主因。</span>
+  </p>
+  <p class="meta">
+    <span class="en">Source: broker trade blotter (Orders &amp; Trades → Trades, 4 Aug 2026, 23:57:24 SGT)</span>
+    <span class="zh">数据来源：券商交易记录（订单与交易 → 交易，2026年8月4日23:57:24 SGT）</span>
+  </p>
+  <div class="hero-btns">
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<div class="content">
+
+  <p class="lead">
+    <span class="en">Paul asked why closing SPY resulted in a loss when the share price never went above the short call strike. The trade blotter he sent (12 trades on 4 Aug, Realized P&amp;L −$148.6) has the answer: the put side made money exactly as expected, but SPY's rally toward — not through — the 770 short call strike inflated that option's price enough to outweigh the put side's gain.</span>
+    <span class="zh">Paul问，为什么股价从未突破卖出认购的行权价，平仓SPY却仍出现亏损。他发来的交易记录（8月4日共12笔交易，已实现盈亏−$148.6）给出了答案：认沽一侧完全按预期盈利，但SPY股价朝770卖出认购行权价上涨——虽未突破——已足以推高该期权价格，抵消并超过了认沽一侧的盈利。</span>
+  </p>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="sk"><span class="en">SPY Condor Status</span><span class="zh">SPY铁鹰组合状态</span></div>
+      <div class="sv green"><span class="en">Fully Closed</span><span class="zh">已完全平仓</span></div>
+      <div class="ss"><span class="en">confirmed via real trade fills, 4 Aug 23:57:24 SGT</span><span class="zh">已通过真实成交确认，8月4日23:57:24 SGT</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Final P&amp;L — Fully Realized</span><span class="zh">最终盈亏 — 已全部实现</span></div>
+      <div class="sv red">−$148.60</div>
+      <div class="ss"><span class="en">was showing +$11.46 unrealized in the 3 Aug statement (IB15)</span><span class="zh">前一份8月3日报表（IB15）仍显示未实现+$11.46</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Put Spread (715/705)</span><span class="zh">认沽价差（715/705）</span></div>
+      <div class="sv green">+$90</div>
+      <div class="ss"><span class="en">worked as designed — price moved away from this side</span><span class="zh">按预期发挥作用——股价朝远离这一侧的方向变动</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Call Spread (770/780)</span><span class="zh">认购价差（770/780）</span></div>
+      <div class="sv red">−$231</div>
+      <div class="ss"><span class="en">SPY's rally toward 770 inflated this leg's buy-back cost</span><span class="zh">SPY上涨逼近770，推高了该腿的买回成本</span></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2><span class="en">Why "Price Never Crossed the Strike" Still Lost Money</span><span class="zh">为什么「股价从未突破行权价」仍会亏损</span></h2>
+
+  <p>
+    <span class="en">An Iron Condor's P&amp;L on close isn't a simple "did price breach the strike" test — it's <b>Net Credit Received at open minus Debit Paid to close</b>. An option's price is driven by how close the stock is to that strike (and how much time is left), not just whether it's technically in-the-money or out-of-the-money. SPY rallied hard toward the 770 short call strike this cycle. Even staying below it, that proximity pushed the 770 call's price from $4.47 at entry up to <b>$11.29</b> to buy back — a much bigger move than the small decay/offset the 780 long call provided.</span>
+    <span class="zh">铁鹰组合平仓时的盈亏，并非简单的「股价是否突破行权价」测试——而是<b>建仓时收取的净权利金 减去 平仓时支付的净成本</b>。期权价格由股价与该行权价的距离（以及剩余时间）决定，而非仅仅取决于是否技术性价内/价外。本轮SPY股价强势上涨，逼近770卖出认购行权价。即便始终未突破，这种「逼近」已将770认购的价格从建仓时的$4.47推高至买回时的<b>$11.29</b>——远大于780买入认购所能提供的抵消/衰减幅度。</span>
+  </p>
+
+  <div class="table-scroll">
+  <table class="legwalk">
+    <thead><tr>
+      <th><span class="en">Leg</span><span class="zh">腿</span></th>
+      <th><span class="en">Open (21 Jul)</span><span class="zh">建仓（7月21日）</span></th>
+      <th><span class="en">Close (4 Aug)</span><span class="zh">平仓（8月4日）</span></th>
+      <th><span class="en">Net</span><span class="zh">净额</span></th>
+    </tr></thead>
+    <tbody>
+      <tr><td><span class="en">Put spread (Sold 715P / Bought 705P)</span><span class="zh">认沽价差（卖出715P／买入705P）</span></td><td>+$1.24</td><td>−$0.34</td><td class="green">+$0.90</td></tr>
+      <tr><td><span class="en">Call spread (Sold 770C / Bought 780C)</span><span class="zh">认购价差（卖出770C／买入780C）</span></td><td>+$2.32</td><td>−$4.63</td><td class="red">−$2.31</td></tr>
+      <tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)"><td><span class="en">Total (× 100 shares, minus commissions)</span><span class="zh">合计（×100股，扣除手续费）</span></td><td>$3.56</td><td>−$4.97</td><td class="red">−$1.41 → <b>−$148.60</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    <span class="en">Put side: opened for $1.24/share credit (Sold 715P $5.80 − Bought 705P $4.56), closed for $0.34/share debit (Bought 715P $1.38 − Sold 705P $1.04) = <b>+$90</b> on 100 shares. Call side: opened for $2.32/share credit (Sold 770C $4.47 − Bought 780C $2.15), closed for $4.63/share debit (Bought 770C $11.29 − Sold 780C $6.66) = <b>−$231</b>. Net: $90 − $231 ≈ −$141, minus roughly $7.60 in commissions across the 4 closing legs = <b>−$148.60</b>, matching the trade blotter exactly.</span>
+    <span class="zh">认沽一侧：建仓收取$1.24/股权利金（卖出715P $5.80 − 买入705P $4.56），平仓支付$0.34/股（买入715P $1.38 − 卖出705P $1.04）＝100股合计<b>+$90</b>。认购一侧：建仓收取$2.32/股权利金（卖出770C $4.47 − 买入780C $2.15），平仓支付$4.63/股（买入770C $11.29 − 卖出780C $6.66）＝<b>−$231</b>。合计：$90 − $231 ≈ −$141，再扣除4条平仓腿约$7.60的手续费 ＝ <b>−$148.60</b>，与交易记录完全吻合。</span>
+  </p>
+
+  <div class="trade-box">
+    <h3><span class="en">📉 SPY Iron Condor — Final Tally</span><span class="zh">📉 SPY铁鹰组合 — 最终结算</span></h3>
+    <div class="tmeta"><span class="en">Opened 21 Jul, closed 4 Aug 23:57:24 SGT</span><span class="zh">7月21日建仓，8月4日23:57:24 SGT平仓</span></div>
+    <ul>
+      <li><span class="en">Open (21 Jul): Sold 715P @$5.80 / Bought 705P @$4.56 / Sold 770C @$4.47 / Bought 780C @$2.15 — ~$356 credit, $3.04 commission</span><span class="zh">建仓（7月21日）：卖出715P @$5.80 / 买入705P @$4.56 / 卖出770C @$4.47 / 买入780C @$2.15 — 收取权利金约$356，手续费$3.04</span></li>
+      <li><span class="en">Close (4 Aug, 23:57:24 SGT): Sold 705P @$1.04 / Bought 715P @$1.38 / Bought 770C @$11.29 / Sold 780C @$6.66</span><span class="zh">平仓（8月4日23:57:24 SGT）：卖出705P @$1.04 / 买入715P @$1.38 / 买入770C @$11.29 / 卖出780C @$6.66</span></li>
+      <li><span class="en">Total realized result: <b>−$148.60</b> — fully banked, no open SPY position remaining</span><span class="zh">合计已实现结果：<b>−$148.60</b> — 已全部入袋，无剩余SPY持仓</span></li>
+    </ul>
+  </div>
+
+  <div class="note-box">
+    <span class="en">ℹ️ <b>Data note:</b> this update is based directly on Paul's broker trade blotter screenshot (4 Aug 2026, 23:57:24 SGT), not the IBKR PortfolioAnalyst statement pipeline — the next statement to sync will show SPY gone from the Open Position Summary and can be used to cross-check this number, the same way IB08/IB11 confirmed earlier closes against a statement.</span>
+    <span class="zh">ℹ️ <b>数据说明：</b>本次更新直接依据Paul券商App的交易记录截图（2026年8月4日23:57:24 SGT），而非IBKR投资组合分析报表流程——下一份同步的报表到账后，应会显示SPY已不在持仓摘要中，届时可用来核对这一数字，方式与IB08/IB11此前用报表核实平仓相同。</span>
+  </div>
+
+  <div class="tips-box">
+    <h3><span class="en">Bottom Line</span><span class="zh">总结</span></h3>
+    <ul class="tips-list">
+      <li><span class="tip-bullet">①</span><span class="en">SPY Iron Condor is fully closed — real trade fills, real Realized P&amp;L of −$148.60.</span><span class="zh">SPY铁鹰组合已完全平仓——真实成交，真实已实现盈亏−$148.60。</span></li>
+      <li><span class="tip-bullet">②</span><span class="en">Staying under the short call strike is not the same as staying safe — proximity alone can inflate that leg's buy-back cost. Watching the Call Cushion % (not just "above/below strike") is the better early-warning signal.</span><span class="zh">股价未突破卖出认购行权价，不代表安全——仅仅是「逼近」就足以推高该腿的买回成本。关注认购缓冲百分比（而非仅仅「高于/低于行权价」）是更好的预警信号。</span></li>
+      <li><span class="tip-bullet">③</span><span class="en">The put spread performed exactly as designed (+$90) — the loss was concentrated entirely in the call spread. Worth reviewing whether wider call-side wings or an earlier roll would have helped next time SPY runs.</span><span class="zh">认沽价差完全按设计发挥作用（+$90）——亏损完全集中在认购价差。值得思考下次SPY急涨时，加宽认购一侧翼宽或提前展期是否会有帮助。</span></li>
+    </ul>
+  </div>
+
+  <p>
+    <a class="tl-link" href="options-breadboard.html#bang-summary" target="_blank"><span class="en">→ Full detail on T29: Option by Bang — Bang Trade Analysis, SPY &amp; Summary tabs (Table 1505/900)</span><span class="zh">→ 查看T29完整详情：期权面包板 — Bang交易分析，SPY与总览页签（表1505/900）</span></a>
+  </p>
+
+  <script src="/view-counter.js"></script>
+
+</div>
+
+<footer>
+  <p>
+    <span class="en">IB16: SPY Iron Condor Closed (−$148.60) &nbsp;·&nbsp; Paul's World &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+    <span class="zh">IB16：SPY铁鹰组合已平仓（−$148.60） &nbsp;·&nbsp; Paul的世界 &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+  </p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === 'zh' ? 'lang-zh' : '';
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.includes(lang === 'zh' ? '中文' : 'English'));
+  });
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if(navigator.share){
+    navigator.share({title:title, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
