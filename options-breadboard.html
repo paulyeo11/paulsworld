@@ -4277,7 +4277,7 @@
     <div class="condor">
       <div class="c-head">
         <div class="tkr" style="font-size:1.1rem">📐 <span class="en">Table 10: Sell Put &amp; Sell Call Variance</span><span class="zh">表10：卖出认沽 &amp; 卖出认购差幅</span></div>
-        <div class="c-meta"><span class="en">4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY, IWM &amp; XLE (⏳ Pending)</span><span class="zh">4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO）以及SPY、IWM与XLE（⏳待成交）</span></div>
+        <div class="c-meta" id="gapTable10Meta"><span class="en">4 flagship Bang Iron Condors (QQQ, NVDA, SMH, AVGO) plus SPY, IWM &amp; XLE (⏳ Pending)</span><span class="zh">4个旗舰Bang铁鹰（QQQ、NVDA、SMH、AVGO）以及SPY、IWM与XLE（⏳待成交）</span></div>
         <div></div>
       </div>
       <button id="svcRowToggleBtn" onclick="toggleSvcRows()" style="margin-top:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#f5c869;font-size:.72rem;font-weight:700;padding:6px 12px;border-radius:16px;cursor:pointer">👁️ <span class="en">Hide Share Price / Put Variance / Call Variance rows</span><span class="zh">隐藏股价/认沽差幅/认购差幅行</span></button>
@@ -6545,6 +6545,33 @@ function renderPutVarianceTable(){
 // matches the actual row count — mixing rowspan with display:none misaligns the label.
 var SVC_HIDE_KEY = 'T29_gapVarHideSvc';
 function svcRowsHidden(){ return localStorage.getItem(SVC_HIDE_KEY) === '1'; }
+// Joins ['A','B','C'] as "A, B & C" (or "A & B" / "A" for shorter lists) — used to build
+// the Table 10 subtitle below without hardcoding punctuation per list length.
+function joinWithAmp(arr){
+  if(arr.length===0) return '';
+  if(arr.length===1) return arr[0];
+  return arr.slice(0,-1).join(', ') + ' & ' + arr[arr.length-1];
+}
+// Table 10's subtitle, generated from GAP_TABLE10_SYMS/BANG_4_SYMS/POSITION_STATUS instead
+// of hardcoded prose — so it can never go stale again the way it did on 2026-08-04 (added
+// SPY/IWM/XLE to the table's data but left an old "All 4 flagship..." subtitle in place).
+// Any future change to those arrays updates this line automatically.
+function renderGapTable10Meta(){
+  var el = document.getElementById('gapTable10Meta'); if(!el) return;
+  var extras = GAP_TABLE10_SYMS.filter(function(s){ return BANG_4_SYMS.indexOf(s)===-1; });
+  var pendingTagEn = function(s){ return (POSITION_STATUS[s]||'open')==='pending' ? ' (⏳ Pending)' : ''; };
+  var pendingTagZh = function(s){ return (POSITION_STATUS[s]||'open')==='pending' ? '（⏳待成交）' : ''; };
+  var bangEn = BANG_4_SYMS.join(', '), bangZh = BANG_4_SYMS.join('、');
+  var enHtml, zhHtml;
+  if(extras.length){
+    enHtml = BANG_4_SYMS.length+' flagship Bang Iron Condors ('+bangEn+') plus '+joinWithAmp(extras.map(function(s){ return s+pendingTagEn(s); }));
+    zhHtml = BANG_4_SYMS.length+'个旗舰Bang铁鹰（'+bangZh+'）以及'+extras.map(function(s){ return s+pendingTagZh(s); }).join('、');
+  } else {
+    enHtml = 'All '+BANG_4_SYMS.length+' flagship Bang Iron Condors — '+bangEn;
+    zhHtml = '全部'+BANG_4_SYMS.length+'个旗舰Bang铁鹰——'+bangZh;
+  }
+  el.innerHTML = '<span class="en">'+enHtml+'</span><span class="zh">'+zhHtml+'</span>';
+}
 function renderNvdaGapVarTable(){
   var body = document.getElementById('nvdaGapVarBody');
   var bodyH = document.getElementById('nvdaGapVarBodyH');
@@ -6583,6 +6610,7 @@ function renderNvdaGapVarTable(){
   });
   if(body) body.innerHTML = vRows.join('');
   if(bodyH) bodyH.innerHTML = hRows.join('');
+  renderGapTable10Meta();
   updateSvcToggleBtn();
   applyVarColVisibility();
   setLang(curLang);
