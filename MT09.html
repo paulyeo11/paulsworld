@@ -2271,6 +2271,11 @@ renderTasks();
         </div>
       </div>
 
+      <!-- Car rental company itinerary button -->
+      <button onclick="openRentalItinerary()" style="width:100%;background:linear-gradient(135deg,#f0a500,#d68e00);color:#0d1117;border:none;border-radius:14px;padding:14px 18px;margin-bottom:14px;font-size:0.95em;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        📋 <span class="en">View Itinerary from Car Rental Company</span><span class="zh" style="display:none">查看租车公司提供的行程单</span>
+      </button>
+
       <!-- Pickup & Return card -->
       <div style="background:#161b22;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;margin-bottom:14px;">
         <div style="font-size:0.9em;font-weight:800;color:#fff;margin-bottom:12px;"><span class="en">🔑 Pickup &amp; Return</span><span class="zh" style="display:none">🔑 取车与还车</span></div>
@@ -2495,9 +2500,68 @@ renderTasks();
 <div id="rental-lightbox" onclick="closeRentalLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;align-items:center;justify-content:center;padding:20px;">
   <img id="rental-lightbox-img" src="" style="max-width:100%;max-height:100%;border-radius:8px;">
   <div style="position:absolute;top:16px;right:20px;color:#fff;font-size:1.8em;cursor:pointer;">✕</div>
+</div>
+<div id="rental-itinerary-modal" onclick="closeRentalItinerary()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;padding:16px;overflow-y:auto;">
+  <div onclick="event.stopPropagation()" style="max-width:520px;margin:0 auto;background:#161b22;border:1px solid rgba(240,165,0,0.3);border-radius:16px;padding:18px;position:relative;">
+    <div onclick="closeRentalItinerary()" style="position:absolute;top:14px;right:16px;color:#8b949e;font-size:1.5em;cursor:pointer;line-height:1;">✕</div>
+    <div style="font-size:0.72em;color:#f0a500;font-weight:800;letter-spacing:.04em;margin-bottom:4px;">TABLE 1329</div>
+    <div style="font-size:1.1em;font-weight:900;color:#fff;margin-bottom:2px;"><span class="en">📋 Car Rental Company Itinerary</span><span class="zh" style="display:none">📋 租车公司行程单</span></div>
+    <div style="font-size:0.78em;color:#8b949e;margin-bottom:14px;"><span class="en">As provided directly by the charter car company — for reference alongside our own day-by-day plan.</span><span class="zh" style="display:none">由租车/包车公司直接提供，供对照我们自己的每日行程使用。</span></div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.82em;">
+      <thead>
+        <tr style="color:#8b949e;text-align:left;border-bottom:1px solid rgba(255,255,255,0.12);">
+          <th style="padding:7px 6px;font-weight:700;white-space:nowrap;"><span class="en">Date</span><span class="zh" style="display:none">日期</span></th>
+          <th style="padding:7px 6px;font-weight:700;"><span class="en">Route</span><span class="zh" style="display:none">路线</span></th>
+          <th style="padding:7px 6px;font-weight:700;white-space:nowrap;"><span class="en">Dist.</span><span class="zh" style="display:none">距离</span></th>
+          <th style="padding:7px 6px;font-weight:700;white-space:nowrap;"><span class="en">Time</span><span class="zh" style="display:none">时长</span></th>
+        </tr>
+      </thead>
+      <tbody id="rentalItineraryRows"></tbody>
+    </table>
+    </div>
+    <div style="font-size:0.7em;color:#6e7681;margin-top:10px;"><span class="en">Distance &amp; driving time as stated by the car rental company.</span><span class="zh" style="display:none">距离与车程时长均为租车公司提供数据。</span></div>
+  </div>
 </div>`;
 
   document.currentScript.insertAdjacentHTML('afterend', html);
+
+  var rentalItinerary = [
+    { date:{en:'Mon 31 Aug',zh:'8月31日 周一'}, route:{en:'Urumqi → S21 Desert Hwy → Wulungu Lake → stay Fuhai County',zh:'乌鲁木齐 → S21沙漠公路 → 乌伦古湖 → 住福海县'}, dist:'~460 km', time:{en:'~6 hrs',zh:'约6小时'} },
+    { date:{en:'Tue 1 Sep',zh:'9月1日 周二'}, route:{en:'Fuhai County → Altay City',zh:'福海县 → 阿勒泰市'}, dist:'~110 km', time:{en:'~1.5–2 hrs',zh:'约1.5–2小时'} },
+    { date:{en:'Wed 2 Sep',zh:'9月2日 周三'}, route:{en:'Altay City → A-He Hwy → Hemu Village',zh:'阿勒泰市 → 阿禾公路 → 禾木村'}, dist:'~210 km', time:{en:'~5.5–6 hrs',zh:'约5.5–6小时'} },
+    { date:{en:'Thu 3 Sep',zh:'9月3日 周四'}, route:{en:'Hemu Village → Jiadengyu',zh:'禾木村 → 贾登峪'}, dist:'~100 km', time:{en:'~2.5 hrs',zh:'约2.5小时'} },
+    { date:{en:'Fri 4 Sep',zh:'9月4日 周五'}, route:{en:'Kanas Scenic Area — day trip (if staying Jiadengyu: hotel → ticket station one-way)',zh:'喀纳斯景区一日游（如住贾登峪：酒店至门票站单程）'}, dist:'~3 km', time:{en:'~10 min',zh:'约10分钟'} },
+    { date:{en:'Sat 5 Sep',zh:'9月5日 周六'}, route:{en:'Kanas Scenic Area → Jiadengyu → Wucai Tan (Five-Coloured Beach) → stay Burqin',zh:'喀纳斯景区 → 贾登峪 → 五彩滩 → 住布尔津'}, dist:'~168 km', time:{en:'~3–3.5 hrs',zh:'约3–3.5小时'} },
+    { date:{en:'Sun 6 Sep',zh:'9月6日 周日'}, route:{en:'Burqin → Wuerhe Devil City → Karamay',zh:'布尔津 → 乌尔禾魔鬼城 → 克拉玛依'}, dist:'~320 km', time:{en:'~5 hrs',zh:'约5小时'} },
+    { date:{en:'Mon 7 Sep',zh:'9月7日 周一'}, route:{en:'Karamay → Urumqi',zh:'克拉玛依 → 乌鲁木齐'}, dist:'~320 km', time:{en:'~4 hrs',zh:'约4小时'} },
+    { date:{en:'Tue 8 Sep',zh:'9月8日 周二'}, route:{en:'Urumqi → Tianshan Tianchi → Urumqi (round trip)',zh:'乌鲁木齐 → 天山天池 → 乌鲁木齐（往返）'}, dist:'~200 km', time:{en:'~3 hrs',zh:'约3小时'} }
+  ];
+
+  function renderRentalItinerary(){
+    var isZh = typeof currentLang !== 'undefined' && currentLang === 'zh';
+    var enDisp = isZh ? 'display:none' : '';
+    var zhDisp = isZh ? '' : 'display:none';
+    var rows = rentalItinerary.map(function(d, i){
+      var zebra = i % 2 === 1 ? 'background:rgba(255,255,255,0.02);' : '';
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,0.06);' + zebra + '">' +
+        '<td style="padding:7px 6px;color:#f0a500;font-weight:800;white-space:nowrap;vertical-align:top;"><span class="en" style="' + enDisp + '">' + d.date.en + '</span><span class="zh" style="' + zhDisp + '">' + d.date.zh + '</span></td>' +
+        '<td style="padding:7px 6px;color:#e6edf3;"><span class="en" style="' + enDisp + '">' + d.route.en + '</span><span class="zh" style="' + zhDisp + '">' + d.route.zh + '</span></td>' +
+        '<td style="padding:7px 6px;color:#8b949e;white-space:nowrap;vertical-align:top;">' + d.dist + '</td>' +
+        '<td style="padding:7px 6px;color:#8b949e;white-space:nowrap;vertical-align:top;"><span class="en" style="' + enDisp + '">' + d.time.en + '</span><span class="zh" style="' + zhDisp + '">' + d.time.zh + '</span></td>' +
+        '</tr>';
+    }).join('');
+    var tbody = document.getElementById('rentalItineraryRows');
+    if (tbody) tbody.innerHTML = rows;
+  }
+
+  window.openRentalItinerary = function(){
+    renderRentalItinerary();
+    document.getElementById('rental-itinerary-modal').style.display = 'block';
+  };
+  window.closeRentalItinerary = function(){
+    document.getElementById('rental-itinerary-modal').style.display = 'none';
+  };
 })();
 
 // ── MONEY PANEL (injected) ───────────────────────────────────────
