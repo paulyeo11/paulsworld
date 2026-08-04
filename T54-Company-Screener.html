@@ -119,6 +119,7 @@
   <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
   <div class="page-menu-dropdown" id="pageMenuDropdown">
     <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button onclick="copyPageHtml(); closePageMenu();">📋 <span class="en">Copy HTML</span><span class="zh">复制HTML代码</span></button>
     <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span></button>
   </div>
 </div>
@@ -138,6 +139,7 @@
 
 <div class="wrap">
   <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="htmlToast">✅ HTML code copied!</div>
   <div class="share-toast" id="pinToast">📌 Pinned!</div>
 
   <div class="disclaimer">
@@ -222,6 +224,31 @@ function shareThisPage(){
       setTimeout(function(){t.style.display='none';},2200);
     });
   }
+}
+
+// Copy this page's full markup HTML source to clipboard
+function copyPageHtml(){
+  var toast = document.getElementById('htmlToast');
+  function showToast(msg){
+    toast.innerHTML = msg;
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+  }
+  fetch(window.location.href, { cache:'no-store' })
+    .then(function(r){ if(!r.ok) throw new Error('bad'); return r.text(); })
+    .then(function(html){
+      return navigator.clipboard.writeText(html);
+    })
+    .then(function(){
+      showToast('<span class="en">✅ HTML code copied!</span><span class="zh">✅ HTML代码已复制！</span>');
+    })
+    .catch(function(){
+      navigator.clipboard.writeText(document.documentElement.outerHTML).then(function(){
+        showToast('<span class="en">✅ HTML code copied!</span><span class="zh">✅ HTML代码已复制！</span>');
+      }).catch(function(){
+        showToast('<span class="en">⚠️ Copy failed</span><span class="zh">⚠️ 复制失败</span>');
+      });
+    });
 }
 
 // Page menu (⋮) — Share / Pin page
