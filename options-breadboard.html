@@ -2837,13 +2837,18 @@
       </div>
     </div>
     <div class="bang-subtabs" id="bangSubBtns">
-      <button class="tbl40-filter-btn active" id="bangtb-qqq" onclick="setBangSubTab('qqq')">🟦 <span class="en">QQQ</span><span class="zh">QQQ专页</span></button>
-      <button class="tbl40-filter-btn" id="bangtb-smh" onclick="setBangSubTab('smh')">🟩 <span class="en">SMH</span><span class="zh">SMH专页</span></button>
-      <button class="tbl40-filter-btn" id="bangtb-avgo" onclick="setBangSubTab('avgo')">🟧 <span class="en">AVGO</span><span class="zh">AVGO专页</span></button>
-      <button class="tbl40-filter-btn" id="bangtb-spy" onclick="setBangSubTab('spy')">🔷 <span class="en">SPY</span><span class="zh">SPY专页</span></button>
-      <button class="tbl40-filter-btn" id="bangtb-iwm" onclick="setBangSubTab('iwm')">🟪 <span class="en">IWM</span><span class="zh">IWM专页</span></button>
-      <button class="tbl40-filter-btn" id="bangtb-nvda" onclick="setBangSubTab('nvda')">🔴 <span class="en">NVDA</span><span class="zh">NVDA专页</span></button>
-      <button class="tbl40-filter-btn" id="bangtb-googl" onclick="setBangSubTab('googl')">🟡 <span class="en">GOOGL</span><span class="zh">GOOGL专页</span></button>
+      <div class="tab-more-wrap" id="bangCompaniesWrap">
+        <button class="tbl40-filter-btn active" id="bangtb-companies" onclick="toggleBangCompanies(event)"><span class="en" id="bangCompaniesLabelEn">🟦 QQQ</span><span class="zh" id="bangCompaniesLabelZh">🟦 QQQ</span> ▾</button>
+        <div class="tab-more-dropdown" id="bangCompaniesDropdown">
+          <button id="bangtb-qqq" class="active" onclick="setBangSubTab('qqq'); closeBangCompanies();">🟦 <span class="en">QQQ</span><span class="zh">QQQ专页</span></button>
+          <button id="bangtb-smh" onclick="setBangSubTab('smh'); closeBangCompanies();">🟩 <span class="en">SMH</span><span class="zh">SMH专页</span></button>
+          <button id="bangtb-avgo" onclick="setBangSubTab('avgo'); closeBangCompanies();">🟧 <span class="en">AVGO</span><span class="zh">AVGO专页</span></button>
+          <button id="bangtb-spy" onclick="setBangSubTab('spy'); closeBangCompanies();">🔷 <span class="en">SPY</span><span class="zh">SPY专页</span></button>
+          <button id="bangtb-iwm" onclick="setBangSubTab('iwm'); closeBangCompanies();">🟪 <span class="en">IWM</span><span class="zh">IWM专页</span></button>
+          <button id="bangtb-nvda" onclick="setBangSubTab('nvda'); closeBangCompanies();">🔴 <span class="en">NVDA</span><span class="zh">NVDA专页</span></button>
+          <button id="bangtb-googl" onclick="setBangSubTab('googl'); closeBangCompanies();">🟡 <span class="en">GOOGL</span><span class="zh">GOOGL专页</span></button>
+        </div>
+      </div>
       <button class="tbl40-filter-btn" id="bangtb-summary" onclick="setBangSubTab('summary')">📊 <span class="en">Summary</span><span class="zh">总览</span></button>
       <button class="tbl40-filter-btn" id="bangtb-premium" onclick="setBangSubTab('premium')">💰 <span class="en">Trade Secret</span><span class="zh">交易秘诀</span></button>
       <button class="tbl40-filter-btn" id="bangtb-gap" onclick="setBangSubTab('gap')">🕳️ <span class="en">Gap</span><span class="zh">跳空</span></button>
@@ -5106,10 +5111,31 @@ function setBangSubTab(sub){
     setActive('bangtb-summary', sub==='summary');
     setActive('bangtb-premium', sub==='premium');
     setActive('bangtb-gap', sub==='gap');
+    var bangSymEmoji = { qqq:'🟦', smh:'🟩', avgo:'🟧', spy:'🔷', iwm:'🟪', nvda:'🔴', googl:'🟡' };
+    var isSymSub = bangSymEmoji.hasOwnProperty(sub);
+    setActive('bangtb-companies', isSymSub);
+    if (isSymSub) {
+      var lbl = bangSymEmoji[sub] + ' ' + BANG_SYM_LABEL[sub];
+      document.getElementById('bangCompaniesLabelEn').textContent = lbl;
+      document.getElementById('bangCompaniesLabelZh').textContent = lbl;
+    } else {
+      document.getElementById('bangCompaniesLabelEn').textContent = '🏢 Companies';
+      document.getElementById('bangCompaniesLabelZh').textContent = '🏢 标的';
+    }
   } catch(e) {
     showErrToast('Bang tab switch failed: ' + e.message);
   }
 }
+function toggleBangCompanies(e){
+  if(e) e.stopPropagation();
+  document.getElementById('bangCompaniesDropdown').classList.toggle('open');
+}
+function closeBangCompanies(){
+  document.getElementById('bangCompaniesDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  if(!document.getElementById('bangCompaniesWrap').contains(e.target)) closeBangCompanies();
+});
 
 // P&L tab — dropdown switches between Monthly / Yearly / Quarterly views
 var curPnlPeriod = 'monthly';
