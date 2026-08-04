@@ -152,6 +152,10 @@
   #gaugeGrid.hide-labels .tkr { font-size:1rem; }
   #gaugeGrid.hide-labels .tkr small { font-size:.52rem; }
   #gaugeGrid.hide-labels .gauge-svg { max-width:180px; }
+  /* Hide Small Print mode — collapses just the explanatory .note paragraph under each gauge
+     card (independent of Hide Label above, which leaves these visible). Scoped to #gaugeGrid
+     so the tab's intro note and the zone-colours note below the grid are unaffected. */
+  #gaugeGrid.hide-notes .condor .note { display:none; }
   /* Phone landscape — force a 3x3 grid (9 gauges = one page, no scroll) with everything
      shrunk down: labels auto-hidden (same rules as the Hide Label button), smaller ticker
      text, tighter card padding, and a capped gauge SVG width so 3 rows fit the short viewport. */
@@ -1072,6 +1076,7 @@
   <div class="cushion-filter-row" id="cushionFilterRow-gauge"></div>
   <div class="cushion-filter-row" style="margin-top:0">
     <button class="cushion-filter-btn" id="gaugeHideLabelBtn" onclick="toggleGaugeLabels()">🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span></button>
+    <button class="cushion-filter-btn" id="gaugeHideNotesBtn" onclick="toggleGaugeNotes()">🙈 <span class="en">Hide Small Print</span><span class="zh">隐藏小字说明</span></button>
     <button class="cushion-filter-btn" onclick="shareGaugeLink()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
   </div>
 
@@ -6281,6 +6286,32 @@ function toggleGaugeLabels(){
   try { saved = localStorage.getItem(GAUGE_HIDE_LABELS_KEY); } catch(e){}
   if(saved === '1') grid.classList.add('hide-labels');
   renderGaugeHideLabelBtn();
+})();
+// Hide Small Print toggle — collapses just the explanatory .note paragraph under each gauge
+// card (e.g. "Single-leg cash-secured put, not a 4-leg condor…"), independent of Hide Label
+// above. Same persisted-per-browser pattern as Hide Label.
+var GAUGE_HIDE_NOTES_KEY = 'pw_gauge_hide_notes';
+function renderGaugeHideNotesBtn(){
+  var btn = document.getElementById('gaugeHideNotesBtn'); if(!btn) return;
+  var hidden = document.getElementById('gaugeGrid').classList.contains('hide-notes');
+  btn.innerHTML = hidden
+    ? '👁️ <span class="en">Show Small Print</span><span class="zh">显示小字说明</span>'
+    : '🙈 <span class="en">Hide Small Print</span><span class="zh">隐藏小字说明</span>';
+  btn.classList.toggle('active', hidden);
+  setLang(curLang);
+}
+function toggleGaugeNotes(){
+  var grid = document.getElementById('gaugeGrid'); if(!grid) return;
+  var hidden = grid.classList.toggle('hide-notes');
+  try { localStorage.setItem(GAUGE_HIDE_NOTES_KEY, hidden ? '1' : '0'); } catch(e){}
+  renderGaugeHideNotesBtn();
+}
+(function(){
+  var grid = document.getElementById('gaugeGrid'); if(!grid) return;
+  var saved;
+  try { saved = localStorage.getItem(GAUGE_HIDE_NOTES_KEY); } catch(e){}
+  if(saved === '1') grid.classList.add('hide-notes');
+  renderGaugeHideNotesBtn();
 })();
 // Table 7 Win vs Loss Amount — Bang filter, reusing BANG_4_SYMS (Paul's 4 flagship
 // IC trades circled on the T6 screenshot: QQQ, NVDA, SMH, AVGO) as the shared source of
