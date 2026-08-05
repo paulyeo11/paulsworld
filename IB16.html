@@ -147,6 +147,27 @@ table.legwalk td.green { color: var(--green); font-weight: 700; }
 }
 .note-box.warn { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.3); }
 
+.wf-wrap { margin: 2em 0; }
+.wf-legend { display:flex; gap:16px; flex-wrap:wrap; font-size:0.78rem; color:var(--muted); margin-bottom:16px; align-items:center; }
+.wf-legend .dot { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+.wf-chart { margin-bottom:6px; }
+.wf-plot { position:relative; height:320px; }
+.wf-baseline { position:absolute; left:0; right:0; border-top:1px dashed rgba(255,255,255,0.25); }
+.wf-zero-label { position:absolute; left:0; font-size:0.68rem; color:var(--muted); transform:translateY(-50%); }
+.wf-cols { position:absolute; inset:0; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.wf-col { position:relative; height:100%; }
+.wf-bar { position:absolute; left:50%; transform:translateX(-50%); width:44px; max-width:70%; border-radius:4px 4px 0 0; }
+.wf-bar.float { border-radius:4px; }
+.wf-bar.down { border-radius:0 0 4px 4px; }
+.wf-bar.green { background:var(--green); }
+.wf-bar.red { background:var(--red); }
+.wf-bar.gold { background:var(--gold); }
+.wf-val { position:absolute; left:50%; transform:translateX(-50%); font-weight:800; font-size:0.85rem; white-space:nowrap; color:#fff; }
+.wf-val.small { font-size:0.72rem; }
+.wf-catrow { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px; }
+.wf-catlabel { text-align:center; font-size:0.72rem; color:var(--muted); line-height:1.35; }
+.wf-catlabel b { color:#d0d4e8; display:block; font-size:0.76rem; }
+
 footer {
   text-align: center;
   padding: 40px 20px;
@@ -263,6 +284,55 @@ footer a { color: var(--blue); text-decoration: none; }
     <span class="en">Put side: opened for $1.24/share credit (Sold 715P $5.80 − Bought 705P $4.56), closed for $0.34/share debit (Bought 715P $1.38 − Sold 705P $1.04) = <b>+$90</b> on 100 shares. Call side: opened for $2.32/share credit (Sold 770C $4.47 − Bought 780C $2.15), closed for $4.63/share debit (Bought 770C $11.29 − Sold 780C $6.66) = <b>−$231</b>. Net: $90 − $231 ≈ −$141, minus roughly $7.60 in commissions across the 4 closing legs = <b>−$148.60</b>, matching the trade blotter exactly.</span>
     <span class="zh">认沽一侧：建仓收取$1.24/股权利金（卖出715P $5.80 − 买入705P $4.56），平仓支付$0.34/股（买入715P $1.38 − 卖出705P $1.04）＝100股合计<b>+$90</b>。认购一侧：建仓收取$2.32/股权利金（卖出770C $4.47 − 买入780C $2.15），平仓支付$4.63/股（买入770C $11.29 − 卖出780C $6.66）＝<b>−$231</b>。合计：$90 − $231 ≈ −$141，再扣除4条平仓腿约$7.60的手续费 ＝ <b>−$148.60</b>，与交易记录完全吻合。</span>
   </p>
+
+  <div class="wf-wrap">
+    <h2>📊 <span class="en">Chart 20: SPY IC P&amp;L Bridge — Where the Loss Came From</span><span class="zh">图20：SPY铁鹰组合盈亏桥接图 — 亏损从何而来</span></h2>
+    <p>
+      <span class="en">Each bar shows one piece's dollar contribution to the final result. The put spread made money exactly as designed; the call spread's loss was more than 2.5× bigger, and commissions added a small extra drag — netting to the final −$148.60 bar on the right.</span>
+      <span class="zh">每根柱子代表一个部分对最终结果的美元贡献。认沽价差完全按预期盈利；认购价差的亏损规模是其2.5倍以上，手续费再加一点小损耗——三者合计得到最右侧的最终结果柱−$148.60。</span>
+    </p>
+
+    <div class="wf-legend">
+      <span><span class="dot" style="background:var(--green)"></span><span class="en">Gain</span><span class="zh">盈利</span></span>
+      <span><span class="dot" style="background:var(--red)"></span><span class="en">Loss</span><span class="zh">亏损</span></span>
+      <span><span class="dot" style="background:var(--gold)"></span><span class="en">Net realized total</span><span class="zh">已实现净合计</span></span>
+    </div>
+
+    <div class="wf-chart">
+      <div class="wf-plot">
+        <div class="wf-baseline" style="top:42.62%"></div>
+        <div class="wf-zero-label" style="top:42.62%">$0</div>
+        <div class="wf-cols">
+          <div class="wf-col" title="Put spread (715P/705P): +$90 — closed for less than it was sold for, worked as designed">
+            <div class="wf-bar green" style="top:13.11%; height:29.51%;"></div>
+            <div class="wf-val" style="top:calc(13.11% - 22px);">+$90</div>
+          </div>
+          <div class="wf-col" title="Call spread (770C/780C): −$231 — SPY's rally toward 770 inflated the buy-back cost">
+            <div class="wf-bar red float" style="top:13.11%; height:75.74%;"></div>
+            <div class="wf-val" style="top:calc(88.85% + 6px);">−$231</div>
+          </div>
+          <div class="wf-col" title="Commissions: −$7.60 across the 4 closing legs">
+            <div class="wf-bar red float" style="top:88.85%; height:2.49%;"></div>
+            <div class="wf-val small" style="top:calc(91.34% + 6px);">−$7.60</div>
+          </div>
+          <div class="wf-col" title="Net realized P&amp;L: −$148.60 — fully banked, confirmed via trade blotter">
+            <div class="wf-bar gold down" style="top:42.62%; height:48.72%;"></div>
+            <div class="wf-val" style="top:calc(91.34% + 6px);">−$148.60</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-catrow">
+        <div class="wf-catlabel"><b><span class="en">Put Spread</span><span class="zh">认沽价差</span></b><span class="en">715P / 705P</span><span class="zh">715P／705P</span></div>
+        <div class="wf-catlabel"><b><span class="en">Call Spread</span><span class="zh">认购价差</span></b><span class="en">770C / 780C</span><span class="zh">770C／780C</span></div>
+        <div class="wf-catlabel"><b><span class="en">Commissions</span><span class="zh">手续费</span></b><span class="en">4 closing legs</span><span class="zh">4条平仓腿</span></div>
+        <div class="wf-catlabel"><b><span class="en">Net Realized P&amp;L</span><span class="zh">已实现净盈亏</span></b><span class="en">final result</span><span class="zh">最终结果</span></div>
+      </div>
+    </div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">
+      <span class="en">Bar height = dollar contribution to the trade's final P&amp;L. Tap/hover a bar for the leg detail. Commissions bar is small but real — see the leg-by-leg table above for exact entry/exit prices.</span>
+      <span class="zh">柱高＝各部分对最终盈亏的美元贡献。点击/悬停柱子可查看该腿详情。手续费柱虽小但真实存在——精确的逐腿进出场价格见上方表格。</span>
+    </p>
+  </div>
 
   <div class="trade-box">
     <h3><span class="en">📉 SPY Iron Condor — Final Tally</span><span class="zh">📉 SPY铁鹰组合 — 最终结算</span></h3>
