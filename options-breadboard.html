@@ -1087,6 +1087,7 @@
   <div class="cushion-filter-row" style="margin-top:0">
     <button class="cushion-filter-btn" id="gaugeHideLabelBtn" onclick="toggleGaugeLabels()">🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span></button>
     <button class="cushion-filter-btn" id="gaugeHideNotesBtn" onclick="toggleGaugeNotes()">🙈 <span class="en">Hide Small Print</span><span class="zh">隐藏小字说明</span></button>
+    <button class="cushion-filter-btn" id="gaugeDayModeBtn" onclick="toggleGaugeDayMode()">🔁 <span class="en">Show Days Left</span><span class="zh">显示剩余天数</span></button>
     <button class="cushion-filter-btn" onclick="shareGaugeLink()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
   </div>
 
@@ -1213,7 +1214,7 @@
       <div class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.4)">⏳ <span class="en">PENDING FILL</span><span class="zh">待成交</span></div>
     </div>
     <div class="gauge-chart-num">Chart 15</div>
-    <div class="gauge-wrap"><span class="gauge-status-dot pending">⏳ <span class="en">PENDING</span><span class="zh">待成交</span></span><svg class="gauge-svg" id="gauge-xle" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-wrap"><span class="gauge-status-dot pending">⏳ <span class="en">PENDING</span><span class="zh">待成交</span></span><svg class="gauge-svg" id="gauge-xle" viewBox="0 0 340 210"></svg><span class="gauge-day-badge" id="gday-badge-xle">D—</span></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-xle">—</span><span id="gcallcush-mini-xle">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-xle">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-xle">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
@@ -1296,7 +1297,7 @@
       <div class="pill" style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.4)">⏳ <span class="en">PENDING FILL</span><span class="zh">待成交</span></div>
     </div>
     <div class="gauge-chart-num">Chart 19</div>
-    <div class="gauge-wrap"><span class="gauge-status-dot pending">⏳ <span class="en">PENDING</span><span class="zh">待成交</span></span><svg class="gauge-svg" id="gauge-meta" viewBox="0 0 340 210"></svg></div>
+    <div class="gauge-wrap"><span class="gauge-status-dot pending">⏳ <span class="en">PENDING</span><span class="zh">待成交</span></span><svg class="gauge-svg" id="gauge-meta" viewBox="0 0 340 210"></svg><span class="gauge-day-badge" id="gday-badge-meta">D—</span></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-meta">—</span><span id="gcallcush-mini-meta">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-meta">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span></div>
@@ -5785,12 +5786,13 @@ Object.keys(PUT_ONLY_CFG).forEach(function(sym){ buildPutOnlyGauge(sym, PUT_ONLY
 Object.keys(GAP_TABLE10_EXTRA).forEach(function(sym){ buildGauge(sym, GAP_TABLE10_EXTRA[sym]); });
 renderCushionFilterRow();
 
-// ===== Gauge tab — DTE Day count badge (top-right of each gauge chart) =====
+// ===== Gauge tab — DTE Day count / Days Left badge (top-right of each gauge chart) =====
 // D1 = the position's confirmed entry/fill day (from the IG Cushion Watch Log / trade
 // timelines elsewhere on this page — never guessed). Open positions recompute live off
 // today's date every page load; closed positions freeze at their confirmed close date.
-// XLE and META are deliberately omitted — staged order previews with no fill yet, so
-// there's no entry day to count from (same reasoning as their "no DTE Day 1 needle" notes).
+// XLE and META have no entry date (staged order previews, not yet filled) so they're
+// omitted here and stay blank in Day-count mode — same reasoning as their existing
+// "no DTE Day 1 needle" notes.
 var GAUGE_ENTRY_DATE = {
   nvda:  { entry:'2026-07-17', close:'2026-07-29' }, // whole condor open 17 Jul, fully closed 29 Jul
   qqq:   { entry:'2026-07-17', close:'2026-07-27' }, // open 17 Jul → close/reopen/close, fully closed by 27 Jul
@@ -5802,23 +5804,68 @@ var GAUGE_ENTRY_DATE = {
   googl: { entry:'2026-07-29' },                     // still open
   nvda2: { entry:'2026-08-04' }                      // second NVDA condor, filled 4 Aug, still open
 };
-function gaugeDayCount(entryStr, closeStr){
-  var entry = new Date(entryStr + 'T00:00:00');
-  var ref;
-  if(closeStr){ ref = new Date(closeStr + 'T00:00:00'); }
-  else { ref = new Date(); ref.setHours(0,0,0,0); }
-  return Math.round((ref - entry) / 86400000) + 1;
+// Expiry date per gauge card (from each card's own c-meta "Exp …" line) — used for the
+// Days Left (Bal) side of the toggle. Known for every card incl. XLE/META (pending orders
+// still have a target expiry even though they haven't filled).
+var GAUGE_EXPIRY_DATE = {
+  nvda:'2026-08-21', qqq:'2026-08-28', avgo:'2026-08-28', smh:'2026-09-18',
+  spy:'2026-08-31', iwm:'2026-08-28', xle:'2026-08-28', fds:'2026-08-21',
+  googl:'2026-09-11', nvda2:'2026-09-18', meta:'2026-09-18'
+};
+function gaugeTodayStr(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+function gaugeDaysBetween(fromStr, toStr){
+  var from = new Date(fromStr + 'T00:00:00');
+  var to = new Date((toStr || gaugeTodayStr()) + 'T00:00:00');
+  return Math.round((to - from) / 86400000);
+}
+// Mode toggle: 'day' shows D<n> (elapsed since entry, D1 = entry day), 'bal' shows the
+// balance of days left to expiry. Persisted per-browser, same pattern as Hide Label/Notes.
+var GAUGE_DAY_MODE_KEY = 'pw_gauge_day_mode';
+var gaugeDayMode = 'day';
 function renderGaugeDayBadges(){
-  Object.keys(GAUGE_ENTRY_DATE).forEach(function(sym){
-    var cfg = GAUGE_ENTRY_DATE[sym];
+  var allSyms = Object.keys(GAUGE_EXPIRY_DATE);
+  allSyms.forEach(function(sym){
     var badge = document.getElementById('gday-badge-'+sym); if(!badge) return;
-    var n = gaugeDayCount(cfg.entry, cfg.close);
-    badge.textContent = 'D' + n;
-    badge.title = cfg.close ? ('Entry ' + cfg.entry + ' → Closed ' + cfg.close) : ('Entry ' + cfg.entry + ' → today');
+    var entryCfg = GAUGE_ENTRY_DATE[sym];
+    if(gaugeDayMode === 'bal'){
+      var expiry = GAUGE_EXPIRY_DATE[sym];
+      var ref = entryCfg && entryCfg.close ? entryCfg.close : null; // freeze at close date if closed
+      var left = gaugeDaysBetween(ref || gaugeTodayStr(), expiry);
+      badge.textContent = 'Bal ' + left + 'd';
+      badge.title = ref ? ('Days left to expiry as of close (' + ref + ')') : ('Days left to expiry (' + expiry + ')');
+      badge.style.display = '';
+    } else {
+      if(!entryCfg){ badge.style.display = 'none'; return; }
+      var n = gaugeDaysBetween(entryCfg.entry, entryCfg.close) + 1;
+      badge.textContent = 'D' + n;
+      badge.title = entryCfg.close ? ('Entry ' + entryCfg.entry + ' → Closed ' + entryCfg.close) : ('Entry ' + entryCfg.entry + ' → today');
+      badge.style.display = '';
+    }
   });
 }
-renderGaugeDayBadges();
+function renderGaugeDayModeBtn(){
+  var btn = document.getElementById('gaugeDayModeBtn'); if(!btn) return;
+  btn.innerHTML = gaugeDayMode === 'bal'
+    ? '🔁 <span class="en">Show Day Count</span><span class="zh">显示第几天</span>'
+    : '🔁 <span class="en">Show Days Left</span><span class="zh">显示剩余天数</span>';
+  setLang(curLang);
+}
+function toggleGaugeDayMode(){
+  gaugeDayMode = gaugeDayMode === 'bal' ? 'day' : 'bal';
+  try { localStorage.setItem(GAUGE_DAY_MODE_KEY, gaugeDayMode); } catch(e){}
+  renderGaugeDayBadges();
+  renderGaugeDayModeBtn();
+}
+(function(){
+  var saved;
+  try { saved = localStorage.getItem(GAUGE_DAY_MODE_KEY); } catch(e){}
+  if(saved === 'bal' || saved === 'day') gaugeDayMode = saved;
+  renderGaugeDayBadges();
+  renderGaugeDayModeBtn();
+})();
 
 // Single-strike "breadboard" for a covered call (no put leg, no long call — just the
 // short call strike vs. share price and cost basis). Table 1101.
