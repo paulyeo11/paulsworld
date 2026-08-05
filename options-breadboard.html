@@ -6120,7 +6120,14 @@ var PUT_ONLY_CFG = { GOOGL: {shortP:305, lo:270, hi:400, breakeven:300.57} };
 // gauge/needle pipeline (plotNowMarker etc. only read RAIL_CFG, not cfgFor()).
 var GAP_TABLE10_EXTRA = {
   NVDA2: { lo:180, hi:235, longP:185, shortP:190, shortC:225, longC:230, beLo:187.45, beHi:227.55, quoteSym:'NVDA', label:'NVDA (Sep18)' },
-  META:  { lo:490, hi:615, longP:495, shortP:505, shortC:600, longC:610, beLo:501.93, beHi:603.07, quoteSym:'META', label:'META' }
+  META:  { lo:490, hi:615, longP:495, shortP:505, shortC:600, longC:610, beLo:501.93, beHi:603.07, quoteSym:'META', label:'META' },
+  // SMH_JUL — the ORIGINAL SMH Iron Condor (17 Jul '26 open, Aug21'26 expiry, 505P/515P/650C/660C),
+  // closed 29 Jul 2026 for -$76.19 (see IB11.html). When SMH re-opened 4 Aug 2026 the 'SMH' key
+  // above got reassigned to the NEW Sep18'26 strikes (500/510/620/630, see RAIL_CFG), which left
+  // this closed position with no config and no row in T6 (Share Price vs Selling Put & Call) —
+  // added here (added 2026-08-06, flagged by Paul) so "Closed Only" shows it again, same pattern
+  // as NVDA2 above. quoteSym still resolves to the live SMH price for context.
+  SMH_JUL: { lo:495, hi:660, longP:505, shortP:515, shortC:650, longC:660, beLo:510.65, beHi:654.35, quoteSym:'SMH', label:'SMH (Jul)' }
 };
 // Combined lookup for any T6 position, across all three shapes (4-leg condor,
 // call-only, put-only) — used everywhere T6 previously did `RAIL_CFG[sym] || CALL_ONLY_CFG[sym]`.
@@ -6770,7 +6777,9 @@ var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.32, SPY:0.25, IWM
 // premium before the $1.14 commission, same convention as the other entries above.
 // SMH: $540 = the 4 Aug 2026 re-open credit (Sold 510P $17.95 + Sold 620C $21.47 − Bought 500P
 // $15.45 − Bought 630C $18.57), same gross-premium convention (no commission deducted) as the rest.
-var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:540, SPY:356, IWM:214, FDS:210, GOOGL:443 };
+// SMH_JUL: $435 = the original 17 Jul 2026 entry credit (closed 29 Jul, see IB11.html). NVDA2:
+// $255 = the 4 Aug 2026 second-NVDA-condor entry credit (Sep18'26 190/225).
+var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:540, SPY:356, IWM:214, FDS:210, GOOGL:443, SMH_JUL:435, NVDA2:255 };
 // T6's P&L Amt column — realized P&L for closed positions (QQQ, SPY, NVDA), else the real
 // IBKR Unrealized P&L from the latest PortfolioAnalyst statement, per the Bang Trade Analysis
 // reconciliation (Table 350/590/420/470/510/550/630) — kept in sync with Table 900's per-row
@@ -6786,11 +6795,14 @@ var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:540, SPY:356, IWM:214, FDS:
 // full A/B/C bridge) — same "newest confirmed real app read wins" convention as FDS. FDS itself
 // is refreshed even further, to the 5 Aug 2026, 21:46 SGT Tiger app snapshot (−$241.65, up from
 // −$150.62 the day before — see the Bang Trade Analysis FDS tab Table 680/690 and IB17 for the
-// full mark history). SMH's old −$76.19 realized figure belonged to the position closed
-// 29 Jul — that trade is done and logged in IB11.html; SMH re-opened fresh 4 Aug 2026 (new
-// strikes, see RAIL_CFG) with no IBKR statement mark yet, so it's deliberately left out of this
-// map rather than guessing (renders as "—").
-var PNL_AMT = { NVDA:-3.39, QQQ:42.53, AVGO:-11.85, SPY:-148.60, IWM:48.92, GOOGL:355.38, FDS:-241.65 };
+// full mark history). SMH_JUL is the OLD position closed 29 Jul for a real, final −$76.19 (see
+// IB11.html) — kept as its own key (GAP_TABLE10_EXTRA) since the 'SMH' key itself got reassigned
+// to the NEW Sep18'26 condor when it re-opened 4 Aug 2026. That new SMH position (and the second
+// NVDA2 condor, also opened 4 Aug) now have their first confirmed real marks too, straight from
+// the 4 Aug 2026 statement's Open Position Summary: SMH −$15.77, NVDA2 −$4.56. IWM (−$9.08) and
+// GOOGL (+$375.51) are refreshed to the same 4 Aug statement (updated 2026-08-06 — see T29's
+// Deposits tab / Table 900 for the full NAV-cycle writeup).
+var PNL_AMT = { NVDA:-3.39, QQQ:42.53, AVGO:-11.85, SPY:-148.60, IWM:-9.08, GOOGL:375.51, FDS:-241.65, SMH:-15.77, SMH_JUL:-76.19, NVDA2:-4.56 };
 // Symbols whose PNL_AMT is confirmed closed but only a partial figure (missing leg(s) not
 // yet confirmed) — none currently; NVDA's combined total above is now final.
 var PNL_AMT_PARTIAL = {};
@@ -6938,7 +6950,7 @@ loadPutOnlyStocks();
 // as of 4 Aug 2026 so it shows up in these T6 tables, not just the Gauge/Gap tabs — display
 // label resolves via gapTable10Label(), live price via getLivePrice()'s quoteSym fallback.
 function sortedByPutCushion(){
-  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM','NVDA2'].concat(Object.keys(PUT_ONLY_CFG));
+  var syms = ['NVDA','QQQ','AVGO','SMH','SPY','IWM','NVDA2','SMH_JUL'].concat(Object.keys(PUT_ONLY_CFG));
   var sorted = syms.slice().sort(function(a,b){
     var cfgA = cfgFor(a), cfgB = cfgFor(b);
     var pA = getLivePrice(a);
