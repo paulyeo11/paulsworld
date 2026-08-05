@@ -524,6 +524,7 @@
         <button id="tb-riskzone" onclick="setTab('riskzone')">📐 <span class="en">Profit/Risk Zone</span><span class="zh">盈亏区间</span></button>
         <button id="tb-pnl" onclick="setTab('pnl')">📅 <span class="en">P&amp;L</span><span class="zh">盈亏</span></button>
         <button id="tb-icpnl" onclick="setTab('icpnl')">🏁 <span class="en">IC P&amp;L</span><span class="zh">IC 盈亏</span></button>
+        <button id="tb-finalpnl" onclick="setTab('finalpnl')">🔚 <span class="en">Final P&amp;L</span><span class="zh">最终盈亏</span></button>
         <button id="tb-unreal" onclick="setTab('unrealized')">📉 <span class="en">Unrealized Loss</span><span class="zh">未实现亏损</span></button>
         <button id="tb-cc" onclick="setTab('covcall')">📞 <span class="en">Covered Call</span><span class="zh">备兑看涨</span></button>
         <button id="tb-accbal" onclick="setTab('accbal')">💰 <span class="en">Acc Balance</span><span class="zh">账户余额</span></button>
@@ -2995,6 +2996,41 @@
     </div>
   </div><!-- /tab-new -->
 
+  <div id="tab-finalpnl" style="display:none">
+    <div class="condor" id="finalPnlCard">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">🔚 <span class="en">Table 1512: Final P&amp;L — Premium Bridge by Stock</span><span class="zh">表1512：各标的最终盈亏——权利金桥接</span></div>
+        <div class="c-meta"><span class="en">Same 4-step bridge as the FDS waterfall chart (IB17) — Premium Collected → Cost to Close Now → Reconciliation → Net Unrealized P&amp;L, one row per stock</span><span class="zh">与FDS瀑布图（IB17）相同的4步桥接——已收权利金 → 当前平仓成本 → 核算调整 → 未实现净盈亏，每只标的一行</span></div>
+        <div></div>
+      </div>
+      <div class="table-scroll table-fit">
+      <table class="legs compact-rows" id="table1512-finalpnl" style="margin-top:10px">
+        <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+        <thead><tr>
+          <th><span class="en">Stock</span><span class="zh">标的</span></th>
+          <th class="num"><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></th>
+          <th class="num"><span class="en">Cost to Close Now (B)</span><span class="zh">当前平仓成本 (B)</span></th>
+          <th class="num"><span class="en">Reconciliation (C)</span><span class="zh">核算调整 (C)</span></th>
+          <th class="num"><span class="en">Net Unrealized P&amp;L (A−B+C)</span><span class="zh">未实现净盈亏 (A−B+C)</span></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td>🟫 <span class="en">FDS Covered Call</span><span class="zh">FDS备兑看涨</span></td>
+            <td class="num" style="color:#3fb950;font-weight:700">+$210.00</td>
+            <td class="num" style="color:#f85149;font-weight:700">−$367.00</td>
+            <td class="num" style="color:#3fb950;font-weight:700">+$6.38</td>
+            <td class="num" style="color:#f85149;font-weight:800">−$150.62</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <span class="en">With <b>A</b> = Premium Collected (net credit received when the option was sold), <b>B</b> = Cost to Close Now (mark-to-market cost to buy it back today), <b>C</b> = Reconciliation (app fee/rounding netting vs the app's exact figure): <b>Net Unrealized P&amp;L = A − B + C</b>. FDS row uses the same 4 Aug 2026 Tiger app snapshot as the <a href="IB17.html" target="_blank" style="color:#f59e0b">IB17</a> waterfall chart (sold 300 Call @$2.10 on 21 Jul; mark-to-market buy-back now $3.67). Only stocks with a confirmed 4-step bridge breakdown are listed here — this table grows as more positions get the same treatment, rather than guessing figures for the rest.</span>
+        <span class="zh">其中 <b>A</b> = 已收权利金（卖出期权时收到的净额），<b>B</b> = 当前平仓成本（今日按市值计价的买回成本），<b>C</b> = 核算调整（相对应用精确数字的手续费／取整净额）：<b>未实现净盈亏 = A − B + C</b>。FDS一行采用与<a href="IB17.html" target="_blank" style="color:#f59e0b">IB17</a>瀑布图相同的2026年8月4日Tiger应用快照（7月21日以$2.10卖出300 Call；按市值计价买回成本现为$3.67）。此表仅列出已确认4步桥接明细的标的——未来随更多持仓采用相同处理方式而增加行数，而非猜测其余标的的数字。</span>
+      </div>
+    </div>
+  </div><!-- /tab-finalpnl -->
+
   <!-- ============ BANG TRADE ANALYSIS TAB (wraps QQQ + SMH sub-pages) ============ -->
   <div id="tab-bang" style="display:none">
 
@@ -5341,6 +5377,7 @@ function setTab(t){
   document.getElementById('tab-cushion').style.display = t==='cushion'?'':'none';
   document.getElementById('tab-pnl').style.display = t==='pnl'?'':'none';
   document.getElementById('tab-icpnl').style.display = t==='icpnl'?'':'none';
+  document.getElementById('tab-finalpnl').style.display = t==='finalpnl'?'':'none';
   document.getElementById('tab-dailypnl').style.display = t==='dailypnl'?'':'none';
   document.getElementById('tab-trades').style.display = t==='trades'?'':'none';
   document.getElementById('tab-win').style.display = t==='win'?'':'none';
@@ -5374,6 +5411,7 @@ function setTab(t){
   document.getElementById('tb-cush').classList.toggle('active', t==='cushion');
   document.getElementById('tb-pnl').classList.toggle('active', t==='pnl');
   document.getElementById('tb-icpnl').classList.toggle('active', t==='icpnl');
+  document.getElementById('tb-finalpnl').classList.toggle('active', t==='finalpnl');
   document.getElementById('tb-dailypnl').classList.toggle('active', t==='dailypnl');
   document.getElementById('tb-trades').classList.toggle('active', t==='trades');
   document.getElementById('tb-win').classList.toggle('active', t==='win');
@@ -5390,9 +5428,9 @@ function setTab(t){
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
   document.getElementById('tb-app').classList.toggle('active', t==='app');
   document.getElementById('tb-new').classList.toggle('active', t==='new');
-  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
+  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
   closeMoreTab();
-  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
