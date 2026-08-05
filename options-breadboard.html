@@ -2119,6 +2119,7 @@
         <span class="en">4 trades closed between 27 Jul and 4 Aug 2026 — all real fills/statement marks, sourced from Table 900 (P&amp;L Summary) and the per-symbol Tables 350 (QQQ), 420 (SMH), 590 (NVDA) and 510 (SPY). Still-open positions (AVGO, SMH Sep18, IWM, NVDA Sep18, GOOGL, FDS) are excluded — see Table 900 for those.</span>
         <span class="zh">4笔交易于2026年7月27日至8月4日期间平仓——均为真实成交/报表标记，数据来自Table 900（盈亏总览）及各标的明细表350（QQQ）、420（SMH）、590（NVDA）与510（SPY）。仍持仓中的部位（AVGO、SMH 9月18日、IWM、NVDA 9月18日、GOOGL、FDS）不计入本表——详见Table 900。</span>
       </div>
+      <div class="cushion-filter-row" id="table901FilterRow"></div>
       <div class="table-scroll table-fit" style="margin-top:10px">
       <table class="legs compact-rows" id="table901-icpnl">
         <thead><tr>
@@ -2126,7 +2127,7 @@
           <th><span class="en">Field</span><span class="zh">项目</span></th>
           <th class="num"><span class="en">Value</span><span class="zh">数值</span></th>
         </tr></thead>
-        <tbody>
+        <tbody data-sym="qqq">
           <tr>
             <td rowspan="5">🟦 <b>QQQ</b></td>
             <td><span class="en">Entry Date</span><span class="zh">建仓日期</span></td>
@@ -2148,6 +2149,8 @@
             <td><span class="en">Final P&amp;L (A−B)</span><span class="zh">最终盈亏（A−B）</span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$42.53</td>
           </tr>
+        </tbody>
+        <tbody data-sym="smh">
           <tr>
             <td rowspan="5">🟩 <b>SMH</b> <span class="en" style="font-weight:400;opacity:.7">(Jul)</span><span class="zh" style="font-weight:400;opacity:.7">（7月）</span></td>
             <td><span class="en">Entry Date</span><span class="zh">建仓日期</span></td>
@@ -2169,6 +2172,8 @@
             <td><span class="en">Final P&amp;L (A−B)</span><span class="zh">最终盈亏（A−B）</span></td>
             <td class="num" style="color:#f85149;font-weight:700">−$76.19</td>
           </tr>
+        </tbody>
+        <tbody data-sym="nvda">
           <tr>
             <td rowspan="5">🔴 <b>NVDA</b> <span class="en" style="font-weight:400;opacity:.7">(Aug21)</span><span class="zh" style="font-weight:400;opacity:.7">（8月21日）</span></td>
             <td><span class="en">Entry Date</span><span class="zh">建仓日期</span></td>
@@ -2190,6 +2195,8 @@
             <td><span class="en">Final P&amp;L (A−B)</span><span class="zh">最终盈亏（A−B）</span></td>
             <td class="num" style="color:#f85149;font-weight:700">−$3.39</td>
           </tr>
+        </tbody>
+        <tbody data-sym="spy">
           <tr>
             <td rowspan="5">🔷 <b>SPY</b></td>
             <td><span class="en">Entry Date</span><span class="zh">建仓日期</span></td>
@@ -7089,6 +7096,42 @@ function filterPremiumRows(){
 }
 renderPremiumFilterRow();
 filterPremiumRows();
+// Table 901 (IC P&L — Fully Realized) — filter by symbol. Rows are grouped into one
+// <tbody data-sym="..."> per symbol (each with a rowspan'd Symbol cell), so filtering
+// hides/shows the whole tbody rather than individual <tr>s — hiding a single row with a
+// rowspan cell would orphan the rows below it instead of cleanly removing the block.
+var table901Filter = 'all';
+function setTable901Filter(val){
+  table901Filter = val;
+  renderTable901FilterRow();
+  filterTable901Rows();
+}
+function renderTable901FilterRow(){
+  var opts = [
+    {v:'all', en:'All', zh:'全部'},
+    {v:'qqq', en:'🟦 QQQ', zh:'🟦 QQQ'},
+    {v:'smh', en:'🟩 SMH', zh:'🟩 SMH'},
+    {v:'nvda', en:'🔴 NVDA', zh:'🔴 NVDA'},
+    {v:'spy', en:'🔷 SPY', zh:'🔷 SPY'}
+  ];
+  var html = opts.map(function(o){
+    var active = table901Filter === o.v ? ' active' : '';
+    return '<button class="cushion-filter-btn'+active+'" onclick="setTable901Filter(\''+o.v+'\')"><span class="en">'+o.en+'</span><span class="zh">'+o.zh+'</span></button>';
+  }).join('');
+  var el = document.getElementById('table901FilterRow');
+  if(el) el.innerHTML = html;
+  setLang(curLang);
+}
+function filterTable901Rows(){
+  var table = document.getElementById('table901-icpnl'); if(!table) return;
+  Array.prototype.forEach.call(table.querySelectorAll('tbody[data-sym]'), function(tb){
+    var sym = tb.getAttribute('data-sym');
+    var show = table901Filter === 'all' || table901Filter === sym;
+    tb.style.display = show ? '' : 'none';
+  });
+}
+renderTable901FilterRow();
+filterTable901Rows();
 // T9 — Hide Dates toggle. Hides the Entry/Exit/Days th+td cells AND their <col>
 // (colgroup <col> width applies regardless of cell display:none, so the col itself must
 // be hidden too) so the remaining columns naturally reclaim that width.
