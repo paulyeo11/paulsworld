@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIT17: My Friend Shared His GitHub Repo — Why It Still Didn't Show Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1a1a2e;
+      --blue: #4a6cf7;
+      --blue-light: #e8eeff;
+      --blue-mid: #c5d3ff;
+      --accent: #f4813f;
+      --soft: #f7f8fc;
+      --line: #e4e8f5;
+      --text: #2d2d44;
+      --muted: #6b7280;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--soft);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.9;
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 999;
+      background: var(--blue);
+      color: white;
+      text-decoration: none;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.82em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 24px;
+      box-shadow: 0 4px 14px rgba(74,108,247,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(74,108,247,0.45); }
+
+    .share-btn { display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4); color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px; cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; margin-left: 12px; transition: background .2s; }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast { display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+
+    .hero {
+      background: linear-gradient(155deg, #1a1a2e 0%, #0f2060 45%, #1a3a8f 100%);
+      color: white;
+      padding: 100px 24px 70px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(74,108,247,0.25) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 30%, rgba(244,129,63,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to   { background-position: 60px 60px; }
+    }
+
+    .hero-tag {
+      position: relative;
+      z-index: 2;
+      display: inline-block;
+      background: rgba(74,108,247,0.35);
+      border: 1px solid rgba(74,108,247,0.6);
+      color: #a5b4fc;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.78em;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      position: relative;
+      z-index: 2;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8em, 5vw, 3em);
+      font-weight: 700;
+      line-height: 1.25;
+      max-width: 820px;
+      margin: 0 auto 20px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .hero h1 em { font-style: italic; color: #f4b87a; }
+    .hero-meta {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 0.85em;
+      color: rgba(255,255,255,0.7);
+      margin-top: 10px;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-cta {
+      position: relative;
+      z-index: 2;
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .article-wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .lead {
+      font-size: 1.18em;
+      font-weight: 400;
+      font-style: italic;
+      color: #3d3d5c;
+      border-left: 4px solid var(--blue);
+      padding: 16px 24px;
+      margin: 48px 0 36px;
+      background: var(--blue-light);
+      border-radius: 0 12px 12px 0;
+      line-height: 1.8;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.55em;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 52px 0 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h2::before {
+      content: attr(data-num);
+      display: inline-block;
+      background: var(--blue);
+      color: white;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.52em;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-right: 10px;
+      vertical-align: middle;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    p { margin-bottom: 20px; }
+
+    .pullquote {
+      margin: 44px 0;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, #1a1a2e, #0f2060);
+      color: white;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pullquote::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-family: 'Playfair Display', serif;
+      font-size: 8em;
+      color: rgba(74,108,247,0.25);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .pullquote p {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15em;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0;
+      color: #e2e8ff;
+    }
+
+    .info-box {
+      background: white;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--blue);
+      border-radius: 0 12px 12px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+      box-shadow: 0 2px 10px rgba(74,108,247,0.07);
+    }
+    .info-box .box-title {
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.8em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+    .info-box ul { list-style: none; padding: 0; }
+    .info-box ul li {
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f2fa;
+      font-size: 0.96em;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .info-box ul li:last-child { border-bottom: none; }
+    .info-box ul li::before { content: '→'; color: var(--blue); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    .highlight-card {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      border: 1px solid #fed7aa;
+      border-left: 5px solid var(--accent);
+      border-radius: 0 14px 14px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+    }
+    .highlight-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .highlight-card p { margin-bottom: 0; }
+
+    .warning-card {
+      background: linear-gradient(135deg, #fefce8, #fef9c3);
+      border: 1px solid #fde68a;
+      border-left: 5px solid #f59e0b;
+      border-radius: 0 14px 14px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+    }
+    .warning-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .warning-card p { margin-bottom: 0; }
+
+    .good-card {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1px solid #bbf7d0;
+      border-left: 5px solid #22c55e;
+      border-radius: 0 14px 14px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+    }
+    .good-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .good-card p { margin-bottom: 0; }
+
+    .steps { counter-reset: step; margin: 36px 0; }
+    .step { counter-increment: step; display: flex; gap: 20px; margin-bottom: 32px; align-items: flex-start; }
+    .step-num {
+      flex-shrink: 0; width: 44px; height: 44px; background: var(--blue); color: white;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1em; box-shadow: 0 4px 12px rgba(74,108,247,0.3);
+    }
+    .step-num::before { content: counter(step); }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; font-family: 'Playfair Display', serif; font-size: 1.05em; color: var(--ink); margin-bottom: 6px; }
+    .step-body p { margin-bottom: 8px; font-size: 0.97em; }
+
+    .divider { text-align: center; margin: 48px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 8px; opacity: 0.4; }
+
+    .view-counter-wrap { text-align: center; margin: 60px 0 20px; padding: 24px; background: var(--blue-light); border-radius: 14px; }
+
+    footer { text-align: center; font-size: 0.82em; color: var(--muted); padding: 24px 16px 48px; border-top: 1px solid var(--line); margin-top: 16px; }
+    footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
+
+    .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+    .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+    .breadcrumb a:hover { color:#fff; }
+    .breadcrumb .sep { color:rgba(255,255,255,.3); }
+    .breadcrumb .current { color:#f4c869; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 80px 20px 50px; }
+      .home-btn { font-size: 0.78em; padding: 8px 14px; }
+      h2 { font-size: 1.3em; }
+      .pullquote::before { font-size: 5em; }
+      .step-num { width: 36px; height: 36px; font-size: 0.9em; }
+    }
+  </style>
+  <script src="/bilingual.js"></script>
+</head>
+<body>
+
+  <a target="_blank" class="home-btn" href="https://paulsworld.vercel.app/">🏠 <span class="en">Home</span><span class="zh">主页</span></a>
+
+  <header class="hero">
+    <div class="hero-tag">
+      <span class="en">🤖 AI Tools · Tool 17</span>
+      <span class="zh">🤖 AI工具 · 工具17</span>
+    </div>
+    <div class="breadcrumb">
+      <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+      <span class="sep">›</span>
+      <a href="/index.html#ait" target="_blank"><span class="en">AI Tools</span><span class="zh">AI 工具</span></a>
+      <span class="sep">›</span>
+      <span class="current"><span class="en">AIT17</span><span class="zh">AIT17</span></span>
+    </div>
+    <h1>
+      <span class="en">AIT17: My Friend Shared His GitHub Repo —<br><em>Why It Still Didn't Show Up</em></span>
+      <span class="zh">AIT17：朋友把他的GitHub仓库分享给我——<br><em>为什么它还是没出现</em></span>
+    </h1>
+    <div class="hero-meta">
+      <span>✍️ Paul Yeo</span>
+      <span>📅 <span class="en">5 August 2026</span><span class="zh">2026年8月5日</span></span>
+      <span>⏱️ <span class="en">5 min read</span><span class="zh">5分钟阅读</span></span>
+    </div>
+    <div class="hero-cta">
+      <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+  <div class="article-wrap">
+
+    <p class="lead">
+      <span class="en">My friend Yudi tried to share his GitHub repository with me. I got the email invite and clicked "Accept." Job done — or so I thought. But when I went to look for his repo on my Claude Code screen, it just wasn't there. Nothing showed up. Here's what I learned about why "accepting an invite" and "seeing the repo in your tool" are actually two completely separate steps.</span>
+      <span class="zh">我的朋友Yudi想把他的GitHub仓库分享给我。我收到了邮件邀请，点了"Accept"（接受）。我以为这样就搞定了。可是当我到Claude Code屏幕上去找他的仓库时，却怎么也找不到，什么都没有出现。以下是我学到的：原来"接受邀请"和"在你的工具里看到这个仓库"其实是完全不同的两个步骤。</span>
+    </p>
+
+    <h2 data-num="01">
+      <span class="en">The Problem — Invite Accepted, Repo Still Missing</span>
+      <span class="zh">问题所在——邀请已接受，仓库却还是不见</span>
+    </h2>
+
+    <p>
+      <span class="en">This is a really common mix-up, so I want to walk through it plainly. GitHub actually has <strong>two separate systems</strong> stacked on top of each other:</span>
+      <span class="zh">这其实是个很常见的混淆点，我想把它讲清楚。GitHub其实有<strong>两套完全独立的系统</strong>叠在一起：</span>
+    </p>
+
+    <div class="info-box">
+      <div class="box-title"><span class="en">🧩 Two Layers, Not One</span><span class="zh">🧩 两层，不是一层</span></div>
+      <ul>
+        <li><span class="en"><strong>Layer 1 — GitHub.com itself:</strong> "Am I a collaborator on this repo?" This is what the email invite controls.</span><span class="zh"><strong>第一层——GitHub.com本身：</strong>"我是不是这个仓库的协作者？"邮件邀请控制的就是这一层。</span></li>
+        <li><span class="en"><strong>Layer 2 — Your tool's connection to GitHub</strong> (Claude Code, VS Code, GitHub Desktop, a Slack integration, etc.): "Which repos has this specific app/tool been given permission to see?" This is a separate permission, on top of Layer 1.</span><span class="zh"><strong>第二层——你所用工具与GitHub的连接</strong>（Claude Code、VS Code、GitHub Desktop、Slack集成等）："这个具体的应用/工具被允许看到哪些仓库？"这是叠加在第一层之上的另一个独立权限。</span></li>
+      </ul>
+    </div>
+
+    <div class="pullquote">
+      <p><span class="en">Accepting Yudi's invite only unlocked Layer 1 — you becoming a real collaborator on GitHub.com. It did nothing to Layer 2, which is what decides what shows up on your Claude Code screen.</span><span class="zh">接受Yudi的邀请只解锁了第一层——让你在GitHub.com上真正成为协作者。它对第二层完全没有影响，而第二层才是决定你Claude Code屏幕上会显示什么的关键。</span></p>
+    </div>
+
+    <h2 data-num="02">
+      <span class="en">Step 1 — Confirm the Invite Actually Went Through</span>
+      <span class="zh">第一步——先确认邀请真的生效了</span>
+    </h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Check github.com directly</span><span class="zh">直接去github.com检查</span></strong>
+          <p><span class="en">Open a browser, go to Yudi's repo URL (e.g. github.com/yudi/his-repo-name), and make sure you're logged into the <em>same GitHub account</em> the invite email was sent to. If the repo loads without a "404 — this is a private repository" error, you're genuinely a collaborator.</span><span class="zh">打开浏览器，进入Yudi仓库的网址（例如 github.com/yudi/his-repo-name），并确认你登录的是<em>收到邀请邮件的那个GitHub账号</em>。如果仓库能正常打开、没有出现"404——这是一个私有仓库"的错误，说明你确实已经是协作者了。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Watch out for multiple GitHub accounts</span><span class="zh">留意是不是有多个GitHub账号</span></strong>
+          <p><span class="en">A very common trap: you clicked "Accept" while logged into a different GitHub account than the one your coding tool actually uses. If you have more than one GitHub account (a work one, a personal one), double-check which one received and accepted the invite.</span><span class="zh">一个非常常见的坑：你点"Accept"接受邀请时登录的GitHub账号，和你的编程工具实际使用的账号并不是同一个。如果你有不止一个GitHub账号（比如一个工作账号、一个个人账号），要仔细核对一下到底是哪个账号收到并接受了这个邀请。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Check for organization SSO</span><span class="zh">检查是不是有组织单点登录（SSO）</span></strong>
+          <p><span class="en">If Yudi's repo lives under a company or organization account (not his personal one), some organizations require a separate "Authorize" step for Single Sign-On (SAML SSO) even after you've accepted the collaborator invite. Look for a banner on the repo page or in your GitHub notification settings that says something like "Authorize [Org Name]."</span><span class="zh">如果Yudi的仓库是挂在公司或组织账号下面（不是他的个人账号），有些组织即使在你接受了协作者邀请之后，仍然需要另外做一次"单点登录（SAML SSO）授权"。留意仓库页面或GitHub通知设置里有没有出现类似"Authorize [组织名称]"的提示条。</span></p>
+        </div>
+      </div>
+    </div>
+
+    <h2 data-num="03">
+      <span class="en">Step 2 — Give Your Tool Permission to See the New Repo</span>
+      <span class="zh">第二步——授权你的工具能看到这个新仓库</span>
+    </h2>
+
+    <p>
+      <span class="en">This is the step people miss. Being a collaborator on GitHub.com does not automatically flow through to every app connected to your GitHub account — each app keeps its own list of which repos it's allowed to touch.</span>
+      <span class="zh">这一步是大家最容易漏掉的。在GitHub.com上是协作者，并不会自动同步到每一个连接到你GitHub账号的应用上——每个应用都有自己单独的一份"它被允许访问哪些仓库"的清单。</span>
+    </p>
+
+    <div class="warning-card">
+      <span class="card-emoji">⚠️</span>
+      <p><span class="en"><strong>For Claude Code / Claude in Slack specifically:</strong> the GitHub connection is powered by a GitHub App installation, and that installation was likely set up to only access a specific list of repos (either "All repositories" or "Only select repositories"). A brand-new repo you were just added to won't appear until that installation's repo list is updated.</span><span class="zh"><span class="en"></span><strong>专门针对Claude Code / Slack中的Claude：</strong>它与GitHub的连接是通过安装一个GitHub App来实现的，这个安装当初很可能被设置为只能访问一份特定的仓库清单（要么是"所有仓库"，要么是"仅选定的仓库"）。一个你刚被加进去的新仓库，在这份清单更新之前是不会出现的。</span></p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Find the GitHub App's settings</span><span class="zh">找到GitHub App的设置</span></strong>
+          <p><span class="en">Go to <strong>github.com → your profile photo (top right) → Settings → Applications → Installed GitHub Apps</strong> (or, if Yudi's repo is under an organization: go to that organization's Settings → Third-party Access instead). Look for the Claude / Claude Code / Claude in Slack app in the list.</span><span class="zh">前往 <strong>github.com → 右上角头像 → Settings（设置）→ Applications（应用）→ Installed GitHub Apps（已安装的GitHub App）</strong>（如果Yudi的仓库是在某个组织下面，那就改成去那个组织的 Settings → Third-party Access）。在列表里找到Claude / Claude Code / Slack中的Claude这个应用。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Add the repo to its access list</span><span class="zh">把仓库加进它的访问清单</span></strong>
+          <p><span class="en">Click "Configure" next to the app. If it's set to "Only select repositories," you'll see an "Add repositories" dropdown — find and add Yudi's repo there, then Save. If it's already set to "All repositories," this step isn't the issue and you can skip to the next section.</span><span class="zh">点击该应用旁边的"Configure"（配置）。如果设置的是"Only select repositories"（仅选定的仓库），你会看到一个"Add repositories"（添加仓库）的下拉菜单——在那里找到并添加Yudi的仓库，然后保存。如果原本设置的就是"All repositories"（所有仓库），说明这一步不是问题所在，可以跳到下一部分。</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <strong><span class="en">Re-check inside your tool</span><span class="zh">回到工具里重新检查</span></strong>
+          <p><span class="en">Back in Claude Code (or whichever tool you're using), refresh or re-open the repo picker / source list. The repo should now show up. If your tool has a specific "Add repository" action, use that — it's designed exactly for this moment.</span><span class="zh">回到Claude Code（或你正在使用的其他工具）里，刷新或重新打开仓库选择器/来源列表。这时候仓库应该就会出现了。如果你的工具有专门的"添加仓库"功能，用那个功能——它就是为这种情况设计的。</span></p>
+        </div>
+      </div>
+    </div>
+
+    <h2 data-num="04">
+      <span class="en">Step 3 — If You're Using Git/VS Code Locally Instead</span>
+      <span class="zh">第三步——如果你用的是本地的Git/VS Code</span>
+    </h2>
+
+    <p>
+      <span class="en">If "code screen" means a local code editor rather than a cloud tool, the fix is different: being a collaborator doesn't make the repo magically appear on your computer. You still need to actually clone it.</span>
+      <span class="zh">如果所说的"代码屏幕"指的是本地的代码编辑器，而不是云端工具，那解决方法就不一样了：成为协作者并不会让仓库自动出现在你的电脑上。你仍然需要真正地把它克隆（clone）下来。</span>
+    </p>
+
+    <div class="info-box">
+      <div class="box-title"><span class="en">💻 Quick Local Fix</span><span class="zh">💻 快速本地修复</span></div>
+      <ul>
+        <li><span class="en">Go to Yudi's repo page on github.com and copy the URL from the green "Code" button.</span><span class="zh">在github.com上打开Yudi的仓库页面，从绿色的"Code"按钮里复制网址。</span></li>
+        <li><span class="en">Run <code>git clone [that URL]</code> in a terminal, or use "Clone Repository" in VS Code / GitHub Desktop and paste the URL.</span><span class="zh">在终端里运行 <code>git clone [那个网址]</code>，或者在VS Code / GitHub Desktop里用"Clone Repository"（克隆仓库）功能，粘贴那个网址。</span></li>
+        <li><span class="en">If it asks you to log in, make sure it's the same account that accepted the invite.</span><span class="zh">如果要求你登录，确保用的是接受邀请的那个账号。</span></li>
+      </ul>
+    </div>
+
+    <h2 data-num="05">
+      <span class="en">What I Learned</span>
+      <span class="zh">我学到了什么</span>
+    </h2>
+
+    <div class="good-card">
+      <span class="card-emoji">💡</span>
+      <p>
+        <span class="en"><strong>The lesson:</strong> "Accept invite" only makes you a collaborator on GitHub itself. Every tool that talks to GitHub — Claude Code, VS Code, GitHub Desktop — has to be separately told which repos it's allowed to see, or told to clone a fresh copy. If a shared repo doesn't appear, the invite almost certainly isn't the broken part — the missing second step is.</span>
+        <span class="zh"><strong>经验教训：</strong>"接受邀请"只会让你成为GitHub本身的协作者。每一个与GitHub对接的工具——Claude Code、VS Code、GitHub Desktop——都需要另外被告知它可以看到哪些仓库，或者被告知去克隆一份新的。如果分享的仓库没有出现，问题几乎肯定不在邀请本身，而是缺了后面这一步。</span>
+      </p>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <p style="font-style: italic; color: var(--muted); text-align: center;">
+      <span class="en">This article is part of my AI Tools series — practical guides for using AI technology in everyday life, written from the perspective of a 70-year-old beginner who is learning as he goes.</span>
+      <span class="zh">本文是我AI工具系列的一部分——从一个边学边做的70岁初学者的角度，撰写的关于在日常生活中使用AI技术的实用指南。</span>
+    </p>
+
+    <div class="view-counter-wrap">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp; <span class="en">AI Tools Series</span><span class="zh">AI工具系列</span>
+  </footer>
+
+  <script>
+    function shareThisPage(){
+      var url = window.location.href;
+      var title = document.title;
+      if(navigator.share){
+        navigator.share({title: title, url: url}).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(url).then(function(){
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function(){ t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
