@@ -173,6 +173,8 @@
     #gaugeGrid .gauge-svg { max-width:72px !important; }
     #gaugeGrid .gauge-tick-label { display:none; }
     #gaugeGrid .gauge-needle-val { font-size:6px; }
+    #gaugeGrid .gauge-pct-lbl { display:none; }
+    #gaugeGrid .gauge-pct-val { font-size:7px; }
     #gaugeGrid .note { display:none; }
     #gaugeGrid .gauge-status-dot { font-size:.38rem !important; padding:1px 4px !important; top:-1px; left:0; letter-spacing:0; }
     #gaugeGrid .gauge-day-badge { font-size:.38rem !important; padding:1px 4px !important; top:-1px; right:0; letter-spacing:0; }
@@ -199,6 +201,15 @@
   .gauge-needle-val { font-size:14px; font-weight:800; font-family:inherit; }
   .gauge-needle-val-now { fill:#f5c869; }
   .gauge-needle-val-day1 { fill:#c9d1d9; }
+  /* Chart 9–20: "% of Premium Collected So Far" readout — sits below the needle hub, in the
+     dead space at the base of the semicircle (the visual centre of a gauge chart, since a
+     speedometer face only spans the top half). Formula: E (Current P&L) ÷ D (Entry Credit) —
+     see gaugePremiumPctInfo(). Green = premium banked as profit so far, red = giving it back. */
+  .gauge-pct-val { font-size:15px; font-weight:800; font-family:inherit; }
+  .gauge-pct-val.gauge-pct-up { fill:#3fb950; }
+  .gauge-pct-val.gauge-pct-down { fill:#f85149; }
+  .gauge-pct-val.gauge-pct-none { fill:#8b98a5; }
+  .gauge-pct-lbl { font-size:6.5px; font-weight:700; fill:#8b98a5; letter-spacing:.03em; text-transform:uppercase; }
   .gauge-legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:.62rem; color:#8b98a5; }
   .gauge-legend span b { color:#c9d1d9; }
   .gauge-legend .now-leg b { color:#f5c869; }
@@ -5598,6 +5609,27 @@ function gaugeSvgEl(tag, attrs){
   Object.keys(attrs).forEach(function(k){ el.setAttribute(k, attrs[k]); });
   return el;
 }
+// Appends the "% of Premium Collected So Far" readout at the centre of a gauge chart, right
+// below the needle hub (the only open space on a semicircle face). Value text is filled in
+// later by renderGaugePremiumPct() once MTD_PREMIUM (entry credit, D) and PNL_AMT (current
+// P&L, E) are defined further down the page — starts as "—" so it never shows stale/wrong data.
+function appendGaugePctReadout(svg, sym){
+  var lo = sym.toLowerCase();
+  var g = gaugeSvgEl('g', { id:'gauge-pct-group-'+lo });
+  var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+  title.textContent = '% of Premium Collected So Far = E (Current P&L) ÷ D (Entry Credit)';
+  g.appendChild(title);
+  var val = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+19, 'text-anchor':'middle', class:'gauge-pct-val gauge-pct-none', id:'gauge-pct-val-'+lo });
+  val.textContent = '—';
+  g.appendChild(val);
+  var lblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+27, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
+  lblEn.textContent = 'Premium Collected';
+  g.appendChild(lblEn);
+  var lblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+27, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
+  lblZh.textContent = '已收保费比例';
+  g.appendChild(lblZh);
+  svg.appendChild(g);
+}
 // Draw the static ring (5 colour zones), strike tick labels, and break-even ticks for a 4-leg condor gauge.
 // Needle elements are also created here (hidden) so updateGaugeNeedle() only has to move them.
 function buildGauge(sym, cfg){
@@ -5649,6 +5681,7 @@ function buildGauge(sym, cfg){
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-day1', id:'gneedle-day1-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
+  appendGaugePctReadout(svg, sym);
 }
 // Single-strike gauge for a covered call (Table 1101 shape — no put leg, no long call).
 function buildCallOnlyGauge(sym, cfg){
@@ -5682,6 +5715,7 @@ function buildCallOnlyGauge(sym, cfg){
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-day1', id:'gneedle-day1-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
+  appendGaugePctReadout(svg, sym);
 }
 // Single-strike gauge for a cash-secured put (e.g. GOOGL) — mirror of buildCallOnlyGauge:
 // red below the strike (assigned), green above it (keep the premium, stays cash-secured).
@@ -5715,6 +5749,7 @@ function buildPutOnlyGauge(sym, cfg){
   var topPt = gaugePolar(GAUGE_R_NEEDLE, 90);
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
+  appendGaugePctReadout(svg, sym);
 }
 // Move a gauge's needle to the angle for `price` within [lo, hi]. kind is 'now' or 'day1'.
 function updateGaugeNeedle(sym, kind, price, lo, hi){
@@ -6445,6 +6480,36 @@ var PNL_AMT = { NVDA:-3.39, QQQ:42.53, AVGO:19.80, SPY:103.15, IWM:36.48, GOOGL:
 // Symbols whose PNL_AMT is confirmed closed but only a partial figure (missing leg(s) not
 // yet confirmed) — none currently; NVDA's combined total above is now final.
 var PNL_AMT_PARTIAL = {};
+// Chart 9–20 gauge centre readout — "% of Premium Collected So Far". D = MTD_PREMIUM (the
+// entry credit banked when the position was opened); E = PNL_AMT (current realized/unrealized
+// P&L). % = E ÷ D — how much of the max-profit credit is already locked in as a gain (or, if
+// negative, being given back). Only computed where both real figures exist above; symbols with
+// no confirmed mark yet (SMH re-open, NVDA2, XLE, META) show "—" rather than a guess.
+function gaugePremiumPctInfo(sym){
+  var d = MTD_PREMIUM[sym], e = PNL_AMT[sym];
+  if(typeof d !== 'number' || !d || typeof e !== 'number') return null;
+  return { pct: (e / d) * 100 };
+}
+function renderGaugePremiumPct(){
+  var syms = {};
+  [RAIL_CFG, CALL_ONLY_CFG, PUT_ONLY_CFG, GAP_TABLE10_EXTRA].forEach(function(map){
+    Object.keys(map).forEach(function(s){ syms[s] = 1; });
+  });
+  Object.keys(syms).forEach(function(sym){
+    var el = document.getElementById('gauge-pct-val-'+sym.toLowerCase()); if(!el) return;
+    var info = gaugePremiumPctInfo(sym);
+    el.classList.remove('gauge-pct-up', 'gauge-pct-down', 'gauge-pct-none');
+    if(!info){
+      el.textContent = '—';
+      el.classList.add('gauge-pct-none');
+      return;
+    }
+    var r = Math.round(info.pct);
+    el.textContent = (r >= 0 ? '+' : '−') + Math.abs(r) + '%';
+    el.classList.add(r >= 0 ? 'gauge-pct-up' : 'gauge-pct-down');
+  });
+}
+renderGaugePremiumPct();
 // Dashboard tab T6's "P&L" (today's daily P&L) and "Unrlzd P&L" (live unrealized P&L)
 // columns — real figures read directly from the IBKR mobile app's Portfolio > Positions
 // screen (31 Jul 2026, 22:15 SGT) for AVGO/IWM/SPY/GOOGL, not modeled/statement figures like
