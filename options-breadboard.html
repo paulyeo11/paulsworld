@@ -526,6 +526,7 @@
         <button id="tb-icpnl" onclick="setTab('icpnl')">🏁 <span class="en">IC P&amp;L</span><span class="zh">IC 盈亏</span></button>
         <button id="tb-finalpnl" onclick="setTab('finalpnl')">🔚 <span class="en">Final P&amp;L</span><span class="zh">最终盈亏</span></button>
         <button id="tb-unreal" onclick="setTab('unrealized')">📉 <span class="en">Unrealized Loss</span><span class="zh">未实现亏损</span></button>
+        <button id="tb-closesharepnl" onclick="setTab('closesharepnl')">🔻 <span class="en">Close Share P&amp;L</span><span class="zh">平仓股票盈亏</span></button>
         <button id="tb-cc" onclick="setTab('covcall')">📞 <span class="en">Covered Call</span><span class="zh">备兑看涨</span></button>
         <button id="tb-accbal" onclick="setTab('accbal')">💰 <span class="en">Acc Balance</span><span class="zh">账户余额</span></button>
         <button id="tb-cut" onclick="setTab('cutloss')">🚨 <span class="en">Cut-Loss</span><span class="zh">止损</span></button>
@@ -923,6 +924,49 @@
     </div>
   </div>
   </div><!-- /tab-unrealized -->
+
+  <div id="tab-closesharepnl" style="display:none">
+  <div class="condor" id="closeSharePnlCard">
+    <div class="c-head">
+      <div class="tkr" style="font-size:1.1rem">🔻 <span class="en">Table 1514: Close Share P&amp;L — Sell All 3 Stocks</span><span class="zh">表1514：平仓股票盈亏——卖出全部3只股票</span></div>
+      <div class="c-meta"><span class="en">FDS + POOL + ZTS · what your final realized P&amp;L would be if sold right now at the live price</span><span class="zh">FDS + POOL + ZTS · 若现在以实时股价卖出，最终已实现盈亏为多少</span></div>
+      <div></div>
+    </div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadShares()">🔄 <span class="en">Refresh share price</span><span class="zh">刷新股价</span></button>
+      <span class="live-ts" id="closeSharePnlTs"></span>
+    </div>
+    <div class="table-scroll table-fit">
+    <table class="legs compact-rows" style="margin-top:10px">
+      <thead><tr>
+        <th><span class="en">Stock</span><span class="zh">股票</span></th>
+        <th class="num"><span class="en">Shares (D)</span><span class="zh">股数 (D)</span></th>
+        <th class="num"><span class="en">Cost Basis (B)</span><span class="zh">成本 (B)</span></th>
+        <th class="num"><span class="en">Live Price (A)</span><span class="zh">实时股价 (A)</span></th>
+        <th class="num"><span class="en">Sale Proceeds (A×D)</span><span class="zh">卖出所得 (A×D)</span></th>
+        <th class="num"><span class="en">Final P&amp;L (A×D−B)</span><span class="zh">最终盈亏 (A×D−B)</span></th>
+      </tr></thead>
+      <tbody>
+        <tr><td><b>FDS</b></td><td class="num">100</td><td class="num">$34,324.00</td><td class="num" id="closepnl-price-fds">—</td><td class="num" id="closepnl-proceeds-fds">—</td><td class="num" id="closepnl-pl-fds" style="font-weight:800">—</td></tr>
+        <tr><td><b>POOL</b></td><td class="num">100</td><td class="num">$27,839.88</td><td class="num" id="closepnl-price-pool">—</td><td class="num" id="closepnl-proceeds-pool">—</td><td class="num" id="closepnl-pl-pool" style="font-weight:800">—</td></tr>
+        <tr><td><b>ZTS</b></td><td class="num">100</td><td class="num">$13,560.27</td><td class="num" id="closepnl-price-zts">—</td><td class="num" id="closepnl-proceeds-zts">—</td><td class="num" id="closepnl-pl-zts" style="font-weight:800">—</td></tr>
+      </tbody>
+      <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+        <td><span class="en">TOTAL (3 stocks)</span><span class="zh">合计（3只股票）</span></td>
+        <td class="num">300</td>
+        <td class="num">$75,724.15</td>
+        <td class="num">—</td>
+        <td class="num" id="closepnl-total-proceeds">—</td>
+        <td class="num" id="closepnl-total-pl">—</td>
+      </tr></tfoot>
+    </table>
+    </div>
+    <div class="note" style="margin-top:12px">
+      <span class="en">With <b>A</b> = live share price (~15 min delay, same feed as the Unrealized Loss and Share Ave Cost tabs), <b>B</b> = cost basis from the 4 Aug 2026 IBKR statement, <b>D</b> = shares held: <b>Final P&amp;L = A×D − B</b>. This is your final realized P&amp;L on these 3 positions <i>if you sold all of them right this moment</i> — it will match Table 1300's Unrealized P&amp;L exactly (selling turns an unrealized loss into a realized one, same number) minus any actual sell commission IBKR charges, which isn't included here since a confirmed per-trade equity commission hasn't been logged for a stock sale on this account (IBKR equity commissions are typically small, around $1/trade, so the effect on a total this size is minor). This table excludes GLS (the small SGD gold ETF holding, tracked separately) and doesn't add back the $775.03 in dividends already received historically — those were already collected regardless of whether you sell now.</span>
+      <span class="zh">其中 <b>A</b> = 实时股价（约延迟15分钟，与「未实现亏损」及「持股平均成本」页签同一数据源），<b>B</b> = 2026年8月4日IBKR报表的成本基础，<b>D</b> = 持有股数：<b>最终盈亏 = A×D − B</b>。这是<i>如果现在立刻卖出全部3只股票</i>的最终已实现盈亏——数字会与表1300的未实现盈亏完全一致（卖出只是把未实现亏损变成已实现亏损，金额不变），未扣除IBKR实际卖出手续费，因为本账户尚未有已确认的股票卖出逐笔手续费记录（IBKR股票手续费通常很小，约$1/笔，对这个金额量级影响甚微）。本表不含GLS（金额较小的新元黄金ETF持仓，另行追踪），也未把历史已收到的$775.03股息加回——那笔股息无论现在是否卖出都已经收到了。</span>
+    </div>
+  </div>
+  </div><!-- /tab-closesharepnl -->
 
   <div id="tab-shareavgcost" style="display:none">
   <!-- IBKR Shares -->
@@ -5512,6 +5556,7 @@ function setTab(t){
   document.getElementById('tab-riskzone').style.display = t==='riskzone'?'':'none';
   document.getElementById('tab-gauge').style.display = t==='gauge'?'':'none';
   document.getElementById('tab-unrealized').style.display = t==='unrealized'?'':'none';
+  document.getElementById('tab-closesharepnl').style.display = t==='closesharepnl'?'':'none';
   document.getElementById('tab-icwatchlist').style.display = t==='icwatchlist'?'':'none';
   document.getElementById('tab-earndate').style.display = t==='earndate'?'':'none';
   document.getElementById('tab-covcall').style.display = t==='covcall'?'':'none';
@@ -5546,6 +5591,7 @@ function setTab(t){
   document.getElementById('tb-riskzone').classList.toggle('active', t==='riskzone');
   document.getElementById('tb-gauge').classList.toggle('active', t==='gauge');
   document.getElementById('tb-unreal').classList.toggle('active', t==='unrealized');
+  document.getElementById('tb-closesharepnl').classList.toggle('active', t==='closesharepnl');
   document.getElementById('tb-tic').classList.toggle('active', t==='icwatchlist');
   document.getElementById('tb-earn').classList.toggle('active', t==='earndate');
   document.getElementById('tb-cc').classList.toggle('active', t==='covcall');
@@ -5572,9 +5618,9 @@ function setTab(t){
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
   document.getElementById('tb-app').classList.toggle('active', t==='app');
   document.getElementById('tb-new').classList.toggle('active', t==='new');
-  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='unrealized'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
+  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='unrealized'||t==='closesharepnl'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
   closeMoreTab();
-  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='closesharepnl'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
@@ -6568,10 +6614,43 @@ function renderUnrealizedTable(){
   if(totalValueTd) totalValueTd.textContent = '$' + totalValue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(totalPlTd) totalPlTd.innerHTML = fmtSigned(totalValue-totalCost) + '<sup>*</sup>';
 }
+function renderCloseSharePnlTable(){
+  var totalCost = 0, totalProceeds = 0, haveAll = true;
+  ['FDS','POOL','ZTS'].forEach(function(sym){
+    var s = SHARES.filter(function(x){ return x.symbol===sym; })[0];
+    var cost = UNREAL_COST_BASIS[sym];
+    totalCost += cost;
+    var priceTd = document.getElementById('closepnl-price-'+sym.toLowerCase());
+    var procTd = document.getElementById('closepnl-proceeds-'+sym.toLowerCase());
+    var plTd = document.getElementById('closepnl-pl-'+sym.toLowerCase());
+    if(!s || typeof s.price !== 'number'){ haveAll = false; return; }
+    var proceeds = s.price * s.qty;
+    totalProceeds += proceeds;
+    var pl = proceeds - cost, plPct = pl / cost * 100;
+    if(priceTd) priceTd.textContent = fmt(s.price);
+    if(procTd) procTd.textContent = '$' + proceeds.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(plTd){
+      plTd.textContent = fmtSigned(pl) + ' (' + (plPct<0?'−':'+') + Math.abs(plPct).toFixed(1) + '%)';
+      plTd.style.color = pl<0 ? '#f85149' : '#3fb950';
+    }
+  });
+  var totalProcTd = document.getElementById('closepnl-total-proceeds');
+  var totalPlTd = document.getElementById('closepnl-total-pl');
+  if(haveAll){
+    if(totalProcTd) totalProcTd.textContent = '$' + totalProceeds.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(totalPlTd){
+      var totalPl = totalProceeds - totalCost;
+      totalPlTd.textContent = fmtSigned(totalPl);
+      totalPlTd.style.color = totalPl<0 ? '#f85149' : '#3fb950';
+    }
+  }
+  var tsEl = document.getElementById('closeSharePnlTs');
+  if(tsEl && haveAll) tsEl.textContent = new Date().toLocaleString('en-US',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
+}
 function loadShares(){
   fetchQuotes(SHARES.map(function(s){return s.quoteSymbol||s.symbol;})).then(function(data){
     SHARES.forEach(function(s){ var q=data&&data[s.quoteSymbol||s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
-    renderShares(); renderSharePrices(); renderUnrealizedTable(); stampCut();
+    renderShares(); renderSharePrices(); renderUnrealizedTable(); renderCloseSharePnlTable(); stampCut();
   }).catch(function(){ renderShares(); });
 }
 loadShares();
