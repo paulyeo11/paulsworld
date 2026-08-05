@@ -929,7 +929,7 @@
   <div class="condor">
     <div class="c-head">
       <div class="tkr">📦 <span class="en">Table 1200: IBKR Shares — Share Ave Cost</span><span class="zh">Table 1200：IBKR持股——持股平均成本</span></div>
-      <div class="c-meta"><span class="en">3 stock holdings — separate from the Iron Condors below</span><span class="zh">3只股票持仓——与下方铁鹰持仓分开</span></div>
+      <div class="c-meta" id="sharesMeta"><span class="en">4 stock holdings — separate from the Iron Condors below</span><span class="zh">4只股票持仓——与下方铁鹰持仓分开</span></div>
       <div class="pill open">● <span class="en">HELD</span><span class="zh">持有中</span></div>
     </div>
     <table class="legs">
@@ -6444,15 +6444,31 @@ function plotDay1Marker(sym, price){
 }
 
 // ===== IBKR Shares (owned stock, not options) =====
+// GLS = Lion-OCBC Securities Gold ETF (SGX-listed, SGD-traded) — avgCost per the
+// 4 Aug 2026 statement's Open Position Summary: Cost Basis SGD 14.02 / Qty 2 = SGD 7.01/share.
+// (Note: the statement's Trade Summary shows a different average buy price, SGD 5.65/share —
+// the Cost Basis figure is used here since it's the one that reconciles with the statement's
+// own Unrealized P&L: Value 11.21 − Cost Basis 14.02 = −2.81, and ties to Base Value USD 8.74/10.94.)
 var SHARES = [
   { symbol:'POOL', name:'Pool Corp',            qty:100, avgCost:278.40, earnEn:'22 Oct 2026 (est.)',    earnZh:'预计2026年10月22日' },
   { symbol:'FDS',  name:'FactSet Research',     qty:100, avgCost:343.24, earnEn:'~mid-Sep 2026 (est.)',  earnZh:'预计2026年9月中旬', coveredCall:{strike:300, expEn:'Aug 21 \'26', expZh:'2026年8月21日'} },
-  { symbol:'ZTS',  name:'Zoetis',                qty:100, avgCost:135.60, earnEn:'6 Aug 2026',            earnZh:'2026年8月6日' }
+  { symbol:'ZTS',  name:'Zoetis',                qty:100, avgCost:135.60, earnEn:'6 Aug 2026',            earnZh:'2026年8月6日' },
+  { symbol:'GLS',  name:'Lion-OCBC Gold ETF',    qty:2,   avgCost:7.01,   currency:'SGD', quoteSymbol:'GLS.SI', earnEn:'ETF — no earnings', earnZh:'ETF——无财报' }
 ];
+// Currency-aware formatter for the Shares table — POOL/FDS/ZTS are USD, GLS trades in SGD on SGX.
+function fmtCcy(n, ccy){ return (ccy==='SGD' ? 'S$' : '$') + n.toFixed(2); }
+function renderSharesMeta(){
+  var el = document.getElementById('sharesMeta'); if(!el) return;
+  var n = SHARES.length;
+  el.innerHTML = '<span class="en">'+n+' stock holdings — separate from the Iron Condors below</span><span class="zh">'+n+'只股票持仓——与下方铁鹰持仓分开</span>';
+  setLang(curLang);
+}
 function renderShares(){
   var body = document.getElementById('sharesBody'); if(!body) return;
+  renderSharesMeta();
   body.innerHTML = SHARES.map(function(s){
-    var priceHtml = typeof s.price==='number' ? fmt(s.price) : '—';
+    var ccy = s.currency || 'USD';
+    var priceHtml = typeof s.price==='number' ? fmtCcy(s.price, ccy) : '—';
     var plHtml = '—';
     if(typeof s.price==='number'){
       var pl = (s.price - s.avgCost) / s.avgCost * 100;
@@ -6474,7 +6490,7 @@ function renderShares(){
     }
     return '<tr><td><b>'+s.symbol+'</b><br><span class="shr-name">'+s.name+'</span></td>'+
       '<td class="num">'+s.qty+'</td>'+
-      '<td class="num">'+fmt(s.avgCost)+'</td>'+
+      '<td class="num">'+fmtCcy(s.avgCost, ccy)+'</td>'+
       '<td class="num">'+priceHtml+'</td>'+
       '<td class="num">'+plHtml+'</td>'+
       '<td class="num">'+ccHtml+'</td>'+
@@ -6512,8 +6528,8 @@ function renderUnrealizedTable(){
   if(totalPlTd) totalPlTd.innerHTML = fmtSigned(totalValue-totalCost) + '<sup>*</sup>';
 }
 function loadShares(){
-  fetchQuotes(SHARES.map(function(s){return s.symbol;})).then(function(data){
-    SHARES.forEach(function(s){ var q=data&&data[s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
+  fetchQuotes(SHARES.map(function(s){return s.quoteSymbol||s.symbol;})).then(function(data){
+    SHARES.forEach(function(s){ var q=data&&data[s.quoteSymbol||s.symbol]; if(q&&typeof q.price==='number'){ s.price=q.price; if(s.symbol==='FDS') recordSharePrice(s.symbol, q.price); } });
     renderShares(); renderSharePrices(); renderUnrealizedTable(); stampCut();
   }).catch(function(){ renderShares(); });
 }
