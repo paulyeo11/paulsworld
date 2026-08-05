@@ -6770,39 +6770,42 @@ var SHORT_PUT_DELTA = { NVDA:-0.33, QQQ:-0.34, AVGO:-0.31, SMH:-0.29, SPY:-0.22,
 // Short call delta at entry — same static figures shown in each condor's leg table
 // on the Positions tab (T30 convention: calls positive).
 var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.32, SPY:0.25, IWM:0.21 };
-// Month-to-date premium collected = Total Credit received when each condor (or, for FDS,
-// the covered call) was sold to open. All were entered in Jul 2026, so MTD = the full entry credit
-// (see Premium tab). FDS is the 300 Covered Call sold 21 Jul 2026 for $2.10 (+$210) — see Covered Call tab.
-// GOOGL: cash-secured 305 Put sold 30 Jul 2026 for $4.43 (Net Amount $443 per the fill) — gross
-// premium before the $1.14 commission, same convention as the other entries above.
-// SMH: $540 = the 4 Aug 2026 re-open credit (Sold 510P $17.95 + Sold 620C $21.47 − Bought 500P
-// $15.45 − Bought 630C $18.57), same gross-premium convention (no commission deducted) as the rest.
-// SMH_JUL: $435 = the original 17 Jul 2026 entry credit (closed 29 Jul, see IB11.html). NVDA2:
-// $255 = the 4 Aug 2026 second-NVDA-condor entry credit (Sep18'26 190/225).
-var MTD_PREMIUM = { NVDA:215, QQQ:259, AVGO:475, SMH:540, SPY:356, IWM:214, FDS:210, GOOGL:443, SMH_JUL:435, NVDA2:255 };
-// T6's P&L Amt column — realized P&L for closed positions (QQQ, SPY, NVDA), else the real
-// IBKR Unrealized P&L from the latest PortfolioAnalyst statement, per the Bang Trade Analysis
-// reconciliation (Table 350/590/420/470/510/550/630) — kept in sync with Table 900's per-row
-// data-pnl figures (fixed 2026-08-05: AVGO/SPY/IWM/GOOGL had drifted stale here after Table 900
-// was refreshed, causing the Gauge tab's centre readout to show old numbers — see below).
-// NVDA's call combo (230C/235C) close is confirmed via the 29 Jul 2026 statement's Performance
-// by Symbol realized figures (230C +$273.80, 235C −$207.19 = +$66.61), combined with the put
-// combo's already-confirmed real −$70.00 for a final total of −$3.39. SPY closed 4 Aug 2026 via
-// real fills (see IB16.html) — realized −$148.60, confirmed via broker trade blotter. AVGO/IWM/
-// GOOGL unrealized marks are refreshed to the 3 Aug statement's Open Position Summary. AVGO is
-// refreshed further still to the 5 Aug 2026, 21:33 SGT Tiger app snapshot (−$11.85, Market
-// Value −$482.57 vs Tiger's own Cost Basis $470.72 — see Table 1512's Final P&L tab for the
-// full A/B/C bridge) — same "newest confirmed real app read wins" convention as FDS. FDS itself
-// is refreshed even further, to the 5 Aug 2026, 21:46 SGT Tiger app snapshot (−$241.65, up from
-// −$150.62 the day before — see the Bang Trade Analysis FDS tab Table 680/690 and IB17 for the
-// full mark history). SMH_JUL is the OLD position closed 29 Jul for a real, final −$76.19 (see
-// IB11.html) — kept as its own key (GAP_TABLE10_EXTRA) since the 'SMH' key itself got reassigned
-// to the NEW Sep18'26 condor when it re-opened 4 Aug 2026. That new SMH position (and the second
-// NVDA2 condor, also opened 4 Aug) now have their first confirmed real marks too, straight from
-// the 4 Aug 2026 statement's Open Position Summary: SMH −$15.77, NVDA2 −$4.56. IWM (−$9.08) and
-// GOOGL (+$375.51) are refreshed to the same 4 Aug statement (updated 2026-08-06 — see T29's
-// Deposits tab / Table 900 for the full NAV-cycle writeup).
-var PNL_AMT = { NVDA:-3.39, QQQ:42.53, AVGO:-11.85, SPY:-148.60, IWM:-9.08, GOOGL:375.51, FDS:-241.65, SMH:-15.77, SMH_JUL:-76.19, NVDA2:-4.56 };
+// MTD_PREMIUM (entry credit collected) and PNL_AMT (current realized/unrealized P&L, below)
+// are DERIVED directly from Table 900's data-premium/data-pnl attributes — the canonical
+// per-position table that's already required to be kept current on every "update IBKR data"
+// refresh — instead of being hand-copied into a second object here. That hand-copy is exactly
+// what broke on 2026-08-04→06: IWM and GOOGL went stale here after Table 900 was updated, and
+// SMH's original Jul position (SMH_JUL) had no entry at all once the 'SMH' key got reassigned
+// to the new Sep18 condor, so it silently dropped out of T6 entirely. Deriving from the DOM
+// means T6/Dashboard/Gauge/Premium tabs can never drift out of sync with Table 900 again — fix
+// the number once, in Table 900's row, and everything downstream updates with it. (Lesson from
+// 2026-08-06, flagged by Paul — see buildTable900Lookup().)
+function buildTable900Lookup(){
+  var premium = {}, pnl = {};
+  var body = document.getElementById('table900Body');
+  if(body){
+    body.querySelectorAll('tr[data-sym]').forEach(function(tr){
+      var sym = tr.getAttribute('data-sym');
+      var p = parseFloat(tr.getAttribute('data-premium'));
+      if(!isNaN(p)) premium[sym] = p;
+      var pnlAttr = tr.getAttribute('data-pnl');
+      if(pnlAttr !== null){
+        var v = parseFloat(pnlAttr);
+        if(!isNaN(v)) pnl[sym] = v;
+      }
+    });
+  }
+  return { premium: premium, pnl: pnl };
+}
+var TABLE900_LOOKUP = buildTable900Lookup();
+var MTD_PREMIUM = TABLE900_LOOKUP.premium;
+// T6's P&L Amt column — realized P&L for closed positions, else the real IBKR unrealized P&L
+// from the latest PortfolioAnalyst statement (or a newer live app read where one exists, e.g.
+// AVGO/FDS via Tiger) — same values as Table 900's "Net P&L" column, derived straight from
+// that table's data-pnl attributes (see buildTable900Lookup() note above). To update any of
+// these figures, edit the row on Table 900 (P&L Summary tab) — this object and every table/
+// gauge that reads it will pick up the change automatically, nothing to edit twice.
+var PNL_AMT = TABLE900_LOOKUP.pnl;
 // Symbols whose PNL_AMT is confirmed closed but only a partial figure (missing leg(s) not
 // yet confirmed) — none currently; NVDA's combined total above is now final.
 var PNL_AMT_PARTIAL = {};
