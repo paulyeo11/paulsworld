@@ -235,6 +235,25 @@
      amber + ⚠️ once the mark is more than ~30h old (a missed daily refresh cycle). */
   .gauge-asof { text-align:center; margin-top:6px; font-size:.66rem; color:#8b98a5; }
   .gauge-asof.stale { color:#f59e0b; font-weight:700; }
+  /* Waterfall tab — per-position P&L bridge charts (Premium Collected → Cost to Close →
+     Reconciliation → Net P&L), same visual language as the standalone FDS chart (IB17,
+     Chart 21) and SPY chart (IB16, Chart 20), generalized here to render for any position
+     from Table 1512's own numbers instead of hand-coded per-chart percentages. */
+  .wf-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:.72rem; color:#8b98a5; margin:10px 0 14px; align-items:center; }
+  .wf-legend .dot { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+  .wf-plot { position:relative; height:190px; margin-top:6px; }
+  .wf-baseline { position:absolute; left:0; right:0; border-top:1px dashed rgba(255,255,255,.25); }
+  .wf-zero-label { position:absolute; left:0; font-size:.62rem; color:#8b98a5; transform:translateY(-50%); }
+  .wf-cols { position:absolute; inset:0 0 0 28px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .wf-col { position:relative; height:100%; }
+  .wf-bar { position:absolute; left:50%; transform:translateX(-50%); width:34px; max-width:70%; border-radius:4px; }
+  .wf-bar.green { background:#3fb950; }
+  .wf-bar.red { background:#f85149; }
+  .wf-bar.gold { background:#f4c869; }
+  .wf-val { position:absolute; left:50%; transform:translateX(-50%); font-weight:800; font-size:.72rem; white-space:nowrap; color:#fff; }
+  .wf-catrow { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; padding-left:28px; }
+  .wf-catlabel { text-align:center; font-size:.62rem; color:#8b98a5; line-height:1.3; }
+  .wf-catlabel b { color:#d0d4e8; display:block; font-size:.64rem; }
   .gauge-readout { text-align:center; margin-top:10px; font-size:.72rem; color:#8b98a5; }
   .gauge-readout b { font-weight:800; font-size:.86rem; }
   .gauge-readout .up { color:#3fb950; }
@@ -531,6 +550,7 @@
         <button id="tb-pnl" onclick="setTab('pnl')">📅 <span class="en">P&amp;L</span><span class="zh">盈亏</span></button>
         <button id="tb-icpnl" onclick="setTab('icpnl')">🏁 <span class="en">IC P&amp;L</span><span class="zh">IC 盈亏</span></button>
         <button id="tb-finalpnl" onclick="setTab('finalpnl')">🔚 <span class="en">Final P&amp;L</span><span class="zh">最终盈亏</span></button>
+        <button id="tb-waterfall" onclick="setTab('waterfall')">🌊 <span class="en">Waterfall</span><span class="zh">瀑布图</span></button>
         <button id="tb-unreal" onclick="setTab('unrealized')">📉 <span class="en">Unrealized Loss</span><span class="zh">未实现亏损</span></button>
         <button id="tb-closesharepnl" onclick="setTab('closesharepnl')">🔻 <span class="en">Close Share P&amp;L</span><span class="zh">平仓股票盈亏</span></button>
         <button id="tb-cc" onclick="setTab('covcall')">📞 <span class="en">Covered Call</span><span class="zh">备兑看涨</span></button>
@@ -3139,70 +3159,70 @@
           <th class="num"><span class="en">Net P&amp;L (A−B+C)</span><span class="zh">净盈亏 (A−B+C)</span></th>
         </tr></thead>
         <tbody>
-          <tr>
+          <tr data-sym="QQQ" data-premium="729.00" data-cost="686.47" data-recon="0.00" data-pnl="42.53">
             <td>🟦 <span class="en">QQQ</span><span class="zh">QQQ</span> <span style="opacity:.6;font-size:.68rem">✅ <span class="en">Closed</span><span class="zh">已平仓</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$729.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$686.47</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#3fb950;font-weight:800">+$42.53</td>
           </tr>
-          <tr>
+          <tr data-sym="SMH_JUL" data-premium="435.00" data-cost="511.19" data-recon="0.00" data-pnl="-76.19">
             <td>🟩 <span class="en">SMH (Jul)</span><span class="zh">SMH（7月）</span> <span style="opacity:.6;font-size:.68rem">✅ <span class="en">Closed</span><span class="zh">已平仓</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$435.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$511.19</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#f85149;font-weight:800">−$76.19</td>
           </tr>
-          <tr>
+          <tr data-sym="NVDA_AUG21" data-premium="215.00" data-cost="218.39" data-recon="0.00" data-pnl="-3.39">
             <td>🔴 <span class="en">NVDA (Aug21)</span><span class="zh">NVDA（8月21日）</span> <span style="opacity:.6;font-size:.68rem">✅ <span class="en">Closed</span><span class="zh">已平仓</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$215.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$218.39</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#f85149;font-weight:800">−$3.39</td>
           </tr>
-          <tr>
+          <tr data-sym="SPY" data-premium="356.00" data-cost="504.60" data-recon="0.00" data-pnl="-148.60">
             <td>🔷 <span class="en">SPY</span><span class="zh">SPY</span> <span style="opacity:.6;font-size:.68rem">✅ <span class="en">Closed</span><span class="zh">已平仓</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$356.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$504.60</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#f85149;font-weight:800">−$148.60</td>
           </tr>
-          <tr>
+          <tr data-sym="AVGO" data-premium="475.00" data-cost="482.57" data-recon="-4.28" data-pnl="-11.85">
             <td>🟧 <span class="en">AVGO</span><span class="zh">AVGO</span> <span style="opacity:.6;font-size:.68rem">🔷 <span class="en">Open</span><span class="zh">持仓中</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$475.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$482.57</td>
             <td class="num" style="color:#f85149;font-weight:700">−$4.28</td>
             <td class="num" style="color:#f85149;font-weight:800">−$11.85</td>
           </tr>
-          <tr>
+          <tr data-sym="IWM" data-premium="214.00" data-cost="223.08" data-recon="0.00" data-pnl="-9.08">
             <td>🟪 <span class="en">IWM</span><span class="zh">IWM</span> <span style="opacity:.6;font-size:.68rem">🔷 <span class="en">Open</span><span class="zh">持仓中</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$214.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$223.08</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#f85149;font-weight:800">−$9.08</td>
           </tr>
-          <tr>
+          <tr data-sym="GOOGL" data-premium="443.00" data-cost="67.49" data-recon="0.00" data-pnl="375.51">
             <td>🟡 <span class="en">GOOGL</span><span class="zh">GOOGL</span> <span style="opacity:.6;font-size:.68rem">🔷 <span class="en">Open</span><span class="zh">持仓中</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$443.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$67.49</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#3fb950;font-weight:800">+$375.51</td>
           </tr>
-          <tr>
+          <tr data-sym="FDS" data-premium="210.00" data-cost="427.11" data-recon="0.14" data-pnl="-216.97">
             <td>🟫 <span class="en">FDS Covered Call</span><span class="zh">FDS备兑看涨</span> <span style="opacity:.6;font-size:.68rem">🔷 <span class="en">Open</span><span class="zh">持仓中</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$210.00</td>
             <td class="num" style="color:#f85149;font-weight:700">−$427.11</td>
             <td class="num" style="color:#3fb950;font-weight:700">+$0.14</td>
             <td class="num" style="color:#f85149;font-weight:800">−$216.97</td>
           </tr>
-          <tr>
+          <tr data-sym="SMH_SEP18" data-premium="536.90" data-cost="552.67" data-recon="0.00" data-pnl="-15.77">
             <td>🟩 <span class="en">SMH (Sep18)</span><span class="zh">SMH（9月18日）</span> <span style="opacity:.6;font-size:.68rem">🔷 <span class="en">Open</span><span class="zh">持仓中</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$536.90</td>
             <td class="num" style="color:#f85149;font-weight:700">−$552.67</td>
             <td class="num">$0.00</td>
             <td class="num" style="color:#f85149;font-weight:800">−$15.77</td>
           </tr>
-          <tr>
+          <tr data-sym="NVDA_SEP18" data-premium="250.44" data-cost="255.00" data-recon="0.00" data-pnl="-4.56">
             <td>🔴 <span class="en">NVDA (Sep18)</span><span class="zh">NVDA（9月18日）</span> <span style="opacity:.6;font-size:.68rem">🔷 <span class="en">Open</span><span class="zh">持仓中</span></span></td>
             <td class="num" style="color:#3fb950;font-weight:700">+$250.44</td>
             <td class="num" style="color:#f85149;font-weight:700">−$255.00</td>
@@ -3227,6 +3247,20 @@
       </div>
     </div>
   </div><!-- /tab-finalpnl -->
+
+  <div id="tab-waterfall" style="display:none">
+    <div class="c-head" style="margin-bottom:10px">
+      <div class="tkr" style="font-size:1.2rem">🌊 <span class="en">Waterfall — P&amp;L Bridge, All Positions</span><span class="zh">瀑布图——全部持仓权利金桥接图</span></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="c-meta" style="margin-bottom:14px"><span class="en">10 charts, one per position — same Premium Collected → Cost to Close → Reconciliation → Net P&amp;L bridge as Table 1512, drawn as a chart instead of a table row. Numbers are read live from Table 1512 (Final P&amp;L tab), so they can never drift from it.</span><span class="zh">10张图，每个持仓一张——与表1512相同的「已收权利金 → 平仓成本 → 核算调整 → 净盈亏」桥接结构，以图表而非表格行呈现。数字均实时读取自表1512（最终盈亏页签），因此不会与其出现分歧。</span></div>
+    <div id="waterfallChartsWrap"></div>
+    <div class="note" style="margin-top:4px">
+      <span class="en">Bar height = dollar contribution to the current mark; the gold bar is the running total, not a fifth input. <b>A</b> = Premium Collected, <b>B</b> = Cost to Close, <b>C</b> = Reconciliation: <b>Net P&amp;L = A − B + C</b>. Closed positions (QQQ, SMH Jul, NVDA Aug21, SPY) show a real, fully realized close; open positions show today's mark-to-market and will keep moving until closed. Full source data + freshness notes: <a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">Table 1512 on the Final P&amp;L tab</a>.</span>
+      <span class="zh">柱高 = 对当前市值的美元贡献；金色柱为累计总额，并非第五项输入。<b>A</b> = 已收权利金，<b>B</b> = 平仓成本，<b>C</b> = 核算调整：<b>净盈亏 = A − B + C</b>。已平仓持仓（QQQ、SMH 7月、NVDA 8月21日、SPY）显示真实、已全部实现的平仓结果；持仓中的显示今日按市值计价，平仓前会持续变动。完整数据来源与更新时效说明：<a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">最终盈亏页签的表1512</a>。</span>
+    </div>
+  </div><!-- /tab-waterfall -->
 
   <!-- ============ BANG TRADE ANALYSIS TAB (wraps QQQ + SMH sub-pages) ============ -->
   <div id="tab-bang" style="display:none">
@@ -5604,6 +5638,7 @@ var cutLoaded = false;
 var depositsLoaded = false;
 var tasksLoaded = false;
 var optionTodayLoaded = false;
+var waterfallLoaded = false;
 function setTab(t){
   document.getElementById('tab-dashboard').style.display = t==='dashboard'?'':'none';
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
@@ -5624,6 +5659,7 @@ function setTab(t){
   document.getElementById('tab-pnl').style.display = t==='pnl'?'':'none';
   document.getElementById('tab-icpnl').style.display = t==='icpnl'?'':'none';
   document.getElementById('tab-finalpnl').style.display = t==='finalpnl'?'':'none';
+  document.getElementById('tab-waterfall').style.display = t==='waterfall'?'':'none';
   document.getElementById('tab-dailypnl').style.display = t==='dailypnl'?'':'none';
   document.getElementById('tab-trades').style.display = t==='trades'?'':'none';
   document.getElementById('tab-win').style.display = t==='win'?'':'none';
@@ -5659,6 +5695,7 @@ function setTab(t){
   document.getElementById('tb-pnl').classList.toggle('active', t==='pnl');
   document.getElementById('tb-icpnl').classList.toggle('active', t==='icpnl');
   document.getElementById('tb-finalpnl').classList.toggle('active', t==='finalpnl');
+  document.getElementById('tb-waterfall').classList.toggle('active', t==='waterfall');
   document.getElementById('tb-dailypnl').classList.toggle('active', t==='dailypnl');
   document.getElementById('tb-trades').classList.toggle('active', t==='trades');
   document.getElementById('tb-win').classList.toggle('active', t==='win');
@@ -5675,13 +5712,14 @@ function setTab(t){
   document.getElementById('tb-refresh').classList.toggle('active', t==='refresh');
   document.getElementById('tb-app').classList.toggle('active', t==='app');
   document.getElementById('tb-new').classList.toggle('active', t==='new');
-  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='unrealized'||t==='closesharepnl'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
+  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='waterfall'||t==='unrealized'||t==='closesharepnl'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new');
   closeMoreTab();
-  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='closesharepnl'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='waterfall'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='closesharepnl'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
   if(t==='optiontoday' && !optionTodayLoaded){ optionTodayLoaded = true; renderOptionTodayTasks(); }
+  if(t==='waterfall' && !waterfallLoaded){ waterfallLoaded = true; renderWaterfallCharts(); }
   if(t==='pnl') resizePnlChart();
   if(t==='gauge'){
     var gaugeGridEl = document.getElementById('gaugeGrid');
@@ -7151,6 +7189,120 @@ function genericPnlCell(map, sym){
 }
 function dailyPnlCell(sym){ return genericPnlCell(DAILY_PNL, sym); }
 function unrlzdPnlCell(sym){ return genericPnlCell(PNL_AMT, sym); }
+// ============ WATERFALL TAB — per-position P&L bridge chart ============
+// Generalizes the hand-coded SPY (IB16, Chart 20) / FDS (IB17, Chart 21) waterfall charts into
+// one function driven entirely by Table 1512's own data-premium/data-cost/data-recon/data-pnl
+// attributes — the same derive-don't-duplicate pattern as buildTable900Lookup() — so these
+// charts read Table 1512's numbers directly and can never drift from it the way Unrlzd P&L
+// drifted from P&L Amt (see above; Paul, 6 Aug 2026).
+function buildTable1512Lookup(){
+  var out = {};
+  var body = document.querySelector('#table1512-finalpnl tbody');
+  if(!body) return out;
+  body.querySelectorAll('tr[data-sym]').forEach(function(tr){
+    var sym = tr.getAttribute('data-sym');
+    var premium = parseFloat(tr.getAttribute('data-premium'));
+    var cost = parseFloat(tr.getAttribute('data-cost'));
+    var recon = parseFloat(tr.getAttribute('data-recon'));
+    var pnl = parseFloat(tr.getAttribute('data-pnl'));
+    if([premium, cost, recon, pnl].some(isNaN)) return;
+    out[sym] = { premium: premium, cost: cost, recon: recon, pnl: pnl };
+  });
+  return out;
+}
+// Order + display config matches Table 1512's row order exactly. Chart numbers 23–32 are the
+// next unused sitewide (Chart 22 was the last one in use — see gauge cards / IB16 Chart 20 /
+// IB17 Chart 21 — per the Table & Chart Numbering Rule).
+var WATERFALL_CFG = [
+  { sym:'QQQ',        chart:23, dot:'🟦', status:'closed', kind:'ic', en:'QQQ',              zh:'QQQ' },
+  { sym:'SMH_JUL',     chart:24, dot:'🟩', status:'closed', kind:'ic', en:'SMH (Jul)',         zh:'SMH（7月）' },
+  { sym:'NVDA_AUG21',  chart:25, dot:'🔴', status:'closed', kind:'ic', en:'NVDA (Aug21)',      zh:'NVDA（8月21日）' },
+  { sym:'SPY',         chart:26, dot:'🔷', status:'closed', kind:'ic', en:'SPY',               zh:'SPY' },
+  { sym:'AVGO',        chart:27, dot:'🟧', status:'open',   kind:'ic', en:'AVGO',              zh:'AVGO' },
+  { sym:'IWM',         chart:28, dot:'🟪', status:'open',   kind:'ic', en:'IWM',               zh:'IWM' },
+  { sym:'GOOGL',       chart:29, dot:'🟡', status:'open',   kind:'put', en:'GOOGL',            zh:'GOOGL' },
+  { sym:'FDS',         chart:30, dot:'🟫', status:'open',   kind:'cc', en:'FDS Covered Call',  zh:'FDS备兑看涨' },
+  { sym:'SMH_SEP18',   chart:31, dot:'🟩', status:'open',   kind:'ic', en:'SMH (Sep18)',       zh:'SMH（9月18日）' },
+  { sym:'NVDA_SEP18',  chart:32, dot:'🔴', status:'open',   kind:'ic', en:'NVDA (Sep18)',      zh:'NVDA（9月18日）' }
+];
+var WATERFALL_KIND_LABEL = {
+  ic:  { en:'IG · Iron Condor', zh:'IG · 铁鹰策略' },
+  put: { en:'IG · Cash-Secured Put', zh:'IG · 现金担保认沽期权' },
+  cc:  { en:'IG · Covered Call', zh:'IG · 备兑看涨期权' }
+};
+function wfFmt(n){
+  var sign = n >= 0 ? '+' : '−';
+  return sign + '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+// Builds one chart's 4-bar bridge (Premium Collected → Cost to Close → Reconciliation →
+// Net P&L), auto-scaled to that position's own value range so a $729 QQQ chart and a $9 IWM
+// chart both fill their box sensibly instead of sharing one fixed scale.
+function waterfallPlotHtml(d){
+  var afterPremium = d.premium;
+  var afterCost = afterPremium - d.cost;
+  var afterRecon = afterCost + d.recon; // should equal d.pnl — the bridge's own arithmetic check
+  var net = d.pnl;
+  var pts = [0, afterPremium, afterCost, afterRecon, net];
+  var minV = Math.min.apply(null, pts), maxV = Math.max.apply(null, pts);
+  var range = (maxV - minV) || 1;
+  var pad = range * 0.16;
+  minV -= pad; maxV += pad;
+  var span = (maxV - minV) || 1;
+  function topPct(v){ return (1 - (v - minV) / span) * 100; }
+  function bar(v0, v1, colorCls, labelVal){
+    var top = topPct(Math.max(v0, v1));
+    var h = Math.max(Math.abs(topPct(v0) - topPct(v1)), 1.5);
+    var up = v1 >= v0;
+    var labelTop = up
+      ? 'calc(' + topPct(Math.max(v0, v1)).toFixed(2) + '% - 20px)'
+      : 'calc(' + topPct(Math.min(v0, v1)).toFixed(2) + '% + 6px)';
+    return '<div class="wf-col"><div class="wf-bar ' + colorCls + '" style="top:' + top.toFixed(2) + '%;height:' + h.toFixed(2) + '%"></div>' +
+      '<div class="wf-val" style="top:' + labelTop + '">' + wfFmt(labelVal) + '</div></div>';
+  }
+  var colsHtml =
+    bar(0, afterPremium, 'green', afterPremium) +
+    bar(afterPremium, afterCost, (afterCost <= afterPremium ? 'red' : 'green'), -d.cost) +
+    bar(afterCost, afterRecon, (d.recon >= 0 ? 'green' : 'red'), d.recon) +
+    bar(0, net, 'gold', net);
+  var zeroTop = topPct(0);
+  return '<div class="wf-baseline" style="top:' + zeroTop.toFixed(2) + '%"></div>' +
+    '<div class="wf-zero-label" style="top:' + zeroTop.toFixed(2) + '%">$0</div>' +
+    '<div class="wf-cols">' + colsHtml + '</div>';
+}
+function renderWaterfallCharts(){
+  var wrap = document.getElementById('waterfallChartsWrap');
+  if(!wrap) return;
+  var lookup = buildTable1512Lookup();
+  var html = WATERFALL_CFG.map(function(cfg){
+    var d = lookup[cfg.sym];
+    if(!d) return '';
+    var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
+    var statusPill = cfg.status === 'closed'
+      ? '<div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>'
+      : '<div class="pill open">● <span class="en">OPEN</span><span class="zh">持仓中</span></div>';
+    var netLabel = cfg.status === 'closed'
+      ? '<span class="en">Net P&amp;L (Realized) (A−B+C)</span><span class="zh">净盈亏（已实现）(A−B+C)</span>'
+      : '<span class="en">Net P&amp;L (Unrealized) (A−B+C)</span><span class="zh">净盈亏（未实现）(A−B+C)</span>';
+    return '' +
+      '<div class="condor" id="wfCard-' + cfg.sym + '">' +
+        '<div class="c-head">' +
+          '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">Chart ' + cfg.chart + ': ' + cfg.en + ' — Premium Bridge</span><span class="zh">图' + cfg.chart + '：' + cfg.zh + '——权利金桥接图</span></div>' +
+          '<div class="c-meta"><span class="en">' + kindLbl.en + '</span><span class="zh">' + kindLbl.zh + '</span></div>' +
+          statusPill +
+        '</div>' +
+        '<div class="wf-legend"><span><span class="dot" style="background:#3fb950"></span><span class="en">Gain / recovery</span><span class="zh">盈利/回升</span></span><span><span class="dot" style="background:#f85149"></span><span class="en">Loss</span><span class="zh">亏损</span></span><span><span class="dot" style="background:#f4c869"></span><span class="en">Net total</span><span class="zh">净额合计</span></span></div>' +
+        '<div class="wf-plot">' + waterfallPlotHtml(d) + '</div>' +
+        '<div class="wf-catrow">' +
+          '<div class="wf-catlabel"><b><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></b>' + wfFmt(d.premium) + '</div>' +
+          '<div class="wf-catlabel"><b><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></b>' + wfFmt(-d.cost) + '</div>' +
+          '<div class="wf-catlabel"><b><span class="en">Reconciliation (C)</span><span class="zh">核算调整 (C)</span></b>' + wfFmt(d.recon) + '</div>' +
+          '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + '</div>' +
+        '</div>' +
+      '</div>';
+  }).join('');
+  wrap.innerHTML = html;
+  applyLangTo(wrap);
+}
 function pnlAmtCell(sym){
   var v = PNL_AMT[sym];
   if(typeof v !== 'number') return '<td class="num">—</td>';
@@ -9018,6 +9170,7 @@ else if (location.hash === '#pnl') { setTab('pnl'); setPnlPeriod('monthly'); }
 else if (location.hash === '#ypnl') { setTab('pnl'); setPnlPeriod('yearly'); }
 else if (location.hash === '#qpnl') { setTab('pnl'); setPnlPeriod('quarterly'); }
 else if (location.hash === '#finalpnl') setTab('finalpnl');
+else if (location.hash === '#waterfall') setTab('waterfall');
 else if (location.hash === '#trades') setTab('trades');
 else if (location.hash === '#win') setTab('win');
 else if (location.hash === '#lost') setTab('lost');
