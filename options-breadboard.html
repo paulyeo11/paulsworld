@@ -43,6 +43,9 @@
   .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
   .page-menu-dropdown button.pinned { color:#f59e0b; }
   .page-menu-dropdown button.spinning .refresh-icon { display:inline-block; animation:spin .8s linear; }
+  .page-menu-dropdown button.menu-active { color:#f59e0b; }
+  .page-menu-dropdown button.menu-active::after { content:'✓'; margin-left:auto; }
+  .page-menu-divider { border-top:1px solid rgba(255,255,255,.08); margin:2px 0; }
   @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 
   .local-menu-wrap { position:relative; justify-self:end; }
@@ -565,6 +568,17 @@
     <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到首页</span></button>
     <button id="heroRefreshBtn" onclick="refreshAllData(); closePageMenu();"><span class="refresh-icon">🔄</span> <span class="en">Refresh</span><span class="zh">刷新</span></button>
     <button onclick="location.reload();">🔃 <span class="en">Reload</span><span class="zh">重新加载</span></button>
+    <div class="page-menu-divider"></div>
+    <button id="menuFilterPending" onclick="setCushionFilter('pending'); closePageMenu();">⏳ <span class="en">Pending Only</span><span class="zh">仅待成交</span></button>
+    <button id="menuFilterBang" onclick="setCushionFilter('bang'); closePageMenu();">💥 <span class="en">Bang</span><span class="zh">Bang精选</span></button>
+    <button id="menuFilterTight" onclick="setCushionFilter('tight'); closePageMenu();">⚡ <span class="en">Tight 0-2%</span><span class="zh">紧绷 0-2%</span></button>
+    <div class="page-menu-divider" id="gaugeMenuDivider" style="display:none"></div>
+    <div id="gaugeMenuExtras" style="display:none">
+      <button id="gaugeHideLabelBtn" onclick="toggleGaugeLabels(); closePageMenu();">🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span></button>
+      <button id="gaugeHideNotesBtn" onclick="toggleGaugeNotes(); closePageMenu();">🙈 <span class="en">Hide Small Print</span><span class="zh">隐藏小字说明</span></button>
+      <button id="gaugeDayModeBtn" onclick="toggleGaugeDayMode(); closePageMenu();">🔁 <span class="en">Show Days Left</span><span class="zh">显示剩余天数</span></button>
+      <button onclick="shareGaugeLink(); closePageMenu();">🔗 <span class="en">Share Gauge</span><span class="zh">分享仪表盘</span></button>
+    </div>
   </div>
 </div>
 
@@ -1256,12 +1270,6 @@
 
   <div id="tab-gauge">
   <div class="cushion-filter-row" id="cushionFilterRow-gauge"></div>
-  <div class="cushion-filter-row" style="margin-top:0">
-    <button class="cushion-filter-btn" id="gaugeHideLabelBtn" onclick="toggleGaugeLabels()">🙈 <span class="en">Hide Label</span><span class="zh">隐藏标签</span></button>
-    <button class="cushion-filter-btn" id="gaugeHideNotesBtn" onclick="toggleGaugeNotes()">🙈 <span class="en">Hide Small Print</span><span class="zh">隐藏小字说明</span></button>
-    <button class="cushion-filter-btn" id="gaugeDayModeBtn" onclick="toggleGaugeDayMode()">🔁 <span class="en">Show Days Left</span><span class="zh">显示剩余天数</span></button>
-    <button class="cushion-filter-btn" onclick="shareGaugeLink()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
-  </div>
 
   <div class="gauge-grid" id="gaugeGrid">
   <!-- NVDA -->
@@ -5874,6 +5882,8 @@ function setTab(t){
   document.getElementById('tab-shareavgcost').style.display = t==='shareavgcost'?'':'none';
   document.getElementById('tab-riskzone').style.display = t==='riskzone'?'':'none';
   document.getElementById('tab-gauge').style.display = t==='gauge'?'':'none';
+  document.getElementById('gaugeMenuExtras').style.display = t==='gauge'?'':'none';
+  document.getElementById('gaugeMenuDivider').style.display = t==='gauge'?'':'none';
   document.getElementById('tab-unrealized').style.display = t==='unrealized'?'':'none';
   document.getElementById('tab-closesharepnl').style.display = t==='closesharepnl'?'':'none';
   document.getElementById('tab-icwatchlist').style.display = t==='icwatchlist'?'':'none';
@@ -7931,13 +7941,12 @@ function setCushionFilter(val){
   renderGaugeCardFilter();
 }
 function renderCushionFilterRow(){
+  // Pending/Bang/Tight moved into the ⋮ page menu (#menuFilterPending/Bang/Tight below) —
+  // this visible row now only shows All/Open/Closed. Keep them in sync via renderCushionFilterMenuActive().
   var opts = [
     {v:'all', en:'All', zh:'全部'},
     {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
-    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'},
-    {v:'pending', en:'⏳ Pending Only', zh:'⏳ 仅待成交'},
-    {v:'bang', en:'💥 Bang', zh:'💥 Bang精选'},
-    {v:'tight', en:'⚡ Tight 0-2%', zh:'⚡ 紧绷 0-2%'}
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
   ];
   var html = opts.map(function(o){
     var active = cushionFilter === o.v ? ' active' : '';
@@ -7947,7 +7956,15 @@ function renderCushionFilterRow(){
     var el = document.getElementById(id);
     if(el) el.innerHTML = html;
   });
+  renderCushionFilterMenuActive();
   setLang(curLang);
+}
+function renderCushionFilterMenuActive(){
+  var map = {pending:'menuFilterPending', bang:'menuFilterBang', tight:'menuFilterTight'};
+  Object.keys(map).forEach(function(v){
+    var btn = document.getElementById(map[v]);
+    if(btn) btn.classList.toggle('menu-active', cushionFilter === v);
+  });
 }
 // Show/hide each Gauge tab card (data-sym) using the same All/Open/Closed/Bang filter as T6 —
 // GOOGL and FDS aren't in POSITION_STATUS's condor set but both default to 'open' via the
