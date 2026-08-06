@@ -7412,6 +7412,23 @@ function renderGaugeAlerts(){
   });
 }
 renderGaugeAlerts();
+// Move any gauge card currently showing a "Consider Closing" alert (🔔 — 50% credit or 21
+// DTE, per renderGaugeAlerts() above) to the top row of the Gauge tab grid, so the cards
+// needing attention are always the first thing Paul sees, not buried mid-grid. Reorders the
+// existing .condor DOM nodes in place (no clone/rebuild) — alerted cards keep their own
+// relative order, followed by every non-alerted card in its original order. Runs once at
+// load since the underlying alert conditions are computed from static config, not a live feed.
+function reorderGaugeAlertsToTop(){
+  var grid = document.getElementById('gaugeGrid'); if(!grid) return;
+  var cards = Array.prototype.slice.call(grid.querySelectorAll(':scope > .condor'));
+  var alerted = [], rest = [];
+  cards.forEach(function(card){
+    var alertEl = card.querySelector('.gauge-alert.show');
+    (alertEl ? alerted : rest).push(card);
+  });
+  alerted.concat(rest).forEach(function(card){ grid.appendChild(card); });
+}
+reorderGaugeAlertsToTop();
 // Dashboard tab T6's "P&L" (today's daily P&L) column — a genuinely separate metric
 // (single-day change) with no canonical table elsewhere on the page, so it stays a manual
 // snapshot: real figures read directly from the IBKR mobile app's Portfolio > Positions screen
