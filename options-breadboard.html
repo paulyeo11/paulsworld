@@ -176,6 +176,7 @@
     #gaugeGrid .gauge-pct-lbl { display:none; }
     #gaugeGrid .gauge-pct-val { display:none; }
     #gaugeGrid .gauge-pct-amt { font-size:7px; }
+    #gaugeGrid .gauge-greeks-val { display:none; }
     #gaugeGrid .note { display:none; }
     #gaugeGrid .gauge-status-dot { font-size:.38rem !important; padding:1px 4px !important; top:-1px; left:0; letter-spacing:0; }
     #gaugeGrid .gauge-day-badge { font-size:.38rem !important; padding:1px 4px !important; top:-1px; right:0; letter-spacing:0; }
@@ -216,6 +217,14 @@
   .gauge-pct-val.gauge-pct-down { fill:#f85149; }
   .gauge-pct-val.gauge-pct-none { fill:#8b98a5; }
   .gauge-pct-lbl { font-size:11px; font-weight:700; fill:#8b98a5; letter-spacing:.03em; text-transform:uppercase; }
+  /* Bottom-left Δ (short-leg delta) / Θ (modeled theta-only value) readout — same dead space
+     at the base of the semicircle as the centred P&L Final/% Premium readout above, just
+     left-aligned instead of centred so the two groups don't collide. See
+     appendGaugeGreeksReadout()/renderGaugeGreeks(). */
+  .gauge-greeks-val { font-size:10px; font-weight:700; font-family:inherit; fill:#c9d1d9; }
+  .gauge-greeks-val.gauge-pct-up { fill:#3fb950; }
+  .gauge-greeks-val.gauge-pct-down { fill:#f85149; }
+  .gauge-greeks-val.gauge-pct-none { fill:#8b98a5; }
   .gauge-legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:.62rem; color:#8b98a5; }
   .gauge-legend span b { color:#c9d1d9; }
   .gauge-legend .now-leg b { color:#f5c869; }
@@ -1516,6 +1525,10 @@
   <div class="note">
     <span class="en">Same data as the <b>Profit/Risk Zone</b> tab, shown as a <b>gauge (speedometer) chart</b> instead of a horizontal strike bar — the needle points to where the live price sits between the long-put and long-call strikes. 🟡 gold needle = live price now, ⚪ dashed grey needle = price on DTE Day 1 (entry). Below each gauge, the 🛡️ Put/Call Cushion badges use the same formula as the Cushion tab's T6: <b>A</b> = Share Price, <b>B</b> = Selling Put strike, <b>C</b> = Selling Call strike — <b>Put Cushion = (A−B)/A</b>, <b>Call Cushion = (C−A)/A</b>.</span>
     <span class="zh">与「盈亏区间」页签相同的数据，改以<b>仪表盘（速度表）图表</b>呈现——指针指向现价在买入认沽与买入认购行权价之间的位置。🟡 金色指针 = 当前实时价格，⚪ 灰色虚线指针 = DTE第1天（建仓当日）价格。每个仪表下方的🛡️认沽/认购缓冲标签，公式与「缓冲」页签T6相同：<b>A</b> = 股价，<b>B</b> = 卖出认沽行权价，<b>C</b> = 卖出认购行权价——<b>认沽缓冲 = (A−B)/A</b>，<b>认购缓冲 = (C−A)/A</b>。</span>
+  </div>
+  <div class="note">
+    <span class="en">Bottom-left of each gauge: <b>Δ</b> (delta) is each short leg's modeled delta at entry — same Black-Scholes figures as the Cushion tab's T6 (put negative, call positive); shows '—' where no modeled delta is on file. <b>Θ</b> (theta) is a separate, <b>modeled "theta-only" value</b> — <b>D × (1 − √(F ÷ E))</b>, with <b>D</b> = Entry Credit, <b>E</b> = DTE at Entry, <b>F</b> = Remaining DTE (to close date if closed, else today) — the same √time model as Table 40/420's Day-by-day pace. It's the premium pure time decay alone would have banked by now, <b>ignoring price movement</b> — deliberately a different number from the real "P&amp;L Final" at gauge centre, which does include price movement. Symbols with no confirmed entry date/credit (XLE, META still pending; SMH Jul's entry date isn't tracked once the SMH key was reassigned to the new Sep18 condor) show '—' rather than a guess.</span>
+    <span class="zh">每个仪表左下角：<b>Δ</b>（Delta）为各卖出腿在建仓时的建模delta——公式与「缓冲」页签T6相同（认沽为负、认购为正）；无建模delta数据时显示"—"。<b>Θ</b>（Theta）是另一个独立的<b>建模「纯时间价值」数值</b>——<b>D × (1 − √(F ÷ E))</b>，其中 <b>D</b> = 已收权利金，<b>E</b> = 建仓时到期天数，<b>F</b> = 剩余到期天数（已平仓则以平仓日为准，否则以今日为准）——与表40/420每日节奏相同的√时间模型。代表若股价完全不变、仅时间流逝，目前应已入袋的权利金，<b>不计入股价变动</b>——刻意与仪表中央、已计入股价变动的真实「最终盈亏」区分开来。没有确认建仓日期/权利金的代码（XLE、META仍待成交；SMH（7月）的建仓日期在SMH代码被重新指派给新的Sep18铁鹰后已不再单独追踪）会显示"—"，而非猜测数字。</span>
   </div>
   </div><!-- /tab-gauge -->
 
@@ -6336,6 +6349,31 @@ function appendGaugePctReadout(svg, sym){
   g.appendChild(lblZh);
   svg.appendChild(g);
 }
+// Appends the Δ (short-leg delta) / Θ (modeled theta-only value) readout at the bottom-left of
+// a gauge chart — same open dead-space below the semicircle as appendGaugePctReadout() above,
+// just left-aligned so the two groups sit side by side instead of overlapping. Δ = each short
+// leg's modeled delta at entry (SHORT_PUT_DELTA/SHORT_CALL_DELTA — same Black-Scholes figures
+// as the Cushion tab's T6). Θ = a modeled "theta-only" dollar value: the cumulative premium
+// that pure time decay alone would have captured by now, ignoring any price movement — same
+// √time model as Table 40/420 (1 − √(Remaining DTE ÷ Entry DTE)) applied to the entry credit
+// (D = MTD_PREMIUM). This is deliberately a different number from the real P&L Final shown at
+// gauge centre. Placeholder '—' text is created here; values filled in by renderGaugeGreeks()
+// once SHORT_PUT_DELTA/SHORT_CALL_DELTA/MTD_PREMIUM/GAUGE_ENTRY_DATE/GAUGE_EXPIRY_DATE are all
+// defined further down the page.
+function appendGaugeGreeksReadout(svg, sym){
+  var lo = sym.toLowerCase();
+  var g = gaugeSvgEl('g', { id:'gauge-greeks-group-'+lo });
+  var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+  title.textContent = 'Δ = modeled short-leg delta at entry (put negative, call positive); Θ = modeled theta-only value = Entry Credit × (1 − √(Remaining DTE ÷ Entry DTE)), ignoring price movement — not a live IBKR reading';
+  g.appendChild(title);
+  var deltaEl = gaugeSvgEl('text', { x:14, y:GAUGE_CY+45, 'text-anchor':'start', class:'gauge-greeks-val', id:'gauge-greeks-delta-'+lo });
+  deltaEl.textContent = 'Δ —';
+  g.appendChild(deltaEl);
+  var thetaEl = gaugeSvgEl('text', { x:14, y:GAUGE_CY+65, 'text-anchor':'start', class:'gauge-greeks-val gauge-pct-none', id:'gauge-greeks-theta-'+lo });
+  thetaEl.textContent = 'Θ —';
+  g.appendChild(thetaEl);
+  svg.appendChild(g);
+}
 // Draw the static ring (5 colour zones), strike tick labels, and break-even ticks for a 4-leg condor gauge.
 // Needle elements are also created here (hidden) so updateGaugeNeedle() only has to move them.
 function buildGauge(sym, cfg){
@@ -6388,6 +6426,7 @@ function buildGauge(sym, cfg){
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
   appendGaugePctReadout(svg, sym);
+  appendGaugeGreeksReadout(svg, sym);
 }
 // Single-strike gauge for a covered call (Table 1101 shape — no put leg, no long call).
 function buildCallOnlyGauge(sym, cfg){
@@ -6422,6 +6461,7 @@ function buildCallOnlyGauge(sym, cfg){
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
   appendGaugePctReadout(svg, sym);
+  appendGaugeGreeksReadout(svg, sym);
 }
 // Single-strike gauge for a cash-secured put (e.g. GOOGL) — mirror of buildCallOnlyGauge:
 // red below the strike (assigned), green above it (keep the premium, stays cash-secured).
@@ -6456,6 +6496,7 @@ function buildPutOnlyGauge(sym, cfg){
   svg.appendChild(gaugeSvgEl('line', { x1:GAUGE_CX, y1:GAUGE_CY, x2:topPt.x.toFixed(2), y2:topPt.y.toFixed(2), class:'gauge-needle-now', id:'gneedle-now-'+sym.toLowerCase(), style:'display:none' }));
   svg.appendChild(gaugeSvgEl('circle', { cx:GAUGE_CX, cy:GAUGE_CY, r:9, class:'gauge-hub' }));
   appendGaugePctReadout(svg, sym);
+  appendGaugeGreeksReadout(svg, sym);
 }
 // Move a gauge's needle to the angle for `price` within [lo, hi]. kind is 'now' or 'day1'.
 function updateGaugeNeedle(sym, kind, price, lo, hi){
@@ -7321,6 +7362,65 @@ function renderGaugePremiumPct(){
   });
 }
 renderGaugePremiumPct();
+// Modeled "theta-only" value for the Δ/Θ readout (appendGaugeGreeksReadout() above): the
+// cumulative dollar amount pure time decay alone would have captured by now (ignoring price
+// movement), using the same √time model as Table 40/420 — 1 − √(Remaining DTE ÷ Entry DTE) —
+// applied to the entry credit (D = MTD_PREMIUM). Entry/expiry dates come from GAUGE_ENTRY_DATE/
+// GAUGE_EXPIRY_DATE (already used by the Day badge above); ref date is the close date for a
+// closed position, else today. Returns null (renders '—') when any needed real figure is
+// missing — e.g. XLE/META are staged orders with no entry date yet, and SMH_JUL's entry date
+// isn't tracked separately once the 'smh' key was reassigned to the new Sep18 condor (see the
+// GAP_TABLE10_EXTRA comment) — never guessed.
+function gaugeThetaOnlyInfo(sym){
+  var lo = sym.toLowerCase();
+  var entryCfg = GAUGE_ENTRY_DATE[lo];
+  var expiry = GAUGE_EXPIRY_DATE[lo];
+  var credit = MTD_PREMIUM[sym];
+  if(!entryCfg || !expiry || typeof credit !== 'number') return null;
+  var entryDte = gaugeDaysBetween(entryCfg.entry, expiry);
+  if(entryDte <= 0) return null;
+  var ref = entryCfg.close || gaugeTodayStr();
+  var remainingDte = Math.max(0, Math.min(entryDte, gaugeDaysBetween(ref, expiry)));
+  var pct = 1 - Math.sqrt(remainingDte / entryDte);
+  return { amt: pct * credit, pct: pct * 100 };
+}
+// Fills in the bottom-left Δ/Θ readout for every gauge card. Δ shows the modeled short put/call
+// delta(s) at entry (SHORT_PUT_DELTA/SHORT_CALL_DELTA — same figures as the Cushion tab's T6,
+// put negative/call positive); symbols with only one short leg (GOOGL put-only, FDS call-only)
+// show just that one, and symbols with no modeled delta on file show '—' rather than a guess.
+function renderGaugeGreeks(){
+  var syms = {};
+  [RAIL_CFG, CALL_ONLY_CFG, PUT_ONLY_CFG, GAP_TABLE10_EXTRA].forEach(function(map){
+    Object.keys(map).forEach(function(s){ syms[s] = 1; });
+  });
+  Object.keys(syms).forEach(function(sym){
+    var lo = sym.toLowerCase();
+    var deltaEl = document.getElementById('gauge-greeks-delta-'+lo);
+    if(deltaEl){
+      var pd = SHORT_PUT_DELTA[sym], cd = SHORT_CALL_DELTA[sym];
+      var pdTxt = typeof pd === 'number' ? pd.toFixed(2) : null;
+      var cdTxt = typeof cd === 'number' ? '+'+cd.toFixed(2) : null;
+      if(pdTxt && cdTxt) deltaEl.textContent = 'ΔP '+pdTxt+' ΔC '+cdTxt;
+      else if(pdTxt) deltaEl.textContent = 'Δ '+pdTxt;
+      else if(cdTxt) deltaEl.textContent = 'Δ '+cdTxt;
+      else deltaEl.textContent = 'Δ —';
+    }
+    var thetaEl = document.getElementById('gauge-greeks-theta-'+lo);
+    if(thetaEl){
+      thetaEl.classList.remove('gauge-pct-up', 'gauge-pct-down', 'gauge-pct-none');
+      var info = gaugeThetaOnlyInfo(sym);
+      if(!info){
+        thetaEl.textContent = 'Θ —';
+        thetaEl.classList.add('gauge-pct-none');
+        return;
+      }
+      var a = Math.round(info.amt);
+      thetaEl.textContent = 'Θ ' + (a >= 0 ? '+' : '−') + '$' + Math.abs(a).toLocaleString('en-US');
+      thetaEl.classList.add(a >= 0 ? 'gauge-pct-up' : 'gauge-pct-down');
+    }
+  });
+}
+renderGaugeGreeks();
 // Freshness stamp for each gauge's P&L Final / Premium Collected readout — ASOF is derived
 // straight off Table 900's data-asof attributes (see buildTable900Lookup()), same
 // derive-don't-duplicate pattern as MTD_PREMIUM/PNL_AMT above. This exists because the P&L
