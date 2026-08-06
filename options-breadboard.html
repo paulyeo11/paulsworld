@@ -7290,9 +7290,13 @@ function waterfallPlotHtml(d){
     var top = topPct(Math.max(v0, v1));
     var h = Math.max(Math.abs(topPct(v0) - topPct(v1)), 1.5);
     var up = v1 >= v0;
+    // Clamped with max()/min() so a bar sitting near the very top or bottom of its own
+    // auto-scaled range can't push the label's "-20px"/"+6px" offset outside .wf-plot's own
+    // box — that escaped upward into the legend above it once a 4th legend item ("Cost to
+    // Close") made the legend wrap to 2 lines, exposing the overlap (Paul, 6 Aug 2026).
     var labelTop = up
-      ? 'calc(' + topPct(Math.max(v0, v1)).toFixed(2) + '% - 20px)'
-      : 'calc(' + topPct(Math.min(v0, v1)).toFixed(2) + '% + 6px)';
+      ? 'max(2px, calc(' + topPct(Math.max(v0, v1)).toFixed(2) + '% - 20px))'
+      : 'min(calc(' + topPct(Math.min(v0, v1)).toFixed(2) + '% + 6px), calc(100% - 12px))';
     return '<div class="wf-col"><div class="wf-bar ' + colorCls + '" style="top:' + top.toFixed(2) + '%;height:' + h.toFixed(2) + '%"></div>' +
       '<div class="wf-val" style="top:' + labelTop + '">' + wfFmt(labelVal) + (suffix || '') + '</div></div>';
   }
