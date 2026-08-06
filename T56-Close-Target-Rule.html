@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T56: The Close-Target Rule — 50% of Credit or 21 DTE (4-Leg IC vs Single-Leg Put)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#0e1330; color:#fff; min-height:100vh; padding:0 0 60px; }
+  .home-btn { position:fixed; top:14px; left:16px; z-index:999; background:#f4813f; color:#fff; text-decoration:none; font-size:.82rem; font-weight:700; padding:7px 16px; border-radius:20px; box-shadow:0 2px 8px rgba(244,129,63,.4); }
+
+  .page-menu-wrap { position:fixed; top:54px; right:12px; z-index:999; }
+  .page-menu-btn { width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.1); border:1.5px solid rgba(255,255,255,.35); color:#fff; font-size:1.15rem; font-weight:800; cursor:pointer; line-height:1; }
+  .page-menu-btn:hover { background:rgba(255,255,255,.2); }
+  .page-menu-dropdown { display:none; position:absolute; top:42px; right:0; background:#161b22; border:1px solid rgba(255,255,255,.15); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.45); min-width:190px; overflow:hidden; }
+  .page-menu-dropdown.open { display:block; }
+  .page-menu-dropdown button { display:flex; align-items:center; gap:8px; width:100%; background:none; border:none; color:#e6edf3; text-align:left; padding:12px 14px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .page-menu-dropdown button:hover { background:rgba(255,255,255,.08); }
+  .page-menu-dropdown button + button { border-top:1px solid rgba(255,255,255,.08); }
+  .page-menu-dropdown button.pinned { color:#f59e0b; }
+
+  .hd { background:linear-gradient(135deg,#0e1330,#1a2a6c); padding:70px 24px 26px; text-align:center; }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  .hd .ic { font-size:2.4rem; }
+  .hd h1 { font-size:1.4rem; font-weight:800; margin:10px 0 6px; }
+  .hd p { color:rgba(255,255,255,.65); font-size:.88rem; max-width:600px; margin:0 auto; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:22px 18px; }
+  .share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+  .disclaimer { background:rgba(244,165,0,.12); border:1px solid rgba(244,165,0,.4); border-radius:12px; padding:12px 16px; font-size:.8rem; color:#ffd97a; line-height:1.5; margin-bottom:22px; }
+
+  .verdict-badge { display:flex; align-items:center; gap:10px; background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.45); border-radius:14px; padding:14px 16px; margin-bottom:22px; }
+  .verdict-badge .vico { font-size:1.6rem; }
+  .verdict-badge .vtxt { font-weight:800; font-size:.95rem; color:#86efac; }
+  .verdict-badge .vsub { font-size:.78rem; color:rgba(255,255,255,.6); margin-top:2px; }
+
+  .card { background:#1a1f3d; border:1px solid #2a3158; border-radius:14px; padding:18px; margin-bottom:22px; }
+  .card h2 { font-size:.95rem; font-weight:800; color:#8ea0ff; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
+  .card p { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:10px; }
+  .card p:last-child { margin-bottom:0; }
+  .card ul { margin:6px 0 10px 20px; }
+  .card li { font-size:.86rem; color:rgba(255,255,255,.8); line-height:1.6; margin-bottom:6px; }
+
+  /* Vertical label/value rows — Table & Chart Numbering Rule's column-fit guidance for 2-5 col tables on mobile */
+  table.facts { width:100%; border-collapse:collapse; margin-top:4px; }
+  table.facts th, table.facts td { padding:9px 8px; font-size:.82rem; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.facts th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.66rem; letter-spacing:.03em; width:42%; }
+  table.facts td b { color:#f4c869; }
+  table.facts td.gain { color:#86efac; font-weight:800; }
+  table.facts td.loss { color:#fca5a5; font-weight:800; }
+
+  table.status { width:100%; border-collapse:collapse; margin-top:4px; font-size:.78rem; }
+  table.status th, table.status td { padding:8px 6px; text-align:left; border-bottom:1px solid rgba(255,255,255,.08); line-height:1.4; }
+  table.status th { color:rgba(255,255,255,.5); font-weight:700; text-transform:uppercase; font-size:.62rem; letter-spacing:.02em; }
+  table.status td.hit { color:#ff7b72; font-weight:800; }
+  table.status td.ok { color:#86efac; font-weight:700; }
+  @media(max-width:480px){ table.status{ display:block; overflow-x:auto; white-space:nowrap; } }
+
+  .ok-badge { display:inline-block; background:rgba(16,185,129,.18); border:1px solid rgba(16,185,129,.5); color:#86efac; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+  .warn-badge { display:inline-block; background:rgba(244,165,0,.16); border:1px solid rgba(244,165,0,.5); color:#ffd97a; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+  .hot-badge { display:inline-block; background:rgba(248,113,113,.16); border:1px solid rgba(248,113,113,.5); color:#fca5a5; font-weight:700; font-size:.82rem; padding:8px 14px; border-radius:10px; margin-top:6px; }
+
+  .fmath { font-family:'Courier New',monospace; background:#0e1330; border-radius:8px; padding:10px 12px; font-size:.82rem; color:#f4c869; margin:8px 0; }
+
+  .opt-item { display:flex; gap:14px; margin-bottom:14px; }
+  .opt-item:last-child { margin-bottom:0; }
+  .onum { flex-shrink:0; width:26px; height:26px; border-radius:50%; background:#10b981; color:#0e1330; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+  .obody { flex:1; min-width:0; }
+  .otitle { font-weight:700; font-size:.88rem; margin-bottom:4px; }
+  .odesc { color:rgba(255,255,255,.72); font-size:.8rem; line-height:1.5; }
+
+  .foot { text-align:center; margin-top:30px; color:rgba(255,255,255,.4); font-size:.78rem; line-height:1.8; }
+  .foot a { color:rgba(255,255,255,.55); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="/tools.html" class="home-btn">🏠 Home</a>
+
+<div class="page-menu-wrap">
+  <button class="page-menu-btn" id="pageMenuBtn" onclick="togglePageMenu()" aria-label="Page menu">⋮</button>
+  <div class="page-menu-dropdown" id="pageMenuDropdown">
+    <button onclick="shareThisPage(); closePageMenu();">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    <button id="pinMenuItem" onclick="togglePinThisPage()">📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span></button>
+  </div>
+</div>
+
+<div class="hd">
+  <div class="breadcrumb">
+    <a href="/tools.html" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#options" target="_blank"><span class="en">🦅 Options &amp; Iron Condor</span><span class="zh">🦅 期权与铁鹰策略</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">T56</span><span class="zh">T56</span></span>
+  </div>
+  <div class="ic">🔔🦅</div>
+  <h1><span class="en">T56: The Close-Target Rule — 50% of Credit or 21 DTE</span><span class="zh">T56：平仓目标法则——50%权利金或21DTE</span></h1>
+  <p><span class="en">The standing rule behind every close decision on this dashboard — what it is, why 21 days specifically, and how it changes (or doesn't) for a single-leg short put like GOOGL.</span><span class="zh">这份仪表板上每一次平仓判断背后的标准法则——是什么、为何是21天，以及对像GOOGL这样的单腿卖出认沽期权，这条规则会有何不同（或不变）。</span></p>
+</div>
+
+<div class="wrap">
+  <div class="share-toast" id="shareToast">✅ Link copied!</div>
+  <div class="share-toast" id="pinToast">📌 Pinned!</div>
+
+  <div class="disclaimer">
+    ⚠️ <span class="en"><b>Not financial advice.</b> This is a personal trading-rule reference, not a recommendation for any specific trade. Figures below are live snapshots as of this writing — always confirm against T29/IBKR before acting.</span><span class="zh"><b>非投资建议。</b>本页仅为个人交易法则参考，并非针对任何具体交易的建议。以下数字为撰写时的即时快照——行动前请务必以T29或IBKR的数据为准。</span>
+  </div>
+
+  <div class="verdict-badge">
+    <div class="vico">🔔</div>
+    <div>
+      <div class="vtxt"><span class="en">Close at 50% of credit collected, OR 21 DTE — whichever comes first</span><span class="zh">达到50%已收权利金，或剩21天到期——以先到者为准</span></div>
+      <div class="vsub"><span class="en">Applies to 4-leg Iron Condors AND single-leg short puts, with one nuance below</span><span class="zh">适用于4腿铁鹰与单腿卖出认沽，唯有一点需留意（见下文）</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">The Two Triggers</span><span class="zh">两个触发条件</span></h2>
+    <table class="facts">
+      <tbody>
+        <tr><th><span class="en">Trigger 1 — Profit Target</span><span class="zh">条件1——获利目标</span></th><td><span class="en">Unrealized/realized P&amp;L reaches <b>50%</b> of the entry credit collected. Lock in the win rather than let theta squeeze out the last dollars while risk sits open.</span><span class="zh">未实现/已实现盈亏达到建仓权利金的<b>50%</b>。锁定获利，而不是为了榨出最后几块钱继续持有风险敞口。</span></td></tr>
+        <tr><th><span class="en">Trigger 2 — Time Target</span><span class="zh">条件2——时间目标</span></th><td><span class="en">Position reaches <b>21 days to expiry (DTE)</b>, regardless of P&amp;L level. Close, roll, or reassess — don't just let it ride.</span><span class="zh">持仓剩<b>21天到期（DTE）</b>，无论当前盈亏如何。此时应平仓、展期或重新评估——不要放任其继续持有。</span></td></tr>
+        <tr><th><span class="en">Rule of thumb</span><span class="zh">经验法则</span></th><td><b><span class="en">Whichever trigger hits first wins</span><span class="zh">哪个条件先触发，就以哪个为准</span></b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Why 21 Days Specifically?</span><span class="zh">为何偏偏是21天？</span></h2>
+    <p><span class="en">Gamma — how fast the option's delta (and therefore P&amp;L) swings per $1 move in the underlying — accelerates hardest in the final ~3 weeks before expiry. Theta decay (time value melting away) is also fastest in this window, which sounds good for a seller, but it comes bundled with much bigger P&amp;L swings on any adverse move in price. Past 21 DTE, the risk-per-day taken on to capture the remaining premium stops being a good trade — you're holding more gamma risk for less theta reward than earlier in the trade's life.</span><span class="zh">Gamma——即标的每变动$1，期权delta（进而盈亏）摆动的速度——在到期前最后约3周内加速最快。此时Theta（时间价值流失）衰减也最快，对卖方看似有利，但同时伴随着股价一旦出现不利变动时更剧烈的盈亏波动。过了21DTE后，为了榨取剩余权利金而承担的「每日风险」已不再划算——你承担的Gamma风险，相对能拿到的Theta回报，已经不如交易早期那么值得。</span></p>
+    <p><span class="en">This is the same reasoning tastytrade's own historical studies popularized — 21 DTE isn't a magic number, it's just where the risk/reward curve for holding vs. closing tends to flip for a short-premium position.</span><span class="zh">这与tastytrade自家历史研究所推广的理念相同——21DTE并非什么神奇数字，只是卖方权利金部位「续持」与「平仓」的风险/回报曲线，通常在此处发生翻转。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Does This Apply to a Single-Leg Short Put Too?</span><span class="zh">这条规则也适用于单腿卖出认沽吗？</span></h2>
+    <p><span class="en"><b>Yes, 21 DTE is still a reasonable default</b> — the gamma/theta acceleration is the same physics regardless of how many legs are in the trade. But two things shift the calculus vs. a 4-leg Iron Condor:</span><span class="zh"><b>是的，21DTE仍是合理的默认门槛</b>——无论交易有几条腿，Gamma／Theta的加速原理都相同。但相对于4腿铁鹰，有两点会改变判断：</span></p>
+    <div class="opt-item">
+      <div class="onum">1</div>
+      <div class="obody">
+        <div class="otitle"><span class="en">OK with assignment? DTE stops being a forced deadline</span><span class="zh">若愿意被指派（接股）？DTE就不再是强制期限</span></div>
+        <div class="odesc"><span class="en">If you're happy to own the shares at the strike (the "wheel" mindset — e.g. bullish on GOOGL at $305), 21 DTE isn't a must-close trigger. You can let it ride to expiry or get assigned; the clock only matters if you specifically don't want the stock.</span><span class="zh">若你愿意以行权价接下股票（「轮动策略」思路——例如看好GOOGL在$305接股），21DTE就不是强制平仓的触发点。可以放到到期或被指派；只有在你明确不想接股时，时间才真正重要。</span></div>
+      </div>
+    </div>
+    <div class="opt-item">
+      <div class="onum">2</div>
+      <div class="obody">
+        <div class="otitle"><span class="en">Not looking for assignment? Risk is actually bigger per contract</span><span class="zh">不想被指派？每口合约的风险其实更大</span></div>
+        <div class="odesc"><span class="en">A single short put has no long put underneath capping the downside — unlike a condor's wing, which defines max loss. So if the goal is pure premium (not stock), a tested strike near 21 DTE deserves the SAME urgency as an Iron Condor's cut-loss check — arguably more, since there's more capital at risk per contract with nothing hedging it.</span><span class="zh">单腿卖出认沽没有下方买入认沽腿来封顶亏损——不像铁鹰的翼腿，能界定最大亏损。因此，若目标纯粹是赚取权利金（而非接股），行权价一旦在21DTE附近被测试，就应给予与铁鹰止损检查<b>同等甚至更高</b>的重视程度——因为每口合约承担的风险更大，且完全没有对冲。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Worked Example — GOOGL Short Put (Live Numbers)</span><span class="zh">实例——GOOGL卖出认沽（实时数据）</span></h2>
+    <table class="facts">
+      <tbody>
+        <tr><th><span class="en">Structure</span><span class="zh">结构</span></th><td><span class="en">1× GOOGL Sep11'26 305 Put, sold to open</span><span class="zh">1口GOOGL 2026年9月11日到期，305行权价认沽，卖出开仓</span></td></tr>
+        <tr><th><span class="en">Entry</span><span class="zh">建仓</span></th><td><span class="en">29 Jul 2026 — credit <b>~$443</b></span><span class="zh">2026年7月29日——权利金<b>约$443</b></span></td></tr>
+        <tr><th><span class="en">21-DTE date</span><span class="zh">21DTE日期</span></th><td><b>21 Aug 2026</b> <span class="en">(Sep 11 − 21 days)</span><span class="zh">（9月11日−21天）</span></td></tr>
+        <tr><th><span class="en">Current P&amp;L (Table 900)</span><span class="zh">当前盈亏（表900）</span></th><td class="gain">+$375.51</td></tr>
+        <tr><th><span class="en">% of credit captured (E/D)</span><span class="zh">已锁定权利金比例 (E/D)</span></th><td><div class="fmath">375.51 / 443.00 = <b class="gain">84.8%</b></div></td></tr>
+      </tbody>
+    </table>
+    <div class="hot-badge">🔔 <span class="en">Already past the 50% trigger — by a wide margin. GOOGL rallied hard since entry, so the 305 put is deep OTM and has given back most of its value already. Per this rule, this is a live candidate for locking in the ~$375 now, rather than waiting for either the 50% mark (long since passed) or 21 DTE (still 15 days away).</span><span class="zh">早已远远超过50%触发点。GOOGL自建仓以来大幅上涨，305认沽已深度价外，权利金已大部分归零。依据本法则，这是一个可以现在锁定约$375获利了结的候选——而不必等待50%这条早已跨过的门槛，或还有15天才到的21DTE。</span></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Live Status — All Open Positions</span><span class="zh">实时状态——全部持仓</span></h2>
+    <div style="overflow-x:auto">
+    <table class="status">
+      <thead><tr><th><span class="en">Symbol</span><span class="zh">代码</span></th><th><span class="en">DTE Left</span><span class="zh">剩余DTE</span></th><th><span class="en">21-DTE Date</span><span class="zh">21DTE日期</span></th><th>% <span class="en">Credit</span><span class="zh">权利金</span></th><th><span class="en">Status</span><span class="zh">状态</span></th></tr></thead>
+      <tbody>
+        <tr><td><b>GOOGL</b></td><td>36d</td><td>21 Aug 2026</td><td class="hit">+84.8%</td><td class="hit">🔔 <span class="en">Profit trigger hit</span><span class="zh">获利已触发</span></td></tr>
+        <tr><td><b>FDS</b></td><td>15d</td><td>31 Jul 2026</td><td>−103%</td><td class="hit">🔔 <span class="en">DTE trigger hit</span><span class="zh">DTE已触发</span></td></tr>
+        <tr><td><b>AVGO</b></td><td>22d</td><td>7 Aug 2026</td><td>−2.5%</td><td class="ok"><span class="en">1 day out</span><span class="zh">还差1天</span></td></tr>
+        <tr><td><b>IWM</b></td><td>22d</td><td>7 Aug 2026</td><td>−4.2%</td><td class="ok"><span class="en">1 day out</span><span class="zh">还差1天</span></td></tr>
+        <tr><td><b>SMH</b></td><td>43d</td><td>28 Aug 2026</td><td>—</td><td class="ok"><span class="en">Neither yet</span><span class="zh">均未触发</span></td></tr>
+        <tr><td><b>NVDA2</b></td><td>43d</td><td>28 Aug 2026</td><td>—</td><td class="ok"><span class="en">Neither yet</span><span class="zh">均未触发</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-top:10px"><span class="en">Numbers as of 6 Aug 2026 (Table 900 P&amp;L Summary + Gauge tab expiry dates). FDS's 21-DTE date has already passed (31 Jul) — its DTE trigger is live, though FDS is a covered call (stock + short call), so its %-credit column isn't directly comparable to the pure-premium condors above.</span><span class="zh">数据截至2026年8月6日（表900盈亏摘要＋Gauge页签到期日）。FDS的21DTE日期（7月31日）已过——DTE触发已生效，惟FDS为备兑看涨（股票＋卖出看涨），其权利金百分比栏与上方纯权利金铁鹰不宜直接比较。</span></p>
+  </div>
+
+  <div class="card">
+    <h2><span class="en">Now Automated on T29</span><span class="zh">现已在T29自动化</span></h2>
+    <p><span class="en">Every OPEN position's Gauge card (Cushion tab, Table 1505–1512) now shows a pulsing 🔔 badge the moment either trigger is hit — computed live from the same Table 900 numbers and expiry dates in the table above, so it can never fall out of sync with the source data.</span><span class="zh">每个「持仓中」（OPEN）标的的Gauge卡片（缓冲页签，表1505–1512）现在会在任一条件触发的瞬间，显示一个跳动的🔔徽章——数据实时取自上表所用的同一份表900数据与到期日，因此不会与数据源脱节。</span></p>
+    <div class="ok-badge">✅ <a href="options-breadboard.html" style="color:#86efac"><span class="en">Check the Gauge tab on T29 →</span><span class="zh">前往T29的Gauge页签查看 →</span></a></div>
+  </div>
+
+  <script src="/view-counter.js"></script>
+
+  <div class="foot">
+    <span class="en">Standing rule reference · <span id="lastReviewedEn">6 Aug 2026</span></span><span class="zh">标准法则参考 · <span id="lastReviewedZh">2026年8月6日</span></span><br>
+    <a href="options-breadboard.html">🍞 <span class="en">T29: Option by Bang — Iron Condor Breadboard (Gauge tab)</span><span class="zh">T29：期权面包板（Gauge页签）</span></a><br>
+    <a href="T47-GOOGL-Put-Setting.html">🅶🦅 <span class="en">T47: Selling GOOGL Put — Suggested Setting</span><span class="zh">T47：卖出GOOGL认沽——建议设置</span></a><br>
+    <a href="T43-QQQ-IC-Close-Decision.html">🛡️🦅 <span class="en">T43: Closing the QQQ Iron Condor</span><span class="zh">T43：平仓QQQ铁鹰</span></a><br>
+    <a href="/tools.html">← <span class="en">Back to Investment Tools</span><span class="zh">返回投资工具</span></a>
+  </div>
+</div>
+
+<script>
+function shareThisPage(){
+  var url=window.location.href;
+  var title=document.title;
+  if(navigator.share){
+    navigator.share({title:title,url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t=document.getElementById('shareToast');
+      t.style.display='block';
+      setTimeout(function(){t.style.display='none';},2200);
+    });
+  }
+}
+
+// Page menu (⋮) — Share / Pin page
+function togglePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.toggle('open');
+}
+function closePageMenu(){
+  document.getElementById('pageMenuDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  if(!document.querySelector('.page-menu-wrap').contains(e.target)) closePageMenu();
+});
+
+// Pin page — pinned pages show as a row at the top of Investment Tools (per-browser, via localStorage)
+var PIN_KEY = 'pw_pinned_pages';
+var PAGE_URL = 'T56-Close-Target-Rule.html';
+var PAGE_TITLE = 'T56 Close-Target Rule';
+var PAGE_TITLE_ZH = 'T56 平仓目标法则';
+var PAGE_ICON = '🔔';
+function getPinnedPages(){
+  try { return JSON.parse(localStorage.getItem(PIN_KEY)) || []; } catch(e){ return []; }
+}
+function isPagePinned(){
+  return getPinnedPages().some(function(p){ return p.url === PAGE_URL; });
+}
+function updatePinMenuItem(){
+  var el = document.getElementById('pinMenuItem');
+  var pinned = isPagePinned();
+  el.classList.toggle('pinned', pinned);
+  el.innerHTML = pinned
+    ? '📌 <span class="en">Unpin from Tools hub</span><span class="zh">取消置顶</span>'
+    : '📌 <span class="en">Pin page</span><span class="zh">置顶到工具中心</span>';
+}
+function togglePinThisPage(){
+  var list = getPinnedPages();
+  var idx = list.findIndex(function(p){ return p.url === PAGE_URL; });
+  var toast = document.getElementById('pinToast');
+  if(idx >= 0){
+    list.splice(idx, 1);
+    toast.innerHTML = '<span class="en">Unpinned</span><span class="zh">已取消置顶</span>';
+  } else {
+    list.unshift({ url:PAGE_URL, title:PAGE_TITLE, titleZh:PAGE_TITLE_ZH, icon:PAGE_ICON, pinnedAt:Date.now() });
+    toast.innerHTML = '<span class="en">📌 Pinned! Shows at top of Investment Tools</span><span class="zh">📌 已置顶！将显示在投资工具中心顶部</span>';
+  }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(list)); } catch(e){}
+  updatePinMenuItem();
+  closePageMenu();
+  toast.style.display = 'block';
+  setTimeout(function(){ toast.style.display = 'none'; }, 2400);
+}
+updatePinMenuItem();
+</script>
+
+<script src="/bilingual.js"></script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
