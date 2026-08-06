@@ -7255,6 +7255,12 @@ function wfFmt(n){
   var sign = n >= 0 ? '+' : '−';
   return sign + '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
+// Net P&L mood emoji (Paul, 6 Aug 2026): >$200 = very happy, $0-$200 = happy, negative = sad.
+function wfNetEmoji(n){
+  if(n > 200) return '🤩';
+  if(n >= 0) return '🙂';
+  return '😢';
+}
 // Builds one chart's 4-bar bridge (Premium Collected → Cost to Close → Reconciliation →
 // Net P&L), auto-scaled to that position's own value range so a $729 QQQ chart and a $9 IWM
 // chart both fill their box sensibly instead of sharing one fixed scale.
@@ -7270,7 +7276,7 @@ function waterfallPlotHtml(d){
   minV -= pad; maxV += pad;
   var span = (maxV - minV) || 1;
   function topPct(v){ return (1 - (v - minV) / span) * 100; }
-  function bar(v0, v1, colorCls, labelVal){
+  function bar(v0, v1, colorCls, labelVal, suffix){
     var top = topPct(Math.max(v0, v1));
     var h = Math.max(Math.abs(topPct(v0) - topPct(v1)), 1.5);
     var up = v1 >= v0;
@@ -7278,13 +7284,13 @@ function waterfallPlotHtml(d){
       ? 'calc(' + topPct(Math.max(v0, v1)).toFixed(2) + '% - 20px)'
       : 'calc(' + topPct(Math.min(v0, v1)).toFixed(2) + '% + 6px)';
     return '<div class="wf-col"><div class="wf-bar ' + colorCls + '" style="top:' + top.toFixed(2) + '%;height:' + h.toFixed(2) + '%"></div>' +
-      '<div class="wf-val" style="top:' + labelTop + '">' + wfFmt(labelVal) + '</div></div>';
+      '<div class="wf-val" style="top:' + labelTop + '">' + wfFmt(labelVal) + (suffix || '') + '</div></div>';
   }
   var colsHtml =
     bar(0, afterPremium, 'green', afterPremium) +
     bar(afterPremium, afterCost, (afterCost <= afterPremium ? 'blue' : 'green'), -d.cost) +
     bar(afterCost, afterRecon, (d.recon >= 0 ? 'green' : 'red'), d.recon) +
-    bar(0, net, (net >= 0 ? 'gold' : 'red'), net);
+    bar(0, net, (net >= 0 ? 'gold' : 'red'), net, ' ' + wfNetEmoji(net));
   var zeroTop = topPct(0);
   return '<div class="wf-baseline" style="top:' + zeroTop.toFixed(2) + '%"></div>' +
     '<div class="wf-zero-label" style="top:' + zeroTop.toFixed(2) + '%">$0</div>' +
@@ -7317,7 +7323,7 @@ function renderWaterfallCharts(){
           '<div class="wf-catlabel"><b><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></b>' + wfFmt(d.premium) + '</div>' +
           '<div class="wf-catlabel"><b><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></b>' + wfFmt(-d.cost) + '</div>' +
           '<div class="wf-catlabel"><b><span class="en">Reconciliation (C)</span><span class="zh">核算调整 (C)</span></b>' + wfFmt(d.recon) + '</div>' +
-          '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + '</div>' +
+          '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + ' ' + wfNetEmoji(d.pnl) + '</div>' +
         '</div>' +
       '</div>';
   }).join('');
