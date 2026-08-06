@@ -255,6 +255,9 @@
   .wf-catrow { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; padding-left:28px; }
   .wf-catlabel { text-align:center; font-size:.62rem; color:#8b98a5; line-height:1.3; }
   .wf-catlabel b { color:#d0d4e8; display:block; font-size:.64rem; }
+  /* Net P&L mood emoji — 4x the size of whatever text it sits next to (em unit, so it scales
+     correctly in both the normal .wf-val bar label and the tiny mini-mode .wf-catlabel). */
+  .wf-emoji { font-size:4em; line-height:1; display:inline-block; vertical-align:middle; }
   /* Mini 2-column mode (Paul, 6 Aug 2026) — 2 cards per row on one screen instead of one long
      stacked list. Everything below shrinks in lockstep so a half-width card stays legible. */
   #waterfallChartsWrap { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
@@ -7263,6 +7266,11 @@ function wfNetEmoji(n){
   if(n >= -200) return '😢';
   return '😭';
 }
+// 4x the surrounding text size (Paul, 6 Aug 2026 — "emoji too small") via em, so it scales
+// correctly whether it's sitting in a normal-size catrow label or the tiny mini-mode one.
+function wfNetEmojiHtml(n){
+  return '<span class="wf-emoji">' + wfNetEmoji(n) + '</span>';
+}
 // Builds one chart's 4-bar bridge (Premium Collected → Cost to Close → Reconciliation →
 // Net P&L), auto-scaled to that position's own value range so a $729 QQQ chart and a $9 IWM
 // chart both fill their box sensibly instead of sharing one fixed scale.
@@ -7292,7 +7300,7 @@ function waterfallPlotHtml(d){
     bar(0, afterPremium, 'green', afterPremium) +
     bar(afterPremium, afterCost, (afterCost <= afterPremium ? 'blue' : 'green'), -d.cost) +
     bar(afterCost, afterRecon, (d.recon >= 0 ? 'green' : 'red'), d.recon) +
-    bar(0, net, (net >= 0 ? 'gold' : 'red'), net, ' ' + wfNetEmoji(net));
+    bar(0, net, (net >= 0 ? 'gold' : 'red'), net, ' ' + wfNetEmojiHtml(net));
   var zeroTop = topPct(0);
   return '<div class="wf-baseline" style="top:' + zeroTop.toFixed(2) + '%"></div>' +
     '<div class="wf-zero-label" style="top:' + zeroTop.toFixed(2) + '%">$0</div>' +
@@ -7325,7 +7333,7 @@ function renderWaterfallCharts(){
           '<div class="wf-catlabel"><b><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></b>' + wfFmt(d.premium) + '</div>' +
           '<div class="wf-catlabel"><b><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></b>' + wfFmt(-d.cost) + '</div>' +
           '<div class="wf-catlabel"><b><span class="en">Reconciliation (C)</span><span class="zh">核算调整 (C)</span></b>' + wfFmt(d.recon) + '</div>' +
-          '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + ' ' + wfNetEmoji(d.pnl) + '</div>' +
+          '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + ' ' + wfNetEmojiHtml(d.pnl) + '</div>' +
         '</div>' +
       '</div>';
   }).join('');
