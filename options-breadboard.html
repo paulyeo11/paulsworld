@@ -235,6 +235,13 @@
      amber + ⚠️ once the mark is more than ~30h old (a missed daily refresh cycle). */
   .gauge-asof { text-align:center; margin-top:6px; font-size:.66rem; color:#8b98a5; }
   .gauge-asof.stale { color:#f59e0b; font-weight:700; }
+  /* Close-target alert — appears under an OPEN gauge card once either trigger from the
+     standing close rule (IG Cushion Watch log) is hit: 50% of credit collected as profit,
+     or 21 days-to-expiry reached. Bell icon pulses so it's not missed on a busy page. */
+  .gauge-alert { display:none; text-align:center; margin-top:6px; }
+  .gauge-alert.show { display:block; }
+  .gauge-alert .gab-pill { display:inline-block; background:rgba(248,81,73,.18); color:#ff7b72; border:1px solid rgba(248,81,73,.55); font-size:.66rem; font-weight:800; letter-spacing:.02em; padding:4px 10px; border-radius:20px; animation:gaugeAlertPulse 1.6s infinite; }
+  @keyframes gaugeAlertPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(248,81,73,.5); } 50%{ box-shadow:0 0 8px 2px rgba(248,81,73,.5); } }
   /* Waterfall tab — per-position P&L bridge charts (Premium Collected → Cost to Close →
      Reconciliation → Net P&L), same visual language as the standalone FDS chart (IB17,
      Chart 21) and SPY chart (IB16, Chart 20), generalized here to render for any position
@@ -1285,6 +1292,7 @@
     <div class="gauge-chart-num">Chart 11</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-avgo" viewBox="0 0 340 236"></svg><span class="gauge-day-badge" id="gday-badge-avgo">D—</span></div>
     <div class="gauge-asof" id="gasof-avgo">—</div>
+    <div class="gauge-alert" id="galert-avgo"></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-avgo">—</span><span id="gcallcush-mini-avgo">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-avgo">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-avgo">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
@@ -1305,6 +1313,7 @@
     <div class="gauge-chart-num">Chart 12</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-smh" viewBox="0 0 340 236"></svg><span class="gauge-day-badge" id="gday-badge-smh">D—</span></div>
     <div class="gauge-asof" id="gasof-smh">—</div>
+    <div class="gauge-alert" id="galert-smh"></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-smh">—</span><span id="gcallcush-mini-smh">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-smh">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-smh">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
@@ -1349,6 +1358,7 @@
     <div class="gauge-chart-num">Chart 14</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-iwm" viewBox="0 0 340 236"></svg><span class="gauge-day-badge" id="gday-badge-iwm">D—</span></div>
     <div class="gauge-asof" id="gasof-iwm">—</div>
+    <div class="gauge-alert" id="galert-iwm"></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-iwm">—</span><span id="gcallcush-mini-iwm">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-iwm">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-iwm">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
@@ -1388,6 +1398,7 @@
     <div class="gauge-chart-num">Chart 16</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-fds" viewBox="0 0 340 236"></svg><span class="gauge-day-badge" id="gday-badge-fds">D—</span></div>
     <div class="gauge-asof" id="gasof-fds">—</div>
+    <div class="gauge-alert" id="galert-fds"></div>
     <div class="gauge-mini-cushion"><span id="gcallcush-mini-fds">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🟠 <b><span class="en">Short call (sell)</span><span class="zh">卖出看涨</span></b></span><span>🟩 <b><span class="en">Keep shares zone</span><span class="zh">保留股票区</span></b></span><span>❘ <b><span class="en">Avg cost</span><span class="zh">平均成本</span></b></span><span class="now-leg" id="gnow-fds">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span><span class="day1-leg" id="gday1-fds">⚪ <b><span class="en">Price on DTE Day 1</span><span class="zh">DTE第1天股价</span> —</b></span></div>
@@ -1411,6 +1422,7 @@
     <div class="gauge-chart-num">Chart 17</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-googl" viewBox="0 0 340 236"></svg><span class="gauge-day-badge" id="gday-badge-googl">D—</span></div>
     <div class="gauge-asof" id="gasof-googl">—</div>
+    <div class="gauge-alert" id="galert-googl"></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-googl">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🟠 <b><span class="en">Short put (sell)</span><span class="zh">卖出认沽</span></b></span><span>🟩 <b><span class="en">Safe zone (stay above)</span><span class="zh">安全区（维持高于行权价）</span></b></span><span>❘ <b><span class="en">Breakeven</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-googl">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span></div>
@@ -1433,6 +1445,7 @@
     <div class="gauge-chart-num">Chart 18</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-nvda2" viewBox="0 0 340 236"></svg><span class="gauge-day-badge" id="gday-badge-nvda2">D—</span></div>
     <div class="gauge-asof" id="gasof-nvda2">—</div>
+    <div class="gauge-alert" id="galert-nvda2"></div>
     <div class="gauge-mini-cushion"><span id="gputcush-mini-nvda2">—</span><span id="gcallcush-mini-nvda2">—</span></div>
     <div class="gauge-details">
     <div class="gauge-legend"><span>🔵 <b><span class="en">Long (buy)</span><span class="zh">买入</span></b></span><span>🟠 <b><span class="en">Short (sell)</span><span class="zh">卖出</span></b></span><span>🟩 <b><span class="en">Profit zone</span><span class="zh">盈利区</span></b></span><span>❘ <b><span class="en">Break-even</span><span class="zh">保本点</span></b></span><span class="now-leg" id="gnow-nvda2">🟡 <b><span class="en">Now</span><span class="zh">现价</span> —</b></span></div>
@@ -7198,6 +7211,41 @@ function renderGaugeAsof(){
   });
 }
 renderGaugeAsof();
+// Close-target alert (Standing Default — added 2026-08-06): flags an OPEN gauge card once
+// either trigger from the IG Cushion Watch log's close rule is hit — 50% of credit collected
+// as profit (via gaugePremiumPctInfo, same E/D as the gauge's own % readout), or 21 DTE
+// reached (via GAUGE_EXPIRY_DATE, same days-left math as the D-badge toggle). Only symbols
+// with a #galert-<sym> element in the DOM are open positions to begin with (closed/pending
+// cards never got one), so no separate "is it open" check is needed beyond that.
+function renderGaugeAlerts(){
+  Object.keys(GAUGE_ENTRY_DATE).forEach(function(sym){
+    var el = document.getElementById('galert-' + sym.toLowerCase());
+    if(!el) return;
+    var reasonsEn = [], reasonsZh = [];
+    var pctInfo = gaugePremiumPctInfo(sym);
+    if(pctInfo && pctInfo.pct >= 50){
+      reasonsEn.push('50% of credit reached');
+      reasonsZh.push('已达50%权利金');
+    }
+    var expiry = GAUGE_EXPIRY_DATE[sym];
+    if(expiry){
+      var dte = gaugeDaysBetween(gaugeTodayStr(), expiry);
+      if(dte <= 21){
+        reasonsEn.push('21 DTE (' + dte + 'd left)');
+        reasonsZh.push('已达21DTE（剩' + dte + '天）');
+      }
+    }
+    if(reasonsEn.length){
+      el.classList.add('show');
+      el.innerHTML = '<span class="gab-pill">🔔 <span class="en">Consider Closing — ' + reasonsEn.join(' + ') + '</span><span class="zh">建议平仓——' + reasonsZh.join('+') + '</span></span>';
+      applyLangTo(el);
+    } else {
+      el.classList.remove('show');
+      el.innerHTML = '';
+    }
+  });
+}
+renderGaugeAlerts();
 // Dashboard tab T6's "P&L" (today's daily P&L) column — a genuinely separate metric
 // (single-day change) with no canonical table elsewhere on the page, so it stays a manual
 // snapshot: real figures read directly from the IBKR mobile app's Portfolio > Positions screen
