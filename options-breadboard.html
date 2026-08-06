@@ -258,9 +258,6 @@
   /* Net P&L mood emoji — 4x the size of whatever text it sits next to (em unit, so it scales
      correctly in both the normal .wf-val bar label and the tiny mini-mode .wf-catlabel). */
   .wf-emoji { font-size:4em; line-height:1; display:inline-block; vertical-align:middle; }
-  /* Superimposed over the whole chart, centred, semi-transparent watermark behind the bars. */
-  .wf-emoji-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:1; opacity:.5; pointer-events:none; }
-  .wf-cols { z-index:2; }
   /* Mini 2-column mode (Paul, 6 Aug 2026) — 2 cards per row on one screen instead of one long
      stacked list. Everything below shrinks in lockstep so a half-width card stays legible. */
   #waterfallChartsWrap { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
@@ -7308,15 +7305,12 @@ function waterfallPlotHtml(d){
     bar(afterPremium, afterCost, (afterCost <= afterPremium ? 'blue' : 'green'), -d.cost) +
     bar(afterCost, afterRecon, (d.recon >= 0 ? 'green' : 'red'), d.recon) +
     bar(0, net, (net >= 0 ? 'gold' : 'red'), net);
-  // Mood emoji superimposed over the whole chart, centred, semi-transparent and behind the
-  // bars/labels (z-index below .wf-cols) so it reads as a watermark rather than blocking the
-  // numbers (Paul, 6 Aug 2026 — "superimpose to the bar chart", after two earlier placements:
-  // next to the Net P&L label, then centred in the empty Reconciliation column).
-  var emojiHtml = '<div class="wf-emoji-overlay">' + wfNetEmojiHtml(net) + '</div>';
+  // Big superimposed watermark emoji removed (Paul, 6 Aug 2026) — it overlapped the bars too
+  // much (see the arrow pointing at it in his screenshot). Kept only the small mood emoji next
+  // to Net P&L in the catrow below, via wfNetEmojiHtml() there.
   var zeroTop = topPct(0);
   return '<div class="wf-baseline" style="top:' + zeroTop.toFixed(2) + '%"></div>' +
     '<div class="wf-zero-label" style="top:' + zeroTop.toFixed(2) + '%">$0</div>' +
-    emojiHtml +
     '<div class="wf-cols">' + colsHtml + '</div>';
 }
 function renderWaterfallCharts(){
