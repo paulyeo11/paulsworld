@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IB20: AVGO Iron Condor — Why the Cost to Close Jumped</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --bg: #0d0f1a;
+  --card: #151826;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --gold: #f59e0b;
+  --red: #f85149;
+  --green: #3fb950;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.85; font-size: 1.05rem; }
+
+.hero {
+  background: linear-gradient(135deg, #060310 0%, #1a1206 40%, #24190a 75%, #0d0f1a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 72px 20px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(245,158,11,0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 40%, rgba(244,129,63,0.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  color: var(--gold);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 720px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.hero-sub {
+  color: var(--muted); font-size: 1rem; max-width: 560px;
+  margin: 0 auto 8px; line-height: 1.6;
+}
+.meta { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; margin-top: 10px; }
+
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); color: var(--gold); }
+
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+.share-btn { display:inline-block; background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.4); color:#fff; font-weight:700; letter-spacing:.04em; padding:10px 26px; border-radius:30px; cursor:pointer; font-size:0.95rem; font-family:'Source Serif 4',Georgia,serif; transition:background .2s; }
+.share-btn:hover { background:rgba(255,255,255,.25); }
+.share-toast { display:none; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#1c1c1e; color:#fff; padding:10px 24px; border-radius:24px; font-size:.9rem; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+.content { max-width: 760px; margin: 0 auto; padding: 52px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead { font-size: 1.15rem; color: #f0f1f8; }
+.content h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.5rem; margin: 2em 0 0.7em; color: #fff; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin:1.5em 0; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.stat-box .sk { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; font-family: 'Source Serif 4', serif; }
+.stat-box .sv { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+.stat-box .sv.red { color: var(--red); }
+.stat-box .sv.green { color: var(--green); }
+.stat-box .sv.amber { color: var(--gold); }
+.stat-box .ss { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.stat-box .formula { font-size: 0.68rem; color: var(--gold); opacity: .85; margin-top: 2px; }
+@media(max-width:520px){ .stats-grid{grid-template-columns:1fr;} }
+
+.tl-link { display:inline-block; margin-top:6px; color: var(--gold); text-decoration:none; font-weight:700; border-bottom: 1px solid rgba(245,158,11,0.4); }
+.tl-link:hover { border-bottom-color: var(--gold); }
+
+.tips-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 14px;
+  padding: 24px 22px;
+  margin: 2em 0;
+}
+.tips-box h3 { margin-top: 0; font-family: 'Playfair Display', Georgia, serif; }
+.tips-list { list-style: none; }
+.tips-list li { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 0; font-size: 0.95rem; color: #d0d4e8; }
+.tip-bullet { color: var(--gold); font-weight: 700; }
+
+.trade-box {
+  background: rgba(248,81,73,0.06);
+  border: 1px solid rgba(248,81,73,0.25);
+  border-radius: 14px;
+  padding: 22px 22px;
+  margin: 1.5em 0;
+}
+.trade-box h3 { margin: 0 0 10px; font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; color: #fff; }
+.trade-box .tmeta { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+.trade-box ul { margin: 0 0 0 20px; }
+.trade-box li { margin: 5px 0; font-size: 0.92rem; color: #d0d4e8; }
+
+.note-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 1.5em 0;
+  font-size: 0.9rem;
+  color: #d0d4e8;
+}
+.note-box.warn { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.3); }
+
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 60px;
+}
+footer a { color: var(--blue); text-decoration: none; }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">← <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-btn" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+
+  <div class="label">
+    <span class="en">IBKR Update Log · IB20</span>
+    <span class="zh">IBKR更新日志 · IB20</span>
+  </div>
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <a href="/tools.html#ibklog" target="_blank"><span class="en">Investment Tools</span><span class="zh">投资工具</span></a>
+    <span class="sep">›</span>
+    <a href="/ibkr-update-log.html" target="_blank"><span class="en">IBKR Update Log</span><span class="zh">IBKR更新日志</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">IB20</span><span class="zh">IB20</span></span>
+  </div>
+  <h1>
+    <span class="en">IB20: AVGO Iron Condor — <span>Why the Cost to Close Jumped</span></span>
+    <span class="zh">IB20：AVGO铁鹰组合 — <span>为什么平仓成本大幅上升</span></span>
+  </h1>
+  <p class="hero-sub">
+    <span class="en">Still open, not exited — AVGO's real unrealized P&amp;L flipped from +$19.80 to −$11.85 as the stock rallied hard toward its short call strike this week</span>
+    <span class="zh">仍持仓中，尚未平仓——本周AVGO股价大幅上涨逼近卖出认购行权价，真实未实现盈亏从+$19.80转为−$11.85</span>
+  </p>
+  <p class="meta">
+    <span class="en">Source: T29 Table 1512 (Final P&amp;L Bridge) &amp; Table 900 (P&amp;L Summary) · live AVGO quote via web search, 6 Aug 2026 — not a confirmed broker tick</span>
+    <span class="zh">数据来源：T29 表1512（最终盈亏桥接）与表900（盈亏汇总）· AVGO实时报价来自网络搜索，2026年8月6日——非券商确认报价</span>
+  </p>
+  <div class="hero-btns">
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<div class="content">
+
+  <p class="lead">
+    <span class="en">Paul asked why AVGO lost money "when I exit" and why the cost to close is so high. First, the important correction: <b>AVGO hasn't been exited</b> — the Iron Condor opened 17 Jul is still <b>OPEN</b> on T29. What happened is its real unrealized mark swung from +$19.80 (30 Jul statement) to <b>−$11.85</b> (5 Aug, Tiger app) as AVGO's share price rallied hard this week — and that rally is exactly what would make buying the position back today cost more than the credit collected.</span>
+    <span class="zh">Paul问，为什么「平仓时」AVGO会亏钱，以及为什么平仓成本这么高。首先要更正一点：<b>AVGO尚未平仓</b>——7月17日建仓的铁鹰组合在T29上仍显示为<b>持仓中</b>。实际发生的是，其真实未实现市值从+$19.80（7月30日报表）转为<b>−$11.85</b>（8月5日，Tiger应用读数），原因是本周AVGO股价大幅上涨——而正是这波上涨，会让今天买回这个仓位的成本高于当初收取的权利金。</span>
+  </p>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="sk"><span class="en">AVGO Condor Status</span><span class="zh">AVGO铁鹰组合状态</span></div>
+      <div class="sv green"><span class="en">Still Open</span><span class="zh">仍持仓中</span></div>
+      <div class="ss"><span class="en">no exit placed — this is an unrealized mark, not a locked-in loss</span><span class="zh">尚未下单平仓——这是未实现市值，并非已锁定的亏损</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Real Unrealized P&amp;L (5 Aug)</span><span class="zh">真实未实现盈亏（8月5日）</span></div>
+      <div class="sv red">−$11.85</div>
+      <div class="ss"><span class="en">down from +$19.80 six days earlier — a price move, not time decay</span><span class="zh">较6天前的+$19.80回落——是股价变动，而非时间价值衰减</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></div>
+      <div class="sv green">$475.00</div>
+      <div class="ss"><span class="en">banked upfront when the condor opened, 17 Jul</span><span class="zh">7月17日建仓时已提前收取入账</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></div>
+      <div class="sv red">$482.57</div>
+      <div class="ss"><span class="en">modeled figure that reconciles to the real −$11.85 mark — not a live per-leg quote</span><span class="zh">建模数字，用以核算至真实−$11.85市值——并非实时逐腿报价</span></div>
+    </div>
+  </div>
+
+  <p class="tbl-cap" style="font-size:.82rem;color:var(--muted)">
+    <span class="en">The bridge: Premium (A) $475.00 − Cost to Close (B) $482.57 + Reconciliation (C) −$4.28 = Net P&amp;L (A−B+C) <b style="color:#f85149">−$11.85</b>, matching Table 1512/900 exactly.</span>
+    <span class="zh">桥接算式：已收权利金 (A) $475.00 − 平仓成本 (B) $482.57 + 核算调整 (C) −$4.28 = 净盈亏 (A−B+C) <b style="color:#f85149">−$11.85</b>，与表1512/900完全一致。</span>
+  </p>
+
+  <hr class="divider">
+
+  <h2><span class="en">Why the Cost to Close Rose — AVGO Rallied Toward Its Short Call</span><span class="zh">为什么平仓成本上升——AVGO股价上涨逼近卖出认购行权价</span></h2>
+
+  <p>
+    <span class="en">The 17 Jul condor sold the <b>350 put</b> and the <b>430 call</b> (bought 340P/440C for $10 wings both sides), expiring 28 Aug'26. Cost to close isn't a "did price cross the strike" test — it's what it costs today to buy back all 4 legs, and an option's price is driven mainly by how close the stock is to that strike, not just whether it's technically in- or out-of-the-money. This is the exact same mechanic that cost <a href="IB16.html" target="_blank" style="color:#f59e0b">SPY −$148.60</a> on 4 Aug: proximity alone inflates the short leg's buy-back price.</span>
+    <span class="zh">7月17日建仓的铁鹰卖出了<b>350认沽</b>与<b>430认购</b>（买入340P/440C，两侧翼宽均为$10），2026年8月28日到期。平仓成本并非「股价是否突破行权价」的测试——而是今天买回全部4条腿需要花多少钱，而期权价格主要取决于股价与该行权价的距离，并非仅仅是技术性的价内/价外。这与8月4日让<a href="IB16.html" target="_blank" style="color:#f59e0b">SPY亏损−$148.60</a>的机制完全相同：仅仅是「逼近」就足以推高卖出腿的买回价格。</span>
+  </p>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="sk"><span class="en">Put Cushion (A−B)/A</span><span class="zh">认沽缓冲 (A−B)/A</span></div>
+      <div class="sv green">~16.9%</div>
+      <div class="ss"><span class="en">Share ~$421.38 vs Sold Put 350 — comfortable</span><span class="zh">股价约$421.38 vs 卖出认沽350——仍有余裕</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="sk"><span class="en">Call Cushion (C−A)/A</span><span class="zh">认购缓冲 (C−A)/A</span></div>
+      <div class="sv amber">~2.0%</div>
+      <div class="ss"><span class="en">Share ~$421.38 vs Sold Call 430 — tight, this is the pressured side</span><span class="zh">股价约$421.38 vs 卖出认购430——较紧，这是承压的一侧</span></div>
+    </div>
+  </div>
+
+  <p>
+    <span class="en">Those cushion figures use a search-derived reference price (~$421.38, 6 Aug 2026) — not a confirmed IBKR/Tiger tick, so treat it as directional, not exact. Even at that rough level, the call side has narrowed to roughly 2% while the put side still has ~17% of room — that lopsidedness is why the position's overall mark went negative even though price hasn't actually breached 430. Re-check the live Cushion tab on <a href="options-breadboard.html" target="_blank" style="color:#f59e0b">T29</a> or a fresh broker quote before making any decision.</span>
+    <span class="zh">上述缓冲数字使用的是网络搜索得出的参考价（约$421.38，2026年8月6日）——并非IBKR/Tiger确认报价，请仅作方向性参考，非精确数字。即便在这个粗略水平下，认购一侧的缓冲已收窄至约2%，而认沽一侧仍有约17%的余裕——这种失衡正是整体市值转为负值的原因，尽管股价实际上尚未突破430。做任何决定前，请先在<a href="options-breadboard.html" target="_blank" style="color:#f59e0b">T29</a>的「缓冲」页签核对实时数据，或向券商索取最新报价。</span>
+  </p>
+
+  <div class="note-box">
+    <span class="en">ℹ️ <b>Why no leg-by-leg breakdown like SPY's:</b> AVGO hasn't been closed, so there's no real closing order ticket with actual per-leg fill prices to show (unlike <a href="IB16.html" target="_blank" style="color:#f59e0b">IB16</a>'s SPY breakdown). The $482.57 "Cost to Close" above is a modeled total that makes Table 1512's bridge tie out to the real −$11.85 broker mark — it's not a live quote you could execute at right now.</span>
+    <span class="zh">ℹ️ <b>为什么没有像SPY那样的逐腿明细：</b>AVGO尚未平仓，因此没有真实平仓订单单据可提供逐腿实际成交价（不同于<a href="IB16.html" target="_blank" style="color:#f59e0b">IB16</a>的SPY明细）。上方$482.57的「平仓成本」是建模总额，用以让表1512的桥接算式与真实−$11.85的券商市值吻合——并非现在可实际成交的实时报价。</span>
+  </div>
+
+  <h2><span class="en">What's Actually Driving the Rally</span><span class="zh">这波上涨的真正原因</span></h2>
+
+  <p>
+    <span class="en">The move is sector-driven, not an AVGO earnings reaction: Broadcom's own Q3 fiscal 2026 results aren't out yet — the company has scheduled them for <b>2 Sep 2026, after close</b>, which lines up with T29's existing Table 343 earnings-date entry and falls safely after this condor's 28 Aug expiry (no earnings-gap risk before then). The share-price strength this week instead tracks a broader AI-infrastructure rally — semiconductor and AI-linked names moved higher alongside strong results from other AI players — on top of a standing tailwind from Broadcom's previously announced multi-year manufacturing agreement with Apple, reported to exceed $30 billion.</span>
+    <span class="zh">这波上涨是板块性行情，并非AVGO自身财报反应：博通自身2026财年第三季度财报尚未公布——公司已将其定于<b>2026年9月2日盘后</b>，与T29现有Table 343财报日期记录一致，且安全落在此铁鹰8月28日到期日之后（到期前无财报跳空风险）。本周股价走强，更多是追随更广泛的AI基础设施类股上涨行情——半导体与AI相关个股随其他AI公司的强劲业绩普遍走高——再叠加博通此前已公布的与苹果多年期制造协议（据报道金额超过300亿美元）带来的持续利好。</span>
+  </p>
+
+  <h2><span class="en">Real Mark, Six Readings</span><span class="zh">真实市值，六次读数</span></h2>
+
+  <p>
+    <span class="en">This is single-stock volatility, not noise: AVGO's real unrealized mark has swung <b>+$63.48 → +$13.81 → +$68.80 → +$19.80 (30 Jul) → −$11.85 (5 Aug 21:33 SGT)</b> across five prior readings on T29 — now confirmed lower again this week as the rally continued. Nothing is locked in until the position is actually closed; holding bets on theta decay outpacing further upside, closing now locks in the small loss and removes price risk for the remaining ~22 days to 28 Aug.</span>
+    <span class="zh">这属于个股波动，并非噪音：AVGO的真实未实现市值在T29上此前五次读数间波动为<b>+$63.48 → +$13.81 → +$68.80 → +$19.80（7月30日） → −$11.85（8月5日21:33 SGT）</b>——本周随涨势延续，市值再度确认走低。仓位未真正平仓前，一切均未锁定；续持是押注theta衰减能跑赢后续可能的上涨，而现在平仓则会锁定这笔小额亏损，并去除剩余约22天（至8月28日）的股价风险。</span>
+  </p>
+
+  <div class="tips-box">
+    <h3><span class="en">Bottom Line</span><span class="zh">总结</span></h3>
+    <ul class="tips-list">
+      <li><span class="tip-bullet">①</span><span class="en">AVGO has NOT been exited — the −$11.85 is a real but unrealized mark on a position still open on T29. Nothing has actually been "lost" yet.</span><span class="zh">AVGO并未平仓——−$11.85是仍持仓中的真实未实现市值，尚未实际「亏损」任何金额。</span></li>
+      <li><span class="tip-bullet">②</span><span class="en">Cost to close is elevated because AVGO rallied toward the 430 short call strike, not because it crossed it — same proximity/IV mechanic that hit SPY in IB16, just smaller in dollar terms so far.</span><span class="zh">平仓成本上升是因为AVGO股价上涨逼近430卖出认购行权价，而非真正突破——与IB16中SPY的机制完全相同，只是目前美元金额较小。</span></li>
+      <li><span class="tip-bullet">③</span><span class="en">The rally is AI-sector/Apple-deal driven, not an AVGO earnings surprise — Broadcom's own Q3 report is 2 Sep 2026, after this condor's 28 Aug expiry, so no earnings-gap risk before then.</span><span class="zh">这波上涨源于AI板块行情与苹果协议利好，并非AVGO自身财报意外——博通自家Q3财报为2026年9月2日，在此铁鹰8月28日到期之后，因此到期前无财报跳空风险。</span></li>
+      <li><span class="tip-bullet">④</span><span class="en">Close now vs hold to expiry is still Paul's call — check the live Cushion tab and a real broker quote before deciding, since the numbers here use a search-derived reference price.</span><span class="zh">现在平仓或续持到期，仍由Paul决定——由于本文数字使用的是搜索得出的参考价，决定前请先核对实时缓冲页签与券商真实报价。</span></li>
+    </ul>
+  </div>
+
+  <p>
+    <a class="tl-link" href="options-breadboard.html#tab-avgo" target="_blank"><span class="en">→ Full detail on T29: AVGO tab (Table 440/450/460/470/480/1512)</span><span class="zh">→ 查看T29完整详情：AVGO页签（表440/450/460/470/480/1512）</span></a>
+  </p>
+
+  <script src="/view-counter.js"></script>
+
+</div>
+
+<footer>
+  <p>
+    <span class="en">IB20: AVGO Iron Condor — Why the Cost to Close Jumped &nbsp;·&nbsp; Paul's World &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+    <span class="zh">IB20：AVGO铁鹰组合 — 为什么平仓成本大幅上升 &nbsp;·&nbsp; Paul的世界 &nbsp;·&nbsp; <a href="https://paulsworld.vercel.app/">paulsworld.vercel.app</a></span>
+  </p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.body.className = lang === 'zh' ? 'lang-zh' : '';
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.includes(lang === 'zh' ? '中文' : 'English'));
+  });
+}
+function shareThisPage(){
+  var url = window.location.href;
+  var title = document.title;
+  if(navigator.share){
+    navigator.share({title:title, url:url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
