@@ -2533,6 +2533,34 @@
         <span class="zh"><b>已收权利金</b> = 每个铁鹰建仓时收到的净权利金（各腿成交金额之和，未扣手续费——与「持仓」页签每个持仓卡片及「权利金」页签合计数字一致，两者合计均为+$1,954）。此表追踪的是仓位<b>建仓当天</b>实际收到的现金——与<a href="#premium" onclick="setTab('premium')" style="color:#f59e0b">权利金页签</a>展示的仍持仓仓位逐日时间价值累计是不同的视角。<b>范围：</b>仅覆盖当前实时追踪的6个铁鹰持仓（2026年7月17–23日），因为只有这批交易的确切建仓日期已被确认。历史上53笔已平仓交易（2024年5月–2026年6月）在IBKR报表中仅记录建仓<i>月份</i>，没有具体日期，因此未列入此表——请见<a href="#trades" onclick="setTab('trades')" style="color:#f59e0b">交易记录页签</a>。</span>
       </div>
     </div>
+    <div class="condor" id="dailyPnlBySymbolCard" style="margin-top:16px">
+      <div class="c-head">
+        <div class="tkr" style="font-size:1.1rem">📋 <span class="en">Table 1522: Daily P&amp;L &amp; Unrealized P&amp;L by Symbol</span><span class="zh">表1522：各标的每日盈亏与未实现盈亏</span></div>
+        <div class="c-meta"><span class="en">One row per Table 900 position — today's daily move (where a real snapshot exists) alongside the current unrealized/realized P&amp;L.</span><span class="zh">每行对应表900中的一个持仓——今日盈亏（如有真实快照数据）及当前未实现/已实现盈亏。</span></div>
+        <div></div>
+      </div>
+      <div class="table-scroll table-fit">
+      <table class="legs" style="margin-top:14px;table-layout:fixed">
+        <thead><tr>
+          <th style="width:40%"><span class="en">Share</span><span class="zh">标的</span></th>
+          <th class="num" style="width:30%"><span class="en">Daily P&amp;L</span><span class="zh">每日盈亏</span></th>
+          <th class="num" style="width:30%"><span class="en">Unrlzd P&amp;L</span><span class="zh">未实现盈亏</span></th>
+        </tr></thead>
+        <tbody id="dailyPnlBySymbolBody">
+          <tr><td colspan="3"><span class="sp-loading"><span class="en">Loading…</span><span class="zh">加载中…</span></span></td></tr>
+        </tbody>
+        <tfoot><tr style="font-weight:800;border-top:2px solid rgba(255,255,255,.15)">
+          <td><span class="en">Total</span><span class="zh">合计</span></td>
+          <td class="num" id="dailyPnlBySymbolDailyTotal">—</td>
+          <td class="num" id="dailyPnlBySymbolUnrlzdTotal">—</td>
+        </tr></tfoot>
+      </table>
+      </div>
+      <div class="note" style="margin-top:12px">
+        <span class="en"><b>Daily P&amp;L</b> is a manual snapshot from the IBKR/Tiger app's Portfolio → Positions screen — only symbols with a real read show a figure (see the Dashboard tab note for exact snapshot dates); everything else shows "—" rather than a guess. <b>Unrlzd P&amp;L</b> reads straight from <a href="#" onclick="setTab('bang');setBangSubTab('summary');return false" style="color:#f59e0b">Table 900 (P&amp;L Summary)</a> — realized P&amp;L for closed positions, else the latest real unrealized mark — same numbers as the Dashboard tab's P&amp;L / Unrlzd P&amp;L columns, so they can never drift apart from each other.</span>
+        <span class="zh"><b>每日盈亏</b>为IBKR/老虎证券App「持仓组合→持仓」页面的人工快照——仅有真实读数的标的才显示数字（具体快照时间见「仪表板」页签说明），其余显示"—"而非猜测。<b>未实现盈亏</b>直接读取<a href="#" onclick="setTab('bang');setBangSubTab('summary');return false" style="color:#f59e0b">表900（盈亏总览）</a>——已平仓持仓显示已实现盈亏，其余显示最新真实未实现市值——与「仪表板」页签的「盈亏」/「未实现盈亏」栏使用同一数字，彼此不会出现分歧。</span>
+      </div>
+    </div>
   </div><!-- /tab-dailypnl -->
 
   <div id="tab-trades" style="display:none">
@@ -7484,6 +7512,7 @@ function renderSharePrices(){
   });
   renderPutVarianceTable();
   renderDashCushionTable();
+  renderDailyPnlBySymbolTable();
   renderPremiumRankTable();
   renderVarMtdTable();
   renderTable900Cushion();
@@ -7836,6 +7865,31 @@ function genericPnlCell(map, sym){
 }
 function dailyPnlCell(sym){ return genericPnlCell(DAILY_PNL, sym); }
 function unrlzdPnlCell(sym){ return genericPnlCell(PNL_AMT, sym); }
+// Table 1522 (Daily P&L tab) — Share / Daily P&L / Unrlzd P&L, one row per position. The
+// row list is read live from Table 900's own DOM (#table900Body tr[data-sym], same source
+// buildTable900Lookup() reads) rather than a separately hardcoded symbol array, so a new
+// position added to Table 900 shows up here automatically — no second array to keep in sync
+// (same derive-don't-duplicate fix as MTD_PREMIUM/PNL_AMT, see buildTable900Lookup() note).
+// Cell values reuse dailyPnlCell()/unrlzdPnlCell() as-is, so this table can never disagree
+// with the Dashboard tab's P&L / Unrlzd P&L columns for the same symbol.
+function renderDailyPnlBySymbolTable(){
+  var body = document.getElementById('dailyPnlBySymbolBody'); if(!body) return;
+  var table900Body = document.getElementById('table900Body');
+  var syms = table900Body ? Array.prototype.slice.call(table900Body.querySelectorAll('tr[data-sym]')).map(function(tr){ return tr.getAttribute('data-sym'); }) : [];
+  if(syms.length === 0){
+    body.innerHTML = '<tr><td colspan="3"><span class="en">No positions yet.</span><span class="zh">暂无持仓。</span></td></tr>';
+    return;
+  }
+  body.innerHTML = syms.map(function(sym){
+    var symTag = '<b>'+gapTable10Label(sym)+'</b>'+statusTag(sym);
+    return '<tr><td>'+symTag+'</td>'+dailyPnlCell(sym)+unrlzdPnlCell(sym)+'</tr>';
+  }).join('');
+  var dailyTotalEl = document.getElementById('dailyPnlBySymbolDailyTotal');
+  var unrlzdTotalEl = document.getElementById('dailyPnlBySymbolUnrlzdTotal');
+  if(dailyTotalEl) dailyTotalEl.innerHTML = genericPnlTotalHtml(DAILY_PNL, syms);
+  if(unrlzdTotalEl) unrlzdTotalEl.innerHTML = genericPnlTotalHtml(PNL_AMT, syms);
+  setLang(curLang);
+}
 // ============ WATERFALL TAB — per-position P&L bridge chart ============
 // Generalizes the hand-coded SPY (IB16, Chart 20) / FDS (IB17, Chart 21) waterfall charts into
 // one function driven entirely by Table 1512's own data-premium/data-cost/data-recon/data-pnl
