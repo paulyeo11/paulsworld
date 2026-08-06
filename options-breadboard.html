@@ -3255,6 +3255,7 @@
       <div></div>
     </div>
     <div class="c-meta" style="margin-bottom:14px"><span class="en">10 charts, one per position — same Premium Collected → Cost to Close → Reconciliation → Net P&amp;L bridge as Table 1512, drawn as a chart instead of a table row. Numbers are read live from Table 1512 (Final P&amp;L tab), so they can never drift from it.</span><span class="zh">10张图，每个持仓一张——与表1512相同的「已收权利金 → 平仓成本 → 核算调整 → 净盈亏」桥接结构，以图表而非表格行呈现。数字均实时读取自表1512（最终盈亏页签），因此不会与其出现分歧。</span></div>
+    <div class="cushion-filter-row" id="waterfallFilterRow"></div>
     <div id="waterfallChartsWrap"></div>
     <div class="note" style="margin-top:4px">
       <span class="en">Bar height = dollar contribution to the current mark; the gold bar is the running total, not a fifth input. <b>A</b> = Premium Collected, <b>B</b> = Cost to Close, <b>C</b> = Reconciliation: <b>Net P&amp;L = A − B + C</b>. Closed positions (QQQ, SMH Jul, NVDA Aug21, SPY) show a real, fully realized close; open positions show today's mark-to-market and will keep moving until closed. Full source data + freshness notes: <a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">Table 1512 on the Final P&amp;L tab</a>.</span>
@@ -7284,7 +7285,7 @@ function renderWaterfallCharts(){
       ? '<span class="en">Net P&amp;L (Realized) (A−B+C)</span><span class="zh">净盈亏（已实现）(A−B+C)</span>'
       : '<span class="en">Net P&amp;L (Unrealized) (A−B+C)</span><span class="zh">净盈亏（未实现）(A−B+C)</span>';
     return '' +
-      '<div class="condor" id="wfCard-' + cfg.sym + '">' +
+      '<div class="condor" id="wfCard-' + cfg.sym + '" data-status="' + cfg.status + '">' +
         '<div class="c-head">' +
           '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">Chart ' + cfg.chart + ': ' + cfg.en + ' — Premium Bridge</span><span class="zh">图' + cfg.chart + '：' + cfg.zh + '——权利金桥接图</span></div>' +
           '<div class="c-meta"><span class="en">' + kindLbl.en + '</span><span class="zh">' + kindLbl.zh + '</span></div>' +
@@ -7302,7 +7303,42 @@ function renderWaterfallCharts(){
   }).join('');
   wrap.innerHTML = html;
   applyLangTo(wrap);
+  renderWaterfallCardFilter();
 }
+// All / Open Only / Closed Only filter for the Waterfall tab — same button look as the shared
+// Gauge/Dashboard/Cushion filter (.cushion-filter-btn), but scoped to this tab's own
+// WATERFALL_CFG status field rather than POSITION_STATUS, since a few waterfall keys
+// (SMH_JUL/NVDA_AUG21/SMH_SEP18/NVDA_SEP18) intentionally split what POSITION_STATUS tracks
+// as a single SMH/NVDA key into separate closed-then-reopened entries — reusing the shared
+// cushionFilter would silently mismatch on those. Pending/Bang/Tight don't apply to a
+// realized/unrealized P&L bridge, so this filter only offers All/Open/Closed.
+var waterfallFilter = 'all';
+function setWaterfallFilter(val){
+  waterfallFilter = val;
+  renderWaterfallFilterRow();
+  renderWaterfallCardFilter();
+}
+function renderWaterfallFilterRow(){
+  var row = document.getElementById('waterfallFilterRow'); if(!row) return;
+  var opts = [
+    {v:'all', en:'All', zh:'全部'},
+    {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+  ];
+  row.innerHTML = opts.map(function(o){
+    var active = waterfallFilter === o.v ? ' active' : '';
+    return '<button class="cushion-filter-btn' + active + '" onclick="setWaterfallFilter(\'' + o.v + '\')"><span class="en">' + o.en + '</span><span class="zh">' + o.zh + '</span></button>';
+  }).join('');
+  applyLangTo(row);
+}
+function renderWaterfallCardFilter(){
+  var wrap = document.getElementById('waterfallChartsWrap'); if(!wrap) return;
+  wrap.querySelectorAll('.condor[data-status]').forEach(function(card){
+    var show = waterfallFilter === 'all' || card.getAttribute('data-status') === waterfallFilter;
+    card.style.display = show ? '' : 'none';
+  });
+}
+renderWaterfallFilterRow();
 function pnlAmtCell(sym){
   var v = PNL_AMT[sym];
   if(typeof v !== 'number') return '<td class="num">—</td>';
