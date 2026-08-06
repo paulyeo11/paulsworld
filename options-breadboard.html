@@ -258,6 +258,11 @@
   /* Net P&L mood emoji — 4x the size of whatever text it sits next to (em unit, so it scales
      correctly in both the normal .wf-val bar label and the tiny mini-mode .wf-catlabel). */
   .wf-emoji { font-size:4em; line-height:1; display:inline-block; vertical-align:middle; }
+  /* Big mood emoji badge, top-right corner of the chart (Paul, 6 Aug 2026) — that corner is
+     naturally empty since Reconciliation/Net P&L (the short bars) live under it, unlike
+     Premium/Cost to Close's tall bars on the left. Fixed rem size, not the 4em .wf-emoji
+     unit, so it stays a consistent size regardless of the surrounding mini/normal font-size. */
+  .wf-emoji-corner { position:absolute; top:2px; right:2px; font-size:1.7rem; line-height:1; z-index:3; }
   /* Mini 2-column mode (Paul, 6 Aug 2026) — 2 cards per row on one screen instead of one long
      stacked list. Everything below shrinks in lockstep so a half-width card stays legible. */
   #waterfallChartsWrap { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
@@ -7305,12 +7310,15 @@ function waterfallPlotHtml(d){
     bar(afterPremium, afterCost, (afterCost <= afterPremium ? 'blue' : 'green'), -d.cost) +
     bar(afterCost, afterRecon, (d.recon >= 0 ? 'green' : 'red'), d.recon) +
     bar(0, net, (net >= 0 ? 'gold' : 'red'), net);
-  // Big superimposed watermark emoji removed (Paul, 6 Aug 2026) — it overlapped the bars too
-  // much (see the arrow pointing at it in his screenshot). Kept only the small mood emoji next
-  // to Net P&L in the catrow below, via wfNetEmojiHtml() there.
+  // Big mood emoji as a top-right corner badge (Paul, 6 Aug 2026) — the full-chart superimposed
+  // watermark overlapped the bars too much and was removed; this corner is naturally empty
+  // since Reconciliation/Net P&L (the short bars) sit under it. Small mood emoji next to
+  // Net P&L in the catrow below (via wfNetEmojiHtml()) stays too.
+  var emojiHtml = '<div class="wf-emoji-corner">' + wfNetEmoji(net) + '</div>';
   var zeroTop = topPct(0);
   return '<div class="wf-baseline" style="top:' + zeroTop.toFixed(2) + '%"></div>' +
     '<div class="wf-zero-label" style="top:' + zeroTop.toFixed(2) + '%">$0</div>' +
+    emojiHtml +
     '<div class="wf-cols">' + colsHtml + '</div>';
 }
 function renderWaterfallCharts(){
