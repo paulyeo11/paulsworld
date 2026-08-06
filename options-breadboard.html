@@ -3299,12 +3299,20 @@
       <div></div>
       <div></div>
     </div>
-    <div class="c-meta" style="margin-bottom:14px"><span class="en">10 charts, one per position — same Premium Collected → Cost to Close → Reconciliation → Net P&amp;L bridge as Table 1512, drawn as a chart instead of a table row. Numbers are read live from Table 1512 (Final P&amp;L tab), so they can never drift from it.</span><span class="zh">10张图，每个持仓一张——与表1512相同的「已收权利金 → 平仓成本 → 核算调整 → 净盈亏」桥接结构，以图表而非表格行呈现。数字均实时读取自表1512（最终盈亏页签），因此不会与其出现分歧。</span></div>
+
+    <div class="c-head" style="margin-bottom:10px">
+      <div class="tkr" style="font-size:1.05rem">🔴 <span class="en">Chart 25 — NVDA (Aug21) Closed Trade Spotlight</span><span class="zh">图25——NVDA（8月21日）已平仓交易特写</span></div>
+      <div class="c-meta"><span class="en">Shown on its own, separate from the 9-position grid below.</span><span class="zh">单独展示，与下方9个持仓的网格图分开。</span></div>
+      <div></div>
+    </div>
+    <div id="wfNvdaAug21Wrap" style="margin-bottom:20px"></div>
+
+    <div class="c-meta" style="margin-bottom:14px"><span class="en">9 more charts below, one per position — same Premium Collected → Cost to Close → Reconciliation → Net P&amp;L bridge as Table 1512, drawn as a chart instead of a table row. Numbers are read live from Table 1512 (Final P&amp;L tab), so they can never drift from it.</span><span class="zh">下方另有9张图，每个持仓一张——与表1512相同的「已收权利金 → 平仓成本 → 核算调整 → 净盈亏」桥接结构，以图表而非表格行呈现。数字均实时读取自表1512（最终盈亏页签），因此不会与其出现分歧。</span></div>
     <div class="cushion-filter-row" id="waterfallFilterRow"></div>
     <div id="waterfallChartsWrap"></div>
     <div class="note" style="margin-top:4px">
-      <span class="en">Bar height = dollar contribution to the current mark; the gold bar is the running total, not a fifth input. <b>A</b> = Premium Collected, <b>B</b> = Cost to Close, <b>C</b> = Reconciliation: <b>Net P&amp;L = A − B + C</b>. Closed positions (QQQ, SMH Jul, NVDA Aug21, SPY) show a real, fully realized close; open positions show today's mark-to-market and will keep moving until closed. Full source data + freshness notes: <a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">Table 1512 on the Final P&amp;L tab</a>.</span>
-      <span class="zh">柱高 = 对当前市值的美元贡献；金色柱为累计总额，并非第五项输入。<b>A</b> = 已收权利金，<b>B</b> = 平仓成本，<b>C</b> = 核算调整：<b>净盈亏 = A − B + C</b>。已平仓持仓（QQQ、SMH 7月、NVDA 8月21日、SPY）显示真实、已全部实现的平仓结果；持仓中的显示今日按市值计价，平仓前会持续变动。完整数据来源与更新时效说明：<a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">最终盈亏页签的表1512</a>。</span>
+      <span class="en">Bar height = dollar contribution to the current mark; the gold bar is the running total, not a fifth input. <b>A</b> = Premium Collected, <b>B</b> = Cost to Close, <b>C</b> = Reconciliation: <b>Net P&amp;L = A − B + C</b>. Closed positions (QQQ, SMH Jul, SPY, and NVDA Aug21 spotlighted above) show a real, fully realized close; open positions show today's mark-to-market and will keep moving until closed. Full source data + freshness notes: <a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">Table 1512 on the Final P&amp;L tab</a>.</span>
+      <span class="zh">柱高 = 对当前市值的美元贡献；金色柱为累计总额，并非第五项输入。<b>A</b> = 已收权利金，<b>B</b> = 平仓成本，<b>C</b> = 核算调整：<b>净盈亏 = A − B + C</b>。已平仓持仓（QQQ、SMH 7月、SPY，以及上方特写的NVDA 8月21日）显示真实、已全部实现的平仓结果；持仓中的显示今日按市值计价，平仓前会持续变动。完整数据来源与更新时效说明：<a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">最终盈亏页签的表1512</a>。</span>
     </div>
   </div><!-- /tab-waterfall -->
 
@@ -5921,7 +5929,7 @@ function setTab(t){
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
   if(t==='optiontoday' && !optionTodayLoaded){ optionTodayLoaded = true; renderOptionTodayTasks(); }
-  if(t==='waterfall' && !waterfallLoaded){ waterfallLoaded = true; renderWaterfallCharts(); }
+  if(t==='waterfall' && !waterfallLoaded){ waterfallLoaded = true; renderWaterfallCharts(); renderNvdaAug21WaterfallCard(); }
   if(t==='pnl') resizePnlChart();
   if(t==='gauge'){
     var gaugeGridEl = document.getElementById('gaugeGrid');
@@ -7458,10 +7466,12 @@ function buildTable1512Lookup(){
 // Order + display config matches Table 1512's row order exactly. Chart numbers 23–32 are the
 // next unused sitewide (Chart 22 was the last one in use — see gauge cards / IB16 Chart 20 /
 // IB17 Chart 21 — per the Table & Chart Numbering Rule).
+// NVDA (Aug21) — chart 25 — is deliberately NOT in this array. Paul asked for it to be pulled
+// out of the shared grid into its own standalone spotlight card (see NVDA_AUG21_CFG /
+// renderNvdaAug21WaterfallCard below) instead of sitting alongside the other 9 positions.
 var WATERFALL_CFG = [
   { sym:'QQQ',        chart:23, dot:'🟦', status:'closed', kind:'ic', en:'QQQ',              zh:'QQQ' },
   { sym:'SMH_JUL',     chart:24, dot:'🟩', status:'closed', kind:'ic', en:'SMH (Jul)',         zh:'SMH（7月）' },
-  { sym:'NVDA_AUG21',  chart:25, dot:'🔴', status:'closed', kind:'ic', en:'NVDA (Aug21)',      zh:'NVDA（8月21日）' },
   { sym:'SPY',         chart:26, dot:'🔷', status:'closed', kind:'ic', en:'SPY',               zh:'SPY' },
   { sym:'AVGO',        chart:27, dot:'🟧', status:'open',   kind:'ic', en:'AVGO',              zh:'AVGO' },
   { sym:'IWM',         chart:28, dot:'🟪', status:'open',   kind:'ic', en:'IWM',               zh:'IWM' },
@@ -7531,6 +7541,34 @@ function waterfallPlotHtml(d){
     '<div class="wf-zero-label" style="top:' + zeroTop.toFixed(2) + '%">$0</div>' +
     '<div class="wf-cols">' + colsHtml + '</div>';
 }
+// Shared by both the grid (renderWaterfallCharts) and the standalone NVDA (Aug21) spotlight
+// card (renderNvdaAug21WaterfallCard) so the two can never visually drift apart.
+function waterfallCardHtml(cfg, d, extraStyle){
+  var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
+  var statusPill = cfg.status === 'closed'
+    ? '<div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>'
+    : '<div class="pill open">● <span class="en">OPEN</span><span class="zh">持仓中</span></div>';
+  var netLabel = cfg.status === 'closed'
+    ? '<span class="en">Net P&amp;L (Realized) (A−B+C)</span><span class="zh">净盈亏（已实现）(A−B+C)</span>'
+    : '<span class="en">Net P&amp;L (Unrealized) (A−B+C)</span><span class="zh">净盈亏（未实现）(A−B+C)</span>';
+  return '' +
+    '<div class="condor" id="wfCard-' + cfg.sym + '" data-status="' + cfg.status + '"' + (extraStyle ? ' style="' + extraStyle + '"' : '') + '>' +
+      '<div class="wf-emoji-corner">' + wfNetEmoji(d.pnl) + '</div>' +
+      '<div class="gauge-chart-num" style="margin-top:0">Chart ' + cfg.chart + '</div>' +
+      '<div class="c-head">' +
+        '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
+        '<div class="c-meta"><span class="en">' + kindLbl.en + '</span><span class="zh">' + kindLbl.zh + '</span></div>' +
+        statusPill +
+      '</div>' +
+      '<div class="wf-plot">' + waterfallPlotHtml(d) + '</div>' +
+      '<div class="wf-catrow">' +
+        '<div class="wf-catlabel"><b><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></b>' + wfFmt(d.premium) + '</div>' +
+        '<div class="wf-catlabel"><b><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></b>' + wfFmt(-d.cost) + '</div>' +
+        '<div class="wf-catlabel"><b><span class="en">Reconciliation (C)</span><span class="zh">核算调整 (C)</span></b>' + wfFmt(d.recon) + '</div>' +
+        '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + '</div>' +
+      '</div>' +
+    '</div>';
+}
 function renderWaterfallCharts(){
   var wrap = document.getElementById('waterfallChartsWrap');
   if(!wrap) return;
@@ -7538,34 +7576,23 @@ function renderWaterfallCharts(){
   var html = WATERFALL_CFG.map(function(cfg){
     var d = lookup[cfg.sym];
     if(!d) return '';
-    var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
-    var statusPill = cfg.status === 'closed'
-      ? '<div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>'
-      : '<div class="pill open">● <span class="en">OPEN</span><span class="zh">持仓中</span></div>';
-    var netLabel = cfg.status === 'closed'
-      ? '<span class="en">Net P&amp;L (Realized) (A−B+C)</span><span class="zh">净盈亏（已实现）(A−B+C)</span>'
-      : '<span class="en">Net P&amp;L (Unrealized) (A−B+C)</span><span class="zh">净盈亏（未实现）(A−B+C)</span>';
-    return '' +
-      '<div class="condor" id="wfCard-' + cfg.sym + '" data-status="' + cfg.status + '">' +
-        '<div class="wf-emoji-corner">' + wfNetEmoji(d.pnl) + '</div>' +
-        '<div class="gauge-chart-num" style="margin-top:0">Chart ' + cfg.chart + '</div>' +
-        '<div class="c-head">' +
-          '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
-          '<div class="c-meta"><span class="en">' + kindLbl.en + '</span><span class="zh">' + kindLbl.zh + '</span></div>' +
-          statusPill +
-        '</div>' +
-        '<div class="wf-plot">' + waterfallPlotHtml(d) + '</div>' +
-        '<div class="wf-catrow">' +
-          '<div class="wf-catlabel"><b><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></b>' + wfFmt(d.premium) + '</div>' +
-          '<div class="wf-catlabel"><b><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></b>' + wfFmt(-d.cost) + '</div>' +
-          '<div class="wf-catlabel"><b><span class="en">Reconciliation (C)</span><span class="zh">核算调整 (C)</span></b>' + wfFmt(d.recon) + '</div>' +
-          '<div class="wf-catlabel"><b>' + netLabel + '</b>' + wfFmt(d.pnl) + '</div>' +
-        '</div>' +
-      '</div>';
+    return waterfallCardHtml(cfg, d);
   }).join('');
   wrap.innerHTML = html;
   applyLangTo(wrap);
   renderWaterfallCardFilter();
+}
+// Standalone spotlight card for the closed NVDA (Aug21) trade — kept out of WATERFALL_CFG /
+// the All-Open-Closed filter grid entirely, per Paul's request (6 Aug 2026) to see it on its
+// own rather than lumped in with the other 9 positions.
+var NVDA_AUG21_CFG = { sym:'NVDA_AUG21', chart:25, dot:'🔴', status:'closed', kind:'ic', en:'NVDA (Aug21)', zh:'NVDA（8月21日）' };
+function renderNvdaAug21WaterfallCard(){
+  var wrap = document.getElementById('wfNvdaAug21Wrap');
+  if(!wrap) return;
+  var d = buildTable1512Lookup()[NVDA_AUG21_CFG.sym];
+  if(!d) return;
+  wrap.innerHTML = waterfallCardHtml(NVDA_AUG21_CFG, d, 'border-color:rgba(248,81,73,.4)');
+  applyLangTo(wrap);
 }
 // All / Open Only / Closed Only filter for the Waterfall tab — same button look as the shared
 // Gauge/Dashboard/Cushion filter (.cushion-filter-btn), but scoped to this tab's own
