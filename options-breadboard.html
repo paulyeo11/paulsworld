@@ -7222,7 +7222,13 @@ function renderGaugeAlerts(){
     var el = document.getElementById('galert-' + sym.toLowerCase());
     if(!el) return;
     var reasonsEn = [], reasonsZh = [];
-    var pctInfo = gaugePremiumPctInfo(sym);
+    // gaugePremiumPctInfo() reads MTD_PREMIUM/PNL_AMT, which are keyed by Table 900's own
+    // data-sym attribute (always uppercase, e.g. "GOOGL") — but GAUGE_ENTRY_DATE's keys are
+    // lowercase ("googl"). Passing the lowercase sym straight through silently missed the
+    // lookup, so a position sitting well past the 50%-of-credit close target (GOOGL at +85%,
+    // caught 6 Aug 2026) never got flagged. Uppercase it for this lookup only — the DOM id
+    // above still needs the lowercase form.
+    var pctInfo = gaugePremiumPctInfo(sym.toUpperCase());
     if(pctInfo && pctInfo.pct >= 50){
       reasonsEn.push('50% of credit reached');
       reasonsZh.push('已达50%权利金');
