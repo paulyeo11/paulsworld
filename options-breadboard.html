@@ -207,18 +207,20 @@
   /* Chart 9–20: centre readout — sits below the needle hub, in the dead space at the base of
      the semicircle (the visual centre of a gauge chart, since a speedometer face only spans the
      top half). Three stacked value+label rows, top to bottom: P&L Final (E, dollar amount — the
-     headline number, on top per Paul's request 2026-08-05), Share Price vs Entry (Now vs the
+     headline number, on top per Paul's request 2026-08-05), % of Premium Collected So Far
+     (E ÷ D — see gaugePremiumPctInfo()), and at the bottom, Share Price vs Entry (Now vs the
      DTE Day 1 price, same A-vs-B formula as the Positions tab's "Price change (A vs B)" line —
-     added above Premium % per Paul's request 2026-08-06, see gaugeSharePriceChgInfo()), and at
-     the bottom, % of Premium Collected So Far (E ÷ D — see gaugePremiumPctInfo()). Green =
-     profit banked / price up so far, red = giving it back / price down. */
+     moved to the bottom row per Paul's request 2026-08-06, see gaugeSharePriceChgInfo()). P&L
+     Final and Premium Collected: green = profit banked, red = giving it back. Share Price vs
+     Entry is shown in a fixed blue instead, so it reads as a neutral reference figure rather
+     than a good/bad signal. */
   .gauge-pct-amt { font-size:21px; font-weight:800; font-family:inherit; }
   .gauge-pct-amt.gauge-pct-up { fill:#3fb950; }
   .gauge-pct-amt.gauge-pct-down { fill:#f85149; }
   .gauge-pct-amt.gauge-pct-none { fill:#8b98a5; }
-  .gauge-sp-val { font-size:15px; font-weight:700; font-family:inherit; }
-  .gauge-sp-val.gauge-pct-up { fill:#3fb950; }
-  .gauge-sp-val.gauge-pct-down { fill:#f85149; }
+  .gauge-sp-val { font-size:15px; font-weight:700; font-family:inherit; fill:#58a6ff; }
+  .gauge-sp-val.gauge-pct-up { fill:#58a6ff; }
+  .gauge-sp-val.gauge-pct-down { fill:#58a6ff; }
   .gauge-sp-val.gauge-pct-none { fill:#8b98a5; }
   .gauge-pct-val { font-size:21px; font-weight:700; font-family:inherit; }
   .gauge-pct-val.gauge-pct-up { fill:#3fb950; }
@@ -6345,26 +6347,28 @@ function appendGaugePctReadout(svg, sym){
   var amtLblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+38, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
   amtLblZh.textContent = '最终盈亏';
   g.appendChild(amtLblZh);
-  // Share Price vs Entry (Now vs DTE Day 1) — sits above the Premium % row per Paul's request 2026-08-06.
-  var spVal = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+56, 'text-anchor':'middle', class:'gauge-sp-val gauge-pct-none', id:'gauge-sp-val-'+lo });
-  spVal.textContent = '—';
-  g.appendChild(spVal);
-  var spLblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+69, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
-  spLblEn.textContent = 'Share Price vs Entry';
-  g.appendChild(spLblEn);
-  var spLblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+69, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
-  spLblZh.textContent = '股价较建仓变化';
-  g.appendChild(spLblZh);
-  // % of Premium Collected So Far — bottom row.
-  var val = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+87, 'text-anchor':'middle', class:'gauge-pct-val gauge-pct-none', id:'gauge-pct-val-'+lo });
+  // % of Premium Collected So Far — middle row.
+  var val = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+56, 'text-anchor':'middle', class:'gauge-pct-val gauge-pct-none', id:'gauge-pct-val-'+lo });
   val.textContent = '—';
   g.appendChild(val);
-  var lblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+102, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
+  var lblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+69, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
   lblEn.textContent = 'Premium Collected';
   g.appendChild(lblEn);
-  var lblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+102, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
+  var lblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+69, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
   lblZh.textContent = '已收保费比例';
   g.appendChild(lblZh);
+  // Share Price vs Entry (Now vs DTE Day 1) — bottom row per Paul's request 2026-08-06 (moved
+  // down from the middle row); rendered in a fixed blue (not the green/red up/down scheme used
+  // by the other two rows) so it reads as a distinct, neutral reference figure at a glance.
+  var spVal = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+87, 'text-anchor':'middle', class:'gauge-sp-val gauge-pct-none', id:'gauge-sp-val-'+lo });
+  spVal.textContent = '—';
+  g.appendChild(spVal);
+  var spLblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+102, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
+  spLblEn.textContent = 'Share Price vs Entry';
+  g.appendChild(spLblEn);
+  var spLblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+102, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
+  spLblZh.textContent = '股价较建仓变化';
+  g.appendChild(spLblZh);
   svg.appendChild(g);
 }
 // Appends the Δ (short-leg delta) / Θ (modeled theta-only value) readout at the bottom-left of
