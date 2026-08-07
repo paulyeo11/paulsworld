@@ -485,6 +485,9 @@
   .task-filter-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#c9d1d9; font-weight:700; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:.74rem; }
   .task-filter-btn.active { background:#f59e0b; color:#0d1117; border-color:#f59e0b; }
   .task-filter-btn:active { transform:scale(.96); }
+  .task-toggle-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); color:#8b98a5; font-weight:700; padding:5px 12px; border-radius:20px; cursor:pointer; font-size:.72rem; }
+  .task-toggle-btn.active { background:rgba(245,158,11,.2); color:#f59e0b; border-color:#f59e0b; }
+  .task-toggle-btn:active { transform:scale(.96); }
   /* T6 — compact view: when activated, hide every column except Symbol, Share Price (A),
      Put Cushion, Call Cushion, P&L Amt (columns 1, 2, 4, 7, 12 in the header's fixed left-to-right order). */
   #table30-cushion.compact-mode th:nth-child(3), #table30-cushion.compact-mode td:nth-child(3),
@@ -5834,15 +5837,32 @@
         <input id="taskInput" type="text" placeholder="Add a task…" style="flex:1;background:#0d1117;border:1px solid rgba(255,255,255,.15);color:#e6edf3;border-radius:9px;padding:10px 12px;font-size:.88rem" onkeydown="if(event.key==='Enter')addTask()">
         <button onclick="addTask()" style="background:#f59e0b;color:#0d1117;border:none;border-radius:9px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:.85rem">+ <span class="en">Add</span><span class="zh">添加</span></button>
       </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.7rem;color:#8b98a5;font-weight:700"><span class="en">New task:</span><span class="zh">新任务：</span></span>
+        <button type="button" class="task-toggle-btn active" id="newTaskImportant" onclick="toggleNewTaskFlag('important')">❗ <span class="en">Important</span><span class="zh">重要</span></button>
+        <button type="button" class="task-toggle-btn" id="newTaskUrgent" onclick="toggleNewTaskFlag('urgent')">🔥 <span class="en">Urgent</span><span class="zh">紧急</span></button>
+      </div>
       <div class="task-filter-row">
         <button class="task-filter-btn active" id="taskFilter-all" onclick="setTaskFilter('all')"><span class="en">All</span><span class="zh">全部</span></button>
         <button class="task-filter-btn" id="taskFilter-outstanding" onclick="setTaskFilter('outstanding')">⏳ <span class="en">Outstanding</span><span class="zh">未完成</span></button>
         <button class="task-filter-btn" id="taskFilter-done" onclick="setTaskFilter('done')">✅ <span class="en">Done</span><span class="zh">已完成</span></button>
       </div>
+      <div class="task-filter-row" style="margin-top:8px">
+        <span style="font-size:.7rem;color:#8b98a5;font-weight:700;margin-right:2px"><span class="en">Importance:</span><span class="zh">重要性：</span></span>
+        <button class="task-filter-btn active" id="taskImpFilter-all" onclick="setTaskImportantFilter('all')"><span class="en">All</span><span class="zh">全部</span></button>
+        <button class="task-filter-btn" id="taskImpFilter-important" onclick="setTaskImportantFilter('important')">❗ <span class="en">Important</span><span class="zh">重要</span></button>
+        <button class="task-filter-btn" id="taskImpFilter-notimportant" onclick="setTaskImportantFilter('notimportant')"><span class="en">Not Important</span><span class="zh">不重要</span></button>
+      </div>
+      <div class="task-filter-row" style="margin-top:8px">
+        <span style="font-size:.7rem;color:#8b98a5;font-weight:700;margin-right:2px"><span class="en">Urgency:</span><span class="zh">紧急性：</span></span>
+        <button class="task-filter-btn active" id="taskUrgFilter-all" onclick="setTaskUrgentFilter('all')"><span class="en">All</span><span class="zh">全部</span></button>
+        <button class="task-filter-btn" id="taskUrgFilter-urgent" onclick="setTaskUrgentFilter('urgent')">🔥 <span class="en">Urgent</span><span class="zh">紧急</span></button>
+        <button class="task-filter-btn" id="taskUrgFilter-noturgent" onclick="setTaskUrgentFilter('noturgent')"><span class="en">Not Urgent</span><span class="zh">不紧急</span></button>
+      </div>
       <ul id="taskListUl" style="list-style:none;padding:0;margin:16px 0 0"></ul>
       <div class="note" style="margin-top:12px">
-        <span class="en">Saved on this device only (browser local storage) — tasks won't sync across phone/notebook.</span>
-        <span class="zh">仅保存在本设备（浏览器本地存储）——任务不会在手机/笔记本之间同步。</span>
+        <span class="en">Saved on this device only (browser local storage) — tasks won't sync across phone/notebook. Tap the ❗/🔥 badge on any task to toggle its Important/Urgent status.</span>
+        <span class="zh">仅保存在本设备（浏览器本地存储）——任务不会在手机/笔记本之间同步。点击任务上的 ❗/🔥 标签可切换其「重要」/「紧急」状态。</span>
       </div>
     </div>
   </div><!-- /tab-tasks -->
@@ -5936,16 +5956,33 @@ function setLang(l){
 }
 
 // Task List
+// Each task has two independent variables, each with two sub-states:
+//   important: true (❗ Important) / false (Not Important)
+//   urgent:    true (🔥 Urgent)    / false (Not Urgent)
+// New tasks default to Important = true, Urgent = false (per Paul's standing default).
 var TASKS_KEY = 'T29_taskList';
 function getTasks(){
   var raw = localStorage.getItem(TASKS_KEY);
-  if(raw) return JSON.parse(raw);
-  var seeded = [{id:Date.now(), text:'9:30 PM – Trade FDS option: sell call option', done:false, added:'21 Jul 2026'}];
+  if(raw){
+    var tasks = JSON.parse(raw);
+    // Backfill important/urgent for tasks saved before this feature existed
+    var changed = false;
+    tasks.forEach(function(t){
+      if(typeof t.important !== 'boolean'){ t.important = true; changed = true; }
+      if(typeof t.urgent !== 'boolean'){ t.urgent = false; changed = true; }
+    });
+    if(changed) saveTasks(tasks);
+    return tasks;
+  }
+  var seeded = [{id:Date.now(), text:'9:30 PM – Trade FDS option: sell call option', done:false, added:'21 Jul 2026', important:true, urgent:false}];
   localStorage.setItem(TASKS_KEY, JSON.stringify(seeded));
   return seeded;
 }
 function saveTasks(tasks){ localStorage.setItem(TASKS_KEY, JSON.stringify(tasks)); }
 var taskFilter = 'all';
+var taskImportantFilter = 'all';
+var taskUrgentFilter = 'all';
+var newTaskFlags = { important:true, urgent:false }; // default for tasks about to be added
 function setTaskFilter(f){
   taskFilter = f;
   ['all','outstanding','done'].forEach(function(k){
@@ -5953,23 +5990,45 @@ function setTaskFilter(f){
   });
   renderTasks();
 }
+function setTaskImportantFilter(f){
+  taskImportantFilter = f;
+  ['all','important','notimportant'].forEach(function(k){
+    document.getElementById('taskImpFilter-'+k).classList.toggle('active', k===f);
+  });
+  renderTasks();
+}
+function setTaskUrgentFilter(f){
+  taskUrgentFilter = f;
+  ['all','urgent','noturgent'].forEach(function(k){
+    document.getElementById('taskUrgFilter-'+k).classList.toggle('active', k===f);
+  });
+  renderTasks();
+}
+function toggleNewTaskFlag(key){
+  newTaskFlags[key] = !newTaskFlags[key];
+  document.getElementById(key==='important' ? 'newTaskImportant' : 'newTaskUrgent').classList.toggle('active', newTaskFlags[key]);
+}
 function renderTasks(){
   var tasks = getTasks();
   var visible = tasks.filter(function(t){
-    if(taskFilter==='outstanding') return !t.done;
-    if(taskFilter==='done') return t.done;
+    if(taskFilter==='outstanding' && t.done) return false;
+    if(taskFilter==='done' && !t.done) return false;
+    if(taskImportantFilter==='important' && !t.important) return false;
+    if(taskImportantFilter==='notimportant' && t.important) return false;
+    if(taskUrgentFilter==='urgent' && !t.urgent) return false;
+    if(taskUrgentFilter==='noturgent' && t.urgent) return false;
     return true;
   });
   var ul = document.getElementById('taskListUl');
   ul.innerHTML = '';
   if(!visible.length){
-    var msg = taskFilter==='outstanding' ? 'No outstanding tasks.' : (taskFilter==='done' ? 'No completed tasks yet.' : 'No tasks yet.');
+    var msg = taskFilter==='outstanding' ? 'No outstanding tasks.' : (taskFilter==='done' ? 'No completed tasks yet.' : 'No tasks match this filter.');
     ul.innerHTML = '<li style="color:#8b98a5;font-size:.85rem;padding:8px 0">'+msg+'</li>';
     return;
   }
   visible.forEach(function(t){
     var li = document.createElement('li');
-    li.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)';
+    li.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap';
     var cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = t.done;
@@ -5977,12 +6036,24 @@ function renderTasks(){
     cb.onclick = function(){ toggleTask(t.id); };
     var span = document.createElement('span');
     span.textContent = t.text;
-    span.style.cssText = 'flex:1;font-size:.88rem;' + (t.done ? 'text-decoration:line-through;color:#8b98a5' : 'color:#e6edf3');
+    span.style.cssText = 'flex:1;min-width:120px;font-size:.88rem;' + (t.done ? 'text-decoration:line-through;color:#8b98a5' : 'color:#e6edf3');
+    var impBadge = document.createElement('button');
+    impBadge.type = 'button';
+    impBadge.innerHTML = t.important ? '❗ Important' : 'Not Important';
+    impBadge.title = 'Tap to toggle Important / Not Important';
+    impBadge.style.cssText = 'flex:none;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:10px;cursor:pointer;background:'+(t.important?'rgba(245,158,11,.18)':'rgba(255,255,255,.06)')+';border:1px solid '+(t.important?'rgba(245,158,11,.5)':'rgba(255,255,255,.15)')+';color:'+(t.important?'#f59e0b':'#8b98a5');
+    impBadge.onclick = function(){ toggleTaskImportant(t.id); };
+    var urgBadge = document.createElement('button');
+    urgBadge.type = 'button';
+    urgBadge.innerHTML = t.urgent ? '🔥 Urgent' : 'Not Urgent';
+    urgBadge.title = 'Tap to toggle Urgent / Not Urgent';
+    urgBadge.style.cssText = 'flex:none;font-size:.66rem;font-weight:700;padding:3px 8px;border-radius:10px;cursor:pointer;background:'+(t.urgent?'rgba(248,81,73,.18)':'rgba(255,255,255,.06)')+';border:1px solid '+(t.urgent?'rgba(248,81,73,.5)':'rgba(255,255,255,.15)')+';color:'+(t.urgent?'#f85149':'#8b98a5');
+    urgBadge.onclick = function(){ toggleTaskUrgent(t.id); };
     var del = document.createElement('button');
     del.textContent = '✕';
-    del.style.cssText = 'background:none;border:none;color:#f85149;font-size:1rem;cursor:pointer;padding:2px 6px';
+    del.style.cssText = 'background:none;border:none;color:#f85149;font-size:1rem;cursor:pointer;padding:2px 6px;flex:none';
     del.onclick = function(){ deleteTask(t.id); };
-    li.appendChild(cb); li.appendChild(span); li.appendChild(del);
+    li.appendChild(cb); li.appendChild(span); li.appendChild(impBadge); li.appendChild(urgBadge); li.appendChild(del);
     ul.appendChild(li);
   });
 }
@@ -5991,7 +6062,7 @@ function addTask(){
   var text = input.value.trim();
   if(!text) return;
   var tasks = getTasks();
-  tasks.push({id:Date.now(), text:text, done:false, added:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})});
+  tasks.push({id:Date.now(), text:text, done:false, added:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}), important:newTaskFlags.important, urgent:newTaskFlags.urgent});
   saveTasks(tasks);
   input.value = '';
   renderTasks();
@@ -5999,6 +6070,18 @@ function addTask(){
 function toggleTask(id){
   var tasks = getTasks();
   tasks.forEach(function(t){ if(t.id===id) t.done = !t.done; });
+  saveTasks(tasks);
+  renderTasks();
+}
+function toggleTaskImportant(id){
+  var tasks = getTasks();
+  tasks.forEach(function(t){ if(t.id===id) t.important = !t.important; });
+  saveTasks(tasks);
+  renderTasks();
+}
+function toggleTaskUrgent(id){
+  var tasks = getTasks();
+  tasks.forEach(function(t){ if(t.id===id) t.urgent = !t.urgent; });
   saveTasks(tasks);
   renderTasks();
 }
