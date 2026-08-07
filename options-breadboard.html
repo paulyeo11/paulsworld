@@ -296,6 +296,7 @@
   .gauge-alert { display:none; text-align:center; margin-top:6px; }
   .gauge-alert.show { display:block; }
   .gauge-alert .gab-pill { display:inline-block; background:rgba(248,81,73,.18); color:#ff7b72; border:1px solid rgba(248,81,73,.55); font-size:.66rem; font-weight:800; letter-spacing:.02em; padding:4px 10px; border-radius:20px; animation:gaugeAlertPulse 1.6s infinite; }
+  .gauge-alert .gab-pill.hold { background:rgba(245,158,11,.18); color:#f5c869; border:1px solid rgba(245,158,11,.55); animation:none; }
   @keyframes gaugeAlertPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(248,81,73,.5); } 50%{ box-shadow:0 0 8px 2px rgba(248,81,73,.5); } }
   /* Waterfall tab — per-position P&L bridge charts (Premium Collected → Cost to Close →
      Reconciliation → Net P&L), same visual language as the standalone FDS chart (IB17,
@@ -7973,12 +7974,23 @@ function renderGaugeAsof(){
   });
 }
 renderGaugeAsof();
-// Close-target alert (Standing Default — added 2026-08-06): flags an OPEN gauge card once
-// either trigger from the IG Cushion Watch log's close rule is hit — 50% of credit collected
-// as profit (via gaugePremiumPctInfo, same E/D as the gauge's own % readout), or 21 DTE
-// reached (via GAUGE_EXPIRY_DATE, same days-left math as the D-badge toggle). Only symbols
-// with a #galert-<sym> element in the DOM are open positions to begin with (closed/pending
-// cards never got one), so no separate "is it open" check is needed beyond that.
+// Close-target alert (Standing Default — added 2026-08-06, loss guard added 2026-08-07):
+// flags an OPEN gauge card once either trigger from the IG Cushion Watch log's close rule is
+// hit — 50% of credit collected as profit (via gaugePremiumPctInfo, same E/D as the gauge's
+// own % readout), or 21 DTE reached (via GAUGE_EXPIRY_DATE, same days-left math as the D-badge
+// toggle). Only symbols with a #galert-<sym> element in the DOM are open positions to begin
+// with (closed/pending cards never got one), so no separate "is it open" check is needed
+// beyond that.
+// Loss guard (Paul, 7 Aug 2026 — FDS flagged "Consider Closing — 21 DTE" at −$205/−98% of
+// credit, well before expiry, when closing would lock in a big loss he had no intention of
+// taking): the 21-DTE trigger alone used to fire "Consider Closing" regardless of P&L. That's
+// fine when the trade is flat/profitable (avoid late gamma risk on a winner), but wrong on a
+// loser — there's no benefit to closing early just because 21 DTE arrived if the position is
+// underwater and hasn't expired. So the 21-DTE trigger now branches on PNL_AMT (Table 900's
+// real mark, uppercase-keyed same as the 50%-credit lookup above): PNL_AMT < 0 renders a
+// distinct amber "hold" pill (no close call-to-action, no pulse animation) instead of being
+// folded into the red "Consider Closing" pill. The 50%-credit trigger is untouched — it only
+// ever fires on a profitable position, so it can't conflict with this branch.
 function renderGaugeAlerts(){
   Object.keys(GAUGE_ENTRY_DATE).forEach(function(sym){
     var el = document.getElementById('galert-' + sym.toLowerCase());
@@ -7990,22 +8002,34 @@ function renderGaugeAlerts(){
     // lookup, so a position sitting well past the 50%-of-credit close target (GOOGL at +85%,
     // caught 6 Aug 2026) never got flagged. Uppercase it for this lookup only — the DOM id
     // above still needs the lowercase form.
-    var pctInfo = gaugePremiumPctInfo(sym.toUpperCase());
+    var symUp = sym.toUpperCase();
+    var pctInfo = gaugePremiumPctInfo(symUp);
     if(pctInfo && pctInfo.pct >= 50){
       reasonsEn.push('50% of credit reached');
       reasonsZh.push('已达50%权利金');
     }
+    var holdEn = null, holdZh = null;
     var expiry = GAUGE_EXPIRY_DATE[sym];
     if(expiry){
       var dte = gaugeDaysBetween(gaugeTodayStr(), expiry);
       if(dte <= 21){
-        reasonsEn.push('21 DTE (' + dte + 'd left)');
-        reasonsZh.push('已达21DTE（剩' + dte + '天）');
+        var pnl = PNL_AMT[symUp];
+        if(typeof pnl === 'number' && pnl < 0){
+          holdEn = '21 DTE (' + dte + 'd left) but at a loss — hold, don’t close now';
+          holdZh = '已达21DTE（剩' + dte + '天）但处于亏损——继续持有，暂不平仓';
+        } else {
+          reasonsEn.push('21 DTE (' + dte + 'd left)');
+          reasonsZh.push('已达21DTE（剩' + dte + '天）');
+        }
       }
     }
     if(reasonsEn.length){
       el.classList.add('show');
       el.innerHTML = '<span class="gab-pill">🔔 <span class="en">Consider Closing — ' + reasonsEn.join(' + ') + '</span><span class="zh">建议平仓——' + reasonsZh.join('+') + '</span></span>';
+      applyLangTo(el);
+    } else if(holdEn){
+      el.classList.add('show');
+      el.innerHTML = '<span class="gab-pill hold">⏳ <span class="en">' + holdEn + '</span><span class="zh">' + holdZh + '</span></span>';
       applyLangTo(el);
     } else {
       el.classList.remove('show');
