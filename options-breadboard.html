@@ -145,7 +145,8 @@
   .gauge-grid .condor { margin:0; position:relative; }
   /* Net P&L mood badge, top-right corner of each Gauge card — same wfNetEmoji() mood
      (🤩/🙂/😢/😭) as the Waterfall tab's .wf-emoji-corner, stacked above the same live
-     PNL_AMT dollar figure shown in the gauge's own centre "P&L Final" readout, sized for
+     PNL_AMT dollar figure. This is now the only place on the card showing that dollar figure —
+     the gauge's own centre "P&L Final" readout was removed 2026-08-08 as a duplicate. Sized for
      the Gauge card's roomier header instead of the Waterfall card's compact one
      (Paul, 7 Aug 2026). */
   .gauge-mood-badge { position:absolute; top:10px; right:14px; z-index:3; display:flex; flex-direction:column; align-items:center; gap:2px; }
@@ -242,14 +243,14 @@
   .gauge-needle-val-day1 { fill:#c9d1d9; }
   /* Chart 9–20: centre readout — sits below the needle hub, in the dead space at the base of
      the semicircle (the visual centre of a gauge chart, since a speedometer face only spans the
-     top half). Three stacked value+label rows, top to bottom: P&L Final (E, dollar amount — the
-     headline number, on top per Paul's request 2026-08-05), % of Premium Collected So Far
+     top half). Two stacked value+label rows, top to bottom: % of Premium Collected So Far
      (E ÷ D — see gaugePremiumPctInfo()), and at the bottom, Share Price vs Entry (Now vs the
      DTE Day 1 price, same A-vs-B formula as the Positions tab's "Price change (A vs B)" line —
-     moved to the bottom row per Paul's request 2026-08-06, see gaugeSharePriceChgInfo()). P&L
-     Final and Premium Collected: green = profit banked, red = giving it back. Share Price vs
-     Entry is shown in a fixed blue instead, so it reads as a neutral reference figure rather
-     than a good/bad signal. */
+     see gaugeSharePriceChgInfo()). (A third row, "P&L Final", used to sit above these two but
+     was removed 2026-08-08 — Paul, as it duplicated the same dollar figure already shown in the
+     card's top-right .gauge-mood-badge.) Premium Collected: green = profit banked, red = giving
+     it back. Share Price vs Entry is shown in a fixed blue instead, so it reads as a neutral
+     reference figure rather than a good/bad signal. */
   .gauge-pct-amt { font-size:21px; font-weight:800; font-family:inherit; }
   .gauge-pct-amt.gauge-pct-up { fill:#3fb950; }
   .gauge-pct-amt.gauge-pct-down { fill:#f85149; }
@@ -264,7 +265,7 @@
   .gauge-pct-val.gauge-pct-none { fill:#8b98a5; }
   .gauge-pct-lbl { font-size:11px; font-weight:700; fill:#8b98a5; letter-spacing:.03em; text-transform:uppercase; }
   /* Bottom-left Δ (short-leg delta) / Θ (modeled theta-only value) readout — same dead space
-     at the base of the semicircle as the centred P&L Final/% Premium readout above, just
+     at the base of the semicircle as the centred % Premium/Share Price readout above, just
      left-aligned instead of centred so the two groups don't collide. See
      appendGaugeGreeksReadout()/renderGaugeGreeks(). */
   .gauge-greeks-val { font-size:10px; font-weight:700; font-family:inherit; fill:#c9d1d9; }
@@ -284,10 +285,10 @@
      duplicate each other in the normal, full-detail view. */
   .gauge-mini-cushion { display:none; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap; }
   #gaugeGrid.hide-labels .gauge-mini-cushion { display:flex; }
-  /* Freshness stamp for the SVG's "P&L Final / Premium Collected" readout — always visible
-     (not gated behind Hide Label mode like the cushion badges above) since a P&L figure with
-     no visible date is exactly what let AVGO's gauge look "wrong" instead of just old. Turns
-     amber + ⚠️ once the mark is more than ~30h old (a missed daily refresh cycle). */
+  /* Freshness stamp for the SVG's "Premium Collected" readout and the mood badge's P&L figure
+     — always visible (not gated behind Hide Label mode like the cushion badges above) since a
+     P&L figure with no visible date is exactly what let AVGO's gauge look "wrong" instead of
+     just old. Turns amber + ⚠️ once the mark is more than ~30h old (a missed daily refresh cycle). */
   .gauge-asof { text-align:center; margin-top:6px; font-size:.66rem; color:#8b98a5; }
   .gauge-asof.stale { color:#f59e0b; font-weight:700; }
   /* Close-target alert — appears under an OPEN gauge card once either trigger from the
@@ -7327,38 +7328,31 @@ function appendGaugePctReadout(svg, sym){
   var lo = sym.toLowerCase();
   var g = gaugeSvgEl('g', { id:'gauge-pct-group-'+lo });
   var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-  title.textContent = 'P&L Final = E (Current P&L); Share Price vs Entry = (Now − Day 1) ÷ Day 1; % of Premium Collected So Far = E ÷ D (Entry Credit)';
+  title.textContent = 'Share Price vs Entry = (Now − Day 1) ÷ Day 1; % of Premium Collected So Far = E ÷ D (Entry Credit)';
   g.appendChild(title);
-  // P&L Final (E, dollar amount) — headline number, sits above the other two rows per Paul's request.
-  var amt = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+24, 'text-anchor':'middle', class:'gauge-pct-amt gauge-pct-none', id:'gauge-pct-amt-'+lo });
-  amt.textContent = '—';
-  g.appendChild(amt);
-  var amtLblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+38, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
-  amtLblEn.textContent = 'P&L Final';
-  g.appendChild(amtLblEn);
-  var amtLblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+38, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
-  amtLblZh.textContent = '最终盈亏';
-  g.appendChild(amtLblZh);
-  // % of Premium Collected So Far — middle row.
-  var val = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+56, 'text-anchor':'middle', class:'gauge-pct-val gauge-pct-none', id:'gauge-pct-val-'+lo });
+  // P&L Final headline row removed (Paul, 8 Aug 2026) — it duplicated the same live PNL_AMT
+  // dollar figure already shown in the .gauge-mood-badge at the top of the card, so the two
+  // rows below shift up 32px to fill the freed centre space.
+  // % of Premium Collected So Far — top row.
+  var val = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+24, 'text-anchor':'middle', class:'gauge-pct-val gauge-pct-none', id:'gauge-pct-val-'+lo });
   val.textContent = '—';
   g.appendChild(val);
-  var lblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+69, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
+  var lblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+37, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
   lblEn.textContent = 'Premium Collected';
   g.appendChild(lblEn);
-  var lblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+69, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
+  var lblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+37, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
   lblZh.textContent = '已收保费比例';
   g.appendChild(lblZh);
-  // Share Price vs Entry (Now vs DTE Day 1) — bottom row per Paul's request 2026-08-06 (moved
-  // down from the middle row); rendered in a fixed blue (not the green/red up/down scheme used
-  // by the other two rows) so it reads as a distinct, neutral reference figure at a glance.
-  var spVal = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+87, 'text-anchor':'middle', class:'gauge-sp-val gauge-pct-none', id:'gauge-sp-val-'+lo });
+  // Share Price vs Entry (Now vs DTE Day 1) — bottom row per Paul's request 2026-08-06; rendered
+  // in a fixed blue (not the green/red up/down scheme used by the row above) so it reads as a
+  // distinct, neutral reference figure at a glance.
+  var spVal = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+55, 'text-anchor':'middle', class:'gauge-sp-val gauge-pct-none', id:'gauge-sp-val-'+lo });
   spVal.textContent = '—';
   g.appendChild(spVal);
-  var spLblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+102, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
+  var spLblEn = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+70, 'text-anchor':'middle', class:'gauge-pct-lbl en' });
   spLblEn.textContent = 'Share Price vs Entry';
   g.appendChild(spLblEn);
-  var spLblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+102, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
+  var spLblZh = gaugeSvgEl('text', { x:GAUGE_CX, y:GAUGE_CY+70, 'text-anchor':'middle', class:'gauge-pct-lbl zh' });
   spLblZh.textContent = '股价较建仓变化';
   g.appendChild(spLblZh);
   svg.appendChild(g);
@@ -7370,8 +7364,8 @@ function appendGaugePctReadout(svg, sym){
 // as the Cushion tab's T6). Θ = a modeled "theta-only" dollar value: the cumulative premium
 // that pure time decay alone would have captured by now, ignoring any price movement — same
 // √time model as Table 40/420 (1 − √(Remaining DTE ÷ Entry DTE)) applied to the entry credit
-// (D = MTD_PREMIUM). This is deliberately a different number from the real P&L Final shown at
-// gauge centre. Placeholder '—' text is created here; values filled in by renderGaugeGreeks()
+// (D = MTD_PREMIUM). This is deliberately a different number from the real P&L shown in the
+// card's mood badge. Placeholder '—' text is created here; values filled in by renderGaugeGreeks()
 // once SHORT_PUT_DELTA/SHORT_CALL_DELTA/MTD_PREMIUM/GAUGE_ENTRY_DATE/GAUGE_EXPIRY_DATE are all
 // defined further down the page.
 function appendGaugeGreeksReadout(svg, sym){
@@ -8372,34 +8366,28 @@ function renderGaugePremiumPct(){
   Object.keys(syms).forEach(function(sym){
     var lo = sym.toLowerCase();
     var el = document.getElementById('gauge-pct-val-'+lo);
-    var amtEl = document.getElementById('gauge-pct-amt-'+lo);
     if(!el) return;
     var info = gaugePremiumPctInfo(sym);
     el.classList.remove('gauge-pct-up', 'gauge-pct-down', 'gauge-pct-none');
-    if(amtEl) amtEl.classList.remove('gauge-pct-up', 'gauge-pct-down', 'gauge-pct-none');
     if(!info){
       el.textContent = '—';
       el.classList.add('gauge-pct-none');
-      if(amtEl){ amtEl.textContent = '—'; amtEl.classList.add('gauge-pct-none'); }
       return;
     }
     var r = Math.round(info.pct);
     var cls = r >= 0 ? 'gauge-pct-up' : 'gauge-pct-down';
     el.textContent = (r >= 0 ? '+' : '−') + Math.abs(r) + '%';
     el.classList.add(cls);
-    if(amtEl){
-      var a = Math.round(info.amt);
-      amtEl.textContent = (a >= 0 ? '+' : '−') + '$' + Math.abs(a).toLocaleString('en-US');
-      amtEl.classList.add(cls);
-    }
   });
 }
 renderGaugePremiumPct();
 // Net P&L mood emoji, top-right corner of each Gauge card — same wfNetEmoji() mood scale
 // (🤩 >$200, 🙂 $0-200, 😢 -$200-0, 😭 <-$200) as the Waterfall tab's corner badge, reusing
-// the same PNL_AMT figures as the gauge's own centre "P&L Final" readout above (Paul, 7 Aug
-// 2026 — wants the Gauge tab's title simplified to just the ticker, with this mood emoji
-// taking the freed-up top-right space instead of the "Table N:" prefix).
+// the same PNL_AMT figures the gauge centre's "P&L Final" readout used to show before it was
+// removed as a duplicate (Paul, 8 Aug 2026) — this mood badge is now the only place on the
+// card showing that dollar figure (Paul, 7 Aug 2026 — wants the Gauge tab's title simplified
+// to just the ticker, with this mood emoji taking the freed-up top-right space instead of the
+// "Table N:" prefix).
 var GAUGE_MOOD_SYMS = ['NVDA','QQQ','AVGO','SMH','SPY','IWM','XLE','FDS','GOOGL','AAPL','NVDA2','META','SMH_JUL','POOL','ZTS'];
 function renderGaugeMoodEmoji(){
   GAUGE_MOOD_SYMS.forEach(function(sym){
@@ -8516,10 +8504,10 @@ function renderGaugeGreeks(){
   });
 }
 renderGaugeGreeks();
-// Freshness stamp for each gauge's P&L Final / Premium Collected readout — ASOF is derived
+// Freshness stamp for each gauge's Premium Collected readout / mood-badge P&L — ASOF is derived
 // straight off Table 900's data-asof attributes (see buildTable900Lookup()), same
 // derive-don't-duplicate pattern as MTD_PREMIUM/PNL_AMT above. This exists because the P&L
-// Final number is a periodic manual snapshot (statement / broker-app read), not a live feed —
+// number is a periodic manual snapshot (statement / broker-app read), not a live feed —
 // with no date attached, a day-old number and a fresh one look identical on the gauge, which is
 // what made AVGO's dip look like a mystery instead of an expected mark-to-market update
 // (Paul, 6 Aug 2026). Values older than ~30h (a missed daily refresh cycle) render ⚠️ amber
