@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIT18: How My Website Actually Deploys — Claude Code, GitHub, and Vercel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1a1a2e;
+      --blue: #4a6cf7;
+      --blue-light: #e8eeff;
+      --blue-mid: #c5d3ff;
+      --accent: #f4813f;
+      --soft: #f7f8fc;
+      --line: #e4e8f5;
+      --text: #2d2d44;
+      --muted: #6b7280;
+      --live: #16a34a;
+      --paused: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--soft);
+      color: var(--text);
+      font-size: 18px;
+      line-height: 1.9;
+    }
+
+    .home-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 999;
+      background: var(--blue);
+      color: white;
+      text-decoration: none;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.82em;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 24px;
+      box-shadow: 0 4px 14px rgba(74,108,247,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .home-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(74,108,247,0.45); }
+
+    .share-btn { display: inline-block; background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.4); color: #fff; font-weight: 700; letter-spacing: .04em; padding: 11px 28px; border-radius: 30px; cursor: pointer; font-size: 1rem; font-family: 'Source Serif 4', Georgia, serif; margin-left: 12px; transition: background .2s; }
+    .share-btn:hover { background: rgba(255,255,255,.25); }
+    .share-toast { display: none; position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: .9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+
+    .hero {
+      background: linear-gradient(155deg, #1a1a2e 0%, #0f2060 45%, #1a3a8f 100%);
+      color: white;
+      padding: 100px 24px 70px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(74,108,247,0.25) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 30%, rgba(244,129,63,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridMove {
+      from { background-position: 0 0; }
+      to   { background-position: 60px 60px; }
+    }
+
+    .hero-tag {
+      position: relative;
+      z-index: 2;
+      display: inline-block;
+      background: rgba(74,108,247,0.35);
+      border: 1px solid rgba(74,108,247,0.6);
+      color: #a5b4fc;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.78em;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      position: relative;
+      z-index: 2;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8em, 5vw, 3em);
+      font-weight: 700;
+      line-height: 1.25;
+      max-width: 820px;
+      margin: 0 auto 20px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .hero h1 em { font-style: italic; color: #f4b87a; }
+    .hero-meta {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 0.85em;
+      color: rgba(255,255,255,0.7);
+      margin-top: 10px;
+    }
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-cta {
+      position: relative;
+      z-index: 2;
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .article-wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+
+    .lead {
+      font-size: 1.18em;
+      font-weight: 400;
+      font-style: italic;
+      color: #3d3d5c;
+      border-left: 4px solid var(--blue);
+      padding: 16px 24px;
+      margin: 48px 0 36px;
+      background: var(--blue-light);
+      border-radius: 0 12px 12px 0;
+      line-height: 1.8;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.55em;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 52px 0 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--line);
+    }
+    h2::before {
+      content: attr(data-num);
+      display: inline-block;
+      background: var(--blue);
+      color: white;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.52em;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-right: 10px;
+      vertical-align: middle;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    p { margin-bottom: 20px; }
+
+    .pullquote {
+      margin: 44px 0;
+      padding: 28px 32px;
+      background: linear-gradient(135deg, #1a1a2e, #0f2060);
+      color: white;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pullquote::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-family: 'Playfair Display', serif;
+      font-size: 8em;
+      color: rgba(74,108,247,0.25);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .pullquote p {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15em;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0;
+      color: #e2e8ff;
+    }
+
+    .info-box {
+      background: white;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--blue);
+      border-radius: 0 12px 12px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+      box-shadow: 0 2px 10px rgba(74,108,247,0.07);
+    }
+    .info-box .box-title {
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.8em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+    .info-box ul { list-style: none; padding: 0; }
+    .info-box ul li {
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f2fa;
+      font-size: 0.96em;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .info-box ul li:last-child { border-bottom: none; }
+    .info-box ul li::before { content: '→'; color: var(--blue); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    .warning-card {
+      background: linear-gradient(135deg, #fefce8, #fef9c3);
+      border: 1px solid #fde68a;
+      border-left: 5px solid #f59e0b;
+      border-radius: 0 14px 14px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+    }
+    .warning-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .warning-card p { margin-bottom: 0; }
+
+    .good-card {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 1px solid #bbf7d0;
+      border-left: 5px solid #22c55e;
+      border-radius: 0 14px 14px 0;
+      padding: 22px 26px;
+      margin: 36px 0;
+    }
+    .good-card .card-emoji { font-size: 1.8em; margin-bottom: 8px; display: block; }
+    .good-card p { margin-bottom: 0; }
+
+    .diagram-box {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 14px 8px;
+      margin: 36px 0 12px;
+      box-shadow: 0 2px 14px rgba(26,26,46,0.06);
+    }
+    .diagram-scroll { overflow-x: auto; }
+    .diagram-box svg { display: block; width: 100%; height: auto; min-width: 640px; }
+    .diagram-caption {
+      font-size: 0.82em;
+      color: var(--muted);
+      padding: 14px 6px 4px;
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+    }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.78em; color: var(--muted); margin: 14px 0 8px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+    .divider { text-align: center; margin: 48px 0; color: var(--blue); font-size: 1.4em; letter-spacing: 8px; opacity: 0.4; }
+
+    .view-counter-wrap { text-align: center; margin: 60px 0 20px; padding: 24px; background: var(--blue-light); border-radius: 14px; }
+
+    footer { text-align: center; font-size: 0.82em; color: var(--muted); padding: 24px 16px 48px; border-top: 1px solid var(--line); margin-top: 16px; }
+    footer a { color: var(--blue); text-decoration: none; font-weight: 600; }
+
+    .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+    .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+    .breadcrumb a:hover { color:#fff; }
+    .breadcrumb .sep { color:rgba(255,255,255,.3); }
+    .breadcrumb .current { color:#f4c869; }
+
+    @media (max-width: 600px) {
+      .hero { padding: 80px 20px 50px; }
+      .home-btn { font-size: 0.78em; padding: 8px 14px; }
+      h2 { font-size: 1.3em; }
+      .pullquote::before { font-size: 5em; }
+    }
+  </style>
+  <script src="/bilingual.js"></script>
+</head>
+<body>
+
+  <a target="_blank" class="home-btn" href="https://paulsworld.vercel.app/">🏠 <span class="en">Home</span><span class="zh">主页</span></a>
+
+  <header class="hero">
+    <div class="hero-tag">
+      <span class="en">🤖 AI Tools · Tool 18</span>
+      <span class="zh">🤖 AI工具 · 工具18</span>
+    </div>
+    <div class="breadcrumb">
+      <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+      <span class="sep">›</span>
+      <a href="/index.html#ait" target="_blank"><span class="en">AI Tools</span><span class="zh">AI 工具</span></a>
+      <span class="sep">›</span>
+      <span class="current"><span class="en">AIT18</span><span class="zh">AIT18</span></span>
+    </div>
+    <h1>
+      <span class="en">AIT18: How My Website Actually Deploys —<br><em>Claude Code, GitHub, and Vercel</em></span>
+      <span class="zh">AIT18：我的网站到底是怎么部署的——<br><em>Claude Code、GitHub 和 Vercel</em></span>
+    </h1>
+    <div class="hero-meta">
+      <span>✍️ Paul Yeo</span>
+      <span>📅 <span class="en">8 August 2026</span><span class="zh">2026年8月8日</span></span>
+      <span>⏱️ <span class="en">4 min read</span><span class="zh">4分钟阅读</span></span>
+    </div>
+    <div class="hero-cta">
+      <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+    </div>
+  </header>
+  <div class="share-toast" id="shareToast">✅ <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+  <div class="article-wrap">
+
+    <p class="lead">
+      <span class="en">Every time I ask Claude Code to add a photo or fix a page, something happens between "done" and the change actually showing up on my phone. I asked for a picture of it — here's the actual pipeline, drawn out, with the two gotchas that have bitten me before.</span>
+      <span class="zh">每次我让Claude Code帮我加一张照片或修改一个页面，在它说"完成了"和这个改动真正出现在我手机上之间，其实发生了好几件事。我让它画了一张图出来——这就是真实的流程，还标出了以前坑过我的两个关键点。</span>
+    </p>
+
+    <h2 data-num="01">
+      <span class="en">The Pipeline, in Order</span>
+      <span class="zh">流程，按顺序来</span>
+    </h2>
+
+    <p>
+      <span class="en">I ask Claude Code for a change from my phone or my notebook. It edits the file, commits it, and pushes to GitHub — but GitHub only tells the live site to rebuild when the change lands on one specific branch, called <code>main</code>. From there, it fans out to the two hosting services that watch my GitHub repo, and only after Claude checks the real link does it tell me I'm done.</span>
+      <span class="zh">我从手机或笔记本电脑上让Claude Code改点东西。它修改文件、提交（commit），然后推送（push）到GitHub——但GitHub只有在改动落到一个特定的分支上（叫<code>main</code>）时，才会通知网站重新构建。从那里，它会同时发送给两个监听我GitHub仓库的托管服务，而且只有在Claude真正检查过那个链接之后，它才会告诉我"弄好了"。</span>
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 1060 650" role="img" aria-label="Diagram: Paul instructs Claude Code, which commits to a session branch, merges it into main in the same turn, and pushes to GitHub. GitHub's push webhook fans out to Vercel, which auto-deploys the live paulsworld.vercel.app site in about two minutes, and to Netlify, which is currently paused because its free operational credits are exhausted until 16 August 2026, leaving paulsworld.netlify.app on a stale build. Before reporting back to Paul, Claude Code fetches the live Vercel URL to verify the change actually deployed.">
+          <defs>
+            <marker id="ait18arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#1a1a2e"/>
+            </marker>
+            <marker id="ait18arrowMuted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/>
+            </marker>
+          </defs>
+
+          <g font-family="'Source Serif 4', Georgia, serif">
+            <rect x="440" y="95" width="222" height="372" rx="10" fill="none" stroke="#c5d3ff" stroke-width="1.3" stroke-dasharray="3 5"/>
+            <text x="551" y="116" text-anchor="middle" font-size="12.5" fill="#6b7280" letter-spacing="0.03em">GITHUB · paulyeo11/paulsworld</text>
+
+            <rect x="20" y="275" width="130" height="60" rx="8" fill="#f7f8fc" stroke="#1a1a2e" stroke-width="1.3"/>
+            <text x="85" y="302" text-anchor="middle" font-size="14" font-weight="700" fill="#1a1a2e">Paul</text>
+            <text x="85" y="319" text-anchor="middle" font-size="10.5" fill="#6b7280"><tspan class="en">phone or notebook</tspan></text>
+
+            <rect x="210" y="250" width="170" height="120" rx="8" fill="white" stroke="#f4813f" stroke-width="1.7"/>
+            <text x="295" y="285" text-anchor="middle" font-size="14" font-weight="700" fill="#f4813f">Claude Code</text>
+            <text x="295" y="304" text-anchor="middle" font-size="10.5" fill="#6b7280">edits + commits</text>
+            <text x="295" y="320" text-anchor="middle" font-size="10.5" fill="#6b7280">merges to main</text>
+            <text x="295" y="336" text-anchor="middle" font-size="10.5" fill="#6b7280">verifies before reporting</text>
+
+            <rect x="460" y="145" width="180" height="55" rx="7" fill="white" stroke="#1a1a2e" stroke-width="1.1"/>
+            <text x="550" y="167" text-anchor="middle" font-size="12.5" fill="#1a1a2e">session / feature</text>
+            <text x="550" y="183" text-anchor="middle" font-size="12.5" fill="#1a1a2e">branch</text>
+
+            <rect x="460" y="390" width="180" height="55" rx="7" fill="#e8eeff" stroke="#4a6cf7" stroke-width="1.7"/>
+            <text x="550" y="412" text-anchor="middle" font-size="13" font-weight="700" fill="#4a6cf7">main</text>
+            <text x="550" y="428" text-anchor="middle" font-size="10.5" fill="#6b7280">only branch either host builds</text>
+
+            <rect x="720" y="290" width="150" height="60" rx="8" fill="white" stroke="#1a1a2e" stroke-width="1.3"/>
+            <text x="795" y="316" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1a1a2e">Vercel</text>
+            <text x="795" y="333" text-anchor="middle" font-size="10.5" fill="#6b7280">webhook build</text>
+
+            <rect x="720" y="470" width="150" height="60" rx="8" fill="white" stroke="#9ca3af" stroke-width="1.3" stroke-dasharray="4 4"/>
+            <text x="795" y="496" text-anchor="middle" font-size="13.5" font-weight="700" fill="#9ca3af">Netlify</text>
+            <text x="795" y="513" text-anchor="middle" font-size="10.5" fill="#9ca3af">webhook — paused</text>
+
+            <rect x="920" y="290" width="120" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.7"/>
+            <text x="980" y="313" text-anchor="middle" font-size="12" font-weight="700" fill="#16a34a">vercel.app</text>
+            <text x="980" y="329" text-anchor="middle" font-size="10" fill="#16a34a">LIVE</text>
+            <text x="980" y="343" text-anchor="middle" font-size="10" fill="#6b7280">~2 min build</text>
+
+            <rect x="920" y="470" width="120" height="60" rx="8" fill="white" stroke="#9ca3af" stroke-width="1.3" stroke-dasharray="4 4"/>
+            <text x="980" y="493" text-anchor="middle" font-size="12" font-weight="700" fill="#9ca3af">netlify.app</text>
+            <text x="980" y="509" text-anchor="middle" font-size="10" fill="#9ca3af">stale build</text>
+            <text x="980" y="523" text-anchor="middle" font-size="9.5" fill="#9ca3af">resets 16 Aug</text>
+          </g>
+
+          <g stroke="#1a1a2e" fill="none">
+            <line x1="150" y1="295" x2="205" y2="295" stroke-width="1.5" marker-end="url(#ait18arrow)"/>
+            <line x1="210" y1="340" x2="155" y2="340" stroke-width="1.5" marker-end="url(#ait18arrow)"/>
+            <line x1="380" y1="278" x2="456" y2="172" stroke-width="1.5" marker-end="url(#ait18arrow)"/>
+            <line x1="550" y1="200" x2="550" y2="386" stroke="#4a6cf7" stroke-width="1.8" marker-end="url(#ait18arrow)"/>
+            <line x1="640" y1="405" x2="716" y2="325" stroke-width="1.5" marker-end="url(#ait18arrow)"/>
+            <line x1="870" y1="320" x2="916" y2="320" stroke-width="1.5" marker-end="url(#ait18arrow)"/>
+            <polyline points="980,350 980,595 295,595 295,374" stroke="#f4813f" stroke-width="1.5" marker-end="url(#ait18arrow)"/>
+          </g>
+          <g stroke="#9ca3af" fill="none">
+            <line x1="640" y1="432" x2="716" y2="497" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ait18arrowMuted)"/>
+            <line x1="870" y1="500" x2="916" y2="500" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ait18arrowMuted)"/>
+          </g>
+
+          <g font-family="'Source Serif 4', Georgia, serif" font-size="10.8" fill="#6b7280">
+            <text x="180" y="286">asks</text>
+            <text x="163" y="358">reports link</text>
+            <text x="393" y="222" transform="rotate(-33 393 222)">push</text>
+            <text x="558" y="288" font-size="10.2" fill="#4a6cf7">merge into main —</text>
+            <text x="558" y="301" font-size="10.2" fill="#4a6cf7">same turn, required</text>
+            <text x="654" y="352" font-size="10.2">push →</text>
+            <text x="646" y="466" font-size="10.2" fill="#9ca3af">credits exhausted</text>
+            <text x="893" y="308" font-size="10.2">auto-deploy</text>
+            <text x="637" y="600" font-size="11" fill="#f4813f">WebFetch verify — confirms the link is live before Claude tells Paul</text>
+          </g>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><span class="swatch" style="background:#f4813f"></span><span class="en">Claude Code / verify path</span><span class="zh">Claude Code / 验证路径</span></span>
+        <span><span class="swatch" style="background:#4a6cf7"></span><span class="en">main — the deploy trigger</span><span class="zh">main——触发部署</span></span>
+        <span><span class="swatch" style="background:#16a34a"></span><span class="en">confirmed live</span><span class="zh">确认已上线</span></span>
+        <span><span class="swatch" style="background:#9ca3af"></span><span class="en">paused / stale</span><span class="zh">暂停/未更新</span></span>
+      </div>
+      <div class="diagram-caption">
+        <span class="en">Fig. 1 — Every push goes through <code>main</code> first, because that's the only branch either hosting service builds from. Vercel and Netlify both watch the same GitHub repo, but Netlify is currently paused, so <code>paulsworld.vercel.app</code> is the one link that actually gets checked before Claude calls anything finished.</span>
+        <span class="zh">图1——每一次推送都必须先经过<code>main</code>分支，因为这是两个托管服务唯一会用来构建网站的分支。Vercel和Netlify都在监听同一个GitHub仓库，但Netlify目前处于暂停状态，所以<code>paulsworld.vercel.app</code>才是Claude在宣布"完成"之前真正会去检查的那个链接。</span>
+      </div>
+    </div>
+
+    <h2 data-num="02">
+      <span class="en">Why the Branch Has to Land on Main</span>
+      <span class="zh">为什么改动必须落到main分支上</span>
+    </h2>
+
+    <p>
+      <span class="en">Vercel only rebuilds the site when <code>main</code> changes. On some Claude Code sessions — especially the web/cloud version — the tool is handed a separate working branch instead of writing straight to <code>main</code>. If that branch never gets merged, the commit is real and saved on GitHub, but the live site never hears about it. That's what used to cause the "I asked for a photo and it never appeared" problem.</span>
+      <span class="zh">Vercel只有在<code>main</code>分支发生变化时才会重新构建网站。在有些Claude Code会话中——尤其是网页版/云端版——工具被分配到的是一个独立的工作分支，而不是直接写入<code>main</code>。如果那个分支从来没有被合并进去，这次提交虽然是真实的、也保存在了GitHub上，但网站却根本不知道它的存在。这就是以前"我让它加照片，结果照片一直没出现"这类问题的真正原因。</span>
+    </p>
+
+    <div class="info-box">
+      <div class="box-title"><span class="en">🌿 The Fix</span><span class="zh">🌿 解决方法</span></div>
+      <ul>
+        <li><span class="en">Every session branch gets merged into <code>main</code> in the same turn — not saved up for later.</span><span class="zh">每一个工作分支都会在同一轮里立刻合并进<code>main</code>——不会留到以后再处理。</span></li>
+        <li><span class="en">Direct pushes to <code>main</code> always fetch and rebase first, so a push never gets rejected by someone else's newer commit.</span><span class="zh">直接推送到<code>main</code>之前，一定会先fetch再rebase，这样就不会因为别人有更新的提交而被拒绝。</span></li>
+      </ul>
+    </div>
+
+    <h2 data-num="03">
+      <span class="en">Two Hosts Watch the Same Push</span>
+      <span class="zh">两个托管平台同时监听同一次推送</span>
+    </h2>
+
+    <p>
+      <span class="en">Both <strong>paulsworld.vercel.app</strong> and <strong>paulsworld.netlify.app</strong> are connected to the same GitHub repository, so in theory one push updates both. In practice, Netlify's free plan ran out of its monthly "operational credits," which pauses new deploys until the plan resets.</span>
+      <span class="zh">无论是<strong>paulsworld.vercel.app</strong>还是<strong>paulsworld.netlify.app</strong>，都连接着同一个GitHub仓库，理论上一次推送应该能同时更新两个网站。但实际上，Netlify的免费套餐用完了每月的"运营额度（operational credits）"，导致新的部署被暂停，要等额度重置才能恢复。</span>
+    </p>
+
+    <div class="warning-card">
+      <span class="card-emoji">⏸️</span>
+      <p>
+        <span class="en"><strong>Netlify is stuck on an old build until 16 August 2026.</strong> It isn't broken — the account is just out of free deploy credits for this cycle. Vercel isn't affected and stays the reliable link in the meantime.</span>
+        <span class="zh"><strong>Netlify会一直卡在旧版本上，直到2026年8月16日。</strong>它并没有坏掉——只是这个账号本月的免费部署额度用完了。Vercel不受影响，在此期间它才是可靠的链接。</span>
+      </p>
+    </div>
+
+    <h2 data-num="04">
+      <span class="en">The Last Step Nobody Sees: Verify Before Reporting</span>
+      <span class="zh">最后一步，谁也看不见：报告之前先验证</span>
+    </h2>
+
+    <div class="pullquote">
+      <p><span class="en">A push "succeeding" and a page actually being live are two different things. Before Claude tells me anything is ready, it fetches the real URL itself and checks the change is there — not "check back in a few minutes," an actual look.</span><span class="zh">推送"成功"和页面真正上线，是两码事。Claude在告诉我"弄好了"之前，会自己去抓取那个真实网址，检查改动是不是真的已经出现了——不是"过几分钟再看看"，而是真的去看一眼。</span></p>
+    </div>
+
+    <div class="good-card">
+      <span class="card-emoji">💡</span>
+      <p>
+        <span class="en"><strong>The lesson:</strong> a deploy pipeline has more steps than "save the file." The branch has to reach <code>main</code>, the right host has to actually build it, and someone has to look at the result before calling it done. Drawing it out is what made the branch-merge gotcha and the Netlify pause obvious instead of mysterious.</span>
+        <span class="zh"><strong>经验教训：</strong>一个部署流程远不止"保存文件"这么简单。分支必须真正到达<code>main</code>，正确的托管平台要真的完成构建，还得有人在宣布完成之前去看一眼结果。把它画出来，才让"分支要合并"这个坑和"Netlify暂停"这件事变得一目了然，而不是一头雾水。</span>
+      </p>
+    </div>
+
+    <div class="divider">· · ·</div>
+
+    <p style="font-style: italic; color: var(--muted); text-align: center;">
+      <span class="en">This article is part of my AI Tools series — practical guides for using AI technology in everyday life, written from the perspective of a 70-year-old beginner who is learning as he goes.</span>
+      <span class="zh">本文是我AI工具系列的一部分——从一个边学边做的70岁初学者的角度，撰写的关于在日常生活中使用AI技术的实用指南。</span>
+    </p>
+
+    <div class="view-counter-wrap">
+      <script src="/view-counter.js"></script>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2026 Paul Yeo &nbsp;|&nbsp; <a href="https://paulsworld.vercel.app/">Paul's World</a> &nbsp;|&nbsp; <span class="en">AI Tools Series</span><span class="zh">AI工具系列</span>
+  </footer>
+
+  <script>
+    function shareThisPage(){
+      var url = window.location.href;
+      var title = document.title;
+      if(navigator.share){
+        navigator.share({title: title, url: url}).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(url).then(function(){
+          var t = document.getElementById('shareToast');
+          t.style.display = 'block';
+          setTimeout(function(){ t.style.display = 'none'; }, 2200);
+        });
+      }
+    }
+  </script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
