@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MT09 · Day 7 Drive: Burqin → Karamay — Animated Route Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+  .zh { display: none; }
+  body.lang-zh .zh { display: inline; }
+  body.lang-zh .en { display: none; }
+  .home-btn { position: fixed; bottom: 16px; right: 16px; z-index: 999; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.55); text-decoration: none; font-size: 0.78em; font-weight: 600; padding: 6px 12px; border-radius: 20px; white-space: nowrap; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .home-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+  .log-return-btn { position: fixed; bottom: 60px; right: 16px; z-index: 999; display: inline-flex; align-items: center; gap: 4px; background: rgba(240,165,0,0.18); border: 1px solid rgba(240,165,0,0.5); color: #f0a500; text-decoration: none; font-size: 0.78em; font-weight: 700; padding: 6px 12px; border-radius: 20px; white-space: nowrap; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .log-return-btn:hover { background: rgba(240,165,0,0.3); }
+  .breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+  .breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+  .breadcrumb a:hover { color:#fff; }
+  .breadcrumb .sep { color:rgba(255,255,255,.3); }
+  .breadcrumb .current { color:#f4c869; }
+  .header { padding: 20px 18px 10px; text-align: center; }
+  .header h1 { font-size: 1.2em; margin: 0 0 4px; font-weight: 800; }
+  .header h1 .gold { color: #f0a500; }
+  .header p { font-size: 0.85em; color: #8b949e; margin: 0; }
+  .header-actions { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .lang-btn { background: rgba(26,188,156,0.15); border: 1px solid rgba(26,188,156,0.4); color: #1abc9c; font-size: 0.78em; font-weight: 700; padding: 6px 14px; border-radius: 14px; cursor: pointer; }
+  .back-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(240,165,0,0.12); border: 1px solid rgba(240,165,0,0.35); color: #f0a500; font-size: 0.78em; font-weight: 700; padding: 5px 12px; border-radius: 14px; text-decoration: none; }
+  .share-btn { font-size: 0.78em; padding: 6px 14px; border-radius: 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-weight: 700; cursor: pointer; }
+  .share-toast { display: none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,.3); }
+  .map-fullscreen-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(240,165,0,0.15); border: 1px solid rgba(240,165,0,0.4); color: #f0a500; font-size: 0.82em; font-weight: 700; padding: 9px 16px; border-radius: 18px; cursor: pointer; margin: 16px 16px 10px; width: calc(100% - 32px); }
+  .map-wrap { position: relative; margin: 0 16px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+  #map { width: 100%; height: 58vh; }
+  #map.map-fullscreen { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; height: 100dvh !important; z-index: 9999; border-radius: 0 !important; }
+  .map-wrap.map-fullscreen-wrap { margin: 0; border-radius: 0; border: none; }
+  #mapCloseBtn { display: none; position: fixed; top: 14px; right: 14px; z-index: 10000; background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px; cursor: pointer; align-items: center; gap: 6px; }
+  .controls { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #161b22; margin: 0 16px; border-radius: 0 0 14px 14px; border: 1px solid rgba(255,255,255,0.08); border-top: none; }
+  #status { font-size: 0.85em; color: #c9d1d9; flex: 1; }
+  #timeLabel { font-weight: 700; color: #58a6ff; }
+  .play-btn { background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4); color: #58a6ff; font-size: 0.8em; font-weight: 700; padding: 6px 14px; border-radius: 14px; cursor: pointer; white-space: nowrap; }
+  .speed-control { display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin: 8px 16px 0; }
+  .speed-control label { font-size: 0.8em; color: #8b949e; white-space: nowrap; }
+  .speed-control input[type=range] { flex: 1; accent-color: #f0a500; }
+  .speed-control #speedVal { font-size: 0.8em; color: #58a6ff; font-weight: 700; width: 34px; text-align: right; }
+  .speed-control.fs-overlay { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10000; background: rgba(13,17,23,0.92); backdrop-filter: blur(6px); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); margin: 0; }
+  .legend { margin: 14px 16px 0; padding: 12px 14px; font-size: 0.8em; color: #8b949e; line-height: 1.9; background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; }
+  .legend span.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+  .warn-banner { margin: 14px 16px 0; padding: 12px 14px; font-size: 0.8em; line-height: 1.6; background: rgba(240,165,0,0.1); border: 1px solid rgba(240,165,0,0.35); border-radius: 12px; color: #f0a500; }
+  .dist-table-wrap { margin: 14px 16px 0; }
+  .dist-table-title { font-size: 0.85em; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  table.dist-table { width: 100%; border-collapse: collapse; background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; font-size: 0.82em; }
+  table.dist-table th, table.dist-table td { padding: 9px 10px; text-align: left; }
+  table.dist-table th { background: rgba(255,255,255,0.05); color: #8b949e; font-weight: 700; }
+  table.dist-table td { border-top: 1px solid rgba(255,255,255,0.06); color: #e6edf3; }
+  .dist-note { font-size: 0.72em; color: #6e7681; margin-top: 8px; line-height: 1.6; }
+  .rec-card { margin: 14px 16px 0; background: #161b22; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
+  .rec-photo { width: 100%; height: 170px; object-fit: cover; display: block; background: #0d1117; }
+  .rec-photo-fallback { width: 100%; height: 170px; display: flex; align-items: center; justify-content: center; font-size: 3em; background: linear-gradient(135deg,#1a2a1a,#221a08); }
+  .rec-body { padding: 14px; }
+  .rec-tag { display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: 10px; margin-bottom: 8px; }
+  .rec-tag.photo { background: rgba(88,166,255,0.15); color: #58a6ff; }
+  .rec-tag.food { background: rgba(240,165,0,0.15); color: #f0a500; }
+  .rec-title { font-size: 1em; font-weight: 800; color: #fff; margin-bottom: 6px; }
+  .rec-desc { font-size: 0.85em; color: #c9d1d9; line-height: 1.6; margin-bottom: 8px; }
+  .rec-credit { font-size: 0.68em; color: #6e7681; margin-bottom: 8px; }
+  .popup-card { font-family: -apple-system, system-ui, sans-serif; }
+  .popup-card img { width: 180px; max-width: 100%; border-radius: 8px; display: block; margin-bottom: 6px; }
+  .popup-card .pt { font-weight: 700; font-size: 0.85em; color: #0d1117; margin-bottom: 2px; }
+  .popup-card .pmeta { font-size: 0.72em; color: #57606a; }
+  .footer-note { text-align: center; padding: 18px 16px 30px; font-size: 0.72em; color: #484f58; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">🏠 Home</a>
+<a target="_blank" href="MT09.html" class="log-return-btn">📔 <span class="en">MT09 Trip</span><span class="zh">MT09 行程</span></a>
+
+<div class="header">
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <a href="/index.html#travel" target="_blank"><span class="en">My Travel Record</span><span class="zh">我的旅行记录</span></a>
+    <span class="sep">›</span>
+    <a href="/MT09.html" target="_blank"><span class="en">MT09</span><span class="zh">MT09</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">Day 7 Drive Map</span><span class="zh">第7天行车地图</span></span>
+  </div>
+  <h1>👹 MT09 · <span class="gold"><span class="en">Day 7 Drive: Burqin → Karamay</span><span class="zh">第7天行车：布尔津 → 克拉玛依</span></span></h1>
+  <p><span class="en">6 Sep 2026 · Via Ueerhe World Devil City · ~320 km, with a golden-hour photo stop and a dinner stop along the way</span><span class="zh">2026年9月6日 · 途经乌尔禾世界魔鬼城 · 全程约320公里，沿途设一处黄金时刻拍照点与一处晚餐点</span></p>
+  <div class="header-actions">
+    <a target="_blank" href="MT09.html" class="back-chip">📔 <span class="en">Back to MT09</span><span class="zh">返回 MT09</span></a>
+    <button class="lang-btn" onclick="toggleLang()" id="langBtn">中文</button>
+    <button class="share-btn" onclick="shareThisPage()">🔗 <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">✅ Link copied!</div>
+
+<button class="map-fullscreen-btn" onclick="openMapFullscreen()">&#9096; <span class="en">Open Full Screen Map</span><span class="zh">打开全屏地图</span></button>
+<div class="map-wrap" id="mapWrap">
+  <div id="map"></div>
+  <div style="position:absolute;top:10px;right:48px;z-index:1000;display:flex;gap:4px;">
+    <button onclick="setMapType('satellite')" id="btn-satellite" style="-webkit-appearance:none;appearance:none;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.5);border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🛰 Satellite</button>
+    <button onclick="setMapType('street')" id="btn-street" style="-webkit-appearance:none;appearance:none;background:#f59e0b;color:#0d1117;border:none;border-radius:20px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer;">🗺 Street</button>
+  </div>
+</div>
+<button id="mapCloseBtn" onclick="closeMapFullscreen()">&#10005; <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+
+<div class="controls">
+  <button class="play-btn" id="playBtn" onclick="togglePlay()">⏸ <span class="en">Pause</span><span class="zh">暂停</span></button>
+  <div id="status"><span class="en">En route</span><span class="zh">行驶中</span> — <span id="timeLabel">12:00</span></div>
+</div>
+
+<div class="speed-control" id="speedControl">
+  <label for="speedSlider">🐢 <span class="en">Speed</span><span class="zh">速度</span></label>
+  <input type="range" id="speedSlider" min="0.25" max="4" step="0.25" value="1">
+  <span id="speedVal">1&times;</span>
+</div>
+
+<div class="legend">
+  <span class="dot" style="background:#f85149;"></span><span class="en">A. Hotel — Start</span><span class="zh">A. 酒店 — 出发</span>&nbsp;&nbsp;
+  <span class="dot" style="background:#58a6ff;"></span><span class="en">B. Photo Stop</span><span class="zh">B. 拍照点</span>&nbsp;&nbsp;
+  <span class="dot" style="background:#f0a500;"></span><span class="en">C. Restaurant Stop</span><span class="zh">C. 餐厅点</span>&nbsp;&nbsp;
+  <span class="dot" style="background:#f85149;"></span><span class="en">D. Hotel — End</span><span class="zh">D. 酒店 — 到达</span>
+</div>
+
+<div class="warn-banner">
+  ⚠️ <span class="en"><strong>B, C and D pins are approximate.</strong> B (Ueerhe World Devil City) reuses the exact coordinate already live on MT09's main Map tab (Day 8 marker's Amap link) — no dedicated Wikipedia article exists for it. C and D reuse Karamay's own main-map coordinate. Use the name-based "Directions"/"Google" links (not these pins) for real navigation.</span>
+  <span class="zh"><strong>B、C、D三点位置均为近似位置。</strong> B（乌尔禾世界魔鬼城）沿用MT09主"地图"标签页已使用的坐标（第8天标记的高德链接）——该地点没有专门的维基百科条目。C、D两点沿用主地图中克拉玛依自身的坐标。请使用按名称生成的"导航"/"谷歌地图"链接（而非这些图钉）进行实际导航。</span>
+</div>
+
+<div class="rec-card">
+  <div class="rec-photo-fallback">👹</div>
+  <div class="rec-body">
+    <span class="rec-tag photo"><span class="en">📸 Recommended Photo Stop</span><span class="zh">📸 推荐拍照点</span></span>
+    <div class="rec-title"><span class="en">B. Ueerhe World Devil City (乌尔禾世界魔鬼城)</span><span class="zh">B. 乌尔禾世界魔鬼城</span></div>
+    <div class="rec-desc">
+      <span class="en">A yardang wind-city of wind-carved towers and ridges — timed for golden-hour light, when the eroded formations throw the longest shadows and the whole "ghost city" nickname makes sense. One of the trip's most photogenic stops.</span>
+      <span class="zh">风蚀雕琢出的雅丹地貌"风城"——建议在黄金时刻前往，此时侵蚀地貌的阴影最长，"魔鬼城"之名也最为贴切。此行最具拍照价值的地点之一。</span>
+    </div>
+    <div id="photoStopButtons"></div>
+  </div>
+</div>
+
+<div class="rec-card">
+  <div class="rec-photo-fallback">🍗</div>
+  <div class="rec-body">
+    <span class="rec-tag food"><span class="en">🍽️ Recommended Restaurant Stop</span><span class="zh">🍽️ 推荐餐厅点</span></span>
+    <div class="rec-title"><span class="en">C. Karamay Big Plate Chicken (克拉玛依大盘鸡)</span><span class="zh">C. 克拉玛依大盘鸡</span></div>
+    <div class="rec-desc">
+      <span class="en">Xinjiang's iconic dapanji — chicken braised with potatoes, peppers and wide belt noodles, shared family-style — paired with Wusu beer. A hearty arrival dinner in Karamay after a long day on the road and at the Devil City.</span>
+      <span class="zh">新疆招牌大盘鸡——鸡肉与土豆、辣椒、皮带面同炖，一大盘分食——配乌苏啤酒。经过一整天的长途驾驶与魔鬼城游览后，在克拉玛依的丰盛抵达晚餐。</span>
+    </div>
+    <div id="foodStopButtons"></div>
+  </div>
+</div>
+
+<div class="dist-table-wrap">
+  <div class="dist-table-title"><span class="en">Distance Between Stops</span><span class="zh">站点间距离</span></div>
+  <table class="dist-table">
+    <thead><tr>
+      <th><span class="en">Leg</span><span class="zh">路段</span></th>
+      <th><span class="en">Distance</span><span class="zh">距离</span></th>
+      <th><span class="en">Driving Time</span><span class="zh">车程</span></th>
+    </tr></thead>
+    <tbody>
+      <tr><td>A → B → C/D</td><td>~320 km</td><td>~5 hr</td></tr>
+    </tbody>
+  </table>
+  <div class="dist-note">
+    <span class="en">Sourced from the car rental company's own itinerary (Table 1329 on MT09.html) rather than measured from exact coordinates.</span>
+    <span class="zh">数据取自租车公司提供的行程单（MT09.html 表1329），而非依据精确坐标测算。</span>
+  </div>
+</div>
+
+<div style="text-align:center;padding:10px 16px 0;"><script src="/view-counter.js"></script></div>
+<div class="footer-note">MT09 Xinjiang 2026 · Day 7 Drive: Burqin → Karamay · Animated Route Map · paulsworld.vercel.app</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+let currentLang = 'en';
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'zh' : 'en';
+  document.body.classList.toggle('lang-zh', currentLang === 'zh');
+  document.getElementById('langBtn').textContent = currentLang === 'en' ? '中文' : 'EN';
+}
+
+// A: Burqin anchor reused from MT09's main Map tab stopsData (Day 7 marker), unverified.
+// B: Ueerhe World Devil City reuses the exact coordinate MT09's main Map tab already uses in its
+//    Day 8 stop's Amap link (84.6800,46.0800) — not a newly-invented coordinate.
+// C/D: Karamay anchor reused from MT09's main Map tab stopsData (Day 8 marker), unverified.
+const stops = [
+  { letter: 'A', name: "Gelincheng Hotel 布尔津格林城大酒店", nameZh: "布尔津格林城大酒店",
+    lat: 47.7100, lng: 86.8700, time: "12:00", type: 'start', icon: '🏨', verifiedGps: false,
+    address: "No. 24-7, Yueliangwan (Moon Bay) Road, Burqin, Xinjiang", addressZh: "新疆布尔津县月亮湾路24-7号",
+    mapUrl: "https://maps.google.com/?q=Gelincheng+Hotel+Burqin",
+    baiduUrl: "https://map.baidu.com/search/%E6%A0%BC%E6%9E%97%E5%9F%8E%E5%A4%A7%E9%85%92%E5%BA%97%E5%B8%83%E5%B0%94%E6%B4%A5",
+    amapUrl: "https://uri.amap.com/search?keyword=%E6%A0%BC%E6%9E%97%E5%9F%8E%E5%A4%A7%E9%85%92%E5%BA%97%E5%B8%83%E5%B0%94%E6%B4%A5",
+    note: "Late-morning departure for the ~320 km drive to Karamay, timed to reach Devil City for golden hour.", noteZh: "上午晚些时候出发，前往克拉玛依，约320公里，途中安排在黄金时刻抵达魔鬼城。" },
+  { letter: 'B', name: "Ueerhe World Devil City 乌尔禾世界魔鬼城", nameZh: "乌尔禾世界魔鬼城",
+    lat: 46.0800, lng: 84.6800, time: "18:30", type: 'photo', icon: '👹', verifiedGps: false,
+    address: "Wuerhe District, Karamay, Xinjiang, China", addressZh: "新疆克拉玛依市乌尔禾区",
+    mapUrl: "https://maps.google.com/?q=Ueerhe+Devil+City+Xinjiang",
+    baiduUrl: "https://map.baidu.com/search/%E4%B9%8C%E5%B0%94%E7%A6%BE%E9%AD%94%E9%AC%BC%E5%9F%8E",
+    amapUrl: "https://uri.amap.com/marker?position=84.6800,46.0800&name=%E4%B9%8C%E5%B0%94%E7%A6%BE%E9%AD%94%E9%AC%BC%E5%9F%8E",
+    note: "📸 Photo stop — yardang wind-city, best at golden hour for long shadows.",
+    noteZh: "📸 拍照点 — 雅丹风城，黄金时刻光影最长最佳。" },
+  { letter: 'C', name: "Karamay Big Plate Chicken", nameZh: "克拉玛依大盘鸡",
+    lat: 45.5800, lng: 84.8900, time: "20:30", type: 'food', icon: '🍗', verifiedGps: false,
+    address: "Karamay City, Xinjiang, China", addressZh: "新疆克拉玛依市",
+    mapUrl: "https://maps.google.com/?q=Da+Pan+Ji+Karamay",
+    baiduUrl: "https://map.baidu.com/search/%E5%A4%A7%E7%9B%98%E9%B8%A1%E5%85%8B%E6%8B%89%E7%8E%9B%E4%BE%9D",
+    amapUrl: "https://uri.amap.com/search?keyword=%E5%A4%A7%E7%9B%98%E9%B8%A1%E5%85%8B%E6%8B%89%E7%8E%9B%E4%BE%9D",
+    note: "🍽️ Restaurant stop — dapanji (big plate chicken) and Wusu beer.", noteZh: "🍽️ 餐厅点 — 大盘鸡与乌苏啤酒。" },
+  { letter: 'D', name: "Rezen Hotel No.1 Well, Taifu Square 丽呈酒店", nameZh: "克拉玛依泰富广场一号井丽呈酒店",
+    lat: 45.5800, lng: 84.8900, time: "21:30", type: 'end', icon: '🏨', verifiedGps: false,
+    address: "No.1 Well, Taifu Square, Karamay City, Xinjiang", addressZh: "克拉玛依泰富广场一号井, 克拉玛依市, 新疆",
+    mapUrl: "https://maps.google.com/?q=Rezen+Hotel+Taifu+Square+Karamay",
+    baiduUrl: "https://map.baidu.com/search/%E4%B8%80%E5%8F%B7%E4%BA%95%E4%B8%BD%E5%91%88%E9%85%92%E5%BA%97%E5%85%8B%E6%8B%89%E7%8E%9B%E4%BE%9D",
+    amapUrl: "https://uri.amap.com/search?keyword=%E4%B8%80%E5%8F%B7%E4%BA%95%E4%B8%BD%E5%91%88%E9%85%92%E5%BA%97%E5%85%8B%E6%8B%89%E7%8E%9B%E4%BE%9D",
+    note: "Check in for the night.", noteZh: "入住过夜。" }
+];
+
+function stopLabel(i) { return stops[i].letter; }
+const colorFor = { start: '#f85149', end: '#f85149', photo: '#58a6ff', food: '#f0a500' };
+
+const map = L.map('map', { zoomControl: true }).setView([46.7, 85.7], 7);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri', maxZoom: 18 }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').style.background = type === 'satellite' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-satellite').style.color = type === 'satellite' ? '#0d1117' : '#fff';
+  document.getElementById('btn-street').style.background = type === 'street' ? '#f59e0b' : 'rgba(0,0,0,0.55)';
+  document.getElementById('btn-street').style.color = type === 'street' ? '#0d1117' : '#fff';
+}
+
+function openMapFullscreen() {
+  if (window.self !== window.top) { window.top.location.href = window.location.href; return; }
+  document.getElementById('map').classList.add('map-fullscreen');
+  document.getElementById('mapWrap').classList.add('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  document.getElementById('speedControl').classList.add('fs-overlay');
+  document.body.style.overflow = 'hidden';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+function closeMapFullscreen() {
+  document.getElementById('map').classList.remove('map-fullscreen');
+  document.getElementById('mapWrap').classList.remove('map-fullscreen-wrap');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  document.getElementById('speedControl').classList.remove('fs-overlay');
+  document.body.style.overflow = '';
+  setTimeout(function () { map.invalidateSize(); }, 100);
+}
+
+function pathCumulativeDistances(points) {
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i][0] - points[i - 1][0], dy = points[i][1] - points[i - 1][1];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+  }
+  return cum;
+}
+function pointAtFraction(seg, frac) {
+  const { points, cum } = seg;
+  const total = cum[cum.length - 1];
+  if (total === 0) return points[0];
+  const target = frac * total;
+  for (let i = 1; i < cum.length; i++) {
+    if (target <= cum[i] || i === cum.length - 1) {
+      const segFrac = cum[i] > cum[i - 1] ? (target - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+      return [points[i - 1][0] + (points[i][0] - points[i - 1][0]) * segFrac, points[i - 1][1] + (points[i][1] - points[i - 1][1]) * segFrac];
+    }
+  }
+  return points[points.length - 1];
+}
+async function fetchRoadSegment(a, b) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=full&geometries=geojson`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code === 'Ok') return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  } catch (e) {}
+  return [[a.lat, a.lng], [b.lat, b.lng]];
+}
+
+const fullLine = stops.map(s => [s.lat, s.lng]);
+let fullRoadPoints = fullLine;
+let routeLine = L.polyline(fullLine, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+
+const roadSegs = [];
+async function buildRoads() {
+  const allPoints = [];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const pts = await fetchRoadSegment(stops[i], stops[i + 1]);
+    roadSegs[i] = { points: pts, cum: pathCumulativeDistances(pts) };
+    allPoints.push(...pts);
+  }
+  if (allPoints.length) {
+    map.removeLayer(routeLine);
+    routeLine = L.polyline(allPoints, { color: '#f0a500', weight: 4, opacity: 0.8, dashArray: '8 8' }).addTo(map);
+    fullRoadPoints = allPoints;
+    if (!playing) map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+  }
+}
+buildRoads();
+
+function buildMapButtons(s) {
+  const dirUrl = s.verifiedGps
+    ? 'https://www.google.com/maps/dir/?api=1&destination=' + s.lat + ',' + s.lng + '&travelmode=driving'
+    : 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(s.name) + '&travelmode=driving';
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">' +
+    '<a href="' + dirUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#34d399;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🧭 Directions</a>' +
+    '<a href="' + s.mapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.4);color:#2f6fd6;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">🗺️ Google</a>' +
+    '<a href="' + s.baiduUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(228,31,25,0.12);border:1px solid rgba(228,31,25,0.35);color:#c0392b;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">百度地图</a>' +
+    '<a href="' + s.amapUrl + '" target="_blank" onclick="event.stopPropagation()" style="background:rgba(30,180,100,0.12);border:1px solid rgba(30,180,100,0.35);color:#1f9d55;font-size:0.68rem;padding:4px 8px;border-radius:7px;text-decoration:none;white-space:nowrap;">高德地图</a>' +
+    '</div>';
+}
+
+function popupHtml(s) {
+  const imgHtml = s.img ? '<img src="' + s.img + '">' : '<div style="font-size:2em;text-align:center;margin-bottom:6px;">' + s.icon + '</div>';
+  return '<div class="popup-card">' + imgHtml +
+    '<div class="pt">' + s.letter + '. ' + s.name + (s.verifiedGps ? '' : ' <span style="color:#e67e22;">(≈)</span>') + '</div>' +
+    '<div class="pmeta">' + s.time + ' — ' + s.note + '</div>' +
+    '<div class="pmeta" style="margin-top:4px;">📍 ' + s.address + '</div>' +
+    buildMapButtons(s) + '</div>';
+}
+stops.forEach((s, i) => {
+  const color = colorFor[s.type];
+  const marker = L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:' + color + ';color:#0d1117;width:28px;height:28px;border-radius:50%;border:2px solid #0d1117;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);">' + s.letter + '</div>',
+      className: '', iconSize: [28, 28], iconAnchor: [14, 14]
+    })
+  }).addTo(map);
+  marker.bindPopup(popupHtml(s));
+});
+map.fitBounds(fullRoadPoints, { padding: [30, 30] });
+
+document.getElementById('photoStopButtons').innerHTML = buildMapButtons(stops[1]);
+document.getElementById('foodStopButtons').innerHTML = buildMapButtons(stops[2]);
+
+const carIcon = L.divIcon({ html: '🚗', className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+const mover = L.marker(fullLine[0], { icon: carIcon }).addTo(map);
+
+function toMinutes(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+const startMin = toMinutes(stops[0].time);
+const endMin = toMinutes(stops[stops.length - 1].time);
+const totalMin = endMin - startMin;
+let progress = 0;
+let speedMultiplier = 1;
+let playing = true;
+
+const speedSlider = document.getElementById('speedSlider');
+const speedVal = document.getElementById('speedVal');
+speedSlider.addEventListener('input', () => { speedMultiplier = parseFloat(speedSlider.value); speedVal.textContent = speedMultiplier + '×'; });
+
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) { btn.innerHTML = '⏸ <span class="en">Pause</span><span class="zh">暂停</span>'; requestAnimationFrame(step); }
+  else { btn.innerHTML = '▶ <span class="en">Play</span><span class="zh">播放</span>'; }
+}
+
+function interpolate(p) {
+  const targetMin = startMin + p * totalMin;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const t0 = toMinutes(stops[i].time), t1 = toMinutes(stops[i + 1].time);
+    if (targetMin >= t0 && targetMin <= t1) {
+      const segP = t1 > t0 ? (targetMin - t0) / (t1 - t0) : 0;
+      const seg = roadSegs[i];
+      const latlng = seg ? pointAtFraction(seg, segP) : [stops[i].lat + (stops[i + 1].lat - stops[i].lat) * segP, stops[i].lng + (stops[i + 1].lng - stops[i].lng) * segP];
+      const curMin = Math.round(targetMin);
+      const hh = String(Math.floor(curMin / 60)).padStart(2, '0'), mm = String(curMin % 60).padStart(2, '0');
+      return { lat: latlng[0], lng: latlng[1], timeStr: `${hh}:${mm}` };
+    }
+  }
+  return { lat: stops[stops.length - 1].lat, lng: stops[stops.length - 1].lng, timeStr: stops[stops.length - 1].time };
+}
+
+const statusEl = document.getElementById('status');
+function step() {
+  if (!playing) return;
+  progress += 0.0012 * speedMultiplier;
+  if (progress >= 1) {
+    const pos = interpolate(1);
+    mover.setLatLng([pos.lat, pos.lng]);
+    document.getElementById('timeLabel').textContent = pos.timeStr;
+    statusEl.innerHTML = '<span class="en">Arrived</span><span class="zh">已到达</span> — <span id="timeLabel">' + stops[stops.length - 1].time + '</span> · <span class="en">replaying…</span><span class="zh">即将重播…</span>';
+    setTimeout(() => {
+      progress = 0;
+      statusEl.innerHTML = '<span class="en">En route</span><span class="zh">行驶中</span> — <span id="timeLabel">' + stops[0].time + '</span>';
+      requestAnimationFrame(step);
+    }, 1400);
+    return;
+  }
+  const pos = interpolate(progress);
+  mover.setLatLng([pos.lat, pos.lng]);
+  document.getElementById('timeLabel').textContent = pos.timeStr;
+  requestAnimationFrame(step);
+}
+step();
+
+function shareThisPage() {
+  var url = window.location.href, title = document.title;
+  if (navigator.share) { navigator.share({ title: title, url: url }).catch(function(){}); }
+  else { navigator.clipboard.writeText(url).then(function() { var t = document.getElementById('shareToast'); t.style.display = 'block'; setTimeout(function(){ t.style.display = 'none'; }, 2200); }); }
+}
+</script>
+
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
