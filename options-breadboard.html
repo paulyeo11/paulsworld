@@ -9137,7 +9137,7 @@ function renderGaugeWaterGrid(){
     var waterHtml = d ? waterfallCardHtml(cfg, d, null, 'gw-') : (cfg.pending ? waterfallPendingCardHtml(cfg, 'gw-') : '');
     if(!waterHtml) return '';
     return '' +
-      '<div class="gw-item" data-status="' + cfg.status + '">' +
+      '<div class="gw-item" data-status="' + cfg.status + '" data-gauge-sym="' + cfg.gaugeId.toUpperCase() + '">' +
         '<div class="gw-row-label"><span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
         waterHtml +
         gaugeWaterGaugeCardHtml(cfg) +
@@ -9167,7 +9167,12 @@ function renderGaugeWaterFilterRow(){
   var opts = [
     {v:'all', en:'All', zh:'全部'},
     {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
-    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'},
+    // Same 0-2% cutoff as CUSHION_THRESHOLDS.veryTight / isTightVariance() — the same "Tight
+    // 0-2%" filter already used on the Gauge tab (its own ⋮ menu), surfaced here as a visible
+    // button instead of buried in a menu (Paul, 8 Aug 2026: "filter those stock when cushion
+    // turn red, <2%"). Matches either the put or call cushion, whichever is tighter.
+    {v:'tight', en:'🔴 Cushion <2%', zh:'🔴 缓冲 <2%'}
   ];
   row.innerHTML = opts.map(function(o){
     var active = gaugeWaterFilter === o.v ? ' active' : '';
@@ -9178,7 +9183,9 @@ function renderGaugeWaterFilterRow(){
 function renderGaugeWaterCardFilter(){
   var wrap = document.getElementById('gaugeWaterGrid'); if(!wrap) return;
   wrap.querySelectorAll('.gw-item[data-status]').forEach(function(item){
-    var show = gaugeWaterFilter === 'all' || item.getAttribute('data-status') === gaugeWaterFilter;
+    var show = gaugeWaterFilter === 'all' ? true
+      : gaugeWaterFilter === 'tight' ? isTightVariance(item.getAttribute('data-gauge-sym'))
+      : item.getAttribute('data-status') === gaugeWaterFilter;
     item.style.display = show ? 'contents' : 'none';
   });
 }
