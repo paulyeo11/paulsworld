@@ -319,6 +319,12 @@
   .wf-catrow { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; padding-left:28px; }
   .wf-catlabel { text-align:center; font-size:.62rem; color:#8b98a5; line-height:1.3; }
   .wf-catlabel b { color:#d0d4e8; display:block; font-size:.64rem; }
+  /* Freshness stamp for each Waterfall mini-chart — "🕐 As of <date>" for an open position's
+     live mark, "✅ Closed <date>" for a fully realized one. Same visual language + ~30h stale
+     threshold as the Gauge tab's .gauge-asof (waterfallAsofInfo()), just its own class since
+     these cards live in #waterfallChartsWrap, not #gaugeGrid. */
+  .wf-asof { text-align:center; margin-top:4px; font-size:.66rem; color:#8b98a5; }
+  .wf-asof.stale { color:#f59e0b; font-weight:700; }
   /* Net P&L mood emoji — 4x the size of whatever text it sits next to (em unit, so it scales
      correctly in both the normal .wf-val bar label and the tiny mini-mode .wf-catlabel). */
   .wf-emoji { font-size:4em; line-height:1; display:inline-block; vertical-align:middle; }
@@ -351,6 +357,7 @@
   #waterfallChartsWrap .wf-catrow { gap:3px; margin-top:6px; padding-left:18px; }
   #waterfallChartsWrap .wf-catlabel { font-size:.4rem; line-height:1.15; }
   #waterfallChartsWrap .wf-catlabel b { font-size:.42rem; }
+  #waterfallChartsWrap .wf-asof { font-size:.46rem; margin-top:3px; }
   @media (max-width:340px){ #waterfallChartsWrap { grid-template-columns:1fr; } }
   .gauge-readout { text-align:center; margin-top:10px; font-size:.72rem; color:#8b98a5; }
   .gauge-readout b { font-weight:800; font-size:.86rem; }
@@ -8395,7 +8402,7 @@ var SHORT_CALL_DELTA = { NVDA:0.21, QQQ:0.25, AVGO:0.26, SMH:0.32, SPY:0.25, IWM
 // the number once, in Table 900's row, and everything downstream updates with it. (Lesson from
 // 2026-08-06, flagged by Paul — see buildTable900Lookup().)
 function buildTable900Lookup(){
-  var premium = {}, pnl = {}, asof = {};
+  var premium = {}, pnl = {}, asof = {}, exit = {};
   var body = document.getElementById('table900Body');
   if(body){
     body.querySelectorAll('tr[data-sym]').forEach(function(tr){
@@ -8413,9 +8420,14 @@ function buildTable900Lookup(){
       // (gaugeAsofInfo()/renderGaugeAsof()) so a stale P&L Final can never look silently current.
       var asofAttr = tr.getAttribute('data-asof');
       if(asofAttr) asof[sym] = asofAttr;
+      // data-exit = 'YYYY-MM-DD', the real/approx close date for fully realized positions —
+      // used by the Waterfall tab's freshness badge (waterfallAsofInfo()) so a closed chart can
+      // say "Closed <date>" instead of a live mark date.
+      var exitAttr = tr.getAttribute('data-exit');
+      if(exitAttr) exit[sym] = exitAttr;
     });
   }
-  return { premium: premium, pnl: pnl, asof: asof };
+  return { premium: premium, pnl: pnl, asof: asof, exit: exit };
 }
 var TABLE900_LOOKUP = buildTable900Lookup();
 var MTD_PREMIUM = TABLE900_LOOKUP.premium;
@@ -8813,6 +8825,62 @@ var WATERFALL_CFG = [
   // invisible, since Paul asked for DDOG to appear here.
   { sym:'DDOG',        chart:35, dot:'🟣', status:'open',   kind:'putspread', en:'DDOG',        zh:'DDOG', pending:true }
 ];
+// Maps a WATERFALL_CFG sym to the sym Table 900 actually uses, for the 3 cases where a
+// closed-then-reopened position split into two Waterfall entries but Table 900 keeps the
+// re-opened leg under the plain symbol (see the Symbol-key reuse audit note above). Symbols
+// not listed here use the same key on both tables.
+var WATERFALL_T900_SYM = { NVDA_AUG21:'NVDA', SMH_SEP18:'SMH', NVDA_SEP18:'NVDA2' };
+// Freshness stamp for a Waterfall mini-chart, same date-formatting + ~30h stale rule as the
+// Gauge tab's gaugeAsofInfo() (kept as a separate function since it also needs to handle the
+// "Closed <date>" case gaugeAsofInfo never sees — a closed position's numbers are final, not a
+// live mark, so they're never shown as stale).
+function waterfallAsofInfo(cfg){
+  var t900Sym = WATERFALL_T900_SYM[cfg.sym] || cfg.sym;
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var monthsZh = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  function fmtDateOnly(raw){
+    var dp = raw.split(' ')[0].split('-');
+    var y = +dp[0], mo = +dp[1] - 1, da = +dp[2];
+    return { enLabel: months[mo] + ' ' + da, zhLabel: monthsZh[mo] + da + '日' };
+  }
+  if(cfg.status === 'closed'){
+    var exitRaw = TABLE900_LOOKUP.exit[t900Sym];
+    if(!exitRaw) return null;
+    var d0 = fmtDateOnly(exitRaw);
+    return { icon:'✅', en:'Closed ' + d0.enLabel, zh:'已平仓 ' + d0.zhLabel, stale:false };
+  }
+  var raw = TABLE900_LOOKUP.asof[t900Sym];
+  if(!raw) return null;
+  var bits = raw.split(' ');
+  var dp = bits[0].split('-');
+  var y = +dp[0], mo = +dp[1] - 1, da = +dp[2];
+  var hh = 0, mm = 0, hasTime = false;
+  if(bits[1]){
+    hasTime = true;
+    var tp = bits[1].split(':');
+    hh = +tp[0]; mm = +tp[1];
+  }
+  var utcMs = Date.UTC(y, mo, da, hh - 8, mm);
+  if(isNaN(utcMs)) return null;
+  var hrsAgo = (Date.now() - utcMs) / 36e5;
+  var pad2 = function(n){ return (n < 10 ? '0' : '') + n; };
+  var d0b = fmtDateOnly(bits[0]);
+  var stale = hrsAgo > 30;
+  var timeEn = hasTime ? ', ' + pad2(hh) + ':' + pad2(mm) + ' SGT' : '';
+  var timeZh = hasTime ? ' ' + pad2(hh) + ':' + pad2(mm) + '（新加坡时间）' : '';
+  return {
+    icon: stale ? '⚠️' : '🕐',
+    en: 'As of ' + d0b.enLabel + timeEn,
+    zh: '更新至' + d0b.zhLabel + timeZh,
+    stale: stale
+  };
+}
+function waterfallAsofHtml(cfg){
+  var info = waterfallAsofInfo(cfg);
+  if(!info) return '';
+  return '<div class="wf-asof' + (info.stale ? ' stale' : '') + '">' + info.icon + ' ' +
+    '<span class="en">' + info.en + '</span><span class="zh">' + info.zh + '</span></div>';
+}
 var WATERFALL_KIND_LABEL = {
   ic:  { en:'IG · Iron Condor', zh:'IG · 铁鹰策略' },
   put: { en:'IG · Cash-Secured Put', zh:'IG · 现金担保认沽期权' },
@@ -8894,6 +8962,7 @@ function waterfallCardHtml(cfg, d, extraStyle){
         statusPill +
       '</div>' +
       '<div class="wf-plot">' + waterfallPlotHtml(d) + '</div>' +
+      waterfallAsofHtml(cfg) +
       '<div class="wf-catrow">' +
         '<div class="wf-catlabel"><b><span class="en">Premium Collected (A)</span><span class="zh">已收权利金 (A)</span></b>' + wfFmt(d.premium) + '</div>' +
         '<div class="wf-catlabel"><b><span class="en">Cost to Close (B)</span><span class="zh">平仓成本 (B)</span></b>' + wfFmt(-d.cost) + '</div>' +
