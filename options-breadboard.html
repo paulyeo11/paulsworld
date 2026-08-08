@@ -359,25 +359,32 @@
   #waterfallChartsWrap .wf-catlabel b { font-size:.42rem; }
   #waterfallChartsWrap .wf-asof { font-size:.46rem; margin-top:3px; }
   @media (max-width:340px){ #waterfallChartsWrap { grid-template-columns:1fr; } }
-  /* ============ GAUGE/WATER TAB — column 1 gauge chart, column 2 waterfall chart, one row per
-     stock. Column 1 is a full clone of the real Gauge-tab card (mood badge, status dot, day
-     badge, asof stamp, alert banner, mini-cushion pills, legend, cushion-row, var readouts —
-     see gaugeWaterGaugeCardHtml()), so nothing added to a Gauge-tab card in future can silently
-     go missing here. Because that clone lives outside #gaugeGrid, none of #gaugeGrid's own
-     display-mode overrides (hide-labels, phone-landscape) apply to it — it always shows full
-     detail regardless of Paul's Gauge-tab label-visibility toggle, which is deliberate for a
-     side-by-side comparison view. .gauge-mini-cushion is the one exception: its base rule is
-     display:none, normally turned on only by "#gaugeGrid.hide-labels .gauge-mini-cushion" — the
-     override below turns it on here too so those pills aren't silently dropped. Column 2 reuses
-     waterfallCardHtml()/waterfallPendingCardHtml() as-is (idPrefix keeps their element ids
-     unique from the copies already sitting in #waterfallChartsWrap). */
+  /* ============ GAUGE/WATER TAB — column 1 waterfall chart, column 2 gauge chart, one row per
+     stock. Column 2 is a full clone of the real Gauge-tab card (mood badge, day badge, asof
+     stamp, alert banner, legend, cushion-row, var readouts — see gaugeWaterGaugeCardHtml()), so
+     nothing added to a Gauge-tab card in future can silently go missing here. Two elements are
+     deliberately removed from the clone as duplicates rather than kept: .gauge-status-dot (the
+     card's own c-head .pill already shows OPEN/CLOSED) and .gauge-mini-cushion (repeats
+     .gauge-cushion-row's Put/Call Cushion, just without the A/B/C formula). Because the clone
+     lives outside #gaugeGrid, none of #gaugeGrid's own display-mode overrides (hide-labels,
+     phone-landscape) apply to it — it always shows full detail regardless of Paul's Gauge-tab
+     label-visibility toggle, which is deliberate for a side-by-side comparison view. Column 1
+     reuses waterfallCardHtml()/waterfallPendingCardHtml() as-is (idPrefix keeps their element
+     ids unique from the copies already sitting in #waterfallChartsWrap). */
   .gw-item { display:contents; }
   .gw-row-label { grid-column:1/-1; font-size:.95rem; font-weight:800; color:#f59e0b; margin:16px 0 -2px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08); }
   .gw-item:first-child .gw-row-label { border-top:none; padding-top:0; margin-top:0; }
   #gaugeWaterGrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
   @media (max-width:700px){ #gaugeWaterGrid { grid-template-columns:1fr; } }
   #gaugeWaterGrid .condor { margin:0; position:relative; }
-  #gaugeWaterGrid .gauge-mini-cushion { display:flex; }
+  /* .c-head normally switches to a stacked single column only when the whole VIEWPORT is
+     narrow (@media max-width:640px) — it assumes a card is roughly as wide as the viewport,
+     which is true on the Gauge tab's own auto-fit grid but not here, where each gauge card is
+     only half the #gaugeWaterGrid row. Without this, the OPEN/CLOSED pill (3rd grid column)
+     gets squeezed into the same corner as the mood badge and disappears behind it on anything
+     wider than a phone. Force the stacked layout here unconditionally instead of trying to
+     compute a real container-width breakpoint. */
+  #gaugeWaterGrid .c-head { grid-template-columns:1fr; }
   .gw-gauge-card .gauge-svg { width:100%; max-width:300px; }
   .gauge-readout { text-align:center; margin-top:10px; font-size:.72rem; color:#8b98a5; }
   .gauge-readout b { font-weight:800; font-size:.86rem; }
@@ -3768,18 +3775,18 @@
     </div>
   </div><!-- /tab-waterfall -->
 
-  <!-- ============ GAUGE/WATER TAB — Gauge chart (col 1) + Waterfall chart (col 2), one row per stock ============ -->
+  <!-- ============ GAUGE/WATER TAB — Waterfall chart (col 1) + Gauge chart (col 2), one row per stock ============ -->
   <div id="tab-gaugewater" style="display:none">
     <div class="c-head" style="margin-bottom:10px">
-      <div class="tkr">📊🌊 <span class="en">Gauge/Water — Gauge + Waterfall Side by Side</span><span class="zh">仪表/瀑布——仪表图与瀑布图并排</span></div>
+      <div class="tkr">📊🌊 <span class="en">Gauge/Water — Waterfall + Gauge Side by Side</span><span class="zh">仪表/瀑布——瀑布图与仪表图并排</span></div>
       <div></div>
       <div></div>
     </div>
     <div class="cushion-filter-row" id="gaugeWaterFilterRow"></div>
     <div id="gaugeWaterGrid"></div>
     <div class="note" style="margin-top:14px">
-      <span class="en">Column 1 is a live copy of that stock's gauge (speedometer) chart from the <a href="#" onclick="setTab('gauge');return false" style="color:#f59e0b">Gauge tab</a> — same needle, same chart number, always in sync since it references the same chart element rather than a second copy. Column 2 is the same P&amp;L bridge chart as the <a href="#" onclick="setTab('waterfall');return false" style="color:#f59e0b">Waterfall tab</a>, read live from Table 1512. Full legends, cushion formulas, and per-symbol notes live on those two tabs — this view is just for comparing both charts per stock at a glance.</span>
-      <span class="zh">第1列是该股票仪表（速度表）图表的实时副本，取自<a href="#" onclick="setTab('gauge');return false" style="color:#f59e0b">仪表页签</a>——同一根指针、同一个图表编号，始终同步，因为它引用的是同一个图表元素而非另一份副本。第2列是与<a href="#" onclick="setTab('waterfall');return false" style="color:#f59e0b">瀑布图页签</a>相同的盈亏桥接图，数字实时读取自表1512。完整图例、缓冲公式与各标的说明请见这两个页签——本页仅方便逐一股票并排比较两张图表。</span>
+      <span class="en">Column 1 is the same P&amp;L bridge chart as the <a href="#" onclick="setTab('waterfall');return false" style="color:#f59e0b">Waterfall tab</a>, read live from Table 1512. Column 2 is a live copy of that stock's gauge (speedometer) chart from the <a href="#" onclick="setTab('gauge');return false" style="color:#f59e0b">Gauge tab</a> — same needle, same chart number, always in sync since it references the same chart element rather than a second copy. A couple of items shown twice on the Gauge tab itself (the small status pill next to the needle, the compact cushion-% pills) are left out here since the card's main OPEN/CLOSED pill and full cushion-formula row already cover them.</span>
+      <span class="zh">第1列是与<a href="#" onclick="setTab('waterfall');return false" style="color:#f59e0b">瀑布图页签</a>相同的盈亏桥接图，数字实时读取自表1512。第2列是该股票仪表（速度表）图表的实时副本，取自<a href="#" onclick="setTab('gauge');return false" style="color:#f59e0b">仪表页签</a>——同一根指针、同一个图表编号，始终同步，因为它引用的是同一个图表元素而非另一份副本。仪表页签上重复出现两次的项目（指针旁的小状态标签、精简版缓冲百分比标签）在此省略，因为卡片主要的持仓状态标签与完整缓冲公式行已涵盖相同信息。</span>
     </div>
   </div><!-- /tab-gaugewater -->
 
@@ -9089,17 +9096,22 @@ function renderWaterfallCardFilter(){
 }
 renderWaterfallFilterRow();
 
-// ============ GAUGE/WATER TAB — Gauge (col 1) + Waterfall (col 2) per stock ============
-// Column 1 is a full, live snapshot of that stock's ACTUAL Gauge-tab card — mood badge, status
-// dot, day badge, asof freshness stamp, alert banner, mini-cushion pills, legend, cushion-row,
-// var readouts, everything — taken by cloning the real #gaugeGrid > .condor[data-sym=...] node
-// (rather than hand-building a stripped-down copy that silently drops whatever the Gauge tab
-// adds later). The one thing NOT cloned is the gauge SVG's own contents: those are replaced
-// with a live <use href="#gauge-xxx"> pointed at the original chart, so the needle/cushion-icon
-// animation there keeps updating this copy too instead of freezing at clone time. The rest of
-// the card (badges/notes) is a snapshot refreshed every time this tab is opened or the page's
-// live-price cycle ticks while it's visible (see refreshGaugeWaterIfVisible()) — same freshness
-// as everywhere else on this dashboard, which is itself only ever as live as its last refresh.
+// ============ GAUGE/WATER TAB — Waterfall (col 1) + Gauge (col 2) per stock ============
+// Column 2 is a full, live snapshot of that stock's ACTUAL Gauge-tab card — mood badge, day
+// badge, asof freshness stamp, alert banner, legend, cushion-row, var readouts, everything —
+// taken by cloning the real #gaugeGrid > .condor[data-sym=...] node (rather than hand-building
+// a stripped-down copy that silently drops whatever the Gauge tab adds later). The one thing
+// NOT cloned is the gauge SVG's own contents: those are replaced with a live <use
+// href="#gauge-xxx"> pointed at the original chart, so the needle/cushion-icon animation there
+// keeps updating this copy too instead of freezing at clone time. Two elements are deliberately
+// stripped as duplicates rather than kept: the small .gauge-status-dot overlay (the card's
+// c-head .pill already shows OPEN/CLOSED — Paul, 8 Aug 2026: "2 Open button, remove smaller
+// one") and .gauge-mini-cushion (its ✅/⚡ Put/Call Cushion % pills repeat exactly what
+// .gauge-cushion-row already shows with the full A/B/C formula — Paul, 8 Aug 2026: "cushion
+// duplicate"). The rest of the card (badges/notes) is a snapshot refreshed every time this tab
+// is opened or the page's live-price cycle ticks while it's visible (see
+// refreshGaugeWaterIfVisible()) — same freshness as everywhere else on this dashboard, which is
+// itself only ever as live as its last refresh.
 function gaugeWaterGaugeCardHtml(cfg){
   var src = document.querySelector('#gaugeGrid > .condor[data-sym="' + cfg.gaugeId.toUpperCase() + '"]');
   if(!src) return '<div class="condor gw-gauge-card"><div class="note"><span class="en">No matching Gauge tab card found for this symbol.</span><span class="zh">未找到该标的对应的仪表页签卡片。</span></div></div>';
@@ -9112,6 +9124,8 @@ function gaugeWaterGaugeCardHtml(cfg){
   clone.style.display = '';
   var svg = clone.querySelector('svg.gauge-svg');
   if(svg){ svg.removeAttribute('id'); svg.innerHTML = ''; svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'use')); svg.querySelector('use').setAttribute('href', '#gauge-' + cfg.gaugeId); }
+  var statusDot = clone.querySelector('.gauge-status-dot'); if(statusDot) statusDot.remove();
+  var miniCushion = clone.querySelector('.gauge-mini-cushion'); if(miniCushion) miniCushion.remove();
   clone.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
   return clone.outerHTML;
 }
@@ -9125,8 +9139,8 @@ function renderGaugeWaterGrid(){
     return '' +
       '<div class="gw-item" data-status="' + cfg.status + '">' +
         '<div class="gw-row-label"><span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
-        gaugeWaterGaugeCardHtml(cfg) +
         waterHtml +
+        gaugeWaterGaugeCardHtml(cfg) +
       '</div>';
   }).join('');
   wrap.innerHTML = html;
