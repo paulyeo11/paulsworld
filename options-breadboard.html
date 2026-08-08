@@ -359,6 +359,21 @@
   #waterfallChartsWrap .wf-catlabel b { font-size:.42rem; }
   #waterfallChartsWrap .wf-asof { font-size:.46rem; margin-top:3px; }
   @media (max-width:340px){ #waterfallChartsWrap { grid-template-columns:1fr; } }
+  /* ============ GAUGE/WATER TAB — column 1 gauge chart, column 2 waterfall chart, one row per
+     stock. Gauge column is a live SVG <use> reference to the same #gauge-<sym> element the Gauge
+     tab draws into, so it never drifts out of sync with a second copy of the needle-drawing code
+     (same derive-don't-duplicate reasoning as buildTable1512Lookup()). Waterfall column reuses
+     waterfallCardHtml()/waterfallPendingCardHtml() as-is (idPrefix keeps their element ids unique
+     from the copies already sitting in #waterfallChartsWrap). */
+  .gw-item { display:contents; }
+  .gw-row-label { grid-column:1/-1; font-size:.95rem; font-weight:800; color:#f59e0b; margin:16px 0 -2px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08); }
+  .gw-item:first-child .gw-row-label { border-top:none; padding-top:0; margin-top:0; }
+  #gaugeWaterGrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  @media (max-width:700px){ #gaugeWaterGrid { grid-template-columns:1fr; } }
+  .gw-gauge-card .gauge-svg { width:100%; max-width:280px; }
+  .gw-gauge-wrap { display:flex; justify-content:center; margin-top:6px; }
+  .gw-mirror-note { margin-top:8px; font-size:.66rem; color:#8b98a5; text-align:center; }
+  #gaugeWaterGrid .condor { margin:0; }
   .gauge-readout { text-align:center; margin-top:10px; font-size:.72rem; color:#8b98a5; }
   .gauge-readout b { font-weight:800; font-size:.86rem; }
   .gauge-readout .up { color:#3fb950; }
@@ -665,6 +680,7 @@
     <div class="tab-more-wrap" id="tabMoreWrap">
       <button class="tab-btn" id="tb-more" onclick="toggleMoreTab(event)">⋯ <span class="en">More</span><span class="zh">更多</span></button>
       <div class="tab-more-dropdown" id="tabMoreDropdown">
+        <button id="tb-gaugewater" onclick="setTab('gaugewater')">📊🌊 <span class="en">Gauge/Water</span><span class="zh">仪表/瀑布</span></button>
         <button id="tb-maxloss" onclick="setTab('maxloss')">⚖️ <span class="en">Max Loss</span><span class="zh">最大亏损</span></button>
         <button id="tb-prem" onclick="setTab('premium')">💵 <span class="en">Premium</span><span class="zh">权利金</span></button>
         <button id="tb-icsetup" onclick="setTab('icsetup')">🦅 <span class="en">IC Setup</span><span class="zh">铁鹰设置</span></button>
@@ -3746,6 +3762,21 @@
       <span class="zh">柱高 = 对当前市值的美元贡献；金色柱为累计总额，并非第五项输入。<b>A</b> = 已收权利金，<b>B</b> = 平仓成本，<b>C</b> = 核算调整：<b>净盈亏 = A − B + C</b>。已平仓持仓（QQQ、SMH 7月、NVDA 8月21日、SPY、GOOGL）显示真实、已全部实现的平仓结果；持仓中的显示今日按市值计价，平仓前会持续变动。完整数据来源与更新时效说明：<a href="#" onclick="setTab('finalpnl');return false" style="color:#f59e0b">最终盈亏页签的表1512</a>。</span>
     </div>
   </div><!-- /tab-waterfall -->
+
+  <!-- ============ GAUGE/WATER TAB — Gauge chart (col 1) + Waterfall chart (col 2), one row per stock ============ -->
+  <div id="tab-gaugewater" style="display:none">
+    <div class="c-head" style="margin-bottom:10px">
+      <div class="tkr">📊🌊 <span class="en">Gauge/Water — Gauge + Waterfall Side by Side</span><span class="zh">仪表/瀑布——仪表图与瀑布图并排</span></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="cushion-filter-row" id="gaugeWaterFilterRow"></div>
+    <div id="gaugeWaterGrid"></div>
+    <div class="note" style="margin-top:14px">
+      <span class="en">Column 1 is a live copy of that stock's gauge (speedometer) chart from the <a href="#" onclick="setTab('gauge');return false" style="color:#f59e0b">Gauge tab</a> — same needle, same chart number, always in sync since it references the same chart element rather than a second copy. Column 2 is the same P&amp;L bridge chart as the <a href="#" onclick="setTab('waterfall');return false" style="color:#f59e0b">Waterfall tab</a>, read live from Table 1512. Full legends, cushion formulas, and per-symbol notes live on those two tabs — this view is just for comparing both charts per stock at a glance.</span>
+      <span class="zh">第1列是该股票仪表（速度表）图表的实时副本，取自<a href="#" onclick="setTab('gauge');return false" style="color:#f59e0b">仪表页签</a>——同一根指针、同一个图表编号，始终同步，因为它引用的是同一个图表元素而非另一份副本。第2列是与<a href="#" onclick="setTab('waterfall');return false" style="color:#f59e0b">瀑布图页签</a>相同的盈亏桥接图，数字实时读取自表1512。完整图例、缓冲公式与各标的说明请见这两个页签——本页仅方便逐一股票并排比较两张图表。</span>
+    </div>
+  </div><!-- /tab-gaugewater -->
 
   <!-- ============ BANG TRADE ANALYSIS TAB (wraps QQQ + SMH sub-pages) ============ -->
   <div id="tab-bang" style="display:none">
@@ -6875,6 +6906,7 @@ var depositsLoaded = false;
 var tasksLoaded = false;
 var optionTodayLoaded = false;
 var waterfallLoaded = false;
+var gaugeWaterLoaded = false;
 function setTab(t){
   document.getElementById('tab-dashboard').style.display = t==='dashboard'?'':'none';
   document.getElementById('tab-positions').style.display = t==='positions'?'':'none';
@@ -6901,6 +6933,7 @@ function setTab(t){
   document.getElementById('tab-icpnl').style.display = t==='icpnl'?'':'none';
   document.getElementById('tab-finalpnl').style.display = t==='finalpnl'?'':'none';
   document.getElementById('tab-waterfall').style.display = t==='waterfall'?'':'none';
+  document.getElementById('tab-gaugewater').style.display = t==='gaugewater'?'':'none';
   document.getElementById('tab-dailypnl').style.display = t==='dailypnl'?'':'none';
   document.getElementById('tab-trades').style.display = t==='trades'?'':'none';
   document.getElementById('tab-win').style.display = t==='win'?'':'none';
@@ -6941,6 +6974,7 @@ function setTab(t){
   document.getElementById('tb-icpnl').classList.toggle('active', t==='icpnl');
   document.getElementById('tb-finalpnl').classList.toggle('active', t==='finalpnl');
   document.getElementById('tb-waterfall').classList.toggle('active', t==='waterfall');
+  document.getElementById('tb-gaugewater').classList.toggle('active', t==='gaugewater');
   document.getElementById('tb-dailypnl').classList.toggle('active', t==='dailypnl');
   document.getElementById('tb-trades').classList.toggle('active', t==='trades');
   document.getElementById('tb-win').classList.toggle('active', t==='win');
@@ -6958,14 +6992,15 @@ function setTab(t){
   document.getElementById('tb-app').classList.toggle('active', t==='app');
   document.getElementById('tb-new').classList.toggle('active', t==='new');
   document.getElementById('tb-ibticket').classList.toggle('active', t==='ibticket');
-  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='unrealized'||t==='closesharepnl'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new'||t==='premium'||t==='icsetup'||t==='optiontoday'||t==='ibticket'||t==='maxloss');
+  document.getElementById('tb-more').classList.toggle('active', t==='dashboard'||t==='fee'||t==='analysis'||t==='riskzone'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='unrealized'||t==='closesharepnl'||t==='covcall'||t==='accbal'||t==='cutloss'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='perf'||t==='icbenefits'||t==='aiwatch'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='shareavgcost'||t==='pospnl'||t==='positions'||t==='app'||t==='new'||t==='premium'||t==='icsetup'||t==='optiontoday'||t==='ibticket'||t==='maxloss'||t==='gaugewater');
   closeMoreTab();
-  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='waterfall'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='rule'||t==='icreview'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='closesharepnl'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new'||t==='ibticket'||t==='maxloss') ? 'none' : '';
+  document.getElementById('acctValueCard').style.display = (t==='dashboard'||t==='accbal'||t==='pnl'||t==='icpnl'||t==='finalpnl'||t==='waterfall'||t==='gaugewater'||t==='dailypnl'||t==='trades'||t==='win'||t==='lost'||t==='deposits'||t==='premium'||t==='fee'||t==='bang'||t==='perf'||t==='tasks'||t==='optiontoday'||t==='cushion'||t==='rule'||t==='icreview'||t==='cutloss'||t==='covcall'||t==='icwatchlist'||t==='earndate'||t==='refresh'||t==='unrealized'||t==='closesharepnl'||t==='shareavgcost'||t==='pospnl'||t==='app'||t==='aiwatch'||t==='new'||t==='ibticket'||t==='maxloss') ? 'none' : '';
   if(t==='deposits' && !depositsLoaded){ depositsLoaded = true; renderDeposits(); }
   if(t==='cutloss' && !cutLoaded){ cutLoaded = true; loadAll(); }
   if(t==='tasks' && !tasksLoaded){ tasksLoaded = true; renderTasks(); }
   if(t==='optiontoday' && !optionTodayLoaded){ optionTodayLoaded = true; renderOptionTodayTasks(); }
   if(t==='waterfall' && !waterfallLoaded){ waterfallLoaded = true; renderWaterfallCharts(); }
+  if(t==='gaugewater' && !gaugeWaterLoaded){ gaugeWaterLoaded = true; renderGaugeWaterGrid(); }
   if(t==='pnl') resizePnlChart();
   if(t==='gauge'){
     var gaugeGridEl = document.getElementById('gaugeGrid');
@@ -8806,24 +8841,28 @@ function buildTable1512Lookup(){
 // NVDA (Aug21) — chart 25 — moved back into this grid (Paul, 6 Aug 2026) after briefly living
 // as its own standalone spotlight card above the grid — he wants it in the mini-chart area
 // with the rest instead.
+// gaugeId/gaugeLabel: which #gauge-<id> SVG (and its Table/Chart label) this position's Gauge
+// tab card uses — added for the Gauge/Water tab so it can point a live <use> reference at the
+// right chart instead of hand-copying a second gauge per stock. Kept on this same config object
+// (not a parallel lookup) so there's nothing to drift when a symbol's gauge card changes.
 var WATERFALL_CFG = [
-  { sym:'QQQ',        chart:23, dot:'🟦', status:'closed', kind:'ic', en:'QQQ',              zh:'QQQ' },
-  { sym:'SMH_JUL',     chart:24, dot:'🟩', status:'closed', kind:'ic', en:'SMH (Jul)',         zh:'SMH（7月）' },
-  { sym:'NVDA_AUG21',  chart:25, dot:'🔴', status:'closed', kind:'ic', en:'NVDA (Aug21)',      zh:'NVDA（8月21日）' },
-  { sym:'SPY',         chart:26, dot:'🔷', status:'closed', kind:'ic', en:'SPY',               zh:'SPY' },
-  { sym:'AVGO',        chart:27, dot:'🟧', status:'open',   kind:'ic', en:'AVGO',              zh:'AVGO' },
-  { sym:'IWM',         chart:28, dot:'🟪', status:'open',   kind:'ic', en:'IWM',               zh:'IWM' },
-  { sym:'GOOGL',       chart:29, dot:'🟡', status:'closed', kind:'put', en:'GOOGL',            zh:'GOOGL' },
-  { sym:'FDS',         chart:30, dot:'🟫', status:'open',   kind:'cc', en:'FDS Covered Call',  zh:'FDS备兑看涨' },
-  { sym:'SMH_SEP18',   chart:31, dot:'🟩', status:'open',   kind:'ic', en:'SMH (Sep18)',       zh:'SMH（9月18日）' },
-  { sym:'NVDA_SEP18',  chart:32, dot:'🔴', status:'open',   kind:'ic', en:'NVDA (Sep18)',      zh:'NVDA（9月18日）' },
-  { sym:'AAPL',        chart:33, dot:'⚪', status:'open',   kind:'put', en:'AAPL',              zh:'AAPL' },
+  { sym:'QQQ',        chart:23, dot:'🟦', status:'closed', kind:'ic', en:'QQQ',              zh:'QQQ',        gaugeId:'qqq',      gaugeLabel:'Table 1502 · Chart 10' },
+  { sym:'SMH_JUL',     chart:24, dot:'🟩', status:'closed', kind:'ic', en:'SMH (Jul)',         zh:'SMH（7月）',   gaugeId:'smh_jul',  gaugeLabel:'Table 1513 · Chart 22' },
+  { sym:'NVDA_AUG21',  chart:25, dot:'🔴', status:'closed', kind:'ic', en:'NVDA (Aug21)',      zh:'NVDA（8月21日）', gaugeId:'nvda',     gaugeLabel:'Table 1501 · Chart 9' },
+  { sym:'SPY',         chart:26, dot:'🔷', status:'closed', kind:'ic', en:'SPY',               zh:'SPY',        gaugeId:'spy',      gaugeLabel:'Table 1505 · Chart 13' },
+  { sym:'AVGO',        chart:27, dot:'🟧', status:'open',   kind:'ic', en:'AVGO',              zh:'AVGO',       gaugeId:'avgo',     gaugeLabel:'Table 1503 · Chart 11' },
+  { sym:'IWM',         chart:28, dot:'🟪', status:'open',   kind:'ic', en:'IWM',               zh:'IWM',        gaugeId:'iwm',      gaugeLabel:'Table 1506 · Chart 14' },
+  { sym:'GOOGL',       chart:29, dot:'🟡', status:'closed', kind:'put', en:'GOOGL',            zh:'GOOGL',      gaugeId:'googl',    gaugeLabel:'Table 1509 · Chart 17' },
+  { sym:'FDS',         chart:30, dot:'🟫', status:'open',   kind:'cc', en:'FDS Covered Call',  zh:'FDS备兑看涨',  gaugeId:'fds',      gaugeLabel:'Table 1508 · Chart 16' },
+  { sym:'SMH_SEP18',   chart:31, dot:'🟩', status:'open',   kind:'ic', en:'SMH (Sep18)',       zh:'SMH（9月18日）', gaugeId:'smh',      gaugeLabel:'Table 1504 · Chart 12' },
+  { sym:'NVDA_SEP18',  chart:32, dot:'🔴', status:'open',   kind:'ic', en:'NVDA (Sep18)',      zh:'NVDA（9月18日）', gaugeId:'nvda2',    gaugeLabel:'Table 1510 · Chart 18' },
+  { sym:'AAPL',        chart:33, dot:'⚪', status:'open',   kind:'put', en:'AAPL',              zh:'AAPL',       gaugeId:'aapl',     gaugeLabel:'Table 1521 · Chart 23' },
   // DDOG — put credit spread, filled 7 Aug 2026, no IBKR/Tiger mark yet (no cost-to-close
   // figure exists to build a real bridge from). pending:true tells renderWaterfallCharts() to
   // show a placeholder "no mark yet" card instead of silently omitting it — same "leave it out
   // rather than guess" rule as everywhere else on this dashboard, just made visible instead of
   // invisible, since Paul asked for DDOG to appear here.
-  { sym:'DDOG',        chart:35, dot:'🟣', status:'open',   kind:'putspread', en:'DDOG',        zh:'DDOG', pending:true }
+  { sym:'DDOG',        chart:35, dot:'🟣', status:'open',   kind:'putspread', en:'DDOG',        zh:'DDOG', pending:true, gaugeId:'ddog', gaugeLabel:'Table 1537 · Chart 34' }
 ];
 // Maps a WATERFALL_CFG sym to the sym Table 900 actually uses, for the 3 cases where a
 // closed-then-reopened position split into two Waterfall entries but Table 900 keeps the
@@ -8944,7 +8983,8 @@ function waterfallPlotHtml(d){
     '<div class="wf-cols">' + colsHtml + '</div>';
 }
 // Builds one mini waterfall card's markup — shared by every entry in WATERFALL_CFG.
-function waterfallCardHtml(cfg, d, extraStyle){
+function waterfallCardHtml(cfg, d, extraStyle, idPrefix){
+  idPrefix = idPrefix || '';
   var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
   var statusPill = cfg.status === 'closed'
     ? '<div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>'
@@ -8953,7 +8993,7 @@ function waterfallCardHtml(cfg, d, extraStyle){
     ? '<span class="en">Net P&amp;L (Realized) (A−B+C)</span><span class="zh">净盈亏（已实现）(A−B+C)</span>'
     : '<span class="en">Net P&amp;L (Unrealized) (A−B+C)</span><span class="zh">净盈亏（未实现）(A−B+C)</span>';
   return '' +
-    '<div class="condor" id="wfCard-' + cfg.sym + '" data-status="' + cfg.status + '"' + (extraStyle ? ' style="' + extraStyle + '"' : '') + '>' +
+    '<div class="condor" id="wfCard-' + idPrefix + cfg.sym + '" data-status="' + cfg.status + '"' + (extraStyle ? ' style="' + extraStyle + '"' : '') + '>' +
       '<div class="wf-emoji-corner">' + wfNetEmoji(d.pnl) + '</div>' +
       '<div class="gauge-chart-num" style="margin-top:0">Chart ' + cfg.chart + '</div>' +
       '<div class="c-head">' +
@@ -8976,13 +9016,14 @@ function waterfallCardHtml(cfg, d, extraStyle){
 // figure to build an actual bridge from. Shows the same "no mark yet" language as Table 900's
 // own placeholder rows instead of fabricating bars, but still renders a visible card (Paul, 8
 // Aug 2026 — wants DDOG to appear on this tab even before a mark exists).
-function waterfallPendingCardHtml(cfg){
+function waterfallPendingCardHtml(cfg, idPrefix){
+  idPrefix = idPrefix || '';
   var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
   var premium = MTD_PREMIUM[cfg.sym];
   var premiumEn = typeof premium === 'number' ? ('Premium Collected (A) '+wfFmt(premium)+', confirmed real fill.') : '';
   var premiumZh = typeof premium === 'number' ? ('已收权利金 (A) '+wfFmt(premium)+'，真实成交已确认。') : '';
   return '' +
-    '<div class="condor" id="wfCard-' + cfg.sym + '" data-status="' + cfg.status + '">' +
+    '<div class="condor" id="wfCard-' + idPrefix + cfg.sym + '" data-status="' + cfg.status + '">' +
       '<div class="gauge-chart-num" style="margin-top:0">Chart ' + cfg.chart + '</div>' +
       '<div class="c-head">' +
         '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
@@ -9042,6 +9083,76 @@ function renderWaterfallCardFilter(){
   });
 }
 renderWaterfallFilterRow();
+
+// ============ GAUGE/WATER TAB — Gauge (col 1) + Waterfall (col 2) per stock ============
+// Column 1 is deliberately NOT a second hand-built gauge — it's an SVG <use> pointed at the
+// same #gauge-<gaugeId> element the Gauge tab already draws/animates (buildGauge() etc., plus
+// the live needle updates), so this view can never fall out of sync with a duplicated copy of
+// that drawing logic. Column 2 reuses waterfallCardHtml()/waterfallPendingCardHtml() as-is.
+function gaugeWaterGaugeCardHtml(cfg){
+  var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
+  var statusPill = cfg.status === 'closed'
+    ? '<div class="pill" style="background:rgba(139,152,168,.15);color:#8b98a5;border:1px solid rgba(139,152,168,.4)">● <span class="en">CLOSED</span><span class="zh">已平仓</span></div>'
+    : '<div class="pill open">● <span class="en">OPEN</span><span class="zh">持仓中</span></div>';
+  return '' +
+    '<div class="condor gw-gauge-card" data-status="' + cfg.status + '">' +
+      '<div class="gauge-chart-num" style="margin-top:0">' + cfg.gaugeLabel + '</div>' +
+      '<div class="c-head">' +
+        '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
+        '<div class="c-meta"><span class="en">' + kindLbl.en + '</span><span class="zh">' + kindLbl.zh + '</span></div>' +
+        statusPill +
+      '</div>' +
+      '<div class="gw-gauge-wrap"><svg class="gauge-svg" viewBox="0 0 340 300"><use href="#gauge-' + cfg.gaugeId + '"></use></svg></div>' +
+      '<div class="gw-mirror-note"><span class="en">Live mirror of the Gauge tab\'s chart — full legend/cushion detail there.</span><span class="zh">与「仪表」页签图表实时同步——完整图例/缓冲说明请见该页签。</span></div>' +
+    '</div>';
+}
+function renderGaugeWaterGrid(){
+  var wrap = document.getElementById('gaugeWaterGrid'); if(!wrap) return;
+  var lookup = buildTable1512Lookup();
+  var html = WATERFALL_CFG.map(function(cfg){
+    var d = lookup[cfg.sym];
+    var waterHtml = d ? waterfallCardHtml(cfg, d, null, 'gw-') : (cfg.pending ? waterfallPendingCardHtml(cfg, 'gw-') : '');
+    if(!waterHtml) return '';
+    return '' +
+      '<div class="gw-item" data-status="' + cfg.status + '">' +
+        '<div class="gw-row-label"><span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
+        gaugeWaterGaugeCardHtml(cfg) +
+        waterHtml +
+      '</div>';
+  }).join('');
+  wrap.innerHTML = html;
+  applyLangTo(wrap);
+  renderGaugeWaterCardFilter();
+}
+// Same All/Open/Closed filter shape as the Waterfall tab's own filter, scoped to #gaugeWaterGrid.
+var gaugeWaterFilter = 'all';
+function setGaugeWaterFilter(val){
+  gaugeWaterFilter = val;
+  renderGaugeWaterFilterRow();
+  renderGaugeWaterCardFilter();
+}
+function renderGaugeWaterFilterRow(){
+  var row = document.getElementById('gaugeWaterFilterRow'); if(!row) return;
+  var opts = [
+    {v:'all', en:'All', zh:'全部'},
+    {v:'open', en:'🟢 Open Only', zh:'🟢 仅持仓中'},
+    {v:'closed', en:'🔴 Closed Only', zh:'🔴 仅已平仓'}
+  ];
+  row.innerHTML = opts.map(function(o){
+    var active = gaugeWaterFilter === o.v ? ' active' : '';
+    return '<button class="cushion-filter-btn' + active + '" onclick="setGaugeWaterFilter(\'' + o.v + '\')"><span class="en">' + o.en + '</span><span class="zh">' + o.zh + '</span></button>';
+  }).join('');
+  applyLangTo(row);
+}
+function renderGaugeWaterCardFilter(){
+  var wrap = document.getElementById('gaugeWaterGrid'); if(!wrap) return;
+  wrap.querySelectorAll('.gw-item[data-status]').forEach(function(item){
+    var show = gaugeWaterFilter === 'all' || item.getAttribute('data-status') === gaugeWaterFilter;
+    item.style.display = show ? 'contents' : 'none';
+  });
+}
+renderGaugeWaterFilterRow();
+
 function pnlAmtCell(sym){
   var v = PNL_AMT[sym];
   if(typeof v !== 'number') return '<td class="num">—</td>';
