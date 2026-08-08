@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S36: A New Way Up — Another Summit at Bukit Timah</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.css"/>
+<style>
+:root {
+  --blue: #4a6cf7;
+  --accent: #f4813f;
+  --green: #2ecc71;
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --text: #e8eaf0;
+  --muted: #8b8fa8;
+  --border: rgba(255,255,255,0.08);
+  --teal: #3ab8c0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Serif 4', Georgia, serif; background: var(--bg); color: var(--text); line-height: 1.8; font-size: 1.05rem; }
+
+.hero {
+  background: linear-gradient(135deg, #061407 0%, #0a1f0d 50%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 64px 20px 52px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(46,204,113,0.09) 0%, transparent 60%);
+  pointer-events: none;
+}
+.label {
+  display: inline-block;
+  background: rgba(46,204,113,0.12);
+  border: 1px solid rgba(46,204,113,0.3);
+  color: var(--green);
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700;
+  color: #fff; line-height: 1.25;
+  max-width: 740px; margin: 0 auto 16px;
+}
+.hero h1 span { color: var(--accent); font-style: italic; }
+.meta { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.04em; }
+.home-btn {
+  position: absolute; top: 18px; left: 18px;
+  background: rgba(74,108,247,0.15);
+  border: 1px solid rgba(74,108,247,0.35);
+  color: var(--blue); text-decoration: none;
+  font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s;
+}
+.home-btn:hover { background: rgba(74,108,247,0.3); }
+.lang-bar { position: absolute; top: 18px; right: 18px; display: flex; gap: 6px; }
+.lang-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #8b8fa8; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Source Serif 4', serif; }
+.lang-btn.active { background: rgba(240,165,0,0.15); border-color: rgba(240,165,0,0.5); color: #f0a500; }
+.zh { display: none; }
+body.lang-zh .zh { display: inline; }
+body.lang-zh .en { display: none; }
+.zh-block { display: none; }
+body.lang-zh .zh-block { display: block; }
+body.lang-zh .en-block { display: none; }
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(244,129,63,0.15);
+  border: 1px solid rgba(244,129,63,0.4);
+  color: var(--accent); font-size: 0.9rem;
+  padding: 9px 22px; border-radius: 24px; cursor: pointer;
+  font-family: 'Source Serif 4', serif; transition: background 0.2s; text-decoration: none;
+}
+.hero-btn:hover { background: rgba(244,129,63,0.28); }
+.hero-btn.alt {
+  background: rgba(74,108,247,0.12);
+  border-color: rgba(74,108,247,0.35);
+  color: var(--blue);
+}
+.hero-btn.alt:hover { background: rgba(74,108,247,0.25); }
+.share-btn { display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;font-weight:700;letter-spacing:.04em;padding:9px 22px;border-radius:30px;cursor:pointer;font-size:.9rem;font-family:'Source Serif 4',Georgia,serif;transition:background .2s; }
+.share-btn:hover { background:rgba(255,255,255,.25); }
+.share-toast { display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:10px 24px;border-radius:24px;font-size:.9rem;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3); }
+
+.content { max-width: 740px; margin: 0 auto; padding: 50px 22px 20px; }
+.content p { margin-bottom: 1.5em; color: #d0d4e8; }
+.content p.lead {
+  font-size: 1.18rem; color: var(--text); font-style: italic;
+  border-left: 3px solid var(--green); padding-left: 18px; margin-bottom: 2em;
+}
+h2 {
+  font-family: 'Playfair Display', serif; font-size: 1.4rem;
+  color: var(--accent); margin: 2.4em 0 0.8em; font-weight: 700;
+}
+
+.stats-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 12px; padding: 22px 24px; margin: 2em 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+@media (max-width: 480px) { .stats-card { grid-template-columns: 1fr; } }
+
+.pull-quote {
+  background: linear-gradient(135deg, rgba(46,204,113,0.07), rgba(74,108,247,0.07));
+  border: 1px solid rgba(46,204,113,0.18);
+  border-radius: 12px; padding: 28px; margin: 2.5em 0; text-align: center;
+}
+.pull-quote p {
+  font-family: 'Playfair Display', serif; font-size: 1.22rem;
+  font-style: italic; color: var(--text); margin: 0; line-height: 1.6;
+}
+
+.map-section { max-width: 100%; margin: 0 auto; padding: 0 0 50px; }
+#trail-map.map-fullscreen {
+  position: fixed !important; top: 0; left: 0;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  z-index: 9999; border: none !important;
+}
+#mapCloseBtn {
+  display: none; position: fixed; top: 14px; right: 14px; z-index: 10000;
+  background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 1rem; padding: 8px 16px; border-radius: 22px;
+  cursor: pointer; align-items: center; gap: 6px; font-family: 'Source Serif 4', serif;
+}
+.map-section > .section-title,
+.map-section > p { max-width: 740px; margin-left: auto; margin-right: auto; padding-left: 22px; padding-right: 22px; }
+.map-section > .section-title { margin-bottom: 14px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+#trail-map { width: 100%; height: 420px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); position: relative; }
+.map-type-toggle { position:absolute; top:10px; right:48px; z-index:1000; display:flex; gap:4px; }
+.map-type-toggle button { border-radius:20px; padding:5px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; font-family:'Source Serif 4',serif; }
+.mt-sat { background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); }
+.mt-street { background:#f59e0b; color:#0d1117; border:none; }
+
+.pm-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 800; color: #fff;
+  font-family: 'Source Serif 4', sans-serif;
+}
+.pm-circle.summit { background: #e74c3c; }
+
+.leaflet-popup-content-wrapper { background: #1a1d2e !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.leaflet-popup-tip { background: #1a1d2e !important; }
+.leaflet-popup-content { margin: 0 !important; padding: 0 !important; }
+.map-popup img { width: 220px; max-width: 100%; display: block; border-radius: 10px 10px 0 0; object-fit: cover; height: 140px; }
+.map-popup-body { padding: 10px 13px 13px; }
+.map-popup-caption { font-size: 0.82rem; color: #d0d4e8; line-height: 1.45; }
+
+.warn-banner {
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.35);
+  color: #f4c869; font-size: 0.82rem; border-radius: 10px;
+  padding: 10px 16px; margin: 10px auto 0; max-width: 696px;
+}
+
+.gallery-section { max-width: 740px; margin: 0 auto; padding: 0 22px 60px; }
+.photo-journal { margin-top: 16px; }
+.pj-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; }
+.pj-photo-wrap { position: relative; }
+.pj-item img { width: 100%; max-height: 460px; object-fit: cover; display: block; transition: opacity 0.2s; }
+.pj-item:hover img { opacity: 0.92; }
+.pj-date { position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,.6); color: #f4c869; font-size: .7rem; font-weight: 600; padding: 3px 9px; border-radius: 6px; }
+.pj-body { padding: 16px 20px 18px; }
+.pj-num { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.pj-text { font-size: 0.97rem; color: #d0d4e8; line-height: 1.7; }
+
+.lightbox {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93); z-index: 9000;
+  align-items: center; justify-content: center; flex-direction: column; padding: 20px;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: min(90vw, 800px); max-height: 75vh; border-radius: 10px; object-fit: contain; }
+.lightbox-caption { color: #ccc; font-size: 0.88rem; margin-top: 14px; text-align: center; max-width: 600px; font-style: italic; }
+.lightbox-close { position: absolute; top: 18px; right: 22px; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
+
+.breadcrumb { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; font-size:.75rem; font-weight:600; color:rgba(255,255,255,.55); margin-bottom:14px; }
+.breadcrumb a { color:rgba(255,255,255,.55); text-decoration:none; }
+.breadcrumb a:hover { color:#fff; }
+.breadcrumb .sep { color:rgba(255,255,255,.3); }
+.breadcrumb .current { color:#f4c869; }
+</style>
+</head>
+<body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-caption" id="lbCaption"></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <a target="_blank" href="https://paulsworld.vercel.app/" class="home-btn">&#8592; <span class="en">Home</span><span class="zh">首页</span></a>
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('en')">&#127468;&#127463; EN</button>
+    <button class="lang-btn" onclick="setLang('zh')">&#127464;&#127475; 中文</button>
+  </div>
+  <div class="label"><span class="en">Travel Story &middot; S36</span><span class="zh">旅行故事 &middot; S36</span></div>
+  <div class="breadcrumb">
+    <a href="/index.html" target="_blank"><span class="en">Home</span><span class="zh">首页</span></a>
+    <span class="sep">›</span>
+    <a href="/index.html#hiking" target="_blank"><span class="en">Hiking in Singapore</span><span class="zh">新加坡徒步</span></a>
+    <span class="sep">›</span>
+    <span class="current"><span class="en">S36</span><span class="zh">S36</span></span>
+  </div>
+  <h1 class="en-block">S36: A New Way Up — Another <span>Summit</span> at Bukit Timah</h1>
+  <h1 class="zh-block">S36：新的登顶之路——再次<span>登顶</span>武吉知马</h1>
+  <div class="meta">
+    <span class="en">By Paul Yeo &nbsp;&middot;&nbsp; 8 August 2026 &nbsp;&middot;&nbsp; Bukit Timah Nature Reserve, Singapore</span>
+    <span class="zh">郑保罗 著 &nbsp;&middot;&nbsp; 2026年8月8日 &nbsp;&middot;&nbsp; 新加坡武吉知马自然保护区</span>
+  </div>
+  <div class="hero-btns">
+    <a href="#photomap" class="hero-btn">&#128205;&nbsp; <span class="en">See the Map</span><span class="zh">查看地图</span></a>
+    <a href="#story" class="hero-btn alt">&#128214;&nbsp; <span class="en">Read the Story</span><span class="zh">阅读故事</span></a>
+    <button class="share-btn" onclick="shareThisPage()">&#128279; <span class="en">Share</span><span class="zh">分享</span></button>
+  </div>
+</div>
+<div class="share-toast" id="shareToast">&#10003; <span class="en">Link copied!</span><span class="zh">链接已复制！</span></div>
+
+<!-- MAP -->
+<div class="map-section" id="photomap">
+  <div style="max-width:740px;margin:0 auto;padding:0 22px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div class="section-title"><span class="en">&#128205; The Summit</span><span class="zh">&#128205; 山顶位置</span></div>
+    <button onclick="openMapFullscreen()" style="display:inline-flex;align-items:center;gap:7px;background:rgba(244,129,63,0.15);border:1px solid rgba(244,129,63,0.4);color:var(--accent);font-size:0.88rem;padding:8px 18px;border-radius:22px;cursor:pointer;font-family:'Source Serif 4',serif;">
+      &#x26F6; <span class="en">Open Full Screen</span><span class="zh">全屏查看</span>
+    </button>
+  </div>
+  <div id="trail-map">
+    <div class="map-type-toggle">
+      <button class="mt-sat" id="btn-satellite" onclick="setMapType('satellite')">&#128752; <span class="en">Satellite</span><span class="zh">卫星</span></button>
+      <button class="mt-street" id="btn-street" onclick="setMapType('street')">&#128506;&#65039; <span class="en">Street</span><span class="zh">街道</span></button>
+    </div>
+  </div>
+  <button id="mapCloseBtn" onclick="closeMapFullscreen()">&#x2715; <span class="en">Close Map</span><span class="zh">关闭地图</span></button>
+  <p class="warn-banner">
+    <span class="en">&#9888;&#65039; The pin marks Bukit Timah Hill Summit (Singapore's highest natural point, 163.63m) — the exact spot along today's trail where this photo was taken was not GPS-tagged. Use the address-based buttons below for directions, not the raw pin.</span>
+    <span class="zh">&#9888;&#65039; 地图标记的是武吉知马山顶（新加坡最高天然点，海拔163.63米）——今天拍摄这张照片的确切位置未记录GPS坐标。请使用下方按地址生成的按钮导航，而非直接依赖地图标记。</span>
+  </p>
+  <div style="max-width:740px;margin:8px auto 0;padding:0 22px 10px;display:flex;flex-wrap:wrap;gap:8px;">
+    <a href="https://www.google.com/maps/search/?api=1&query=Bukit+Timah+Hill+Summit%2C+Bukit+Timah+Nature+Reserve%2C+Singapore" target="_blank" style="background:rgba(66,133,244,0.2);border:1px solid rgba(66,133,244,0.4);color:#74b9ff;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">&#128506;&#65039; Google</a>
+    <a href="https://map.baidu.com/search/%E6%AD%A6%E5%90%89%E7%9F%A5%E9%A9%AC%E5%B1%B1%E9%A1%B6" target="_blank" style="background:rgba(228,31,25,0.15);border:1px solid rgba(228,31,25,0.4);color:#ff6b6b;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">百度地图</a>
+    <a href="https://uri.amap.com/marker?position=103.7764,1.3547&name=Bukit%20Timah%20Hill%20Summit" target="_blank" style="background:rgba(30,180,100,0.15);border:1px solid rgba(30,180,100,0.4);color:#2ecc71;font-size:0.72rem;padding:5px 9px;border-radius:8px;text-decoration:none;white-space:nowrap;">高德地图</a>
+  </div>
+</div>
+
+<!-- STORY -->
+<div class="content" id="story">
+
+  <p class="lead en-block">Every day, near my house, there is a forest waiting for me. Today it showed me a corner I had never seen before — and it led to a summit again.</p>
+  <p class="lead zh-block">每天，在我家附近，都有一片森林在等着我。今天它让我看到了一个从未见过的角落——而这条路，再一次通向山顶。</p>
+
+  <h2><span class="en">The Same Forest, A Different Door</span><span class="zh">同一片森林，不同的入口</span></h2>
+  <p class="en-block">Hiking near my house has become a daily habit since I retired. Bukit Timah Nature Reserve is only minutes from home, and I have walked into it from more entrances than I can count — the Dairy Farm side, the quarry side, the BKE side. Back in June I climbed to the summit itself for the first time, up the Dairy Farm Trail, one careful step at a time. I thought I had more or less mapped the place out in my head.</p>
+  <p class="zh-block">退休之后，在家附近徒步已经成了我每天的习惯。武吉知马自然保护区离家只有几分钟路程，我从数不清的入口走进去过——乳农园那一侧、采石场那一侧、还有靠近武吉知马快速公路的那一侧。今年六月，我第一次沿着乳农园步道，一步一步小心地登上了山顶。我以为自己心里大概已经把这地方摸清楚了。</p>
+  <p class="en-block">Today I was wrong, in the best way. I set off this morning on a path I had not tried before, aiming — again — for the summit. New route, same destination. That is one of the quiet pleasures of hiking somewhere so close to home: you can keep discovering it, over and over, without ever leaving your own neighbourhood.</p>
+  <p class="zh-block">今天，我错了——而且是以最好的方式错了。今天早上，我走上了一条以前没试过的小路，目标依旧是——再一次——山顶。路线是新的，目的地却是老朋友。这正是在离家这么近的地方徒步的一种安静的乐趣：你可以一次又一次地重新发现它，而完全不必离开自己的社区。</p>
+
+  <div class="stats-card">
+    <div class="stat"><div class="stat-label"><span class="en">Location</span><span class="zh">地点</span></div><div class="stat-value"><span class="en">Bukit Timah Nature Reserve</span><span class="zh">武吉知马自然保护区</span></div></div>
+    <div class="stat"><div class="stat-label"><span class="en">Destination</span><span class="zh">目的地</span></div><div class="stat-value"><span class="en">Bukit Timah Hill Summit (163.63m)</span><span class="zh">武吉知马山顶（163.63米）</span></div></div>
+    <div class="stat"><div class="stat-label"><span class="en">Date</span><span class="zh">日期</span></div><div class="stat-value"><span class="en">8 August 2026</span><span class="zh">2026年8月8日</span></div></div>
+    <div class="stat"><div class="stat-label"><span class="en">Route</span><span class="zh">路线</span></div><div class="stat-value"><span class="en">A new trail — first time this way</span><span class="zh">一条新步道——第一次这样走</span></div></div>
+  </div>
+
+  <h2><span class="en">A Quiet Surprise Along the Way</span><span class="zh">路途中的一个静谧惊喜</span></h2>
+  <p class="en-block">Not far up the new trail, I came across something I did not expect: a small, hand-built resting point tucked into the forest, half-hidden under ferns and tall secondary growth. A rough wooden boardwalk crossed a trickle of water, and beside it stood a little stone-and-wood spout, water running steadily down over moss-covered rocks into a shallow basin below. A knotted rope served as a handrail along the crossing. A weathered wooden bench sat just past it, waiting for anyone who wanted to stop and listen to the water for a minute.</p>
+  <p class="zh-block">沿着这条新步道走不远，我遇到了一样意想不到的东西：森林深处藏着一个小小的、手工搭建的休息点，半掩在蕨类植物和高大的次生林之下。一条粗糙的木质栈道横跨过一道细细的水流，旁边立着一个小小的石木引水口，水沿着长满青苔的石头稳稳地流下，注入下方一个浅浅的水池。一条打了结的绳子沿着这段栈道充当扶手。再往前，一张风化的木长凳静静地立着，等着任何想停下来听一听流水声的人。</p>
+  <p class="en-block">I stopped there for a photo — cap on, backpack still on my shoulders, the light coming through the canopy in soft green patches. It is easy to walk past small things like this when you are focused on reaching a summit. I am glad I did not, this time.</p>
+  <p class="zh-block">我在那里停下来拍了张照片——戴着帽子，背包还背在肩上，光线透过树冠洒下柔和的绿色光斑。当你一心只想着登顶时，很容易就会错过这样的小细节。这一次，我很庆幸自己没有错过。</p>
+
+  <div class="pull-quote">
+    <p class="en-block">"I keep finding new corners of a forest I thought I already knew. Maybe that is the real lesson of hiking near home — the summit is the same, but the way you arrive there never has to be."</p>
+    <p class="zh-block">"我不断在这片自以为已经熟悉的森林里，发现新的角落。也许这就是在家附近徒步真正的意义所在——山顶始终一样，但抵达它的方式，永远可以不同。"</p>
+  </div>
+
+  <h2><span class="en">Still Climbing at 70</span><span class="zh">七十岁，依然在攀登</span></h2>
+  <p class="en-block">I am 70 years old, retired for three years now. Adventure sports and travel are still very much part of who I am, and this little forest near my house lets me feed that part of myself almost every single day, without a flight or a visa or a packed bag. A new trail, a small wooden crossing I had never seen, and one more summit reached — that was more than enough for one Saturday morning.</p>
+  <p class="zh-block">我七十岁了，退休已经三年。冒险运动和旅行依然是我生命中重要的一部分，而家附近的这片小小森林，几乎每天都能让我满足这份心愿——不需要搭飞机，不需要签证，也不需要收拾行李箱。一条新步道，一处从未见过的小小木栈道，还有再一次登顶——对一个周六的早晨来说，这已经足够美好。</p>
+
+</div>
+
+<!-- PHOTO JOURNAL -->
+<div class="gallery-section">
+  <div class="section-title"><span class="en">&#128247; Photo Journal</span><span class="zh">&#128247; 照片日记</span></div>
+  <div class="photo-journal" id="galleryGrid"></div>
+</div>
+
+<script src="/view-counter.js"></script>
+
+<footer>
+  <p>S36 &nbsp;&middot;&nbsp; Paul Yeo &nbsp;&middot;&nbsp; 8 August 2026 &nbsp;&middot;&nbsp; Bukit Timah Nature Reserve, Singapore</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.6.0/Control.FullScreen.min.js"></script>
+<script>
+const galleryPhotos = [
+  {
+    src: "img_S36/01-new-summit-spring.jpg",
+    caption: "A hidden wooden water crossing along the new trail — 8 August 2026"
+  }
+];
+
+const grid = document.getElementById('galleryGrid');
+galleryPhotos.forEach((p, i) => {
+  const item = document.createElement('div');
+  item.className = 'pj-item';
+  item.innerHTML = `
+    <div class="pj-photo-wrap">
+      <img src="${p.src}" alt="" loading="lazy">
+      <div class="pj-date"><span class="en">8 Aug 2026</span><span class="zh">2026年8月8日</span></div>
+    </div>
+    <div class="pj-body">
+      <div class="pj-num">Photo ${String(i+1).padStart(2,'0')} of ${galleryPhotos.length}</div>
+      <div class="pj-text en-block">A quiet, unexpected resting point I found along the new trail on the way up to Bukit Timah's summit today: a rough wooden boardwalk crossing a small trickle of water, a hand-built stone-and-wood spout feeding a shallow basin below, and a knotted rope for a handrail. Ferns and dense secondary forest crowd in on every side, and a weathered wooden bench sits just off to the side, waiting for someone to stop and listen to the water. I have hiked in this reserve many times, and I had never come across this particular corner before. It is exactly the kind of small discovery that keeps a daily hike near home interesting, even after dozens of visits — there is always one more path, one more quiet spot, one more version of the same summit waiting to be found.</div>
+      <div class="pj-text zh-block">这是我今天在通往武吉知马山顶的新步道上，意外发现的一个安静角落：一条粗糙的木质栈道横跨过一道细细的水流，一个手工搭建的石木引水口，将水引入下方浅浅的水池，还有一条打结的绳子充当扶手。四周被蕨类植物和茂密的次生林紧紧包围，旁边立着一张风化的木长凳，静静等待有人停下脚步，聆听水声。我在这片保护区徒步过许多次，却从未遇见过这个特别的角落。正是这样细小的发现，让即便是走过几十次的家附近日常徒步，依然充满新意——总还有一条新的小路，一处安静的角落，一个通往同一个山顶的全新方式，等着被发现。</div>
+    </div>`;
+  item.onclick = () => openLightbox(i);
+  grid.appendChild(item);
+});
+
+let lbIndex = 0;
+function openLightbox(i) {
+  lbIndex = i;
+  document.getElementById('lbImg').src = galleryPhotos[i].src;
+  document.getElementById('lbCaption').textContent = galleryPhotos[i].caption + ' — 8 Aug 2026';
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+document.getElementById('lightbox').addEventListener('click', function(e) { if (e.target === this) closeLightbox(); });
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('lightbox').classList.contains('active')) return;
+  if (e.key === 'Escape') closeLightbox();
+});
+
+function setLang(lang) {
+  document.body.classList.toggle('lang-zh', lang === 'zh');
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+}
+
+function shareThisPage() {
+  var url = window.location.href;
+  var title = document.title;
+  if (navigator.share) {
+    navigator.share({title: title, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function(){
+      var t = document.getElementById('shareToast');
+      t.style.display = 'block';
+      setTimeout(function(){ t.style.display = 'none'; }, 2200);
+    });
+  }
+}
+
+// MAP — single marker, Bukit Timah Hill Summit
+const SUMMIT = { lat: 1.3547, lng: 103.7764 };
+const map = L.map('trail-map', { zoomControl: true, attributionControl: false }).setView([SUMMIT.lat, SUMMIT.lng], 16);
+
+const tileLayers = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 20, attribution: '&copy; Esri' }),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' })
+};
+tileLayers.street.addTo(map);
+let currentTile = 'street';
+function setMapType(type) {
+  if (type === currentTile) return;
+  map.removeLayer(tileLayers[currentTile]);
+  tileLayers[type].addTo(map);
+  currentTile = type;
+  document.getElementById('btn-satellite').className = type === 'satellite' ? 'mt-street' : 'mt-sat';
+  document.getElementById('btn-street').className = type === 'street' ? 'mt-street' : 'mt-sat';
+}
+
+const div = document.createElement('div');
+div.className = 'pm-circle summit';
+div.textContent = '★';
+const icon = L.divIcon({ html: div.outerHTML, className: '', iconSize: [40,40], iconAnchor: [20,20] });
+const marker = L.marker([SUMMIT.lat, SUMMIT.lng], { icon }).addTo(map);
+marker.bindPopup(`
+  <div class="map-popup">
+    <img src="img_S36/01-new-summit-spring.jpg" alt="">
+    <div class="map-popup-body">
+      <div class="map-popup-caption"><strong>Bukit Timah Hill Summit</strong><br>163.63m — Singapore's highest natural point. Pin is approximate; use the address-based buttons for directions.</div>
+    </div>
+  </div>`);
+
+function openMapFullscreen() {
+  document.getElementById('trail-map').classList.add('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'flex';
+  map.invalidateSize();
+}
+function closeMapFullscreen() {
+  document.getElementById('trail-map').classList.remove('map-fullscreen');
+  document.getElementById('mapCloseBtn').style.display = 'none';
+  map.invalidateSize();
+}
+</script>
+<script src="/sw-register.js" defer></script>
+</body>
+</html>
