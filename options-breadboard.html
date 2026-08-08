@@ -1716,7 +1716,7 @@
       <div class="c-meta"><span class="en">Exp Sep 18 '26 · 42 DTE</span><span class="zh">到期 2026年9月18日 · 42天</span><br><span class="strat"><span class="en">IG · Bull Put Credit Spread</span><span class="zh">IG · 认沽牛市价差</span> · Table 1537</span></div>
       <div class="pill open">● OPEN</div>
     </div>
-    <div class="gauge-chart-num">Table 1537 · Chart 26</div>
+    <div class="gauge-chart-num">Table 1537 · Chart 34</div>
     <div class="gauge-wrap"><span class="gauge-status-dot open">● <span class="en">OPEN</span><span class="zh">持仓中</span></span><svg class="gauge-svg" id="gauge-ddog" viewBox="0 0 340 300"></svg><span class="gauge-day-badge" id="gday-badge-ddog">D—</span></div>
     <div class="gauge-asof" id="gasof-ddog">—</div>
     <div class="gauge-alert" id="galert-ddog"></div>
@@ -8805,12 +8805,19 @@ var WATERFALL_CFG = [
   { sym:'FDS',         chart:30, dot:'🟫', status:'open',   kind:'cc', en:'FDS Covered Call',  zh:'FDS备兑看涨' },
   { sym:'SMH_SEP18',   chart:31, dot:'🟩', status:'open',   kind:'ic', en:'SMH (Sep18)',       zh:'SMH（9月18日）' },
   { sym:'NVDA_SEP18',  chart:32, dot:'🔴', status:'open',   kind:'ic', en:'NVDA (Sep18)',      zh:'NVDA（9月18日）' },
-  { sym:'AAPL',        chart:33, dot:'⚪', status:'open',   kind:'put', en:'AAPL',              zh:'AAPL' }
+  { sym:'AAPL',        chart:33, dot:'⚪', status:'open',   kind:'put', en:'AAPL',              zh:'AAPL' },
+  // DDOG — put credit spread, filled 7 Aug 2026, no IBKR/Tiger mark yet (no cost-to-close
+  // figure exists to build a real bridge from). pending:true tells renderWaterfallCharts() to
+  // show a placeholder "no mark yet" card instead of silently omitting it — same "leave it out
+  // rather than guess" rule as everywhere else on this dashboard, just made visible instead of
+  // invisible, since Paul asked for DDOG to appear here.
+  { sym:'DDOG',        chart:35, dot:'🟣', status:'open',   kind:'putspread', en:'DDOG',        zh:'DDOG', pending:true }
 ];
 var WATERFALL_KIND_LABEL = {
   ic:  { en:'IG · Iron Condor', zh:'IG · 铁鹰策略' },
   put: { en:'IG · Cash-Secured Put', zh:'IG · 现金担保认沽期权' },
-  cc:  { en:'IG · Covered Call', zh:'IG · 备兑看涨期权' }
+  cc:  { en:'IG · Covered Call', zh:'IG · 备兑看涨期权' },
+  putspread: { en:'IG · Bull Put Credit Spread', zh:'IG · 认沽牛市价差' }
 };
 function wfFmt(n){
   var sign = n >= 0 ? '+' : '−';
@@ -8895,13 +8902,37 @@ function waterfallCardHtml(cfg, d, extraStyle){
       '</div>' +
     '</div>';
 }
+// Placeholder card for a WATERFALL_CFG entry with no Table 1512 row yet (cfg.pending:true) —
+// e.g. DDOG, filled after any pending statement cutoff, so there's no real cost-to-close/recon
+// figure to build an actual bridge from. Shows the same "no mark yet" language as Table 900's
+// own placeholder rows instead of fabricating bars, but still renders a visible card (Paul, 8
+// Aug 2026 — wants DDOG to appear on this tab even before a mark exists).
+function waterfallPendingCardHtml(cfg){
+  var kindLbl = WATERFALL_KIND_LABEL[cfg.kind];
+  var premium = MTD_PREMIUM[cfg.sym];
+  var premiumEn = typeof premium === 'number' ? ('Premium Collected (A) '+wfFmt(premium)+', confirmed real fill.') : '';
+  var premiumZh = typeof premium === 'number' ? ('已收权利金 (A) '+wfFmt(premium)+'，真实成交已确认。') : '';
+  return '' +
+    '<div class="condor" id="wfCard-' + cfg.sym + '" data-status="' + cfg.status + '">' +
+      '<div class="gauge-chart-num" style="margin-top:0">Chart ' + cfg.chart + '</div>' +
+      '<div class="c-head">' +
+        '<div class="tkr" style="font-size:1.1rem">' + cfg.dot + ' <span class="en">' + cfg.en + '</span><span class="zh">' + cfg.zh + '</span></div>' +
+        '<div class="c-meta"><span class="en">' + kindLbl.en + '</span><span class="zh">' + kindLbl.zh + '</span></div>' +
+        '<div class="pill open">● <span class="en">OPEN</span><span class="zh">持仓中</span></div>' +
+      '</div>' +
+      '<div class="note" style="margin-top:8px">' +
+        '<span class="en">🆕 No IBKR/Tiger mark yet — no confirmed Cost to Close (B) or Reconciliation (C) figure exists to build a real P&amp;L bridge from, so no bars are shown rather than guessing them. '+premiumEn+' Bridge will populate once DDOG appears in a live statement.</span>' +
+        '<span class="zh">🆕 尚无IBKR/Tiger市值——目前没有确认的平仓成本 (B) 或核算调整 (C) 数字可用于绘制真实的盈亏桥接图，因此不显示柱状图以避免猜测。'+premiumZh+'待DDOG出现在实时报表中后此桥接图才会显示。</span>' +
+      '</div>' +
+    '</div>';
+}
 function renderWaterfallCharts(){
   var wrap = document.getElementById('waterfallChartsWrap');
   if(!wrap) return;
   var lookup = buildTable1512Lookup();
   var html = WATERFALL_CFG.map(function(cfg){
     var d = lookup[cfg.sym];
-    if(!d) return '';
+    if(!d) return cfg.pending ? waterfallPendingCardHtml(cfg) : '';
     return waterfallCardHtml(cfg, d);
   }).join('');
   wrap.innerHTML = html;
